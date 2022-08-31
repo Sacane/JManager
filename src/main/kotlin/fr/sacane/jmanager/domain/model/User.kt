@@ -1,13 +1,7 @@
 package fr.sacane.jmanager.domain.model
 
-data class User(
-    private val username: String,
-    private val email: String,
-    private val pseudonym: String,
-    private val accounts: MutableList<Account>?,
-    private val password: Password
-){
-    fun doesPwdMatch(pwd: String): Boolean = pwd == password.get()
+class UserId(private val id: Long){
+    fun get(): Long = id
 }
 
 class Password(private val value: String){
@@ -29,4 +23,15 @@ class Password(private val value: String){
         }
         return builder.toString()
     }
+}
+
+data class User(
+        val id: UserId,
+        val username: String,
+        val email: String,
+        val pseudonym: String,
+        val accounts: MutableList<Account>?,
+        val password: Password,
+){
+    fun doesPwdMatch(pwd: String): Boolean = pwd == password.get()
 }

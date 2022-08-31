@@ -3,10 +3,9 @@ package fr.sacane.jmanager.domain.model
 import java.time.LocalDate
 
 data class Sheet(
-        var id: SheetId,
-        var label: String,
-        var date: LocalDate,
-        var value: Double,
-        var labelAccount: String,
-        var isEntry: Boolean
+        val label: String,
+        val date: LocalDate,
+        val value: Double,
+        val labelAccount: String,
+        val isEntry: Boolean
 )
