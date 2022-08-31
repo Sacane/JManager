@@ -8,27 +8,27 @@ import org.junit.jupiter.api.Test
 class UserTest {
 
     @Test
-    fun password_should_be_encrypt(){
+    fun `password should be encrypt`(){
         val pwd = Password("password")
         assertThat(pwd.get()).isNotEqualTo("password")
     }
 
     @Test
-    fun password_should_match(){
+    fun `password should match`(){
         val pwd = Password("password")
         val pwd2 = Password("password")
         assertThat(pwd.get()).isEqualTo(pwd2.get())
     }
 
     @Test
-    fun password_should_not_match_even_with_uppercase(){
+    fun `password should not match even with uppercase`(){
         val pwd = Password("password")
         val pwd2 = Password("PAsswoRD")
         assertThat(pwd.get()).isNotEqualTo(pwd2.get())
     }
 
     @Test
-    fun user_pwd_should_match(){
+    fun `user pwd should match with same`(){
         val pwd = Password("D5301012000MAMacita")
         val pwdUser = Password("D5301012000MAMacita")
 
@@ -38,7 +38,7 @@ class UserTest {
     }
 
     @Test
-    fun user_pwd_should_not_match(){
+    fun `user pwd should not match`(){
         val pwd = Password("D5301012000MAMaCitA")
         val pwdUser = Password("D5301012000MAMacita")
         val user = User("johan", "johan.test@test.fr", "tester", null, pwdUser)
