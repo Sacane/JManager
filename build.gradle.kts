@@ -24,6 +24,7 @@ dependencies {
 	runtimeOnly("org.postgresql:postgresql")
 	providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.hamcrest:hamcrest:2.2")
 }
 
 tasks.withType<KotlinCompile> {

@@ -1,12 +1,14 @@
 package fr.sacane.jmanager.domain.model
 
 data class User(
-    val username: String,
-    val email: String,
-    val pseudonym: String,
-    val accounts: MutableList<Account>?,
-    val password: Password
-)
+    private val username: String,
+    private val email: String,
+    private val pseudonym: String,
+    private val accounts: MutableList<Account>?,
+    private val password: Password
+){
+    fun doesPwdMatch(pwd: String): Boolean = pwd == password.get()
+}
 
 class Password(private val value: String){
 
@@ -19,7 +21,6 @@ class Password(private val value: String){
             char ->
             c = char
             var res = c.code.toLong()
-            res += value.toInt()
             res *= value.length
             res += value.toDigit(value.length)
             res %= 255
