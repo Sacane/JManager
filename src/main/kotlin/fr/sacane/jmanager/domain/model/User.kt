@@ -25,15 +25,16 @@ class Password(private val value: String){
     }
 }
 
-data class User(
-        val id: UserId,
-        val username: String,
-        val email: String,
-        val pseudonym: String,
-        val accounts: MutableList<Account>?,
-        val password: Password,
+class User(
+        private val id: UserId,
+        private val username: String,
+        private val email: String,
+        private val pseudonym: String,
+        private val accounts: MutableList<Account>,
+        private val password: Password,
 ){
     fun doesPwdMatch(pwd: String): Boolean = pwd == password.get()
 
+    fun accounts(): List<Account> = accounts.distinct()
 
 }

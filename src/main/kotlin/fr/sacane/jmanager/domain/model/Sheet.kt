@@ -8,6 +8,4 @@ class Sheet(
         val value: Double,
         val labelAccount: String,
         val isEntry: Boolean
-){
-
-}
+)

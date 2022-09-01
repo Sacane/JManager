@@ -1,15 +1,14 @@
 package fr.sacane.jmanager.domain.model
 
-
-
 class Account(
         private var amount: Double,
-        private var labelAccount: String,
-        private var sheets: List<Sheet>
+        private val labelAccount: String,
+        private val sheets: MutableList<Sheet>
 ){
 
+    override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label()
     fun sheets(): List<Sheet>{
-        return sheets.distinct()
+        return sheets.toList()
     }
     fun amount(): Double = amount
 
@@ -23,5 +22,9 @@ class Account(
 
     fun lossAmount(loss: Double) {
         amount -= loss
+    }
+
+    override fun hashCode(): Int {
+        return labelAccount.hashCode()
     }
 }
