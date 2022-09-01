@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.model.UserId
 import java.time.Month
 
 
-interface ResourcePort {
+interface ServerPort {
 
     suspend fun getSheets(user: UserId, accountLabel: String): List<Sheet>
     suspend fun getSheetsByDateAndAccount(userId: UserId, month: Month, year: Int, labelAccount: String): List<Sheet>

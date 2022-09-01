@@ -4,11 +4,11 @@ import fr.sacane.jmanager.domain.model.Account
 import fr.sacane.jmanager.domain.model.Sheet
 import fr.sacane.jmanager.domain.model.User
 import fr.sacane.jmanager.domain.model.UserId
-import fr.sacane.jmanager.domain.port.apiside.UserApiPort
-import fr.sacane.jmanager.domain.port.serverside.ResourcePort
+import fr.sacane.jmanager.domain.port.apiside.ApiPort
+import fr.sacane.jmanager.domain.port.serverside.ServerPort
 import java.time.Month
 
-class UserApiPortImpl(private val port: ResourcePort): UserApiPort {
+class ApiPortImpl(private val port: ServerPort): ApiPort {
 
     override suspend fun registerUser(user: User): User {
         return port.saveUser(user)
