@@ -9,7 +9,8 @@ import java.time.Month
 interface ElementAskerPort {
 
     suspend fun getSheets(user: UserId, accountLabel: String): List<Sheet>
-    suspend fun getAccounts(user: UserId): List<Account>
     suspend fun getSheets(user: UserId, month: Month, year: Int, labelAccount: String)
+    suspend fun getAccounts(user: UserId): List<Account>
+
 
 }

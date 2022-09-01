@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain
 
 import fr.sacane.jmanager.domain.model.Password
 import fr.sacane.jmanager.domain.model.User
+import fr.sacane.jmanager.domain.model.UserId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -32,7 +33,7 @@ class UserTest {
         val pwd = Password("D5301012000MAMacita")
         val pwdUser = Password("D5301012000MAMacita")
 
-        val user = User("johan", "johan.test@test.fr", "tester", null, pwdUser)
+        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", null, pwdUser)
 
         assertThat(user.doesPwdMatch(pwd.get())).isTrue
     }
@@ -41,8 +42,7 @@ class UserTest {
     fun `user pwd should not match`(){
         val pwd = Password("D5301012000MAMaCitA")
         val pwdUser = Password("D5301012000MAMacita")
-        val user = User("johan", "johan.test@test.fr", "tester", null, pwdUser)
-
+        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", null, pwdUser)
         assertThat(user.doesPwdMatch(pwd.get())).isFalse
     }
 }
