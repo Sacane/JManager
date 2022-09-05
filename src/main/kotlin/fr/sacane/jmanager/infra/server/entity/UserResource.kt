@@ -11,7 +11,7 @@ open class UserResource {
     @Nullable
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_user", nullable = false)
-    open var id_user: Int? = null
+    open var id_user: Long? = null
 
     @Column(unique = true, nullable = true)
     open var pseudonym: String? = null
@@ -21,7 +21,7 @@ open class UserResource {
     open var password: String? = null
 
     @Column(unique = true, nullable = true)
-    var email: String? = null
+    open var email: String? = null
 
     @OneToMany(cascade = [CascadeType.ALL])
     @JoinTable(
@@ -29,7 +29,7 @@ open class UserResource {
         joinColumns = [JoinColumn(name = "id_user")],
         inverseJoinColumns = [JoinColumn(name = "idAccount")]
     )
-    var accounts: MutableList<AccountResource>? = null
+    open var accounts: MutableList<AccountResource>? = null
 
 
 }

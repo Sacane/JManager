@@ -11,13 +11,13 @@ open class AccountResource{
     @Nullable
     @GeneratedValue
     @Column(unique = true, name = "id_account", nullable = false)
-    val idAccount: Int? = null
+    open val idAccount: Long? = null
 
     @Column(name = "amount")
-    var amount: Double? = null
+    open val amount: Double? = null
 
     @Column(name = "label")
-    var label: String? = null
+    open val label: String? = null
 
     @OneToMany(cascade = [CascadeType.ALL])
     @JoinTable(
@@ -25,7 +25,7 @@ open class AccountResource{
         joinColumns = [JoinColumn(name = "id_account")],
         inverseJoinColumns = [JoinColumn(name = "id_sheet")]
     )
-    var sheets: MutableList<SheetResource>? = null
+    open val sheets: MutableList<SheetResource>? = null
 
 }
 
