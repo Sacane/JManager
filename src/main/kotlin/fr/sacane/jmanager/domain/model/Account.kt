@@ -7,14 +7,15 @@ class Account(
 ){
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label()
-    fun sheets(): List<Sheet>{
-        return sheets.toList()
+    fun sheets(): List<Sheet>?{
+        return if(sheets.isEmpty()) null else sheets.toList()
     }
     fun amount(): Double = amount
 
     fun label(): String{
         return labelAccount
     }
+
 
     fun earnAmount(earned: Double) {
         amount += earned

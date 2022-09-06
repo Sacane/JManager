@@ -26,12 +26,12 @@ class Password(private val value: String){
 }
 
 class User(
-        private val id: UserId,
-        private val username: String,
-        private val email: String,
-        private val pseudonym: String,
-        private val accounts: MutableList<Account>,
-        private val password: Password,
+    val id: UserId,
+    val username: String,
+    val email: String,
+    val pseudonym: String,
+    private val accounts: MutableList<Account>,
+    val password: Password,
 ){
     fun doesPwdMatch(pwd: String): Boolean = pwd == password.get()
 
