@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.server.entity
 
+import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
@@ -19,7 +20,13 @@ open class SheetResource {
     @Column(unique = true, name = "label_sheet")
     open var label: String? = null
 
-    @Column(unique = true, name= "amount")
+    @Column(name= "amount")
     open var amount: Double? = null
+
+    @Column(name="date")
+    open var date: LocalDate? = null
+
+    @Column(name="isEntry")
+    open var isEntry: Boolean? = null
 
 }
