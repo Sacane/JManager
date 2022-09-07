@@ -6,18 +6,19 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "account")
-open class AccountResource{
+class AccountResource(
     @Id
     @Nullable
     @GeneratedValue
     @Column(unique = true, name = "id_account", nullable = false)
-    open var idAccount: Long? = null
+    var idAccount: Long? = null,
 
     @Column(name = "amount")
-    open var amount: Double? = null
+    var amount: Double? = null,
 
     @Column(name = "label")
-    open var label: String? = null
+    var label: String? = null,
+
 
     @OneToMany(cascade = [CascadeType.ALL])
     @JoinTable(
@@ -25,8 +26,6 @@ open class AccountResource{
         joinColumns = [JoinColumn(name = "id_account")],
         inverseJoinColumns = [JoinColumn(name = "id_sheet")]
     )
-    open var sheets: MutableList<SheetResource>? = null
-
-}
-
+    var sheets: MutableList<SheetResource>? = null
+)
 
