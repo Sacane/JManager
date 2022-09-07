@@ -6,12 +6,15 @@ import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Month
 
 @Service
-class ServerAdapter(val userRepository: UserRepository) : ServerPort{
+class ServerAdapter() : ServerPort{
 
+    @Autowired
+    private lateinit var userRepository: UserRepository
     private fun SheetResource.toModel(): Sheet{
         return Sheet(this.label!!, this.date!!, this.amount!!, this.isEntry!!)
     }
