@@ -10,23 +10,23 @@ import javax.persistence.Table
 
 @Entity
 @Table(name="sheet")
-open class SheetResource {
+class SheetResource {
 
     @Id
     @GeneratedValue
     @Column(unique = true, name = "id_sheet", nullable = false)
-    open var idSheet: Long? = null
+    var idSheet: Long? = null
 
     @Column(unique = true, name = "label_sheet")
-    open var label: String? = null
+    var label: String? = null
 
     @Column(name= "amount")
-    open var amount: Double? = null
+    var amount: Double? = null
 
     @Column(name="date")
-    open var date: LocalDate? = null
+    var date: LocalDate? = null
 
     @Column(name="isEntry")
-    open var isEntry: Boolean? = null
+    var isEntry: Boolean? = null
 
 }
