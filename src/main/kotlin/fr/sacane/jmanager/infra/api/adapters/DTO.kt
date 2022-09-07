@@ -1,4 +1,8 @@
 package fr.sacane.jmanager.infra.api.adapters
 
-class DTO {
-}
+data class UserDTO(
+    val id: Long,
+    val username: String,
+    val password: String,
+    val pseudonym: String
+)
