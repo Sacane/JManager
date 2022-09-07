@@ -6,30 +6,29 @@ import javax.persistence.*
 
 @Table(name="User")
 @Entity
-open class UserResource {
+class UserResource(
     @Id
     @Nullable
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_user", nullable = false)
-    open var id_user: Long? = null
+    open var id_user: Long? = null,
 
     @Column(unique = true, nullable = true)
-    open var pseudonym: String? = null
+    var pseudonym: String? = null,
 
     @Column(unique = true)
-    open var username: String? = null
-    open var password: String? = null
+    var username: String? = null,
+    var password: String? = null,
 
     @Column(unique = true, nullable = true)
-    open var email: String? = null
+    var email: String? = null,
 
-    @OneToMany(cascade = [CascadeType.ALL])
+
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_account",
         joinColumns = [JoinColumn(name = "id_user")],
         inverseJoinColumns = [JoinColumn(name = "idAccount")]
     )
-    open var accounts: MutableList<AccountResource>? = null
-
-
-}
+    var accounts: MutableList<AccountResource>?
+)

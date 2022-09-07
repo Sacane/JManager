@@ -24,13 +24,8 @@ class ServerAdapter(val userRepository: UserRepository) : ServerPort{
         return User(UserId(this.id_user!!), this.username!!, this.email!!, this.pseudonym!!, this.accounts!!.map { account -> account.toModel() }.toMutableList(), Password(this.password!!))
     }
 
-    private fun User.asResource(): UserResource{
-        val resource = UserResource()
-        resource.pseudonym = this.pseudonym
-        resource.password = this.password.get()
-        resource.email = this.email
-        resource.username = this.username
-        return resource
+    private fun User.asResource(): UserResource {
+        return UserResource(null, pseudonym, password.get(), email, username, mutableListOf())
     }
 
     override suspend fun getSheets(user: UserId, accountLabel: String): List<Sheet> {
