@@ -92,4 +92,8 @@ class ServerAdapter() : ServerPort{
         userRepository.save(user)
     }
 
+    override suspend fun findUserByPseudonym(pseudonym: String): User {
+        return userRepository.findByPseudonym(pseudonym).toModel()
+    }
+
 }
