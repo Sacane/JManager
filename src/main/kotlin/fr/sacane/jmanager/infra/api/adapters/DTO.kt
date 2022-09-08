@@ -7,3 +7,8 @@ data class UserDTO(
     val pseudonym: String,
     val email: String
 )
+
+data class UserPasswordDTO(
+    val username: String,
+    val password: String
+)

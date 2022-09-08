@@ -12,7 +12,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     * Mapping of domain -> dto
     */
     private fun User.toDTO(): UserDTO{
-        return UserDTO(this.id.get(), this.username, this.password.get(), this.pseudonym, this.email)
+        return UserDTO(this.id.get(), this.username, "", this.pseudonym, this.email)
     }
 
     /**
@@ -20,10 +20,12 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
      */
 
 
-    suspend fun verifyUser(userDTO: UserDTO): UserDTO?{
-        val user = apiPort.findUserById(UserId(userDTO.id))
+
+
+    suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
+        val user = apiPort.findUserByPseudonym(userDTO.username)
         return if(user.doesPwdMatch(userDTO.password)){
-            userDTO
+            user.toDTO()
         } else {
             null
         }
