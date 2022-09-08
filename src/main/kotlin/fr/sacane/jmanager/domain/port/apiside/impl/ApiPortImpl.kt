@@ -29,4 +29,9 @@ class ApiPortImpl(private val port: ServerPort): ApiPort {
     override suspend fun sheetByDateAndAccount(userId: UserId, month: Month, year: Int, account: String): List<Sheet> {
         return port.getSheetsByDateAndAccount(userId, month, year, account)
     }
+
+    override suspend fun findAccount(userId: UserId, labelAccount: String): Account? {
+        val user = port.findUserById(userId)
+        return user.accounts().find { acc -> acc.label() == labelAccount }
+    }
 }

@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infra.api.adapters
 
 import java.time.LocalDate
+import java.time.Month
 
 data class UserDTO(
     val id: Long,
@@ -31,4 +32,11 @@ data class AccountDTO(
 data class UserAccount(
     val userId: Long,
     val labelAccount: String
+)
+
+data class UserSheetDTO(
+    val userId: Long,
+    val month: Month,
+    val year: Int,
+    val accountLabel: String
 )

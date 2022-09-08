@@ -31,10 +31,10 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
             this.sheets()!!.map { sheet -> sheet.toDTO() }
         )
     }
+
     /**
      * Mapping of dto -> model
      */
-
 
 
 
@@ -51,6 +51,15 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
         val user = apiPort.findUserById(accountOwnerDTO.userId.id())
         val account = user.accounts().find { account -> account.label() == accountOwnerDTO.labelAccount }
         return account?.toDTO()
+    }
+
+    suspend fun getSheetAccountByDate(dto: UserSheetDTO): List<SheetDTO>?{
+        val account = apiPort.findAccount(dto.userId.id(), dto.accountLabel)
+        return if(account == null){
+            null
+        } else {
+            account.sheets()?.map { sheet -> sheet.toDTO() }
+        }
     }
 
 }
