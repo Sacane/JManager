@@ -16,5 +16,6 @@ interface ServerPort {
     suspend fun findUserById(userId: UserId): User
     suspend fun saveAccount(userId: UserId, account: Account)
     suspend fun findUserByPseudonym(pseudonym: String): User
+    suspend fun createUser(user: User): User?
 
 }

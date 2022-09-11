@@ -1,5 +1,9 @@
 package fr.sacane.jmanager.domain.model
 
+class Hash(){
+
+}
+
 class UserId(private val id: Long){
     fun get(): Long = id
 }

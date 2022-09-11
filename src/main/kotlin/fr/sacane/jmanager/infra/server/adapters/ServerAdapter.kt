@@ -96,4 +96,13 @@ class ServerAdapter() : ServerPort{
         return userRepository.findByPseudonym(pseudonym).toModel()
     }
 
+    override suspend fun createUser(user: User): User? {
+        return try {
+            val entity = userRepository.save(user.asResource())
+            entity.toModel()
+        }catch (e: IllegalArgumentException){
+            null
+        }
+    }
+
 }

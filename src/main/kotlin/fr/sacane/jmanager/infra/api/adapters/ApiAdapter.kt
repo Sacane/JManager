@@ -1,9 +1,6 @@
 package fr.sacane.jmanager.infra.api.adapters
 
-import fr.sacane.jmanager.domain.model.Account
-import fr.sacane.jmanager.domain.model.Sheet
-import fr.sacane.jmanager.domain.model.User
-import fr.sacane.jmanager.domain.model.UserId
+import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.ApiPort
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -36,8 +33,21 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
      * Mapping of dto -> model
      */
 
+    private fun SheetDTO.toModel(): Sheet{
+        return Sheet(this.label, this.date, this.amount, this.action == "Recette")
+    }
+
+    private fun AccountDTO.toModel(): Account{
+        return Account(this.amount, this.labelAccount, this.sheets.map { it.toModel() }.toMutableList())
+    }
 
 
+    private fun UserDTO.toModel(): User{
+        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password))
+    }
+//    suspend fun createUser(userDTO: UserDTO): UserDTO?{
+//
+//    }
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
         return if(user.doesPwdMatch(userDTO.password)){
