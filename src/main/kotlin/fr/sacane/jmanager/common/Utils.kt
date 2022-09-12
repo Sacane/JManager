@@ -1,6 +1,11 @@
 package fr.sacane.jmanager.common
 
+import at.favre.lib.crypto.bcrypt.BCrypt
+import at.favre.lib.crypto.bcrypt.LongPasswordStrategies
+import com.toxicbakery.bcrypt.Bcrypt
 import fr.sacane.jmanager.domain.model.Account
+import fr.sacane.jmanager.domain.model.Password
+import java.security.SecureRandom
 
 operator fun Account.plusAssign(earned: Double){
     this.earnAmount(earned)
@@ -21,26 +26,15 @@ fun Account.transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
 
 class Hash{
 
+
     companion object {
-        private fun String.toDigit(salt:String, code: Int): Int{
-            return salt.map { it.code + code}.sum()
+
+        fun hash(pass:String): String{
+            return Bcrypt.hash(pass, Constants.CODE).toString()
         }
-        fun coder(pass: String, code: Int): String{
-            val hashBuilder = StringBuilder()
-            var c: Char
-            pass.forEach { char ->
-                c = char
-                var value = c.code.toLong()
-                value += code
-                value *= pass.length
-                value += pass.toDigit(pass, code)
-                value %= 255
-                c = value.toInt().toChar()
-                hashBuilder.append(c)
-            }
-            return hashBuilder.toString()
+        fun verify(given: String, expected: String): Boolean{
+            return Bcrypt.verify(given, Bcrypt.hash(expected, Constants.CODE))
         }
     }
-
 }
 

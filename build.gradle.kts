@@ -29,8 +29,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-
-
+	implementation("com.ToxicBakery.library.bcrypt:bcrypt:1.0.9")
 	runtimeOnly("org.postgresql:postgresql")
 	providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

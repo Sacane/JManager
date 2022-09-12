@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain
 
+import fr.sacane.jmanager.common.Hash
 import fr.sacane.jmanager.domain.model.Account
 import fr.sacane.jmanager.domain.model.Password
 import fr.sacane.jmanager.domain.model.User
@@ -10,16 +11,8 @@ import org.junit.jupiter.api.Test
 class UserTest {
 
     @Test
-    fun `password should be encrypt`(){
-        val pwd = Password("password")
-        assertThat(pwd.get()).isNotEqualTo("password")
-    }
-
-    @Test
     fun `password should match`(){
-        val pwd = Password("password")
-        val pwd2 = Password("password")
-        assertThat(pwd.get()).isEqualTo(pwd2.get())
+        assertThat(Hash.verify("password", "password")).isTrue
     }
 
     @Test
@@ -32,11 +25,10 @@ class UserTest {
     @Test
     fun `user pwd should match with same`(){
         val pwd = Password("D5301012000MAMacita")
-        val pwdUser = Password("D5301012000MAMacita")
 
-        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwdUser)
+        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwd)
 
-        assertThat(user.doesPwdMatch(pwd.get())).isTrue
+        assertThat(user.pwdMatchWith("D5301012000MAMacita")).isTrue
     }
 
     @Test
@@ -44,7 +36,7 @@ class UserTest {
         val pwd = Password("D5301012000MAMaCitA")
         val pwdUser = Password("D5301012000MAMacita")
         val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwdUser)
-        assertThat(user.doesPwdMatch(pwd.get())).isFalse
+        assertThat(user.pwdMatchWith(pwd.get())).isFalse
     }
 
     @Test

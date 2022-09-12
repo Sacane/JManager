@@ -10,11 +10,15 @@ class UserId(private val id: Long){
 
 class Password(private val value: String){
 
-    private fun String.toDigit(code: Int) : Int = this.map { it.code + code }.sum()
 
     fun get(): String{
-        return Hash.coder(value, value.toDigit(Constants.CODE))
+        return Hash.hash(value)
     }
+
+    fun matchWith(other: String): Boolean{
+        return Hash.verify(other, value)
+    }
+
 }
 
 class User(
@@ -25,7 +29,7 @@ class User(
     private val accounts: MutableList<Account>,
     val password: Password,
 ){
-    fun doesPwdMatch(pwd: String): Boolean = pwd == password.get()
+    fun pwdMatchWith(pwd: String): Boolean = password.matchWith(pwd)
 
     fun accounts(): List<Account> = accounts.distinct()
 
