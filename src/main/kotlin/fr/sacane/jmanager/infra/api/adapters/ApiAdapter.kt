@@ -62,7 +62,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
         }
     }
 
-    suspend fun findAccount(accountOwnerDTO: UserAccount): AccountDTO?{
+    suspend fun findAccount(accountOwnerDTO: UserAccountDTO): AccountDTO?{
         val user = apiPort.findUserById(accountOwnerDTO.userId.id())
         val account = user.accounts().find { account -> account.label() == accountOwnerDTO.labelAccount }
         return account?.toDTO()
@@ -75,6 +75,14 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
         } else {
             account.sheets()?.map { sheet -> sheet.toDTO() }
         }
+    }
+
+    suspend fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO): Boolean{
+        return apiPort.saveSheet(userId.id(), accountLabel, sheetDTO.toModel())
+    }
+
+    suspend fun saveAccount(userAccount: UserAccountDTO) {
+        apiPort.saveAccount(UserId(userAccount.userId), Account(userAccount.amount, userAccount.labelAccount, mutableListOf()))
     }
 
 }

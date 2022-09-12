@@ -92,6 +92,8 @@ class ServerAdapter() : ServerPort{
         userRepository.save(user)
     }
 
+
+
     override suspend fun findUserByPseudonym(pseudonym: String): User {
         return userRepository.findByPseudonym(pseudonym).toModel()
     }
@@ -103,6 +105,21 @@ class ServerAdapter() : ServerPort{
         }catch (e: IllegalArgumentException){
             null
         }
+    }
+
+    override suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
+        val user = userRepository.findById(userId.get()).get()
+        val account = user.accounts?.find { it.label == accountLabel }
+        if(account != null){
+            return try{
+                account.sheets?.add(sheet.asResource())
+                userRepository.save(user)
+                true
+            }catch(iae: IllegalArgumentException){
+                false
+            }
+        }
+        return false
     }
 
 }

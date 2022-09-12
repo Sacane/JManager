@@ -29,9 +29,10 @@ data class AccountDTO(
     val sheets: List<SheetDTO>
 )
 
-data class UserAccount(
+data class UserAccountDTO(
     val userId: Long,
-    val labelAccount: String
+    val labelAccount: String,
+    val amount: Double
 )
 
 data class UserSheetDTO(
@@ -39,4 +40,10 @@ data class UserSheetDTO(
     val month: Month,
     val year: Int,
     val accountLabel: String
+)
+
+data class UserAccountSheetDTO(
+    val userId: Long,
+    val accountLabel: String,
+    val sheetDTO: SheetDTO
 )

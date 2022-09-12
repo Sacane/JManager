@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import java.net.http.HttpResponse
 
@@ -15,7 +16,7 @@ class JManagerController {
     private lateinit var apiAdapter: ApiAdapter
 
     @PostMapping(path= ["/user/verify"])
-    suspend fun verifyUser(userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
+    suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
         val user = apiAdapter.verifyUser(userDTO)
         return if(user != null){
             ResponseEntity.ok(user)
@@ -25,14 +26,29 @@ class JManagerController {
     }
 
     @PostMapping(path = ["/user/account"])
-    suspend fun findAccount(accountOwnerDTO: UserAccount): ResponseEntity<AccountDTO>{
+    suspend fun findAccount(@RequestBody accountOwnerDTO: UserAccountDTO): ResponseEntity<AccountDTO>{
         val account = apiAdapter.findAccount(accountOwnerDTO)
         return if(account == null) ResponseEntity(HttpStatus.NOT_FOUND) else ResponseEntity(account, HttpStatus.OK)
     }
 
     @PostMapping(path= ["/user/create"])
-    suspend fun createUser(userDTO: UserDTO): ResponseEntity<UserDTO> {
+    suspend fun createUser(@RequestBody userDTO: UserDTO): ResponseEntity<UserDTO> {
         val created = apiAdapter.createUser(userDTO)
         return if(created != null) ResponseEntity(created, HttpStatus.OK) else ResponseEntity(HttpStatus.UNAUTHORIZED)
     }
+
+    @PostMapping("/account/create")
+    suspend fun createAccount(@RequestBody userAccount: UserAccountDTO){
+        apiAdapter.saveAccount(userAccount)
+    }
+
+    @PostMapping("/sheet/create")
+    suspend fun createSheet(@RequestBody userAccountSheetDTO: UserAccountSheetDTO): ResponseEntity<SheetDTO>{
+        return if(apiAdapter.saveSheet(userAccountSheetDTO.userId, userAccountSheetDTO.accountLabel, userAccountSheetDTO.sheetDTO)){
+            ResponseEntity(userAccountSheetDTO.sheetDTO, HttpStatus.OK)
+        } else {
+            ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
 }

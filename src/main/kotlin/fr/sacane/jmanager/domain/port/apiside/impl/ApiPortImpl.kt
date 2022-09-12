@@ -38,4 +38,8 @@ class ApiPortImpl(private val port: ServerPort): ApiPort {
     override suspend fun createUser(user: User): User? {
         return port.createUser(user)
     }
+
+    override suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
+        return port.saveSheet(userId, accountLabel, sheet)
+    }
 }
