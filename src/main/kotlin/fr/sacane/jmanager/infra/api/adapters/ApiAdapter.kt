@@ -45,9 +45,14 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     private fun UserDTO.toModel(): User{
         return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password))
     }
-//    suspend fun createUser(userDTO: UserDTO): UserDTO?{
-//
-//    }
+
+
+    suspend fun createUser(userDTO: UserDTO): UserDTO?{
+        val user = apiPort.createUser(userDTO.toModel())
+        return user?.toDTO()
+    }
+
+
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
         return if(user.doesPwdMatch(userDTO.password)){

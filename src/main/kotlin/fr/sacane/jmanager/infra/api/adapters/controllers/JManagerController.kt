@@ -6,16 +6,17 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
+import java.net.http.HttpResponse
 
 @RestController
 class JManagerController {
 
     @Autowired
-    private lateinit var domainAdapter: ApiAdapter
+    private lateinit var apiAdapter: ApiAdapter
 
     @PostMapping(path= ["/user/verify"])
     suspend fun verifyUser(userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
-        val user = domainAdapter.verifyUser(userDTO)
+        val user = apiAdapter.verifyUser(userDTO)
         return if(user != null){
             ResponseEntity.ok(user)
         } else {
@@ -25,8 +26,13 @@ class JManagerController {
 
     @PostMapping(path = ["/user/account"])
     suspend fun findAccount(accountOwnerDTO: UserAccount): ResponseEntity<AccountDTO>{
-        val account = domainAdapter.findAccount(accountOwnerDTO)
+        val account = apiAdapter.findAccount(accountOwnerDTO)
         return if(account == null) ResponseEntity(HttpStatus.NOT_FOUND) else ResponseEntity(account, HttpStatus.OK)
     }
 
+    @PostMapping(path= ["/user/create"])
+    suspend fun createUser(userDTO: UserDTO): ResponseEntity<UserDTO> {
+        val created = apiAdapter.createUser(userDTO)
+        return if(created != null) ResponseEntity(created, HttpStatus.OK) else ResponseEntity(HttpStatus.UNAUTHORIZED)
+    }
 }
