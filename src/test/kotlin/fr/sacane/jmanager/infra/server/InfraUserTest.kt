@@ -5,7 +5,6 @@ import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
 import fr.sacane.jmanager.infra.server.repositories.AccountRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Order
@@ -21,9 +20,8 @@ class InfraUserTest {
     @Autowired
     lateinit var accountRepository: AccountRepository
 
-    fun basicUserTest(): UserResource{
-        val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", null)
-        return user
+    fun basicUserTest(): UserResource {
+        return UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", null)
     }
 
     fun basicSheetTest(): SheetResource{
@@ -36,7 +34,7 @@ class InfraUserTest {
         userRepository.deleteAll()
         val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", mutableListOf())
         userRepository.save(user)
-        val byName = userRepository.findByPseudonym("Sacane")
+        val byName = userRepository.findByPseudonym("johan_test")
         assertThat(byName.pseudonym).isEqualTo(user.pseudonym)
         userRepository.deleteById(byName.id_user!!)
 

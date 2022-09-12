@@ -32,7 +32,7 @@ class ApiPortImpl(private val port: ServerPort): ApiPort {
 
     override suspend fun findAccount(userId: UserId, labelAccount: String): Account? {
         val user = port.findUserById(userId)
-        return user.accounts().find { acc -> acc.label() == labelAccount }
+        return user.accounts().find { it.label() == labelAccount }
     }
 
     override suspend fun createUser(user: User): User? {

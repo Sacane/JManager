@@ -18,3 +18,29 @@ fun Account.transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
         otherAccount += delta
     }
 }
+
+class Hash{
+
+    companion object {
+        private fun String.toDigit(salt:String, code: Int): Int{
+            return salt.map { it.code + code}.sum()
+        }
+        fun coder(pass: String, code: Int): String{
+            val hashBuilder = StringBuilder()
+            var c: Char
+            pass.forEach { char ->
+                c = char
+                var value = c.code.toLong()
+                value += code
+                value *= pass.length
+                value += pass.toDigit(pass, code)
+                value %= 255
+                c = value.toInt().toChar()
+                hashBuilder.append(c)
+            }
+            return hashBuilder.toString()
+        }
+    }
+
+}
+
