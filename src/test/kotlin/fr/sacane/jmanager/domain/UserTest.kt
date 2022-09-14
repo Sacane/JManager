@@ -32,7 +32,7 @@ class UserTest {
     }
 
     @Test
-    fun `user pwd should not match`(){
+    fun `wrong pwd should not match`(){
         val pwd = Password("D5301012000MAMaCitA")
         val pwdUser = Password("D5301012000MAMacita")
         val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwdUser)

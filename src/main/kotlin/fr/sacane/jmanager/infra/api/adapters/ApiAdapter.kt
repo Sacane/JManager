@@ -85,4 +85,8 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
         apiPort.saveAccount(UserId(userAccount.userId), Account(userAccount.amount, userAccount.labelAccount, mutableListOf()))
     }
 
+    suspend fun getUserAccount(id: Long): List<AccountInfoDTO>? {
+        return apiPort.getAccountByUser(id.id())?.map { AccountInfoDTO(it.amount(), it.label()) }
+    }
+
 }

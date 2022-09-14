@@ -5,7 +5,7 @@ import fr.sacane.jmanager.common.Hash
 
 
 class UserId(private val id: Long){
-    fun get(): Long = id
+    fun get(): Long = id //In case there is a business rule for ID
 }
 
 class Password(private val value: String){

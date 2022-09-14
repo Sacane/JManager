@@ -17,4 +17,6 @@ interface ApiPort {
     suspend fun findAccount(userId: UserId, labelAccount: String): Account?
     suspend fun createUser(user: User): User?
     suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean
+
+    suspend fun getAccountByUser(userId: UserId): List<Account>?
 }

@@ -23,6 +23,11 @@ data class SheetDTO(
     val date: LocalDate
 )
 
+data class AccountInfoDTO(
+    val amount: Double,
+    val label: String
+)
+
 data class AccountDTO(
     val amount: Double,
     val labelAccount: String,
@@ -47,3 +52,4 @@ data class UserAccountSheetDTO(
     val accountLabel: String,
     val sheetDTO: SheetDTO
 )
+
