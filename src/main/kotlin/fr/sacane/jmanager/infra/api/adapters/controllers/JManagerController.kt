@@ -4,21 +4,17 @@ import fr.sacane.jmanager.infra.api.adapters.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.net.http.HttpResponse
 
 @RestController
+@CrossOrigin(origins = ["*"], allowedHeaders = ["*"])
 class JManagerController {
 
     @Autowired
     private lateinit var apiAdapter: ApiAdapter
 
-    @PostMapping(path= ["/user/verify"])
+    @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
         val user = apiAdapter.verifyUser(userDTO)
         return if(user != null){
@@ -54,7 +50,7 @@ class JManagerController {
         }
     }
 
-    @GetMapping(path = ["user/account/get/{id}"])
+    @GetMapping(path = ["user/accounts/get/{id}"])
     suspend fun getAccounts(@PathVariable id: String): ResponseEntity<List<AccountInfoDTO>>{
         val accounts = apiAdapter.getUserAccount(id.toLong())
         return if(accounts == null) ResponseEntity(accounts, HttpStatus.OK) else ResponseEntity(HttpStatus.NOT_FOUND)

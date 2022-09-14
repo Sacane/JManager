@@ -55,7 +55,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
 
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
-        return if(user.pwdMatchWith(userDTO.password)){
+        return if(user != null && user.pwdMatchWith(userDTO.password)){
             user.toDTO()
         } else {
             null

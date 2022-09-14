@@ -11,7 +11,7 @@ interface ApiPort {
 
     suspend fun registerUser(user: User): User
     suspend fun findUserById(userId: UserId): User
-    suspend fun findUserByPseudonym(pseudonym: String): User
+    suspend fun findUserByPseudonym(pseudonym: String): User?
     suspend fun saveAccount(userId: UserId, account: Account)
     suspend fun sheetByDateAndAccount(userId: UserId, month: Month, year: Int, account: String): List<Sheet>
     suspend fun findAccount(userId: UserId, labelAccount: String): Account?

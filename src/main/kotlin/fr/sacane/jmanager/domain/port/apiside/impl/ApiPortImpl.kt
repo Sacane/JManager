@@ -18,7 +18,7 @@ class ApiPortImpl(private val port: ServerPort): ApiPort {
         return port.findUserById(userId)
     }
 
-    override suspend fun findUserByPseudonym(pseudonym: String): User {
+    override suspend fun findUserByPseudonym(pseudonym: String): User? {
         return port.findUserByPseudonym(pseudonym)
     }
 
