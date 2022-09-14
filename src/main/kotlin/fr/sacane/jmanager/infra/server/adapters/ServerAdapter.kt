@@ -28,7 +28,7 @@ class ServerAdapter() : ServerPort{
     }
 
     private fun User.asResource(): UserResource {
-        return UserResource(null, pseudonym, password.get(), email, username, mutableListOf())
+        return UserResource(null, pseudonym, username, password.get(), email, mutableListOf())
     }
 
     override suspend fun getSheets(user: UserId, accountLabel: String): List<Sheet> {
