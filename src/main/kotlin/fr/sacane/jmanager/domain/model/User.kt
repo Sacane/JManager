@@ -8,7 +8,8 @@ class UserId(private val id: Long){
     fun get(): Long = id //In case there is a business rule for ID
 }
 
-class Password(private val value: String){
+
+class Password(val value: String){
 
 
     fun get(): String{
@@ -17,6 +18,9 @@ class Password(private val value: String){
 
     fun matchWith(other: String): Boolean{
         return Hash.verify(other, value)
+    }
+    fun cryptMatchWith(other: String): Boolean{
+        return Hash.verify(other, value.toByteArray())
     }
 
 }
@@ -30,6 +34,8 @@ class User(
     val password: Password,
 ){
     fun pwdMatchWith(pwd: String): Boolean = password.matchWith(pwd)
+
+    fun pwdCryptedMatchWith(pwd: String): Boolean = password.cryptMatchWith(pwd)
 
     fun accounts(): List<Account> = accounts.distinct()
 

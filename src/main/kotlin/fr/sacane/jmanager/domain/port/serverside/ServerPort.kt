@@ -1,9 +1,6 @@
 package fr.sacane.jmanager.domain.port.serverside
 
-import fr.sacane.jmanager.domain.model.Account
-import fr.sacane.jmanager.domain.model.Sheet
-import fr.sacane.jmanager.domain.model.User
-import fr.sacane.jmanager.domain.model.UserId
+import fr.sacane.jmanager.domain.model.*
 import java.time.Month
 
 
@@ -18,5 +15,7 @@ interface ServerPort {
     suspend fun findUserByPseudonym(pseudonym: String): User?
     suspend fun createUser(user: User): User?
     suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean
+
+    suspend fun checkUser(userId: UserId, pwd: Password): Boolean
 
 }

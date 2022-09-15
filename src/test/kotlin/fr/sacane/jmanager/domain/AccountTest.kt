@@ -13,8 +13,8 @@ class AccountTest {
 
     @Test
     fun `transaction should give and take amount`(){
-        val account = Account(102.toDouble(), "courant", mutableListOf())
-        val account2 = Account(105.toDouble(), "secondaire", mutableListOf())
+        val account = Account(null, 102.toDouble(), "courant", mutableListOf())
+        val account2 = Account(null, 105.toDouble(), "secondaire", mutableListOf())
 
         account.transaction(203.toDouble(), account2, true)
 

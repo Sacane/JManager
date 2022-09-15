@@ -35,8 +35,8 @@ class InfraUserTest {
         val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", mutableListOf())
         userRepository.save(user)
         val byName = userRepository.findByPseudonym("johan_test")
-        assertThat(byName.pseudonym).isEqualTo(user.pseudonym)
-        userRepository.deleteById(byName.id_user!!)
+        assertThat(byName?.pseudonym).isEqualTo(user.pseudonym)
+        userRepository.deleteById(byName?.id_user!!)
 
     }
 
@@ -57,7 +57,7 @@ class InfraUserTest {
         account.amount = 102.toDouble()
         account.label = "test account"
 
-        byName.accounts!!.add(account)
+        byName?.accounts!!.add(account)
 
         userRepository.save(byName)
 

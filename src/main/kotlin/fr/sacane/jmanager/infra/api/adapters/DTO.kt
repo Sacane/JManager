@@ -17,6 +17,7 @@ data class UserPasswordDTO(
 )
 
 data class SheetDTO(
+    val id: Long,
     val label: String,
     val amount: Double,
     val action: String,
@@ -29,6 +30,7 @@ data class AccountInfoDTO(
 )
 
 data class AccountDTO(
+    val id: Long,
     val amount: Double,
     val labelAccount: String,
     val sheets: List<SheetDTO>

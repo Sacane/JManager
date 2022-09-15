@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.domain.model
 
 class Account(
+        private var id: Long?,
         private var amount: Double,
         private val labelAccount: String,
         private val sheets: MutableList<Sheet>
@@ -14,6 +15,9 @@ class Account(
 
     fun label(): String{
         return labelAccount
+    }
+    fun id(): Long{
+        return id!!
     }
 
 

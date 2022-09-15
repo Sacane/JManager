@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*
 import java.net.http.HttpResponse
 
 @RestController
-@CrossOrigin(origins = ["*"], allowedHeaders = ["*"])
+@CrossOrigin(origins = ["*"], allowedHeaders = ["*"]) //To change for production
 class JManagerController {
 
     @Autowired
@@ -17,6 +17,7 @@ class JManagerController {
     @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
         val user = apiAdapter.verifyUser(userDTO)
+        println(user?.pseudonym)
         return if(user != null){
             ResponseEntity.ok(user)
         } else {
@@ -53,7 +54,7 @@ class JManagerController {
     @GetMapping(path = ["user/accounts/get/{id}"])
     suspend fun getAccounts(@PathVariable id: String): ResponseEntity<List<AccountInfoDTO>>{
         val accounts = apiAdapter.getUserAccount(id.toLong())
-        return if(accounts == null) ResponseEntity(accounts, HttpStatus.OK) else ResponseEntity(HttpStatus.NOT_FOUND)
+        return if(accounts != null) ResponseEntity(accounts, HttpStatus.OK) else ResponseEntity(HttpStatus.NOT_FOUND)
     }
 
 }

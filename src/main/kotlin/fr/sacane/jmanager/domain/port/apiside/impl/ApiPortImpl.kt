@@ -1,9 +1,6 @@
 package fr.sacane.jmanager.domain.port.apiside.impl
 
-import fr.sacane.jmanager.domain.model.Account
-import fr.sacane.jmanager.domain.model.Sheet
-import fr.sacane.jmanager.domain.model.User
-import fr.sacane.jmanager.domain.model.UserId
+import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.ApiPort
 import fr.sacane.jmanager.domain.port.serverside.ServerPort
 import java.time.Month
@@ -41,6 +38,10 @@ class ApiPortImpl(private val port: ServerPort): ApiPort {
 
     override suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
         return port.saveSheet(userId, accountLabel, sheet)
+    }
+
+    override suspend fun checkUser(userId: UserId, pwd: Password): Boolean {
+        return port.checkUser(userId, pwd)
     }
 
     override suspend fun getAccountByUser(userId: UserId): List<Account>?{

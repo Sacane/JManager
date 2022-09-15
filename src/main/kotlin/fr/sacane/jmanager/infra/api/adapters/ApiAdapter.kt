@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.api.adapters
 
+import fr.sacane.jmanager.common.Hash
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.ApiPort
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,11 +19,12 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     }
 
     private fun Sheet.toDTO(): SheetDTO{
-        return SheetDTO(this.label, this.value, if(this.isEntry) "Recette" else "Debit", this.date)
+        return SheetDTO(this.id, this.label, this.value, if(this.isEntry) "Recette" else "Debit", this.date)
     }
 
     private fun Account.toDTO(): AccountDTO{
         return AccountDTO(
+            this.id(),
             this.amount(),
             this.label(),
             this.sheets()!!.map { sheet -> sheet.toDTO() }
@@ -34,11 +36,11 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
      */
 
     private fun SheetDTO.toModel(): Sheet{
-        return Sheet(this.label, this.date, this.amount, this.action == "Recette")
+        return Sheet(this.id, this.label, this.date, this.amount, this.action == "Recette")
     }
 
     private fun AccountDTO.toModel(): Account{
-        return Account(this.amount, this.labelAccount, this.sheets.map { it.toModel() }.toMutableList())
+        return Account(this.id, this.amount, this.labelAccount, this.sheets.map { it.toModel() }.toMutableList())
     }
 
 
@@ -55,7 +57,8 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
 
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
-        return if(user != null && user.pwdMatchWith(userDTO.password)){
+        println(apiPort.checkUser(user!!.id, Password(userDTO.password)))
+        return if(user != null && user.pwdCryptedMatchWith(userDTO.password)){
             user.toDTO()
         } else {
             null
@@ -82,7 +85,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     }
 
     suspend fun saveAccount(userAccount: UserAccountDTO) {
-        apiPort.saveAccount(UserId(userAccount.userId), Account(userAccount.amount, userAccount.labelAccount, mutableListOf()))
+        apiPort.saveAccount(UserId(userAccount.userId), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
     }
 
     suspend fun getUserAccount(id: Long): List<AccountInfoDTO>? {

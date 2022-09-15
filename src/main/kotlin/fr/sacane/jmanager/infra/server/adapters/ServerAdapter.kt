@@ -16,11 +16,11 @@ class ServerAdapter() : ServerPort{
     @Autowired
     private lateinit var userRepository: UserRepository
     private fun SheetResource.toModel(): Sheet{
-        return Sheet(this.label!!, this.date!!, this.amount!!, this.isEntry!!)
+        return Sheet(this.idSheet!!, this.label!!, this.date!!, this.amount!!, this.isEntry!!)
     }
 
     private fun AccountResource.toModel(): Account{
-        return Account(this.amount!!, this.label!!, this.sheets?.map { sheet -> sheet.toModel() }!!.toMutableList())
+        return Account(this.idAccount!!, this.amount!!, this.label!!, this.sheets?.map { sheet -> sheet.toModel() }!!.toMutableList())
     }
 
     private fun UserResource.toModel(): User{
@@ -37,7 +37,7 @@ class ServerAdapter() : ServerPort{
         return userResource.accounts
             ?.find { account -> account.label == accountLabel }
             ?.sheets!!
-            .map { sheetResource -> Sheet(sheetResource.label!!, sheetResource.date!!, sheetResource.amount!!, sheetResource.isEntry!!) }
+            .map { sheetResource -> Sheet(sheetResource.idSheet!!, sheetResource.label!!, sheetResource.date!!, sheetResource.amount!!, sheetResource.isEntry!!) }
             .toList()
     }
 
@@ -120,6 +120,12 @@ class ServerAdapter() : ServerPort{
             }
         }
         return false
+    }
+
+
+    override suspend fun checkUser(userId: UserId, pwd: Password): Boolean{
+        val user = userRepository.findById(userId.get()).get()
+        return pwd.cryptMatchWith(user.password!!)
     }
 
 }
