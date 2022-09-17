@@ -7,7 +7,6 @@ JManager is a WebApp that allow you to manage your personal budget. And this pro
 
 ## What's behind this application ?
 
---- 
 
 This project is my first attempt to build a **business-based application**. More precisely, an app centered by the customer business expectation.
 I also wanted it to be as flexible as possible. 
@@ -17,7 +16,6 @@ Here you can find a good topic about this architecture [In french](https://blog.
 
 ## So what's my implementation of this architecture ? 
 
---- 
 
 This architecture does separate the project in 3 distinct subprojects :
 * **Domain-side** which contains all the business _rules_
@@ -26,7 +24,6 @@ This architecture does separate the project in 3 distinct subprojects :
 
 ## Why this architecture ?
 
---- 
 
 Because I felt in love with this architecture. 
 
@@ -41,7 +38,6 @@ Seriously, this is the main reason I implemented this architecture in this proje
 
 ### Technos : 
 
----
 
 * Kotlin
 * Framework Spring for user and server-side implementation (Ktor is coming soon)
