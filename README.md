@@ -2,8 +2,6 @@
 
 ## Introduction
 
---- 
-
 JManager is a WebApp that allow you to manage your personal budget. And this project is the Back-end side of the project.
 
 
