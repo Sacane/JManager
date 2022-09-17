@@ -11,9 +11,10 @@ class UserId(private val id: Long){
 
 class Password(val value: String){
 
+    private var hasher = Hash()
 
     fun get(): String{
-        return Hash.hash(value)
+        return hasher.hash(value)
     }
 
     fun matchWith(other: String): Boolean{

@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.api.adapters
 
+import com.toxicbakery.bcrypt.Bcrypt
 import fr.sacane.jmanager.common.Hash
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.ApiPort
@@ -57,8 +58,9 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
 
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
-        println(apiPort.checkUser(user!!.id, Password(userDTO.password)))
-        return if(user != null && user.pwdCryptedMatchWith(userDTO.password)){
+        println(user?.username)
+
+        return if(user != null && apiPort.checkUser(userDTO.username, userDTO.password)){
             user.toDTO()
         } else {
             null

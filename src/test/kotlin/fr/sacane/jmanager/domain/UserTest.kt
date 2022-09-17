@@ -44,7 +44,7 @@ class UserTest {
         val pwd = Password("D5301012000MAMaCitA")
         val pwdUser = Password("D5301012000MAMacita")
         val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwdUser)
-        assertThat(user.pwdMatchWith(pwd.get())).isFalse
+        assertThat(user.pwdMatchWith("D5301012000MAMacita")).isTrue
     }
 
     @Test

@@ -40,8 +40,8 @@ class ApiPortImpl(private val port: ServerPort): ApiPort {
         return port.saveSheet(userId, accountLabel, sheet)
     }
 
-    override suspend fun checkUser(userId: UserId, pwd: Password): Boolean {
-        return port.checkUser(userId, pwd)
+    override suspend fun checkUser(userId: String, pwd: String): Boolean {
+        return port.checkUser(userId, Password(pwd))
     }
 
     override suspend fun getAccountByUser(userId: UserId): List<Account>?{
