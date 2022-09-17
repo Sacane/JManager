@@ -35,7 +35,8 @@ Because I felt in love with this architecture.
 
 Seriously, this is the main reason I implemented this architecture in this project : 
 
-* To be as flexible as possible, and feel free to change my technos at any time I want for future releases without break all of my application. 
+* To be as flexible as possible by implementing each side separately
+* To feel free to change my technos at any time for future releases without break all of my application. 
 * To test each side independently, or only centered on the domain-side. 
 * To make a first step with DDD (Domain driven design)
 * Because I like the port/adapter design pattern. 
