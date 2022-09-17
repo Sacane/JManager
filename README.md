@@ -27,7 +27,7 @@ This architecture does separate the project in 3 distinct subprojects :
 
 Because I felt in love with this architecture. 
 
-Seriously, this is the main reason I implemented this architecture in this project : 
+Seriously, those are the main reasons I implemented this architecture in this project : 
 
 * To be as flexible as possible by implementing each side separately
 * To feel free to change my technos at any time for future releases without break all of my application. 
