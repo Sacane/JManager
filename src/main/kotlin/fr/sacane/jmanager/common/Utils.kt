@@ -1,15 +1,9 @@
 package fr.sacane.jmanager.common
 
-import at.favre.lib.crypto.bcrypt.BCrypt
-import at.favre.lib.crypto.bcrypt.LongPasswordStrategies
 import com.toxicbakery.bcrypt.Bcrypt
 import fr.sacane.jmanager.domain.model.Account
-import fr.sacane.jmanager.domain.model.Password
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import java.security.SecureRandom
-import kotlin.math.exp
-
 operator fun Account.plusAssign(earned: Double){
     this.earnAmount(earned)
 }
