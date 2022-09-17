@@ -1,9 +1,8 @@
-package fr.sacane.jmanager.infra.api.adapters
+package fr.sacane.jmanager.infra.api
 
-import com.toxicbakery.bcrypt.Bcrypt
-import fr.sacane.jmanager.common.Hash
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.ApiPort
+import fr.sacane.jmanager.infra.api.adapters.*
 import org.springframework.beans.factory.annotation.Autowired
 
 class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
@@ -11,7 +10,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     /*
     * Mapping of domain -> dto
     */
-    private fun User.toDTO(): UserDTO{
+    private fun User.toDTO(): UserDTO {
         return UserDTO(this.id.get(), this.username, "", this.pseudonym, this.email)
     }
 
@@ -19,11 +18,11 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
         return UserId(this)
     }
 
-    private fun Sheet.toDTO(): SheetDTO{
+    private fun Sheet.toDTO(): SheetDTO {
         return SheetDTO(this.id, this.label, this.value, if(this.isEntry) "Recette" else "Debit", this.date)
     }
 
-    private fun Account.toDTO(): AccountDTO{
+    private fun Account.toDTO(): AccountDTO {
         return AccountDTO(
             this.id(),
             this.amount(),
