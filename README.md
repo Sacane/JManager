@@ -1,6 +1,5 @@
 # JManager's back-end (Architecture hexagonal implementation)
 
-
 ## Introduction
 
 --- 
