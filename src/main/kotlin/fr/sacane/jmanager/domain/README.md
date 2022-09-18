@@ -27,7 +27,7 @@ Some of my classes are only encapsulation for primitives. For example : UserId f
 
 Two main reasons for this implementation : 
 * To be close with the DDD concepts, an outsider can read this part of a code. When he looks this project he can easily check that a user has a Password as attribute, and not a String which represent a password. This part is one of the reason this architecture exists. 
-* To encapsulate the business logic inside the encapsulated object. If I want passwords in this application to have a certain pattern, I have to specify it inside the object.
+* To encapsulate the business logic inside the encapsulated object. If I want passwords in this application to have a certain pattern, I have to specify it in the domain.
 
 ## Port and Adapters
 
