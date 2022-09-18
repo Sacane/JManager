@@ -12,7 +12,6 @@ import java.security.MessageDigest
 
 
 class Hash() {
-    private val salt = Constants.SALT.toByteArray()
     private val md = MessageDigest.getInstance("SHA-512")
 
     init{
