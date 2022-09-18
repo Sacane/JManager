@@ -13,7 +13,7 @@ If I decide to switch to another framework, or more to change the database of th
 
 ## My models
 
-There is 3 mains entity in this project : 
+There is 3 mains entities in this project : 
 
 * **User** : the users that can access to the application
 * **Account** : containers of user's budget
