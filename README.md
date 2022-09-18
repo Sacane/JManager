@@ -1,7 +1,5 @@
 # JManager's back-end (Architecture hexagonal implementation)
 
-## Introduction
-
 JManager is a WebApp that allow you to manage your personal budget.
 
 
