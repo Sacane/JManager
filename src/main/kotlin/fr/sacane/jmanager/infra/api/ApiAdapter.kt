@@ -2,7 +2,6 @@ package fr.sacane.jmanager.infra.api
 
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.ApiPort
-import fr.sacane.jmanager.infra.api.adapters.*
 import org.springframework.beans.factory.annotation.Autowired
 
 class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {

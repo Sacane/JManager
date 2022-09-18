@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infra.api.adapters
+package fr.sacane.jmanager.infra.api
 
 import java.time.LocalDate
 import java.time.Month
