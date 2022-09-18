@@ -27,7 +27,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
             this.id(),
             this.amount(),
             this.label(),
-            this.sheets()!!.map { sheet -> sheet.toDTO() }
+            this.sheets()?.map { sheet -> sheet.toDTO() }
         )
     }
 
@@ -40,7 +40,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     }
 
     private fun AccountDTO.toModel(): Account{
-        return Account(this.id, this.amount, this.labelAccount, this.sheets.map { it.toModel() }.toMutableList())
+        return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
     }
 
 

@@ -4,11 +4,12 @@ class Account(
         private var id: Long?,
         private var amount: Double,
         private val labelAccount: String,
-        private val sheets: MutableList<Sheet>
+        private val sheets: MutableList<Sheet>?
 ){
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label()
     fun sheets(): List<Sheet>?{
+        if(sheets == null) return null
         return if(sheets.isEmpty()) null else sheets.toList()
     }
     fun amount(): Double = amount

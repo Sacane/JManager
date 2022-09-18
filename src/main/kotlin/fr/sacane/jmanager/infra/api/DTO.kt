@@ -33,7 +33,7 @@ data class AccountDTO(
     val id: Long,
     val amount: Double,
     val labelAccount: String,
-    val sheets: List<SheetDTO>
+    val sheets: List<SheetDTO>?
 )
 
 data class UserAccountDTO(
