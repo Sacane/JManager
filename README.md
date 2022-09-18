@@ -19,7 +19,7 @@ Here you can find a good topic about this architecture [In french](https://blog.
 
 This architecture does separate the project in 3 distinct subprojects :
 * **Domain-side** which contains all the business _rules_
-* **Server-side** which contains all the database interaction, or files system calls. Shortly, the persistence side. 
+* **Server-side** which contains all the database interaction, or files system calls. Briefly, the persistence side. 
 * **User-side**, or the side which interact directly with the user. It could be an API (which is actually the case), or a command-line interface.
 
 ## Why this architecture ?
