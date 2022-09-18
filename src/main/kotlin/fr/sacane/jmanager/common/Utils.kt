@@ -22,8 +22,8 @@ fun Account.transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
 }
 
 class Hash() {
-    private var salt = Constants.SALT.toByteArray()
-    private var md = MessageDigest.getInstance("SHA-512")
+    private val salt = Constants.SALT.toByteArray()
+    private val md = MessageDigest.getInstance("SHA-512")
 
     init{
         md.update(salt)
