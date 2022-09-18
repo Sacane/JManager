@@ -25,7 +25,7 @@ This architecture does separate the project in 3 distinct subprojects :
 ## Why this architecture ?
 
 
-Because I felt in love with this architecture. 
+Because I felt in love with it. 
 
 Seriously, those are the main reasons I implemented this architecture in this project : 
 

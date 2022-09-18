@@ -20,9 +20,6 @@ class Password(val value: String){
     fun matchWith(other: String): Boolean{
         return Hash.verify(other, value)
     }
-    fun cryptMatchWith(other: String): Boolean{
-        return Hash.verify(other, value.toByteArray())
-    }
 
 }
 
@@ -35,8 +32,6 @@ class User(
     val password: Password,
 ){
     fun pwdMatchWith(pwd: String): Boolean = password.matchWith(pwd)
-
-    fun pwdCryptedMatchWith(pwd: String): Boolean = password.cryptMatchWith(pwd)
 
     fun accounts(): List<Account> = accounts.distinct()
 

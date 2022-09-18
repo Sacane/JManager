@@ -15,7 +15,6 @@ interface ServerPort {
     suspend fun findUserByPseudonym(pseudonym: String): User?
     suspend fun createUser(user: User): User?
     suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean
-
     suspend fun checkUser(pseudonym: String, pwd: Password): Boolean
 
 }
