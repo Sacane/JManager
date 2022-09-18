@@ -40,7 +40,7 @@ class Account(
         this.lossAmount(loss)
     }
 
-    fun Account.transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
+    fun transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
         if(isEntry){
             this += delta
             otherAccount -= delta

@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.domain
 
-import fr.sacane.jmanager.common.transaction
 import fr.sacane.jmanager.domain.model.Account
 import fr.sacane.jmanager.domain.model.Sheet
 import org.junit.jupiter.api.Test
