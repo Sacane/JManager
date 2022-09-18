@@ -31,4 +31,13 @@ class UserResource(
         inverseJoinColumns = [JoinColumn(name = "idAccount")]
     )
     var accounts: MutableList<AccountResource>?
-)
+){
+    constructor(
+        pseudonym: String?,
+        username: String?,
+        password: String?,
+        email: String?,
+        accounts: MutableList<AccountResource>?
+
+    ) : this(null, pseudonym, username, password, email, accounts)
+}

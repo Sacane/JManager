@@ -27,5 +27,11 @@ class AccountResource(
         inverseJoinColumns = [JoinColumn(name = "id_sheet")]
     )
     var sheets: MutableList<SheetResource>? = null
-)
+){
+    constructor(
+        amount: Double?,
+        label: String?,
+        sheets: MutableList<SheetResource>?
+    ) : this(null, amount, label, sheets)
+}
 

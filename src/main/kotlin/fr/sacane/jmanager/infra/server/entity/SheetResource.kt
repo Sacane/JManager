@@ -24,4 +24,11 @@ class SheetResource(
     @Column(name="isEntry")
     var isEntry: Boolean? = null
 
-)
+){
+    constructor(
+        label: String?,
+        amount: Double?,
+        date: LocalDate?,
+        isEntry: Boolean?
+    ): this(null, label, amount, date, isEntry)
+}
