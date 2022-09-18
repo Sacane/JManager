@@ -3,6 +3,10 @@
 JManager is a WebApp that allow you to manage your personal budget.
 
 
+## Author 
+
+**Johan *"Sacane"* Ramaroson Rakotomihamina**
+
 ## What's behind this application ?
 
 
