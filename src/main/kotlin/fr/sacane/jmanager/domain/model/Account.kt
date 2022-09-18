@@ -22,15 +22,31 @@ class Account(
     }
 
 
-    fun earnAmount(earned: Double) {
+    private fun earnAmount(earned: Double) {
         amount += earned
     }
 
-    fun lossAmount(loss: Double) {
+    private fun lossAmount(loss: Double) {
         amount -= loss
     }
 
     override fun hashCode(): Int {
         return labelAccount.hashCode()
+    }
+    operator fun Account.plusAssign(earned: Double){
+        this.earnAmount(earned)
+    }
+    operator fun Account.minusAssign(loss: Double){
+        this.lossAmount(loss)
+    }
+
+    fun Account.transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
+        if(isEntry){
+            this += delta
+            otherAccount -= delta
+        } else {
+            this -= delta
+            otherAccount += delta
+        }
     }
 }

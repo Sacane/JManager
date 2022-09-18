@@ -11,7 +11,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     * Mapping of domain -> dto
     */
     private fun User.toDTO(): UserDTO {
-        return UserDTO(this.id.get(), this.username, "", this.pseudonym, this.email)
+        return UserDTO(this.id.get(), this.username, this.pseudonym, this.email)
     }
 
     private fun Long.id(): UserId{
@@ -45,7 +45,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
 
 
     private fun UserDTO.toModel(): User{
-        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password))
+        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(""))
     }
 
 

@@ -51,8 +51,8 @@ class JManagerController {
     }
 
     @GetMapping(path = ["user/accounts/get/{id}"])
-    suspend fun getAccounts(@PathVariable id: String): ResponseEntity<List<AccountInfoDTO>>{
-        val accounts = apiAdapter.getUserAccount(id.toLong())
+    suspend fun getAccounts(@PathVariable id: Long): ResponseEntity<List<AccountInfoDTO>>{
+        val accounts = apiAdapter.getUserAccount(id)
         return if(accounts != null) ResponseEntity(accounts, HttpStatus.OK) else ResponseEntity(HttpStatus.NOT_FOUND)
     }
 

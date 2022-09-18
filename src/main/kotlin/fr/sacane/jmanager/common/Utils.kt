@@ -4,22 +4,7 @@ import com.toxicbakery.bcrypt.Bcrypt
 import fr.sacane.jmanager.domain.model.Account
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-operator fun Account.plusAssign(earned: Double){
-    this.earnAmount(earned)
-}
-operator fun Account.minusAssign(loss: Double){
-    this.lossAmount(loss)
-}
 
-fun Account.transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
-    if(isEntry){
-        this += delta
-        otherAccount -= delta
-    } else {
-        this -= delta
-        otherAccount += delta
-    }
-}
 
 class Hash() {
     private val salt = Constants.SALT.toByteArray()
