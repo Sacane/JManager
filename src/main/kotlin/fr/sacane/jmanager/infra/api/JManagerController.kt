@@ -1,13 +1,21 @@
 package fr.sacane.jmanager.infra.api
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+
 @RestController
 @CrossOrigin(origins = ["*"], allowedHeaders = ["*"]) //To change for production
 class JManagerController {
+
+    companion object{
+        private val LOGGER: Logger = LoggerFactory.getLogger("JManagerController")
+    }
+
 
     @Autowired
     private lateinit var apiAdapter: ApiAdapter
@@ -51,8 +59,13 @@ class JManagerController {
 
     @GetMapping(path = ["user/accounts/get/{id}"])
     suspend fun getAccounts(@PathVariable id: Long): ResponseEntity<List<AccountInfoDTO>>{
+        LOGGER.debug("Trying to get the user's accounts by id : $id")
         val accounts = apiAdapter.getUserAccount(id)
         return if(accounts != null) ResponseEntity(accounts, HttpStatus.OK) else ResponseEntity(HttpStatus.NOT_FOUND)
     }
 
+    @PostMapping(path=["sheets/get"])
+    suspend fun getSheets(@RequestBody dto: UserSheetDTO): List<SheetDTO>?{
+        return apiAdapter.getSheetAccountByDate(dto)
+    }
 }

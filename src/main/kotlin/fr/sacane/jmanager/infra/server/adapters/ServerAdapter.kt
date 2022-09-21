@@ -6,12 +6,17 @@ import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.Month
 
 @Service
 class ServerAdapter() : ServerPort{
+
+    companion object{
+        private val logger = LoggerFactory.getLogger("ServerAdapter")
+    }
 
     @Autowired
     private lateinit var userRepository: UserRepository
@@ -52,6 +57,7 @@ class ServerAdapter() : ServerPort{
     }
 
     override suspend fun getAccounts(user: UserId): List<Account> {
+        logger.debug("Trying to reach accounts of user ${user.get()}")
         return userRepository.findById(user.get())
         .get().accounts!!.map { resource -> resource.toModel() }
     }
