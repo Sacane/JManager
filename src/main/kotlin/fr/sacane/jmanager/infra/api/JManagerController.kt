@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*
 class JManagerController {
 
     companion object{
-        private val LOGGER: Logger = LoggerFactory.getLogger("JManagerController")
+        private val LOGGER: Logger = LoggerFactory.getLogger(Companion::class.java.name)
     }
 
 
@@ -23,7 +23,6 @@ class JManagerController {
     @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
         val user = apiAdapter.verifyUser(userDTO)
-        println(user?.pseudonym)
         return if(user != null){
             ResponseEntity.ok(user)
         } else {
@@ -48,10 +47,10 @@ class JManagerController {
         apiAdapter.saveAccount(userAccount)
     }
 
-    @PostMapping("/sheet/create")
-    suspend fun createSheet(@RequestBody userAccountSheetDTO: UserAccountSheetDTO): ResponseEntity<SheetDTO>{
+    @PostMapping("/sheet/save")
+    suspend fun createSheet(@RequestBody userAccountSheetDTO: UserAccountSheetDTO): ResponseEntity<SheetSendDTO>{
         return if(apiAdapter.saveSheet(userAccountSheetDTO.userId, userAccountSheetDTO.accountLabel, userAccountSheetDTO.sheetDTO)){
-            ResponseEntity(userAccountSheetDTO.sheetDTO, HttpStatus.OK)
+            ResponseEntity(userAccountSheetDTO.sheetDTO.sheetToSend(), HttpStatus.OK)
         } else {
             ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
         }
@@ -66,6 +65,11 @@ class JManagerController {
 
     @PostMapping(path=["sheets/get"])
     suspend fun getSheets(@RequestBody dto: UserSheetDTO): List<SheetDTO>?{
+        LOGGER.debug(dto.month.toString())
         return apiAdapter.getSheetAccountByDate(dto)
     }
+}
+
+private fun SheetDTO.sheetToSend(): SheetSendDTO{
+    return SheetSendDTO(this.label, this.amount, if(this.action) "Entree" else "Sortie", this.date)
 }

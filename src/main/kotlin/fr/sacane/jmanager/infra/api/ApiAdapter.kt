@@ -18,7 +18,7 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
     }
 
     private fun Sheet.toDTO(): SheetDTO {
-        return SheetDTO(this.id, this.label, this.value, if(this.isEntry) "Recette" else "Debit", this.date)
+        return SheetDTO(this.label, this.value, this.isEntry, this.date)
     }
 
     private fun Account.toDTO(): AccountDTO {
@@ -35,8 +35,10 @@ class ApiAdapter @Autowired constructor(private var apiPort: ApiPort) {
      */
 
     private fun SheetDTO.toModel(): Sheet{
-        return Sheet(this.id, this.label, this.date, this.amount, this.action == "Recette")
+        return Sheet(0, this.label, this.date, this.amount, this.action)
     }
+
+
 
     private fun AccountDTO.toModel(): Account{
         return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())

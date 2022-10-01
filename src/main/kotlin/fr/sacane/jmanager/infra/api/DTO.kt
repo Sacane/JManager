@@ -16,7 +16,13 @@ data class UserPasswordDTO(
 )
 
 data class SheetDTO(
-    val id: Long,
+    val label: String,
+    val amount: Double,
+    val action: Boolean,
+    val date: LocalDate
+)
+
+data class SheetSendDTO(
     val label: String,
     val amount: Double,
     val action: String,

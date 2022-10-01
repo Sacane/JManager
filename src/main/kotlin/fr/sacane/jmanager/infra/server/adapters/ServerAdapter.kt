@@ -124,6 +124,7 @@ class ServerAdapter() : ServerPort{
         if(account != null){
             return try{
                 account.sheets?.add(sheet.asResource())
+                account.amount = if(sheet.isEntry) account.amount?.plus(sheet.value) else account.amount?.minus(sheet.value)
                 userRepository.save(user)
                 true
             }catch(iae: IllegalArgumentException){
