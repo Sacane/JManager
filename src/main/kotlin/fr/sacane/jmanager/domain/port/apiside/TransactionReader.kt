@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.model.*
 import java.time.Month
 
 
-interface ApiPort {
+interface TransactionReader {
 
     suspend fun registerUser(user: User): User
     suspend fun findUserById(userId: UserId): User

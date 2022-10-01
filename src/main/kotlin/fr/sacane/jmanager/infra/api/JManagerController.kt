@@ -18,7 +18,7 @@ class JManagerController {
 
 
     @Autowired
-    private lateinit var apiAdapter: ApiAdapter
+    private lateinit var apiAdapter: TransactionReaderAdapter
 
     @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
