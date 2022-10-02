@@ -20,7 +20,7 @@ class AccountResource(
     var label: String? = null,
 
 
-    @OneToMany(cascade = [CascadeType.ALL])
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
     @JoinTable(
         name = "account_sheet",
         joinColumns = [JoinColumn(name = "id_account")],

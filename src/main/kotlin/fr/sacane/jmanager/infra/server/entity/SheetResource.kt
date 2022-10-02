@@ -17,7 +17,7 @@ class SheetResource(
     var idSheet: Long? = null,
     @Column(unique = true, name = "label_sheet")
     var label: String? = null,
-    @Column(name= "amount")
+    @Column(name= "amount", unique = false)
     var amount: Double? = null,
     @Column(name="date")
     var date: LocalDate? = null,
