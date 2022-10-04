@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infra.server.adapters
 
 import fr.sacane.jmanager.domain.model.*
-import fr.sacane.jmanager.domain.port.serverside.TransactionRegistry
+import fr.sacane.jmanager.domain.port.serverside.TransactionRegistrer
 import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 import java.time.Month
 
 @Service
-class ServerAdapter() : TransactionRegistry{
+class ServerAdapter() : TransactionRegistrer{
 
     companion object{
         private val logger = LoggerFactory.getLogger("ServerAdapter")

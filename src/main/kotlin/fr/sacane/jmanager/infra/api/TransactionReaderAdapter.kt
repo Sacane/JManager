@@ -12,15 +12,12 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
     private fun User.toDTO(): UserDTO {
         return UserDTO(this.id.get(), this.username, this.pseudonym, this.email)
     }
-
     private fun Long.id(): UserId{
         return UserId(this)
     }
-
     private fun Sheet.toDTO(): SheetDTO {
         return SheetDTO(this.label, this.value, this.isEntry, this.date)
     }
-
     private fun Account.toDTO(): AccountDTO {
         return AccountDTO(
             this.id(),
@@ -37,25 +34,16 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
     private fun SheetDTO.toModel(): Sheet{
         return Sheet(0, this.label, this.date, this.amount, this.action)
     }
-
-
-
     private fun AccountDTO.toModel(): Account{
         return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
     }
-
-
     private fun UserDTO.toModel(): User{
         return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(""))
     }
-
-
     suspend fun createUser(userDTO: UserDTO): UserDTO?{
         val user = apiPort.createUser(userDTO.toModel())
         return user?.toDTO()
     }
-
-
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
         println(user?.username)
@@ -66,13 +54,11 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
             null
         }
     }
-
     suspend fun findAccount(accountOwnerDTO: UserAccountDTO): AccountDTO?{
         val user = apiPort.findUserById(accountOwnerDTO.userId.id())
         val account = user.accounts().find { account -> account.label() == accountOwnerDTO.labelAccount }
         return account?.toDTO()
     }
-
     suspend fun getSheetAccountByDate(dto: UserSheetDTO): List<SheetDTO>?{
         val account = apiPort.findAccount(dto.userId.id(), dto.accountLabel)
         return if(account == null){
@@ -81,15 +67,12 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
             account.sheets()?.map { sheet -> sheet.toDTO() }
         }
     }
-
     suspend fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO): Boolean{
         return apiPort.saveSheet(userId.id(), accountLabel, sheetDTO.toModel())
     }
-
     suspend fun saveAccount(userAccount: UserAccountDTO) {
         apiPort.saveAccount(UserId(userAccount.userId), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
     }
-
     suspend fun getUserAccount(id: Long): List<AccountInfoDTO>? {
         return apiPort.getAccountByUser(id.id())?.map { AccountInfoDTO(it.amount(), it.label()) }
     }
