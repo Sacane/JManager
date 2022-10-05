@@ -2,10 +2,10 @@ package fr.sacane.jmanager.domain.port.apiside.impl
 
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.TransactionReader
-import fr.sacane.jmanager.domain.port.serverside.TransactionRegistrer
+import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import java.time.Month
 
-class TransactionReaderImpl(private val port: TransactionRegistrer): TransactionReader {
+class TransactionReaderImpl(private val port: TransactionRegister): TransactionReader {
 
     override suspend fun registerUser(user: User): User {
         return port.saveUser(user)
@@ -33,6 +33,7 @@ class TransactionReaderImpl(private val port: TransactionRegistrer): Transaction
     }
 
     override suspend fun createUser(user: User): User? {
+        println("On transaction reader impl : ${user.password.value}")
         return port.createUser(user)
     }
 

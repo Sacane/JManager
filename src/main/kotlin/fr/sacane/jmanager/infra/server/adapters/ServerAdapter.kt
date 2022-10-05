@@ -1,7 +1,9 @@
 package fr.sacane.jmanager.infra.server.adapters
 
+import com.toxicbakery.bcrypt.Bcrypt
+import fr.sacane.jmanager.common.Hash
 import fr.sacane.jmanager.domain.model.*
-import fr.sacane.jmanager.domain.port.serverside.TransactionRegistrer
+import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
@@ -12,7 +14,7 @@ import org.springframework.stereotype.Service
 import java.time.Month
 
 @Service
-class ServerAdapter() : TransactionRegistrer{
+class ServerAdapter() : TransactionRegister{
 
     companion object{
         private val logger = LoggerFactory.getLogger("ServerAdapter")
@@ -58,8 +60,10 @@ class ServerAdapter() : TransactionRegistrer{
 
     override suspend fun getAccounts(user: UserId): List<Account> {
         logger.debug("Trying to reach accounts of user ${user.get()}")
-        return userRepository.findById(user.get())
+        val accs = userRepository.findById(user.get())
         .get().accounts!!.map { resource -> resource.toModel() }
+        println(accs)
+        return accs
     }
 
     override suspend fun saveUser(user: User): User {
@@ -110,6 +114,7 @@ class ServerAdapter() : TransactionRegistrer{
 
     override suspend fun createUser(user: User): User? {
         return try {
+            println("register : ${user.password.value}")
             val entity = userRepository.save(user.asResource())
 
             entity.toModel()
@@ -137,7 +142,6 @@ class ServerAdapter() : TransactionRegistrer{
 
     override suspend fun checkUser(pseudonym: String, pwd: Password): Boolean{
         val user = userRepository.findByPseudonym(pseudonym)
-
         return pwd.get() == user?.password
     }
 

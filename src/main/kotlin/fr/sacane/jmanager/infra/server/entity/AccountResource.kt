@@ -16,7 +16,7 @@ class AccountResource(
     @Column(name = "amount")
     var amount: Double? = null,
 
-    @Column(name = "label")
+    @Column(name = "label", unique = true)
     var label: String? = null,
 
 

@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.api
 
+import fr.sacane.jmanager.JmanagerBackApplication
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 class JManagerController {
 
     companion object{
-        private val LOGGER: Logger = LoggerFactory.getLogger(Companion::class.java.name)
+        private val LOGGER: Logger = LoggerFactory.getLogger(JmanagerBackApplication::class.java.name)
     }
 
 
@@ -23,6 +24,7 @@ class JManagerController {
     @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
         val user = apiAdapter.verifyUser(userDTO)
+        println(user?.pseudonym + " -> ${user?.username}")
         return if(user != null){
             ResponseEntity.ok(user)
         } else {
@@ -37,7 +39,7 @@ class JManagerController {
     }
 
     @PostMapping(path= ["/user/create"])
-    suspend fun createUser(@RequestBody userDTO: UserDTO): ResponseEntity<UserDTO> {
+    suspend fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
         val created = apiAdapter.createUser(userDTO)
         return if(created != null) ResponseEntity(created, HttpStatus.OK) else ResponseEntity(HttpStatus.UNAUTHORIZED)
     }
