@@ -67,7 +67,7 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
         return if(account == null){
             null
         } else {
-            account.sheets()?.map { sheet -> sheet.toDTO() }
+            account.sheets()?.filter{it.date.year == dto.year && it.date.month == dto.month}?.map { sheet -> sheet.toDTO() }
         }
     }
     suspend fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO): Boolean{
