@@ -5,6 +5,7 @@ import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
 import javax.persistence.Id
+import javax.persistence.OneToOne
 import javax.persistence.Table
 
 
@@ -29,6 +30,7 @@ class SheetResource(
         label: String?,
         amount: Double?,
         date: LocalDate?,
-        isEntry: Boolean?
+        isEntry: Boolean?,
+        category: CategoryResource
     ): this(null, label, amount, date, isEntry)
 }
