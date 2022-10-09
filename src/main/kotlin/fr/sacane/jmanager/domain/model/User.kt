@@ -30,6 +30,7 @@ class User(
     val pseudonym: String,
     private val accounts: MutableList<Account>,
     val password: Password,
+    val categories: MutableList<Category>
 ){
     fun pwdMatchWith(pwd: String): Boolean = password.matchWith(pwd)
 

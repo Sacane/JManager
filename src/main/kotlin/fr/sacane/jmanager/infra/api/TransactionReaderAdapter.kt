@@ -38,10 +38,8 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
         return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
     }
     private fun RegisteredUserDTO.toModel(): User{
-        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password))
+        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password), mutableListOf())
     }
-
-
 
     suspend fun createUser(userDTO: RegisteredUserDTO): UserDTO?{
         val user = apiPort.createUser(userDTO.toModel())
