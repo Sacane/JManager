@@ -31,7 +31,7 @@ class ServerAdapter() : TransactionRegister{
     }
 
     private fun UserResource.toModel(): User{
-        return User(UserId(this.id_user!!), this.username!!, this.email!!, this.pseudonym!!, this.accounts!!.map { account -> account.toModel() }.toMutableList(), Password(this.password!!.toString()))
+        return User(UserId(this.id_user!!), this.username!!, this.email!!, this.pseudonym!!, this.accounts!!.map { account -> account.toModel() }.toMutableList(), Password(this.password!!.toString()), CategoryFactory.allDefaultCategories())
     }
 
     private fun User.asResource(): UserResource {

@@ -8,5 +8,5 @@ data class Sheet(
         val date: LocalDate,
         val value: Double,
         val isEntry: Boolean,
-        val category: Category = Category.DEFAULT_CATEGORY
+        val category: Category = CategoryFactory.DEFAULT_CATEGORY
 )

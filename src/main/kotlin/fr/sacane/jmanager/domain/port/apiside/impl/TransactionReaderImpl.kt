@@ -33,7 +33,6 @@ class TransactionReaderImpl(private val port: TransactionRegister): TransactionR
     }
 
     override suspend fun createUser(user: User): User? {
-        println("On transaction reader impl : ${user.password.value}")
         return port.createUser(user)
     }
 
