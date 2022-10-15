@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
-@CrossOrigin(origins = ["*"], allowedHeaders = ["*"]) //To change for production
+//@CrossOrigin("http://localhost:8088") //To change for production
 class JManagerController {
 
     companion object{
