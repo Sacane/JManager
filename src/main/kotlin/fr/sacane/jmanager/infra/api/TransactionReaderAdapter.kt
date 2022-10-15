@@ -38,7 +38,7 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
         return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
     }
     private fun RegisteredUserDTO.toModel(): User{
-        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password), mutableListOf())
+        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password), mutableListOf(CategoryFactory.DEFAULT_CATEGORY))
     }
 
     suspend fun createUser(userDTO: RegisteredUserDTO): UserDTO?{
@@ -78,4 +78,11 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
         return apiPort.getAccountByUser(id.id())?.map { AccountInfoDTO(it.amount(), it.label()) }
     }
 
+    suspend fun saveCategory(userCategoryDTO: UserCategoryDTO): Boolean{
+        return apiPort.addCategory(UserId(userCategoryDTO.userId), Category(userCategoryDTO.label))
+    }
+
+    suspend fun retrieveAllCategories(userId: Long): List<Category> {
+        return apiPort.retrieveAllCategoryOfUser(userId)
+    }
 }

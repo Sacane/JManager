@@ -40,11 +40,19 @@ class TransactionReaderImpl(private val port: TransactionRegister): TransactionR
         return port.saveSheet(userId, accountLabel, sheet)
     }
 
+    override suspend fun addCategory(userId: UserId, category: Category): Boolean {
+        return port.saveCategory(userId, category)
+    }
+
     override suspend fun checkUser(userId: String, pwd: String): Boolean {
         return port.checkUser(userId, Password(pwd))
     }
 
     override suspend fun getAccountByUser(userId: UserId): List<Account>?{
         return port.getAccounts(userId)
+    }
+
+    override suspend fun retrieveAllCategoryOfUser(userId: Long): List<Category> {
+        return port.retrieveAllCategory(userId)
     }
 }

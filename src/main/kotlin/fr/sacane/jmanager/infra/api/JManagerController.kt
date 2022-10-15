@@ -70,6 +70,25 @@ class JManagerController {
         LOGGER.debug(dto.month.toString())
         return apiAdapter.getSheetAccountByDate(dto)
     }
+    @PostMapping(path = ["user/category"])
+    suspend fun saveUserCategory(@RequestBody userCategoryDTO: UserCategoryDTO): ResponseEntity<String>{
+        LOGGER.info("Add a new Category")
+        return if(apiAdapter.saveCategory(userCategoryDTO)){
+            ResponseEntity.ok(userCategoryDTO.label)
+        } else {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
+    @GetMapping(path = ["user/categories/{userId}"])
+    suspend fun retrieveAllUserCategories(@PathVariable userId: String): ResponseEntity<List<String>>{
+        val categories = apiAdapter.retrieveAllCategories(userId.toLong())
+        return if(categories.isEmpty()){
+            ResponseEntity.notFound().build()
+        } else {
+            ResponseEntity.ok(categories.map { it.label })
+        }
+    }
 }
 
 private fun SheetDTO.sheetToSend(): SheetSendDTO{

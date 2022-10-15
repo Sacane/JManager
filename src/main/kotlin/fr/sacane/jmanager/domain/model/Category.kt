@@ -1,10 +1,10 @@
 package fr.sacane.jmanager.domain.model
 
 data class Category(
-    private val label: String
+    val label: String
 )
 object CategoryFactory{
-    val DEFAULT_CATEGORY = Category("Unspecified")
+    val DEFAULT_CATEGORY = Category("Non-spécifié")
     fun allDefaultCategories(): MutableList<Category> {
         return mutableListOf(
             DEFAULT_CATEGORY,

@@ -23,21 +23,29 @@ class UserResource(
     @Column(unique = true, nullable = true)
     var email: String? = null,
 
-
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_account",
         joinColumns = [JoinColumn(name = "id_user")],
         inverseJoinColumns = [JoinColumn(name = "idAccount")]
     )
-    var accounts: MutableList<AccountResource>?
+    var accounts: MutableList<AccountResource>?,
+
+    @OneToMany(cascade = [CascadeType.ALL])
+    @JoinTable(
+        name="user_categories",
+        joinColumns = [JoinColumn(name="id_user")],
+        inverseJoinColumns = [JoinColumn(name="id_category")]
+    )
+    var categories: MutableList<CategoryResource>?
 ){
     constructor(
         pseudonym: String?,
         username: String?,
         password: String?,
         email: String?,
-        accounts: MutableList<AccountResource>?
+        accounts: MutableList<AccountResource>?,
+        categories: MutableList<CategoryResource>?
 
-    ) : this(null, pseudonym, username, password, email, accounts)
+    ) : this(null, pseudonym, username, password, email, accounts, categories)
 }

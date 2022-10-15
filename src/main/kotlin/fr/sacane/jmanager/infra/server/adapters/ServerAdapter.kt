@@ -5,6 +5,7 @@ import fr.sacane.jmanager.common.Hash
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import fr.sacane.jmanager.infra.server.entity.AccountResource
+import fr.sacane.jmanager.infra.server.entity.CategoryResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
@@ -25,21 +26,16 @@ class ServerAdapter() : TransactionRegister{
     private fun SheetResource.toModel(): Sheet{
         return Sheet(this.idSheet!!, this.label!!, this.date!!, this.amount!!, this.isEntry!!)
     }
-
     private fun AccountResource.toModel(): Account{
         return Account(this.idAccount!!, this.amount!!, this.label!!, this.sheets?.map { sheet -> sheet.toModel() }!!.toMutableList())
     }
-
     private fun UserResource.toModel(): User{
         return User(UserId(this.id_user!!), this.username!!, this.email!!, this.pseudonym!!, this.accounts!!.map { account -> account.toModel() }.toMutableList(), Password(this.password!!.toString()), CategoryFactory.allDefaultCategories())
     }
-
     private fun User.asResource(): UserResource {
-        return UserResource(null, pseudonym, username, password.get(), email, mutableListOf())
+        return UserResource(null, pseudonym, username, password.get(), email, mutableListOf(), this.categories.map { CategoryResource(it.label) }.toMutableList())
     }
-
     override suspend fun getSheets(user: UserId, accountLabel: String): List<Sheet> {
-
         val userResource = userRepository.findById(user.get()).get()
         return userResource.accounts
             ?.find { account -> account.label == accountLabel }
@@ -47,7 +43,6 @@ class ServerAdapter() : TransactionRegister{
             .map { sheetResource -> Sheet(sheetResource.idSheet!!, sheetResource.label!!, sheetResource.date!!, sheetResource.amount!!, sheetResource.isEntry!!) }
             .toList()
     }
-
     override suspend fun getSheetsByDateAndAccount(
         userId: UserId,
         month: Month,
@@ -57,7 +52,6 @@ class ServerAdapter() : TransactionRegister{
         val sheets = getSheets(userId, labelAccount)
         return sheets.filter { s -> s.date.month == month && s.date.year == year }
     }
-
     override suspend fun getAccounts(user: UserId): List<Account> {
         logger.debug("Trying to reach accounts of user ${user.get()}")
         val accs = userRepository.findById(user.get())
@@ -65,17 +59,14 @@ class ServerAdapter() : TransactionRegister{
         println(accs)
         return accs
     }
-
     override suspend fun saveUser(user: User): User {
         userRepository.save(user.asResource())
 
         return user
     }
-
     override suspend fun findUserById(userId: UserId): User {
         return userRepository.findById(userId.get()).get().toModel()
     }
-
     private fun Sheet.asResource(): SheetResource{
         val resource = SheetResource()
         resource.isEntry = this.isEntry
@@ -84,7 +75,6 @@ class ServerAdapter() : TransactionRegister{
         resource.amount = this.value
         return resource
     }
-
     private fun Account.asResource(): AccountResource{
         val resource = AccountResource()
         resource.amount = this.amount()
@@ -96,33 +86,22 @@ class ServerAdapter() : TransactionRegister{
         }
         return resource
     }
-
-
     override suspend fun saveAccount(userId: UserId, account: Account) {
         val user = userRepository.findById(userId.get()).get()
-
         user.accounts?.add(account.asResource())
         userRepository.save(user)
-
     }
-
-
-
     override suspend fun findUserByPseudonym(pseudonym: String): User? {
         return userRepository.findByPseudonym(pseudonym)?.toModel()
     }
-
     override suspend fun createUser(user: User): User? {
         return try {
-            println("register : ${user.password.value}")
             val entity = userRepository.save(user.asResource())
-
             entity.toModel()
         }catch (e: IllegalArgumentException){
             null
         }
     }
-
     override suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
         val user = userRepository.findById(userId.get()).get()
         val account = user.accounts?.find { it.label == accountLabel }
@@ -138,11 +117,18 @@ class ServerAdapter() : TransactionRegister{
         }
         return false
     }
-
-
     override suspend fun checkUser(pseudonym: String, pwd: Password): Boolean{
         val user = userRepository.findByPseudonym(pseudonym)
         return pwd.get() == user?.password
     }
-
+    override suspend fun saveCategory(userId: UserId, category: Category): Boolean {
+        val user = userRepository.findById(userId.get()).get()
+        user.categories?.add(CategoryResource(category.label)) ?: return false
+        userRepository.save(user)
+        return true
+    }
+    override suspend fun retrieveAllCategory(userId: Long): List<Category> {
+        val user = userRepository.findById(userId).get()
+        return user.categories?.map { Category(it.label!!) } ?: emptyList()
+    }
 }
