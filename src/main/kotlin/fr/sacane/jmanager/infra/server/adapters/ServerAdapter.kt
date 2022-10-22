@@ -8,6 +8,7 @@ import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.CategoryResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
+import fr.sacane.jmanager.infra.server.repositories.CategoryRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +24,9 @@ class ServerAdapter() : TransactionRegister{
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var categoryRepository: CategoryRepository
     private fun SheetResource.toModel(): Sheet{
         return Sheet(this.idSheet!!, this.label!!, this.date!!, this.amount!!, this.isEntry!!)
     }
@@ -55,8 +59,8 @@ class ServerAdapter() : TransactionRegister{
     override suspend fun getAccounts(user: UserId): List<Account> {
         logger.debug("Trying to reach accounts of user ${user.get()}")
         val accs = userRepository.findById(user.get())
-        .get().accounts!!.map { resource -> resource.toModel() }
-        println(accs)
+        .get().accounts!!.distinct().map { resource -> resource.toModel() }
+        println("ACCOUNTS -> " + accs)
         return accs
     }
     override suspend fun saveUser(user: User): User {
@@ -130,5 +134,12 @@ class ServerAdapter() : TransactionRegister{
     override suspend fun retrieveAllCategory(userId: Long): List<Category> {
         val user = userRepository.findById(userId).get()
         return user.categories?.map { Category(it.label!!) } ?: emptyList()
+    }
+
+    override suspend fun removeCategory(userId: UserId, labelCategory: String): Boolean {
+        val user = userRepository.findById(userId.get()).get()
+        val category = user.categories?.find { it.label == labelCategory } ?: return false
+        categoryRepository.deleteByLabel(labelCategory)
+        return true
     }
 }

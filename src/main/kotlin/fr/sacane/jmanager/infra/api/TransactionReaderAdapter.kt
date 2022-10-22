@@ -85,4 +85,7 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
     suspend fun retrieveAllCategories(userId: Long): List<Category> {
         return apiPort.retrieveAllCategoryOfUser(userId)
     }
+    suspend fun removeCategory(userCategoryDTO: UserCategoryDTO): Boolean{
+        return apiPort.removeCategory(userCategoryDTO.userId.id(), userCategoryDTO.label)
+    }
 }

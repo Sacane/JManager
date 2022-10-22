@@ -62,6 +62,7 @@ class JManagerController {
     suspend fun getAccounts(@PathVariable id: Long): ResponseEntity<List<AccountInfoDTO>>{
         LOGGER.debug("Trying to get the user's accounts by id : $id")
         val accounts = apiAdapter.getUserAccount(id)
+        println(accounts)
         return if(accounts != null) ResponseEntity(accounts, HttpStatus.OK) else ResponseEntity(HttpStatus.NOT_FOUND)
     }
 
@@ -88,6 +89,10 @@ class JManagerController {
         } else {
             ResponseEntity.ok(categories.map { it.label })
         }
+    }
+    @DeleteMapping(path=["category/delete"])
+    suspend fun deleteCategory(@RequestBody userCategoryDTO: UserCategoryDTO): ResponseEntity<Unit>{
+        return if(apiAdapter.removeCategory(userCategoryDTO)) ResponseEntity.ok(null) else ResponseEntity.notFound().build()
     }
 }
 

@@ -18,5 +18,5 @@ interface TransactionRegister {
     suspend fun checkUser(pseudonym: String, pwd: Password): Boolean
     suspend fun saveCategory(userId: UserId, category: Category): Boolean
     suspend fun retrieveAllCategory(userId: Long): List<Category>
-
+    suspend fun removeCategory(userId: UserId, labelCategory: String): Boolean
 }
