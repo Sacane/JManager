@@ -21,7 +21,7 @@ class InfraUserTest {
     lateinit var accountRepository: AccountRepository
 
     fun basicUserTest(): UserResource {
-        return UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", null)
+        return UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", null,null)
     }
 
     fun basicSheetTest(): SheetResource{
@@ -32,7 +32,7 @@ class InfraUserTest {
     @Order(1)
     fun `users should correctly be implement into database`(){
         userRepository.deleteAll()
-        val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", mutableListOf())
+        val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", mutableListOf(), mutableListOf())
         userRepository.save(user)
         val byName = userRepository.findByPseudonym("johan_test")
         assertThat(byName?.pseudonym).isEqualTo(user.pseudonym)
