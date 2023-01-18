@@ -1,11 +1,7 @@
 package fr.sacane.jmanager.infra.server.entity
 
 import java.time.LocalDate
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
-import javax.persistence.Table
+import javax.persistence.*
 
 
 @Entity
@@ -22,13 +18,21 @@ class SheetResource(
     @Column(name="date")
     var date: LocalDate? = null,
     @Column(name="isEntry")
-    var isEntry: Boolean? = null
+    var isEntry: Boolean? = null,
+    @OneToOne
+    @JoinTable(
+        name = "sheet_category",
+        joinColumns = [JoinColumn(name = "id_sheet")],
+        inverseJoinColumns = [JoinColumn(name = "id_category")]
+    )
+    var category: CategoryResource?=null
 
 ){
     constructor(
         label: String?,
         amount: Double?,
         date: LocalDate?,
-        isEntry: Boolean?
-    ): this(null, label, amount, date, isEntry)
+        isEntry: Boolean?,
+        category: CategoryResource?
+    ): this(null, label, amount, date, isEntry, category)
 }

@@ -2,10 +2,7 @@ package fr.sacane.jmanager.domain
 
 import com.toxicbakery.bcrypt.Bcrypt
 import fr.sacane.jmanager.common.Hash
-import fr.sacane.jmanager.domain.model.Account
-import fr.sacane.jmanager.domain.model.Password
-import fr.sacane.jmanager.domain.model.User
-import fr.sacane.jmanager.domain.model.UserId
+import fr.sacane.jmanager.domain.model.*
 import org.apache.tomcat.util.digester.DocumentProperties.Charset
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -28,7 +25,7 @@ class UserTest {
     fun `user pwd should match with same`(){
         val pwd = Password("D5301012000MAMacita")
 
-        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwd)
+        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwd, CategoryFactory.allDefaultCategories())
 
         assertThat(user.pwdMatchWith("D5301012000MAMacita")).isTrue
         val pw2 = Password("D5301012000MAMacita")
@@ -43,7 +40,7 @@ class UserTest {
     fun `wrong pwd should not match`(){
         val pwd = Password("D5301012000MAMaCitA")
         val pwdUser = Password("D5301012000MAMacita")
-        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwdUser)
+        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwdUser, CategoryFactory.allDefaultCategories())
         assertThat(user.pwdMatchWith("D5301012000MAMacita")).isTrue
     }
 
@@ -58,9 +55,17 @@ class UserTest {
         )
 
         val pwdUser = Password("D5301012000MAMacita")
-        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", accounts, pwdUser)
+        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", accounts, pwdUser, CategoryFactory.allDefaultCategories())
         assertThat(user.accounts()).containsOnlyOnce(Account(null, constantValue, "test", mutableListOf()))
 
+    }
+
+    @Test
+    fun `two hashed password should match`(){
+        val text = Password("test")
+        val text2 = Password("test")
+
+        assertThat(text.get()).isEqualTo(text2.get())
     }
 
 }

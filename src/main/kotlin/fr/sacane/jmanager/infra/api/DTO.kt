@@ -74,3 +74,7 @@ data class UserAccountSheetDateFilteredDTO(
     val month: Month,
     val year: Int
 )
+data class UserCategoryDTO(
+    val userId: Long,
+    val label: String
+)

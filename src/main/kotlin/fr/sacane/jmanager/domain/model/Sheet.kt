@@ -7,5 +7,6 @@ data class Sheet(
         val label: String,
         val date: LocalDate,
         val value: Double,
-        val isEntry: Boolean
+        val isEntry: Boolean,
+        val category: Category = CategoryFactory.DEFAULT_CATEGORY
 )

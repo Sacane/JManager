@@ -38,10 +38,8 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
         return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
     }
     private fun RegisteredUserDTO.toModel(): User{
-        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password))
+        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password), mutableListOf(CategoryFactory.DEFAULT_CATEGORY))
     }
-
-
 
     suspend fun createUser(userDTO: RegisteredUserDTO): UserDTO?{
         val user = apiPort.createUser(userDTO.toModel())
@@ -49,7 +47,6 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
     }
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
-        println("user -> ${user?.username}")
 
         return if(user != null && apiPort.checkUser(userDTO.username, userDTO.password)){
             user.toDTO()
@@ -80,4 +77,14 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
         return apiPort.getAccountByUser(id.id())?.map { AccountInfoDTO(it.amount(), it.label()) }
     }
 
+    suspend fun saveCategory(userCategoryDTO: UserCategoryDTO): Boolean{
+        return apiPort.addCategory(UserId(userCategoryDTO.userId), Category(userCategoryDTO.label))
+    }
+
+    suspend fun retrieveAllCategories(userId: Long): List<Category> {
+        return apiPort.retrieveAllCategoryOfUser(userId)
+    }
+    suspend fun removeCategory(userCategoryDTO: UserCategoryDTO): Boolean{
+        return apiPort.removeCategory(userCategoryDTO.userId.id(), userCategoryDTO.label)
+    }
 }

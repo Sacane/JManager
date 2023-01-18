@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
-@CrossOrigin(origins = ["*"], allowedHeaders = ["*"]) //To change for production
+//@CrossOrigin("http://localhost:8088") //To change for production
 class JManagerController {
 
     companion object{
@@ -24,7 +24,6 @@ class JManagerController {
     @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
         val user = apiAdapter.verifyUser(userDTO)
-        println(user?.pseudonym + " -> ${user?.username}")
         return if(user != null){
             ResponseEntity.ok(user)
         } else {
@@ -54,7 +53,7 @@ class JManagerController {
         return if(apiAdapter.saveSheet(userAccountSheetDTO.userId, userAccountSheetDTO.accountLabel, userAccountSheetDTO.sheetDTO)){
             ResponseEntity(userAccountSheetDTO.sheetDTO.sheetToSend(), HttpStatus.OK)
         } else {
-            ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+            ResponseEntity(HttpStatus.BAD_REQUEST)
         }
     }
 
@@ -69,6 +68,29 @@ class JManagerController {
     suspend fun getSheets(@RequestBody dto: UserSheetDTO): List<SheetDTO>?{
         LOGGER.debug(dto.month.toString())
         return apiAdapter.getSheetAccountByDate(dto)
+    }
+    @PostMapping(path = ["user/category"])
+    suspend fun saveUserCategory(@RequestBody userCategoryDTO: UserCategoryDTO): ResponseEntity<String>{
+        LOGGER.info("Add a new Category")
+        return if(apiAdapter.saveCategory(userCategoryDTO)){
+            ResponseEntity.ok(userCategoryDTO.label)
+        } else {
+            ResponseEntity.badRequest().build()
+        }
+    }
+
+    @GetMapping(path = ["user/categories/{userId}"])
+    suspend fun retrieveAllUserCategories(@PathVariable userId: String): ResponseEntity<List<String>>{
+        val categories = apiAdapter.retrieveAllCategories(userId.toLong())
+        return if(categories.isEmpty()){
+            ResponseEntity.notFound().build()
+        } else {
+            ResponseEntity.ok(categories.map { it.label })
+        }
+    }
+    @DeleteMapping(path=["category/delete"])
+    suspend fun deleteCategory(@RequestBody userCategoryDTO: UserCategoryDTO): ResponseEntity<Unit>{
+        return if(apiAdapter.removeCategory(userCategoryDTO)) ResponseEntity.ok(null) else ResponseEntity.notFound().build()
     }
 }
 

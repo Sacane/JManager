@@ -18,8 +18,8 @@ class Hash() {
         md.update(salt())
     }
 
-    fun hash(pwd: String): String{
-        return String(md.digest(pwd.toByteArray(StandardCharsets.UTF_8)))
+    fun hash(pwd: String): ByteArray{
+        return md.digest(pwd.toByteArray(StandardCharsets.UTF_8))
     }
 
     private fun salt(): ByteArray?{

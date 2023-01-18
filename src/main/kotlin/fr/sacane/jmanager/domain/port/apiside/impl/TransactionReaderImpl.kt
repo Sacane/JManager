@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.port.apiside.TransactionReader
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import java.time.Month
 
+//TODO put it into TransactionReader without separate in many files
 class TransactionReaderImpl(private val port: TransactionRegister): TransactionReader {
 
     override suspend fun registerUser(user: User): User {
@@ -33,12 +34,15 @@ class TransactionReaderImpl(private val port: TransactionRegister): TransactionR
     }
 
     override suspend fun createUser(user: User): User? {
-        println("On transaction reader impl : ${user.password.value}")
         return port.createUser(user)
     }
 
     override suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
         return port.saveSheet(userId, accountLabel, sheet)
+    }
+
+    override suspend fun addCategory(userId: UserId, category: Category): Boolean {
+        return port.saveCategory(userId, category)
     }
 
     override suspend fun checkUser(userId: String, pwd: String): Boolean {
@@ -47,5 +51,13 @@ class TransactionReaderImpl(private val port: TransactionRegister): TransactionR
 
     override suspend fun getAccountByUser(userId: UserId): List<Account>?{
         return port.getAccounts(userId)
+    }
+
+    override suspend fun retrieveAllCategoryOfUser(userId: Long): List<Category> {
+        return port.retrieveAllCategory(userId)
+    }
+
+    override suspend fun removeCategory(id: UserId, label: String): Boolean {
+        return port.removeCategory(id, label)
     }
 }

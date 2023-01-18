@@ -23,7 +23,7 @@ class UserDomainServerTest {
     @Test
     fun `User registered has its password check correctly`(){
         val password = Password("01012000")
-        val userEntity = UserResource(null, "Sacane_test", "Sacane", password.get(), "sacane.test@grostest.fr", null)
+        val userEntity = UserResource(null, "Sacane_test", "Sacane", password.get(), "sacane.test@grostest.fr", null, null)
         userRepository.save(userEntity)
 
         val getUser = userRepository.findByPseudonym("Sacane_test")
