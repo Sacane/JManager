@@ -13,7 +13,7 @@ class Password(val value: String){
 
     private var hasher = Hash()
 
-    fun get(): String{
+    fun get(): ByteArray{
         return hasher.hash(value)
     }
 
@@ -35,5 +35,6 @@ class User(
     fun pwdMatchWith(pwd: String): Boolean = password.matchWith(pwd)
 
     fun accounts(): List<Account> = accounts.distinct()
+    fun categories(): List<Category> = categories.distinct()
 
 }

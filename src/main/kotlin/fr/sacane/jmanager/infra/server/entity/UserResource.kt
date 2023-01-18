@@ -13,12 +13,14 @@ class UserResource(
     @Column(name = "id_user", nullable = false)
     open var id_user: Long? = null,
 
-    @Column(unique = true, nullable = true)
+    @Column(nullable = true)
     var pseudonym: String? = null,
 
     @Column(unique = true)
     var username: String? = null,
-    var password: String? = null,
+
+    @Column(updatable = true)
+    var password: ByteArray? = null,
 
     @Column(unique = true, nullable = true)
     var email: String? = null,
@@ -42,7 +44,7 @@ class UserResource(
     constructor(
         pseudonym: String?,
         username: String?,
-        password: String?,
+        password: ByteArray?,
         email: String?,
         accounts: MutableList<AccountResource>?,
         categories: MutableList<CategoryResource>?

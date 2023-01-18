@@ -60,4 +60,12 @@ class UserTest {
 
     }
 
+    @Test
+    fun `two hashed password should match`(){
+        val text = Password("test")
+        val text2 = Password("test")
+
+        assertThat(text.get()).isEqualTo(text2.get())
+    }
+
 }

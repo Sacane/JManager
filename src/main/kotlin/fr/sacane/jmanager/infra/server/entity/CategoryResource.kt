@@ -11,7 +11,7 @@ class CategoryResource(
     @GeneratedValue
     @Column(unique = true, name = "id_category", nullable = false)
     var idCategory: Long?,
-    @Column(name="label", unique = true)
+    @Column(name="label")
     var label: String?
 ){
     constructor(

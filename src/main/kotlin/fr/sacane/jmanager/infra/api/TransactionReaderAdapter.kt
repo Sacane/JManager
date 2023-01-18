@@ -47,7 +47,6 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
     }
     suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
-        println("user -> ${user?.username}")
 
         return if(user != null && apiPort.checkUser(userDTO.username, userDTO.password)){
             user.toDTO()

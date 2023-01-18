@@ -4,15 +4,15 @@ data class Category(
     val label: String
 )
 object CategoryFactory{
-    val DEFAULT_CATEGORY = Category("Non-spécifié")
+    val DEFAULT_CATEGORY = Category("Aucune")
     fun allDefaultCategories(): MutableList<Category> {
         return mutableListOf(
             DEFAULT_CATEGORY,
             Category("Loisir"),
-            Category("Vêtements"),
+            Category("Vetements"),
             Category("Courses"),
             Category("Sport"),
-            Category("Bien-être")
+            Category("Bien-etre")
         )
     }
 }

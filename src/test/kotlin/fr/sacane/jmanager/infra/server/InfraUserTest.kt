@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.server
 
+import fr.sacane.jmanager.domain.model.Password
 import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource
@@ -21,7 +22,7 @@ class InfraUserTest {
     lateinit var accountRepository: AccountRepository
 
     fun basicUserTest(): UserResource {
-        return UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", null,null)
+        return UserResource(null, "johan_test", "johan.ramaroson@test.com", Password("0101012000").get(), "Sacane", null,null)
     }
 
     fun basicSheetTest(): SheetResource{
@@ -32,7 +33,7 @@ class InfraUserTest {
     @Order(1)
     fun `users should correctly be implement into database`(){
         userRepository.deleteAll()
-        val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", "01012000", "Sacane", mutableListOf(), mutableListOf())
+        val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", Password("01012000").get(), "Sacane", mutableListOf(), mutableListOf())
         userRepository.save(user)
         val byName = userRepository.findByPseudonym("johan_test")
         assertThat(byName?.pseudonym).isEqualTo(user.pseudonym)

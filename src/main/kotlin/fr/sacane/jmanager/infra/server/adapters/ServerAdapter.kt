@@ -13,13 +13,14 @@ import fr.sacane.jmanager.infra.server.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
 import java.time.Month
 
 @Service
 class ServerAdapter() : TransactionRegister{
 
     companion object{
-        private val logger = LoggerFactory.getLogger("ServerAdapter")
+        private val logger = LoggerFactory.getLogger("infra.server.adapters.ServerAdapter")
     }
 
     @Autowired
@@ -60,7 +61,6 @@ class ServerAdapter() : TransactionRegister{
         logger.debug("Trying to reach accounts of user ${user.get()}")
         val accs = userRepository.findById(user.get())
         .get().accounts!!.distinct().map { resource -> resource.toModel() }
-        println("ACCOUNTS -> " + accs)
         return accs
     }
     override suspend fun saveUser(user: User): User {
@@ -100,6 +100,7 @@ class ServerAdapter() : TransactionRegister{
     }
     override suspend fun createUser(user: User): User? {
         return try {
+            logger.info("user : ${user.id.get()} | ${user.password.get()}| ${user.email} | ${user.pseudonym} | ${user.username}")
             val entity = userRepository.save(user.asResource())
             entity.toModel()
         }catch (e: IllegalArgumentException){
@@ -123,7 +124,10 @@ class ServerAdapter() : TransactionRegister{
     }
     override suspend fun checkUser(pseudonym: String, pwd: Password): Boolean{
         val user = userRepository.findByPseudonym(pseudonym)
-        return pwd.get() == user?.password
+        logger.info("${pwd.value} -> ${user?.password} -> ${pwd.get()}")
+        val res = MessageDigest.isEqual(pwd.get(), user?.password)
+        logger.info("${res}")
+        return res
     }
     override suspend fun saveCategory(userId: UserId, category: Category): Boolean {
         val user = userRepository.findById(userId.get()).get()

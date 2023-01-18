@@ -24,7 +24,6 @@ class JManagerController {
     @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
         val user = apiAdapter.verifyUser(userDTO)
-        println(user?.pseudonym + " -> ${user?.username}")
         return if(user != null){
             ResponseEntity.ok(user)
         } else {
@@ -54,7 +53,7 @@ class JManagerController {
         return if(apiAdapter.saveSheet(userAccountSheetDTO.userId, userAccountSheetDTO.accountLabel, userAccountSheetDTO.sheetDTO)){
             ResponseEntity(userAccountSheetDTO.sheetDTO.sheetToSend(), HttpStatus.OK)
         } else {
-            ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+            ResponseEntity(HttpStatus.BAD_REQUEST)
         }
     }
 
@@ -62,7 +61,6 @@ class JManagerController {
     suspend fun getAccounts(@PathVariable id: Long): ResponseEntity<List<AccountInfoDTO>>{
         LOGGER.debug("Trying to get the user's accounts by id : $id")
         val accounts = apiAdapter.getUserAccount(id)
-        println(accounts)
         return if(accounts != null) ResponseEntity(accounts, HttpStatus.OK) else ResponseEntity(HttpStatus.NOT_FOUND)
     }
 
