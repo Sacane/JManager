@@ -23,7 +23,7 @@ class ServerUserAdapter(private val userRepository: UserRepository): UserTransac
         val user = userRepository.findByPseudonym(pseudonym)
         LOGGER.info("${pwd.value} -> ${user?.password} -> ${pwd.get()}")
         val res = MessageDigest.isEqual(pwd.get(), user?.password)
-        LOGGER.info("${res}")
+        LOGGER.info("$res")
         return res
     }
 

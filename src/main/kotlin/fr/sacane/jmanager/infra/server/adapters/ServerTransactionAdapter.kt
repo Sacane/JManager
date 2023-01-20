@@ -2,16 +2,12 @@ package fr.sacane.jmanager.infra.server.adapters
 
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
-import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.CategoryResource
-import fr.sacane.jmanager.infra.server.entity.SheetResource
-import fr.sacane.jmanager.infra.server.entity.UserResource
 import fr.sacane.jmanager.infra.server.repositories.CategoryRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.security.MessageDigest
 import java.time.Month
 
 @Service
@@ -47,9 +43,8 @@ class ServerTransactionAdapter() : TransactionRegister{
     }
     override fun getAccounts(user: UserId): List<Account> {
         logger.debug("Trying to reach accounts of user ${user.get()}")
-        val accs = userRepository.findById(user.get())
-        .get().accounts!!.distinct().map { resource -> resource.toModel() }
-        return accs
+        return userRepository.findById(user.get())
+            .get().accounts!!.distinct().map { resource -> resource.toModel() }
     }
 
     override fun saveAccount(userId: UserId, account: Account) {
