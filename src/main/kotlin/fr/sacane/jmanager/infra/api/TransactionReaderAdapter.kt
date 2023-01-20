@@ -41,11 +41,11 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
         return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password), mutableListOf(CategoryFactory.DEFAULT_CATEGORY))
     }
 
-    suspend fun createUser(userDTO: RegisteredUserDTO): UserDTO?{
+    fun createUser(userDTO: RegisteredUserDTO): UserDTO?{
         val user = apiPort.createUser(userDTO.toModel())
         return user?.toDTO()
     }
-    suspend fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
+    fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = apiPort.findUserByPseudonym(userDTO.username)
 
         return if(user != null && apiPort.checkUser(userDTO.username, userDTO.password)){
@@ -54,12 +54,12 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
             null
         }
     }
-    suspend fun findAccount(accountOwnerDTO: UserAccountDTO): AccountDTO?{
+    fun findAccount(accountOwnerDTO: UserAccountDTO): AccountDTO?{
         val user = apiPort.findUserById(accountOwnerDTO.userId.id())
         val account = user.accounts().find { account -> account.label() == accountOwnerDTO.labelAccount }
         return account?.toDTO()
     }
-    suspend fun getSheetAccountByDate(dto: UserSheetDTO): List<SheetDTO>?{
+    fun getSheetAccountByDate(dto: UserSheetDTO): List<SheetDTO>?{
         val account = apiPort.findAccount(dto.userId.id(), dto.accountLabel)
         return if(account == null){
             null
@@ -67,24 +67,24 @@ class TransactionReaderAdapter @Autowired constructor(private var apiPort: Trans
             account.sheets()?.filter{it.date.year == dto.year && it.date.month == dto.month}?.map { sheet -> sheet.toDTO() }
         }
     }
-    suspend fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO): Boolean{
+    fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO): Boolean{
         return apiPort.saveSheet(userId.id(), accountLabel, sheetDTO.toModel())
     }
-    suspend fun saveAccount(userAccount: UserAccountDTO) {
+    fun saveAccount(userAccount: UserAccountDTO) {
         apiPort.saveAccount(UserId(userAccount.userId), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
     }
-    suspend fun getUserAccount(id: Long): List<AccountInfoDTO>? {
+    fun getUserAccount(id: Long): List<AccountInfoDTO>? {
         return apiPort.getAccountByUser(id.id())?.map { AccountInfoDTO(it.amount(), it.label()) }
     }
 
-    suspend fun saveCategory(userCategoryDTO: UserCategoryDTO): Boolean{
+    fun saveCategory(userCategoryDTO: UserCategoryDTO): Boolean{
         return apiPort.addCategory(UserId(userCategoryDTO.userId), Category(userCategoryDTO.label))
     }
 
-    suspend fun retrieveAllCategories(userId: Long): List<Category> {
+    fun retrieveAllCategories(userId: Long): List<Category> {
         return apiPort.retrieveAllCategoryOfUser(userId)
     }
-    suspend fun removeCategory(userCategoryDTO: UserCategoryDTO): Boolean{
+    fun removeCategory(userCategoryDTO: UserCategoryDTO): Boolean{
         return apiPort.removeCategory(userCategoryDTO.userId.id(), userCategoryDTO.label)
     }
 }
