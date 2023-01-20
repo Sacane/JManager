@@ -40,7 +40,7 @@ class ServerAdapter() : TransactionRegister{
     private fun User.asResource(): UserResource {
         return UserResource(null, pseudonym, username, password.get(), email, mutableListOf(), this.categories.map { CategoryResource(it.label) }.toMutableList())
     }
-    override suspend fun getSheets(user: UserId, accountLabel: String): List<Sheet> {
+    override fun getSheets(user: UserId, accountLabel: String): List<Sheet> {
         val userResource = userRepository.findById(user.get()).get()
         return userResource.accounts
             ?.find { account -> account.label == accountLabel }
@@ -48,7 +48,7 @@ class ServerAdapter() : TransactionRegister{
             .map { sheetResource -> Sheet(sheetResource.idSheet!!, sheetResource.label!!, sheetResource.date!!, sheetResource.amount!!, sheetResource.isEntry!!) }
             .toList()
     }
-    override suspend fun getSheetsByDateAndAccount(
+    override fun getSheetsByDateAndAccount(
         userId: UserId,
         month: Month,
         year: Int,
@@ -57,18 +57,18 @@ class ServerAdapter() : TransactionRegister{
         val sheets = getSheets(userId, labelAccount)
         return sheets.filter { s -> s.date.month == month && s.date.year == year }
     }
-    override suspend fun getAccounts(user: UserId): List<Account> {
+    override fun getAccounts(user: UserId): List<Account> {
         logger.debug("Trying to reach accounts of user ${user.get()}")
         val accs = userRepository.findById(user.get())
         .get().accounts!!.distinct().map { resource -> resource.toModel() }
         return accs
     }
-    override suspend fun saveUser(user: User): User {
+    override fun saveUser(user: User): User {
         userRepository.save(user.asResource())
 
         return user
     }
-    override suspend fun findUserById(userId: UserId): User {
+    override fun findUserById(userId: UserId): User {
         return userRepository.findById(userId.get()).get().toModel()
     }
     private fun Sheet.asResource(): SheetResource{
@@ -90,15 +90,15 @@ class ServerAdapter() : TransactionRegister{
         }
         return resource
     }
-    override suspend fun saveAccount(userId: UserId, account: Account) {
+    override fun saveAccount(userId: UserId, account: Account) {
         val user = userRepository.findById(userId.get()).get()
         user.accounts?.add(account.asResource())
         userRepository.save(user)
     }
-    override suspend fun findUserByPseudonym(pseudonym: String): User? {
+    override fun findUserByPseudonym(pseudonym: String): User? {
         return userRepository.findByPseudonym(pseudonym)?.toModel()
     }
-    override suspend fun createUser(user: User): User? {
+    override fun createUser(user: User): User? {
         return try {
             logger.info("user : ${user.id.get()} | ${user.password.get()}| ${user.email} | ${user.pseudonym} | ${user.username}")
             val entity = userRepository.save(user.asResource())
@@ -107,7 +107,7 @@ class ServerAdapter() : TransactionRegister{
             null
         }
     }
-    override suspend fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
+    override fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
         val user = userRepository.findById(userId.get()).get()
         val account = user.accounts?.find { it.label == accountLabel }
         if(account != null){
@@ -122,25 +122,25 @@ class ServerAdapter() : TransactionRegister{
         }
         return false
     }
-    override suspend fun checkUser(pseudonym: String, pwd: Password): Boolean{
+    override fun checkUser(pseudonym: String, pwd: Password): Boolean{
         val user = userRepository.findByPseudonym(pseudonym)
         logger.info("${pwd.value} -> ${user?.password} -> ${pwd.get()}")
         val res = MessageDigest.isEqual(pwd.get(), user?.password)
         logger.info("${res}")
         return res
     }
-    override suspend fun saveCategory(userId: UserId, category: Category): Boolean {
+    override fun saveCategory(userId: UserId, category: Category): Boolean {
         val user = userRepository.findById(userId.get()).get()
         user.categories?.add(CategoryResource(category.label)) ?: return false
         userRepository.save(user)
         return true
     }
-    override suspend fun retrieveAllCategory(userId: Long): List<Category> {
+    override fun retrieveAllCategory(userId: Long): List<Category> {
         val user = userRepository.findById(userId).get()
         return user.categories?.map { Category(it.label!!) } ?: emptyList()
     }
 
-    override suspend fun removeCategory(userId: UserId, labelCategory: String): Boolean {
+    override fun removeCategory(userId: UserId, labelCategory: String): Boolean {
         val user = userRepository.findById(userId.get()).get()
         val category = user.categories?.find { it.label == labelCategory } ?: return false
         categoryRepository.deleteByLabel(labelCategory)
