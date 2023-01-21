@@ -2,60 +2,13 @@ package fr.sacane.jmanager.infra.api
 
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.TransactionReader
+import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import org.springframework.beans.factory.annotation.Autowired
 
-class TransactionReaderAdapter @Autowired constructor(private var apiPort: TransactionReader) {
+class TransactionReaderAdapter @Autowired constructor(private var apiPort: TransactionReader, private var userPort: UserTransaction) {
 
-    /*
-    * Mapping of domain -> dto
-    */
-    private fun User.toDTO(): UserDTO {
-        return UserDTO(this.id.get(), this.username, this.pseudonym, this.email)
-    }
-    private fun Long.id(): UserId{
-        return UserId(this)
-    }
-    private fun Sheet.toDTO(): SheetDTO {
-        return SheetDTO(this.label, this.value, this.isEntry, this.date)
-    }
-    private fun Account.toDTO(): AccountDTO {
-        return AccountDTO(
-            this.id(),
-            this.amount(),
-            this.label(),
-            this.sheets()?.map { sheet -> sheet.toDTO() }
-        )
-    }
-
-    /**
-     * Mapping of dto -> model
-     */
-
-    private fun SheetDTO.toModel(): Sheet{
-        return Sheet(0, this.label, this.date, this.amount, this.action)
-    }
-    private fun AccountDTO.toModel(): Account{
-        return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
-    }
-    private fun RegisteredUserDTO.toModel(): User{
-        return User(this.id.id(), this.username, this.email, this.pseudonym, mutableListOf(), Password(this.password), mutableListOf(CategoryFactory.DEFAULT_CATEGORY))
-    }
-
-    fun createUser(userDTO: RegisteredUserDTO): UserDTO?{
-        val user = apiPort.createUser(userDTO.toModel())
-        return user?.toDTO()
-    }
-    fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
-        val user = apiPort.findUserByPseudonym(userDTO.username)
-
-        return if(user != null && apiPort.checkUser(userDTO.username, userDTO.password)){
-            user.toDTO()
-        } else {
-            null
-        }
-    }
     fun findAccount(accountOwnerDTO: UserAccountDTO): AccountDTO?{
-        val user = apiPort.findUserById(accountOwnerDTO.userId.id())
+        val user = userPort.findById(accountOwnerDTO.userId.id())
         val account = user.accounts().find { account -> account.label() == accountOwnerDTO.labelAccount }
         return account?.toDTO()
     }

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
-//@CrossOrigin("http://localhost:8088") //To change for production
 class JManagerController {
 
     companion object{
@@ -21,9 +20,12 @@ class JManagerController {
     @Autowired
     private lateinit var apiAdapter: TransactionReaderAdapter
 
+    @Autowired
+    private lateinit var userAdapter: UserControlAdapter
+
     @PostMapping(path= ["/user/auth"])
     suspend fun verifyUser(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserDTO>{
-        val user = apiAdapter.verifyUser(userDTO)
+        val user = userAdapter.verifyUser(userDTO)
         return if(user != null){
             ResponseEntity.ok(user)
         } else {
@@ -39,7 +41,7 @@ class JManagerController {
 
     @PostMapping(path= ["/user/create"])
     suspend fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-        val created = apiAdapter.createUser(userDTO)
+        val created = userAdapter.createUser(userDTO)
         return if(created != null) ResponseEntity(created, HttpStatus.OK) else ResponseEntity(HttpStatus.UNAUTHORIZED)
     }
 

@@ -2,23 +2,14 @@ package fr.sacane.jmanager.domain.port.apiside.impl
 
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.TransactionReader
+import fr.sacane.jmanager.domain.port.apiside.UserRegisterFlow
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
+import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import java.time.Month
 
 //TODO put it into TransactionReader without separate in many files
-class TransactionReaderImpl(private val port: TransactionRegister): TransactionReader {
+class TransactionReaderImpl(private val port: TransactionRegister, private val userPort: UserTransaction): TransactionReader {
 
-    override fun registerUser(user: User): User {
-        return port.saveUser(user)
-    }
-
-    override fun findUserById(userId: UserId): User {
-        return port.findUserById(userId)
-    }
-
-    override fun findUserByPseudonym(pseudonym: String): User? {
-        return port.findUserByPseudonym(pseudonym)
-    }
 
     override fun saveAccount(userId: UserId, account: Account) {
         return port.saveAccount(userId, account)
@@ -29,13 +20,10 @@ class TransactionReaderImpl(private val port: TransactionRegister): TransactionR
     }
 
     override fun findAccount(userId: UserId, labelAccount: String): Account? {
-        val user = port.findUserById(userId)
+        val user = userPort.findById(userId)
         return user.accounts().find { it.label() == labelAccount }
     }
 
-    override fun createUser(user: User): User? {
-        return port.createUser(user)
-    }
 
     override fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
         return port.saveSheet(userId, accountLabel, sheet)
@@ -43,10 +31,6 @@ class TransactionReaderImpl(private val port: TransactionRegister): TransactionR
 
     override fun addCategory(userId: UserId, category: Category): Boolean {
         return port.saveCategory(userId, category)
-    }
-
-    override fun checkUser(userId: String, pwd: String): Boolean {
-        return port.checkUser(userId, Password(pwd))
     }
 
     override fun getAccountByUser(userId: UserId): List<Account>?{
