@@ -1,7 +1,9 @@
 package fr.sacane.jmanager.infra
 
 import fr.sacane.jmanager.domain.port.apiside.TransactionReader
+import fr.sacane.jmanager.domain.port.apiside.UserRegisterFlow
 import fr.sacane.jmanager.domain.port.apiside.impl.TransactionReaderImpl
+import fr.sacane.jmanager.domain.port.apiside.impl.UserRegisterFlowImpl
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import fr.sacane.jmanager.infra.api.TransactionReaderAdapter
@@ -19,12 +21,17 @@ class JmanagerConfiguration {
     }
 
     @Bean
+    fun portUser(userTransaction: UserTransaction) : UserRegisterFlow{
+        return UserRegisterFlowImpl(userTransaction)
+    }
+
+    @Bean
     fun apiAdapter(apiPort: TransactionReader, userPort: UserTransaction): TransactionReaderAdapter {
         return TransactionReaderAdapter(apiPort, userPort)
     }
 
     @Bean
-    fun userApiAdapter(adapter: UserTransaction): UserControlAdapter{
+    fun userApiAdapter(adapter: UserRegisterFlow): UserControlAdapter{
         return UserControlAdapter(adapter)
     }
 

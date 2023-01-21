@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port.apiside.impl
 
+import fr.sacane.jmanager.domain.model.Password
 import fr.sacane.jmanager.domain.model.User
 import fr.sacane.jmanager.domain.model.UserId
 import fr.sacane.jmanager.domain.port.apiside.UserRegisterFlow
@@ -15,11 +16,11 @@ class UserRegisterFlowImpl(private val port: UserTransaction) : UserRegisterFlow
     }
 
     override fun createUser(user: User): User? {
-        TODO("Not yet implemented")
+        return port.create(user)
     }
 
     override fun checkUser(userId: String, pwd: String): Boolean {
-        TODO("Not yet implemented")
+        return port.checkUser(userId, Password(pwd))
     }
 
     override fun findUserByPseudonym(pseudonym: String): User? {

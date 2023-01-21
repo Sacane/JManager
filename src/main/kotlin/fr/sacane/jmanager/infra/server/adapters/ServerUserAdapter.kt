@@ -16,7 +16,8 @@ class ServerUserAdapter(private val userRepository: UserRepository): UserTransac
         private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerUserAdapter")
     }
     override fun findById(userId: UserId): User {
-        TODO("Not yet implemented")
+        val user = userRepository.findById(userId.get())
+        return user.get().toModel()
     }
 
     override fun checkUser(pseudonym: String, pwd: Password): Boolean {
