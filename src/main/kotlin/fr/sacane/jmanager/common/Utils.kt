@@ -11,7 +11,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 
 
-class Hash() {
+class Hash {
     private val md = MessageDigest.getInstance("SHA-512")
 
     init{
@@ -30,16 +30,6 @@ class Hash() {
             }.toByteArray()
         }catch(e: IOException){
             null
-        }
-    }
-
-    companion object {
-
-        fun hash(pass:String): ByteArray{
-            return Bcrypt.hash(pass, Constants.CODE)
-        }
-        fun verify(given: String, expected: String): Boolean{
-            return Bcrypt.verify(given, Bcrypt.hash(expected, Constants.CODE))
         }
     }
 }
