@@ -12,6 +12,5 @@ interface TransactionRegister {
     fun saveAccount(userId: UserId, account: Account)
     fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean
     fun saveCategory(userId: UserId, category: Category): Boolean
-    fun retrieveAllCategory(userId: Long): List<Category>
     fun removeCategory(userId: UserId, labelCategory: String): Boolean
 }

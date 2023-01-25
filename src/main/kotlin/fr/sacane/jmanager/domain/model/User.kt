@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.domain.model
 
-import fr.sacane.jmanager.common.Constants
 import fr.sacane.jmanager.common.Hash
 
 

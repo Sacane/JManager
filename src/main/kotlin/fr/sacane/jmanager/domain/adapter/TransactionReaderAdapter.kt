@@ -37,7 +37,8 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
     }
 
     override fun retrieveAllCategoryOfUser(userId: Long): List<Category> {
-        return port.retrieveAllCategory(userId)
+        val user = userPort.findById(UserId(userId))
+        return user.categories()
     }
 
     override fun removeCategory(id: UserId, label: String): Boolean {

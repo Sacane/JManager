@@ -75,10 +75,6 @@ class ServerTransactionAdapter() : TransactionRegister{
         userRepository.save(user)
         return true
     }
-    override fun retrieveAllCategory(userId: Long): List<Category> {
-        val user = userRepository.findById(userId).get()
-        return user.categories?.map { Category(it.label!!) } ?: emptyList()
-    }
 
     override fun removeCategory(userId: UserId, labelCategory: String): Boolean {
         val user = userRepository.findById(userId.get()).get()

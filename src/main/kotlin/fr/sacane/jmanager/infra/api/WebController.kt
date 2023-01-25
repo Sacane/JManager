@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
-class JManagerController {
+class WebController {
 
     companion object{
         private val LOGGER: Logger = LoggerFactory.getLogger(JmanagerBackApplication::class.java.name)
