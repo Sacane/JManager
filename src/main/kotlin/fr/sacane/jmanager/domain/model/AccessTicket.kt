@@ -2,10 +2,16 @@ package fr.sacane.jmanager.domain.model
 
 data class AccessTicket(
     val user: User,
-    val isOK: Boolean,
-    val role: Role
+    val hasAccess: Boolean
 )
+//enum class Action{
+//    TRANSACTION, ACCESS
+//}
 
-enum class Role {
-    ADMIN, USER
-}
+//internal fun Action.byName(name: String): Action{
+//    return when(name){
+//        "transaction", "Transaction", "TRANSACTION" -> Action.TRANSACTION
+//        "Access", "Check", "access" -> Action.ACCESS
+//        else -> throw IllegalArgumentException()
+//    }
+//}
