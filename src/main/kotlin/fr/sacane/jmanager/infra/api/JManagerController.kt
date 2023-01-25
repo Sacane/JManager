@@ -18,7 +18,7 @@ class JManagerController {
 
 
     @Autowired
-    private lateinit var apiAdapter: TransactionReaderAdapter
+    private lateinit var apiAdapter: TransactionValidator
 
     @Autowired
     private lateinit var userAdapter: UserControlAdapter

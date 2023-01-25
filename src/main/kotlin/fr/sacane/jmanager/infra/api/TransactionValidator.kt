@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.port.apiside.TransactionReader
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import org.springframework.beans.factory.annotation.Autowired
 
-class TransactionReaderAdapter @Autowired constructor(private var apiPort: TransactionReader, private var userPort: UserTransaction) {
+class TransactionValidator @Autowired constructor(private var apiPort: TransactionReader, private var userPort: UserTransaction) {
 
     fun findAccount(accountOwnerDTO: UserAccountDTO): AccountDTO?{
         val user = userPort.findById(accountOwnerDTO.userId.id())

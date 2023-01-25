@@ -41,9 +41,6 @@ class Hash() {
         fun verify(given: String, expected: String): Boolean{
             return Bcrypt.verify(given, Bcrypt.hash(expected, Constants.CODE))
         }
-        fun verify(given: String, expected: ByteArray): Boolean{
-            return Bcrypt.verify(given, expected)
-        }
     }
 }
 

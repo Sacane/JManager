@@ -22,29 +22,6 @@ class UserTest {
     }
 
     @Test
-    fun `user pwd should match with same`(){
-        val pwd = Password("D5301012000MAMacita")
-
-        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwd, CategoryFactory.allDefaultCategories())
-
-        assertThat(user.pwdMatchWith("D5301012000MAMacita")).isTrue
-        val pw2 = Password("D5301012000MAMacita")
-        assertThat(pw2.matchWith("D5301012000MAMacita")).isTrue
-
-        val hashed = Hash.hash("DBAEUHABUD")
-        assertThat(Bcrypt.verify("DBAEUHABUD", Bcrypt.hash("DBAEUHABUD", 5))).isTrue
-
-    }
-
-    @Test
-    fun `wrong pwd should not match`(){
-        val pwd = Password("D5301012000MAMaCitA")
-        val pwdUser = Password("D5301012000MAMacita")
-        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", mutableListOf(), pwdUser, CategoryFactory.allDefaultCategories())
-        assertThat(user.pwdMatchWith("D5301012000MAMacita")).isTrue
-    }
-
-    @Test
     fun `the user's accounts should not contains the same value more than once`(){
         val constantValue = 102.toDouble()
         val accounts = mutableListOf(

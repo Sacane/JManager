@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.apiside.impl
+package fr.sacane.jmanager.domain.adapter
 
 import fr.sacane.jmanager.domain.model.Password
 import fr.sacane.jmanager.domain.model.User
@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.model.UserId
 import fr.sacane.jmanager.domain.port.apiside.UserRegisterFlow
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 
-class UserRegisterFlowImpl(private val port: UserTransaction) : UserRegisterFlow{
+class UserRegisterFlowAdapter(private val port: UserTransaction) : UserRegisterFlow{
     override fun registerUser(user: User): User {
         return port.save(user)
     }

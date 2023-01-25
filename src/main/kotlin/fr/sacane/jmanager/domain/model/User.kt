@@ -17,10 +17,6 @@ class Password(val value: String){
         return hasher.hash(value)
     }
 
-    fun matchWith(other: String): Boolean{
-        return Hash.verify(other, value)
-    }
-
 }
 
 class User(
@@ -32,7 +28,6 @@ class User(
     val password: Password,
     val categories: MutableList<Category>
 ){
-    fun pwdMatchWith(pwd: String): Boolean = password.matchWith(pwd)
 
     fun accounts(): List<Account> = accounts.distinct()
     fun categories(): List<Category> = categories.distinct()

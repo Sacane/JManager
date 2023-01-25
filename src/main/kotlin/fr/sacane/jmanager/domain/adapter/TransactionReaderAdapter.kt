@@ -1,14 +1,13 @@
-package fr.sacane.jmanager.domain.port.apiside.impl
+package fr.sacane.jmanager.domain.adapter
 
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.TransactionReader
-import fr.sacane.jmanager.domain.port.apiside.UserRegisterFlow
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import java.time.Month
 
 //TODO put it into TransactionReader without separate in many files
-class TransactionReaderImpl(private val port: TransactionRegister, private val userPort: UserTransaction): TransactionReader {
+class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction): TransactionReader {
 
 
     override fun saveAccount(userId: UserId, account: Account) {
