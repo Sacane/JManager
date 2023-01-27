@@ -10,7 +10,7 @@ import javax.persistence.*
 class Login(
     @Id
     @GeneratedValue
-    @Column(name = "login")
+    @Column(name = "token")
     var id: UUID?,
 
     @OneToOne
@@ -22,10 +22,14 @@ class Login(
     var user: UserResource?,
 
     @Column(name = "last_refresh")
-    var lastRefresh: LocalDateTime?
+    var lastRefresh: LocalDateTime?,
+
+    @GeneratedValue
+    @Column(name="refresh_token")
+    var refreshToken: UUID?
 
 ){
-    constructor(user: UserResource, lastRefresh: LocalDateTime): this(null, user, lastRefresh)
+    constructor(user: UserResource, lastRefresh: LocalDateTime, refreshToken: UUID?): this(null, user, lastRefresh, refreshToken)
     companion object{
         @Serial
         val serialVersionUID: Long = 423542135L
