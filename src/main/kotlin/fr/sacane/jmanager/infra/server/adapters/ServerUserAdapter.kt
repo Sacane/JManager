@@ -22,14 +22,14 @@ class ServerUserAdapter(private val userRepository: UserRepository, private val 
         return user.get().toModel()
     }
 
-    override fun checkUser(pseudonym: String, pwd: Password): AccessTicket {
+    override fun checkUser(pseudonym: String, pwd: Password): Ticket {
         LOGGER.info("Trying to login user $pseudonym")
         val user = userRepository.findByPseudonym(pseudonym)
         val hasAccess = MessageDigest.isEqual(pwd.get(), user?.password)
         val token = Login(user!!, LocalDateTime.now(), UUID.randomUUID())
         loginRepository.save(token)
         val tokenBack = loginRepository.findByUser(user)
-        return AccessTicket(user.toModel(), hasAccess, Token(tokenBack?.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
+        return Ticket(user.toModel(), hasAccess, Token(tokenBack?.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {

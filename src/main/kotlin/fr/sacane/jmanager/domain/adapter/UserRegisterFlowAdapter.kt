@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain.adapter
 
-import fr.sacane.jmanager.domain.model.AccessTicket
+import fr.sacane.jmanager.domain.model.Ticket
 import fr.sacane.jmanager.domain.model.Password
 import fr.sacane.jmanager.domain.model.User
 import fr.sacane.jmanager.domain.model.UserId
@@ -20,7 +20,7 @@ class UserRegisterFlowAdapter(private val port: UserTransaction) : UserRegisterF
         return port.create(user)
     }
 
-    override fun checkUser(userId: String, pwd: String): AccessTicket {
+    override fun checkUser(userId: String, pwd: String): Ticket {
         return port.checkUser(userId, Password(pwd))
     }
 
