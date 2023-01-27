@@ -11,7 +11,7 @@ class UserControlAdapter @Autowired constructor(private var port: UserRegisterFl
     fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = port.findUserByPseudonym(userDTO.username)
 
-        return if(user != null && port.checkUser(userDTO.username, userDTO.password)){
+        return if(user != null && port.checkUser(userDTO.username, userDTO.password).hasAccess){
             user.toDTO()
         } else {
             null

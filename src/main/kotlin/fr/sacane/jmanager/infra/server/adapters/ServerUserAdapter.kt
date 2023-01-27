@@ -1,16 +1,18 @@
 package fr.sacane.jmanager.infra.server.adapters
 
-import fr.sacane.jmanager.domain.model.Password
-import fr.sacane.jmanager.domain.model.User
-import fr.sacane.jmanager.domain.model.UserId
+import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
+import fr.sacane.jmanager.infra.server.entity.Login
+import fr.sacane.jmanager.infra.server.repositories.LoginRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
+import java.time.LocalDateTime
+import java.util.*
 
 @Service
-class ServerUserAdapter(private val userRepository: UserRepository): UserTransaction{
+class ServerUserAdapter(private val userRepository: UserRepository, private val loginRepository: LoginRepository): UserTransaction{
 
     companion object{
         private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerUserAdapter")
@@ -20,12 +22,14 @@ class ServerUserAdapter(private val userRepository: UserRepository): UserTransac
         return user.get().toModel()
     }
 
-    override fun checkUser(pseudonym: String, pwd: Password): Boolean {
+    override fun checkUser(pseudonym: String, pwd: Password): AccessTicket {
+        LOGGER.info("Trying to login user $pseudonym")
         val user = userRepository.findByPseudonym(pseudonym)
-        LOGGER.info("${pwd.value} -> ${user?.password} -> ${pwd.get()}")
-        val res = MessageDigest.isEqual(pwd.get(), user?.password)
-        LOGGER.info("$res")
-        return res
+        val hasAccess = MessageDigest.isEqual(pwd.get(), user?.password)
+        val token = Login(user!!, LocalDateTime.now(), UUID.randomUUID())
+        loginRepository.save(token)
+        val tokenBack = loginRepository.findByUser(user)
+        return AccessTicket(user.toModel(), hasAccess, Token(tokenBack?.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
