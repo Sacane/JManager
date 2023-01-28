@@ -26,13 +26,13 @@ class LoginManager {
         val user = userResponse.get()
         val login = Login(user, LocalDateTime.now())
         val token = loginRepository.save(login)
-        return Token(token.id!!, token.lastRefresh!!)
+        return Token(token.id!!, token.lastRefresh!!, token.refreshToken!!)
     }
 
     fun logout(tokenId: UUID): Token?{
         val login = loginRepository.findById(tokenId)
         if(login.isPresent) loginRepository.deleteById(tokenId)
         val entity = login.get()
-        return Token(entity.id!!, entity.lastRefresh!!)
+        return Token(entity.id!!, entity.lastRefresh!!, entity.refreshToken!!)
     }
 }

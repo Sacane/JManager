@@ -29,7 +29,7 @@ class Login(
     var refreshToken: UUID?
 
 ){
-    constructor(user: UserResource, lastRefresh: LocalDateTime, refreshToken: UUID?): this(null, user, lastRefresh, refreshToken)
+    constructor(user: UserResource, lastRefresh: LocalDateTime): this(null, user, lastRefresh, null)
     companion object{
         @Serial
         val serialVersionUID: Long = 423542135L

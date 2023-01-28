@@ -25,7 +25,7 @@ class User(
     val pseudonym: String,
     private val accounts: MutableList<Account>,
     val password: Password,
-    val categories: MutableList<Category>
+    private val categories: MutableList<Category>
 ){
 
     fun accounts(): List<Account> = accounts.distinct()
