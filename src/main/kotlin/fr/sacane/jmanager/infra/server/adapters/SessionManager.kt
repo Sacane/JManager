@@ -42,11 +42,20 @@ class SessionManager {
         val user = userRepository.findById(userId.get())
         val token = loginRepository.findByUser(user.get())
         loginRepository.deleteById(token?.id!!)
+        val userModel = user.get().toModel()
         return if(refreshTokenId == token.refreshToken){
             val login = loginRepository.save(Login(user.get(), LocalDateTime.now()))
-            Ticket(user.get().toModel(), true, Token(login.id!!, login.lastRefresh!!, login.refreshToken!!))
+            Ticket(userModel, true, Token(login.id!!, login.lastRefresh!!, login.refreshToken!!))
         } else {
-            Ticket(user.get().toModel(), false, null)
+            Ticket(userModel, false, null)
+        }
+    }
+    fun purgeExpiredToken(time: LocalDateTime){
+        val tokens = loginRepository.findAll()
+        for (token in tokens){
+            if(token.lastRefresh?.isBefore(time) == true) {
+                loginRepository.delete(token)
+            }
         }
     }
 }

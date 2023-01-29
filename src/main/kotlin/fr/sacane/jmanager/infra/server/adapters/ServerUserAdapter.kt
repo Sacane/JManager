@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.server.adapters
 
+import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import fr.sacane.jmanager.infra.server.entity.Login
@@ -15,7 +16,7 @@ import java.util.*
 class ServerUserAdapter(private val userRepository: UserRepository, private val loginRepository: LoginRepository): UserTransaction{
 
     companion object{
-        private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerUserAdapter")
+        private val LOGGER = Logger.getLogger(Companion::class.java)
     }
     override fun findById(userId: UserId): User {
         val user = userRepository.findById(userId.get())
@@ -26,10 +27,9 @@ class ServerUserAdapter(private val userRepository: UserRepository, private val 
         LOGGER.info("Trying to login user $pseudonym")
         val user = userRepository.findByPseudonym(pseudonym)
         val hasAccess = MessageDigest.isEqual(pwd.get(), user?.password)
-        val token = Login(user!!, LocalDateTime.now())
-        loginRepository.save(token)
-        val tokenBack = loginRepository.findByUser(user)
-        return Ticket(user.toModel(), hasAccess, Token(tokenBack?.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
+        val token = Login(UUID.randomUUID(), user!!, LocalDateTime.now(), UUID.randomUUID())
+        val tokenBack = loginRepository.save(token)
+        return Ticket(user.toModel(), hasAccess, Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {

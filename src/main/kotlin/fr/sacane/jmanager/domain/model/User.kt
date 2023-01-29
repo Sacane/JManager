@@ -10,10 +10,9 @@ class UserId(private val id: Long){
 
 class Password(val value: String){
 
-    private var hasher = Hash()
 
     fun get(): ByteArray{
-        return hasher.hash(value)
+        return Hash.hash(value)
     }
 
 }

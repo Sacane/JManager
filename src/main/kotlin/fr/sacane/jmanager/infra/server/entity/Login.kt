@@ -10,13 +10,14 @@ import javax.persistence.*
 class Login(
     @Id
     @GeneratedValue
-    @Column(name = "token")
+    @Column(name = "id_token")
     var id: UUID?,
 
-    @OneToOne
+
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinTable(
         name = "token_user",
-        joinColumns = [JoinColumn(name = "token_id")],
+        joinColumns = [JoinColumn(name = "id_token")],
         inverseJoinColumns = [JoinColumn(name = "id_user")]
     )
     var user: UserResource?,
