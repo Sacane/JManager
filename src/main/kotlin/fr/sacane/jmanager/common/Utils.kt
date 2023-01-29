@@ -11,7 +11,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 
 
-class Hash {
+object Hash {
     private val md = MessageDigest.getInstance("SHA-512")
 
     init{
