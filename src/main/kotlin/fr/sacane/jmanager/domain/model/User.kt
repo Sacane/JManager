@@ -8,7 +8,7 @@ class UserId(private val id: Long){
 }
 
 
-class Password(val value: String){
+class Password(private val value: String){
 
 
     fun get(): ByteArray{
