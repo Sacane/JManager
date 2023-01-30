@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.api
 
+import fr.sacane.jmanager.domain.model.TicketState
 import fr.sacane.jmanager.domain.port.apiside.UserRegisterFlow
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -11,7 +12,7 @@ class UserControlAdapter @Autowired constructor(private var port: UserRegisterFl
     fun verifyUser(userDTO: UserPasswordDTO): UserDTO?{
         val user = port.findUserByPseudonym(userDTO.username)
 
-        return if(user != null && port.checkUser(userDTO.username, userDTO.password).hasAccess){
+        return if(user != null && port.checkUser(userDTO.username, userDTO.password).state == TicketState.AUTHENTICATED){
             user.toDTO()
         } else {
             null

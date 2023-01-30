@@ -13,6 +13,9 @@ class Login(
     @Column(name = "id_token")
     var id: UUID?,
 
+    @GeneratedValue
+    @Column(name="token")
+    var token: UUID?,
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinTable(
@@ -30,7 +33,7 @@ class Login(
     var refreshToken: UUID?
 
 ){
-    constructor(user: UserResource, lastRefresh: LocalDateTime): this(null, user, lastRefresh, null)
+    constructor(user: UserResource, lastRefresh: LocalDateTime): this(null, null, user, lastRefresh, null)
     companion object{
         @Serial
         val serialVersionUID: Long = 423542135L

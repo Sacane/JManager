@@ -10,8 +10,10 @@ import fr.sacane.jmanager.infra.api.TransactionValidator
 import fr.sacane.jmanager.infra.api.UserControlAdapter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.scheduling.annotation.EnableScheduling
 
 @Configuration
+@EnableScheduling
 class JmanagerConfiguration {
 
     @Bean

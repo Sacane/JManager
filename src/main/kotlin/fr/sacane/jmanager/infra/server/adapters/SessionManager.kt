@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infra.server.adapters
 import fr.sacane.jmanager.domain.model.Ticket
 import fr.sacane.jmanager.domain.model.Token
 import fr.sacane.jmanager.domain.model.UserId
+import fr.sacane.jmanager.domain.model.expiredTicket
 import fr.sacane.jmanager.infra.server.entity.Login
 import fr.sacane.jmanager.infra.server.repositories.LoginRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
@@ -45,9 +46,9 @@ class SessionManager {
         val userModel = user.get().toModel()
         return if(refreshTokenId == token.refreshToken){
             val login = loginRepository.save(Login(user.get(), LocalDateTime.now()))
-            Ticket(userModel, true, Token(login.id!!, login.lastRefresh!!, login.refreshToken!!))
+            login.toValidateTicket(userModel)
         } else {
-            Ticket(userModel, false, null)
+            expiredTicket()
         }
     }
     fun purgeExpiredToken(time: LocalDateTime){

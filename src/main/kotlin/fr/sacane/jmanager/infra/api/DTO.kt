@@ -24,6 +24,7 @@ data class UserPasswordDTO(
 )
 
 data class SheetDTO(
+//    val id: Long,
     val label: String,
     val amount: Double,
     val action: Boolean,

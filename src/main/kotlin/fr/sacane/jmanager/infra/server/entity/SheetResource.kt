@@ -11,7 +11,7 @@ class SheetResource(
     @GeneratedValue
     @Column(unique = true, name = "id_sheet", nullable = false)
     var idSheet: Long? = null,
-    @Column(unique = true, name = "label_sheet")
+    @Column(name = "label_sheet")
     var label: String? = null,
     @Column(name= "amount", unique = false)
     var amount: Double? = null,
