@@ -7,8 +7,7 @@ JManager is a WebApp that allow you to manage your personal budget.
 
 **Johan *"Sacane"* Ramaroson Rakotomihamina**
 
-## What's behind this application ?
-
+## About
 
 This project is my first attempt to build a **business-based application**. More precisely, an app centered by the customer business expectation.
 I also wanted it to be as flexible as possible. 
@@ -16,7 +15,15 @@ To do this, I tried to implement the concept of **Hexagonal architecture**, at l
 
 Here you can find a good topic about this architecture [In french](https://blog.octo.com/architecture-hexagonale-trois-principes-et-un-exemple-dimplementation/) or another topic in [english](https://medium.com/ssense-tech/hexagonal-architecture-there-are-always-two-sides-to-every-story-bc0780ed7d9c).
 
-## So what's my implementation of this architecture ? 
+## Features
+
+- You can register and login, so you can manipulate your own data
+- You can add an "account" which be containers of your actual budget
+- You can add sheets associated by an account, sheet is defined by a name, an amount a date and binary input of if this corresponds to an income or an outcome.
+- You can easily visualize feedback to your budget state by months.
+- You can easily visualize feedback to all of your registered accounts.
+
+## Implementation
 
 
 This architecture does separate the project in 3 distinct subprojects :
@@ -24,7 +31,7 @@ This architecture does separate the project in 3 distinct subprojects :
 * **Server-side** which contains all the database interaction, or files system calls. Briefly, the persistence side. 
 * **User-side**, or the side which interact directly with the user. It could be an API (which is actually the case), or a command-line interface.
 
-## Why this architecture ?
+## What's the advantages ?
 
 
 Because I felt in love with it. 
