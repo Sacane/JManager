@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import java.time.Month
 
 @Service
-class ServerTransactionAdapter() : TransactionRegister{
+class ServerTransactionAdapter : TransactionRegister{
 
     companion object{
         private val logger = LoggerFactory.getLogger("infra.server.adapters.ServerAdapter")
