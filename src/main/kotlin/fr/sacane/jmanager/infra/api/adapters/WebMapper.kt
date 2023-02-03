@@ -1,6 +1,14 @@
-package fr.sacane.jmanager.infra.api
+package fr.sacane.jmanager.infra.api.adapters
 
 import fr.sacane.jmanager.domain.model.*
+import fr.sacane.jmanager.infra.api.AccountDTO
+import fr.sacane.jmanager.infra.api.RegisteredUserDTO
+import fr.sacane.jmanager.infra.api.SheetDTO
+import fr.sacane.jmanager.infra.api.UserDTO
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import java.net.http.HttpResponse
 
 internal fun Account.toDTO(): AccountDTO {
     return AccountDTO(
@@ -29,6 +37,13 @@ internal fun Sheet.toDTO(): SheetDTO {
 internal fun User.toDTO(): UserDTO {
     return UserDTO(this.id.get(), this.username, this.pseudonym, this.email)
 }
-internal fun Long.id(): UserId{
+internal fun Long.id(): UserId {
     return UserId(this)
+}
+internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
+    return when(this.status){
+        TicketState.OK -> ResponseEntity(this.get(), HttpStatus.OK)
+        TicketState.TIMEOUT -> ResponseEntity(this.get(), HttpStatus.UNAUTHORIZED)
+        TicketState.INVALID -> ResponseEntity(this.get(), HttpStatus.BAD_REQUEST)
+    }
 }
