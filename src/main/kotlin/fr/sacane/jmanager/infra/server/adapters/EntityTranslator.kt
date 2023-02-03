@@ -38,5 +38,5 @@ internal fun UserResource.toModel(): User{
 }
 
 internal fun Login.toValidateTicket(user: User): Ticket{
-    return Ticket(user, TicketState.AUTHENTICATED, Token(this.id!!, this.lastRefresh!!, this.refreshToken!!))
+    return Ticket(user, TicketState.OK, Token(this.id!!, this.lastRefresh!!, this.refreshToken!!))
 }
