@@ -20,7 +20,7 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
 
     override fun findAccount(userId: UserId, labelAccount: String): Account? {
         val user = userPort.findById(userId)
-        return user.accounts().find { it.label() == labelAccount }
+        return user?.accounts()?.find { it.label() == labelAccount }
     }
 
 
@@ -37,7 +37,7 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
     }
 
     override fun retrieveAllCategoryOfUser(userId: Long): List<Category> {
-        val user = userPort.findById(UserId(userId))
+        val user = userPort.findById(UserId(userId)) ?: return emptyList()
         return user.categories()
     }
 

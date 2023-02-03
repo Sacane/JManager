@@ -3,13 +3,16 @@ package fr.sacane.jmanager.infra.api
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.apiside.TransactionReader
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
+import fr.sacane.jmanager.infra.api.adapters.id
+import fr.sacane.jmanager.infra.api.adapters.toDTO
+import fr.sacane.jmanager.infra.api.adapters.toModel
 import org.springframework.beans.factory.annotation.Autowired
 
 class TransactionValidator @Autowired constructor(private var apiPort: TransactionReader, private var userPort: UserTransaction) {
 
     fun findAccount(accountOwnerDTO: UserAccountDTO): AccountDTO?{
         val user = userPort.findById(accountOwnerDTO.userId.id())
-        val account = user.accounts().find { account -> account.label() == accountOwnerDTO.labelAccount }
+        val account = user?.accounts()?.find { account -> account.label() == accountOwnerDTO.labelAccount }
         return account?.toDTO()
     }
     fun getSheetAccountByDate(dto: UserSheetDTO): List<SheetDTO>?{
