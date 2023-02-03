@@ -6,11 +6,9 @@ import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import fr.sacane.jmanager.infra.server.entity.Login
 import fr.sacane.jmanager.infra.server.repositories.LoginRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.time.LocalDateTime
-import java.util.*
 
 @Service
 class ServerUserAdapter(private val userRepository: UserRepository, private val loginRepository: LoginRepository): UserTransaction{
@@ -31,7 +29,7 @@ class ServerUserAdapter(private val userRepository: UserRepository, private val 
         }
         val token = Login(user!!, LocalDateTime.now())
         val tokenBack = loginRepository.save(token)
-        return Ticket(user.toModel(), TicketState.AUTHENTICATED, Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
+        return Ticket(user.toModel(), TicketState.OK, Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
