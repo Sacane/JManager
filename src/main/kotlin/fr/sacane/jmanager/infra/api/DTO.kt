@@ -80,4 +80,13 @@ data class UserCategoryDTO(
     val label: String
 )
 
+data class TokenDTO(
+    val token: String
+)
+
 data class UserLoginDTO(val userId: Long, val password: String, val token: String, val refreshToken: String)
+data class UserCredentialsDTO(
+    val pseudonym: String,
+    val password: String,
+    val token: String
+)
