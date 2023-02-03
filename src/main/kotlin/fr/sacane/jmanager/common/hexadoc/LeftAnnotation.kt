@@ -1,0 +1,7 @@
+package fr.sacane.jmanager.common.hexadoc
+
+
+@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.ANNOTATION_CLASS)
+annotation class LeftAdapter
+
