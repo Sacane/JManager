@@ -1,9 +1,11 @@
-package fr.sacane.jmanager.domain.adapter
+package fr.sacane.jmanager.domain.port.apiside
 
+import fr.sacane.jmanager.common.hexadoc.PortToLeft
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.LoginTransactor
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 
+@PortToLeft
 class UserRegisterAdapter(private val port: UserTransaction, private val loginPort: LoginTransactor){
 
     fun signIn(user: User): Response<User> {

@@ -1,11 +1,13 @@
 package fr.sacane.jmanager.infra.server.entity
 
+import fr.sacane.jmanager.common.hexadoc.DatasourceEntity
 import java.time.LocalDate
 import javax.persistence.*
 
 
 @Entity
 @Table(name="sheet")
+@DatasourceEntity
 class SheetResource(
     @Id
     @GeneratedValue

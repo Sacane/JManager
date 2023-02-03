@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.server.adapters
 
+import fr.sacane.jmanager.common.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import fr.sacane.jmanager.infra.server.entity.CategoryResource
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service
 import java.time.Month
 
 @Service
+@DatasourceAdapter
 class ServerTransactionAdapter : TransactionRegister{
 
     companion object{

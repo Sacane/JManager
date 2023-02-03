@@ -1,9 +1,10 @@
 package fr.sacane.jmanager.domain.port.serverside
 
+import fr.sacane.jmanager.common.hexadoc.PortToRight
 import fr.sacane.jmanager.domain.model.*
 import java.time.Month
 
-
+@PortToRight
 interface TransactionRegister {
 
     fun getSheets(user: UserId, accountLabel: String): List<Sheet>

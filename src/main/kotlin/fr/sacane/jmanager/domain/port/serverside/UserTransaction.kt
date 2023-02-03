@@ -1,10 +1,12 @@
 package fr.sacane.jmanager.domain.port.serverside
 
+import fr.sacane.jmanager.common.hexadoc.PortToRight
 import fr.sacane.jmanager.domain.model.Ticket
 import fr.sacane.jmanager.domain.model.Password
 import fr.sacane.jmanager.domain.model.User
 import fr.sacane.jmanager.domain.model.UserId
 
+@PortToRight
 interface UserTransaction {
     fun findById(userId: UserId): User?
     fun checkUser(pseudonym: String, pwd: Password): Ticket

@@ -1,12 +1,13 @@
-package fr.sacane.jmanager.domain.adapter
+package fr.sacane.jmanager.domain.port.apiside
 
+import fr.sacane.jmanager.common.hexadoc.PortToLeft
 import fr.sacane.jmanager.domain.model.*
-import fr.sacane.jmanager.domain.port.apiside.TransactionReader
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import java.time.Month
 
 //TODO put it into TransactionReader without separate in many files
+@PortToLeft
 class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction): TransactionReader {
 
 

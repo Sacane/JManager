@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.server.adapters
 
+import fr.sacane.jmanager.common.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.LoginTransactor
 import fr.sacane.jmanager.infra.server.entity.Login
@@ -11,6 +12,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Service
+@DatasourceAdapter
 class LoginTransactionReceiver(val userRepository: UserRepository, val loginRepository: LoginRepository) : LoginTransactor {
 
     companion object{

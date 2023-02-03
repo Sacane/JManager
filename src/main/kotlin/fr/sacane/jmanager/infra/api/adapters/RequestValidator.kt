@@ -1,9 +1,8 @@
 package fr.sacane.jmanager.infra.api.adapters
 
-import fr.sacane.jmanager.domain.adapter.UserRegisterAdapter
+import fr.sacane.jmanager.domain.port.apiside.UserRegisterAdapter
 import fr.sacane.jmanager.domain.model.Response
 import fr.sacane.jmanager.domain.model.TicketState
-import fr.sacane.jmanager.domain.port.apiside.UserRegister
 import fr.sacane.jmanager.infra.api.RegisteredUserDTO
 import fr.sacane.jmanager.infra.api.UserDTO
 import org.springframework.beans.factory.annotation.Autowired

@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infra.server.adapters
 
 import com.sun.istack.logging.Logger
+import fr.sacane.jmanager.common.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import fr.sacane.jmanager.infra.server.entity.Login
@@ -11,6 +12,7 @@ import java.security.MessageDigest
 import java.time.LocalDateTime
 
 @Service
+@DatasourceAdapter
 class ServerUserAdapter(private val userRepository: UserRepository, private val loginRepository: LoginRepository): UserTransaction{
 
     companion object{
