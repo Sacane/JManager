@@ -9,9 +9,16 @@ data class Token(
 )
 
 enum class TicketState{
-    AUTHENTICATED,
+    OK,
     TIMEOUT,
-    INVALID
+    INVALID;
+
+    fun isSuccess(): Boolean{
+        return this == OK
+    }
+    fun isFailure(): Boolean{
+        return this != OK
+    }
 }
 
 data class Ticket(
@@ -28,5 +35,5 @@ fun expiredTicket(): Ticket{
 }
 
 fun emptyValidateTicket(): Ticket{
-    return Ticket(null ,TicketState.AUTHENTICATED, null)
+    return Ticket(null ,TicketState.OK, null)
 }
