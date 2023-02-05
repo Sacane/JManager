@@ -16,8 +16,11 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
         return Response.ok(accountSaved)
     }
 
-    fun sheetByDateAndAccount(userId: UserId, month: Month, year: Int, account: String): List<Sheet> {
-        return port.getSheetsByDateAndAccount(userId, month, year, account)
+    fun sheetByDateAndAccount(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
+        val userResponse = userPort.findById(userId)
+        if(userResponse.state.isFailure()) return Response.invalid()
+        userResponse.checkForIdentity(token) ?: return Response.timeout()
+        return Response.ok(port.getSheetsByDateAndAccount(userId, month, year, account))
     }
 
     fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
