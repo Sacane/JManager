@@ -31,21 +31,37 @@ This architecture does separate the project in 3 distinct subprojects :
 * **Server-side** which contains all the database interaction, or files system calls. Briefly, the persistence side. 
 * **User-side**, or the side which interact directly with the user. It could be an API (which is actually the case), or a command-line interface.
 
-## What's the advantages ?
+Annotation documentation in the common package is available to easily read which class is used for.
 
+for example : 
+```kotlin
+@Service
+@DatasourceAdapter
+class LoginTransactionAdapter(val userRepository: UserRepository, val loginRepository: LoginRepository) : LoginTransactor
+```
+This class is an adapter to the dataSource, so here we are currently in the right-side of the hexagon.
+This class implements **LoginTransactor** which is part of the domain : 
+```kotlin
+@PortToRight
+interface LoginTransactor {
+    fun login(userPseudonym: String, password: Password): Ticket?
+    fun logout(userId: UserId, token: Token): Ticket?
+    fun refresh(userId: UserId, token: Token): Ticket?
+}
+```
+This class is a port which goes to the right-side of the hexagon
 
-Because I felt in love with it. 
+## Advantages
 
-Seriously, those are the main reasons I implemented this architecture in this project : 
+Those are the main reasons I implemented this architecture in this project : 
 
 * To be as flexible as possible by implementing each side separately
-* To feel free to change my technos at any time for future releases without break all of my application. 
+* To feel free to change my dependencies at any time for future releases without break all the architecture. 
 * To test each side independently, or only centered on the domain-side. 
 * To make a first step with DDD (Domain driven design)
-* Because I like the port/adapter design pattern. 
-* Because I had time to do this
+* To train the port/adapter design pattern.
 
-### Technos : 
+## Dependencies : 
 
 
 * Kotlin
