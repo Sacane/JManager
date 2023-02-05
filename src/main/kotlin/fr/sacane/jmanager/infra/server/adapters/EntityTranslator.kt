@@ -37,6 +37,7 @@ internal fun UserResource.toModel(): User{
     return User(UserId(this.id_user!!), this.username!!, this.email!!, this.pseudonym!!, this.accounts!!.map { account -> account.toModel() }.toMutableList(), Password(this.password!!.toString()), CategoryFactory.allDefaultCategories())
 }
 
-internal fun Login.toValidateTicket(user: User): Ticket{
-    return Ticket(user, TicketState.OK, Token(this.id!!, this.lastRefresh!!, this.refreshToken!!))
+
+internal fun Login.toModel(): Token{
+    return Token(this.token!!, this.lastRefresh!!, this.refreshToken!!)
 }
