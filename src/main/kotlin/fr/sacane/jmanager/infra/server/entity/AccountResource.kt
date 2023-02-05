@@ -1,11 +1,13 @@
 package fr.sacane.jmanager.infra.server.entity
 
+import fr.sacane.jmanager.common.hexadoc.DatasourceEntity
 import org.springframework.lang.Nullable
 import javax.persistence.*
 
 
 @Entity
 @Table(name = "account")
+@DatasourceEntity
 class AccountResource(
     @Id
     @Nullable

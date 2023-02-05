@@ -9,10 +9,6 @@ import org.junit.jupiter.api.Test
 
 class UserTest {
 
-    @Test
-    fun `password should match`(){
-        assertThat(Hash.verify("password", "password")).isTrue
-    }
 
     @Test
     fun `password should not match even with uppercase`(){

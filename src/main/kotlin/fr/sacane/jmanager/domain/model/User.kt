@@ -8,12 +8,11 @@ class UserId(private val id: Long){
 }
 
 
-class Password(val value: String){
+class Password(private val value: String){
 
-    private var hasher = Hash()
 
     fun get(): ByteArray{
-        return hasher.hash(value)
+        return Hash.hash(value)
     }
 
 }
@@ -25,7 +24,7 @@ class User(
     val pseudonym: String,
     private val accounts: MutableList<Account>,
     val password: Password,
-    val categories: MutableList<Category>
+    private val categories: MutableList<Category>
 ){
 
     fun accounts(): List<Account> = accounts.distinct()

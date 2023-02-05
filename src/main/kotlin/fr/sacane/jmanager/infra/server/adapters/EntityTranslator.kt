@@ -1,10 +1,7 @@
 package fr.sacane.jmanager.infra.server.adapters
 
 import fr.sacane.jmanager.domain.model.*
-import fr.sacane.jmanager.infra.server.entity.AccountResource
-import fr.sacane.jmanager.infra.server.entity.CategoryResource
-import fr.sacane.jmanager.infra.server.entity.SheetResource
-import fr.sacane.jmanager.infra.server.entity.UserResource
+import fr.sacane.jmanager.infra.server.entity.*
 
 internal fun Sheet.asResource(): SheetResource {
     val resource = SheetResource()
@@ -27,7 +24,7 @@ internal fun Account.asResource(): AccountResource {
 }
 
 internal fun User.asResource(): UserResource {
-    return UserResource(null, pseudonym, username, password.get(), email, mutableListOf(), this.categories.map { CategoryResource(it.label) }.toMutableList())
+    return UserResource(null, pseudonym, username, password.get(), email, mutableListOf(), this.categories().map { CategoryResource(it.label) }.toMutableList())
 }
 
 internal fun SheetResource.toModel(): Sheet{
@@ -38,4 +35,9 @@ internal fun AccountResource.toModel(): Account{
 }
 internal fun UserResource.toModel(): User{
     return User(UserId(this.id_user!!), this.username!!, this.email!!, this.pseudonym!!, this.accounts!!.map { account -> account.toModel() }.toMutableList(), Password(this.password!!.toString()), CategoryFactory.allDefaultCategories())
+}
+
+
+internal fun Login.toModel(): Token{
+    return Token(this.token!!, this.lastRefresh!!, this.refreshToken!!)
 }

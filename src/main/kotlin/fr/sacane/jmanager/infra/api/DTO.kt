@@ -20,10 +20,12 @@ data class RegisteredUserDTO(
 
 data class UserPasswordDTO(
     val username: String,
-    val password: String
+    val password: String,
+    val id: Long
 )
 
 data class SheetDTO(
+//    val id: Long,
     val label: String,
     val amount: Double,
     val action: Boolean,
@@ -50,13 +52,13 @@ data class AccountDTO(
 )
 
 data class UserAccountDTO(
-    val userId: Long,
+    val userCredentials: UserCredentialsDTO,
     val labelAccount: String,
     val amount: Double
 )
 
 data class UserSheetDTO(
-    val userId: Long,
+    val userCredentials: UserCredentialsDTO,
     val month: Month,
     val year: Int,
     val accountLabel: String
@@ -77,4 +79,26 @@ data class UserAccountSheetDateFilteredDTO(
 data class UserCategoryDTO(
     val userId: Long,
     val label: String
+)
+
+data class TokenDTO(
+    val token: String,
+    val refreshToken: String
+)
+
+data class UserLoginDTO(val userId: Long, val password: String, val token: String, val refreshToken: String)
+data class UserCredentialsDTO(
+    val id: Long,
+    val pseudonym: String,
+    val password: String,
+)
+
+data class UserTokenDTO(
+    val user: UserDTO,
+    val tokenPair: TokenDTO
+)
+
+data class UserIdTokenDTO(
+    val userId: Long,
+    val tokenPair: TokenDTO
 )

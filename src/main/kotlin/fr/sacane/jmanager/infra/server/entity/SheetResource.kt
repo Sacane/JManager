@@ -1,17 +1,19 @@
 package fr.sacane.jmanager.infra.server.entity
 
+import fr.sacane.jmanager.common.hexadoc.DatasourceEntity
 import java.time.LocalDate
 import javax.persistence.*
 
 
 @Entity
 @Table(name="sheet")
+@DatasourceEntity
 class SheetResource(
     @Id
     @GeneratedValue
     @Column(unique = true, name = "id_sheet", nullable = false)
     var idSheet: Long? = null,
-    @Column(unique = true, name = "label_sheet")
+    @Column(name = "label_sheet")
     var label: String? = null,
     @Column(name= "amount", unique = false)
     var amount: Double? = null,

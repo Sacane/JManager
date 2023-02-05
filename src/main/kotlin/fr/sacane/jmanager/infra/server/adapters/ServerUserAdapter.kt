@@ -1,45 +1,75 @@
 package fr.sacane.jmanager.infra.server.adapters
 
-import fr.sacane.jmanager.domain.model.Password
-import fr.sacane.jmanager.domain.model.User
-import fr.sacane.jmanager.domain.model.UserId
+import com.sun.istack.logging.Logger
+import fr.sacane.jmanager.common.hexadoc.DatasourceAdapter
+import fr.sacane.jmanager.domain.model.*
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
+import fr.sacane.jmanager.infra.server.entity.Login
+import fr.sacane.jmanager.infra.server.repositories.LoginRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
-import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
+import java.time.LocalDateTime
 
 @Service
-class ServerUserAdapter(private val userRepository: UserRepository): UserTransaction{
+@DatasourceAdapter
+class ServerUserAdapter : UserTransaction{
+
+    @Autowired
+    private lateinit var userRepository: UserRepository
+
+    @Autowired
+    private lateinit var loginRepository: LoginRepository
 
     companion object{
-        private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerUserAdapter")
+        private val LOGGER = Logger.getLogger(Companion::class.java)
     }
-    override fun findById(userId: UserId): User {
+    override fun findById(userId: UserId): Ticket? {
         val user = userRepository.findById(userId.get())
-        return user.get().toModel()
+        if(user.isEmpty) return null
+        val token = loginRepository.findByUser(user.get()) ?: return null
+        return Ticket(user.get().toModel(), token.toModel())
     }
 
-    override fun checkUser(pseudonym: String, pwd: Password): Boolean {
+    override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
+        LOGGER.info("Trying to login user $pseudonym")
         val user = userRepository.findByPseudonym(pseudonym)
-        LOGGER.info("${pwd.value} -> ${user?.password} -> ${pwd.get()}")
-        val res = MessageDigest.isEqual(pwd.get(), user?.password)
-        LOGGER.info("$res")
-        return res
+        if(!MessageDigest.isEqual(pwd.get(), user?.password)){
+            return null
+        }
+        val token = Login(user!!, LocalDateTime.now())
+        val tokenBack = loginRepository.save(token)
+        return Ticket(user.toModel(), Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
     }
 
-    override fun findByPseudonym(pseudonym: String): User? {
-        return userRepository.findByPseudonym(pseudonym)?.toModel()
+    override fun findByPseudonym(pseudonym: String): Ticket? {
+        val user = userRepository.findByPseudonym(pseudonym) ?: return null
+        val token = loginRepository.findByUser(user) ?: return null
+        return Ticket(user.toModel(), token.toModel())
     }
 
-    override fun create(user: User): User? {
-        LOGGER.info("user : ${user.id.get()} | ${user.password.get()}| ${user.email} | ${user.pseudonym} | ${user.username}")
-        val entity = userRepository.save(user.asResource())
-        return entity.toModel()
+    override fun create(user: User): User?{
+        LOGGER.info("Persist user : ${user.id.get()} | ${user.password.get()}| ${user.email} | ${user.pseudonym} | ${user.username}")
+        return try{
+            userRepository.save(user.asResource()).toModel()
+        }catch(e: Exception){
+            null
+        }
     }
 
-    override fun save(user: User): User {
-        userRepository.save(user.asResource())
-        return user
+    override fun save(user: User): User? {
+        return try{
+            val userResponse = userRepository.save(user.asResource())
+            userResponse.toModel()
+        }catch (e: Exception){
+            null
+        }
+    }
+
+    override fun getUserToken(userId: UserId): Token? {
+        val userResponse = userRepository.findById(userId.get())
+        if (userResponse.isEmpty) return null
+        return loginRepository.findByUser(userResponse.get())?.toModel()
     }
 }
