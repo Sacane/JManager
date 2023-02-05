@@ -6,43 +6,74 @@ import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import java.time.Month
 
-//TODO put it into TransactionReader without separate in many files
+// TODO Instead of return Response timeout, this should refresh the token if they match
 @PortToLeft
-class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction): TransactionReader {
-
-
-    override fun saveAccount(userId: UserId, account: Account) {
-        return port.saveAccount(userId, account)
+class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction) {
+    fun saveAccount(userId: UserId, token: Token, account: Account) : Response<Account>{
+        val tokenResponse = userPort.getUserToken(userId) ?: return Response.invalid()
+        if(tokenResponse.id != token.id) return Response.timeout()
+        val accountSaved = port.saveAccount(userId, account) ?: return Response.invalid()
+        return Response.ok(accountSaved)
     }
 
-    override fun sheetByDateAndAccount(userId: UserId, month: Month, year: Int, account: String): List<Sheet> {
+    fun sheetByDateAndAccount(userId: UserId, month: Month, year: Int, account: String): List<Sheet> {
         return port.getSheetsByDateAndAccount(userId, month, year, account)
     }
 
-    override fun findAccount(userId: UserId, labelAccount: String): Account? {
-        val user = userPort.findById(userId)
-        return user?.accounts()?.find { it.label() == labelAccount }
+    fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
+        val ticket = userPort.findById(userId)
+        if(ticket.state.isFailure()){
+            return Response.invalid()
+        }
+        val userTokenResponse = userPort.getUserToken(userId) ?: return Response.timeout()
+        val user = ticket.user
+        if(userTokenResponse.id == userToken.id) {
+            return Response.ok(user?.accounts()?.find { it.label() == labelAccount }!!)
+        }
+        return Response.timeout()
     }
 
 
-    override fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean {
-        return port.saveSheet(userId, accountLabel, sheet)
+    fun saveSheet(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
+        val userResponse = userPort.findById(userId)
+        if(userResponse.state.isFailure()) return Response.invalid()
+        val identity = userResponse.checkForIdentity(token) ?: return Response.invalid()
+        val savedSheet = port.saveSheet(userId, accountLabel, sheet) ?: return Response.invalid()
+        return Response.ok(savedSheet)
     }
 
-    override fun addCategory(userId: UserId, category: Category): Boolean {
-        return port.saveCategory(userId, category)
+    fun addCategory(userId: UserId, token: Token, category: Category): Response<Category> {
+        val userResponse = userPort.findById(userId)
+        if(userResponse.state.isFailure()){
+            return Response.invalid()
+        }
+        val userToken = userResponse.token ?: return Response.invalid()
+        if(userToken.id != token.id) {
+            return Response.timeout()
+        }
+        val categoryResponse = port.saveCategory(userId, category) ?: return Response.invalid()
+        return Response.ok(categoryResponse)
     }
 
-    override fun getAccountByUser(userId: UserId): List<Account>?{
+    fun getAccountByUser(userId: UserId, token: Token): List<Account>?{
         return port.getAccounts(userId)
     }
 
-    override fun retrieveAllCategoryOfUser(userId: Long): List<Category> {
-        val user = userPort.findById(UserId(userId)) ?: return emptyList()
-        return user.categories()
+    fun retrieveAllCategoryOfUser(userId: Long, token: Token): Response<List<Category>> {
+        val ticket = userPort.findById(UserId(userId))
+        if(ticket.user == null || ticket.token == null) return Response.invalid()
+        ticket.checkForIdentity(token) ?: return Response.invalid()
+        if(ticket.state.isFailure()){
+            return Response.timeout()
+        }
+        return Response.ok(ticket.user.categories())
     }
 
-    override fun removeCategory(id: UserId, label: String): Boolean {
-        return port.removeCategory(id, label)
+    fun removeCategory(id: UserId, token: Token, label: String): Response<Category?> {
+        val userTicket = userPort.findById(id)
+        if(userTicket.state.isFailure()) return Response.invalid()
+        userTicket.checkForIdentity(token) ?: return Response.timeout()
+        val responseEntity = port.removeCategory(id, label)
+        return Response.ok(responseEntity)
     }
 }
