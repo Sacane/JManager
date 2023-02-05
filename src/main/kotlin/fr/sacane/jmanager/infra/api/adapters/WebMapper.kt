@@ -1,14 +1,12 @@
 package fr.sacane.jmanager.infra.api.adapters
 
 import fr.sacane.jmanager.domain.model.*
-import fr.sacane.jmanager.infra.api.AccountDTO
-import fr.sacane.jmanager.infra.api.RegisteredUserDTO
-import fr.sacane.jmanager.infra.api.SheetDTO
-import fr.sacane.jmanager.infra.api.UserDTO
+import fr.sacane.jmanager.infra.api.*
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import java.net.http.HttpResponse
+import java.util.*
 
 internal fun Account.toDTO(): AccountDTO {
     return AccountDTO(
@@ -43,7 +41,23 @@ internal fun Long.id(): UserId {
 internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
     return when(this.status){
         TicketState.OK -> ResponseEntity(this.get(), HttpStatus.OK)
-        TicketState.TIMEOUT -> ResponseEntity(this.get(), HttpStatus.UNAUTHORIZED)
-        TicketState.INVALID -> ResponseEntity(this.get(), HttpStatus.BAD_REQUEST)
+        TicketState.TIMEOUT -> ResponseEntity.notFound().build()
+        TicketState.INVALID -> ResponseEntity.badRequest().build()
     }
 }
+
+internal fun TokenDTO.toToken(): Token{
+    return Token(UUID.fromString(this.token), null, UUID.fromString(this.refreshToken))
+}
+
+internal fun Token.toDTO(): TokenDTO{
+    return TokenDTO(this.id.toString(), this.refreshToken.toString())
+}
+
+//internal fun UserCredentialsDTO.toDataModel(): CredData{
+//    return CredData(
+//        this.id.id(),
+//        Password(this.password)
+//    )
+//}
+//data class CredData (val user: UserId, val password: Password, val token: Token)
