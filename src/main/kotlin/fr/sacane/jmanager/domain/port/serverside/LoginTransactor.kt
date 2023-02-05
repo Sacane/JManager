@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.model.*
 
 @PortToRight
 interface LoginTransactor {
-    fun login(userId: UserId, password: Password, token: Token): Ticket
-    fun logout(userId: UserId, token: Token): Ticket
-    fun refresh(userId: UserId, token: Token): Ticket
+    fun login(userPseudonym: String, password: Password): Ticket?
+    fun logout(userId: UserId, token: Token): Ticket?
+    fun refresh(userId: UserId, token: Token): Ticket?
 }

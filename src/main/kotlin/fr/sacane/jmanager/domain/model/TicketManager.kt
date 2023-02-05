@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.util.*
 data class Token(
     val id: UUID,
-    val lastRefresh: LocalDateTime,
+    val lastRefresh: LocalDateTime?,
     val refreshToken: UUID
 )
 
@@ -21,19 +21,16 @@ enum class TicketState{
     }
 }
 
-data class Ticket(
+class Ticket(
     val user: User?,
-    val state: TicketState,
     val token: Token?
-)
-
-fun invalidateTicket(): Ticket{
-    return Ticket(null, TicketState.INVALID, null)
-}
-fun expiredTicket(): Ticket{
-    return Ticket(null, TicketState.TIMEOUT, null)
-}
-
-fun emptyValidateTicket(): Ticket{
-    return Ticket(null ,TicketState.OK, null)
+){
+    fun checkForIdentity(token: Token): User?{
+        require(this.token != null && this.user != null){
+            "Forbidden check for invalid ticket"
+        }
+        return if(this.token.id == token.id){
+            this.user
+        } else null
+    }
 }

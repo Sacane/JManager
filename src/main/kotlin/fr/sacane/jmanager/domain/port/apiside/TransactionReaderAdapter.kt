@@ -17,17 +17,13 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
     }
 
     fun sheetByDateAndAccount(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
-        val userResponse = userPort.findById(userId)
-        if(userResponse.state.isFailure()) return Response.invalid()
+        val userResponse = userPort.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
         return Response.ok(port.getSheetsByDateAndAccount(userId, month, year, account))
     }
 
     fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
-        val ticket = userPort.findById(userId)
-        if(ticket.state.isFailure()){
-            return Response.invalid()
-        }
+        val ticket = userPort.findById(userId) ?: return Response.invalid()
         val userTokenResponse = userPort.getUserToken(userId) ?: return Response.timeout()
         val user = ticket.user
         if(userTokenResponse.id == userToken.id) {
@@ -38,18 +34,14 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
 
 
     fun saveSheet(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
-        val userResponse = userPort.findById(userId)
-        if(userResponse.state.isFailure()) return Response.invalid()
-        val identity = userResponse.checkForIdentity(token) ?: return Response.invalid()
+        val userResponse = userPort.findById(userId) ?: return Response.invalid()
+        userResponse.checkForIdentity(token) ?: return Response.invalid()
         val savedSheet = port.saveSheet(userId, accountLabel, sheet) ?: return Response.invalid()
         return Response.ok(savedSheet)
     }
 
     fun addCategory(userId: UserId, token: Token, category: Category): Response<Category> {
-        val userResponse = userPort.findById(userId)
-        if(userResponse.state.isFailure()){
-            return Response.invalid()
-        }
+        val userResponse = userPort.findById(userId) ?: return Response.invalid()
         val userToken = userResponse.token ?: return Response.invalid()
         if(userToken.id != token.id) {
             return Response.timeout()
@@ -58,23 +50,21 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
         return Response.ok(categoryResponse)
     }
 
-    fun getAccountByUser(userId: UserId, token: Token): List<Account>?{
-        return port.getAccounts(userId)
+    fun getAccountByUser(userId: UserId, token: Token): Response<List<Account>?>{
+        val userResponse = userPort.findById(userId) ?: return Response.invalid()
+        userResponse.checkForIdentity(token) ?: return Response.invalid()
+        return Response.ok(port.getAccounts(userId))
     }
 
-    fun retrieveAllCategoryOfUser(userId: Long, token: Token): Response<List<Category>> {
-        val ticket = userPort.findById(UserId(userId))
+    fun retrieveAllCategoryOfUser(userId: UserId, token: Token): Response<List<Category>> {
+        val ticket = userPort.findById(userId) ?: return Response.invalid()
         if(ticket.user == null || ticket.token == null) return Response.invalid()
         ticket.checkForIdentity(token) ?: return Response.invalid()
-        if(ticket.state.isFailure()){
-            return Response.timeout()
-        }
         return Response.ok(ticket.user.categories())
     }
 
     fun removeCategory(id: UserId, token: Token, label: String): Response<Category?> {
-        val userTicket = userPort.findById(id)
-        if(userTicket.state.isFailure()) return Response.invalid()
+        val userTicket = userPort.findById(id) ?: return Response.invalid()
         userTicket.checkForIdentity(token) ?: return Response.timeout()
         val responseEntity = port.removeCategory(id, label)
         return Response.ok(responseEntity)

@@ -10,8 +10,8 @@ interface TransactionRegister {
     fun getSheets(user: UserId, accountLabel: String): List<Sheet>
     fun getSheetsByDateAndAccount(userId: UserId, month: Month, year: Int, labelAccount: String): List<Sheet>
     fun getAccounts(user: UserId): List<Account>?
-    fun saveAccount(userId: UserId, account: Account)
-    fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Boolean
-    fun saveCategory(userId: UserId, category: Category): Boolean
-    fun removeCategory(userId: UserId, labelCategory: String): Boolean
+    fun saveAccount(userId: UserId, account: Account): Account?
+    fun saveSheet(userId: UserId, accountLabel: String, sheet: Sheet): Sheet?
+    fun saveCategory(userId: UserId, category: Category): Category?
+    fun removeCategory(userId: UserId, labelCategory: String): Category?
 }

@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.model
 
 class Response <out S> private constructor(
     val status: TicketState,
-    private val value: S? = null,
+    private var value: S? = null,
 ){
     init{
         require(status.isSuccess() && value != null || status.isFailure()){
@@ -20,5 +20,11 @@ class Response <out S> private constructor(
     }
     fun get(): S?{
         return value
+    }
+    fun <T> mapTo(
+        mapper: (S?) -> T
+    ): Response<T>{
+        val mapped = mapper.invoke(this.value)
+        return Response(this.status, mapped)
     }
 }
