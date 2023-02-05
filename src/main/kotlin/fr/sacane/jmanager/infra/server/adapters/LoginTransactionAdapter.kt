@@ -13,7 +13,7 @@ import java.util.*
 
 @Service
 @DatasourceAdapter
-class LoginTransactionReceiver(val userRepository: UserRepository, val loginRepository: LoginRepository) : LoginTransactor {
+class LoginTransactionAdapter(val userRepository: UserRepository, val loginRepository: LoginRepository) : LoginTransactor {
 
     companion object{
         private const val DEFAULT_TOKEN_LIFETIME_IN_HOURS = 1L //1hour
