@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infra.server.adapters
 
+import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.serverside.LoginTransactor
@@ -23,7 +24,7 @@ class LoginTransactionAdapter(val userRepository: UserRepository, val loginRepos
     override fun login(userPseudonym: String, password: Password): Ticket? {
         val userResponse = userRepository.findByPseudonym(userPseudonym)
         val user = userResponse ?: return null
-        return if(MessageDigest.isEqual(user.password, password.get())){
+        return if(Hash.contentEquals(user.password!!, password.value)){
             val login = loginRepository.save(Login(user, LocalDateTime.now().plusHours(1)))
             Ticket(user.toModel(), login.toModel())
         }

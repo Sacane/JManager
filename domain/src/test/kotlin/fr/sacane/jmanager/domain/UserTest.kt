@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain
 
-import fr.sacane.jmanager.domain.model.*
+import fr.sacane.jmanager.domain.models.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

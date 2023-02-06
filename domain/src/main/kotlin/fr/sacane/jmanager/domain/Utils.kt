@@ -20,8 +20,14 @@ object Hash {
         return md.digest(pwd.toByteArray(StandardCharsets.UTF_8))
     }
 
+    fun contentEquals(pwd: ByteArray, other: String): Boolean{
+        return pwd.contentEquals(other.toByteArray())
+    }
+
     private fun salt(): ByteArray?{
         val path: File = Path.of(System.getProperty("user.dir").plus("/salt.txt")).toFile()
+        println(path.exists())
+        println("HELLO")
         return try{
             BufferedReader(FileReader(path)).use {
                 it.lines().findFirst().get()

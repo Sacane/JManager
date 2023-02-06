@@ -21,7 +21,7 @@ class UserResource(
     @Column(unique = true)
     var username: String? = null,
 
-    @Column(updatable = true)
+    @Column
     var password: ByteArray? = null,
 
     @Column(unique = true, nullable = true)

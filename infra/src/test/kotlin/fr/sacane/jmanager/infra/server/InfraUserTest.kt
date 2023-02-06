@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infra.server
 
-import fr.sacane.jmanager.domain.model.Password
+import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.infra.server.entity.AccountResource
 import fr.sacane.jmanager.infra.server.entity.SheetResource
 import fr.sacane.jmanager.infra.server.entity.UserResource

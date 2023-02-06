@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain
 
-import fr.sacane.jmanager.domain.model.Account
+import fr.sacane.jmanager.domain.models.Account
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
 
