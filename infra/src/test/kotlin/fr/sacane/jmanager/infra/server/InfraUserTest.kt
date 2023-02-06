@@ -8,11 +8,19 @@ import fr.sacane.jmanager.infra.server.repositories.AccountRepository
 import fr.sacane.jmanager.infra.server.repositories.UserRepository
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Order
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.TestPropertySource
 
-@SpringBootTest
+
+
+@DataJpaTest
+@AutoConfigureTestDatabase(replace= AutoConfigureTestDatabase.Replace.NONE)
+@TestPropertySource(locations = ["classpath:application-test.properties"])
 class InfraUserTest {
 
     @Autowired
@@ -29,15 +37,19 @@ class InfraUserTest {
         return SheetResource()
     }
 
+    @AfterEach
+    fun clear(){
+        userRepository.deleteByPseudonym("johan_test")
+    }
+
     @Test
     @Order(1)
     fun `users should correctly be implement into database`(){
-        userRepository.deleteAll()
-        val user = UserResource(null, "johan_test", "johan.ramaroson@test.com", Password("01012000").get(), "Sacane", mutableListOf(), mutableListOf())
+        val user = UserResource("johan_test", "johan.ramaroson@test.com", Password("01012000").get(), "Sacane", mutableListOf(), mutableListOf())
         userRepository.save(user)
         val byName = userRepository.findByPseudonym("johan_test")
         assertThat(byName?.pseudonym).isEqualTo(user.pseudonym)
-        userRepository.deleteById(byName?.id_user!!)
+
 
     }
 
@@ -48,7 +60,6 @@ class InfraUserTest {
     @Test
     @Order(2)
     fun `users should got accounts while add them into database`(){
-        userRepository.deleteByPseudonym("johan_test")
         val user = basicUserTest()
         user.accounts = mutableListOf()
         userRepository.save(user)
