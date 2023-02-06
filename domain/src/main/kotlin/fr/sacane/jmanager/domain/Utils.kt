@@ -11,17 +11,19 @@ import java.security.MessageDigest
 
 object Hash {
     private val md = MessageDigest.getInstance("SHA-512")
-
+    private val salt: ByteArray?
     init{
-        md.update(salt())
+        salt = salt()
     }
 
     fun hash(pwd: String): ByteArray{
+        md.update(salt)
         return md.digest(pwd.toByteArray(StandardCharsets.UTF_8))
     }
 
     fun contentEquals(pwd: ByteArray, other: String): Boolean{
-        return pwd.contentEquals(other.toByteArray())
+        val digest = hash(other)
+        return pwd.contentEquals(digest)
     }
 
     private fun salt(): ByteArray?{

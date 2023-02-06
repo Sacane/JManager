@@ -31,7 +31,7 @@ class UserDomainServerTest {
         val getUser = userRepository.findByPseudonym("Sacane_test")
         assertThat(getUser).isNotNull
         assertThat(getUser?.username).isEqualTo("Sacane")
-        assertThat(Hash.contentEquals(getUser?.password!!, "01012000"))
+        assertThat(Hash.contentEquals(getUser?.password!!, "01012000")).isTrue
     }
 
 
