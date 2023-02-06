@@ -1,1 +1,1 @@
-rootProject.name="infra"
+rootProject.name = "infra"
