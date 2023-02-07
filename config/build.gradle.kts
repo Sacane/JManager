@@ -6,6 +6,7 @@ plugins {
     war
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
+    kotlin("plugin.jpa") version "1.6.21"
     id("org.jetbrains.kotlin.plugin.allopen") version "1.5.21"
 }
 
@@ -18,6 +19,7 @@ repositories {
 }
 
 
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -27,10 +29,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation(project(mapOf("path" to ":domain")))
-    implementation(project(mapOf("path" to ":config")))
     implementation(project(mapOf("path" to ":infra")))
     providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.hamcrest:hamcrest:2.2")
 }
 
 tasks.withType<KotlinCompile> {

@@ -7,47 +7,31 @@ import fr.sacane.jmanager.domain.port.serverside.LoginTransactor
 import fr.sacane.jmanager.server.entity.Login
 import fr.sacane.jmanager.server.repositories.LoginRepository
 import fr.sacane.jmanager.server.repositories.UserRepository
+import fr.sacane.jmanager.server.spring.SpringLayerService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
 
 @Service
 @DatasourceAdapter
-class LoginTransactionAdapter(val userRepository: UserRepository, val loginRepository: LoginRepository) : LoginTransactor {
-
+class LoginTransactionAdapter : LoginTransactor {
+    @Autowired
+    private lateinit var service: SpringLayerService
     companion object{
         private const val DEFAULT_TOKEN_LIFETIME_IN_HOURS = 1L //1hour
 //        private const val DEFAULT_REFRESH_TOKEN_LIFETIME = 60L* 60L * 24L * 5L * 1000L // 5 days
     }
 
     override fun login(userPseudonym: String, password: Password): Ticket? {
-        val userResponse = userRepository.findByPseudonym(userPseudonym)
-        val user = userResponse ?: return null
-        return if(Hash.contentEquals(user.password!!, password.value)){
-            val login = loginRepository.save(Login(user, LocalDateTime.now().plusHours(1)))
-            Ticket(user.toModel(), login.toModel())
-        }
-        else null
+        return service.login(userPseudonym, password)
     }
 
     override fun logout(userId: UserId, token: Token): Ticket? {
-        val userResponse = userRepository.findById(userId.get())
-        if(userResponse.isEmpty) return null
-        val user = userResponse.get()
-        val login = loginRepository.findByUser(user) ?: return null
-        loginRepository.delete(login)
-        return null
+        return service.logout(userId, token)
     }
 
     override fun refresh(userId: UserId, token: Token): Ticket? {
-        val userResponse = userRepository.findById(userId.get())
-        if (userResponse.isEmpty) return null
-        val user = userResponse.get()
-        val login = loginRepository.findByUser(user) ?: return null
-        login.id = UUID.randomUUID()
-        login.refreshToken = UUID.randomUUID()
-        login.lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
-        val response = loginRepository.save(login)
-        return Ticket(user.toModel(), login.toModel())
+        return service.refresh(userId, token)
     }
 }
