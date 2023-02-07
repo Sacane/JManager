@@ -28,7 +28,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation(project(mapOf("path" to ":domain")))
     implementation(project(mapOf("path" to ":config")))
-    implementation(project(mapOf("path" to ":infra")))
     providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
