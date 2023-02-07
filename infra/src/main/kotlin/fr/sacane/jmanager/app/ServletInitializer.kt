@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.app
 
+import fr.sacane.jmanager.JmanagerBackApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 
