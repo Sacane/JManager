@@ -1,4 +1,4 @@
-package fr.sacane.jmanager
+package fr.sacane.jmanager.app
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
