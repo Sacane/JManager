@@ -1,2 +1,2 @@
 rootProject.name = "Jmanager-back"
-include(":domain", ":infra", ":app")
+include("domain", "infra", "app", "config")
