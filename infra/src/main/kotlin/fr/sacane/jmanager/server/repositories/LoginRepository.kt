@@ -1,7 +1,7 @@
-package fr.sacane.jmanager.infra.repositories
+package fr.sacane.jmanager.server.repositories
 
-import fr.sacane.jmanager.infra.entity.Login
-import fr.sacane.jmanager.infra.entity.UserResource
+import fr.sacane.jmanager.server.entity.Login
+import fr.sacane.jmanager.server.entity.UserResource
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

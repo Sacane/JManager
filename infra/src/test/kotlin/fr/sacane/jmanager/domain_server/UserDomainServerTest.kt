@@ -2,15 +2,13 @@ package fr.sacane.jmanager.domain_server
 
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.infra.entity.UserResource
-import fr.sacane.jmanager.infra.repositories.UserRepository
+import fr.sacane.jmanager.server.entity.UserResource
+import fr.sacane.jmanager.server.repositories.UserRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import java.security.MessageDigest
-import java.util.*
 
 @SpringBootTest
 class UserDomainServerTest {

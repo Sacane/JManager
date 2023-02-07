@@ -1,7 +1,6 @@
-package fr.sacane.jmanager.infra.api
+package fr.sacane.jmanager.server.api
 
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 
 
 class ControllerTest {

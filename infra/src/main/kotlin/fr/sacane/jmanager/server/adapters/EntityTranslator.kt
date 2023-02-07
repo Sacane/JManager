@@ -1,8 +1,8 @@
-package fr.sacane.jmanager.infra.adapters
+package fr.sacane.jmanager.server.adapters
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.infra.entity.*
-import fr.sacane.jmanager.infra.server.entity.*
+import fr.sacane.jmanager.server.entity.*
+
 
 internal fun Sheet.asResource(): SheetResource {
     val resource = SheetResource()

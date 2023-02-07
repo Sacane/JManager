@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infra.entity
+package fr.sacane.jmanager.server.entity
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
 import java.time.LocalDate
