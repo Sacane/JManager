@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.port.serverside.UserTransaction
 import fr.sacane.jmanager.server.entity.Login
 import fr.sacane.jmanager.server.repositories.LoginRepository
 import fr.sacane.jmanager.server.repositories.UserRepository
+import fr.sacane.jmanager.server.spring.SpringLayerService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
@@ -17,59 +18,33 @@ import java.time.LocalDateTime
 class ServerUserAdapter : UserTransaction{
 
     @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
-    private lateinit var loginRepository: LoginRepository
+    private lateinit var service: SpringLayerService
 
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java)
     }
     override fun findById(userId: UserId): Ticket? {
-        val user = userRepository.findById(userId.get())
-        if(user.isEmpty) return null
-        val token = loginRepository.findByUser(user.get()) ?: return null
-        return Ticket(user.get().toModel(), token.toModel())
+        return service.findById(userId)
     }
 
     override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
         LOGGER.info("Trying to login user $pseudonym")
-        val user = userRepository.findByPseudonym(pseudonym)
-        if(!MessageDigest.isEqual(pwd.get(), user?.password)){
-            return null
-        }
-        val token = Login(user!!, LocalDateTime.now())
-        val tokenBack = loginRepository.save(token)
-        return Ticket(user.toModel(), Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
+        return service.checkUser(pseudonym, pwd)
     }
 
     override fun findByPseudonym(pseudonym: String): Ticket? {
-        val user = userRepository.findByPseudonym(pseudonym) ?: return null
-        val token = loginRepository.findByUser(user) ?: return null
-        return Ticket(user.toModel(), token.toModel())
+        return service.findByPseudonym(pseudonym)
     }
 
     override fun create(user: User): User?{
-        LOGGER.info("Persist user : ${user.id.get()} | ${user.password.get()}| ${user.email} | ${user.pseudonym} | ${user.username}")
-        return try{
-            userRepository.save(user.asResource()).toModel()
-        }catch(e: Exception){
-            null
-        }
+        return service.create(user)
     }
 
     override fun save(user: User): User? {
-        return try{
-            val userResponse = userRepository.save(user.asResource())
-            userResponse.toModel()
-        }catch (e: Exception){
-            null
-        }
+        return service.save(user)
     }
 
     override fun getUserToken(userId: UserId): Token? {
-        val userResponse = userRepository.findById(userId.get())
-        if (userResponse.isEmpty) return null
-        return loginRepository.findByUser(userResponse.get())?.toModel()
+        return service.getUserToken(userId)
     }
 }
