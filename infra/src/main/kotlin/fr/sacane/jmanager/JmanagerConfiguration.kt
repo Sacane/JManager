@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infra
+package fr.sacane.jmanager
 
 
 import fr.sacane.jmanager.domain.port.apiside.LoginManager

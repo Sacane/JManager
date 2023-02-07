@@ -1,11 +1,11 @@
-package fr.sacane.jmanager.infra.server
+package fr.sacane.jmanager.infra
 
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.infra.server.entity.AccountResource
-import fr.sacane.jmanager.infra.server.entity.SheetResource
-import fr.sacane.jmanager.infra.server.entity.UserResource
-import fr.sacane.jmanager.infra.server.repositories.AccountRepository
-import fr.sacane.jmanager.infra.server.repositories.UserRepository
+import fr.sacane.jmanager.infra.entity.AccountResource
+import fr.sacane.jmanager.infra.entity.SheetResource
+import fr.sacane.jmanager.infra.entity.UserResource
+import fr.sacane.jmanager.infra.repositories.AccountRepository
+import fr.sacane.jmanager.infra.repositories.UserRepository
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -33,7 +33,7 @@ class InfraUserTest {
         return UserResource(null, "johan_test", "johan.ramaroson@test.com", Password("0101012000").get(), "Sacane", null,null)
     }
 
-    fun basicSheetTest(): SheetResource{
+    fun basicSheetTest(): SheetResource {
         return SheetResource()
     }
 

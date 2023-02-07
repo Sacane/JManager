@@ -1,6 +1,7 @@
-package fr.sacane.jmanager.infra.server.adapters
+package fr.sacane.jmanager.infra.adapters
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.infra.entity.*
 import fr.sacane.jmanager.infra.server.entity.*
 
 internal fun Sheet.asResource(): SheetResource {

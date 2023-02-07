@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infra.server.entity
+package fr.sacane.jmanager.infra.entity
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
 import javax.persistence.Column

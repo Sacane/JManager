@@ -1,7 +1,7 @@
-package fr.sacane.jmanager.infra.api.adapters
+package fr.sacane.jmanager.app.adapters
 
+import fr.sacane.jmanager.app.*
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.infra.api.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import java.util.*
@@ -48,7 +48,7 @@ internal fun TokenDTO.toToken(): Token {
     return Token(UUID.fromString(this.token), null, UUID.fromString(this.refreshToken))
 }
 
-internal fun Token.toDTO(): TokenDTO{
+internal fun Token.toDTO(): TokenDTO {
     return TokenDTO(this.id.toString(), this.refreshToken.toString())
 }
 

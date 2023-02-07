@@ -1,12 +1,12 @@
-package fr.sacane.jmanager.infra.api.adapters
+package fr.sacane.jmanager.app.adapters
 
+import fr.sacane.jmanager.app.*
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Category
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.port.apiside.TransactionReaderAdapter
-import fr.sacane.jmanager.infra.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
@@ -65,7 +65,7 @@ class TransactionValidator @Autowired constructor(private var apiPort: Transacti
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(response.get()?.label)
     }
-    private fun SheetDTO.sheetToSend(): SheetSendDTO{
+    private fun SheetDTO.sheetToSend(): SheetSendDTO {
         return SheetSendDTO(this.label, this.amount, if(this.action) "Entree" else "Sortie", this.date)
     }
 

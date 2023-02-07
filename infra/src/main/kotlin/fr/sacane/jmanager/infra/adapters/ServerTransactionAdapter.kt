@@ -1,11 +1,11 @@
-package fr.sacane.jmanager.infra.server.adapters
+package fr.sacane.jmanager.infra.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
-import fr.sacane.jmanager.infra.server.entity.CategoryResource
-import fr.sacane.jmanager.infra.server.repositories.CategoryRepository
-import fr.sacane.jmanager.infra.server.repositories.UserRepository
+import fr.sacane.jmanager.infra.entity.CategoryResource
+import fr.sacane.jmanager.infra.repositories.CategoryRepository
+import fr.sacane.jmanager.infra.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

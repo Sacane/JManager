@@ -1,6 +1,6 @@
-package fr.sacane.jmanager.infra.server.repositories
+package fr.sacane.jmanager.infra.repositories
 
-import fr.sacane.jmanager.infra.server.entity.AccountResource
+import fr.sacane.jmanager.infra.entity.AccountResource
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 

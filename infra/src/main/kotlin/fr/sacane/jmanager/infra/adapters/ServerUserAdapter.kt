@@ -1,12 +1,12 @@
-package fr.sacane.jmanager.infra.server.adapters
+package fr.sacane.jmanager.infra.adapters
 
 import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.serverside.UserTransaction
-import fr.sacane.jmanager.infra.server.entity.Login
-import fr.sacane.jmanager.infra.server.repositories.LoginRepository
-import fr.sacane.jmanager.infra.server.repositories.UserRepository
+import fr.sacane.jmanager.infra.entity.Login
+import fr.sacane.jmanager.infra.repositories.LoginRepository
+import fr.sacane.jmanager.infra.repositories.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.security.MessageDigest

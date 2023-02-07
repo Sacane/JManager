@@ -1,12 +1,12 @@
-package fr.sacane.jmanager.infra.server.adapters
+package fr.sacane.jmanager.infra.adapters
 
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.serverside.LoginTransactor
-import fr.sacane.jmanager.infra.server.entity.Login
-import fr.sacane.jmanager.infra.server.repositories.LoginRepository
-import fr.sacane.jmanager.infra.server.repositories.UserRepository
+import fr.sacane.jmanager.infra.entity.Login
+import fr.sacane.jmanager.infra.repositories.LoginRepository
+import fr.sacane.jmanager.infra.repositories.UserRepository
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.time.LocalDateTime
