@@ -1,9 +1,9 @@
 package fr.sacane.jmanager.app
 
-import fr.sacane.jmanager.JmanagerBackApplication
-import fr.sacane.jmanager.domain.models.UserId
+
 import fr.sacane.jmanager.app.adapters.TransactionValidator
 import fr.sacane.jmanager.app.adapters.UserControlAdapter
+import fr.sacane.jmanager.domain.models.UserId
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
