@@ -1,8 +1,18 @@
 package fr.sacane.jmanager.domain.models
 
-
+enum class ResponseState{
+    OK,
+    TIMEOUT,
+    INVALID;
+    fun isSuccess(): Boolean{
+        return this == OK
+    }
+    fun isFailure(): Boolean{
+        return this != OK
+    }
+}
 class Response <out S> private constructor(
-    val status: TicketState,
+    val status: ResponseState,
     private var value: S? = null,
 ){
     init{
@@ -11,12 +21,9 @@ class Response <out S> private constructor(
         }
     }
     companion object{
-        fun <S> ok(entity: S): Response<S> = Response(TicketState.OK, entity)
-        fun <S> invalid(entity: S?): Response<S> = Response(TicketState.INVALID, entity)
-        fun invalid(): Response<Nothing> = invalid(null)
-        fun <S> timeout(entity: S): Response<S> = Response(TicketState.TIMEOUT, entity)
-        fun timeout(): Response<Nothing> = Response(TicketState.TIMEOUT, null)
-        fun <S> emptyInvalidResponse(): Response<S> = Response(TicketState.INVALID, null)
+        fun <S> ok(entity: S): Response<S> = Response(ResponseState.OK, entity)
+        fun invalid(): Response<Nothing> = Response(ResponseState.INVALID, null)
+        fun timeout(): Response<Nothing> = Response(ResponseState.TIMEOUT, null)
     }
     fun get(): S?{
         return value

@@ -9,13 +9,17 @@ class UserId(private val id: Long){
 
 
 class Password(val value: String){
-
-
+    init{
+        require(value.isNotBlank() && value.isNotEmpty()){
+            "Given password is blank or empty"
+        }
+    }
     fun get(): ByteArray{
         return Hash.hash(value)
     }
-
-
+    fun matchWith(password2: Password): Boolean {
+        return get().contentEquals(password2.get())
+    }
 }
 
 class User(
@@ -27,8 +31,6 @@ class User(
     val password: Password,
     private val categories: MutableList<Category>
 ){
-
     fun accounts(): List<Account> = accounts.distinct()
     fun categories(): List<Category> = categories.distinct()
-
 }

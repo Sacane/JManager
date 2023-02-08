@@ -142,10 +142,9 @@ class SpringLayerService {
         return Ticket(user.toModel(), Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
     }
 
-    fun findByPseudonym(pseudonym: String): Ticket? {
-        val user = userRepository.findByPseudonym(pseudonym) ?: return null
-        val token = loginRepository.findByUser(user) ?: return null
-        return Ticket(user.toModel(), token.toModel())
+    fun findByPseudonym(pseudonym: String): User? {
+        val user = userRepository.findByPseudonym(pseudonym)
+        return user?.toModel()
     }
 
     fun create(user: User): User?{

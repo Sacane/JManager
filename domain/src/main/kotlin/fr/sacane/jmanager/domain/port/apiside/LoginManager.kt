@@ -2,10 +2,10 @@ package fr.sacane.jmanager.domain.port.apiside
 
 import fr.sacane.jmanager.domain.hexadoc.PortToLeft
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.LoginTransactor
+import fr.sacane.jmanager.domain.port.serverside.LoginInventory
 
 @PortToLeft
-class LoginManager(private val loginPort: LoginTransactor){
+class LoginManager(private val loginPort: LoginInventory){
 
 
     fun login(pseudonym: String, userPassword: Password): Response<Ticket> {

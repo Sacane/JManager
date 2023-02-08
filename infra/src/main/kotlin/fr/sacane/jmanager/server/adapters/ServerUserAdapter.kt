@@ -32,7 +32,7 @@ class ServerUserAdapter : UserTransaction{
         return service.checkUser(pseudonym, pwd)
     }
 
-    override fun findByPseudonym(pseudonym: String): Ticket? {
+    override fun findByPseudonym(pseudonym: String): User? {
         return service.findByPseudonym(pseudonym)
     }
 
