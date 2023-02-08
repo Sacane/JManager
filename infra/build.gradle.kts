@@ -16,9 +16,6 @@ group = "fr.sacane.jmanager"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
-repositories{
-    mavenCentral()
-}
 
 
 dependencies {
@@ -36,21 +33,4 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.hamcrest:hamcrest:2.2")
     testImplementation("com.h2database:h2")
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
-    }
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
-
-allprojects{
-    repositories{
-        mavenCentral()
-    }
 }
