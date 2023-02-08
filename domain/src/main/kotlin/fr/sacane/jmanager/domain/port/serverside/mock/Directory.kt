@@ -53,7 +53,7 @@ class Directory {
 
         override fun findById(userId: UserId): Ticket? {
             val user = userInventory.find { it.id.get() == userId.get() } ?: return null
-            return Ticket(user, tokenInventory[user.username])
+            return tokenInventory[user.username]?.let { Ticket(user, it) }
         }
         override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
             TODO("Not yet implemented")
