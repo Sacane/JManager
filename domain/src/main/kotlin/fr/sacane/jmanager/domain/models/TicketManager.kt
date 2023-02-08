@@ -6,26 +6,25 @@ data class Token(
     val id: UUID,
     val lastRefresh: LocalDateTime?,
     val refreshToken: UUID
-)
-enum class TicketState{
-    OK,
-    TIMEOUT,
-    INVALID;
-    fun isSuccess(): Boolean{
-        return this == OK
+){
+    fun isExpired(time: LocalDateTime): Boolean{
+        require(lastRefresh != null){
+            "trying to check a token that has been created without lastRefresh indication"
+        }
+        return lastRefresh.isBefore(time)
     }
-    fun isFailure(): Boolean{
-        return this != OK
+    fun isExpired(): Boolean{
+        require(lastRefresh != null){
+            "trying to check a token that has been created without lastRefresh indication"
+        }
+        return lastRefresh.isBefore(LocalDateTime.now())
     }
 }
 class Ticket(
-    val user: User?,
-    val token: Token?
+    val user: User,
+    val token: Token
 ){
     fun checkForIdentity(token: Token): User?{
-        require(this.token != null && this.user != null){
-            "Forbidden check for invalid ticket"
-        }
         return if(this.token.id == token.id){
             this.user
         } else null
