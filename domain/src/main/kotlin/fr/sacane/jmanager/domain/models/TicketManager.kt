@@ -7,12 +7,10 @@ data class Token(
     val lastRefresh: LocalDateTime?,
     val refreshToken: UUID
 )
-
 enum class TicketState{
     OK,
     TIMEOUT,
     INVALID;
-
     fun isSuccess(): Boolean{
         return this == OK
     }
@@ -20,7 +18,6 @@ enum class TicketState{
         return this != OK
     }
 }
-
 class Ticket(
     val user: User?,
     val token: Token?
