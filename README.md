@@ -10,10 +10,6 @@ A WebApp that allow you to manage your personal budget.
 - You can easily visualize feedback to your budget state by months.
 - You can easily visualize feedback to all of your registered accounts.
 
-## Author 
-
-**Johan *"Sacane"* Ramaroson Rakotomihamina**
-
 
 ## Implementation
 
