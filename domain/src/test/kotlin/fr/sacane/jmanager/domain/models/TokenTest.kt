@@ -1,12 +1,10 @@
 package fr.sacane.jmanager.domain.models
 
 
-import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.concurrent.schedule
 
 class TokenTest {
     @Test
