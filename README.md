@@ -19,8 +19,8 @@ A WebApp that allow you to manage your personal budget.
 
 This architecture does separate the project in 2 distinct submodules :
 
-* **Domain**, which contains all the business _rules_
-* **Infrastructure**, which briefly, contains all the dependencies that support the application. Such as the database or the api-rest implementation.
+* **Domain**, which contains all the business models and logics.
+* **Infrastructure**, which briefly, contains all the dependencies that support the application. Such as the database and the api-rest implementation.
 
 Annotation documentation in the common package is available to easily read which class is used for.
 
