@@ -6,14 +6,14 @@ import fr.sacane.jmanager.domain.models.Category
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
-import fr.sacane.jmanager.domain.port.api.TransactionReaderAdapter
+import fr.sacane.jmanager.domain.port.api.BudgetResolverApply
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 
 @LeftAdapter
 @Service
-class TransactionValidator @Autowired constructor(private var apiPort: TransactionReaderAdapter) {
+class TransactionValidator @Autowired constructor(private var apiPort: BudgetResolverApply) {
 
     fun findAccount(accountOwnerDTO: UserAccountDTO, tokenDTO: TokenDTO): ResponseEntity<AccountDTO> {
         val accountResponse =

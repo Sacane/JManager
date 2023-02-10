@@ -8,7 +8,7 @@ import java.time.Month
 
 // TODO Instead of return Response timeout, this should refresh the token if they match
 @LeftPort
-class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction): BudgetResolver {
+class BudgetResolverApply(private val port: TransactionRegister, private val userPort: UserTransaction): BudgetResolver {
     override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
         val tokenResponse = userPort.getUserToken(userId) ?: return Response.invalid()
         if(tokenResponse.id != token.id) return Response.timeout()
@@ -18,8 +18,12 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
 
     override fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
         val userResponse = userPort.findById(userId) ?: return Response.invalid()
-        userResponse.checkForIdentity(token) ?: return Response.timeout()
-        return Response.ok(port.getSheetsByDateAndAccount(userId, month, year, account))
+        val user = userResponse.checkForIdentity(token) ?: return Response.timeout()
+        val sheets = user.accounts()
+            .find { it.label() == account }
+            ?.sheets()?.filter { it.date.month == month && it.date.year == year }
+            ?: return Response.invalid()
+        return Response.ok(sheets)
     }
 
     fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
@@ -42,7 +46,7 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
 
     override fun createCategory(userId: UserId, token: Token, category: Category): Response<Category> {
         val userResponse = userPort.findById(userId) ?: return Response.invalid()
-        val userToken = userResponse.token ?: return Response.invalid()
+        val userToken = userResponse.token
         if(userToken.id != token.id) {
             return Response.timeout()
         }

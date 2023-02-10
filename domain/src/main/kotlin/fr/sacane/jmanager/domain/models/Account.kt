@@ -4,7 +4,7 @@ class Account(
         private var id: Long?,
         private var amount: Double,
         private val labelAccount: String,
-        private val sheets: MutableList<Sheet>?
+        val sheets: MutableList<Sheet>?
 ){
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label()
