@@ -38,9 +38,7 @@ interface LoginTransactor {
 ```
 This class is a port which goes to the right-side of the hexagon.
 
-## Advantages
-
-Those are the main reasons I implemented this architecture in this project : 
+## Values
 
 * To be as flexible as possible by implementing each side separately.
 * To feel free to change my dependencies at any time for future releases without break all the architecture. 
