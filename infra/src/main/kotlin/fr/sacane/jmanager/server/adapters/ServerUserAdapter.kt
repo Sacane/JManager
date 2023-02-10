@@ -7,7 +7,6 @@ import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import fr.sacane.jmanager.server.entity.Login
 import fr.sacane.jmanager.server.repositories.LoginRepository
 import fr.sacane.jmanager.server.repositories.UserRepository
-import fr.sacane.jmanager.server.spring.SpringLayerService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.Exception
