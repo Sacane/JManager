@@ -7,5 +7,5 @@ import fr.sacane.jmanager.domain.models.*
 interface Administrator {
     fun login(pseudonym: String, userPassword: Password): Response<Ticket>
     fun logout(userId: UserId, userToken: Token): Response<Nothing>
-    fun signIn(user: User): Response<User>
+    fun register(user: User): Response<User>
 }
