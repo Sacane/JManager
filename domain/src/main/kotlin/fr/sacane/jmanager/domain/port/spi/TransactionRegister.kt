@@ -1,12 +1,12 @@
-package fr.sacane.jmanager.domain.port.serverside
-import fr.sacane.jmanager.domain.hexadoc.PortToRight
+package fr.sacane.jmanager.domain.port.spi
+import fr.sacane.jmanager.domain.hexadoc.RightPort
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Category
 import fr.sacane.jmanager.domain.models.Sheet
 import fr.sacane.jmanager.domain.models.UserId
 import java.time.Month
 
-@PortToRight
+@RightPort
 interface TransactionRegister {
 
     fun getSheets(user: UserId, accountLabel: String): List<Sheet>

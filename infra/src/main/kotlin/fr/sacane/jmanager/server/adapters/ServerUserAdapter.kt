@@ -3,15 +3,10 @@ package fr.sacane.jmanager.server.adapters
 import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.UserTransaction
-import fr.sacane.jmanager.server.entity.Login
-import fr.sacane.jmanager.server.repositories.LoginRepository
-import fr.sacane.jmanager.server.repositories.UserRepository
+import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import fr.sacane.jmanager.server.spring.SpringLayerService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.security.MessageDigest
-import java.time.LocalDateTime
 
 @Service
 @DatasourceAdapter

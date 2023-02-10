@@ -3,8 +3,8 @@ package fr.sacane.jmanager.app.adapters
 import fr.sacane.jmanager.app.*
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.domain.port.apiside.LoginManager
-import fr.sacane.jmanager.domain.port.apiside.UserRegister
+import fr.sacane.jmanager.domain.port.api.LoginManager
+import fr.sacane.jmanager.domain.port.api.UserRegister
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service

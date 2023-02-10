@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.Category
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
-import fr.sacane.jmanager.domain.port.apiside.TransactionReaderAdapter
+import fr.sacane.jmanager.domain.port.api.TransactionReaderAdapter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service

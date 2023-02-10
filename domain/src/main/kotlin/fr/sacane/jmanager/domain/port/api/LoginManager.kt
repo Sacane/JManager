@@ -1,10 +1,10 @@
-package fr.sacane.jmanager.domain.port.apiside
+package fr.sacane.jmanager.domain.port.api
 
-import fr.sacane.jmanager.domain.hexadoc.PortToLeft
+import fr.sacane.jmanager.domain.hexadoc.LeftPort
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.LoginInventory
+import fr.sacane.jmanager.domain.port.spi.LoginInventory
 
-@PortToLeft
+@LeftPort
 class LoginManager(private val loginPort: LoginInventory){
 
 

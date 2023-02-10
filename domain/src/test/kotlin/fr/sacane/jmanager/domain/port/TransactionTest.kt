@@ -1,8 +1,8 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.serverside.UserTransaction
-import fr.sacane.jmanager.domain.port.serverside.mock.Directory
+import fr.sacane.jmanager.domain.port.spi.UserTransaction
+import fr.sacane.jmanager.domain.port.spi.mock.Directory
 import org.junit.jupiter.api.Test
 
 class TransactionTest {

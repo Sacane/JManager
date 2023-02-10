@@ -1,8 +1,8 @@
-package fr.sacane.jmanager.domain.port.serverside.mock
+package fr.sacane.jmanager.domain.port.spi.mock
 
 import fr.sacane.jmanager.domain.hexadoc.DefaultSource
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.UserTransaction
+import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*

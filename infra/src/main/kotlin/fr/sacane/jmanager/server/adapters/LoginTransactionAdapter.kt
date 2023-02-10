@@ -2,7 +2,7 @@ package fr.sacane.jmanager.server.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.LoginInventory
+import fr.sacane.jmanager.domain.port.spi.LoginInventory
 import fr.sacane.jmanager.server.spring.SpringLayerService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

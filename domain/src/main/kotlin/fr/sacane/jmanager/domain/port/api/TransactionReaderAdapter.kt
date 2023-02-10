@@ -1,13 +1,13 @@
-package fr.sacane.jmanager.domain.port.apiside
+package fr.sacane.jmanager.domain.port.api
 
-import fr.sacane.jmanager.domain.hexadoc.PortToLeft
+import fr.sacane.jmanager.domain.hexadoc.LeftPort
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
-import fr.sacane.jmanager.domain.port.serverside.UserTransaction
+import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.Month
 
 // TODO Instead of return Response timeout, this should refresh the token if they match
-@PortToLeft
+@LeftPort
 class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction) {
     fun saveAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
         val tokenResponse = userPort.getUserToken(userId) ?: return Response.invalid()

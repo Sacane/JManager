@@ -2,15 +2,11 @@ package fr.sacane.jmanager.server.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.TransactionRegister
-import fr.sacane.jmanager.server.entity.CategoryResource
-import fr.sacane.jmanager.server.repositories.CategoryRepository
-import fr.sacane.jmanager.server.repositories.UserRepository
+import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.server.spring.SpringLayerService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.lang.Exception
 import java.time.Month
 
 @Service
