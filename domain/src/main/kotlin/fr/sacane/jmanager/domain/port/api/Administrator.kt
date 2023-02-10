@@ -1,15 +1,11 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.LeftPort
-import fr.sacane.jmanager.domain.models.Response
-import fr.sacane.jmanager.domain.models.Ticket
-import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.*
 
 @LeftPort
 interface Administrator {
-    fun login(): Response<Ticket>
-    fun logout(): Response<Nothing>
+    fun login(pseudonym: String, userPassword: Password): Response<Ticket>
+    fun logout(userId: UserId, userToken: Token): Response<Nothing>
     fun signIn(user: User): Response<User>
-    fun find(userId: UserId): Response<User>
 }

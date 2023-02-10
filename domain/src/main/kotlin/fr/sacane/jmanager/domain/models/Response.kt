@@ -22,6 +22,7 @@ class Response <out S> private constructor(
     }
     companion object{
         fun <S> ok(entity: S): Response<S> = Response(ResponseState.OK, entity)
+        fun ok(): Response<Nothing> = Response(ResponseState.OK, null)
         fun invalid(): Response<Nothing> = Response(ResponseState.INVALID, null)
         fun timeout(): Response<Nothing> = Response(ResponseState.TIMEOUT, null)
     }

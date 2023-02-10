@@ -8,15 +8,15 @@ import java.time.Month
 
 // TODO Instead of return Response timeout, this should refresh the token if they match
 @LeftPort
-class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction) {
-    fun saveAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
+class TransactionReaderAdapter(private val port: TransactionRegister, private val userPort: UserTransaction): BudgetResolver {
+    override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
         val tokenResponse = userPort.getUserToken(userId) ?: return Response.invalid()
         if(tokenResponse.id != token.id) return Response.timeout()
         val accountSaved = port.saveAccount(userId, account) ?: return Response.invalid()
         return Response.ok(accountSaved)
     }
 
-    fun sheetByDateAndAccount(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
+    override fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
         val userResponse = userPort.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
         return Response.ok(port.getSheetsByDateAndAccount(userId, month, year, account))
@@ -27,20 +27,20 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
         val userTokenResponse = userPort.getUserToken(userId) ?: return Response.timeout()
         val user = ticket.user
         if(userTokenResponse.id == userToken.id) {
-            return Response.ok(user?.accounts()?.find { it.label() == labelAccount }!!)
+            return Response.ok(user.accounts().find { it.label() == labelAccount }!!)
         }
         return Response.timeout()
     }
 
 
-    fun saveSheet(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
+    override fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
         val userResponse = userPort.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.invalid()
         val savedSheet = port.saveSheet(userId, accountLabel, sheet) ?: return Response.invalid()
         return Response.ok(savedSheet)
     }
 
-    fun addCategory(userId: UserId, token: Token, category: Category): Response<Category> {
+    override fun createCategory(userId: UserId, token: Token, category: Category): Response<Category> {
         val userResponse = userPort.findById(userId) ?: return Response.invalid()
         val userToken = userResponse.token ?: return Response.invalid()
         if(userToken.id != token.id) {
@@ -50,15 +50,14 @@ class TransactionReaderAdapter(private val port: TransactionRegister, private va
         return Response.ok(categoryResponse)
     }
 
-    fun getAccountByUser(userId: UserId, token: Token): Response<List<Account>?> {
+    override fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>> {
         val userResponse = userPort.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.invalid()
-        return Response.ok(port.getAccounts(userId))
+        return Response.ok(port.getAccounts(userId)!!)
     }
 
-    fun retrieveAllCategoryOfUser(userId: UserId, token: Token): Response<List<Category>> {
+    override fun retrieveCategories(userId: UserId, token: Token): Response<List<Category>> {
         val ticket = userPort.findById(userId) ?: return Response.invalid()
-        if(ticket.user == null || ticket.token == null) return Response.invalid()
         ticket.checkForIdentity(token) ?: return Response.invalid()
         return Response.ok(ticket.user.categories())
     }
