@@ -29,7 +29,7 @@ class InfraUserTest {
     lateinit var accountRepository: AccountRepository
 
     fun basicUserTest(): UserResource {
-        return UserResource(null, "johan_test", "johan.ramaroson@test.com", Password("0101012000").get(), "Sacane", null,null)
+        return UserResource(null, "johan_test", Password("0101012000").get(),"johan.ramaroson@test.com", null,null)
     }
 
     fun basicSheetTest(): SheetResource {
@@ -38,16 +38,17 @@ class InfraUserTest {
 
     @AfterEach
     fun clear(){
-        userRepository.deleteByPseudonym("johan_test")
+        userRepository.deleteByUsername("johan_test")
     }
 
     @Test
     @Order(1)
     fun `users should correctly be implement into database`(){
-        val user = UserResource("johan_test", "johan.ramaroson@test.com", Password("01012000").get(), "Sacane", mutableListOf(), mutableListOf())
+        val user = UserResource("johan_test", Password("01012000").get(),"johan.ramaroson@test.com",  mutableListOf(), mutableListOf())
         userRepository.save(user)
-        val byName = userRepository.findByPseudonym("johan_test")
-        assertThat(byName?.pseudonym).isEqualTo(user.pseudonym)
+        val byName = userRepository.findByUsername("johan_test")
+        assertThat(byName).isNotNull
+        assertThat(byName!!.username).isEqualTo(user.username)
 
 
     }
@@ -63,7 +64,7 @@ class InfraUserTest {
         user.accounts = mutableListOf()
         userRepository.save(user)
 
-        val byName = userRepository.findByPseudonym(user.pseudonym!!)
+        val byName = userRepository.findByUsername(user.username!!)
         val account = AccountResource()
         account.amount = 102.toDouble()
         account.label = "test account"
@@ -75,7 +76,7 @@ class InfraUserTest {
         assertThat(userRepository.count()).isLessThan(2)
         assertThat(byName.accounts).isNotEmpty
         assertThat(accountRepository.count()).isGreaterThan(0)
-        userRepository.deleteByPseudonym("johan_test")
+        userRepository.deleteByUsername("johan_test")
 
     }
 

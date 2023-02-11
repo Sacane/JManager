@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.server.entity
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
-import org.springframework.lang.Nullable
 import javax.persistence.*
 
 

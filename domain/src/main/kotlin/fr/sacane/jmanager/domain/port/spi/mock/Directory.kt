@@ -41,9 +41,9 @@ class Directory {
     )
 
     private val userInventory = mutableListOf(
-        User(UserId(1L), "test1", "test1.test@test.fr", "tester1", accountInventory, Password("01010122321"), categories),
-        User(UserId(2L), "test2", "test2.test@test.fr", "tester2", accountInventory, Password("01010122332"), categories),
-        User(UserId(3L), "test3", "test3.test@test.fr", "tester3", accountInventory, Password("01010122323"), categories),
+        User(UserId(1L), "test1", "test1.test@test.fr",  accountInventory, Password("01010122321"), categories),
+        User(UserId(2L), "test2", "test2.test@test.fr",  accountInventory, Password("01010122332"), categories),
+        User(UserId(3L), "test3", "test3.test@test.fr",  accountInventory, Password("01010122323"), categories),
     )
 
 
@@ -58,8 +58,8 @@ class Directory {
         override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
             TODO("Not yet implemented")
         }
-        override fun findByPseudonym(pseudonym: String): User? {
-            return userInventory.find { it.pseudonym == pseudonym }
+        override fun findByPseudonym(username: String): User? {
+            return userInventory.find { it.username == username }
         }
         override fun create(user: User): User? {
             return register(user)

@@ -26,7 +26,7 @@ class LoginTransactionAdapter : LoginManager {
     }
 
     override fun login(userPseudonym: String, password: Password): Ticket? {
-        val userResponse = userRepository.findByPseudonym(userPseudonym)
+        val userResponse = userRepository.findByUsername(userPseudonym)
         val user = userResponse ?: return null
         return if(Hash.contentEquals(user.password!!, password.value)){
             val login = loginRepository.save(Login(user, LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)))

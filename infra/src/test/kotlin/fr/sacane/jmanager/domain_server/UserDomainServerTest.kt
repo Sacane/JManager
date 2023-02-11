@@ -18,15 +18,15 @@ class UserDomainServerTest {
 
     @AfterEach
     fun deleteUserTest(){
-        userRepository.deleteByPseudonym("Sacane_test")
+        userRepository.deleteByUsername("Sacane_test")
     }
 
     @Test
     fun `User registered has its password check correctly`(){
         val pwd1 = Password("01012000")
-        val userEntity = UserResource(null, "Sacane_test", "Sacane", pwd1.get(), "sacane.test@grostest.fr", null, null)
+        val userEntity = UserResource(null, "Sacane_test", pwd1.get(), "sacane.test@grostest.fr", null, null)
         userRepository.save(userEntity)
-        val getUser = userRepository.findByPseudonym("Sacane_test")
+        val getUser = userRepository.findByUsername("Sacane_test")
         assertThat(getUser).isNotNull
         assertThat(getUser?.username).isEqualTo("Sacane")
         assertThat(Hash.contentEquals(getUser?.password!!, "01012000")).isTrue

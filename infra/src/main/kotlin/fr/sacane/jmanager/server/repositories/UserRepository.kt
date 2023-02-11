@@ -7,8 +7,8 @@ import org.springframework.transaction.annotation.Transactional
 
 @Repository
 interface UserRepository: JpaRepository<UserResource, Long>{
-    fun findByPseudonym(pseudo: String): UserResource?
+    fun findByUsername(username: String): UserResource?
 
     @Transactional
-    fun deleteByPseudonym(pseudo: String)
+    fun deleteByUsername(username: String)
 }

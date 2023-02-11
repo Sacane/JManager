@@ -34,7 +34,7 @@ class ServerUserAdapter : UserTransaction{
     }
 
     override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
-        val user = userRepository.findByPseudonym(pseudonym)
+        val user = userRepository.findByUsername(pseudonym)
         if(!MessageDigest.isEqual(pwd.get(), user?.password)){
             return null
         }
@@ -44,7 +44,7 @@ class ServerUserAdapter : UserTransaction{
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
-        val user = userRepository.findByPseudonym(pseudonym)
+        val user = userRepository.findByUsername(pseudonym)
         return user?.toModel()
     }
 

@@ -15,9 +15,6 @@ class UserResource(
     @Column(name = "id_user", nullable = false)
     open var id_user: Long? = null,
 
-    @Column(nullable = true)
-    var pseudonym: String? = null,
-
     @Column(unique = true)
     var username: String? = null,
 
@@ -44,12 +41,11 @@ class UserResource(
     var categories: MutableList<CategoryResource>?
 ){
     constructor(
-        pseudonym: String?,
         username: String?,
         password: ByteArray?,
         email: String?,
         accounts: MutableList<AccountResource>?,
         categories: MutableList<CategoryResource>?
 
-    ) : this(null, pseudonym, username, password, email, accounts, categories)
+    ) : this(null, username, password, email, accounts, categories)
 }

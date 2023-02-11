@@ -6,7 +6,6 @@ import java.time.Month
 data class UserDTO(
     val id: Long,
     val username: String,
-    val pseudonym: String,
     val email: String
 )
 
