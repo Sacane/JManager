@@ -31,6 +31,6 @@ class User(
     val password: Password,
     private val categories: MutableList<Category>
 ){
-    fun accounts(): List<Account> = accounts.distinct()
-    fun categories(): List<Category> = categories.distinct()
+    fun accounts(): MutableList<Account> = accounts.distinct().toMutableList()
+    fun categories(): MutableList<Category> = categories.distinct().toMutableList()
 }

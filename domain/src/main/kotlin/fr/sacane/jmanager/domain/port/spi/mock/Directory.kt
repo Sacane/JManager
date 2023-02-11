@@ -1,8 +1,8 @@
-package fr.sacane.jmanager.domain.port.serverside.mock
+package fr.sacane.jmanager.domain.port.spi.mock
 
 import fr.sacane.jmanager.domain.hexadoc.DefaultSource
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.serverside.UserTransaction
+import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
@@ -62,9 +62,9 @@ class Directory {
             return userInventory.find { it.pseudonym == pseudonym }
         }
         override fun create(user: User): User? {
-            return save(user)
+            return register(user)
         }
-        override fun save(user: User): User? {
+        override fun register(user: User): User? {
             if(userInventory.find { it.username == user.username || it.id.get() == user.id.get() } != null) return null
             userInventory.add(user)
             return user

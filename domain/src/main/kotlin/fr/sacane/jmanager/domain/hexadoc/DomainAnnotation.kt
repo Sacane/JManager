@@ -3,11 +3,11 @@ package fr.sacane.jmanager.domain.hexadoc
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)
-annotation class PortToLeft
+annotation class LeftPort
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)
-annotation class PortToRight
+annotation class RightPort
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)

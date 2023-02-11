@@ -4,7 +4,7 @@ class Account(
         private var id: Long?,
         private var amount: Double,
         private val labelAccount: String,
-        private val sheets: MutableList<Sheet>?
+        val sheets: MutableList<Sheet>?
 ){
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label()
@@ -22,22 +22,22 @@ class Account(
     }
 
 
-    private fun earnAmount(earned: Double) {
+    fun earn(earned: Double) {
         amount += earned
     }
 
-    private fun lossAmount(loss: Double) {
+    fun loss(loss: Double) {
         amount -= loss
     }
 
     override fun hashCode(): Int {
         return labelAccount.hashCode()
     }
-    operator fun Account.plusAssign(earned: Double){
-        this.earnAmount(earned)
+    operator fun plusAssign(earned: Double){
+        this.earn(earned)
     }
-    operator fun Account.minusAssign(loss: Double){
-        this.lossAmount(loss)
+    operator fun minusAssign(loss: Double){
+        this.loss(loss)
     }
 
     fun transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
