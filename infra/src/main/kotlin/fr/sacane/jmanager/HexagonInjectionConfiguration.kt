@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @EnableAutoConfiguration
-class JmanagerConfiguration {
+class HexagonInjectionConfiguration {
 
 
     @Bean
