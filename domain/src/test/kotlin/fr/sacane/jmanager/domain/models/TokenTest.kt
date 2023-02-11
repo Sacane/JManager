@@ -20,7 +20,7 @@ class TokenTest {
     @Test
     fun `Ticket check identity should be effective for same token`(){
         val token = Token(UUID.randomUUID(), null, UUID.randomUUID())
-        val user = User(UserId(0), "test", "test@gmail.com", "test", mutableListOf(), Password("test"), mutableListOf())
+        val user = User(UserId(0), "test", "test@gmail.com", mutableListOf(), Password("test"), mutableListOf())
         val ticket = Ticket(user, token)
         val verifiedToken = token.copy()
         assertThat(ticket.checkForIdentity(verifiedToken)).isNotNull

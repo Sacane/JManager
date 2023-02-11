@@ -26,7 +26,6 @@ class User(
     val id: UserId,
     val username: String,
     val email: String,
-    val pseudonym: String,
     private val accounts: MutableList<Account>,
     val password: Password,
     private val categories: MutableList<Category>

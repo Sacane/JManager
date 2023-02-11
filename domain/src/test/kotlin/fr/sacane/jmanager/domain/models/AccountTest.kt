@@ -36,7 +36,7 @@ class AccountTest {
         )
 
         val pwdUser = Password("D5301012000MAMacita")
-        val user = User(UserId(1), "johan", "johan.test@test.fr", "tester", accounts, pwdUser, CategoryFactory.allDefaultCategories())
+        val user = User(UserId(1), "johan", "johan.test@test.fr", accounts, pwdUser, CategoryFactory.allDefaultCategories())
         assertThat(user.accounts()).containsOnlyOnce(Account(null, constantValue, "test", mutableListOf()))
     }
 }
