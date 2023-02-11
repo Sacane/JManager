@@ -16,18 +16,18 @@ import org.springframework.context.annotation.Configuration
 class HexagonInjectionConfiguration {
 
 
-    @Bean
-    fun userTransaction(): UserTransaction{
-        return ServerUserAdapter()
-    }
-    @Bean
-    fun serverAdapter(): TransactionRegister{
-        return ServerTransactionAdapter()
-    }
-    @Bean
-    fun loginTransactionInventory(): LoginInventory{
-        return LoginTransactionAdapter()
-    }
+//    @Bean
+//    fun userTransaction(): UserTransaction{
+//        return ServerUserAdapter()
+//    }
+//    @Bean
+//    fun serverAdapter(): TransactionRegister{
+//        return ServerTransactionAdapter()
+//    }
+//    @Bean
+//    fun loginTransactionInventory(): LoginInventory{
+//        return LoginTransactionAdapter()
+//    }
     @Bean
     fun transactionReaderAdapter(serverAdapter: TransactionRegister, userTransaction: UserTransaction): BudgetResolver {
         return BudgetResolverApply(serverAdapter, userTransaction)
@@ -35,10 +35,6 @@ class HexagonInjectionConfiguration {
     @Bean
     fun loginManager(loginTransaction: LoginInventory, userTransaction: UserTransaction) : Administrator {
         return LoginManager(loginTransaction, userTransaction)
-    }
-    @Bean
-    fun userRegister(userTransaction: UserTransaction): UserRegister {
-        return UserRegister(userTransaction)
     }
 
 }

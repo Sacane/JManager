@@ -39,7 +39,7 @@ internal fun Long.id(): UserId {
 internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
     return when(this.status){
         ResponseState.OK -> ResponseEntity(this.get(), HttpStatus.OK)
-        ResponseState.TIMEOUT -> ResponseEntity.notFound().build()
+        ResponseState.TIMEOUT, ResponseState.NOT_FOUND -> ResponseEntity.notFound().build()
         ResponseState.INVALID -> ResponseEntity.badRequest().build()
     }
 }

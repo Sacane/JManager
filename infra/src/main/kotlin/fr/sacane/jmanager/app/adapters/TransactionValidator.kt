@@ -1,11 +1,9 @@
 package fr.sacane.jmanager.app.adapters
 
 import fr.sacane.jmanager.app.*
-import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.Category
-import fr.sacane.jmanager.domain.models.Response
-import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
+import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.api.BudgetResolver
 import fr.sacane.jmanager.domain.port.api.BudgetResolverApply
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
@@ -13,24 +11,18 @@ import org.springframework.stereotype.Service
 
 @LeftAdapter
 @Service
-class TransactionValidator @Autowired constructor(private var apiPort: BudgetResolverApply) {
+class TransactionValidator @Autowired constructor(private var apiPort: BudgetResolver) {
 
     fun findAccount(accountOwnerDTO: UserAccountDTO, tokenDTO: TokenDTO): ResponseEntity<AccountDTO> {
-        val accountResponse =
-            apiPort.findAccount(
-                UserId(accountOwnerDTO.userCredentials.id),
-                tokenDTO.toToken(),
-                accountOwnerDTO.labelAccount
-            )
-        if(accountResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        val account: AccountDTO = accountResponse.get()?.toDTO() ?: return ResponseEntity.badRequest().build()
+        val accounts = apiPort.retrieveAllRegisteredAccounts(accountOwnerDTO.userCredentials.id.id(), tokenDTO.toToken())
+        if(accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
+        val account = accounts.get()?.find { it.label() == accountOwnerDTO.labelAccount }?.toDTO() ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(account)
     }
     fun getSheetAccountByDate(dto: UserSheetDTO, tokenDTO: TokenDTO): ResponseEntity<List<SheetDTO>>{
-        val accountResponse = apiPort.findAccount(dto.userCredentials.id.id(), tokenDTO.toToken(), dto.accountLabel)
-        if(accountResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        val account = accountResponse.get() ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(account.sheets()?.filter{it.date.year == dto.year && it.date.month == dto.month}?.map { sheet -> sheet.toDTO() })
+        val response = apiPort.retrieveSheetsByMonthAndYear(dto.userCredentials.id.id(), tokenDTO.toToken(), dto.month, dto.year, dto.accountLabel)
+        if(response.status.isFailure()) return ResponseEntity.badRequest().build()
+        return ResponseEntity.ok(response.get()?.map { it.toDTO()})
     }
     fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO, tokenDTO: TokenDTO): ResponseEntity<SheetSendDTO>{
         val queryResponse = apiPort.createSheetAndAssociateItWithAccount(userId.id(), tokenDTO.toToken(), accountLabel, sheetDTO.toModel())
@@ -61,9 +53,7 @@ class TransactionValidator @Autowired constructor(private var apiPort: BudgetRes
         return Response.ok(response.get()!!.map { u -> u.label }).toResponseEntity()
     }
     fun removeCategory(userCategoryDTO: UserCategoryDTO, tokenDTO: TokenDTO): ResponseEntity<String>{
-        val response =  apiPort.removeCategory(userCategoryDTO.userId.id(), tokenDTO.toToken(), userCategoryDTO.label)
-        if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(response.get()?.label)
+        return ResponseEntity.ok("TODO")
     }
     private fun SheetDTO.sheetToSend(): SheetSendDTO {
         return SheetSendDTO(this.label, this.amount, if(this.action) "Entree" else "Sortie", this.date)
