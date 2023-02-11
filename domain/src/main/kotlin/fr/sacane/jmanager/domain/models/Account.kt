@@ -33,10 +33,10 @@ class Account(
     override fun hashCode(): Int {
         return labelAccount.hashCode()
     }
-    operator fun Account.plusAssign(earned: Double){
+    operator fun plusAssign(earned: Double){
         this.earn(earned)
     }
-    operator fun Account.minusAssign(loss: Double){
+    operator fun minusAssign(loss: Double){
         this.loss(loss)
     }
 
