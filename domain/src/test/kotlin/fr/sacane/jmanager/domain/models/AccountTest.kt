@@ -7,11 +7,22 @@ import org.junit.jupiter.api.Assertions.assertEquals
 class AccountTest {
 
     @Test
+    fun `earn or loss should be effective for an account`(){
+        val account = Account(null, 100.toDouble(), "courant", mutableListOf())
+        account += 20.toDouble()
+        account.loss(10.toDouble())
+        account.earn(50.toDouble())
+        account -= 15.toDouble()
+        assertThat(account.amount()).isEqualTo(145.toDouble())
+    }
+
+    @Test
     fun `transaction should give and take amount`(){
-        val account = Account(null, 102.toDouble(), "courant", mutableListOf())
-        val account2 = Account(null, 105.toDouble(), "secondaire", mutableListOf())
-        account.transaction(203.toDouble(), account2, true)
-        assertEquals("10", "10")
+        val account = Account(null, 100.toDouble(), "courant", mutableListOf())
+        val account2 = Account(null, 100.toDouble(), "secondaire", mutableListOf())
+        account.transaction(10.toDouble(), account2, true)
+        assertEquals(account.amount(), 110.toDouble())
+        assertEquals(account2.amount(), 90.toDouble())
     }
 
     @Test
