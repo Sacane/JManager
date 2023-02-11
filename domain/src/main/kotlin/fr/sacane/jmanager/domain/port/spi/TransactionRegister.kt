@@ -13,6 +13,6 @@ interface TransactionRegister {
     fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet?
     fun persist(userId: UserId, category: Category): Category?
     fun removeCategory(userId: UserId, labelCategory: String): Category?
-    fun remove(targetCategory: Category)
+//    fun remove(targetCategory: Category)
     fun persist(account: Account) :Account?
 }

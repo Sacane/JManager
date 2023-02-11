@@ -29,7 +29,7 @@ class LoginTransactionAdapter : LoginInventory {
         val userResponse = userRepository.findByPseudonym(userPseudonym)
         val user = userResponse ?: return null
         return if(Hash.contentEquals(user.password!!, password.value)){
-            val login = loginRepository.save(Login(user, LocalDateTime.now().plusHours(1)))
+            val login = loginRepository.save(Login(user, LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)))
             Ticket(user.toModel(), login.toModel())
         }
         else null
@@ -54,5 +54,20 @@ class LoginTransactionAdapter : LoginInventory {
         login.lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
         val response = loginRepository.save(login)
         return Ticket(user.toModel(), login.toModel())
+    }
+
+    override fun tokenBy(userId: UserId, ): Token? {
+        val user = userRepository.findById(userId.get())
+        if(user.isEmpty) return null
+        val token = loginRepository.findByUser(user.get()) ?: return null
+        return token.toModel()
+    }
+
+    override fun generateToken(user: User): Token? {
+        return loginRepository
+            .save(Login(
+                user.asResource(),
+                LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
+            ).toModel()
     }
 }

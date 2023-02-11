@@ -26,12 +26,12 @@ class UserControlAdapter @Autowired constructor(private var userPort: UserRegist
         return ResponseEntity.ok(UserTokenDTO(user.toDTO(), token.toDTO()))
     }
 
-    fun logout(userId: Long, tokenDTO: TokenDTO): ResponseEntity<UserDTO>{
+    fun logout(userId: Long, tokenDTO: TokenDTO): ResponseEntity<Nothing>{
         val ticket = loginPort.logout(userId.id(), tokenDTO.toToken())
         if(ticket.status.isFailure()){
             return ResponseEntity.badRequest().build()
         }
-        return ticket.mapTo { p -> p!!.user!!.toDTO() }.toResponseEntity()
+        return ResponseEntity.ok().build()
     }
 
 }

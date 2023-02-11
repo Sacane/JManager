@@ -33,7 +33,7 @@ class WebController {
     }
 
     @PostMapping(path = ["/user/logout/{id}"])
-    suspend fun logout(@PathVariable id: Long, @RequestHeader token: TokenDTO): ResponseEntity<UserDTO>{
+    suspend fun logout(@PathVariable id: Long, @RequestHeader token: TokenDTO): ResponseEntity<Nothing>{
         return userAdapter.logout(id, token)
     }
 

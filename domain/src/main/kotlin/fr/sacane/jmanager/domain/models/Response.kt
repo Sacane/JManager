@@ -37,4 +37,5 @@ class Response <out S> private constructor(
         val mapped = mapper.invoke(this.value)
         return Response(this.status, mapped)
     }
+
 }
