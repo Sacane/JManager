@@ -1,11 +1,11 @@
 package fr.sacane.jmanager.server
 
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.server.entity.AccountResource
-import fr.sacane.jmanager.server.entity.SheetResource
-import fr.sacane.jmanager.server.entity.UserResource
-import fr.sacane.jmanager.server.repositories.AccountRepository
-import fr.sacane.jmanager.server.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.server.entity.AccountResource
+import fr.sacane.jmanager.infrastructure.server.entity.SheetResource
+import fr.sacane.jmanager.infrastructure.server.entity.UserResource
+import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
