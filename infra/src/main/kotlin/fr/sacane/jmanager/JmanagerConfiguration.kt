@@ -1,7 +1,8 @@
 package fr.sacane.jmanager
 
+import fr.sacane.jmanager.domain.port.api.BudgetResolver
 import fr.sacane.jmanager.domain.port.api.LoginManager
-import fr.sacane.jmanager.domain.port.api.TransactionReaderAdapter
+import fr.sacane.jmanager.domain.port.api.BudgetResolverApply
 import fr.sacane.jmanager.domain.port.api.UserRegister
 import fr.sacane.jmanager.domain.port.spi.LoginInventory
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
@@ -16,9 +17,10 @@ class JmanagerConfiguration {
 
 
     @Bean
-    fun transactionReaderAdapter(serverAdapter: TransactionRegister, userTransaction: UserTransaction): TransactionReaderAdapter {
-        return TransactionReaderAdapter(serverAdapter, userTransaction)
+    fun transactionReaderAdapter(serverAdapter: TransactionRegister, userTransaction: UserTransaction): BudgetResolver {
+        return BudgetResolverApply(serverAdapter, userTransaction)
     }
+
     @Bean
     fun loginManager(loginTransaction: LoginInventory) : LoginManager {
         return LoginManager(loginTransaction)

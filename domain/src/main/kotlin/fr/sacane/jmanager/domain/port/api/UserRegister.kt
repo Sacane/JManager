@@ -8,7 +8,7 @@ import fr.sacane.jmanager.domain.port.spi.UserTransaction
 @LeftPort
 class UserRegister(private val userPort: UserTransaction) {
     fun signIn(user: User): Response<User> {
-        val userResponse = userPort.save(user) ?: return Response.invalid()
+        val userResponse = userPort.register(user) ?: return Response.invalid()
         return Response.ok(userResponse)
     }
 }

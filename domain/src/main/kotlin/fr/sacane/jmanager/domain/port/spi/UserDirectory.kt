@@ -9,6 +9,6 @@ interface UserTransaction {
     fun checkUser(pseudonym: String, pwd: Password): Ticket?
     fun findByPseudonym(pseudonym: String): User?
     fun create(user: User): User?
-    fun save(user: User): User?
+    fun register(user: User): User?
     fun getUserToken(userId: UserId): Token?
 }

@@ -20,7 +20,7 @@ class LoginManager(private val loginPort: LoginInventory, private val userPort: 
     }
 
     override fun register(user: User): Response<User> {
-        val userResponse = userPort.save(user) ?: return Response.invalid()
+        val userResponse = userPort.register(user) ?: return Response.invalid()
         return Response.ok(userResponse)
     }
 

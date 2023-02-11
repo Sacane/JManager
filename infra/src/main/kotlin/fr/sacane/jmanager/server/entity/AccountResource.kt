@@ -10,7 +10,6 @@ import javax.persistence.*
 @DatasourceEntity
 class AccountResource(
     @Id
-    @Nullable
     @GeneratedValue
     @Column(unique = true, name = "id_account", nullable = false)
     var idAccount: Long? = null,

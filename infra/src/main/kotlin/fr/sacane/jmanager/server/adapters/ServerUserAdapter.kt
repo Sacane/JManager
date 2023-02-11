@@ -56,7 +56,7 @@ class ServerUserAdapter : UserTransaction{
         }
     }
 
-    override fun save(user: User): User? {
+    override fun register(user: User): User? {
         return try{
             val userResponse = userRepository.save(user.asResource())
             userResponse.toModel()

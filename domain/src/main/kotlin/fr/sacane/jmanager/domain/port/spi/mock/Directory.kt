@@ -62,9 +62,9 @@ class Directory {
             return userInventory.find { it.pseudonym == pseudonym }
         }
         override fun create(user: User): User? {
-            return save(user)
+            return register(user)
         }
-        override fun save(user: User): User? {
+        override fun register(user: User): User? {
             if(userInventory.find { it.username == user.username || it.id.get() == user.id.get() } != null) return null
             userInventory.add(user)
             return user

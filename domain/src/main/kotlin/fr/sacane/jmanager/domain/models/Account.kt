@@ -22,11 +22,11 @@ class Account(
     }
 
 
-    private fun earnAmount(earned: Double) {
+    fun earn(earned: Double) {
         amount += earned
     }
 
-    private fun lossAmount(loss: Double) {
+    fun loss(loss: Double) {
         amount -= loss
     }
 
@@ -34,10 +34,10 @@ class Account(
         return labelAccount.hashCode()
     }
     operator fun Account.plusAssign(earned: Double){
-        this.earnAmount(earned)
+        this.earn(earned)
     }
     operator fun Account.minusAssign(loss: Double){
-        this.lossAmount(loss)
+        this.loss(loss)
     }
 
     fun transaction(delta: Double, otherAccount: Account, isEntry: Boolean){

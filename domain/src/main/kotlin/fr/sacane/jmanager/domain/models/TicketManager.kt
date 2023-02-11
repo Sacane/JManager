@@ -25,7 +25,7 @@ class Ticket(
     val token: Token
 ){
     fun checkForIdentity(token: Token): User?{
-        return if(this.token.id == token.id){
+        return if(this.token.id == token.id || this.token.lastRefresh!!.isAfter(LocalDateTime.now())){
             this.user
         } else null
     }
