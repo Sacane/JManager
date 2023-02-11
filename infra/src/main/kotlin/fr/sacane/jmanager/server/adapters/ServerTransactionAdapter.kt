@@ -74,4 +74,8 @@ class ServerTransactionAdapter : TransactionRegister{
         categoryRepository.deleteByLabel(labelCategory)
         return Category(category.label!!)
     }
+
+    override fun remove(targetCategory: Category) {
+        categoryRepository.deleteByLabel(targetCategory.label)
+    }
 }

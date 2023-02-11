@@ -15,4 +15,5 @@ interface TransactionRegister {
     fun removeCategory(userId: UserId, labelCategory: String): Category?
 //    fun remove(targetCategory: Category)
     fun persist(account: Account) :Account?
+    fun remove(targetCategory: Category)
 }
