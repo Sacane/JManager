@@ -3,7 +3,7 @@ package fr.sacane.jmanager.server.adapters
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.LoginInventory
+import fr.sacane.jmanager.domain.port.spi.LoginManager
 import fr.sacane.jmanager.server.entity.Login
 import fr.sacane.jmanager.server.repositories.LoginRepository
 import fr.sacane.jmanager.server.repositories.UserRepository
@@ -14,7 +14,7 @@ import java.util.*
 
 @Service
 @DatasourceAdapter
-class LoginTransactionAdapter : LoginInventory {
+class LoginTransactionAdapter : LoginManager {
 
     @Autowired
     private lateinit var userRepository: UserRepository

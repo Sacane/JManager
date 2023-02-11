@@ -2,11 +2,11 @@ package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.LeftPort
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.LoginInventory
+import fr.sacane.jmanager.domain.port.spi.LoginManager
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 
 @LeftPort
-class LoginManager(private val loginInventory: LoginInventory, private val userTransaction: UserTransaction): Administrator{
+class LoginManager(private val loginInventory: LoginManager, private val userTransaction: UserTransaction): Administrator{
 
 
     override fun login(pseudonym: String, userPassword: Password): Response<Ticket> {
