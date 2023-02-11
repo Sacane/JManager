@@ -38,6 +38,14 @@ interface LoginTransactor {
 ```
 This class is a port which goes to the right-side of the hexagon.
 
+## Focus on the hexagon
+
+Here is the diagram corresponding to the current state of the project :
+
+![ Texte alternatif](doc/Jmanager-hexagon-0.1.jpg)
+
+
+
 ## Values
 
 * To be as flexible as possible by implementing each side separately.
