@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain_server
+package fr.sacane.jmanager.infrastructure.domain_server
 
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.models.Password
@@ -28,7 +28,7 @@ class UserDomainServerTest {
         userRepository.save(userEntity)
         val getUser = userRepository.findByUsername("Sacane_test")
         assertThat(getUser).isNotNull
-        assertThat(getUser?.username).isEqualTo("Sacane")
+        assertThat(getUser?.username).isEqualTo("Sacane_test")
         assertThat(Hash.contentEquals(getUser?.password!!, "01012000")).isTrue
     }
 
