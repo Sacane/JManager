@@ -12,7 +12,6 @@ data class UserDTO(
 data class RegisteredUserDTO(
     val id: Long,
     val username: String,
-    val pseudonym: String,
     val email: String,
     val password: String
 )
@@ -51,7 +50,8 @@ data class AccountDTO(
 )
 
 data class UserAccountDTO(
-    val userCredentials: UserCredentialsDTO,
+    val id: Long,
+    val token: String,
     val labelAccount: String,
     val amount: Double
 )
@@ -88,7 +88,7 @@ data class TokenDTO(
 data class UserLoginDTO(val userId: Long, val password: String, val token: String, val refreshToken: String)
 data class UserCredentialsDTO(
     val id: Long,
-    val pseudonym: String,
+    val username: String,
     val password: String,
 )
 

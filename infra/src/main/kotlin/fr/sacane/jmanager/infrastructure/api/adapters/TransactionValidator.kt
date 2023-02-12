@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 class TransactionValidator @Autowired constructor(private var apiPort: BudgetResolver) {
 
     fun findAccount(accountOwnerDTO: UserAccountDTO, tokenDTO: TokenDTO): ResponseEntity<AccountDTO> {
-        val accounts = apiPort.retrieveAllRegisteredAccounts(accountOwnerDTO.userCredentials.id.id(), tokenDTO.toToken())
+        val accounts = apiPort.retrieveAllRegisteredAccounts(accountOwnerDTO.id.id(), tokenDTO.toToken())
         if(accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
         val account = accounts.get()?.find { it.label() == accountOwnerDTO.labelAccount }?.toDTO() ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(account)
@@ -29,7 +29,7 @@ class TransactionValidator @Autowired constructor(private var apiPort: BudgetRes
         return queryResponse.mapTo { sheetDTO.sheetToSend() }.toResponseEntity()
     }
     fun saveAccount(userAccount: UserAccountDTO, tokenDTO: TokenDTO) : ResponseEntity<AccountDTO>{
-        val response = apiPort.openAccount(userAccount.userCredentials.id.id(), tokenDTO.toToken(), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
+        val response = apiPort.openAccount(userAccount.id.id(), tokenDTO.toToken(), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
         if(response.get() == null) return ResponseEntity.badRequest().build()
         return response.mapTo { response.get()!!.toDTO() }.toResponseEntity()
     }
