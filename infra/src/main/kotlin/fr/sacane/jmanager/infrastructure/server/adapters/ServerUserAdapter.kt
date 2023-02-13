@@ -57,6 +57,7 @@ class ServerUserAdapter : UserTransaction{
     }
 
     override fun register(user: User): User? {
+        LOGGER.info("Trying to register $user into database")
         return try{
             val userResponse = userRepository.save(user.asResource())
             userResponse.toModel()

@@ -22,7 +22,7 @@ internal fun AccountDTO.toModel(): Account {
     return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
 }
 internal fun RegisteredUserDTO.toModel(): User {
-    return User(this.id.id(), this.username, this.email, mutableListOf(), Password(this.password), mutableListOf(
+    return User(UserId(0), this.username, this.email, mutableListOf(), Password(this.password), mutableListOf(
         CategoryFactory.DEFAULT_CATEGORY))
 }
 

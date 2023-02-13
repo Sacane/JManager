@@ -28,8 +28,6 @@ object Hash {
 
     private fun salt(): ByteArray?{
         val path: File = Path.of(System.getProperty("user.dir").plus("/salt.txt")).toFile()
-        println(path.exists())
-        println("HELLO")
         return try{
             BufferedReader(FileReader(path)).use {
                 it.lines().findFirst().get()

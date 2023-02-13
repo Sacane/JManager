@@ -25,7 +25,7 @@ internal fun Account.asResource(): AccountResource {
 }
 
 internal fun User.asResource(): UserResource {
-    return UserResource(null, username, password.get(), email, mutableListOf(), this.categories().map { CategoryResource(it.label) }.toMutableList())
+    return UserResource(null, username, password.get(), email, mutableListOf(), categories().map { CategoryResource(it.label) }.toMutableList())
 }
 
 internal fun SheetResource.toModel(): Sheet{

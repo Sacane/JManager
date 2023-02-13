@@ -1,18 +1,16 @@
-version: '3.1'
+version: '3.8'
 services:
-    postgres-db:
-        container_name: jmanager-local-pg
-        image: postgres:latest
+    db:
+        image: postgres:14.1-alpine
         restart: always
         environment:
-            POSTGRES_USER: juser
-            POSTGRES_PASSWORD: jpwd
-            POSTGRES_DB: Jmanager-db
-            PGDATA: /var/lib/postgresql/data/pgdata
-        volumes:
-            - postgres-db-data:/var/lib/postgresql/data
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=test
         ports:
-            - "5432:5432"
+            - '5432:5432'
+        volumes:
+            - db:/var/lib/postgresql/data
 volumes:
-    postgres-db-data:
-        name: jmanager-local-pg
+    db:
+        driver: local

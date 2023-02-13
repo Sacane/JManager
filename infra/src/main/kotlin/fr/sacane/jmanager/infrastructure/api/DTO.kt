@@ -10,7 +10,6 @@ data class UserDTO(
 )
 
 data class RegisteredUserDTO(
-    val id: Long,
     val username: String,
     val email: String,
     val password: String
