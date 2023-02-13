@@ -6,6 +6,9 @@ plugins {
 group = "fr.sacane.jmanager"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
+dependencies{
+	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
+}
 allprojects{
 	repositories {
 		mavenCentral()

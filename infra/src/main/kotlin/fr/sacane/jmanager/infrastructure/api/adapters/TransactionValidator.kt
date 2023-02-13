@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service
 
 @LeftAdapter
 @Service
-class TransactionValidator @Autowired constructor(private var apiPort: BudgetResolver) {
+class TransactionValidator {
+
+    @Autowired
+    private lateinit var apiPort: BudgetResolver
 
     fun findAccount(accountOwnerDTO: UserAccountDTO, tokenDTO: TokenDTO): ResponseEntity<AccountDTO> {
         val accounts = apiPort.retrieveAllRegisteredAccounts(accountOwnerDTO.id.id(), tokenDTO.toToken())

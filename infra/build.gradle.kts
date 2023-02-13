@@ -27,6 +27,7 @@ dependencies {
     implementation("com.ToxicBakery.library.bcrypt:bcrypt:1.0.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
     implementation("org.postgresql:postgresql")
     implementation(project(mapOf("path" to ":domain")))
     providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
