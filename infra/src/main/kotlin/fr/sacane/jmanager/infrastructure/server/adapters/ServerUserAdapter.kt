@@ -52,18 +52,16 @@ class ServerUserAdapter : UserTransaction{
         return try{
             userRepository.save(user.asResource()).toModel()
         }catch(e: Exception){
+            LOGGER.severe("Failed to save user into server")
             null
         }
     }
 
     override fun register(user: User): User? {
-        LOGGER.info("Trying to register $user into database")
-        return try{
-            val userResponse = userRepository.save(user.asResource())
-            userResponse.toModel()
-        }catch (e: Exception){
-            null
-        }
+        val userResource = user.asResource()
+        LOGGER.info("Trying to register $userResource into database")
+        val userResponse = userRepository.save(userResource)
+        return userResponse.toModel()
     }
 
     override fun getUserToken(userId: UserId): Token? {

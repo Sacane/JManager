@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.server.adapters
 
+import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
@@ -23,14 +24,20 @@ class LoginTransactionAdapter : LoginManager {
     companion object{
         private const val DEFAULT_TOKEN_LIFETIME_IN_HOURS = 1L //1hour
 //        private const val DEFAULT_REFRESH_TOKEN_LIFETIME = 60L* 60L * 24L * 5L * 1000L // 5 days
+        private val LOGGER = Logger.getLogger(Companion::class.java)
     }
 
     override fun login(userPseudonym: String, password: Password): Ticket? {
-        val userResponse = userRepository.findByUsername(userPseudonym)
-        val user = userResponse ?: return null
-        return if(Hash.contentEquals(user.password!!, password.value)){
-            val login = loginRepository.save(Login(user, LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)))
-            Ticket(user.toModel(), login.toModel())
+        LOGGER.info("Trying to login user $userPseudonym")
+        val userResponse = userRepository.findByUsername(userPseudonym) ?: return null
+        LOGGER.info("Find user ${userResponse.username}")
+        return if(Hash.contentEquals(userResponse.password!!, password.value!!)){
+            val login = loginRepository.save(
+                Login(
+                    userResponse,
+                    LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
+                ))
+            Ticket(userResponse.toModel(), login.toModel())
         }
         else null
     }
@@ -64,10 +71,12 @@ class LoginTransactionAdapter : LoginManager {
     }
 
     override fun generateToken(user: User): Token? {
+        val userResponse = userRepository.findById(user.id.get())
+        if(userResponse.isEmpty) return null
         return loginRepository
-            .save(
+            .saveAndFlush(
                 Login(
-                user.asResource(),
+                userResponse.get(),
                 LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
             ).toModel()
     }

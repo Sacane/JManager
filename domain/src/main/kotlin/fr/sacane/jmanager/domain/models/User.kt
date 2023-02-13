@@ -8,14 +8,26 @@ class UserId(private val id: Long){
 }
 
 
-class Password(val value: String){
-    init{
-        require(value.isNotBlank() && value.isNotEmpty()){
-            "Given password is blank or empty"
+class Password(val value: String?){
+    private lateinit var hashedPassword: ByteArray
+    private var fromString: Boolean = true
+    private constructor(byteArray: ByteArray): this(byteArray.toString()){
+        fromString = false
+        hashedPassword = byteArray
+    }
+    companion object{
+        fun fromBytes(byteArray: ByteArray): Password{
+            return Password(byteArray)
         }
     }
+    init{
+        require((!value.isNullOrBlank() && value.isNotEmpty())){
+            "Given password is blank or empty"
+        }
+        if(fromString) hashedPassword = Hash.hash(value)
+    }
     fun get(): ByteArray{
-        return Hash.hash(value)
+        return hashedPassword
     }
     fun matchWith(password2: Password): Boolean {
         return get().contentEquals(password2.get())

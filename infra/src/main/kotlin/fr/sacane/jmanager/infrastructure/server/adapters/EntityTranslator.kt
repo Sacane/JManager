@@ -36,11 +36,11 @@ internal fun AccountResource.toModel(): Account{
 }
 internal fun UserResource.toModel(): User{
     return User(
-        UserId(this.id_user!!),
+        UserId(this.idUser!!),
         this.username!!,
         this.email!!,
         this.accounts!!.map { account -> account.toModel() }.toMutableList(),
-        Password(this.password!!.toString()),
+        Password.fromBytes(this.password!!),
         CategoryFactory.allDefaultCategories()
     )
 }

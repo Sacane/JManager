@@ -24,6 +24,7 @@ class UserTest {
         val pwd = Password("password")
         val pwd2 = Password("PAsswoRD")
         assertThat(pwd.get()).isNotEqualTo(pwd2.get())
+        assertThat(pwd.matchWith(pwd2)).isFalse
     }
 
     @Test
@@ -33,6 +34,7 @@ class UserTest {
         val passwordClone = Password("01012000")
         assertThat(password.matchWith(password2)).isFalse
         assertThat(password.matchWith(passwordClone)).isTrue
+        assertThat(Password.fromBytes(password.get()).matchWith(password)).isTrue
     }
 
 }

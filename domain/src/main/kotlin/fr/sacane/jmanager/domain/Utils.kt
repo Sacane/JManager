@@ -13,6 +13,7 @@ object Hash {
     private val md = MessageDigest.getInstance("SHA-512")
     private val salt: ByteArray?
     init{
+        println("HASH INIATED")
         salt = salt()
     }
 
@@ -28,6 +29,7 @@ object Hash {
 
     private fun salt(): ByteArray?{
         val path: File = Path.of(System.getProperty("user.dir").plus("/salt.txt")).toFile()
+        println(path.exists())
         return try{
             BufferedReader(FileReader(path)).use {
                 it.lines().findFirst().get()

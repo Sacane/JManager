@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.api.adapters
 
+import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.port.api.Administrator
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Service
 @Service
 @LeftAdapter
 class UserControlAdapter @Autowired constructor(private var userPort: Administrator) {
+    companion object{
+        private val LOGGER = Logger.getLogger(Companion::class.java)
+    }
     fun createUser(userDTO: RegisteredUserDTO): ResponseEntity<UserDTO>{
         val response = userPort.register(userDTO.toModel())
         if(response.get() == null) return ResponseEntity.badRequest().build()
@@ -18,6 +22,7 @@ class UserControlAdapter @Autowired constructor(private var userPort: Administra
     }
     fun loginUser(userDTO: UserPasswordDTO): ResponseEntity<UserTokenDTO>{
         val response = userPort.login(userDTO.username, Password(userDTO.password))
+        LOGGER.info("Trying to login user ${userDTO.password} with password ${userDTO.password}")
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         val ticket = response.get() ?: return ResponseEntity.badRequest().build()
         val user = ticket.user

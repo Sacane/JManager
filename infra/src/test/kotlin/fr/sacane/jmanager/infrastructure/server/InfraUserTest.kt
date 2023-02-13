@@ -45,12 +45,14 @@ class InfraUserTest {
     @Test
     @Order(1)
     fun `users should correctly be implement into database`(){
-        val user = UserResource("johan_test", Password("01012000").get(),"johan.ramaroson@test.com",  mutableListOf(), mutableListOf())
+        val passwordUser = Password("01012000")
+        val user = UserResource("johan_test", passwordUser.get(),"johan.ramaroson@test.com",  mutableListOf(), mutableListOf())
         userRepository.save(user)
         val byName = userRepository.findByUsername("johan_test")
         assertThat(byName).isNotNull
         assertThat(byName!!.username).isEqualTo(user.username)
-
+        val password = Password.fromBytes(byName.password!!)
+        assertThat(passwordUser.matchWith(password))
 
     }
 

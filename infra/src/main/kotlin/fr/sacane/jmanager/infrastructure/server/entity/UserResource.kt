@@ -5,15 +5,15 @@ import org.springframework.lang.Nullable
 import javax.persistence.*
 
 
-@Table(name="User")
+@Table(name="user")
 @Entity
 @DatasourceEntity
 class UserResource(
     @Id
     @Nullable
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue
     @Column(name = "id_user", nullable = false)
-    open var id_user: Long? = null,
+    var idUser: Long? = null,
 
     @Column(unique = true)
     var username: String? = null,
