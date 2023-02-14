@@ -39,9 +39,9 @@ class WebController {
         return userAdapter.logout(id, token)
     }
 
-    @PostMapping(path = ["/user/account"])
-    suspend fun findAccount(@RequestBody accountOwnerDTO: UserAccountDTO, @RequestHeader token: TokenDTO): ResponseEntity<AccountDTO>{
-        return apiAdapter.findAccount(accountOwnerDTO, token)
+    @GetMapping(path = ["/user/{id}/account/{label}"])
+    suspend fun findAccount(@PathVariable id: Long, @PathVariable label: String, @RequestHeader token: TokenDTO): ResponseEntity<AccountDTO>{
+        return apiAdapter.findAccount(id, label, token)
     }
 
     @PostMapping(path= ["/user/create"])

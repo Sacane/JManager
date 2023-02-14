@@ -15,10 +15,10 @@ class TransactionValidator {
     @Autowired
     private lateinit var apiPort: BudgetResolver
 
-    fun findAccount(accountOwnerDTO: UserAccountDTO, tokenDTO: TokenDTO): ResponseEntity<AccountDTO> {
-        val accounts = apiPort.retrieveAllRegisteredAccounts(accountOwnerDTO.id.id(), tokenDTO.toToken())
+    fun findAccount(id: Long, label: String, tokenDTO: TokenDTO): ResponseEntity<AccountDTO> {
+        val accounts = apiPort.retrieveAllRegisteredAccounts(id.id(), tokenDTO.toToken())
         if(accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
-        val account = accounts.get()?.find { it.label() == accountOwnerDTO.labelAccount }?.toDTO() ?: return ResponseEntity.badRequest().build()
+        val account = accounts.get()?.find { it.label() == label }?.toDTO() ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(account)
     }
     fun getSheetAccountByDate(dto: UserSheetDTO, tokenDTO: TokenDTO): ResponseEntity<List<SheetDTO>>{

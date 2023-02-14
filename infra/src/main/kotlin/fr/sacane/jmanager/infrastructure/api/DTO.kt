@@ -50,7 +50,6 @@ data class AccountDTO(
 
 data class UserAccountDTO(
     val id: Long,
-    val token: String,
     val labelAccount: String,
     val amount: Double
 )

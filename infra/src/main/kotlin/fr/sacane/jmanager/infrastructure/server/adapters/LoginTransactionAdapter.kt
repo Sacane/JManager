@@ -63,7 +63,7 @@ class LoginTransactionAdapter : LoginManager {
         return Ticket(user.toModel(), login.toModel())
     }
 
-    override fun tokenBy(userId: UserId, ): Token? {
+    override fun tokenBy(userId: UserId): Token? {
         val user = userRepository.findById(userId.get())
         if(user.isEmpty) return null
         val token = loginRepository.findByUser(user.get()) ?: return null
