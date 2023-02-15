@@ -3,11 +3,13 @@ package fr.sacane.jmanager.infrastructure.api.adapters
 import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.models.Password
+import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.Administrator
 import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 @LeftAdapter
@@ -30,8 +32,8 @@ class UserControlAdapter @Autowired constructor(private var userPort: Administra
         return ResponseEntity.ok(UserTokenDTO(user.toDTO(), token.toDTO()))
     }
 
-    fun logout(userId: Long, tokenDTO: TokenDTO): ResponseEntity<Nothing>{
-        val ticket = userPort.logout(userId.id(), tokenDTO.toToken())
+    fun logout(userId: Long, tokenDTO: String): ResponseEntity<Nothing>{
+        val ticket = userPort.logout(userId.id(), Token(UUID.fromString(tokenDTO), null, null))
         if(ticket.status.isFailure()){
             return ResponseEntity.badRequest().build()
         }

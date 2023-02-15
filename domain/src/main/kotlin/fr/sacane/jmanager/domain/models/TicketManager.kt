@@ -5,7 +5,7 @@ import java.util.*
 data class Token(
     val id: UUID,
     val lastRefresh: LocalDateTime?,
-    val refreshToken: UUID
+    val refreshToken: UUID?
 ){
     fun isExpired(time: LocalDateTime): Boolean{
         require(lastRefresh != null){

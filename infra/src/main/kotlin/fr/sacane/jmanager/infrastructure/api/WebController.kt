@@ -35,8 +35,8 @@ class WebController {
     }
 
     @PostMapping(path = ["/user/logout/{id}"])
-    suspend fun logout(@PathVariable id: Long, @RequestHeader token: TokenDTO): ResponseEntity<Nothing>{
-        return userAdapter.logout(id, token)
+    suspend fun logout(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing>{
+        return userAdapter.logout(id, token.replace("Bearer ", ""))
     }
 
     @GetMapping(path = ["/user/{id}/account/{label}"])

@@ -42,13 +42,13 @@ class LoginTransactionAdapter : LoginManager {
         else null
     }
 
-    override fun logout(userId: UserId, token: Token): Ticket? {
+    override fun logout(userId: UserId, token: Token): Token? {
         val userResponse = userRepository.findById(userId.get())
         if(userResponse.isEmpty) return null
         val user = userResponse.get()
         val login = loginRepository.findByUser(user) ?: return null
         loginRepository.delete(login)
-        return null
+        return login.toModel()
     }
 
     override fun refresh(userId: UserId, token: Token): Ticket? {
