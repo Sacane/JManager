@@ -7,6 +7,7 @@ import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import java.util.*
 
 @LeftAdapter
 @Service
@@ -15,8 +16,8 @@ class TransactionValidator {
     @Autowired
     private lateinit var apiPort: BudgetResolver
 
-    fun findAccount(id: Long, label: String, tokenDTO: TokenDTO): ResponseEntity<AccountDTO> {
-        val accounts = apiPort.retrieveAllRegisteredAccounts(id.id(), tokenDTO.toToken())
+    fun findAccount(id: Long, label: String, tokenDTO: String): ResponseEntity<AccountDTO> {
+        val accounts = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(tokenDTO), null, null))
         if(accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
         val account = accounts.get()?.find { it.label() == label }?.toDTO() ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(account)
