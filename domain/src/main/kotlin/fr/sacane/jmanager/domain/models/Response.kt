@@ -16,11 +16,6 @@ class Response <out S> private constructor(
     val status: ResponseState,
     private var value: S? = null,
 ){
-    init{
-        require(status.isSuccess() && value != null || status.isFailure()){
-            "Success status should lead to a not null value"
-        }
-    }
     companion object{
         fun <S> ok(entity: S): Response<S> = Response(ResponseState.OK, entity)
         fun ok(): Response<Nothing> = Response(ResponseState.OK, null)
