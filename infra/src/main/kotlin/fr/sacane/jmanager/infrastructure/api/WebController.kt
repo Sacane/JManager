@@ -29,6 +29,10 @@ class WebController {
     private lateinit var userAdapter: UserControlAdapter
 
 
+    private fun extractToken(authorization: String): String{
+        return authorization.replace("Bearer ", "");
+    }
+
     @PostMapping(path= ["/user/auth"])
     suspend fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserTokenDTO>{
         return userAdapter.loginUser(userDTO)
@@ -36,11 +40,11 @@ class WebController {
 
     @PostMapping(path = ["/user/logout/{id}"])
     suspend fun logout(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing>{
-        return userAdapter.logout(id, token.replace("Bearer ", ""))
+        return userAdapter.logout(id, extractToken(token))
     }
 
     @GetMapping(path = ["/user/{id}/account/{label}"])
-    suspend fun findAccount(@PathVariable id: Long, @PathVariable label: String, @RequestHeader token: TokenDTO): ResponseEntity<AccountDTO>{
+    suspend fun findAccount(@PathVariable id: Long, @PathVariable label: String, @RequestHeader("Authorization") token: String): ResponseEntity<AccountDTO>{
         return apiAdapter.findAccount(id, label, token)
     }
 
