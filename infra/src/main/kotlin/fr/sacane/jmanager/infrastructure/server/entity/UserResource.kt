@@ -5,7 +5,7 @@ import org.springframework.lang.Nullable
 import javax.persistence.*
 
 
-@Table(name="user")
+@Table(name="userResource")
 @Entity
 @DatasourceEntity
 class UserResource(
