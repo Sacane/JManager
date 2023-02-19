@@ -11,9 +11,13 @@ import java.time.Month
 class BudgetResolverApply(private val register: TransactionRegister, private val userTransaction: UserTransaction): BudgetResolver {
     override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
         val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid()
-        if(tokenResponse.id != token.id) return Response.timeout()
-        val accountSaved = register.persist(userId, account) ?: return Response.invalid()
-        return Response.ok(accountSaved)
+        if(tokenResponse.id != token.id) {
+            println("TOKEN DOES NOT CORRESPOND EACH OTHERS")
+            return Response.timeout()
+        }
+        val userSaved = register.persist(userId, account) ?: return Response.invalid()
+        println("PERSISTENCE IS OK")
+        return Response.ok(userSaved.accounts().find { it.label() == account.label() }!!)
     }
 
     override fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {

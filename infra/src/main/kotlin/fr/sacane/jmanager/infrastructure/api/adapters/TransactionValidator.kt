@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.BudgetResolver
 import fr.sacane.jmanager.infrastructure.api.*
+import org.jboss.logging.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
@@ -15,6 +16,10 @@ class TransactionValidator {
 
     @Autowired
     private lateinit var apiPort: BudgetResolver
+
+    companion object{
+        private val LOGGER: Logger = Logger.getLogger(TransactionValidator::class.java)
+    }
 
     fun findAccount(id: Long, label: String, tokenDTO: String): ResponseEntity<AccountDTO> {
         val accounts = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(tokenDTO), null, null))
@@ -32,13 +37,19 @@ class TransactionValidator {
         if(queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
         return queryResponse.mapTo { sheetDTO.sheetToSend() }.toResponseEntity()
     }
-    fun saveAccount(userAccount: UserAccountDTO, tokenDTO: TokenDTO) : ResponseEntity<AccountDTO>{
-        val response = apiPort.openAccount(userAccount.id.id(), tokenDTO.toToken(), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
-        if(response.get() == null) return ResponseEntity.badRequest().build()
-        return response.mapTo { response.get()!!.toDTO() }.toResponseEntity()
+    fun saveAccount(userAccount: UserAccountDTO, token: String) : ResponseEntity<AccountInfoDTO>{
+        val response = apiPort.openAccount(userAccount.id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
+        if(response.get() == null) {
+            LOGGER.warn("Null response from database request for saving account")
+            return ResponseEntity.badRequest().build()
+        }
+        if(response.status.isFailure()){
+            LOGGER.warn("Get a failure response from server, something bad happened");
+        }
+        return response.mapTo { AccountInfoDTO(it!!.amount(), it.label()) }.toResponseEntity()
     }
-    fun getUserAccount(id: Long, tokenDTO: TokenDTO): ResponseEntity<List<AccountInfoDTO>> {
-        val response = apiPort.retrieveAllRegisteredAccounts(id.id(), tokenDTO.toToken())
+    fun getUserAccount(id: Long, token: String): ResponseEntity<List<AccountInfoDTO>> {
+        val response = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()))
         if(response.get() == null) return ResponseEntity.badRequest().build()
         val mapped = response.mapTo { p -> p!!.map { AccountInfoDTO(it.amount(), it.label()) } }
         return mapped.toResponseEntity()

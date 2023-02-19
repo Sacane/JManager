@@ -17,7 +17,7 @@ internal fun Account.asResource(): AccountResource {
     resource.amount = this.amount()
     resource.label = this.label()
     if(this.sheets().isNullOrEmpty()){
-        resource.sheets = null
+        resource.sheets = mutableListOf()
     }else {
         resource.sheets = sheets()?.toMutableList()?.map { model -> model.asResource() }?.toMutableList()
     }
@@ -32,7 +32,11 @@ internal fun SheetResource.toModel(): Sheet{
     return Sheet(this.idSheet!!, this.label!!, this.date!!, this.amount!!, this.isEntry!!)
 }
 internal fun AccountResource.toModel(): Account{
-    return Account(this.idAccount!!, this.amount!!, this.label!!, this.sheets?.map { sheet -> sheet.toModel() }!!.toMutableList())
+    return Account(
+        this.idAccount!!,
+        this.amount!!,
+        this.label!!,
+        this.sheets?.map { sheet -> sheet.toModel() }!!.toMutableList())
 }
 internal fun UserResource.toModel(): User{
     return User(

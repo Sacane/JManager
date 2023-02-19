@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service
 class ServerTransactionAdapter : TransactionRegister{
 
     companion object{
-        private val logger = LoggerFactory.getLogger("infra.server.adapters.ServerAdapter")
+        private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerAdapter")
     }
 
     @Autowired
@@ -26,17 +26,17 @@ class ServerTransactionAdapter : TransactionRegister{
     @Autowired
     private lateinit var categoryRepository: CategoryRepository
 
-    override fun persist(userId: UserId, account: Account): Account? {
+    override fun persist(userId: UserId, account: Account): User? {
         val userResponse = userRepository.findById(userId.get())
         if(userResponse.isEmpty) return null
         val user = userResponse.get()
         user.accounts?.add(account.asResource())
-        return try{
-            userRepository.save(user)
-            account
-        }catch (e: Exception){
-            null
-        }
+        return userRepository.saveAndFlush(user).toModel()
+
+//        }catch (e: Exception){
+//            LOGGER.warn("ERROR WHILE SAVE AND FLUSHING ACCOUNT INTO DATABASE : ${e.cause}")
+//            null
+//        }
     }
 
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
@@ -53,12 +53,10 @@ class ServerTransactionAdapter : TransactionRegister{
     }
 
     override fun persist(account: Account) :Account?{
-        val accountResponse = accountRepository.findById(account.id())
-        if(accountResponse.isEmpty) return null
-        var accountGet = accountResponse.get()
-        accountGet = account.asResource()
-        accountRepository.saveAndFlush(accountGet)
-        return account
+        val accountGet = account.asResource()
+        accountRepository.save(accountGet)
+        accountRepository.flush()
+        return accountRepository.findByLabel(account.label())!!.toModel()
     }
 
     override fun persist(userId: UserId, category: Category): Category? {
