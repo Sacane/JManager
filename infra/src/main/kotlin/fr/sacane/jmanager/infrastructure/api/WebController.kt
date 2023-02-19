@@ -60,7 +60,7 @@ class WebController {
     }
 
     @PostMapping("/sheet/save")
-    suspend fun createSheet(@RequestBody userAccountSheetDTO: UserAccountSheetDTO, @RequestHeader token: TokenDTO): ResponseEntity<SheetSendDTO>{
+    suspend fun createSheet(@RequestBody userAccountSheetDTO: UserAccountSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetSendDTO>{
         return apiAdapter.saveSheet(
             userAccountSheetDTO.userId,
             userAccountSheetDTO.accountLabel,
@@ -76,9 +76,9 @@ class WebController {
     }
 
     @PostMapping(path=["sheets/get"])
-    suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader token: TokenDTO): ResponseEntity<List<SheetDTO>>{
+    suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
         LOGGER.debug(dto.month.toString())
-        return apiAdapter.getSheetAccountByDate(dto, token)
+        return apiAdapter.getSheetAccountByDate(dto, extractToken(token))
     }
     @PostMapping(path = ["user/category"])
     suspend fun saveUserCategory(@RequestBody userCategoryDTO: UserCategoryDTO, @RequestHeader token: TokenDTO): ResponseEntity<String>{
