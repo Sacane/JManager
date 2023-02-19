@@ -28,6 +28,10 @@ data class SheetDTO(
     val action: Boolean,
     val date: LocalDate
 )
+data class SheetsAndAverageDTO(
+    val sheets: List<SheetDTO>,
+    val sum: Double
+)
 
 data class SheetSendDTO(
     val label: String,
@@ -55,7 +59,7 @@ data class UserAccountDTO(
 )
 
 data class UserSheetDTO(
-    val userCredentials: UserCredentialsDTO,
+    val userId: Long,
     val month: Month,
     val year: Int,
     val accountLabel: String
@@ -71,7 +75,8 @@ data class UserAccountSheetDateFilteredDTO(
     val userId: Long,
     val accountLabel: String,
     val month: Month,
-    val year: Int
+    val year: Int,
+//    val average: Long
 )
 data class UserCategoryDTO(
     val userId: Long,
@@ -92,10 +97,5 @@ data class UserCredentialsDTO(
 
 data class UserTokenDTO(
     val user: UserDTO,
-    val tokenPair: TokenDTO
-)
-
-data class UserIdTokenDTO(
-    val userId: Long,
     val tokenPair: TokenDTO
 )
