@@ -27,13 +27,14 @@ class TransactionValidator {
         val account = accounts.get()?.find { it.label() == label }?.toDTO() ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(account)
     }
-    fun getSheetAccountByDate(dto: UserSheetDTO, tokenDTO: TokenDTO): ResponseEntity<List<SheetDTO>>{
-        val response = apiPort.retrieveSheetsByMonthAndYear(dto.userCredentials.id.id(), tokenDTO.toToken(), dto.month, dto.year, dto.accountLabel)
+    fun getSheetAccountByDate(dto: UserSheetDTO, token: String): ResponseEntity<SheetsAndAverageDTO>{
+        val response = apiPort.retrieveSheetsByMonthAndYear(dto.userId.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), dto.month, dto.year, dto.accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(response.get()?.map { it.toDTO()})
+        val sum = response.get()!!.map { it.value }.sum()
+        return ResponseEntity.ok(SheetsAndAverageDTO(response.get()?.map { it.toDTO()}!!, sum))
     }
-    fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO, tokenDTO: TokenDTO): ResponseEntity<SheetSendDTO>{
-        val queryResponse = apiPort.createSheetAndAssociateItWithAccount(userId.id(), tokenDTO.toToken(), accountLabel, sheetDTO.toModel())
+    fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO, tokenDTO: String): ResponseEntity<SheetSendDTO>{
+        val queryResponse = apiPort.createSheetAndAssociateItWithAccount(userId.id(), Token(UUID.fromString(tokenDTO), null, UUID.randomUUID()), accountLabel, sheetDTO.toModel())
         if(queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
         return queryResponse.mapTo { sheetDTO.sheetToSend() }.toResponseEntity()
     }
