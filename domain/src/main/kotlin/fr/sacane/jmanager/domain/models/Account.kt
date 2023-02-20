@@ -1,5 +1,7 @@
 package fr.sacane.jmanager.domain.models
 
+import java.time.Month
+
 class Account(
         private var id: Long?,
         private var amount: Double,
@@ -48,5 +50,9 @@ class Account(
             this -= delta
             otherAccount += delta
         }
+    }
+    fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Sheet>?{
+        return sheets
+            ?.filter { it.date.month == month && it.date.year == year }
     }
 }

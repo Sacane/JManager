@@ -1,13 +1,15 @@
 package fr.sacane.jmanager.domain.models
 
+import fr.sacane.jmanager.domain.port.spi.mock.Directory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import java.time.Month
 
 class AccountTest {
 
     @Test
-    fun `earn or loss should be effective for an account`(){
+    fun `account should be capable to earn and loss amount correctly`(){
         val account = Account(null, 100.toDouble(), "courant", mutableListOf())
         account += 20.toDouble()
         account.loss(10.toDouble())
@@ -17,7 +19,7 @@ class AccountTest {
     }
 
     @Test
-    fun `transaction should give and take amount`(){
+    fun `transaction should give and take amount between two account transaction`(){
         val account = Account(null, 100.toDouble(), "courant", mutableListOf())
         val account2 = Account(null, 100.toDouble(), "secondaire", mutableListOf())
         account.transaction(10.toDouble(), account2, true)
@@ -38,5 +40,18 @@ class AccountTest {
         val pwdUser = Password("D5301012000MAMacita")
         val user = User(UserId(1), "johan", "johan.test@test.fr", accounts, pwdUser, CategoryFactory.allDefaultCategories())
         assertThat(user.accounts()).containsOnlyOnce(Account(null, constantValue, "test", mutableListOf()))
+    }
+
+    @Test
+    fun `by giving a year and a month, accounts should retrieve its corresponding sheets`(){
+        val sheets = Directory.sheetInventory
+        val account = Account(2.toLong(), 1050.toDouble(), "Primary", sheets)
+
+
+        val sheetsOfDecember = account.retrieveSheetSurroundByDate(Month.DECEMBER, 2022)
+
+
+        assertThat(sheetsOfDecember).allMatch { it.date.month == Month.DECEMBER }
+        assertThat(sheetsOfDecember).hasSize(3)
     }
 }
