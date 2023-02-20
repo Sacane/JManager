@@ -5,24 +5,29 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Month
 import java.util.*
 
 class Directory {
+
+    companion object{
+        val sheetInventory = mutableListOf(
+            Sheet(0, "Piano", LocalDate.of(2022, Month.DECEMBER, 1), 450.toDouble(), false, Category("Fun")),
+            Sheet(1, "Salary", LocalDate.now(), 3500.toDouble(), true, Category("Work")),
+            Sheet(2, "SingLessons", LocalDate.now(), 450.toDouble(), false, Category("Fun")),
+            Sheet(3, "Restaurant", LocalDate.of(2022, Month.DECEMBER, 4), 100.toDouble(), false, Category("Fun")),
+            Sheet(4, "Laptop", LocalDate.of(2022, Month.DECEMBER, 31), 450.toDouble(), false, Category("Nothing")),
+            Sheet(5, "", LocalDate.now(), 450.toDouble(), true, Category("Fun")),
+            Sheet(6, "Money From testX", LocalDate.now(), 450.toDouble(), true, Category("Transaction"))
+        )
+    }
     private val categories = mutableListOf(
         Category("Fun"),
         Category("Work"),
         Category("Nothing"),
         Category("Transaction")
     )
-    private val sheetInventory = mutableListOf(
-        Sheet(0, "Piano", LocalDate.now(), 450.toDouble(), false, Category("Fun")),
-        Sheet(1, "Salary", LocalDate.now(), 3500.toDouble(), true, Category("Work")),
-        Sheet(2, "SingLessons", LocalDate.now(), 450.toDouble(), false, Category("Fun")),
-        Sheet(3, "Restaurant", LocalDate.now(), 100.toDouble(), false, Category("Fun")),
-        Sheet(4, "Laptop", LocalDate.now(), 450.toDouble(), false, Category("Nothing")),
-        Sheet(5, "", LocalDate.now(), 450.toDouble(), true, Category("Fun")),
-        Sheet(6, "Money From testX", LocalDate.now(), 450.toDouble(), true, Category("Transaction"))
-    )
+
 
     private val accountInventory = mutableListOf(
         Account(1, 0.toDouble(), "Principal", sheetInventory)
