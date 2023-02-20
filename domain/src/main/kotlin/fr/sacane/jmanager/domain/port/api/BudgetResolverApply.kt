@@ -25,8 +25,7 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
         val user = userResponse.checkForIdentity(token) ?: return Response.timeout()
         val sheets = user.accounts()
             .find { it.label() == account }
-            ?.sheets()?.filter { it.date.month == month && it.date.year == year }
-            ?: return Response.invalid()
+            ?.retrieveSheetSurroundByDate(month, year) ?: return Response.invalid()
         return Response.ok(sheets)
     }
 
