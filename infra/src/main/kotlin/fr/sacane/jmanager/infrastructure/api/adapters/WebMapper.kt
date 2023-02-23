@@ -27,7 +27,7 @@ internal fun RegisteredUserDTO.toModel(): User {
 }
 
 internal fun Sheet.toDTO(): SheetDTO {
-    return SheetDTO(this.label, this.value, this.isEntry, this.date)
+    return SheetDTO(this.id, this.label, this.value, this.isEntry, this.date)
 }
 
 internal fun User.toDTO(): UserDTO {
