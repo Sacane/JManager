@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.35.2",
-    "@iconify-json/ic": "^1.1.13",
+    "@iconify-json/tabler": "^1.1.62",
     "@pinia/nuxt": "^0.4.7",
     "@unocss/nuxt": "^0.50.0",
     "@unocss/reset": "^0.50.0",

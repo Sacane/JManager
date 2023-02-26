@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@antfu/eslint-config': ^0.35.2
-  '@iconify-json/ic': ^1.1.13
+  '@iconify-json/tabler': ^1.1.62
   '@pinia/nuxt': ^0.4.7
   '@unocss/nuxt': ^0.50.0
   '@unocss/reset': ^0.50.0
@@ -14,7 +14,7 @@ specifiers:
 
 devDependencies:
   '@antfu/eslint-config': 0.35.2_7kw3g6rralp5ps6mg3uyzz6azm
-  '@iconify-json/ic': 1.1.13
+  '@iconify-json/tabler': 1.1.62
   '@pinia/nuxt': 0.4.7_hmuptsblhheur2tugfgucj7gc4
   '@unocss/nuxt': 0.50.0_vite@4.1.4+webpack@5.75.0
   '@unocss/reset': 0.50.0
@@ -894,8 +894,8 @@ packages:
     resolution: {integrity: sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==}
     dev: true
 
-  /@iconify-json/ic/1.1.13:
-    resolution: {integrity: sha512-5i5zal/VRwTrs99iMTnG1Zu97bgX9Mkiu9TzR1U1rHBylUnBW+HkOweoQVEPgQITGG024/lNbZxU+3Aa2xuDww==}
+  /@iconify-json/tabler/1.1.62:
+    resolution: {integrity: sha512-/kxz7HHu7T7Tl6OXru/ZJHCAcxvcb6pXijKy4qBl6h8ArpkE9iGSESNbvMpKjogJTvlnP75C4g9pgZqnQU0F7A==}
     dependencies:
       '@iconify/types': 2.0.0
     dev: true
