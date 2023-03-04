@@ -3,13 +3,10 @@ import type { UserAuth } from '../composables/useAuth'
 definePageMeta({
   layout: 'foo',
 })
-const { user, login } = useAuth()
+const { login } = useAuth()
 const userAuth = ref<UserAuth>({
   username: '',
   password: '',
-})
-onMounted(() => {
-  console.log(user.value)
 })
 function onSubmitLogin() {
   login(userAuth.value)
@@ -18,20 +15,20 @@ function onSubmitLogin() {
 
 <template>
   <div class="w-full h-auto md:h-full flex flex-col md:flex-row justify-center md:justify-evenly items-center">
-    <form class="flex flex-col w-full md:w-30% p-10 rounded-lg border border-gray-400" @submit="onSubmitLogin">
+    <div class="flex flex-col w-full md:w-30% p-10 rounded-lg border border-gray-400">
       <h1 class="text-3xl font-bold text-center">
         Se connecter
       </h1>
-      <form class="flex flex-col gap-2 p-3 border-rd-20px border-none">
+      <div class="flex flex-col gap-2 p-3 border-rd-20px border-none">
         <label for="username">Nom d'utilisateur</label>
         <input id="username" v-model="userAuth.username" type="text" class="border border-gray-400 rounded-lg p-1 ">
         <label for="password">Password</label>
         <input v-model="userAuth.password" type="password" class="border border-gray-400 rounded-lg mb-4 p-1">
-        <button type="submit" class="bg-#7F52FF text-white p-7px rounded-2">
+        <button type="submit" class="bg-#7F52FF text-white p-7px rounded-2" @click="onSubmitLogin">
           Login
         </button>
-      </form>
-    </form>
+      </div>
+    </div>
     <div class="flex flex-col w-full md:w30% p-10 rounded-lg border border-gray-400">
       <h1 class="text-3xl font-bold text-center">
         S'enregistrer

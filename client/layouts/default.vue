@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
 const { user, isAuthenticated } = useAuth()
+onMounted(() => {
+  console.table(user.value)
+})
 </script>
 
 <template>

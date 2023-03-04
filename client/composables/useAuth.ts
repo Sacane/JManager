@@ -23,15 +23,17 @@ interface UserStorage {
 export default function useAuth() {
   const user = useLocalStorage<UserStorage | null>('user', null)
 
-  const login = (user: UserAuth) => {
-    const { response } = useFetch(`${API_PATH}/auth/login`).post(user).json()
-    const userResponse = response.value as User
-    console.log(userResponse)
-    useLocalStorage('user', {
-      username: userResponse.user.username,
-      email: userResponse.user.email,
-      token: userResponse.tokenPair.token,
-      refresh: userResponse.tokenPair.refresh,
+  const login = async (user: UserAuth) => {
+    const { data } = await useFetch(`${API_PATH}user/auth`).post(user).json<User>()
+    if (data.value == null)
+      return null
+    const { token, refresh } = data.value.tokenPair
+    const { username, email } = data.value.user
+    return useLocalStorage('user', {
+      username,
+      email,
+      token,
+      refresh,
     })
   }
   const logout = () => {
