@@ -22,14 +22,14 @@ class UserControlAdapter @Autowired constructor(private var userPort: Administra
         if(response.get() == null) return ResponseEntity.badRequest().build()
         return response.mapTo { u -> u!!.toDTO() }.toResponseEntity()
     }
-    fun loginUser(userDTO: UserPasswordDTO): ResponseEntity<UserTokenDTO>{
+    fun loginUser(userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO>{
         val response = userPort.login(userDTO.username, Password(userDTO.password))
         LOGGER.info("Trying to login user ${userDTO.password} with password ${userDTO.password}")
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         val ticket = response.get() ?: return ResponseEntity.badRequest().build()
         val user = ticket.user
         val token = ticket.token
-        return ResponseEntity.ok(UserTokenDTO(user.toDTO(), token.toDTO()))
+        return ResponseEntity.ok(UserStorageDTO(user.id.get(), user.username, user.email, token.id.toString()))
     }
 
     fun logout(userId: Long, tokenDTO: String): ResponseEntity<Nothing>{

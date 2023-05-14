@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
-const { user, isAuthenticated } = useAuth()
-onMounted(() => {
-  console.table(user.value)
-})
+const { user, isAuthenticated, logout } = useAuth()
 </script>
 
 <template>
@@ -12,15 +9,14 @@ onMounted(() => {
       <NuxtLink to="/" class="text-2xl font-bold">
         JManager
       </NuxtLink>
-      <div v-if="isAuthenticated">
-        Bienvenue {{ user?.username }}
-      </div>
+      <h1 v-if="isAuthenticated">
+        Bonjour {{ user?.username }} !
+      </h1>
       <div class="flex-row">
-        <NuxtLink v-if="isAuthenticated" to="/login" class="icon-btn text-3 text4">
-          <div i="tabler-logout">
-            Se deconnecter
-          </div>
-        </NuxtLink>
+        <button v-if="isAuthenticated" class="icon-btn text-3 text4" @click="logout()">
+          <div i="tabler-logout" />
+          Se deconnecter
+        </button>
         <NuxtLink v-else to="/login" class="icon-btn text-3 text-4">
           <div i="tabler-login" />
           Se connecter

@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import type { UserAuth } from '../composables/useAuth'
-definePageMeta({
-  layout: 'foo',
-})
+
 const { login } = useAuth()
-const userAuth = ref<UserAuth>({
+const userAuth = reactive<UserAuth>({
   username: '',
   password: '',
 })
-function onSubmitLogin() {
-  login(userAuth.value)
-}
 </script>
 
 <template>
@@ -19,15 +14,15 @@ function onSubmitLogin() {
       <h1 class="text-3xl font-bold text-center">
         Se connecter
       </h1>
-      <div class="flex flex-col gap-2 p-3 border-rd-20px border-none">
+      <form class="flex flex-col gap-2 p-3 border-rd-20px border-none">
         <label for="username">Nom d'utilisateur</label>
         <input id="username" v-model="userAuth.username" type="text" class="border border-gray-400 rounded-lg p-1 ">
         <label for="password">Password</label>
         <input v-model="userAuth.password" type="password" class="border border-gray-400 rounded-lg mb-4 p-1">
-        <button type="submit" class="bg-#7F52FF text-white p-7px rounded-2" @click="onSubmitLogin">
+        <button class="bg-#7F52FF text-white p-7px rounded-2" @click="login(userAuth)">
           Login
         </button>
-      </div>
+      </form>
     </div>
     <div class="flex flex-col w-full md:w30% p-10 rounded-lg border border-gray-400">
       <h1 class="text-3xl font-bold text-center">
