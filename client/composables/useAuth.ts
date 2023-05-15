@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { API_PATH } from '../utils/request'
+
 export interface UserAuth {
   username: string
   password: string
@@ -12,12 +13,21 @@ interface User {
 }
 
 export default function useAuth() {
-  const user = useLocalStorage<User | null>('user', null)
+  const user: Ref<User | null> = ref(null)
+  const storedUser: User = JSON.parse(localStorage.getItem('user') as string)
+  const isAuthenticated = ref<boolean>(false)
+  if (storedUser) {
+    user.value = storedUser
+    isAuthenticated.value = true
+  }
 
   async function login(userAuth: UserAuth) {
     try {
       const response = await axios.post(`${API_PATH}user/auth`, userAuth)
       user.value = response.data
+      isAuthenticated.value = true
+      localStorage.setItem('user', JSON.stringify(user.value))
+      navigateTo('/')
     }
     catch (e: any) {
       console.error(e.toString())
@@ -28,12 +38,16 @@ export default function useAuth() {
     Accept: 'application/json',
   }))
   async function logout() {
-    user.value = null
-    await axios.post(`${API_PATH}user/logout/${user.value?.id}`, {
+    const config = {
       headers: defaultHeaders.value,
+    }
+    axios.post(`${API_PATH}user/logout/${user?.value?.id}`, null, config).catch((e: any) => console.error(e.toString())).finally(() => {
+      navigateTo('/')
+      user.value = null
+      localStorage.removeItem('user')
+      isAuthenticated.value = false
     })
   }
 
-  const isAuthenticated = computed(() => user.value != null)
   return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders }
 }
