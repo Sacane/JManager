@@ -17,6 +17,7 @@ class LoginManager(private val loginInventory: LoginManager, private val userTra
         val user = userTransaction.findByPseudonym(pseudonym) ?: return Response.notFound()
         val canLogin = userPassword.matchWith(user.password)
         if(canLogin) {
+            LOGGER.info("User $pseudonym logged")
             val ticket = loginInventory.generateToken(user) ?: return Response.invalid()
             return Response.ok(Ticket(user, ticket))
         }

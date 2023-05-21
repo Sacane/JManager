@@ -36,6 +36,7 @@ class ServerUserAdapter : UserTransaction{
     override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
         val user = userRepository.findByUsername(pseudonym)
         if(!MessageDigest.isEqual(pwd.get(), user?.password)){
+            LOGGER.info("Password is not correct")
             return null
         }
         val token = Login(user!!, LocalDateTime.now())
@@ -52,7 +53,7 @@ class ServerUserAdapter : UserTransaction{
         return try{
             userRepository.save(user.asResource()).toModel()
         }catch(e: Exception){
-            LOGGER.severe("Failed to save user into server")
+            LOGGER.severe("Failed to save user into database")
             null
         }
     }
