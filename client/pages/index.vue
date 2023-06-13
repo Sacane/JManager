@@ -1,3 +1,9 @@
+<script setup lang="ts">
+definePageMeta({
+  layout: 'default',
+})
+</script>
+
 <template>
   <div class="flex ">
     <h1 class="text-3xl font-bold text-center max-w-2xl">

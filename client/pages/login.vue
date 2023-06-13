@@ -8,9 +8,9 @@ const userAuth = reactive<UserAuth>({
   password: '',
 })
 
-const onSubmit = () => {
-  login(userAuth)
-}
+definePageMeta({
+  layout: 'blank',
+})
 </script>
 
 <template>
@@ -24,7 +24,7 @@ const onSubmit = () => {
         <input id="username" v-model="userAuth.username" type="text" class="border border-gray-400 rounded-lg p-1 ">
         <label for="password">Password</label>
         <input v-model="userAuth.password" type="password" class="border border-gray-400 rounded-lg mb-4 p-1">
-        <button class="bg-#7F52FF text-white p-7px rounded-2" @click="onSubmit">
+        <button type="button" class="bg-#7F52FF text-white p-7px rounded-2" @click="login(userAuth)">
           Login
         </button>
       </form>

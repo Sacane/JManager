@@ -26,8 +26,8 @@ export default function useAuth() {
       const response = await axios.post(`${API_PATH}user/auth`, userAuth)
       user.value = response.data
       isAuthenticated.value = true
-      localStorage.setItem('user', JSON.stringify(user.value))
       navigateTo('/')
+      localStorage.setItem('user', JSON.stringify(user.value))
     }
     catch (e: any) {
       console.error(e.toString())
@@ -41,13 +41,17 @@ export default function useAuth() {
     const config = {
       headers: defaultHeaders.value,
     }
-    axios.post(`${API_PATH}user/logout/${user?.value?.id}`, null, config).catch((e: any) => console.error(e.toString())).finally(() => {
-      navigateTo('/')
+    try {
+      await axios.post(`${API_PATH}user/logout/${user?.value?.id}`, null, config)
       user.value = null
       localStorage.removeItem('user')
       isAuthenticated.value = false
-    })
+      navigateTo('/')
+    }
+    catch (e: any) {
+      console.error(e.toString())
+    }
   }
 
-  return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders }
+  return { user: readonly(user), isAuthenticated, login, logout }
 }
