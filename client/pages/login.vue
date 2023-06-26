@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import type { UserAuth } from '../composables/useAuth'
+import type { UserAuth } from '@/composables/useAuth'
 
 const { login } = useAuth()
 
 const userAuth = reactive<UserAuth>({
   username: '',
   password: '',
-})
-
-definePageMeta({
-  layout: 'blank',
 })
 </script>
 

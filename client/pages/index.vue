@@ -1,13 +1,13 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'default',
+  layout: 'dashboard',
 })
 </script>
 
 <template>
-  <div class="flex ">
-    <h1 class="text-3xl font-bold text-center max-w-2xl">
-      Un sommaire rapide et pratique pour organiser votre budget et vos dépenses
+  <div class="flex">
+    <h1 class="text-3xl font-bold text-center mt-10">
+      Un sommaire rapide et pratique pour gérer votre budget et vos dépenses
     </h1>
     <section class="text-center">
       <h2 class="text-2xl mt-2xl italic">

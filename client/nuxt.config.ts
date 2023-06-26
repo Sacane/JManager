@@ -11,7 +11,11 @@ export default defineNuxtConfig({
     },
   },
   ssr: false,
-  css: ['@unocss/reset/antfu.css'],
+  css: [
+    '@unocss/reset/antfu.css',
+    'primevue/resources/themes/lara-light-blue/theme.css',
+    'primevue/resources/primevue.css',
+  ],
   sourcemap: {
     server: true,
     client: false,
@@ -24,8 +28,9 @@ export default defineNuxtConfig({
     pathPrefix: false,
   }],
 
-  modules: ['@vueuse/nuxt', '@unocss/nuxt', '@pinia/nuxt'],
+  modules: ['@vueuse/nuxt', '@unocss/nuxt', '@pinia/nuxt', '@notkamui/nuxt-primevue'],
   pinia: {
     autoImports: ['defineStore', ['defineStore', 'definePiniaStore'], 'storeToRefs'],
   },
+
 })

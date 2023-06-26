@@ -14,11 +14,15 @@ interface User {
 
 export default function useAuth() {
   const user: Ref<User | null> = ref(null)
-  const storedUser: User = JSON.parse(localStorage.getItem('user') as string)
+  const storedUser: User | undefined = JSON.parse(localStorage.getItem('user') as string)
   const isAuthenticated = ref<boolean>(false)
   if (storedUser) {
     user.value = storedUser
     isAuthenticated.value = true
+  }
+  else {
+    user.value = null
+    isAuthenticated.value = false
   }
 
   async function login(userAuth: UserAuth) {
@@ -44,9 +48,9 @@ export default function useAuth() {
     try {
       await axios.post(`${API_PATH}user/logout/${user?.value?.id}`, null, config)
       user.value = null
-      localStorage.removeItem('user')
       isAuthenticated.value = false
       navigateTo('/')
+      localStorage.removeItem('user')
     }
     catch (e: any) {
       console.error(e.toString())
