@@ -1,7 +1,5 @@
 package fr.sacane.jmanager.domain.models
 
-import fr.sacane.jmanager.domain.models.Category
-import fr.sacane.jmanager.domain.models.CategoryFactory
 import java.time.LocalDate
 
 data class Sheet(
