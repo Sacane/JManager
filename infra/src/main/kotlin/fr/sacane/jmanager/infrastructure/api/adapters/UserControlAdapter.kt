@@ -20,7 +20,7 @@ class UserControlAdapter @Autowired constructor(private var userPort: Administra
     fun createUser(userDTO: RegisteredUserDTO): ResponseEntity<UserDTO>{
         val response = userPort.register(userDTO.toModel())
         if(response.get() == null) return ResponseEntity.badRequest().build()
-        return response.mapTo { u -> u!!.toDTO() }.toResponseEntity()
+        return response.map { u -> u!!.toDTO() }.toResponseEntity()
     }
     fun loginUser(userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO>{
         val response = userPort.login(userDTO.username, Password(userDTO.password))
