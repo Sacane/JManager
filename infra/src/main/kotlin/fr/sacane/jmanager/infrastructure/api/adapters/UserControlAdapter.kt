@@ -19,17 +19,14 @@ class UserControlAdapter @Autowired constructor(private var userPort: Administra
     }
     fun createUser(userDTO: RegisteredUserDTO): ResponseEntity<UserDTO>{
         val response = userPort.register(userDTO.toModel())
-        if(response.get() == null) return ResponseEntity.badRequest().build()
-        return response.mapTo { u -> u!!.toDTO() }.toResponseEntity()
+        if(response.isFailure()) return ResponseEntity.badRequest().build()
+        return response.map { u -> u!!.toDTO() }.toResponseEntity()
     }
-    fun loginUser(userDTO: UserPasswordDTO): ResponseEntity<UserTokenDTO>{
+    fun loginUser(userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO>{
         val response = userPort.login(userDTO.username, Password(userDTO.password))
         LOGGER.info("Trying to login user ${userDTO.password} with password ${userDTO.password}")
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        val ticket = response.get() ?: return ResponseEntity.badRequest().build()
-        val user = ticket.user
-        val token = ticket.token
-        return ResponseEntity.ok(UserTokenDTO(user.toDTO(), token.toDTO()))
+        return response.map { u -> UserStorageDTO(u!!.user.id.get(), u.user.username, u.user.email, u.token.id.toString()) }.toResponseEntity()
     }
 
     fun logout(userId: Long, tokenDTO: String): ResponseEntity<Nothing>{

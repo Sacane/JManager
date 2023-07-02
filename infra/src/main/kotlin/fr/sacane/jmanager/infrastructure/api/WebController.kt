@@ -34,7 +34,8 @@ class WebController {
     }
 
     @PostMapping(path= ["/user/auth"])
-    suspend fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserTokenDTO>{
+    suspend fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO>{
+        LOGGER.info("Trying to login and get access token")
         return userAdapter.loginUser(userDTO)
     }
 

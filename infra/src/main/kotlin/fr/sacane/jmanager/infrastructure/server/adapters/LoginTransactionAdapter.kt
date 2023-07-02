@@ -37,6 +37,7 @@ class LoginTransactionAdapter : LoginManager {
                     userResponse,
                     LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
                 ))
+            LOGGER.info("User ${userResponse.username} logged in")
             Ticket(userResponse.toModel(), login.toModel())
         }
         else null

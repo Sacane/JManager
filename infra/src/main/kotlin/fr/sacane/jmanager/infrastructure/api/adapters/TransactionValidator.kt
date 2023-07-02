@@ -24,48 +24,47 @@ class TransactionValidator {
     fun findAccount(id: Long, label: String, tokenDTO: String): ResponseEntity<AccountDTO> {
         val accounts = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(tokenDTO), null, null))
         if(accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
-        val account = accounts.get()?.find { it.label() == label }?.toDTO() ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(account)
+        return accounts.map { list ->
+            list?.find { it.label() == label }?.toDTO()!!
+        }.toResponseEntity()
     }
     fun getSheetAccountByDate(dto: UserSheetDTO, token: String): ResponseEntity<SheetsAndAverageDTO>{
         val response = apiPort.retrieveSheetsByMonthAndYear(dto.userId.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), dto.month, dto.year, dto.accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        val sum = response.get()!!.map { it.value }.sum()
-        return ResponseEntity.ok(SheetsAndAverageDTO(response.get()?.map { it.toDTO()}!!, sum))
+        val sum = response.mapTo { s -> s?.map { it.value } }?.sum() ?: 0.0
+        return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it -> it!!.map { it.toDTO() } }, sum))
     }
     fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO, tokenDTO: String): ResponseEntity<SheetSendDTO>{
         val queryResponse = apiPort.createSheetAndAssociateItWithAccount(userId.id(), Token(UUID.fromString(tokenDTO), null, UUID.randomUUID()), accountLabel, sheetDTO.toModel())
         if(queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        return queryResponse.mapTo { sheetDTO.sheetToSend() }.toResponseEntity()
+        return queryResponse.map { sheetDTO.sheetToSend() }.toResponseEntity()
     }
     fun saveAccount(userAccount: UserAccountDTO, token: String) : ResponseEntity<AccountInfoDTO>{
         val response = apiPort.openAccount(userAccount.id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
-        if(response.get() == null) {
-            LOGGER.warn("Null response from database request for saving account")
-            return ResponseEntity.badRequest().build()
+        if(response.isFailure()){
+            return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        if(response.status.isFailure()){
-            LOGGER.warn("Get a failure response from server, something bad happened");
-        }
-        return response.mapTo { AccountInfoDTO(it!!.amount(), it.label()) }.toResponseEntity()
+        return response.map { AccountInfoDTO(it!!.amount(), it.label()) }.toResponseEntity()
     }
     fun getUserAccount(id: Long, token: String): ResponseEntity<List<AccountInfoDTO>> {
         val response = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()))
-        if(response.get() == null) return ResponseEntity.badRequest().build()
-        val mapped = response.mapTo { p -> p!!.map { AccountInfoDTO(it.amount(), it.label()) } }
+        if(response.isFailure()){
+            return response.mapTo { ResponseEntity.badRequest().build() }
+        }
+        val mapped = response.map { p -> p!!.map { AccountInfoDTO(it.amount(), it.label()) } }
         return mapped.toResponseEntity()
     }
 
     fun saveCategory(userCategoryDTO: UserCategoryDTO, token: TokenDTO): ResponseEntity<String>{
         val response = apiPort.createCategory(UserId(userCategoryDTO.userId), token.toToken(), Category(userCategoryDTO.label))
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(response.get()!!.label)
+        return response.map{ it?.label ?: "OK" }.toResponseEntity()
     }
 
     fun retrieveAllCategories(userId: UserId, tokenDTO: TokenDTO): ResponseEntity<List<String>> {
         val response = apiPort.retrieveCategories(userId, tokenDTO.toToken())
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return Response.ok(response.get()!!.map { u -> u.label }).toResponseEntity()
+        return response.map { u -> u!!.map { it.label } }.toResponseEntity()
     }
     fun removeCategory(userCategoryDTO: UserCategoryDTO, tokenDTO: TokenDTO): ResponseEntity<String>{
         return ResponseEntity.ok("TODO")

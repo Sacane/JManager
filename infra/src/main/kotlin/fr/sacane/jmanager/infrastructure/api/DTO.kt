@@ -99,3 +99,10 @@ data class UserTokenDTO(
     val user: UserDTO,
     val tokenPair: TokenDTO
 )
+
+data class UserStorageDTO(
+    val id: Long,
+    val username: String,
+    val email: String,
+    val token: String
+)
