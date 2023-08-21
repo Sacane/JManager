@@ -5,7 +5,7 @@
   <Header />
   <!-- ------------------------------ -->
 
-  <div class="wfull hfull">
+  <div class="w-screen h-screen">
     <slot />
   </div>
 

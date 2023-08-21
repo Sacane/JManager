@@ -1,28 +1,34 @@
+import useAccounts from '../composables/useAccounts';
 <script setup lang="ts">
 definePageMeta({
-  layout: 'dashboard',
+  layout: 'sidebar-layout',
 })
-const products = [
-  {
-    code: 'P1000',
-    name: 'Product 1',
-    category: 'Category 1',
-    quantity: 10,
-  },
-  {
-    code: 'P1001',
-    name: 'Product 2',
-    category: 'Category 2',
-    quantity: 20,
-  },
-]
+
+
+const {accounts, createAccount} = useAccounts()
+const isAccountFilled = ref(accounts.value.length > 0)
+
+const toAdd = () => {
+  navigateTo('/addAccount')
+}
+
 </script>
 
 <template>
-  <PDataTable :value="products" table-style="min-width: 50rem">
-    <PColumn field="code" header="Code" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-    <PColumn field="name" header="Name" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-    <PColumn field="category" header="Category" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-    <PColumn field="quantity" header="Quantity" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-  </PDataTable>
+  <div w-full h-full flex>
+    <div v-if="isAccountFilled">
+      <PDataTable :value="accounts" table-style="min-width: 50rem">
+        <PColumn field="label" header="Label" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="amount" header="Amount" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+      </PDataTable>
+    </div>
+    <div v-else min-w-500px>
+      Ce profil n'a pas encore de compte enregistrés
+    </div>
+    <div class="w-200px" mt-2>
+      <PButton label="Ajouter un nouveau compte" @click="toAdd" class="bg-purple"/>
+    </div>
+    
+  </div>
+
 </template>
