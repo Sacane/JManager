@@ -6,9 +6,11 @@ import { AccountDTO } from '../types/index';
 
 export default function useAccounts(){
     const accounts: Ref<Array<AccountDTO>> = ref([])
-    const {user} = useAuth()
+    const {user, defaultHeaders} = useAuth()
 
-    axios.get(`${API_PATH}user/accounts/get/${user.value?.id}`)
+    axios.get(`${API_PATH}user/accounts/get/${user.value?.id}`, {
+        headers: defaultHeaders.value
+    })
     .then(data => accounts.value = data.data)
     .catch(err => console.error(err))
 
@@ -19,9 +21,6 @@ export default function useAccounts(){
                 labelAccount,
                 amount
             })
-            axios.get(`${API_PATH}user/accounts/get/${user.value?.id}`)
-            .then(data => accounts.value = data.data)
-            .catch(err => console.error(err))
         }catch(e: any) {
             console.error(e.toString())
         }

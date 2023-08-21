@@ -57,5 +57,5 @@ export default function useAuth() {
     }
   }
 
-  return { user: readonly(user), isAuthenticated, login, logout }
+  return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders}
 }

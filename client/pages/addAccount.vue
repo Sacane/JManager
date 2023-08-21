@@ -3,6 +3,8 @@ definePageMeta({
     layout: 'sidebar-layout'
 })
 
+const {createAccount} = useAccounts()
+
 const newAccount = reactive({
   label: '',
   amount: 0.0
@@ -14,6 +16,8 @@ const amount = reactive({
 })
 
 const toAccount = () => {
+  const integer = parseFloat(`${amount.integerPart}`)
+  createAccount(newAccount.label, integer + parseFloat(`0.${amount.decimalPart}`))
   navigateTo('/account')
 }
 </script>
