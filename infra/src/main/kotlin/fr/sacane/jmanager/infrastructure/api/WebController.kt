@@ -71,7 +71,7 @@ class WebController {
     }
 
     @GetMapping(path = ["user/accounts/get/{id}"])
-    suspend fun getAccounts(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<List<AccountInfoDTO>>{
+    suspend fun getAccounts(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<List<AccountDTO>>{
         LOGGER.debug("Trying to get the user's accounts by id : $id")
         return apiAdapter.getUserAccount(id, extractToken(token))
     }

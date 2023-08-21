@@ -46,12 +46,12 @@ class TransactionValidator {
         }
         return response.map { AccountInfoDTO(it!!.amount(), it.label()) }.toResponseEntity()
     }
-    fun getUserAccount(id: Long, token: String): ResponseEntity<List<AccountInfoDTO>> {
+    fun getUserAccount(id: Long, token: String): ResponseEntity<List<AccountDTO>> {
         val response = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()))
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        val mapped = response.map { p -> p!!.map { AccountInfoDTO(it.amount(), it.label()) } }
+        val mapped = response.map { p -> p!!.map { AccountDTO(it.id(), it.amount(), it.label(), it.sheets()?.map { s -> s.toDTO() }) } }
         return mapped.toResponseEntity()
     }
 

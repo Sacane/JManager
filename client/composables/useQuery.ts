@@ -11,9 +11,10 @@ export default function useQuery() {
         })
     }
 
-    async function post(url: string) {
+    async function post(url: string, body: any | undefined) {
         return await axios.post(`${API_PATH}` + url , {
-            headers: defaultHeaders.value
+            headers: defaultHeaders.value,
+            body: body
         })
     }
 
