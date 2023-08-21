@@ -57,6 +57,7 @@ class WebController {
 
     @PostMapping("/account/create")
     suspend fun createAccount(@RequestBody userAccount: UserAccountDTO, @RequestHeader("Authorization") tokenPair: String): ResponseEntity<AccountInfoDTO>{
+        LOGGER.info("Trying to create a new account")
         return apiAdapter.saveAccount(userAccount, extractToken(tokenPair))
     }
 

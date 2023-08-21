@@ -10,6 +10,7 @@ import java.time.Month
 @LeftPort
 class BudgetResolverApply(private val register: TransactionRegister, private val userTransaction: UserTransaction): BudgetResolver {
     override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
+        println("AIE AIE AIE")
         val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid()
         if(tokenResponse.id != token.id) {
             println("TOKEN DOES NOT CORRESPOND EACH OTHERS")
@@ -61,6 +62,7 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
     override fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>> {
         val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.invalid()
+        userResponse.user.accounts().forEach { println(it) }
         return Response.ok(userResponse.user.accounts())
     }
 

@@ -1,16 +1,27 @@
 import useAccounts from '../composables/useAccounts';
+import { AccountDTO } from '../types/index';
 <script setup lang="ts">
 definePageMeta({
   layout: 'sidebar-layout',
 })
 
-
-const {accounts, createAccount} = useAccounts()
-const isAccountFilled = ref(accounts.value.length > 0)
+const {accounts, fetch} = useAccounts()
+const isAccountFilled = ref(false)
 
 const toAdd = () => {
   navigateTo('/addAccount')
 }
+
+onMounted(async () => {
+  await fetch();
+  isAccountFilled.value = true
+  console.log(accounts.value)
+})
+
+const formatCurrency = (value: string) => {
+  const formattedValue = parseFloat(value).toFixed(2);
+  return `${formattedValue} €`;
+};
 
 </script>
 
@@ -18,8 +29,8 @@ const toAdd = () => {
   <div w-full h-full flex>
     <div v-if="isAccountFilled">
       <PDataTable :value="accounts" table-style="min-width: 50rem">
-        <PColumn field="label" header="Label" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="amount" header="Amount" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="labelAccount" header="Label" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="amount" header="Amount" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }"/>
       </PDataTable>
     </div>
     <div v-else min-w-500px>

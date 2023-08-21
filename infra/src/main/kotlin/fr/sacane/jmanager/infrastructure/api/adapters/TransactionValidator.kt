@@ -40,6 +40,7 @@ class TransactionValidator {
         return queryResponse.map { sheetDTO.sheetToSend() }.toResponseEntity()
     }
     fun saveAccount(userAccount: UserAccountDTO, token: String) : ResponseEntity<AccountInfoDTO>{
+        println("SAVE ACCOUNT ATTEMPT")
         val response = apiPort.openAccount(userAccount.id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }

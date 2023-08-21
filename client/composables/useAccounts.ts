@@ -9,22 +9,36 @@ export default function useAccounts(){
     const accounts: Ref<Array<AccountDTO>> = ref([])
     const {user, defaultHeaders} = useAuth()
     const {get, post} = useQuery()
-    get(`user/accounts/get/${user.value?.id}`)
-    .then(data => accounts.value = data.data)
-    .catch(err => console.error(err))
-
-    async function createAccount(labelAccount: string, amount: number) {
-        try {
-            const response = await post(`${API_PATH}account/create`, {
-                id: user.value?.id,
-                labelAccount,
-                amount
-            })
-        }catch(e: any) {
-            console.error(e.toString())
-        }
+    
+    try{
+        const response = axios.get(`user/accounts/get/${user.value?.id}`,
+        {
+            headers: defaultHeaders.value
+        })
         
+    }catch(error) {
+        console.error(error)
     }
 
-    return {accounts: readonly(accounts), createAccount}
+    async function fetch() {
+        try {
+            const response = await axios.get(`${API_PATH}user/accounts/get/${user.value?.id}`,
+            {
+                headers: defaultHeaders.value
+            })
+            accounts.value = response.data
+        }catch(error) {
+            console.error(error)
+        }
+    }
+    
+    async function createAccount(labelAccount: string, amount: number) {
+        post('account/create', {
+            id: user.value?.id,
+            labelAccount,
+            amount
+        })
+    }
+
+    return {accounts, createAccount, fetch}
 }
