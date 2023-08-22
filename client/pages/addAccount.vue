@@ -3,7 +3,7 @@ definePageMeta({
     layout: 'sidebar-layout'
 })
 
-const {createAccount} = useAccounts()
+const {createAccount, fetch} = useAccounts()
 
 const newAccount = reactive({
   label: '',
@@ -15,9 +15,10 @@ const amount = reactive({
   decimalPart: 0
 })
 
-const toAccount = () => {
+const toAccount = async () => {
   const integer = parseFloat(`${amount.integerPart}`)
-  createAccount(newAccount.label, integer + parseFloat(`0.${amount.decimalPart}`))
+  await createAccount(newAccount.label, integer + parseFloat(`0.${amount.decimalPart}`))
+  await fetch()
   navigateTo('/account')
 }
 </script>
@@ -34,7 +35,7 @@ const toAccount = () => {
         <div class="flex-row space-x-2" id="labelAmount">
           <PInputNumber placeholder="Partie entière" v-model="amount.integerPart" />
           <div class="p-2">.</div>
-          <PInputNumber placeholder="Partie décimal" v-model="amount.decimalPart"/>
+          <PInputNumber placeholder="Partie décimal" v-model="amount.decimalPart" maxlength="2"/>
         </div>
         <PButton label="Créer" class="mt-3 bg-#7F52FF" @click="toAccount" />
       </PFieldset>

@@ -6,7 +6,7 @@ definePageMeta({
 })
 
 const {accounts, fetch} = useAccounts()
-const isAccountFilled = ref(false)
+const isAccountFilled = reactive({ok:false})
 
 const toAdd = () => {
   navigateTo('/addAccount')
@@ -14,7 +14,7 @@ const toAdd = () => {
 
 onMounted(async () => {
   await fetch();
-  isAccountFilled.value = true
+  isAccountFilled.ok = true
   console.log(accounts.value)
 })
 
@@ -27,10 +27,10 @@ const formatCurrency = (value: string) => {
 
 <template>
   <div w-full h-full flex>
-    <div v-if="isAccountFilled">
+    <div v-if="isAccountFilled.ok">
       <PDataTable :value="accounts" table-style="min-width: 50rem">
-        <PColumn field="labelAccount" header="Label" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="amount" header="Amount" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }"/>
+        <PColumn field="labelAccount" header="Libellé du compte" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="amount" header="Montant" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }"/>
       </PDataTable>
     </div>
     <div v-else min-w-500px>
