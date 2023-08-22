@@ -57,6 +57,7 @@ class WebController {
 
     @PostMapping("/account/create")
     suspend fun createAccount(@RequestBody userAccount: UserAccountDTO, @RequestHeader("Authorization") tokenPair: String): ResponseEntity<AccountInfoDTO>{
+        LOGGER.info("Trying to create a new account")
         return apiAdapter.saveAccount(userAccount, extractToken(tokenPair))
     }
 
@@ -71,7 +72,7 @@ class WebController {
     }
 
     @GetMapping(path = ["user/accounts/get/{id}"])
-    suspend fun getAccounts(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<List<AccountInfoDTO>>{
+    suspend fun getAccounts(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<List<AccountDTO>>{
         LOGGER.debug("Trying to get the user's accounts by id : $id")
         return apiAdapter.getUserAccount(id, extractToken(token))
     }

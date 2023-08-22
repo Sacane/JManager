@@ -5,9 +5,9 @@
 <template>
   <Header />
   <!-- ------------------------------ -->
-  <div class=" flex-row h-100%">
+  <div class=" flex-row h-screen w-screen">
     <Sidebar class="mr5" />
-    <div class="wfull hfull">
+    <div class="wscreen hscreen m-2">
       <slot />
     </div>
   </div>

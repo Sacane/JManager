@@ -4,7 +4,7 @@ export default function useGlobalLayout() {
   const { isAuthenticated } = useAuth()
   watch(isAuthenticated, () => {
     if (isAuthenticated.value)
-      globalLayout.value = 'dashboard'
+      globalLayout.value = 'sidebar-layout'
 
     else
       globalLayout.value = 'default'
