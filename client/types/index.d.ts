@@ -20,3 +20,4 @@ export interface UserAccountDTO {
     amount: number,
     labelAccount: string
 }
+

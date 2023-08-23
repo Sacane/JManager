@@ -10,7 +10,7 @@ const { user, isAuthenticated, logout } = useAuth()
         JManager
       </NuxtLink>
       <h1 v-if="isAuthenticated" class="text-18px fw-bold">
-        Bonjour {{ user?.username }} !
+        Bienvenue {{ user?.username }} !
       </h1>
       <div class="flex-row">
         <button v-if="isAuthenticated" class="icon-btn text-3 text4" @click="logout()">

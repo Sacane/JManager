@@ -8,7 +8,7 @@ export default function useQuery() {
 
     async function get(url: string, authorized: boolean = true) {
         const response = await axios.get(`${API_PATH}` + url , {
-            headers: defaultHeaders.value
+            headers: defaultHeaders.value,
         })
         return response
     }
