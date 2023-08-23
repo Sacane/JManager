@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { API_PATH } from '../utils/request';
 import useAuth from './useAuth';
-import { AccountDTO } from '../types/index';
 
 export default function useQuery() {
     const {defaultHeaders} = useAuth()

@@ -62,7 +62,6 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
     override fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>> {
         val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.invalid()
-        userResponse.user.accounts().forEach { println(it) }
         return Response.ok(userResponse.user.accounts())
     }
 
@@ -70,6 +69,13 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
         val ticket = userTransaction.findById(userId) ?: return Response.invalid()
         ticket.checkForIdentity(token) ?: return Response.invalid()
         return Response.ok(ticket.user.categories())
+    }
+
+    override fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account> {
+        val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
+        userResponse.checkForIdentity(token) ?: return Response.invalid()
+        val targetOne = userResponse.user.accounts().find { it.label() == label } ?: return Response.notFound()
+        return Response.ok(targetOne)
     }
 
     fun removeCategory(id: UserId, token: Token, label: String): Response<Category?> {

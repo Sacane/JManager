@@ -10,4 +10,5 @@ interface BudgetResolver {
     fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>>
     fun createCategory(userId: UserId, token: Token, category: Category): Response<Category>
     fun retrieveCategories(userId: UserId, token: Token): Response<List<Category>>
+    fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account>
 }
