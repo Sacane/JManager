@@ -32,11 +32,6 @@ class ServerTransactionAdapter : TransactionRegister{
         val user = userResponse.get()
         user.accounts?.add(account.asResource())
         return userRepository.saveAndFlush(user).toModel()
-
-//        }catch (e: Exception){
-//            LOGGER.warn("ERROR WHILE SAVE AND FLUSHING ACCOUNT INTO DATABASE : ${e.cause}")
-//            null
-//        }
     }
 
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
@@ -44,7 +39,6 @@ class ServerTransactionAdapter : TransactionRegister{
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets?.add(sheet.asResource())
-            //TODO replace it by a class wrapper of sheet's incomes
             account.amount = account.amount?.plus(sheet.expenses)
             account.amount = account.amount?.plus(sheet.income)
             // =================================================

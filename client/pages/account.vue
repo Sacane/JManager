@@ -32,7 +32,8 @@ function onRowClick(event: any) {
     name: 'transaction',
     query: {
       id: event.data.id,
-      labelAccount: event.data.labelAccount
+      labelAccount: event.data.labelAccount,
+      amount: event.data.amount
     }
   })
 }

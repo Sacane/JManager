@@ -40,4 +40,14 @@ class SheetResource(
         category: CategoryResource?,
         accountAmount: Double
     ): this(null, label, date, expenses, income, accountAmount, category)
+
+    override fun toString(): String {
+        return """
+            label : $label
+            date: $date
+            expenses: $expenses
+            income: $income
+            accountAmount: $accountAmount
+        """.trimIndent()
+    }
 }

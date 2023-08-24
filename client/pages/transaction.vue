@@ -21,7 +21,9 @@ const dateSelected = reactive({
   month: monthFromNumber(date.getMonth() + 1) as string,
   labelAccount: '',
   isRangeSelected: false,
-  currentSheets: [] as SheetDTO[]
+  currentSheets: [] as SheetDTO[],
+  currentAccountId: '',
+  accountAmount: 0.0
 })
 
 const isSelectionOk = () => dateSelected.year !== 0 && dateSelected.month !== '' && dateSelected.labelAccount !== ''
@@ -49,7 +51,8 @@ const route = useRouter()
 
 const initAccount = () => {
   dateSelected.labelAccount = route.currentRoute.value.query.labelAccount as string
-  console.log(dateSelected.labelAccount)
+  dateSelected.currentAccountId = route.currentRoute.value.query.id as string
+  dateSelected.accountAmount = parseFloat(route.currentRoute.value.query.amount as string)
 }
 
 onMounted(async () => {
@@ -65,6 +68,16 @@ function formatDateToFrench(numbers: number[]) {
   return new Date(numbers[0], numbers[1], numbers[2]).toLocaleDateString('fr-FR').replace(/\//g, '-');
 }
 
+function gotoTransaction() {
+  navigateTo({
+    name: 'newSheet',
+    query: {
+      id: dateSelected.currentAccountId,
+      label: dateSelected.labelAccount,
+      amount: dateSelected.accountAmount
+    }
+  })
+}
 
 </script>
 
@@ -114,6 +127,9 @@ function formatDateToFrench(numbers: number[]) {
         <PColumn field="income" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
+    </div>
+    <div w200px pt5px>
+      <PButton w-auto @click="gotoTransaction">Ajouter une transaction</PButton>
     </div>
   </div>
 </template>

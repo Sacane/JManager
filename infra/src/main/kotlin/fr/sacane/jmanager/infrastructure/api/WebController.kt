@@ -67,7 +67,7 @@ class WebController {
             userAccountSheetDTO.userId,
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO,
-            token
+            extractToken(token)
         )
     }
 
