@@ -4,7 +4,7 @@ const { user, isAuthenticated, logout } = useAuth()
 </script>
 
 <template>
-  <header class="bg-gray-200 py2 border-b">
+  <header class="bg-gray-200 py2 border-b" w-screen h-screen>
     <div class="flex-row justify-between ml-2 mr-2xl">
       <NuxtLink to="/" class="text-2xl font-bold">
         JManager

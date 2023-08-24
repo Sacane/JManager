@@ -98,27 +98,19 @@ function formatDateToFrench(numbers: number[]) {
       </PButton>
     </div>
     <div p-8 mt-5 bg-white class="form-container">
-      <PFieldset>
-        <!--<div mt2>
-          <div class="flex flex-row" v-for="account of accounts.map(p => p.labelAccount)">
-            <PRadioButton :value="account" v-model="dateSelected.labelAccount"/>
-            <label ml-2>{{ account }}</label>
-          </div>
-        </div>
-        <div items-start mt4 >
-          <PButton @click="retrieveSheets">Selectionner</PButton>
-        </div>-->
-        <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(current => {
-          return {
-            ...current,
-            date: formatDateToFrench(current.date)
-          }
-        })" table-style="min-width: 50rem">
-          <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-          <PColumn field="label" header="Libellé de la transaction" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-          <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        </PDataTable>
-      </PFieldset>
+
+      <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(sheet => {
+        return {
+          ...sheet,
+          amount: sheet.amount.toFixed(2),
+          date: formatDateToFrench(sheet.date)
+        }
+      })" table-style="min-width: 50rem">
+        <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="label" header="Libellé de la transaction" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+      </PDataTable>
+
     </div>
   </div>
 </template>
