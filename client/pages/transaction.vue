@@ -71,7 +71,7 @@ function formatDateToFrench(numbers: number[]) {
 
 <template>
   <div class="w-full h-full flex flex-col container-all">
-    <div class="p10px flex flex-row header-btn">
+    <div class="pl10px pb2px flex flex-row header-btn">
       <PButton v-for="year in years" 
       :class="{ 'bg-gray-300': dateSelected.year === year }"
       :key="year" 
@@ -102,17 +102,18 @@ function formatDateToFrench(numbers: number[]) {
       <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(sheet => {
         return {
           ...sheet,
-          expenses: sheet.expenses.toFixed(2),
-          income: sheet.income.toFixed(2),
-          date: formatDateToFrench(sheet.date)
+          expenses: `${sheet.expenses.toFixed(2)}€`,
+          income: `${sheet.income.toFixed(2)}€`,
+          date: formatDateToFrench(sheet.date),
+          accountAmount: `${sheet.accountAmount.toFixed(2)}€`
         }
       })" table-style="min-width: 50rem">
         <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="expenses" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="income" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
-
     </div>
   </div>
 </template>

@@ -21,6 +21,8 @@ class SheetResource(
     var expenses: Double? = null,
     @Column(name="income")
     var income: Double? = null,
+    @Column(name="account_amount")
+    var accountAmount: Double? = null,
     @OneToOne
     @JoinTable(
         name = "sheet_category",
@@ -35,6 +37,7 @@ class SheetResource(
         date: LocalDate?,
         expenses: Double?,
         income: Double?,
-        category: CategoryResource?
-    ): this(null, label, date, expenses, income, category)
+        category: CategoryResource?,
+        accountAmount: Double
+    ): this(null, label, date, expenses, income, accountAmount, category)
 }

@@ -16,7 +16,8 @@ internal fun Account.toDTO(): AccountDTO {
 }
 
 internal fun SheetDTO.toModel(): Sheet {
-    return Sheet(0, this.label, this.date, this.expenses, this.income)
+    val totalAmountAccount = if(this.expenses.compareTo(0.0) == 0) this.accountAmount + this.income else this.accountAmount - this.expenses
+    return Sheet(null, this.label, this.date, this.expenses, this.income, totalAmountAccount)
 }
 internal fun AccountDTO.toModel(): Account {
     return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
@@ -27,7 +28,7 @@ internal fun RegisteredUserDTO.toModel(): User {
 }
 
 internal fun Sheet.toDTO(): SheetDTO {
-    return SheetDTO(this.id, this.label, this.expenses, this.income, this.date)
+    return SheetDTO(this.id!!, this.label, this.expenses, this.income, this.date, this.accountAmount)
 }
 
 internal fun User.toDTO(): UserDTO {

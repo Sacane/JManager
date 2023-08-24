@@ -26,7 +26,8 @@ data class SheetDTO(
     val label: String,
     val expenses: Double,
     val income: Double,
-    val date: LocalDate
+    val date: LocalDate,
+    val accountAmount: Double
 )
 data class SheetsAndAverageDTO(
     val sheets: List<SheetDTO>,
