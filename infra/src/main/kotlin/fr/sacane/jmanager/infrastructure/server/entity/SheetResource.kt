@@ -21,6 +21,10 @@ class SheetResource(
     var date: LocalDate? = null,
     @Column(name="isEntry")
     var isEntry: Boolean? = null,
+    @Column(name="expenses")
+    var expenses: Double? = null,
+    @Column(name="income")
+    var income: Double? = null,
     @OneToOne
     @JoinTable(
         name = "sheet_category",
@@ -35,6 +39,8 @@ class SheetResource(
         amount: Double?,
         date: LocalDate?,
         isEntry: Boolean?,
+        expenses: Double?,
+        income: Double?,
         category: CategoryResource?
-    ): this(null, label, amount, date, isEntry, category)
+    ): this(null, label, amount, date, isEntry, expenses, income, category)
 }

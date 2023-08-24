@@ -29,7 +29,7 @@ internal fun User.asResource(): UserResource {
 }
 
 internal fun SheetResource.toModel(): Sheet{
-    return Sheet(this.idSheet!!, this.label!!, this.date!!, this.amount!!, this.isEntry!!)
+    return Sheet(this.idSheet!!, this.label!!, this.date!!, this.amount!!, this.expenses!!, this.income!!, this.isEntry!!)
 }
 internal fun AccountResource.toModel(): Account{
     return Account(

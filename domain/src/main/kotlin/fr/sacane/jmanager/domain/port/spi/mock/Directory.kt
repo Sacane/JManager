@@ -12,13 +12,13 @@ class Directory {
 
     companion object{
         val sheetInventory = mutableListOf(
-            Sheet(0, "Piano", LocalDate.of(2022, Month.DECEMBER, 1), 450.toDouble(), false, Category("Fun")),
-            Sheet(1, "Salary", LocalDate.now(), 3500.toDouble(), true, Category("Work")),
-            Sheet(2, "SingLessons", LocalDate.now(), 450.toDouble(), false, Category("Fun")),
-            Sheet(3, "Restaurant", LocalDate.of(2022, Month.DECEMBER, 4), 100.toDouble(), false, Category("Fun")),
-            Sheet(4, "Laptop", LocalDate.of(2022, Month.DECEMBER, 31), 450.toDouble(), false, Category("Nothing")),
-            Sheet(5, "", LocalDate.now(), 450.toDouble(), true, Category("Fun")),
-            Sheet(6, "Money From testX", LocalDate.now(), 450.toDouble(), true, Category("Transaction"))
+            Sheet(0, "Piano", LocalDate.of(2022, Month.DECEMBER, 1), 450.toDouble(), 0.0, 105.toDouble(), false, Category("Fun")),
+            Sheet(1, "Salary", LocalDate.now(), 3500.toDouble(), 105.toDouble(), 0.0, true, Category("Work")),
+            Sheet(2, "SingLessons", LocalDate.now(), 450.toDouble(), 0.0, 105.toDouble(), false, Category("Fun")),
+            Sheet(3, "Restaurant", LocalDate.of(2022, Month.DECEMBER, 4), 100.toDouble(), 0.0, 102.toDouble(), false, Category("Fun")),
+            Sheet(4, "Laptop", LocalDate.of(2022, Month.DECEMBER, 31), 450.toDouble(), 105.toDouble(), 0.0, false, Category("Nothing")),
+            Sheet(5, "", LocalDate.now(), 450.toDouble(), 0.0, 105.toDouble(), true, Category("Fun")),
+            Sheet(6, "Money From testX", LocalDate.now(), 450.toDouble(), 105.toDouble(), 0.0, true, Category("Transaction"))
         )
     }
     private val categories = mutableListOf(
@@ -63,8 +63,8 @@ class Directory {
         override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
             TODO("Not yet implemented")
         }
-        override fun findByPseudonym(username: String): User? {
-            return userInventory.find { it.username == username }
+        override fun findByPseudonym(pseudonym: String): User? {
+            return userInventory.find { it.username == pseudonym }
         }
         override fun create(user: User): User? {
             return register(user)
@@ -76,7 +76,7 @@ class Directory {
         }
         override fun getUserToken(userId: UserId): Token? {
             val user = findById(userId) ?: return null
-            return tokenInventory[user.user?.username]
+            return tokenInventory[user.user.username]
         }
     }
 }

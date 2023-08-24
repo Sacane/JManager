@@ -16,7 +16,7 @@ internal fun Account.toDTO(): AccountDTO {
 }
 
 internal fun SheetDTO.toModel(): Sheet {
-    return Sheet(0, this.label, this.date, this.amount, this.action)
+    return Sheet(0, this.label, this.date, this.amount, this.expenses, this.income, this.action)
 }
 internal fun AccountDTO.toModel(): Account {
     return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList())
@@ -27,7 +27,7 @@ internal fun RegisteredUserDTO.toModel(): User {
 }
 
 internal fun Sheet.toDTO(): SheetDTO {
-    return SheetDTO(this.id, this.label, this.value, this.isEntry, this.date)
+    return SheetDTO(this.id, this.label, this.value, this.isEntry, this.expenses, this.income, this.date)
 }
 
 internal fun User.toDTO(): UserDTO {

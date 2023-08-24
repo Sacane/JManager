@@ -26,6 +26,8 @@ data class SheetDTO(
     val label: String,
     val amount: Double,
     val action: Boolean,
+    val expenses: Double,
+    val income: Double,
     val date: LocalDate
 )
 data class SheetsAndAverageDTO(
