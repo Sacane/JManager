@@ -1,44 +1,14 @@
 <script setup lang="ts">
 
 import {useToast} from 'primevue/usetoast'
+import {useRouter} from 'vue-router';
+import { SheetAverageDTO, SheetDTO } from '../types/index';
 definePageMeta({
   layout: 'sidebar-layout',
 })
 
 const toast = useToast()
-const months = [
-  'JANUARY', 
-  'FEBRUARY',
-  'MARCH',
-  'APRIL',
-  'MAY',
-  'JUNE',
-  'JULY',
-  'AUGUST',
-  'SEPTEMBER',
-  'OCTOBER',
-  'NOVEMBER',
-  'DECEMBER'
-] 
-
-function translate(month: string): string{
-  let result = ''
-  switch(month){
-    case 'JANUARY': result = 'JANVIER'; break;
-    case 'FEBRUARY': result = 'FEVRIER'; break;
-    case 'MARCH': result = 'MARS'; break;
-    case 'APRIL': result = 'AVRIL'; break;
-    case 'MAY': result = 'MAI'; break;
-    case 'JUNE': result = 'JUIN'; break;
-    case 'JULY': result = 'JUILLET'; break;
-    case 'AUGUST': result = 'AOUT'; break;
-    case 'SEPTEMBER': result = 'SEPTEMBRE'; break;
-    case 'OCTOBER': result = 'OCTOBRE'; break;
-    case 'NOVEMBER': result = 'NOVEMBRE'; break;
-    case 'DECEMBER': result = 'DECEMBRE'; break;
-  }
-  return result;
-}
+const {months, translate, monthFromNumber} = useDate()
 
 const years = reactive([2023])
 
@@ -48,37 +18,47 @@ const addYear = () => {
 
 const {accounts, fetch} = useAccounts()
 const {findByDate} = useSheets()
+const date = new Date()
 const dateSelected = reactive({
-  year: 0,
-  month: '',
+  year: date.getFullYear(),
+  month: monthFromNumber(date.getMonth() + 1) as string,
   labelAccount: '',
-  isRangeSelected: false
+  isRangeSelected: false,
+  currentSheets: [] as SheetDTO[]
 })
 
 const isSelectionOk = () => dateSelected.year !== 0 && dateSelected.month !== '' && dateSelected.labelAccount !== ''
 
 function selectYear(year: number) {
   dateSelected.year = year
-  console.log(year)
+  retrieveSheets()
 }
 
 function selectMonth(month: string) {
   dateSelected.month = month
-  console.log(dateSelected.month)
+  retrieveSheets()
 }
 
-async function retrieveSheets() {
-  console.log('test!!')
+function retrieveSheets() {
   if(!isSelectionOk()) {
-    console.log(dateSelected, isSelectionOk)
     return
   }
-  console.log('test??')
-  await findByDate(dateSelected.month, dateSelected.year, dateSelected.labelAccount)
+  findByDate(dateSelected.month, dateSelected.year, dateSelected.labelAccount)
+  .then((value: SheetAverageDTO) => dateSelected.currentSheets = value.sheets)
+  .finally(() => console.log(dateSelected.currentSheets))
+}
+
+const route = useRouter()
+
+const initAccount = () => {
+  dateSelected.labelAccount = route.currentRoute.value.query.labelAccount as string
+  console.log(dateSelected.labelAccount)
 }
 
 onMounted(async () => {
+  await initAccount()
   await fetch();
+  await retrieveSheets()
 })
 
 
@@ -88,7 +68,14 @@ onMounted(async () => {
 <template>
   <div class="w-full h-full flex flex-col container-all">
     <div class="p10px flex flex-row header-btn">
-      <PButton v-for="year in years" :key="year" w-auto b mr2 @click="selectYear(year)" id="month" class="year-btn">
+      <PButton v-for="year in years" 
+      :class="{ 'bg-gray-300': dateSelected.year === year }"
+      :key="year" 
+      w-auto b mr2 
+      @click="selectYear(year)" 
+      id="month" 
+      class="year-btn"
+      >
       {{ year }}
       </PButton>
       <PButton ml5px @click="addYear">  
@@ -96,13 +83,19 @@ onMounted(async () => {
       </PButton>
     </div>
     <div class="pl10px flex flex-row buttons justify-between">
-      <PButton v-for="(month, key) in months" :key="key" w-auto b @click="selectMonth(month.toString())" class="btn-small">
+      <PButton v-for="(month, key) in months" 
+      :key="key" 
+      w-auto b 
+      @click="selectMonth(month.toString())" 
+      class="btn-small"
+      :class="{ 'bg-gray-300': dateSelected.month === month }"
+      >
       {{ translate(month) }}
       </PButton>
     </div>
     <div p-8 mt-5 bg-white class="form-container">
       <PFieldset>
-        <div mt2>
+        <!--<div mt2>
           <div class="flex flex-row" v-for="account of accounts.map(p => p.labelAccount)">
             <PRadioButton :value="account" v-model="dateSelected.labelAccount"/>
             <label ml-2>{{ account }}</label>
@@ -110,7 +103,12 @@ onMounted(async () => {
         </div>
         <div items-start mt4 >
           <PButton @click="retrieveSheets">Selectionner</PButton>
-        </div>
+        </div>-->
+        <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets" table-style="min-width: 50rem">
+          <PColumn field="label" header="Libellé de la transaction" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+          <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+          <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        </PDataTable>
       </PFieldset>
     </div>
   </div>

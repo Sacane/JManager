@@ -15,9 +15,9 @@ const { isAuthenticated } = useAuth()
       <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF">
         <i class="pi pi-user text-20px"/> Mes comptes
       </NuxtLink>
-      <NuxtLink v-if="isAuthenticated" to="/transaction" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF">
+      <!--<NuxtLink v-if="isAuthenticated" to="/transaction" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF">
         <i class="pi pi-money-bill text-20px"/> Mes transactions
-      </NuxtLink>
+      </NuxtLink>-->
     </div>
   </div>
 </template>

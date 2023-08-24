@@ -29,7 +29,7 @@ onMounted(async () => {
 function onRowClick(event: any) {
   console.log(event.data.amount)
   navigateTo({
-    path: '/transaction',
+    name: 'transaction',
     query: {
       id: event.data.id,
       labelAccount: event.data.labelAccount
@@ -41,7 +41,7 @@ function onRowClick(event: any) {
 <template>
   <div w-full h-full flex>
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
-      <PDataTable :value="accountFormatted" table-style="min-width: 50rem" @row-click="navigateToTransaction()">
+      <PDataTable :value="accountFormatted" table-style="min-width: 50rem" @row-click="onRowClick">
         <PColumn field="labelAccount" header="Libellé du compte" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>

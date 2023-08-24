@@ -21,3 +21,7 @@ export interface UserAccountDTO {
     labelAccount: string
 }
 
+export interface SheetAverageDTO{
+    sheets: SheetDTO[],
+    sum: number
+}
