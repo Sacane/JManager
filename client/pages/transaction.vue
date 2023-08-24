@@ -98,7 +98,7 @@ function formatDateToFrench(numbers: number[]) {
       </PButton>
     </div>
     <div p-8 mt-5 bg-white class="form-container">
-
+      <h2 class="text-2xl font-bold mb-4 text-center">Mes transactions sur le compte {{ dateSelected.labelAccount }}</h2>
       <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(sheet => {
         return {
           ...sheet,
