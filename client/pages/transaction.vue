@@ -1,13 +1,10 @@
 <script setup lang="ts">
-
-import {useToast} from 'primevue/usetoast'
 import {useRouter} from 'vue-router';
 import { SheetAverageDTO, SheetDTO } from '../types/index';
 definePageMeta({
   layout: 'sidebar-layout',
 })
 
-const toast = useToast()
 const {months, translate, monthFromNumber} = useDate()
 
 const years = reactive([2023])
@@ -45,7 +42,7 @@ function retrieveSheets() {
   }
   findByDate(dateSelected.month, dateSelected.year, dateSelected.labelAccount)
   .then((value: SheetAverageDTO) => dateSelected.currentSheets = value.sheets)
-  .finally(() => console.log(dateSelected.currentSheets))
+  .finally(() => console.log(dateSelected.currentSheets.map(p => p.date)))
 }
 
 const route = useRouter()
@@ -60,6 +57,13 @@ onMounted(async () => {
   await fetch();
   await retrieveSheets()
 })
+
+
+
+// Fonction pour formater la date en format français (jour/mois/année)
+function formatDateToFrench(numbers: number[]) {
+  return new Date(numbers[0], numbers[1], numbers[2]).toLocaleDateString('fr-FR').replace(/\//g, '-');
+}
 
 
 </script>
@@ -104,10 +108,15 @@ onMounted(async () => {
         <div items-start mt4 >
           <PButton @click="retrieveSheets">Selectionner</PButton>
         </div>-->
-        <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets" table-style="min-width: 50rem">
+        <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(current => {
+          return {
+            ...current,
+            date: formatDateToFrench(current.date)
+          }
+        })" table-style="min-width: 50rem">
+          <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
           <PColumn field="label" header="Libellé de la transaction" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
           <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-          <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         </PDataTable>
       </PFieldset>
     </div>

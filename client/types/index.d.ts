@@ -5,7 +5,7 @@ export interface SheetDTO{
     label: string,
     amount: number,
     action: boolean,
-    date: Date
+    date: number[3]
 }
 
 export interface AccountDTO {
