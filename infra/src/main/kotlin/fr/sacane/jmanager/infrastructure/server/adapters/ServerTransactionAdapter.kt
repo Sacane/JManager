@@ -44,7 +44,10 @@ class ServerTransactionAdapter : TransactionRegister{
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets?.add(sheet.asResource())
-            account.amount = if(sheet.isEntry) account.amount?.plus(sheet.value) else account.amount?.minus(sheet.value)
+            //TODO replace it by a class wrapper of sheet's incomes
+            account.amount = account.amount?.plus(sheet.expenses)
+            account.amount = account.amount?.plus(sheet.income)
+            // =================================================
             userRepository.saveAndFlush(user)
             sheet
         }catch(e: Exception){

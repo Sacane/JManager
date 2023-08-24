@@ -46,7 +46,6 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
         userResponse.checkForIdentity(token) ?: return Response.timeout()
         val accounts = userResponse.user.accounts().find { it.label() == accountLabel } ?: return Response.invalid()
         accounts.sheets?.add(sheet) ?: return Response.invalid()
-        if(sheet.isEntry) accounts.earn(sheet.value) else accounts.loss(sheet.value)
         userTransaction.register(userResponse.user)
         register.persist(accounts) ?: return Response.notFound()
         return Response.ok(sheet)

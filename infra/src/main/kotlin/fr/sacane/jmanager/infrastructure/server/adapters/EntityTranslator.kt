@@ -6,10 +6,8 @@ import fr.sacane.jmanager.infrastructure.server.entity.*
 
 internal fun Sheet.asResource(): SheetResource {
     val resource = SheetResource()
-    resource.isEntry = this.isEntry
     resource.label = this.label
     resource.date = this.date
-    resource.amount = this.value
     return resource
 }
 internal fun Account.asResource(): AccountResource {
@@ -29,7 +27,7 @@ internal fun User.asResource(): UserResource {
 }
 
 internal fun SheetResource.toModel(): Sheet{
-    return Sheet(this.idSheet!!, this.label!!, this.date!!, this.amount!!, this.expenses!!, this.income!!, this.isEntry!!)
+    return Sheet(this.idSheet!!, this.label!!, this.date!!, this.expenses!!, this.income!!)
 }
 internal fun AccountResource.toModel(): Account{
     return Account(

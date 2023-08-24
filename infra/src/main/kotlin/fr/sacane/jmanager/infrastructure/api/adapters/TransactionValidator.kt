@@ -31,16 +31,14 @@ class TransactionValidator {
     fun getSheetAccountByDate(dto: UserSheetDTO, token: String): ResponseEntity<SheetsAndAverageDTO>{
         val response = apiPort.retrieveSheetsByMonthAndYear(dto.userId.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), dto.month, dto.year, dto.accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        val sum = response.mapTo { s -> s?.map { it.value } }?.sum() ?: 0.0
-        return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it -> it!!.map { it.toDTO() } }, sum))
+        return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it -> it!!.map { it.toDTO() } }, 0.0))
     }
     fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO, tokenDTO: String): ResponseEntity<SheetSendDTO>{
         val queryResponse = apiPort.createSheetAndAssociateItWithAccount(userId.id(), Token(UUID.fromString(tokenDTO), null, UUID.randomUUID()), accountLabel, sheetDTO.toModel())
         if(queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        return queryResponse.map { sheetDTO.sheetToSend() }.toResponseEntity()
+        return queryResponse.map { SheetSendDTO(sheetDTO.label, sheetDTO.date, sheetDTO.expenses, sheetDTO.income) }.toResponseEntity()
     }
     fun saveAccount(userAccount: UserAccountDTO, token: String) : ResponseEntity<AccountInfoDTO>{
-        println("SAVE ACCOUNT ATTEMPT")
         val response = apiPort.openAccount(userAccount.id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
@@ -70,8 +68,4 @@ class TransactionValidator {
     fun removeCategory(userCategoryDTO: UserCategoryDTO, tokenDTO: TokenDTO): ResponseEntity<String>{
         return ResponseEntity.ok("TODO")
     }
-    private fun SheetDTO.sheetToSend(): SheetSendDTO {
-        return SheetSendDTO(this.label, this.amount, if(this.action) "Entree" else "Sortie", this.date)
-    }
-
 }

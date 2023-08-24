@@ -24,8 +24,6 @@ data class UserPasswordDTO(
 data class SheetDTO(
     val id: Long,
     val label: String,
-    val amount: Double,
-    val action: Boolean,
     val expenses: Double,
     val income: Double,
     val date: LocalDate
@@ -37,9 +35,9 @@ data class SheetsAndAverageDTO(
 
 data class SheetSendDTO(
     val label: String,
-    val amount: Double,
-    val action: String,
-    val date: LocalDate
+    val date: LocalDate,
+    val expenses: Double,
+    val income: Double
 )
 
 data class AccountInfoDTO(

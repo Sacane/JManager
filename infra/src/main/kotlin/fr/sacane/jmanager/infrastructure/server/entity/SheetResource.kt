@@ -15,12 +15,8 @@ class SheetResource(
     var idSheet: Long? = null,
     @Column(name = "label_sheet")
     var label: String? = null,
-    @Column(name= "amount", unique = false)
-    var amount: Double? = null,
     @Column(name="date")
     var date: LocalDate? = null,
-    @Column(name="isEntry")
-    var isEntry: Boolean? = null,
     @Column(name="expenses")
     var expenses: Double? = null,
     @Column(name="income")
@@ -36,11 +32,9 @@ class SheetResource(
 ){
     constructor(
         label: String?,
-        amount: Double?,
         date: LocalDate?,
-        isEntry: Boolean?,
         expenses: Double?,
         income: Double?,
         category: CategoryResource?
-    ): this(null, label, amount, date, isEntry, expenses, income, category)
+    ): this(null, label, date, expenses, income, category)
 }
