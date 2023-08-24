@@ -3,8 +3,8 @@
 export interface SheetDTO{
     id: number,
     label: string,
-    amount: number,
-    action: boolean,
+    expenses: number,
+    income: number,
     date: number[3]
 }
 

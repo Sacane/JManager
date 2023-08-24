@@ -80,7 +80,9 @@ class WebController {
     @PostMapping(path=["sheets/get"])
     suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
         LOGGER.info("CHECK FOR SHEETS : $dto")
-        return apiAdapter.getSheetAccountByDate(dto, extractToken(token))
+        return apiAdapter.getSheetAccountByDate(dto, extractToken(token)).also {
+            println(it.body)
+        }
     }
     @PostMapping(path = ["user/category"])
     suspend fun saveUserCategory(@RequestBody userCategoryDTO: UserCategoryDTO, @RequestHeader token: TokenDTO): ResponseEntity<String>{

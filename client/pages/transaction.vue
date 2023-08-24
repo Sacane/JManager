@@ -102,13 +102,15 @@ function formatDateToFrench(numbers: number[]) {
       <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(sheet => {
         return {
           ...sheet,
-          amount: sheet.amount.toFixed(2),
+          expenses: sheet.expenses.toFixed(2),
+          income: sheet.income.toFixed(2),
           date: formatDateToFrench(sheet.date)
         }
       })" table-style="min-width: 50rem">
         <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="label" header="Libellé de la transaction" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="expenses" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="income" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
 
     </div>
