@@ -1,17 +1,28 @@
 import axios from 'axios'
 import { API_PATH } from '../utils/request';
 import useAuth from './useAuth';
-import { AccountDTO } from '../types/index';
 
 export default function useQuery() {
     const {defaultHeaders} = useAuth()
 
     async function get(url: string, authorized: boolean = true) {
         const response = await axios.get(`${API_PATH}` + url , {
-            headers: defaultHeaders.value
+            headers: defaultHeaders.value,
         })
         return response
     }
+    async function deleteQuery(url: string, body: any | undefined){
+      try{
+        const response = await axios.delete(`${API_PATH}${url}`, {
+          headers: defaultHeaders.value,
+          data: body
+        })
+        return response.data
+      }catch(error) {
+        console.error(error)
+        throw error
+      }
+  }
 
     async function post(url: string, body: any | undefined) {
         try{
@@ -24,6 +35,7 @@ export default function useQuery() {
             throw error
         }
     }
+ 
 
-    return {get, post}
+    return {get, post, deleteQuery}
 }

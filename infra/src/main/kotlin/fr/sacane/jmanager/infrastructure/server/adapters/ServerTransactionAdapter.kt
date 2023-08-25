@@ -6,14 +6,16 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.infrastructure.server.entity.CategoryResource
 import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
 import fr.sacane.jmanager.infrastructure.server.repositories.CategoryRepository
+import fr.sacane.jmanager.infrastructure.server.repositories.SheetRepository
 import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 @Service
 @DatasourceAdapter
-class ServerTransactionAdapter : TransactionRegister{
+class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : TransactionRegister{
 
     companion object{
         private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerAdapter")
@@ -32,19 +34,22 @@ class ServerTransactionAdapter : TransactionRegister{
         val user = userResponse.get()
         user.accounts?.add(account.asResource())
         return userRepository.saveAndFlush(user).toModel()
-
-//        }catch (e: Exception){
-//            LOGGER.warn("ERROR WHILE SAVE AND FLUSHING ACCOUNT INTO DATABASE : ${e.cause}")
-//            null
-//        }
     }
 
+    override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
+        val user = userRepository.findById(userId.get()).get()
+        val account = user.accounts?.find { it.label == labelAccount } ?: return null
+        return account.toModel()
+    }
+
+    @Transactional
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
         val user = userRepository.findById(userId.get()).get()
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets?.add(sheet.asResource())
-            account.amount = if(sheet.isEntry) account.amount?.plus(sheet.value) else account.amount?.minus(sheet.value)
+            account.amount = sheet.accountAmount
+            // =================================================
             userRepository.saveAndFlush(user)
             sheet
         }catch(e: Exception){
@@ -75,5 +80,18 @@ class ServerTransactionAdapter : TransactionRegister{
 
     override fun remove(targetCategory: Category) {
         categoryRepository.deleteByLabel(targetCategory.label)
+    }
+
+    override fun findAccountById(accountId: Long): Account? {
+        val accountResponse = accountRepository.findById(accountId)
+        return accountResponse.get().toModel()
+    }
+    @Transactional
+    override fun deleteAllSheets(accountID: Long, sheets: List<Long>) {
+        try{
+
+        }catch(e: Exception) {
+            return
+        }
     }
 }

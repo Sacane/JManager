@@ -15,12 +15,14 @@ class SheetResource(
     var idSheet: Long? = null,
     @Column(name = "label_sheet")
     var label: String? = null,
-    @Column(name= "amount", unique = false)
-    var amount: Double? = null,
     @Column(name="date")
     var date: LocalDate? = null,
-    @Column(name="isEntry")
-    var isEntry: Boolean? = null,
+    @Column(name="expenses")
+    var expenses: Double? = null,
+    @Column(name="income")
+    var income: Double? = null,
+    @Column(name="account_amount")
+    var accountAmount: Double? = null,
     @OneToOne
     @JoinTable(
         name = "sheet_category",
@@ -32,9 +34,20 @@ class SheetResource(
 ){
     constructor(
         label: String?,
-        amount: Double?,
         date: LocalDate?,
-        isEntry: Boolean?,
-        category: CategoryResource?
-    ): this(null, label, amount, date, isEntry, category)
+        expenses: Double?,
+        income: Double?,
+        category: CategoryResource?,
+        accountAmount: Double
+    ): this(null, label, date, expenses, income, accountAmount, category)
+
+    override fun toString(): String {
+        return """
+            label : $label
+            date: $date
+            expenses: $expenses
+            income: $income
+            accountAmount: $accountAmount
+        """.trimIndent()
+    }
 }

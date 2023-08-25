@@ -26,7 +26,7 @@ const toAccount = async () => {
 <template>
   <div class="flex items-center mt3">
     
-    <form class="b-3 p-8 mt-5 b-rounded-2 b-#7F52FF">
+    <form class="p-8 mt-5 bg-white form-container">
       <h1 class="text-4xl font-bold c-#7F52FF text-center">Créer un nouveau compte</h1>
       <PFieldset>
         <label for="label">Libelle du compte</label>
@@ -42,3 +42,13 @@ const toAccount = async () => {
     </form>
   </div>
 </template>
+
+<style scoped>
+
+.form-container{
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
+}
+</style>

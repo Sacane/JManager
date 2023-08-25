@@ -67,8 +67,13 @@ class WebController {
             userAccountSheetDTO.userId,
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO,
-            token
+            extractToken(token)
         )
+    }
+
+    @DeleteMapping("/sheet/delete")
+    fun deleteByIds(@RequestBody sheetIds: AccountSheetIdsDTO, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing>{
+        return apiAdapter.deleteSheetByIds(sheetIds)
     }
 
     @GetMapping(path = ["user/accounts/get/{id}"])
@@ -79,8 +84,10 @@ class WebController {
 
     @PostMapping(path=["sheets/get"])
     suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
-        LOGGER.debug(dto.month.toString())
-        return apiAdapter.getSheetAccountByDate(dto, extractToken(token))
+        LOGGER.info("CHECK FOR SHEETS : $dto")
+        return apiAdapter.getSheetAccountByDate(dto, extractToken(token)).also {
+            println(it.body)
+        }
     }
     @PostMapping(path = ["user/category"])
     suspend fun saveUserCategory(@RequestBody userCategoryDTO: UserCategoryDTO, @RequestHeader token: TokenDTO): ResponseEntity<String>{
