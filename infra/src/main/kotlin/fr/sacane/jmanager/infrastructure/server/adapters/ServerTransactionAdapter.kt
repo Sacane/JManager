@@ -10,6 +10,7 @@ import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 @Service
 @DatasourceAdapter
@@ -34,13 +35,19 @@ class ServerTransactionAdapter : TransactionRegister{
         return userRepository.saveAndFlush(user).toModel()
     }
 
+    override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
+        val user = userRepository.findById(userId.get()).get()
+        val account = user.accounts?.find { it.label == labelAccount } ?: return null
+        return account.toModel()
+    }
+
+    @Transactional
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
         val user = userRepository.findById(userId.get()).get()
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets?.add(sheet.asResource())
-            account.amount = account.amount?.plus(sheet.expenses)
-            account.amount = account.amount?.plus(sheet.income)
+            account.amount = sheet.accountAmount
             // =================================================
             userRepository.saveAndFlush(user)
             sheet

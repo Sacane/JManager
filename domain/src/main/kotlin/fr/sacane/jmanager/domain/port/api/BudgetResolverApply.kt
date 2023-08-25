@@ -10,14 +10,11 @@ import java.time.Month
 @LeftPort
 class BudgetResolverApply(private val register: TransactionRegister, private val userTransaction: UserTransaction): BudgetResolver {
     override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
-        println("AIE AIE AIE")
         val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid()
         if(tokenResponse.id != token.id) {
-            println("TOKEN DOES NOT CORRESPOND EACH OTHERS")
             return Response.timeout()
         }
         val userSaved = register.persist(userId, account) ?: return Response.invalid()
-        println("PERSISTENCE IS OK")
         return Response.ok(userSaved.accounts().find { it.label() == account.label() }!!)
     }
 
@@ -44,8 +41,8 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
     override fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
         val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
-        val accounts = userResponse.user.accounts().find { it.label() == accountLabel } ?: return Response.invalid()
-        accounts.sheets?.add(sheet) ?: return Response.invalid()
+        val account = register.findAccountByLabel(userId, accountLabel) ?: return Response.notFound()
+        sheet.accountAmount = account.amount().plus(sheet.income).minus(sheet.expenses)
         register.persist(userId, accountLabel, sheet) ?: return Response.notFound()
         return Response.ok(sheet)
     }

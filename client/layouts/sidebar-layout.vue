@@ -3,17 +3,16 @@
 </script>
 
 <template>
-  <div h-screen w-screen class="overflow-auto">
-    <Header />
+  <div h-full w-auto class="overflow-auto flex-row">
     <!-- ------------------------------ -->
-    <div class=" flex-row ">
-      <Sidebar class="mr5" />
-      <div class="wscreen hscreen m-2">
+    <Sidebar class="mr5" />
+    <div flex-col w-screen>
+      <div class="m-2 flex-row justify-center">
         <slot />
       </div>
+      <footer class="bottom-0 text-center">
+        @copyright 2023
+      </footer> 
     </div>
-    <footer class="bottom-0 w-full text-center">
-      @copyright 2023
-    </footer>
   </div>
 </template>

@@ -7,7 +7,7 @@ definePageMeta({
 
 const {months, translate, monthFromNumber} = useDate()
 
-const years = reactive([2023])
+const years = reactive([2023, 2024, 2025])
 
 const addYear = () => {
   years.push(years.at(years.length - 1)!! + 1)
@@ -79,12 +79,18 @@ function gotoTransaction() {
   })
 }
 
+const selectedSheets = ref()
+
+const confirmDelete = () => {
+  console.log(selectedSheets.value)
+}
+
 </script>
 
 
 <template>
   <div class="w-full h-full flex flex-col container-all">
-    <div class="pl10px pb2px flex flex-row header-btn">
+    <div class="pl10px flex flex-row hauto">
       <PButton v-for="year in years" 
       :class="{ 'bg-gray-300': dateSelected.year === year }"
       :key="year" 
@@ -95,11 +101,11 @@ function gotoTransaction() {
       >
       {{ year }}
       </PButton>
-      <PButton ml5px @click="addYear">  
+      <PButton ml5px @click="addYear" class="year-btn">  
         +
       </PButton>
     </div>
-    <div class="pl10px flex flex-row buttons justify-between">
+    <div class="pl10px flex flex-row buttons ">
       <PButton v-for="(month, key) in months" 
       :key="key" 
       w-auto b 
@@ -110,26 +116,32 @@ function gotoTransaction() {
       {{ translate(month) }}
       </PButton>
     </div>
-    <div p-8 mt-5 bg-white class="form-container">
-      <h2 class="text-2xl font-bold mb-4 text-center">Mes transactions sur le compte {{ dateSelected.labelAccount }}</h2>
+    <div p-8  bg-white class="form-container" mt2px>
+      <div flex-row justify-between>
+        <h2 class="text-2xl font-bold mb-4">Mes transactions sur le compte {{ dateSelected.labelAccount }}</h2>
+        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ dateSelected.accountAmount }} €</h2>
+
+      </div>
       <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(sheet => {
         return {
           ...sheet,
-          expenses: `${sheet.expenses.toFixed(2)}€`,
-          income: `${sheet.income.toFixed(2)}€`,
+          expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
+          incomeRepresenttation: (sheet.income > 0.0) ? `${sheet.income.toFixed(2)}€` : '/',
           date: formatDateToFrench(sheet.date),
           accountAmount: `${sheet.accountAmount.toFixed(2)}€`
         }
-      })" table-style="min-width: 50rem">
-        <PColumn field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+      })" table-style="min-width: 50rem" v-model:selection="selectedSheets">
+        <PColumn selectionMode="multiple" style="width: 3rem" :exportable="false"></PColumn>
+        <PColumn sortable field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="expenses" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="income" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <PColumn field="expensesRepresentation" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }"/>
+        <PColumn field="incomeRepresenttation" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
     </div>
-    <div w200px pt5px>
+    <div  pt5px flex-row justify-between>
       <PButton w-auto @click="gotoTransaction">Ajouter une transaction</PButton>
+      <PButton @click="confirmDelete" label="Supprimer" icon="pi pi-trash" severity="danger"/>
     </div>
   </div>
 </template>
@@ -137,7 +149,8 @@ function gotoTransaction() {
 <style scoped lang="scss">
 .container-all{
   .year-btn {
-    padding: 5px 7px;
+    width: auto;
+    height: 5%;
   }
   .form-container{
     background-color: white;
@@ -145,14 +158,16 @@ function gotoTransaction() {
     border-radius: 8px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
   }
-  .btn-small{
-    font-size: 12px;
-    padding: 6px 12px;
+  .buttons {
+    margin-top: -15px;
+    .btn-small{
+      padding: 6px 12px;
+      margin-right: 10px;
+    }
   }
+
 }
-.buttons {
-  align-content: space-evenly;
-}
+
 
 
 
