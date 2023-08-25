@@ -44,7 +44,7 @@ function retrieveSheets() {
   }
   findByDate(dateSelected.month, dateSelected.year, dateSelected.labelAccount)
   .then((value: SheetAverageDTO) => dateSelected.currentSheets = value.sheets)
-  .finally(() => console.log(dateSelected.currentSheets.map(p => p.date)))
+  .finally(() => updateSheets())
 }
 
 const route = useRouter()
@@ -55,10 +55,11 @@ const initAccount = () => {
   dateSelected.accountAmount = parseFloat(route.currentRoute.value.query.amount as string)
 }
 
+
 onMounted(async () => {
   await initAccount()
-  await fetch();
   await retrieveSheets()
+  
 })
 
 
@@ -80,13 +81,28 @@ function gotoTransaction() {
 }
 
 const selectedSheets = ref<SheetDTO[]>([])
+const actualSheets = ref()
+
+const updateSheets = () => {
+  fetch()
+  actualSheets.value = dateSelected.currentSheets.map(sheet => {
+    return {
+      ...sheet,
+      expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
+      incomeRepresenttation: (sheet.income > 0.0) ? `${sheet.income.toFixed(2)}€` : '/',
+      date: formatDateToFrench(sheet.date),
+      accountAmount: `${sheet.accountAmount.toFixed(2)}€`
+    }
+  })
+  console.log(actualSheets.value)
+}
 
 const confirmDelete = async () => {
   if(selectedSheets.value.length === 0){
     return;
   }
-  deleteSheet(selectedSheets.value.map(sheet => sheet.id))
-  .then(() => fetch())
+  deleteSheet(parseInt(dateSelected.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
+  .then(() => retrieveSheets())
 }
 
 </script>
@@ -100,15 +116,7 @@ const confirmDelete = async () => {
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ dateSelected.accountAmount }} €</h2>
 
       </div>
-      <PDataTable :value="dateSelected.currentSheets.map(sheet => {
-        return {
-          ...sheet,
-          expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
-          incomeRepresenttation: (sheet.income > 0.0) ? `${sheet.income.toFixed(2)}€` : '/',
-          date: formatDateToFrench(sheet.date),
-          accountAmount: `${sheet.accountAmount.toFixed(2)}€`
-        }
-      })" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets">
+      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets">
         <template #header>
           <div style="text-align: left">
             <div class="pl10px flex flex-row hauto">

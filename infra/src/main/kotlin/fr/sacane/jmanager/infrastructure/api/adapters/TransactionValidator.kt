@@ -36,7 +36,7 @@ class TransactionValidator {
     fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO, tokenDTO: String): ResponseEntity<SheetSendDTO>{
         val queryResponse = apiPort.createSheetAndAssociateItWithAccount(userId.id(), Token(UUID.fromString(tokenDTO), null, UUID.randomUUID()), accountLabel, sheetDTO.toModel())
         if(queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        return queryResponse.map { SheetSendDTO(sheetDTO.label, sheetDTO.date, sheetDTO.expenses, sheetDTO.income) }.toResponseEntity()
+        return queryResponse.map { SheetSendDTO(it!!.label, it.date, it.expenses, it.income, it.accountAmount) }.toResponseEntity()
     }
     fun saveAccount(userAccount: UserAccountDTO, token: String) : ResponseEntity<AccountInfoDTO>{
         val response = apiPort.openAccount(userAccount.id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
@@ -70,7 +70,8 @@ class TransactionValidator {
     }
 
     fun deleteSheetByIds(ids: AccountSheetIdsDTO): ResponseEntity<Nothing>{
-        apiPort.deleteByIds(ids.accountId, ids.sheetIds)
-        return ResponseEntity.ok().build()
+        return apiPort.deleteByIds(ids.accountId, ids.sheetIds).let {
+            ResponseEntity.ok().build()
+        }
     }
 }

@@ -33,7 +33,6 @@ internal fun User.asResource(): UserResource {
 }
 
 internal fun SheetResource.toModel(): Sheet{
-    println(this)
     return Sheet(this.idSheet!!,
         this.label!!,
         this.date!!,

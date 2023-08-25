@@ -83,7 +83,9 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
     }
 
     override fun deleteByIds(accountID: Long, sheetIds: List<Long>) {
-        val account = register.findAccountById(accountID)
-        register.deleteAllSheets(accountID, sheetIds)
+        val account = register.findAccountById(accountID) ?: return
+        account.sheets?.removeIf {sheetIds.contains(it.id) }
+        //TODO update account's sold after delete
+        register.persist(account)
     }
 }
