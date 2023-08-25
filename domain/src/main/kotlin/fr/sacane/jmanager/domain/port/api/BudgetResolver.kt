@@ -11,4 +11,5 @@ interface BudgetResolver {
     fun createCategory(userId: UserId, token: Token, category: Category): Response<Category>
     fun retrieveCategories(userId: UserId, token: Token): Response<List<Category>>
     fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account>
+    fun deleteByIds(accountID: Long, sheetIds: List<Long>)
 }

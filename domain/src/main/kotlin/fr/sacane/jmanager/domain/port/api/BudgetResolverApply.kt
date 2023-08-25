@@ -81,4 +81,9 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
         register.remove(targetCategory)
         return Response.ok(targetCategory)
     }
+
+    override fun deleteByIds(accountID: Long, sheetIds: List<Long>) {
+        val account = register.findAccountById(accountID)
+        register.deleteAllSheets(accountID, sheetIds)
+    }
 }

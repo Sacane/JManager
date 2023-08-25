@@ -71,6 +71,11 @@ class WebController {
         )
     }
 
+    @DeleteMapping("/sheet/delete")
+    fun deleteByIds(@RequestBody sheetIds: AccountSheetIdsDTO, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing>{
+        return apiAdapter.deleteSheetByIds(sheetIds)
+    }
+
     @GetMapping(path = ["user/accounts/get/{id}"])
     suspend fun getAccounts(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<List<AccountDTO>>{
         LOGGER.debug("Trying to get the user's accounts by id : $id")

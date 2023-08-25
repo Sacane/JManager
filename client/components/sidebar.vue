@@ -6,7 +6,7 @@ const { isAuthenticated } = useAuth()
 </script>
 
 <template>
-  <div class="flex-column border-r decoration-none w-15% text-center justify-between">
+  <div class="flex-column border-r decoration-none w-15% h-screen text-center justify-between">
     <div class="mt5">
       <NuxtLink to="/" class="text-3xl font-bold mb-2">
         JManager

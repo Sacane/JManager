@@ -14,7 +14,7 @@ const addYear = () => {
 }
 
 const {accounts, fetch} = useAccounts()
-const {findByDate} = useSheets()
+const {findByDate, deleteSheet} = useSheets()
 const date = new Date()
 const dateSelected = reactive({
   year: date.getFullYear(),
@@ -79,10 +79,14 @@ function gotoTransaction() {
   })
 }
 
-const selectedSheets = ref()
+const selectedSheets = ref<SheetDTO[]>([])
 
-const confirmDelete = () => {
-  console.log(selectedSheets.value)
+const confirmDelete = async () => {
+  if(selectedSheets.value.length === 0){
+    return;
+  }
+  deleteSheet(selectedSheets.value.map(sheet => sheet.id))
+  .then(() => fetch())
 }
 
 </script>
@@ -90,39 +94,13 @@ const confirmDelete = () => {
 
 <template>
   <div class="w-full h-full flex flex-col container-all">
-    <div class="pl10px flex flex-row hauto">
-      <PButton v-for="year in years" 
-      :class="{ 'bg-gray-300': dateSelected.year === year }"
-      :key="year" 
-      w-auto b mr2 
-      @click="selectYear(year)" 
-      id="month" 
-      class="year-btn"
-      >
-      {{ year }}
-      </PButton>
-      <PButton ml5px @click="addYear" class="year-btn">  
-        +
-      </PButton>
-    </div>
-    <div class="pl10px flex flex-row buttons ">
-      <PButton v-for="(month, key) in months" 
-      :key="key" 
-      w-auto b 
-      @click="selectMonth(month.toString())" 
-      class="btn-small"
-      :class="{ 'bg-gray-300': dateSelected.month === month }"
-      >
-      {{ translate(month) }}
-      </PButton>
-    </div>
     <div p-8  bg-white class="form-container" mt2px>
       <div flex-row justify-between>
         <h2 class="text-2xl font-bold mb-4">Mes transactions sur le compte {{ dateSelected.labelAccount }}</h2>
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ dateSelected.accountAmount }} €</h2>
 
       </div>
-      <PDataTable v-if="dateSelected.currentSheets.length > 0" :value="dateSelected.currentSheets.map(sheet => {
+      <PDataTable :value="dateSelected.currentSheets.map(sheet => {
         return {
           ...sheet,
           expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
@@ -130,7 +108,37 @@ const confirmDelete = () => {
           date: formatDateToFrench(sheet.date),
           accountAmount: `${sheet.accountAmount.toFixed(2)}€`
         }
-      })" table-style="min-width: 50rem" v-model:selection="selectedSheets">
+      })" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets">
+        <template #header>
+          <div style="text-align: left">
+            <div class="pl10px flex flex-row hauto">
+              <PButton v-for="year in years"
+              :class="{ 'bg-gray-300': dateSelected.year === year }"
+              :key="year"
+              w-auto b mr2
+              @click="selectYear(year)"
+              id="month"
+              class="year-btn"
+              >
+              {{ year }}
+              </PButton>
+              <PButton ml5px @click="addYear" class="year-btn">
+                +
+              </PButton>
+            </div>
+            <div class="pl10px flex flex-row buttons ">
+              <PButton v-for="(month, key) in months"
+              :key="key"
+              w-auto b
+              @click="selectMonth(month.toString())"
+              class="btn-small"
+              :class="{ 'bg-gray-300': dateSelected.month === month }"
+              >
+              {{ translate(month) }}
+              </PButton>
+            </div>
+          </div>
+        </template>
         <PColumn selectionMode="multiple" style="width: 3rem" :exportable="false"></PColumn>
         <PColumn sortable field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />

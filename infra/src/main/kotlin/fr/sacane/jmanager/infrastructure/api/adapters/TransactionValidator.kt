@@ -68,4 +68,9 @@ class TransactionValidator {
     fun removeCategory(userCategoryDTO: UserCategoryDTO, tokenDTO: TokenDTO): ResponseEntity<String>{
         return ResponseEntity.ok("TODO")
     }
+
+    fun deleteSheetByIds(ids: AccountSheetIdsDTO): ResponseEntity<Nothing>{
+        apiPort.deleteByIds(ids.accountId, ids.sheetIds)
+        return ResponseEntity.ok().build()
+    }
 }

@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.infrastructure.server.entity.CategoryResource
 import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
 import fr.sacane.jmanager.infrastructure.server.repositories.CategoryRepository
+import fr.sacane.jmanager.infrastructure.server.repositories.SheetRepository
 import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,7 +15,7 @@ import javax.transaction.Transactional
 
 @Service
 @DatasourceAdapter
-class ServerTransactionAdapter : TransactionRegister{
+class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : TransactionRegister{
 
     companion object{
         private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerAdapter")
@@ -79,5 +80,18 @@ class ServerTransactionAdapter : TransactionRegister{
 
     override fun remove(targetCategory: Category) {
         categoryRepository.deleteByLabel(targetCategory.label)
+    }
+
+    override fun findAccountById(accountId: Long): Account? {
+        val accountResponse = accountRepository.findById(accountId)
+        return accountResponse.get().toModel()
+    }
+    @Transactional
+    override fun deleteAllSheets(accountID: Long, sheets: List<Long>) {
+        try{
+
+        }catch(e: Exception) {
+            return
+        }
     }
 }

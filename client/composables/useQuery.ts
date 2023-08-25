@@ -11,6 +11,18 @@ export default function useQuery() {
         })
         return response
     }
+    async function deleteQuery(url: string, body: any | undefined){
+      try{
+        const response = await axios.delete(`${API_PATH}${url}`, {
+          headers: defaultHeaders.value,
+          data: body
+        })
+        return response.data
+      }catch(error) {
+        console.error(error)
+        throw error
+      }
+  }
 
     async function post(url: string, body: any | undefined) {
         try{
@@ -23,6 +35,7 @@ export default function useQuery() {
             throw error
         }
     }
+ 
 
-    return {get, post}
+    return {get, post, deleteQuery}
 }

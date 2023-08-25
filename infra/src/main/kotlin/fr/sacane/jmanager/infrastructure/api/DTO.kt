@@ -107,3 +107,8 @@ data class UserStorageDTO(
     val email: String,
     val token: String
 )
+
+data class AccountSheetIdsDTO(
+    val accountId: Long,
+    val sheetIds: List<Long>
+)
