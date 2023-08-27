@@ -8,7 +8,7 @@ import java.time.Month
 
 // TODO Instead of return Response timeout, this should refresh the token if they match
 @LeftPort
-class BudgetResolverApply(private val register: TransactionRegister, private val userTransaction: UserTransaction): BudgetResolver {
+class TransactionResolverImpl(private val register: TransactionRegister, private val userTransaction: UserTransaction): TransactionResolver {
     override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
         val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid()
         if(tokenResponse.id != token.id) {
@@ -87,5 +87,9 @@ class BudgetResolverApply(private val register: TransactionRegister, private val
         account.sheets?.removeIf {sheetIds.contains(it.id) }
         //TODO update account's sold after delete
         register.persist(account)
+    }
+
+    override fun deleteAccountById(accountID: Long) {
+        TODO("Not yet implemented")
     }
 }

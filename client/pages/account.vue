@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import useAccounts from '../composables/useAccounts'
+import { AccountDTO } from '../types/index';
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -37,12 +38,28 @@ function onRowClick(event: any) {
     }
   })
 }
+
+const editAccount = () => {
+  console.log('Edit', row.value)
+}
+const deleteAccount = () => {
+  console.log('Delete', row.value)
+}
+
+const row = ref<AccountDTO | undefined>(undefined)
 </script>
 
 <template>
   <div w-full h-full flex>
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
-      <PDataTable :value="accountFormatted" table-style="min-width: 50rem" @row-click="onRowClick">
+      <PDataTable :value="accountFormatted" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
+        <template #header>
+          <div class="flex flex-row hauto pl10px">
+            <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="editAccount"/>
+            <PButton w-auto b mr2 label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="deleteAccount"/>
+          </div>
+        </template>
+        <PColumn selectionMode="single" style="width: 3rem" :exportable="false"></PColumn>
         <PColumn field="labelAccount" header="Libellé du compte" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
