@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {useRouter} from 'vue-router';
 import { SheetAverageDTO, SheetDTO } from '../types/index';
+import { useConfirm } from "primevue/useconfirm";
 definePageMeta({
   layout: 'sidebar-layout',
 })
@@ -98,17 +99,32 @@ const updateSheets = () => {
 }
 
 const confirmDelete = async () => {
+  deleteSheet(parseInt(dateSelected.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
+  .then(() => retrieveSheets())
+}
+
+const confirm = useConfirm()
+
+const confirmDeleteButton = () => {
   if(selectedSheets.value.length === 0){
     return;
   }
-  deleteSheet(parseInt(dateSelected.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
-  .then(() => retrieveSheets())
+  confirm.require({
+    message: 'Êtes-vous sûr de vouloir supprimer ces éléments ?',
+    header: 'Confirmation de suppression',
+    icon: 'pi pi-exclamation-triangle',
+    accept: () => {
+      confirmDelete()
+    }
+  })
 }
 
 </script>
 
 
 <template>
+  <PToast></PToast>
+  <PConfirmDialog></PConfirmDialog>
   <div class="w-full h-full flex flex-col container-all">
     <div p-8  bg-white class="form-container" mt2px>
       <div flex-row justify-between>
@@ -157,7 +173,7 @@ const confirmDelete = async () => {
     </div>
     <div  pt5px flex-row justify-between>
       <PButton w-auto @click="gotoTransaction">Ajouter une transaction</PButton>
-      <PButton @click="confirmDelete" label="Supprimer" icon="pi pi-trash" severity="danger"/>
+      <PButton @click="confirmDeleteButton" label="Supprimer" icon="pi pi-trash" severity="danger"/>
     </div>
   </div>
 </template>
