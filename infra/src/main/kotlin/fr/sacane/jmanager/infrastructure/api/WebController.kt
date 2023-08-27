@@ -101,5 +101,10 @@ class WebController {
     suspend fun deleteCategory(@RequestBody userCategoryDTO: UserCategoryDTO, @RequestHeader token: TokenDTO): ResponseEntity<String>{
         return apiAdapter.removeCategory(userCategoryDTO, token)
     }
+
+    @DeleteMapping(path = ["user/{userId}/account/delete/{accountId}"])
+    fun deleteAccount(@PathVariable userId: Long, @PathVariable accountId: Long, @RequestHeader token: TokenDTO): ResponseEntity<Nothing> {
+        return apiAdapter.deleteAccount(UserId(userId), accountId)
+    }
 }
 

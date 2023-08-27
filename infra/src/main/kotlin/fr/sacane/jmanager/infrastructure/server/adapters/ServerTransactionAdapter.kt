@@ -94,4 +94,8 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
             return
         }
     }
+
+    override fun deleteAccountByID(accountID: Long) {
+        TODO("Not yet implemented")
+    }
 }

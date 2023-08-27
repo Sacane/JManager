@@ -74,4 +74,7 @@ class TransactionValidator {
             ResponseEntity.ok().build()
         }
     }
+    fun deleteAccount(userId: UserId, accountID: Long): ResponseEntity<Nothing>{
+        return apiPort.deleteAccountById(userId, accountID).toResponseEntity()
+    }
 }

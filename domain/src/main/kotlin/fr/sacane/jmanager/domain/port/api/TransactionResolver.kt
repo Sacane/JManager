@@ -12,5 +12,5 @@ interface TransactionResolver {
     fun retrieveCategories(userId: UserId, token: Token): Response<List<Category>>
     fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account>
     fun deleteByIds(accountID: Long, sheetIds: List<Long>)
-    fun deleteAccountById(accountID: Long)
+    fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing>
 }
