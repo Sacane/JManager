@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <Header />
+
   <!-- ------------------------------ -->
 
   <div class="w-screen h-screen">

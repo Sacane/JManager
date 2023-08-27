@@ -2,7 +2,7 @@ import useAuth from '../composables/useAuth';
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
 import 'primeicons/primeicons.css';
-const { isAuthenticated } = useAuth()
+const { isAuthenticated, logout } = useAuth()
 </script>
 
 <template>
