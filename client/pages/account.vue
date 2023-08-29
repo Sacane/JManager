@@ -9,7 +9,7 @@ interface AccountFormatted{
   labelAccount: string,
   amount: string
 }
-const { accounts, fetch } = useAccounts()
+const { accounts, fetch, deleteAccount} = useAccounts()
 const isAccountFilled = reactive({ ok: false })
 const accountFormatted = ref<AccountFormatted[]>([])
 const toAdd = () => {
@@ -42,8 +42,9 @@ function onRowClick(event: any) {
 const editAccount = () => {
   console.log('Edit', row.value)
 }
-const deleteAccount = () => {
-  console.log('Delete', row.value)
+const applyDelete = () => {
+  deleteAccount(row.value?.id as number)
+  .then(() => fetch())
 }
 
 const row = ref<AccountDTO | undefined>(undefined)
@@ -56,7 +57,7 @@ const row = ref<AccountDTO | undefined>(undefined)
         <template #header>
           <div class="flex flex-row hauto pl10px">
             <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="editAccount"/>
-            <PButton w-auto b mr2 label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="deleteAccount"/>
+            <PButton w-auto b mr2 label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete"/>
           </div>
         </template>
         <PColumn selectionMode="single" style="width: 3rem" :exportable="false"></PColumn>

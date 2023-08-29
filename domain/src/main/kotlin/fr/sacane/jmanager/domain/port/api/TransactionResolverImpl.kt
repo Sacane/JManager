@@ -82,7 +82,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         return Response.ok(targetCategory)
     }
 
-    override fun deleteByIds(accountID: Long, sheetIds: List<Long>) {
+    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
         val account = register.findAccountById(accountID) ?: return
         account.sheets?.removeIf {sheetIds.contains(it.id) }
         //TODO update account's sold after delete
@@ -90,9 +90,10 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
     }
 
     override fun deleteAccountById(profileID: UserId, accountID: Long) : Response<Nothing>{
-        val profile = userTransaction.findById(profileID) ?: return Response.notFound()
-        profile.user.accounts().removeIf {it.id() == accountID}
-        userTransaction.register(profile.user) ?: return Response.notFound()
+        val profile = userTransaction.findUserById(profileID) ?: return Response.notFound()
+        profile.accounts.removeIf { it.id() == accountID }
+        profile.accounts.forEach { println(it) }
+        userTransaction.upsert(profile)!!
         return Response.ok()
     }
 }

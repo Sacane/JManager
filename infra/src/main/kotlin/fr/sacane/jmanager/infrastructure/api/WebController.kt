@@ -94,7 +94,7 @@ class WebController {
     }
 
     @GetMapping(path = ["user/categories/{userId}"])
-    suspend fun retrieveAllUserCategories(@PathVariable userId: String, @RequestHeader token: TokenDTO): ResponseEntity<List<String>>{
+    suspend fun retrieveAllUserCategories(@PathVariable userId: String, @RequestHeader("Authorization") token: TokenDTO): ResponseEntity<List<String>>{
         return apiAdapter.retrieveAllCategories(UserId(userId.toLong()), token)
     }
     @DeleteMapping(path=["category/delete"])
@@ -103,7 +103,8 @@ class WebController {
     }
 
     @DeleteMapping(path = ["user/{userId}/account/delete/{accountId}"])
-    fun deleteAccount(@PathVariable userId: Long, @PathVariable accountId: Long, @RequestHeader token: TokenDTO): ResponseEntity<Nothing> {
+    fun deleteAccount(@PathVariable userId: Long, @PathVariable accountId: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
+        println(extractToken(token))
         return apiAdapter.deleteAccount(UserId(userId), accountId)
     }
 }

@@ -60,6 +60,11 @@ class Directory {
             val user = userInventory.find { it.id.get() == userId.get() } ?: return null
             return tokenInventory[user.username]?.let { Ticket(user, it) }
         }
+
+        override fun findUserById(userId: UserId): User? {
+            TODO("Not yet implemented")
+        }
+
         override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
             TODO("Not yet implemented")
         }
@@ -77,6 +82,10 @@ class Directory {
         override fun getUserToken(userId: UserId): Token? {
             val user = findById(userId) ?: return null
             return tokenInventory[user.user.username]
+        }
+
+        override fun upsert(user: User): User? {
+            TODO("Not yet implemented")
         }
     }
 }

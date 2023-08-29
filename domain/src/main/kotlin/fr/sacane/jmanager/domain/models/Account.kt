@@ -55,4 +55,12 @@ class Account(
         return sheets
             ?.filter { it.date.month == month && it.date.year == year }
     }
+
+    override fun toString(): String {
+        return """
+            id: $id
+            amount: $amount
+            label: $labelAccount
+        """.trimIndent()
+    }
 }

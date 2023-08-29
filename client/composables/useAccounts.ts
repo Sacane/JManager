@@ -8,7 +8,7 @@ import useQuery from './useQuery';
 export default function useAccounts(){
     const accounts: Ref<Array<AccountDTO>> = ref([])
     const {user, defaultHeaders} = useAuth()
-    const {get, post} = useQuery()
+    const {get, post, deleteQuery} = useQuery()
     
     try{
         const response = axios.get(`user/accounts/get/${user.value?.id}`,
@@ -40,5 +40,9 @@ export default function useAccounts(){
         })
     }
 
-    return {accounts, createAccount, fetch}
+    async function deleteAccount(id: number) {
+        deleteQuery(`user/${user.value?.id}/account/delete/${id}`, undefined)
+    }
+
+    return {accounts, createAccount, fetch, deleteAccount}
 }

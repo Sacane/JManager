@@ -70,7 +70,7 @@ class TransactionValidator {
     }
 
     fun deleteSheetByIds(ids: AccountSheetIdsDTO): ResponseEntity<Nothing>{
-        return apiPort.deleteByIds(ids.accountId, ids.sheetIds).let {
+        return apiPort.deleteSheetsByIds(ids.accountId, ids.sheetIds).let {
             ResponseEntity.ok().build()
         }
     }
