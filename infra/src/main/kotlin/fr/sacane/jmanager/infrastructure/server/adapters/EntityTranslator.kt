@@ -16,15 +16,13 @@ internal fun Sheet.asResource(): SheetResource {
     return resource
 }
 internal fun Account.asResource(): AccountResource {
-    val resource = AccountResource()
-    resource.amount = this.amount()
-    resource.label = this.label()
-    resource.idAccount = this.id()
-    if(this.sheets().isNullOrEmpty()){
-        resource.sheets = mutableListOf()
+    val sheets = if(this.sheets().isNullOrEmpty()){
+        mutableListOf()
     }else {
-        resource.sheets = sheets()?.toMutableList()?.map { it.asResource() }?.toMutableList()
+        sheets()?.toMutableList()?.map { it.asResource() }?.toMutableList()
     }
+    val resource = AccountResource(this.amount(), this.label(), sheets)
+    resource.idAccount = this.id
     return resource
 }
 

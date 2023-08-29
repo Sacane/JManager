@@ -8,7 +8,7 @@ import java.util.*
 
 internal fun Account.toDTO(): AccountDTO {
     return AccountDTO(
-        this.id(),
+        this.id!!,
         this.amount(),
         this.label(),
         this.sheets()?.map { sheet -> sheet.toDTO() }

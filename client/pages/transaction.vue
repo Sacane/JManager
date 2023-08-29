@@ -128,7 +128,7 @@ const confirmDeleteButton = () => {
   <div class="w-full h-full flex flex-col container-all">
     <div p-8  bg-white class="form-container" mt2px>
       <div flex-row justify-between>
-        <h2 class="text-2xl font-bold mb-4">Mes transactions sur le compte {{ dateSelected.labelAccount }}</h2>
+        <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ dateSelected.labelAccount }}</h2>
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ dateSelected.accountAmount }} €</h2>
 
       </div>

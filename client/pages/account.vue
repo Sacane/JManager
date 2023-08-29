@@ -18,14 +18,18 @@ const toAdd = () => {
 onMounted(async () => {
   await fetch()
   isAccountFilled.ok = accounts.value.length > 0
-  accountFormatted.value = accounts.value.map(account => {
+  format(accounts.value)
+})
+
+function format(accounts: Array<AccountDTO>) {
+  accountFormatted.value = accounts.map(account => {
     return {
       id: account.id,
       labelAccount: account.labelAccount,
       amount: `${account.amount} €`,
     };
   });
-})
+}
 
 function onRowClick(event: any) {
   console.log(event.data.amount)
@@ -39,12 +43,15 @@ function onRowClick(event: any) {
   })
 }
 
-const editAccount = () => {
+const applyEdit = () => {
   console.log('Edit', row.value)
 }
+
 const applyDelete = () => {
   deleteAccount(row.value?.id as number)
-  .then(() => fetch())
+  .finally(() => {
+    fetch().then(() => format(accounts.value))
+  })
 }
 
 const row = ref<AccountDTO | undefined>(undefined)
@@ -56,7 +63,7 @@ const row = ref<AccountDTO | undefined>(undefined)
       <PDataTable :value="accountFormatted" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
         <template #header>
           <div class="flex flex-row hauto pl10px">
-            <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="editAccount"/>
+            <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit"/>
             <PButton w-auto b mr2 label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete"/>
           </div>
         </template>

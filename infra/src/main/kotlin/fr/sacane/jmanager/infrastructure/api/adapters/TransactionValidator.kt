@@ -50,7 +50,7 @@ class TransactionValidator {
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        val mapped = response.map { p -> p!!.map { AccountDTO(it.id(), it.amount(), it.label(), it.sheets()?.map { s -> s.toDTO() }) } }
+        val mapped = response.map { p -> p!!.map { AccountDTO(it.id!!, it.amount(), it.label(), it.sheets()?.map { s -> s.toDTO() }) } }
         return mapped.toResponseEntity()
     }
 

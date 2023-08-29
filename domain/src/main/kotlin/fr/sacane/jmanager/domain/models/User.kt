@@ -42,7 +42,7 @@ class User(
     val password: Password,
     private val categories: MutableList<Category>
 ){
-    fun accounts(): MutableList<Account> = accounts.distinct().toMutableList()
+    fun accounts(): MutableList<Account> = accounts.toMutableList()
     fun categories(): MutableList<Category> = categories.distinct().toMutableList()
 
     override fun toString(): String {

@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.models
 import java.time.Month
 
 class Account(
-        private var id: Long?,
+        val id: Long?,
         private var amount: Double,
         private val labelAccount: String,
         val sheets: MutableList<Sheet>?
@@ -19,10 +19,6 @@ class Account(
     fun label(): String{
         return labelAccount
     }
-    fun id(): Long{
-        return id!!
-    }
-
 
     fun earn(earned: Double) {
         amount += earned

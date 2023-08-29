@@ -40,8 +40,8 @@ export default function useAccounts(){
         })
     }
 
-    async function deleteAccount(id: number) {
-        deleteQuery(`user/${user.value?.id}/account/delete/${id}`, undefined)
+    async function deleteAccount(id: number): Promise<any> {
+        return deleteQuery(`user/${user.value?.id}/account/delete/${id}`, undefined)
     }
 
     return {accounts, createAccount, fetch, deleteAccount}

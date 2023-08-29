@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.server.adapters
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.infrastructure.server.entity.AccountResource
 import fr.sacane.jmanager.infrastructure.server.entity.CategoryResource
 import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
 import fr.sacane.jmanager.infrastructure.server.repositories.CategoryRepository
@@ -29,11 +30,9 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
     private lateinit var categoryRepository: CategoryRepository
 
     override fun persist(userId: UserId, account: Account): User? {
-        val userResponse = userRepository.findById(userId.get())
-        if(userResponse.isEmpty) return null
-        val user = userResponse.get()
+        val user = userRepository.findById(userId.get()).orElse(null) ?: return null
         user.accounts?.add(account.asResource())
-        return userRepository.saveAndFlush(user).toModel()
+        return userRepository.save(user).toModel()
     }
 
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
@@ -96,6 +95,6 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
     }
 
     override fun deleteAccountByID(accountID: Long) {
-        TODO("Not yet implemented")
+        accountRepository.deleteById(accountID)
     }
 }

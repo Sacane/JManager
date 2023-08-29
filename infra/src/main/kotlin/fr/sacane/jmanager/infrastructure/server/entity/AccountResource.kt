@@ -10,7 +10,7 @@ import javax.persistence.*
 class AccountResource(
     @Id
     @GeneratedValue
-    @Column(unique = true, name = "id_account", nullable = false)
+    @Column(name = "id_account")
     var idAccount: Long? = null,
 
     @Column(name = "amount")

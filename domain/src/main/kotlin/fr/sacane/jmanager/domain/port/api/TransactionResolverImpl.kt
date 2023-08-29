@@ -91,9 +91,10 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
 
     override fun deleteAccountById(profileID: UserId, accountID: Long) : Response<Nothing>{
         val profile = userTransaction.findUserById(profileID) ?: return Response.notFound()
-        profile.accounts.removeIf { it.id() == accountID }
+        profile.accounts.removeIf { it.id == accountID }
         profile.accounts.forEach { println(it) }
         userTransaction.upsert(profile)!!
+        register.deleteAccountByID(accountID)
         return Response.ok()
     }
 }
