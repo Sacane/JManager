@@ -191,7 +191,7 @@ const confirmDeleteButton = () => {
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
   }
   .buttons {
-    margin-top: -15px;
+    margin-top: 15px;
     .btn-small{
       padding: 6px 12px;
       margin-right: 10px;
