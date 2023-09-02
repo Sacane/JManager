@@ -9,7 +9,6 @@ data class Sheet(
     val expenses: Double,
     val income: Double,
     var accountAmount: Double,
-    val category: Category = CategoryFactory.DEFAULT_CATEGORY
+    val category: Category = CategoryFactory.DEFAULT_CATEGORY,
+    val position: Int = 0
 )
-
-class Interest(val expenses: Double, val income: Double)
