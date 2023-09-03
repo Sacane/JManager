@@ -1,4 +1,5 @@
 <script setup lang="ts">
+
 definePageMeta({
     layout: 'sidebar-layout'
 })
@@ -15,11 +16,13 @@ const amount = reactive({
   decimalPart: 0
 })
 
+
 const toAccount = async () => {
   const integer = parseFloat(`${amount.integerPart}`)
   await createAccount(newAccount.label, integer + parseFloat(`0.${amount.decimalPart}`))
-  await fetch()
-  navigateTo('/account')
+  .then(async () => {
+    await fetch()
+  }).finally(() => navigateTo('/account'))
 }
 </script>
 

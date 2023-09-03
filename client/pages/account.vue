@@ -1,28 +1,30 @@
 <script setup lang="ts">
-import useAccounts from '../composables/useAccounts'
+import useAccounts, { AccountFormatted } from '../composables/useAccounts'
 import { AccountDTO } from '../types/index';
-
 definePageMeta({
   layout: 'sidebar-layout',
 })
-interface AccountFormatted{
-  labelAccount: string,
-  amount: string
-}
+
 const { accounts, fetch, deleteAccount} = useAccounts()
 const isAccountFilled = reactive({ ok: false })
-const accountFormatted = ref<AccountFormatted[]>([])
 const toAdd = () => {
   navigateTo('/addAccount')
 }
+
+const data = reactive({
+  render: [] as AccountFormatted[]
+})
+
 onMounted(async () => {
-  await fetch()
+  await fetch().then(accountArray => {
+    format(accountArray)
+    console.log(accounts)
+  })
   isAccountFilled.ok = accounts.value.length > 0
-  format(accounts.value)
 })
 
 function format(accounts: Array<AccountDTO>) {
-  accountFormatted.value = accounts.map(account => {
+  data.render = accounts.map(account => {
     return {
       id: account.id,
       labelAccount: account.labelAccount,
@@ -50,7 +52,7 @@ const applyEdit = () => {
 const applyDelete = () => {
   deleteAccount(row.value?.id as number)
   .finally(() => {
-    fetch().then(() => format(accounts.value))
+    fetch().then(accountArray => format(accountArray))
   })
 }
 
@@ -60,7 +62,7 @@ const row = ref<AccountDTO | undefined>(undefined)
 <template>
   <div w-full h-full flex>
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
-      <PDataTable :value="accountFormatted" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
+      <PDataTable :value="data.render" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
         <template #header>
           <div class="flex flex-row hauto pl10px">
             <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit"/>

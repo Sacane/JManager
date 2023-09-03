@@ -10,7 +10,6 @@ interface UserSheetDTO {
 
 export default function useSheet() {
   const {deleteQuery, post} = useQuery()
-  const sheets = ref<SheetDTO[]>([])
   const {user} = useAuth()
 
   async function findByDate(month: string, year: number, accountLabel: string) {

@@ -25,7 +25,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
             .find { it.label() == account }
             ?.retrieveSheetSurroundByDate(month, year) ?: return Response.invalid()
         return Response.ok(sheets)
-    }
+    } 
 
     fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
         val ticket = userTransaction.findById(userId) ?: return Response.notFound()

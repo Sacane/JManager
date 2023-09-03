@@ -4,11 +4,16 @@ import useAuth from './useAuth';
 import { AccountDTO } from '../types/index';
 import useQuery from './useQuery';
 
+export interface AccountFormatted{
+    labelAccount: string,
+    amount: string
+  }
 
 export default function useAccounts(){
     const accounts: Ref<Array<AccountDTO>> = ref([])
     const {user, defaultHeaders} = useAuth()
     const {get, post, deleteQuery} = useQuery()
+    const accountFormatted = ref<AccountFormatted[]>([])
     
     try{
         const response = axios.get(`user/accounts/get/${user.value?.id}`,
@@ -20,15 +25,17 @@ export default function useAccounts(){
         console.error(error)
     }
 
-    async function fetch() {
+    async function fetch(): Promise<Array<AccountDTO>>  {
         try {
             const response = await axios.get(`${API_PATH}user/accounts/get/${user.value?.id}`,
             {
                 headers: defaultHeaders.value
             })
             accounts.value = response.data
+            return response.data
         }catch(error) {
             console.error(error)
+            throw error
         }
     }
     
@@ -40,9 +47,19 @@ export default function useAccounts(){
         })
     }
 
+    function format(accounts: Array<AccountDTO>) {
+        accountFormatted.value = accounts.map(account => {
+          return {
+            id: account.id,
+            labelAccount: account.labelAccount,
+            amount: `${account.amount} €`,
+          };
+        });
+    }
+    
+
     async function deleteAccount(id: number): Promise<any> {
         return deleteQuery(`user/${user.value?.id}/account/delete/${id}`, undefined)
     }
-
-    return {accounts, createAccount, fetch, deleteAccount}
+    return {accounts, createAccount, fetch, deleteAccount, accountFormatted, format}
 }
