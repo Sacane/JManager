@@ -2,7 +2,7 @@ package fr.sacane.jmanager.domain.models
 
 import java.time.LocalDate
 
-data class Sheet(
+class Sheet(
     val id: Long?,
     val label: String,
     val date: LocalDate,
@@ -10,5 +10,5 @@ data class Sheet(
     val income: Double,
     var accountAmount: Double,
     val category: Category = CategoryFactory.DEFAULT_CATEGORY,
-    val position: Int = 0
+    var position: Int = 0
 )

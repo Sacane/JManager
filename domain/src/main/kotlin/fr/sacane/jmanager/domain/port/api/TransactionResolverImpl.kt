@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.LeftPort
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
+import java.time.LocalDate
 import java.time.Month
 
 // TODO Instead of return Response timeout, this should refresh the token if they match
@@ -25,7 +26,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
             .find { it.label() == account }
             ?.retrieveSheetSurroundByDate(month, year) ?: return Response.invalid()
         return Response.ok(sheets)
-    } 
+    }
 
     fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
         val ticket = userTransaction.findById(userId) ?: return Response.notFound()
@@ -37,12 +38,46 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         return Response.timeout()
     }
 
+    private fun updateSheetSold(accountID: Long, year: Int, month: Month){
+        val account = register.findAccountById(accountID)
+        val sheets = account?.sheets
+            ?.filter { it.date.year == year && it.date.month == month }
+            ?.sortedBy { it.position }
+            ?: return
+
+        sheets.filter { it.position != 0 }
+            .forEach { sheet ->
+                val lastRecord = account.sheets.find { it.position == sheet.position - 1 }
+                sheet.accountAmount = lastRecord?.accountAmount?.plus(sheet.income)?.minus(sheet.expenses) ?: return
+            }
+        register.persist(account)
+    }
+
+    private fun updateSheetPosition(accountID: Long, year: Int, month: Month) {
+        val account = register.findAccountById(accountID)
+        val sheets = account?.sheets
+            ?.filter { it.date.year == year && it.date.month == month }
+            ?.sortedBy { it.position }
+            ?: return
+
+        for(number in 0..sheets.size) {
+            sheets[number].position = number
+        }
+        register.persist(account)
+    }
+
 
     override fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
         val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
         val account = register.findAccountByLabel(userId, accountLabel) ?: return Response.notFound()
-        sheet.accountAmount = account.amount().plus(sheet.income).minus(sheet.expenses)
+        if(!account.sheets.isNullOrEmpty()) {
+            val lastRecord = account.sheets.maxByOrNull { it.position } ?: return Response.notFound()
+            sheet.position = lastRecord.position + 1
+            sheet.accountAmount = lastRecord.accountAmount.plus(sheet.income).minus(sheet.expenses)
+        } else {
+            sheet.accountAmount = account.amount().plus(sheet.income).minus(sheet.expenses)
+        }
         register.persist(userId, accountLabel, sheet) ?: return Response.notFound()
         return Response.ok(sheet)
     }
@@ -84,8 +119,17 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
         val account = register.findAccountById(accountID) ?: return
-        account.sheets?.removeIf {sheetIds.contains(it.id) }
-        //TODO update account's sold after delete
+        var year: Int
+        var month: Month
+        if(account.sheets == null) return
+        account.sheets.first { sheetIds.contains(it.id) }.apply {
+            year = this.date.year
+            month = this.date.month
+        }
+        account.sheets.removeIf {sheetIds.contains(it.id) }
+        updateSheetPosition(accountID, year, month)
+            .also { updateSheetSold(accountID, year, month) }
+
         register.persist(account)
     }
 
