@@ -46,7 +46,14 @@ function onRowClick(event: any) {
 }
 
 const applyEdit = () => {
-  console.log('Edit', row.value)
+  navigateTo({
+    name: 'updateAccount',
+    query: {
+      id: row.value?.id,
+      labelAccount: row.value?.labelAccount,
+      amount: row.value?.amount
+    }
+  })
 }
 
 const applyDelete = () => {
@@ -57,10 +64,11 @@ const applyDelete = () => {
 }
 
 const row = ref<AccountDTO | undefined>(undefined)
+const actionSelection = ref<AccountDTO | undefined>(undefined)
 </script>
 
 <template>
-  <div w-full h-full flex>
+  <div w-full h-full flex items-center>
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
       <PDataTable :value="data.render" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
         <template #header>
@@ -69,7 +77,7 @@ const row = ref<AccountDTO | undefined>(undefined)
             <PButton w-auto b mr2 label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete"/>
           </div>
         </template>
-        <PColumn selectionMode="single" style="width: 3rem" :exportable="false"></PColumn>
+        <PColumn selectionMode="single" style="width: 3rem" :exportable="false" v-model="actionSelection"></PColumn>
         <PColumn field="labelAccount" header="Libellé du compte" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>

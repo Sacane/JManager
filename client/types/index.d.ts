@@ -10,7 +10,7 @@ export interface SheetDTO{
 }
 
 export interface AccountDTO {
-    id: number,
+    id: number | undefined,
     amount: number,
     labelAccount: string,
     sheets: Array<SheetDTO>

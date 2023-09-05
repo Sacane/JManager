@@ -10,9 +10,10 @@ internal fun Sheet.asResource(): SheetResource {
     resource.date = this.date
     resource.expenses = this.expenses
     resource.income = this.income
-    resource.accountAmount = this.accountAmount
+    resource.accountAmount = this.sold
     resource.category = resource.category
     resource.idSheet = this.id
+    resource.position = this.position
     return resource
 }
 internal fun Account.asResource(): AccountResource {
@@ -21,7 +22,7 @@ internal fun Account.asResource(): AccountResource {
     }else {
         sheets()?.toMutableList()?.map { it.asResource() }?.toMutableList()
     }
-    val resource = AccountResource(this.amount(), this.label(), sheets)
+    val resource = AccountResource(this.sold, this.label, sheets)
     resource.idAccount = this.id
     return resource
 }

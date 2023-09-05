@@ -56,10 +56,17 @@ export default function useAccounts(){
           };
         });
     }
+
+    async function updateAccount(account: AccountDTO, onUpdate: (acc: AccountDTO) => void){
+      post('account/update/' + user.value?.id, account)
+            .then((acc) => {
+              onUpdate(acc)
+            })
+    }
     
 
     async function deleteAccount(id: number): Promise<any> {
         return deleteQuery(`user/${user.value?.id}/account/delete/${id}`, undefined)
     }
-    return {accounts, createAccount, fetch, deleteAccount, accountFormatted, format}
+    return {accounts, createAccount, fetch, deleteAccount, accountFormatted, format, updateAccount}
 }

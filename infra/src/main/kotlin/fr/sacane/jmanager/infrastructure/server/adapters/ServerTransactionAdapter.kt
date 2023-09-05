@@ -47,7 +47,7 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets?.add(sheet.asResource())
-            account.amount = sheet.accountAmount
+            account.amount = sheet.sold
             // =================================================
             userRepository.saveAndFlush(user)
             sheet
@@ -58,9 +58,9 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
 
     override fun persist(account: Account) :Account?{
         val accountGet = account.asResource()
-        accountRepository.save(accountGet)
+        val registered = accountRepository.save(accountGet)
         accountRepository.flush()
-        return accountRepository.findByLabel(account.label())!!.toModel()
+        return registered.toModel()
     }
 
     override fun persist(userId: UserId, category: Category): Category? {
@@ -96,5 +96,9 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
 
     override fun deleteAccountByID(accountID: Long) {
         accountRepository.deleteById(accountID)
+    }
+
+    override fun saveAllSheets(sheets: List<Sheet>) {
+        TODO("Not yet implemented")
     }
 }

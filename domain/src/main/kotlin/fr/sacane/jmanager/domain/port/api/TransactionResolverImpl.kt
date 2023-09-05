@@ -16,14 +16,14 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
             return Response.timeout()
         }
         val userSaved = register.persist(userId, account) ?: return Response.invalid()
-        return Response.ok(userSaved.accounts().find { it.label() == account.label() }!!)
+        return Response.ok(userSaved.accounts().find { it.label == account.label }!!)
     }
 
     override fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
         val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
         val user = userResponse.checkForIdentity(token) ?: return Response.timeout()
         val sheets = user.accounts()
-            .find { it.label() == account }
+            .find { it.label == account }
             ?.retrieveSheetSurroundByDate(month, year) ?: return Response.invalid()
         return Response.ok(sheets)
     }
@@ -33,7 +33,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         val userTokenResponse = userTransaction.getUserToken(userId) ?: return Response.timeout()
         val user = ticket.user
         if(userTokenResponse.id == userToken.id) {
-            return Response.ok(user.accounts().find { it.label() == labelAccount }!!)
+            return Response.ok(user.accounts().find { it.label == labelAccount }!!)
         }
         return Response.timeout()
     }
@@ -48,7 +48,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         sheets.filter { it.position != 0 }
             .forEach { sheet ->
                 val lastRecord = account.sheets.find { it.position == sheet.position - 1 }
-                sheet.accountAmount = lastRecord?.accountAmount?.plus(sheet.income)?.minus(sheet.expenses) ?: return
+                sheet.updateSoldStartingWith(lastRecord?.sold ?: 0.toDouble())
             }
         register.persist(account)
     }
@@ -60,25 +60,25 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
             ?.sortedBy { it.position }
             ?: return
 
-        for(number in 0..sheets.size) {
+        for(number in sheets.indices) {
             sheets[number].position = number
         }
+        println(sheets)
         register.persist(account)
     }
-
 
     override fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
         val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
         val account = register.findAccountByLabel(userId, accountLabel) ?: return Response.notFound()
         if(!account.sheets.isNullOrEmpty()) {
-            val lastRecord = account.sheets.maxByOrNull { it.position } ?: return Response.notFound()
+            val lastRecord = account.sheets.filter { it.date <= sheet.date }.maxByOrNull { it.position } ?: return Response.notFound()
             sheet.position = lastRecord.position + 1
-            sheet.accountAmount = lastRecord.accountAmount.plus(sheet.income).minus(sheet.expenses)
+            sheet.updateSoldStartingWith(lastRecord.sold)
         } else {
-            sheet.accountAmount = account.amount().plus(sheet.income).minus(sheet.expenses)
+            sheet.updateSoldStartingWith(account.sold)
         }
-        register.persist(userId, accountLabel, sheet) ?: return Response.notFound()
+        register.persist(userId, accountLabel, sheet) ?: return Response.invalid()
         return Response.ok(sheet)
     }
 
@@ -104,7 +104,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
     override fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account> {
         val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
         userResponse.checkForIdentity(token) ?: return Response.invalid()
-        val targetOne = userResponse.user.accounts().find { it.label() == label } ?: return Response.notFound()
+        val targetOne = userResponse.user.accounts().find { it.label == label } ?: return Response.notFound()
         return Response.ok(targetOne)
     }
 
@@ -129,16 +129,24 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         account.sheets.removeIf {sheetIds.contains(it.id) }
         updateSheetPosition(accountID, year, month)
             .also { updateSheetSold(accountID, year, month) }
-
         register.persist(account)
     }
 
     override fun deleteAccountById(profileID: UserId, accountID: Long) : Response<Nothing>{
         val profile = userTransaction.findUserById(profileID) ?: return Response.notFound()
         profile.accounts.removeIf { it.id == accountID }
-        profile.accounts.forEach { println(it) }
         userTransaction.upsert(profile)!!
         register.deleteAccountByID(accountID)
         return Response.ok()
+    }
+
+    override fun editAccount(userID: Long, account: Account, token: Token): Response<Account> {
+        val user = userTransaction.findById(UserId(userID)) ?: return Response.notFound()
+        user.checkForIdentity(token) ?: return Response.invalid()
+        val accountID = account.id ?: return Response.notFound()
+        val oldAccount = register.findAccountById(accountID) ?: return Response.notFound()
+        oldAccount.updateFrom(account)
+        val registered = register.persist(oldAccount) ?: return Response.invalid()
+        return Response.ok(registered)
     }
 }

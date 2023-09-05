@@ -29,7 +29,9 @@ class SheetResource(
         joinColumns = [JoinColumn(name = "id_sheet")],
         inverseJoinColumns = [JoinColumn(name = "id_category")]
     )
-    var category: CategoryResource?=null
+    var category: CategoryResource?=null,
+    @Column
+    var position: Int = 0
 
 ){
     constructor(
@@ -38,8 +40,9 @@ class SheetResource(
         expenses: Double?,
         income: Double?,
         category: CategoryResource?,
-        accountAmount: Double
-    ): this(null, label, date, expenses, income, accountAmount, category)
+        accountAmount: Double,
+        position: Int
+    ): this(null, label, date, expenses, income, accountAmount, category, position)
 
     override fun toString(): String {
         return """

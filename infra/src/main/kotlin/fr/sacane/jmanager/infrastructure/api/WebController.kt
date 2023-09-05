@@ -104,8 +104,12 @@ class WebController {
 
     @DeleteMapping(path = ["user/{userId}/account/delete/{accountId}"])
     fun deleteAccount(@PathVariable userId: Long, @PathVariable accountId: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
-        println(extractToken(token))
         return apiAdapter.deleteAccount(UserId(userId), accountId)
+    }
+
+    @PostMapping(path = ["/account/update/{userID}"])
+    fun updateAccount(@PathVariable userID: Long, @RequestBody account: AccountDTO, @RequestHeader("Authorization") token: String): ResponseEntity<AccountDTO> {
+        return apiAdapter.updateAccount(userID, account, extractToken(token))
     }
 }
 

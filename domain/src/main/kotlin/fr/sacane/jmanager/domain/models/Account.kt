@@ -5,19 +5,26 @@ import java.time.Month
 class Account(
         val id: Long?,
         private var amount: Double,
-        private val labelAccount: String,
+        private var labelAccount: String,
         val sheets: MutableList<Sheet>?
 ){
 
-    override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label()
+    val label: String
+        get() = labelAccount
+
+    val sold: Double
+        get() = amount
+
+
+    override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
     fun sheets(): List<Sheet>?{
         if(sheets == null) return null
         return if(sheets.isEmpty()) null else sheets.toList()
     }
-    fun amount(): Double = amount
 
-    fun label(): String{
-        return labelAccount
+    fun updateFrom(account: Account) {
+        amount = account.sold
+        labelAccount = account.label
     }
 
     fun earn(earned: Double) {

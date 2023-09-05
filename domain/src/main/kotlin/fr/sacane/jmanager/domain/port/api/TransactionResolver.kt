@@ -13,4 +13,5 @@ interface TransactionResolver {
     fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account>
     fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>)
     fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing>
+    fun editAccount(userID: Long, account: Account, token: Token): Response<Account>
 }
