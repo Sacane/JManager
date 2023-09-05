@@ -8,7 +8,7 @@ const { isAuthenticated, logout } = useAuth()
 <template>
   <div class="flex-column border-r decoration-none w-15% h-screen text-center justify-between">
     <div class="mt5">
-      <NuxtLink to="/" class="text-3xl font-bold mb-2">
+      <NuxtLink to="/" class="font-bold mb-2 title">
         JManager
       </NuxtLink>
       <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF color-#fff">
@@ -35,3 +35,26 @@ const { isAuthenticated, logout } = useAuth()
       </div>
   </div>
 </template>
+
+<style scoped lang="scss">
+
+@media screen and (min-width: 1201px) {
+  .title{
+    font-size: 2.5rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .title{
+    font-size: 1rem;
+  }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1200px) {
+  .title{
+    font-size: 1.5rem;
+  }
+}
+
+
+</style>
