@@ -7,6 +7,7 @@ enum class ResponseState{
     OK,
     TIMEOUT,
     INVALID,
+    FORBIDDEN,
     NOT_FOUND;
     fun isSuccess(): Boolean{
         return this == OK
@@ -16,28 +17,23 @@ enum class ResponseState{
     }
 }
 
-data class Error(
-    val code: ResponseState,
-    val message: String
-){
-    init {
-        check(code.isFailure()) {
-            "Error code must be a failure"
-        }
-    }
-}
-
 class Response <S> private constructor(
     val status: ResponseState,
     private var value: S? = null,
-    private var error: Error? = null
+    private var error: String = "This response is not an error"
 ){
     companion object{
         fun <S> ok(entity: S): Response<S> = Response(ResponseState.OK, entity)
-        fun ok(): Response<Nothing> = Response(ResponseState.OK, null)
-        fun <S> invalid(): Response<S> = Response(ResponseState.INVALID, null)
-        fun <S> timeout(): Response<S> = Response(ResponseState.TIMEOUT, null)
-        fun <S> notFound(): Response<S> = Response(ResponseState.NOT_FOUND, null)
+        fun ok(): Response<Nothing> = Response(ResponseState.OK)
+        fun <S> invalid(): Response<S> = Response(ResponseState.INVALID)
+        fun <S> timeout(): Response<S> = Response(ResponseState.TIMEOUT)
+        fun <S> notFound(): Response<S> = Response(ResponseState.NOT_FOUND)
+        fun <S> forbidden(): Response<S> = Response(ResponseState.FORBIDDEN)
+
+        fun <S> notFound(message: String): Response<S> = Response(ResponseState.NOT_FOUND, error=message)
+        fun <S> invalid(message: String): Response<S> = Response(ResponseState.INVALID, error=message)
+        fun <S> timeout(message: String): Response<S> = Response(ResponseState.TIMEOUT, error=message)
+        fun <S> forbidden(message:String): Response<S> = Response(ResponseState.FORBIDDEN, error=message)
     }
 
     fun onSuccess(consumer: Consumer<S>): Response<S> {
@@ -48,11 +44,6 @@ class Response <S> private constructor(
     fun orElseGet(s: S): S? {
         if(this.status.isFailure()) return s
         return this.value
-    }
-
-    fun onError(consumer: (Error) -> Unit) {
-        if(this.status.isSuccess()) return;
-        consumer.invoke(this.error!!)
     }
 
     fun orElse(s: () -> S): S {

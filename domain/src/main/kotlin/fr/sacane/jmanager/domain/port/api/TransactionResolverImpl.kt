@@ -46,8 +46,13 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         register.saveAllSheets(
             sheets.map{ sheet ->
                     val lastRecord = account.sheets.find { it.position == sheet.position - 1 }
-                    sheet.updateSoldStartingWith(lastRecord?.sold ?: account.sold)
-                    sheet
+                    sheet.also {
+                        if(lastRecord == null) {
+                            sheet.sold = account.sold
+                        } else {
+                            sheet.updateSoldStartingWith(lastRecord.sold)
+                        }
+                    }
                 }.toList()
         )
     }
@@ -110,7 +115,6 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
     fun removeCategory(id: UserId, token: Token, label: String): Response<Category?> {
         val userTicket = userTransaction.findById(id) ?: return Response.notFound()
         val user = userTicket.checkForIdentity(token) ?: return Response.timeout()
-//        val responseEntity = port.removeCategory(id, label) ?: return Response.invalid()
         val targetCategory = user.categories().find { it.label == label } ?: return Response.notFound()
         register.remove(targetCategory)
         return Response.ok(targetCategory)
@@ -118,14 +122,8 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
         val account: Account = register.findAccountById(accountID) ?: return
-        var year: Int
-        var month: Month
         if(account.sheets == null) return
         val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
-        account.sheets.first(isSheetOnList).apply {
-            year = this.date.year
-            month = this.date.month
-        }
         account.cancelSheetsSupply(
             account.sheets.filter(isSheetOnList)
         )
