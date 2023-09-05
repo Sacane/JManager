@@ -40,7 +40,6 @@ class SheetController(
 
     @PostMapping(path=["get"])
     suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
-        LOGGER.info("CHECK FOR SHEETS : $dto")
         return transactionValidator.getSheetAccountByDate(dto, extractToken(token))
     }
 
