@@ -38,19 +38,18 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         return Response.timeout()
     }
 
-    private fun updateSheetSold(accountID: Long, year: Int, month: Month){
-        val account = register.findAccountById(accountID)
-        val sheets = account?.sheets
-            ?.filter { it.date.year == year && it.date.month == month }
-            ?.sortedBy { it.position }
-            ?: return
-
-        sheets.filter { it.position != 0 }
-            .forEach { sheet ->
-                val lastRecord = account.sheets.find { it.position == sheet.position - 1 }
-                sheet.updateSoldStartingWith(lastRecord?.sold ?: 0.toDouble())
-            }
-        register.persist(account)
+    private fun updateSheetSold(account: Account){
+        val sheets = account.sheets
+        for(number in sheets!!.indices) {
+            sheets[number].position = number
+        }
+        register.saveAllSheets(
+            sheets.map{ sheet ->
+                    val lastRecord = account.sheets.find { it.position == sheet.position - 1 }
+                    sheet.updateSoldStartingWith(lastRecord?.sold ?: account.sold)
+                    sheet
+                }.toList()
+        )
     }
 
     private fun updateSheetPosition(accountID: Long, year: Int, month: Month) {
@@ -63,8 +62,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         for(number in sheets.indices) {
             sheets[number].position = number
         }
-        println(sheets)
-        register.persist(account)
+        register.saveAllSheets(sheets)
     }
 
     override fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
@@ -75,6 +73,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
             val lastRecord = account.sheets.filter { it.date <= sheet.date }.maxByOrNull { it.position } ?: return Response.notFound()
             sheet.position = lastRecord.position + 1
             sheet.updateSoldStartingWith(lastRecord.sold)
+            updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
         } else {
             sheet.updateSoldStartingWith(account.sold)
         }
@@ -118,18 +117,22 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
     }
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
-        val account = register.findAccountById(accountID) ?: return
+        val account: Account = register.findAccountById(accountID) ?: return
         var year: Int
         var month: Month
         if(account.sheets == null) return
-        account.sheets.first { sheetIds.contains(it.id) }.apply {
+        val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
+        account.sheets.first(isSheetOnList).apply {
             year = this.date.year
             month = this.date.month
         }
-        account.sheets.removeIf {sheetIds.contains(it.id) }
-        updateSheetPosition(accountID, year, month)
-            .also { updateSheetSold(accountID, year, month) }
+        account.cancelSheetsSupply(
+            account.sheets.filter(isSheetOnList)
+        )
+        account.sheets.removeIf(isSheetOnList)
+        updateSheetSold(account)
         register.persist(account)
+        register.deleteAllSheetsById(sheetIds)
     }
 
     override fun deleteAccountById(profileID: UserId, accountID: Long) : Response<Nothing>{

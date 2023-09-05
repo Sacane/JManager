@@ -99,6 +99,10 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
     }
 
     override fun saveAllSheets(sheets: List<Sheet>) {
-        TODO("Not yet implemented")
+        sheetRepository.saveAll(sheets.map { it.asResource() })
+    }
+
+    override fun deleteAllSheetsById(sheetIds: List<Long>) {
+        sheetRepository.deleteAllById(sheetIds)
     }
 }

@@ -31,7 +31,7 @@ class SheetResource(
     )
     var category: CategoryResource?=null,
     @Column
-    var position: Int = 0
+    var position: Int? = 0
 
 ){
     constructor(

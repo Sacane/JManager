@@ -66,7 +66,14 @@ class WebController {
         return apiAdapter.saveSheet(
             userAccountSheetDTO.userId,
             userAccountSheetDTO.accountLabel,
-            userAccountSheetDTO.sheetDTO,
+            SheetDTO(
+                userAccountSheetDTO.sheetDTO.id,
+                userAccountSheetDTO.sheetDTO.label,
+                userAccountSheetDTO.sheetDTO.expenses,
+                userAccountSheetDTO.sheetDTO.income,
+                userAccountSheetDTO.sheetDTO.date.plusDays(1),
+                userAccountSheetDTO.sheetDTO.accountAmount
+            ),
             extractToken(token)
         ).apply { LOGGER.info("Sheet has been created") }
     }

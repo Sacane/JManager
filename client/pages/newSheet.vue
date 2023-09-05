@@ -36,7 +36,6 @@ const onConfirm = async () => {
     accountAmount: parseFloat(values.accountAmount)
   }).then(async (sheet: SheetDTO) => {
       await fetch()
-      console.log(sheet)
       navigateTo({
       path:'/transaction',
       query: {

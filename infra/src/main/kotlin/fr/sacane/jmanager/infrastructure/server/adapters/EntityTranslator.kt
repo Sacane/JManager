@@ -41,7 +41,8 @@ internal fun SheetResource.toModel(): Sheet{
         this.date!!,
         this.expenses!!,
         this.income!!,
-        this.accountAmount!!)
+        this.accountAmount!!,
+        position=this.position!!)
 }
 internal fun AccountResource.toModel(): Account{
     return Account(

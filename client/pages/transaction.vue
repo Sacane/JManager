@@ -17,7 +17,7 @@ const addYear = () => {
 const {accounts, fetch} = useAccounts()
 const {findByDate, deleteSheet} = useSheets()
 const date = new Date()
-const dateSelected = reactive({
+const data = reactive({
   year: date.getFullYear(),
   month: monthFromNumber(date.getMonth() + 1) as string,
   labelAccount: '',
@@ -27,15 +27,15 @@ const dateSelected = reactive({
   accountAmount: 0.0
 })
 
-const isSelectionOk = () => dateSelected.year !== 0 && dateSelected.month !== '' && dateSelected.labelAccount !== ''
+const isSelectionOk = () => data.year !== 0 && data.month !== '' && data.labelAccount !== ''
 
 function selectYear(year: number) {
-  dateSelected.year = year
+  data.year = year
   retrieveSheets()
 }
 
 function selectMonth(month: string) {
-  dateSelected.month = month
+  data.month = month
   retrieveSheets()
 }
 
@@ -43,17 +43,17 @@ function retrieveSheets() {
   if(!isSelectionOk()) {
     return
   }
-  findByDate(dateSelected.month, dateSelected.year, dateSelected.labelAccount)
-  .then((value: SheetAverageDTO) => dateSelected.currentSheets = value.sheets)
+  findByDate(data.month, data.year, data.labelAccount)
+  .then((value: SheetAverageDTO) => data.currentSheets = value.sheets)
   .finally(() => updateSheets())
 }
 
 const route = useRouter()
 
 const initAccount = () => {
-  dateSelected.labelAccount = route.currentRoute.value.query.labelAccount as string
-  dateSelected.currentAccountId = route.currentRoute.value.query.id as string
-  dateSelected.accountAmount = parseFloat(route.currentRoute.value.query.amount as string)
+  data.labelAccount = route.currentRoute.value.query.labelAccount as string
+  data.currentAccountId = route.currentRoute.value.query.id as string
+  data.accountAmount = parseFloat(route.currentRoute.value.query.amount as string)
 }
 
 
@@ -67,16 +67,16 @@ onMounted(async () => {
 
 // Fonction pour formater la date en format français (jour/mois/année)
 function formatDateToFrench(numbers: number[]) {
-  return new Date(numbers[0], numbers[1], numbers[2]).toLocaleDateString('fr-FR').replace(/\//g, '-');
+  return new Date(numbers[0], numbers[1] - 1, numbers[2]).toLocaleDateString('fr-FR').replace(/\//g, '-');
 }
 
 function gotoTransaction() {
   navigateTo({
     name: 'newSheet',
     query: {
-      id: dateSelected.currentAccountId,
-      label: dateSelected.labelAccount,
-      amount: dateSelected.accountAmount
+      id: data.currentAccountId,
+      label: data.labelAccount,
+      amount: data.accountAmount
     }
   })
 }
@@ -86,7 +86,7 @@ const actualSheets = ref()
 
 const updateSheets = () => {
   fetch()
-  actualSheets.value = dateSelected.currentSheets.map(sheet => {
+  actualSheets.value = data.currentSheets.map(sheet => {
     return {
       ...sheet,
       expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
@@ -99,8 +99,14 @@ const updateSheets = () => {
 }
 
 const confirmDelete = async () => {
-  deleteSheet(parseInt(dateSelected.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
+  deleteSheet(parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
   .then(() => retrieveSheets())
+  .finally(() =>{
+    fetch().then(accs => {
+      console.log(accounts.value.findLast(value => value.id === parseInt(data.currentAccountId))?.amount as number)
+      data.accountAmount = accounts.value.findLast(value => value.id === parseInt(data.currentAccountId))?.amount as number
+    })
+  })
 }
 
 const confirm = useConfirm()
@@ -128,8 +134,8 @@ const confirmDeleteButton = () => {
   <div class="w-full h-full flex flex-col container-all">
     <div p-8  bg-white class="form-container" mt2px>
       <div flex-row justify-between>
-        <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ dateSelected.labelAccount }}</h2>
-        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ dateSelected.accountAmount }} €</h2>
+        <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ data.labelAccount }}</h2>
+        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }} €</h2>
 
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets">
@@ -137,7 +143,7 @@ const confirmDeleteButton = () => {
           <div style="text-align: left">
             <div class="pl10px flex flex-row hauto">
               <PButton v-for="year in years"
-              :class="{ 'bg-gray-300': dateSelected.year === year }"
+              :class="{ 'bg-gray-300': data.year === year }"
               :key="year"
               w-auto b mr2
               @click="selectYear(year)"
@@ -156,7 +162,7 @@ const confirmDeleteButton = () => {
               w-auto b
               @click="selectMonth(month.toString())"
               class="btn-small"
-              :class="{ 'bg-gray-300': dateSelected.month === month }"
+              :class="{ 'bg-gray-300': data.month === month }"
               >
               {{ translate(month) }}
               </PButton>
