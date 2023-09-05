@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.server.adapters
 
-import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
@@ -12,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
+import java.util.logging.Logger
 
 @Service
 @DatasourceAdapter
@@ -24,7 +24,7 @@ class LoginTransactionAdapter : LoginManager {
     companion object{
         private const val DEFAULT_TOKEN_LIFETIME_IN_HOURS = 1L //1hour
 //        private const val DEFAULT_REFRESH_TOKEN_LIFETIME = 60L* 60L * 24L * 5L * 1000L // 5 days
-        private val LOGGER = Logger.getLogger(Companion::class.java)
+        private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
 
     override fun login(userPseudonym: String, password: Password): Ticket? {

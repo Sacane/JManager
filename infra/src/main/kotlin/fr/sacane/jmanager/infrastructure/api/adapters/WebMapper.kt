@@ -42,6 +42,7 @@ internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
         ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
         ResponseState.TIMEOUT, ResponseState.NOT_FOUND -> ResponseEntity.notFound().build()
         ResponseState.INVALID -> ResponseEntity.badRequest().build()
+        ResponseState.FORBIDDEN -> ResponseEntity(HttpStatus.FORBIDDEN)
     }
 }
 

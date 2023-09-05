@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -23,8 +22,8 @@ class UserTest {
     fun `password should not match even with uppercase`(){
         val pwd = Password("password")
         val pwd2 = Password("PAsswoRD")
-        assertThat(pwd.get()).isNotEqualTo(pwd2.get())
-        assertThat(pwd.matchWith(pwd2)).isFalse
+        assertNotEquals(pwd.get(), pwd2.get())
+        assertFalse(pwd.matchWith(pwd2))
     }
 
     @Test
@@ -32,9 +31,9 @@ class UserTest {
         val password = Password("01012000")
         val password2 = Password("01023000")
         val passwordClone = Password("01012000")
-        assertThat(password.matchWith(password2)).isFalse
-        assertThat(password.matchWith(passwordClone)).isTrue
-        assertThat(Password.fromBytes(password.get()).matchWith(password)).isTrue
+        assertFalse(password.matchWith(password2))
+        assertTrue(password.matchWith(passwordClone))
+        assertTrue(Password.fromBytes(password.get()).matchWith(password))
     }
 
 }

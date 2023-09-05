@@ -1,7 +1,8 @@
 package fr.sacane.jmanager.domain.models
 
 
-import org.assertj.core.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDateTime
@@ -23,14 +24,16 @@ class TokenTest {
         val user = User(UserId(0), "test", "test@gmail.com", mutableListOf(), Password("test"), mutableListOf())
         val ticket = Ticket(user, token)
         val verifiedToken = token.copy()
-        assertThat(ticket.checkForIdentity(verifiedToken)).isNotNull
+        assertFalse{
+            ticket.checkForIdentity(verifiedToken) == null
+        }
     }
 
     @Test
     fun `Token knows when it's expired or not`(){
         val token = Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
-        assertThat(token.isExpired()).isFalse
+        assertFalse(token.isExpired())
         Thread.sleep(5000)
-        assertThat(token.isExpired()).isTrue
+        assertTrue(token.isExpired())
     }
 }

@@ -1,10 +1,7 @@
 package fr.sacane.jmanager.infrastructure.server.entity
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
+import jakarta.persistence.*
 
 @Entity
 @DatasourceEntity

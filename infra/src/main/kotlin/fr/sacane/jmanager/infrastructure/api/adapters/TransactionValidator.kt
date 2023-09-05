@@ -4,11 +4,12 @@ import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.TransactionResolver
 import fr.sacane.jmanager.infrastructure.api.*
-import org.jboss.logging.Logger
+
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.util.*
+import java.util.logging.Logger
 
 @LeftAdapter
 @Service
@@ -18,7 +19,7 @@ class TransactionValidator {
     private lateinit var apiPort: TransactionResolver
 
     companion object{
-        private val LOGGER: Logger = Logger.getLogger(TransactionValidator::class.java)
+        private val LOGGER: Logger = Logger.getLogger(TransactionValidator::class.java.toString())
     }
 
     fun findAccount(id: Long, label: String, tokenDTO: String): ResponseEntity<AccountDTO> {

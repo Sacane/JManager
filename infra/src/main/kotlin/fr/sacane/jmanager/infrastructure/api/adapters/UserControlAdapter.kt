@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.api.adapters
 
-import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.Token
@@ -10,12 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.util.*
+import java.util.logging.Logger
 
 @Service
 @LeftAdapter
 class UserControlAdapter @Autowired constructor(private var userPort: Administrator) {
     companion object{
-        private val LOGGER = Logger.getLogger(Companion::class.java)
+        private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
     fun createUser(userDTO: RegisteredUserDTO): ResponseEntity<UserDTO>{
         val response = userPort.register(userDTO.toModel())

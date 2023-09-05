@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
 import java.io.Serial
 import java.time.LocalDateTime
 import java.util.UUID
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @Table(name="login")

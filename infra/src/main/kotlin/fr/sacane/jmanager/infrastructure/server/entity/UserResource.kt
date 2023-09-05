@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.server.entity
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
 import org.springframework.lang.Nullable
-import javax.persistence.*
+import jakarta.persistence.*
 
 
 @Table(name="userResource")
@@ -40,6 +40,7 @@ class UserResource(
     )
     var categories: MutableList<CategoryResource>?
 ){
+    constructor() : this(null, null, null, null, null, null)
     constructor(
         username: String?,
         password: ByteArray?,
