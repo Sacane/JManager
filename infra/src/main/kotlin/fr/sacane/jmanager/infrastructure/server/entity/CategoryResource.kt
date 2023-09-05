@@ -13,6 +13,7 @@ class CategoryResource(
     @Column(name="label")
     var label: String?
 ){
+    constructor(): this(null, null)
     constructor(
         label: String?
     ): this(null, label)

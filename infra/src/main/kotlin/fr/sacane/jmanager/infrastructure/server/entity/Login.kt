@@ -35,6 +35,7 @@ class Login(
     var refreshToken: UUID?
 
 ){
+    constructor(): this(null, null, null, null, null)
     constructor(user: UserResource, lastRefresh: LocalDateTime): this(null, UUID.randomUUID(), user, lastRefresh, UUID.randomUUID())
     companion object{
         @Serial
