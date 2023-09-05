@@ -1,5 +1,8 @@
+
+
+
 plugins {
-    id("org.springframework.boot") version "2.7.3"
+    id("org.springframework.boot") version "3.1.3"
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
     war
     kotlin("jvm") version "1.6.21"
@@ -8,17 +11,22 @@ plugins {
     id("org.jetbrains.kotlin.plugin.allopen") version "1.5.21"
 }
 
+repositories{
+    mavenCentral()
+}
+
 allOpen {
     annotations("javax.persistence.Entity", "javax.persistence.MappedSuperclass", "javax.persistence.Embedabble")
 }
 
 group = "fr.sacane.jmanager"
-version = "0.0.1-SNAPSHOT"
+version = "1.6.21"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 
 
 dependencies {
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -34,4 +42,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.hamcrest:hamcrest:2.2")
     testImplementation("com.h2database:h2")
+
 }
+

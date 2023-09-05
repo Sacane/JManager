@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
 import java.io.Serial
 import java.time.LocalDateTime
 import java.util.UUID
-import javax.persistence.*
+import jakarta.persistence.*
 
 @Entity
 @Table(name="login")
@@ -35,6 +35,7 @@ class Login(
     var refreshToken: UUID?
 
 ){
+    constructor(): this(null, null, null, null, null)
     constructor(user: UserResource, lastRefresh: LocalDateTime): this(null, UUID.randomUUID(), user, lastRefresh, UUID.randomUUID())
     companion object{
         @Serial

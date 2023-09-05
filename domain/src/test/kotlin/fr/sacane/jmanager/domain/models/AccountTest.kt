@@ -1,9 +1,9 @@
 package fr.sacane.jmanager.domain.models
 
 import fr.sacane.jmanager.domain.port.spi.mock.Directory
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.time.Month
 
 class AccountTest {
@@ -15,7 +15,7 @@ class AccountTest {
         account.loss(10.toDouble())
         account.earn(50.toDouble())
         account -= 15.toDouble()
-        assertThat(account.amount()).isEqualTo(145.toDouble())
+        assertEquals(account.sold, 145.toDouble())
     }
 
     @Test
@@ -23,8 +23,8 @@ class AccountTest {
         val account = Account(null, 100.toDouble(), "courant", mutableListOf())
         val account2 = Account(null, 100.toDouble(), "secondaire", mutableListOf())
         account.transaction(10.toDouble(), account2, true)
-        assertEquals(account.amount(), 110.toDouble())
-        assertEquals(account2.amount(), 90.toDouble())
+        assertEquals(account.sold, 110.toDouble())
+        assertEquals(account2.sold, 90.toDouble())
     }
 
     @Test
@@ -39,19 +39,18 @@ class AccountTest {
 
         val pwdUser = Password("D5301012000MAMacita")
         val user = User(UserId(1), "johan", "johan.test@test.fr", accounts, pwdUser, CategoryFactory.allDefaultCategories())
-        assertThat(user.accounts()).containsOnlyOnce(Account(null, constantValue, "test", mutableListOf()))
+        assertTrue{
+            user.accounts.contains(Account(null, constantValue, "test", mutableListOf()))
+        }
     }
 
     @Test
     fun `by giving a year and a month, accounts should retrieve its corresponding sheets`(){
         val sheets = Directory.sheetInventory
         val account = Account(2.toLong(), 1050.toDouble(), "Primary", sheets)
-
-
         val sheetsOfDecember = account.retrieveSheetSurroundByDate(Month.DECEMBER, 2022)
-
-
-        assertThat(sheetsOfDecember).allMatch { it.date.month == Month.DECEMBER }
-        assertThat(sheetsOfDecember).hasSize(3)
+        assertTrue {
+            sheetsOfDecember != null && sheetsOfDecember.all { it.date.month == Month.DECEMBER && it.date.year == 2022 } && sheetsOfDecember.size == 3
+        }
     }
 }

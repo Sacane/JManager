@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.server.adapters
 
-import com.sun.istack.logging.Logger
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service
 import java.lang.Exception
 import java.security.MessageDigest
 import java.time.LocalDateTime
+import java.util.logging.Logger
 
 @Service
 @DatasourceAdapter
@@ -21,7 +21,7 @@ class ServerUserAdapter : UserTransaction{
     @Autowired
     private lateinit var loginRepository: LoginRepository
     companion object{
-        private val LOGGER = Logger.getLogger(Companion::class.java)
+        private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
     override fun findById(userId: UserId): Ticket? {
         val user = userRepository.findById(userId.get())

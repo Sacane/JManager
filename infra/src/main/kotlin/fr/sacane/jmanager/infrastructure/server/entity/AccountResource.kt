@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.server.entity
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
-import javax.persistence.*
+import jakarta.persistence.*
 
 
 @Entity

@@ -8,14 +8,13 @@ class Sheet(
     val date: LocalDate,
     val expenses: Double,
     val income: Double,
-    private var accountAmount: Double,
+    var sold: Double,
     val category: Category = CategoryFactory.DEFAULT_CATEGORY,
     var position: Int = 0
 ) {
-    val sold: Double
-        get() = accountAmount
+
     fun updateSoldStartingWith(start: Double) {
-        accountAmount = start.plus(income).minus(expenses).also { println( "$it -> $start" ) }
+        sold = start.plus(income).minus(expenses)
     }
 
     override fun toString(): String {
@@ -24,7 +23,7 @@ class Sheet(
             date: $date
             expenses: $expenses
             income: $income
-            accountAmount: $accountAmount
+            sold: $sold
             position: $position
         """.trimIndent()
     }

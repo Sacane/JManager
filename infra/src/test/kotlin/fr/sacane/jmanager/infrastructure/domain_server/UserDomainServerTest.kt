@@ -24,6 +24,7 @@ class UserDomainServerTest {
     @Test
     fun `User registered has its password check correctly`(){
         val pwd1 = Password("01012000")
+        userRepository.deleteByUsername("Sacane_test")
         val userEntity = UserResource(null, "Sacane_test", pwd1.get(), "sacane.test@grostest.fr", null, null)
         userRepository.save(userEntity)
         val getUser = userRepository.findByUsername("Sacane_test")

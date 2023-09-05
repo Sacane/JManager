@@ -1,10 +1,7 @@
 package fr.sacane.jmanager.infrastructure.server.entity
 
 import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.Id
+import jakarta.persistence.*
 
 @Entity
 @DatasourceEntity
@@ -16,6 +13,7 @@ class CategoryResource(
     @Column(name="label")
     var label: String?
 ){
+    constructor(): this(null, null)
     constructor(
         label: String?
     ): this(null, label)
