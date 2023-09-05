@@ -38,10 +38,17 @@ class User(
     val id: UserId,
     val username: String,
     val email: String,
-    private val accounts: MutableList<Account>,
+    val accounts: MutableList<Account>,
     val password: Password,
     private val categories: MutableList<Category>
 ){
-    fun accounts(): MutableList<Account> = accounts.distinct().toMutableList()
+    fun accounts(): MutableList<Account> = accounts.toMutableList()
     fun categories(): MutableList<Category> = categories.distinct().toMutableList()
+
+    override fun toString(): String {
+        return """
+            id: ${id.get()}
+            username: $username
+        """.trimIndent()
+    }
 }

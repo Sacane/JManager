@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain.port.spi
 import fr.sacane.jmanager.domain.hexadoc.RightPort
 import fr.sacane.jmanager.domain.models.*
-import java.time.Month
 
 @RightPort
 interface TransactionRegister {
@@ -16,4 +15,7 @@ interface TransactionRegister {
     fun persist(account: Account) :Account?
     fun remove(targetCategory: Category)
     fun deleteAllSheets(accountID: Long, sheets: List<Long>)
+    fun deleteAccountByID(accountID: Long)
+    fun saveAllSheets(sheets: List<Sheet>)
+    fun deleteAllSheetsById(sheetIds: List<Long>)
 }

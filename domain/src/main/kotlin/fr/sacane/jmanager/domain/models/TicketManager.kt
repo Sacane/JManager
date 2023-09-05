@@ -4,8 +4,8 @@ import java.time.LocalDateTime
 import java.util.*
 data class Token(
     val id: UUID,
-    val lastRefresh: LocalDateTime?,
-    val refreshToken: UUID?
+    val lastRefresh: LocalDateTime? = null,
+    val refreshToken: UUID? = UUID.randomUUID()
 ){
     fun isExpired(time: LocalDateTime): Boolean{
         require(lastRefresh != null){

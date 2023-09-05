@@ -38,7 +38,8 @@ data class SheetSendDTO(
     val label: String,
     val date: LocalDate,
     val expenses: Double,
-    val income: Double
+    val income: Double,
+    val accountAmount: Double
 )
 
 data class AccountInfoDTO(

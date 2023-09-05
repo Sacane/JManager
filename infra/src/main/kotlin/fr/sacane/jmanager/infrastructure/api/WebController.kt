@@ -66,9 +66,16 @@ class WebController {
         return apiAdapter.saveSheet(
             userAccountSheetDTO.userId,
             userAccountSheetDTO.accountLabel,
-            userAccountSheetDTO.sheetDTO,
+            SheetDTO(
+                userAccountSheetDTO.sheetDTO.id,
+                userAccountSheetDTO.sheetDTO.label,
+                userAccountSheetDTO.sheetDTO.expenses,
+                userAccountSheetDTO.sheetDTO.income,
+                userAccountSheetDTO.sheetDTO.date.plusDays(1),
+                userAccountSheetDTO.sheetDTO.accountAmount
+            ),
             extractToken(token)
-        )
+        ).apply { LOGGER.info("Sheet has been created") }
     }
 
     @DeleteMapping("/sheet/delete")
@@ -85,9 +92,7 @@ class WebController {
     @PostMapping(path=["sheets/get"])
     suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
         LOGGER.info("CHECK FOR SHEETS : $dto")
-        return apiAdapter.getSheetAccountByDate(dto, extractToken(token)).also {
-            println(it.body)
-        }
+        return apiAdapter.getSheetAccountByDate(dto, extractToken(token))
     }
     @PostMapping(path = ["user/category"])
     suspend fun saveUserCategory(@RequestBody userCategoryDTO: UserCategoryDTO, @RequestHeader token: TokenDTO): ResponseEntity<String>{
@@ -96,12 +101,22 @@ class WebController {
     }
 
     @GetMapping(path = ["user/categories/{userId}"])
-    suspend fun retrieveAllUserCategories(@PathVariable userId: String, @RequestHeader token: TokenDTO): ResponseEntity<List<String>>{
+    suspend fun retrieveAllUserCategories(@PathVariable userId: String, @RequestHeader("Authorization") token: TokenDTO): ResponseEntity<List<String>>{
         return apiAdapter.retrieveAllCategories(UserId(userId.toLong()), token)
     }
     @DeleteMapping(path=["category/delete"])
     suspend fun deleteCategory(@RequestBody userCategoryDTO: UserCategoryDTO, @RequestHeader token: TokenDTO): ResponseEntity<String>{
         return apiAdapter.removeCategory(userCategoryDTO, token)
+    }
+
+    @DeleteMapping(path = ["user/{userId}/account/delete/{accountId}"])
+    fun deleteAccount(@PathVariable userId: Long, @PathVariable accountId: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
+        return apiAdapter.deleteAccount(UserId(userId), accountId)
+    }
+
+    @PostMapping(path = ["/account/update/{userID}"])
+    fun updateAccount(@PathVariable userID: Long, @RequestBody account: AccountDTO, @RequestHeader("Authorization") token: String): ResponseEntity<AccountDTO> {
+        return apiAdapter.updateAccount(userID, account, extractToken(token))
     }
 }
 

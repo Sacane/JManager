@@ -10,21 +10,20 @@ internal fun Sheet.asResource(): SheetResource {
     resource.date = this.date
     resource.expenses = this.expenses
     resource.income = this.income
-    resource.accountAmount = this.accountAmount
+    resource.accountAmount = this.sold
     resource.category = resource.category
     resource.idSheet = this.id
+    resource.position = this.position
     return resource
 }
 internal fun Account.asResource(): AccountResource {
-    val resource = AccountResource()
-    resource.amount = this.amount()
-    resource.label = this.label()
-    resource.idAccount = this.id()
-    if(this.sheets().isNullOrEmpty()){
-        resource.sheets = mutableListOf()
+    val sheets = if(this.sheets().isNullOrEmpty()){
+        mutableListOf()
     }else {
-        resource.sheets = sheets()?.toMutableList()?.map { it.asResource() }?.toMutableList()
+        sheets()?.toMutableList()?.map { it.asResource() }?.toMutableList()
     }
+    val resource = AccountResource(this.sold, this.label, sheets)
+    resource.idAccount = this.id
     return resource
 }
 
@@ -32,14 +31,18 @@ internal fun User.asResource(): UserResource {
     return UserResource(null, username, password.get(), email, mutableListOf(), categories().map { CategoryResource(it.label) }.toMutableList())
 }
 
+internal fun User.asExistingResource(): UserResource {
+    return UserResource(idUser = this.id.get(), username, password.get(), email, this.accounts().map {it.asResource()}.toMutableList(), mutableListOf() )
+}
+
 internal fun SheetResource.toModel(): Sheet{
-    println(this)
     return Sheet(this.idSheet!!,
         this.label!!,
         this.date!!,
         this.expenses!!,
         this.income!!,
-        this.accountAmount!!)
+        this.accountAmount!!,
+        position=this.position!!)
 }
 internal fun AccountResource.toModel(): Account{
     return Account(

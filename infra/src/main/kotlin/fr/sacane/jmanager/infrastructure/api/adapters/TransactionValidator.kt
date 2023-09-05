@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.api.BudgetResolver
+import fr.sacane.jmanager.domain.port.api.TransactionResolver
 import fr.sacane.jmanager.infrastructure.api.*
 import org.jboss.logging.Logger
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,7 +15,7 @@ import java.util.*
 class TransactionValidator {
 
     @Autowired
-    private lateinit var apiPort: BudgetResolver
+    private lateinit var apiPort: TransactionResolver
 
     companion object{
         private val LOGGER: Logger = Logger.getLogger(TransactionValidator::class.java)
@@ -25,7 +25,7 @@ class TransactionValidator {
         val accounts = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(tokenDTO), null, null))
         if(accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
         return accounts.map { list ->
-            list?.find { it.label() == label }?.toDTO()!!
+            list?.find { it.label == label }?.toDTO()!!
         }.toResponseEntity()
     }
     fun getSheetAccountByDate(dto: UserSheetDTO, token: String): ResponseEntity<SheetsAndAverageDTO>{
@@ -36,21 +36,21 @@ class TransactionValidator {
     fun saveSheet(userId: Long, accountLabel: String, sheetDTO: SheetDTO, tokenDTO: String): ResponseEntity<SheetSendDTO>{
         val queryResponse = apiPort.createSheetAndAssociateItWithAccount(userId.id(), Token(UUID.fromString(tokenDTO), null, UUID.randomUUID()), accountLabel, sheetDTO.toModel())
         if(queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        return queryResponse.map { SheetSendDTO(sheetDTO.label, sheetDTO.date, sheetDTO.expenses, sheetDTO.income) }.toResponseEntity()
+        return queryResponse.map { SheetSendDTO(it!!.label, it.date, it.expenses, it.income, it.sold) }.toResponseEntity()
     }
     fun saveAccount(userAccount: UserAccountDTO, token: String) : ResponseEntity<AccountInfoDTO>{
         val response = apiPort.openAccount(userAccount.id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), Account(null, userAccount.amount, userAccount.labelAccount, mutableListOf()))
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        return response.map { AccountInfoDTO(it!!.amount(), it.label()) }.toResponseEntity()
+        return response.map { AccountInfoDTO(it!!.sold, it.label) }.toResponseEntity()
     }
     fun getUserAccount(id: Long, token: String): ResponseEntity<List<AccountDTO>> {
         val response = apiPort.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()))
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        val mapped = response.map { p -> p!!.map { AccountDTO(it.id(), it.amount(), it.label(), it.sheets()?.map { s -> s.toDTO() }) } }
+        val mapped = response.map { p -> p!!.map { AccountDTO(it.id!!, it.sold, it.label, it.sheets()?.map { s -> s.toDTO() }) } }
         return mapped.toResponseEntity()
     }
 
@@ -70,7 +70,16 @@ class TransactionValidator {
     }
 
     fun deleteSheetByIds(ids: AccountSheetIdsDTO): ResponseEntity<Nothing>{
-        apiPort.deleteByIds(ids.accountId, ids.sheetIds)
-        return ResponseEntity.ok().build()
+        return apiPort.deleteSheetsByIds(ids.accountId, ids.sheetIds).let {
+            ResponseEntity.ok().build()
+        }
+    }
+    fun deleteAccount(userId: UserId, accountID: Long): ResponseEntity<Nothing>{
+        return apiPort.deleteAccountById(userId, accountID).toResponseEntity()
+    }
+
+    fun updateAccount(userID: Long, account: AccountDTO, extractToken: String): ResponseEntity<AccountDTO> {
+        return apiPort.editAccount(userID, account.toModel(), Token(UUID.fromString(extractToken)))
+            .map { it!!.toDTO() }.toResponseEntity()
     }
 }

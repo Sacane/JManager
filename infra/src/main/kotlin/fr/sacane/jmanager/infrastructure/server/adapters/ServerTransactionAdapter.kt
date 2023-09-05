@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.server.adapters
 import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.infrastructure.server.entity.AccountResource
 import fr.sacane.jmanager.infrastructure.server.entity.CategoryResource
 import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
 import fr.sacane.jmanager.infrastructure.server.repositories.CategoryRepository
@@ -29,11 +30,9 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
     private lateinit var categoryRepository: CategoryRepository
 
     override fun persist(userId: UserId, account: Account): User? {
-        val userResponse = userRepository.findById(userId.get())
-        if(userResponse.isEmpty) return null
-        val user = userResponse.get()
+        val user = userRepository.findById(userId.get()).orElse(null) ?: return null
         user.accounts?.add(account.asResource())
-        return userRepository.saveAndFlush(user).toModel()
+        return userRepository.save(user).toModel()
     }
 
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
@@ -48,7 +47,7 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets?.add(sheet.asResource())
-            account.amount = sheet.accountAmount
+            account.amount = sheet.sold
             // =================================================
             userRepository.saveAndFlush(user)
             sheet
@@ -59,9 +58,9 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
 
     override fun persist(account: Account) :Account?{
         val accountGet = account.asResource()
-        accountRepository.save(accountGet)
+        val registered = accountRepository.save(accountGet)
         accountRepository.flush()
-        return accountRepository.findByLabel(account.label())!!.toModel()
+        return registered.toModel()
     }
 
     override fun persist(userId: UserId, category: Category): Category? {
@@ -93,5 +92,17 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
         }catch(e: Exception) {
             return
         }
+    }
+
+    override fun deleteAccountByID(accountID: Long) {
+        accountRepository.deleteById(accountID)
+    }
+
+    override fun saveAllSheets(sheets: List<Sheet>) {
+        sheetRepository.saveAll(sheets.map { it.asResource() })
+    }
+
+    override fun deleteAllSheetsById(sheetIds: List<Long>) {
+        sheetRepository.deleteAllById(sheetIds)
     }
 }

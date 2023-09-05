@@ -1,30 +1,37 @@
 <script setup lang="ts">
-import useAccounts from '../composables/useAccounts'
-
+import useAccounts, { AccountFormatted } from '../composables/useAccounts'
+import { AccountDTO } from '../types/index';
 definePageMeta({
   layout: 'sidebar-layout',
 })
-interface AccountFormatted{
-  labelAccount: string,
-  amount: string
-}
-const { accounts, fetch } = useAccounts()
+
+const { accounts, fetch, deleteAccount} = useAccounts()
 const isAccountFilled = reactive({ ok: false })
-const accountFormatted = ref<AccountFormatted[]>([])
 const toAdd = () => {
   navigateTo('/addAccount')
 }
+
+const data = reactive({
+  render: [] as AccountFormatted[]
+})
+
 onMounted(async () => {
-  await fetch()
+  await fetch().then(accountArray => {
+    format(accountArray)
+    console.log(accounts)
+  })
   isAccountFilled.ok = accounts.value.length > 0
-  accountFormatted.value = accounts.value.map(account => {
+})
+
+function format(accounts: Array<AccountDTO>) {
+  data.render = accounts.map(account => {
     return {
       id: account.id,
       labelAccount: account.labelAccount,
       amount: `${account.amount} €`,
     };
   });
-})
+}
 
 function onRowClick(event: any) {
   console.log(event.data.amount)
@@ -37,12 +44,40 @@ function onRowClick(event: any) {
     }
   })
 }
+
+const applyEdit = () => {
+  navigateTo({
+    name: 'updateAccount',
+    query: {
+      id: row.value?.id,
+      labelAccount: row.value?.labelAccount,
+      amount: row.value?.amount
+    }
+  })
+}
+
+const applyDelete = () => {
+  deleteAccount(row.value?.id as number)
+  .finally(() => {
+    fetch().then(accountArray => format(accountArray))
+  })
+}
+
+const row = ref<AccountDTO | undefined>(undefined)
+const actionSelection = ref<AccountDTO | undefined>(undefined)
 </script>
 
 <template>
-  <div w-full h-full flex>
+  <div w-full h-full flex items-center>
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
-      <PDataTable :value="accountFormatted" table-style="min-width: 50rem" @row-click="onRowClick">
+      <PDataTable :value="data.render" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
+        <template #header>
+          <div class="flex flex-row hauto pl10px">
+            <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit"/>
+            <PButton w-auto b mr2 label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete"/>
+          </div>
+        </template>
+        <PColumn selectionMode="single" style="width: 3rem" :exportable="false" v-model="actionSelection"></PColumn>
         <PColumn field="labelAccount" header="Libellé du compte" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>

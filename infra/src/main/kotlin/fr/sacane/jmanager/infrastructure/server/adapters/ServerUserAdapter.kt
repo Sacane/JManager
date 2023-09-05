@@ -16,9 +16,6 @@ import java.time.LocalDateTime
 @Service
 @DatasourceAdapter
 class ServerUserAdapter : UserTransaction{
-
-
-
     @Autowired
     private lateinit var userRepository: UserRepository
     @Autowired
@@ -31,6 +28,10 @@ class ServerUserAdapter : UserTransaction{
         if(user.isEmpty) return null
         val token = loginRepository.findByUser(user.get()) ?: return null
         return Ticket(user.get().toModel(), token.toModel())
+    }
+
+    override fun findUserById(userId: UserId): User? {
+        return userRepository.findById(userId.get()).get().toModel()
     }
 
     override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
@@ -62,6 +63,12 @@ class ServerUserAdapter : UserTransaction{
         val userResource = user.asResource()
         LOGGER.info("Trying to register $userResource into database")
         val userResponse = userRepository.save(userResource)
+        return userResponse.toModel()
+    }
+
+    override fun upsert(user: User): User? {
+        val userResource = user.asExistingResource()
+        val userResponse = userRepository.saveAndFlush(userResource)
         return userResponse.toModel()
     }
 

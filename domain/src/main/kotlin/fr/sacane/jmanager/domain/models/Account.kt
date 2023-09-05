@@ -3,26 +3,29 @@ package fr.sacane.jmanager.domain.models
 import java.time.Month
 
 class Account(
-        private var id: Long?,
+        val id: Long?,
         private var amount: Double,
-        private val labelAccount: String,
+        private var labelAccount: String,
         val sheets: MutableList<Sheet>?
 ){
 
-    override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label()
+    val label: String
+        get() = labelAccount
+
+    val sold: Double
+        get() = amount
+
+
+    override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
     fun sheets(): List<Sheet>?{
         if(sheets == null) return null
         return if(sheets.isEmpty()) null else sheets.toList()
     }
-    fun amount(): Double = amount
 
-    fun label(): String{
-        return labelAccount
+    fun updateFrom(account: Account) {
+        amount = account.sold
+        labelAccount = account.label
     }
-    fun id(): Long{
-        return id!!
-    }
-
 
     fun earn(earned: Double) {
         amount += earned
@@ -54,5 +57,21 @@ class Account(
     fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Sheet>?{
         return sheets
             ?.filter { it.date.month == month && it.date.year == year }
+    }
+
+    override fun toString(): String {
+        return """
+            id: $id
+            amount: $amount
+            label: $labelAccount
+        """.trimIndent()
+    }
+    private fun cancelSheetAmount(sheet: Sheet){
+        this.amount = this.amount
+            .plus(sheet.expenses)
+            .minus(sheet.income)
+    }
+    fun cancelSheetsSupply(sheets: List<Sheet>) {
+        sheets.forEach { cancelSheetAmount(it) }
     }
 }

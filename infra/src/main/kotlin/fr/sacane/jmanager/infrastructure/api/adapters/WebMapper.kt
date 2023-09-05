@@ -8,9 +8,9 @@ import java.util.*
 
 internal fun Account.toDTO(): AccountDTO {
     return AccountDTO(
-        this.id(),
-        this.amount(),
-        this.label(),
+        this.id!!,
+        this.sold,
+        this.label,
         this.sheets()?.map { sheet -> sheet.toDTO() }
     )
 }
@@ -28,7 +28,7 @@ internal fun RegisteredUserDTO.toModel(): User {
 }
 
 internal fun Sheet.toDTO(): SheetDTO {
-    return SheetDTO(this.id!!, this.label, this.expenses, this.income, this.date, this.accountAmount)
+    return SheetDTO(this.id!!, this.label, this.expenses, this.income, this.date, this.sold)
 }
 
 internal fun User.toDTO(): UserDTO {

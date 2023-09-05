@@ -6,7 +6,7 @@
   <div h-full w-auto class="overflow-auto flex-row">
     <!-- ------------------------------ -->
     <Sidebar class="mr5 h-screen" />
-    <div flex-col w-screen>
+    <div flex-col w-screen justify-between>
       <div class="m-2 flex-row justify-center">
         <slot />
       </div>
