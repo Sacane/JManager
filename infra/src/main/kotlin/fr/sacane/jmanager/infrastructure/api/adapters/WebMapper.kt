@@ -2,7 +2,6 @@ package fr.sacane.jmanager.infrastructure.api.adapters
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.api.*
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import java.util.*
 
@@ -40,9 +39,9 @@ internal fun Long.id(): UserId {
 internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
     return when(this.status){
         ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
-        ResponseState.TIMEOUT, ResponseState.NOT_FOUND -> ResponseEntity.notFound().build()
-        ResponseState.INVALID -> ResponseEntity.badRequest().build()
-        ResponseState.FORBIDDEN -> ResponseEntity(HttpStatus.FORBIDDEN)
+        ResponseState.TIMEOUT, ResponseState.NOT_FOUND -> throw NotFoundException(this.message)
+        ResponseState.INVALID -> throw InvalidRequestException(this.message)
+        ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
     }
 }
 

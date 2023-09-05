@@ -22,6 +22,9 @@ class Response <S> private constructor(
     private var value: S? = null,
     private var error: String = "This response is not an error"
 ){
+    val message: String
+        get() = error
+
     companion object{
         fun <S> ok(entity: S): Response<S> = Response(ResponseState.OK, entity)
         fun ok(): Response<Nothing> = Response(ResponseState.OK)

@@ -4,33 +4,36 @@ import fr.sacane.jmanager.domain.hexadoc.LeftPort
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
-import java.time.LocalDate
 import java.time.Month
 
 // TODO Instead of return Response timeout, this should refresh the token if they match
 @LeftPort
 class TransactionResolverImpl(private val register: TransactionRegister, private val userTransaction: UserTransaction): TransactionResolver {
     override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
-        val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid()
+        val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid(TransactionRegister.missingUserMessage)
         if(tokenResponse.id != token.id) {
-            return Response.timeout()
+            return Response.timeout(TransactionRegister.timeoutMessage)
         }
-        val userSaved = register.persist(userId, account) ?: return Response.invalid()
-        return Response.ok(userSaved.accounts().find { it.label == account.label }!!)
+        val ticket = userTransaction.findById(userId)
+        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return Response.notFound(TransactionRegister.missingUserMessage)) {
+            return Response.invalid("Le profil contient déjà un compte avec ce label")
+        }
+        val userSaved = register.persist(userId, account) ?: return Response.invalid("Impossible de créer un compte")
+        return Response.ok(userSaved.accounts().find { it.label == account.label } ?: return Response.notFound("Le compte créé n'a pas été sauvegardé correctement"))
     }
 
     override fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
-        val user = userResponse.checkForIdentity(token) ?: return Response.timeout()
+        val userResponse = userTransaction.findById(userId) ?: return Response.notFound(TransactionRegister.missingUserMessage)
+        val user = userResponse.checkForIdentity(token) ?: return Response.timeout(TransactionRegister.timeoutMessage)
         val sheets = user.accounts()
             .find { it.label == account }
-            ?.retrieveSheetSurroundByDate(month, year) ?: return Response.invalid()
+            ?.retrieveSheetSurroundByDate(month, year) ?: return Response.invalid("Aucun compte ne correspond au label indiqué")
         return Response.ok(sheets)
     }
 
     fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
-        val ticket = userTransaction.findById(userId) ?: return Response.notFound()
-        val userTokenResponse = userTransaction.getUserToken(userId) ?: return Response.timeout()
+        val ticket = userTransaction.findById(userId) ?: return Response.notFound(TransactionRegister.missingUserMessage)
+        val userTokenResponse = userTransaction.getUserToken(userId) ?: return Response.timeout(TransactionRegister.timeoutMessage)
         val user = ticket.user
         if(userTokenResponse.id == userToken.id) {
             return Response.ok(user.accounts().find { it.label == labelAccount }!!)
@@ -94,8 +97,8 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
     }
 
     override fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
-        userResponse.checkForIdentity(token) ?: return Response.invalid()
+        val userResponse = userTransaction.findById(userId) ?: return Response.invalid(TransactionRegister.missingUserMessage)
+        userResponse.checkForIdentity(token) ?: return Response.invalid(TransactionRegister.timeoutMessage)
         return Response.ok(userResponse.user.accounts())
     }
 
@@ -110,14 +113,6 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         userResponse.checkForIdentity(token) ?: return Response.invalid()
         val targetOne = userResponse.user.accounts().find { it.label == label } ?: return Response.notFound()
         return Response.ok(targetOne)
-    }
-
-    fun removeCategory(id: UserId, token: Token, label: String): Response<Category?> {
-        val userTicket = userTransaction.findById(id) ?: return Response.notFound()
-        val user = userTicket.checkForIdentity(token) ?: return Response.timeout()
-        val targetCategory = user.categories().find { it.label == label } ?: return Response.notFound()
-        register.remove(targetCategory)
-        return Response.ok(targetCategory)
     }
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
