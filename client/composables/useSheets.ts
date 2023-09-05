@@ -13,7 +13,7 @@ export default function useSheet() {
   const {user} = useAuth()
 
   async function findByDate(month: string, year: number, accountLabel: string) {
-    const response = post('sheets/get', {
+    const response = post('sheet/get', {
       userId: user.value?.id,
       month: month,
       year: year,
@@ -23,7 +23,7 @@ export default function useSheet() {
   }
   
   function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<SheetDTO> {
-    return post('/sheet/save', {
+    return post('sheet/save', {
       userId: user.value?.id,
       accountLabel: accountLabel,
       sheetDTO: sheetDTO
@@ -31,7 +31,7 @@ export default function useSheet() {
   }
 
   function deleteSheet(accountId: number, ids: Array<number>) : Promise<any>{
-    return deleteQuery('/sheet/delete', {
+    return deleteQuery('sheet/delete', {
       accountId: accountId,
       sheetIds: ids
     })

@@ -14,20 +14,10 @@ export default function useAccounts(){
     const {user, defaultHeaders} = useAuth()
     const {get, post, deleteQuery} = useQuery()
     const accountFormatted = ref<AccountFormatted[]>([])
-    
-    try{
-        const response = axios.get(`user/accounts/get/${user.value?.id}`,
-        {
-            headers: defaultHeaders.value
-        })
-        
-    }catch(error) {
-        console.error(error)
-    }
 
     async function fetch(): Promise<Array<AccountDTO>>  {
         try {
-            const response = await axios.get(`${API_PATH}user/accounts/get/${user.value?.id}`,
+            const response = await axios.get(`${API_PATH}account/${user.value?.id}`,
             {
                 headers: defaultHeaders.value
             })
@@ -66,7 +56,7 @@ export default function useAccounts(){
     
 
     async function deleteAccount(id: number): Promise<any> {
-        return deleteQuery(`user/${user.value?.id}/account/delete/${id}`, undefined)
+        return deleteQuery(`account/${user.value?.id}/delete/${id}`, undefined)
     }
     return {accounts, createAccount, fetch, deleteAccount, accountFormatted, format, updateAccount}
 }
