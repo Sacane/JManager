@@ -1,11 +1,11 @@
-package fr.sacane.jmanager.infrastructure.server
+package fr.sacane.jmanager.infrastructure.datasource
 
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.infrastructure.server.entity.AccountResource
-import fr.sacane.jmanager.infrastructure.server.entity.SheetResource
-import fr.sacane.jmanager.infrastructure.server.entity.UserResource
-import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.datasource.entity.AccountResource
+import fr.sacane.jmanager.infrastructure.datasource.entity.SheetResource
+import fr.sacane.jmanager.infrastructure.datasource.entity.UserResource
+import fr.sacane.jmanager.infrastructure.datasource.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Order
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
 
 

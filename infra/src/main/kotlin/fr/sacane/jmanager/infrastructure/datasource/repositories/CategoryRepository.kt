@@ -1,6 +1,6 @@
-package fr.sacane.jmanager.infrastructure.server.repositories
+package fr.sacane.jmanager.infrastructure.datasource.repositories
 
-import fr.sacane.jmanager.infrastructure.server.entity.CategoryResource
+import fr.sacane.jmanager.infrastructure.datasource.entity.CategoryResource
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional

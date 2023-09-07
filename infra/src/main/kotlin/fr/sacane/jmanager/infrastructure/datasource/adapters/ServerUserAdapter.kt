@@ -1,20 +1,20 @@
-package fr.sacane.jmanager.infrastructure.server.adapters
+package fr.sacane.jmanager.infrastructure.datasource.adapters
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
-import fr.sacane.jmanager.infrastructure.server.entity.Login
-import fr.sacane.jmanager.infrastructure.server.repositories.LoginRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.datasource.entity.Login
+import fr.sacane.jmanager.infrastructure.datasource.repositories.LoginRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.lang.Exception
 import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.util.logging.Logger
 
 @Service
-@DatasourceAdapter
+@Adapter(DomainSide.DATASOURCE)
 class ServerUserAdapter : UserTransaction{
     @Autowired
     private lateinit var userRepository: UserRepository

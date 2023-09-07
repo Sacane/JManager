@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.server.entity
+package fr.sacane.jmanager.infrastructure.datasource.entity
 
 import jakarta.persistence.*
 import java.time.LocalDate

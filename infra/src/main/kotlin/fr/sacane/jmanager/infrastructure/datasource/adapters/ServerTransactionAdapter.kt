@@ -1,14 +1,14 @@
-package fr.sacane.jmanager.infrastructure.server.adapters
+package fr.sacane.jmanager.infrastructure.datasource.adapters
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.server.entity.AccountResource
-import fr.sacane.jmanager.infrastructure.server.entity.CategoryResource
-import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.CategoryRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.SheetRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.datasource.entity.CategoryResource
+import fr.sacane.jmanager.infrastructure.datasource.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.CategoryRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.SheetRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service
 
 
 @Service
-@DatasourceAdapter
+@Adapter(DomainSide.DATASOURCE)
 class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : TransactionRegister{
 
     companion object{

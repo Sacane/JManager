@@ -2,7 +2,6 @@ package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
 import fr.sacane.jmanager.domain.hexadoc.DomainSide
-import fr.sacane.jmanager.domain.hexadoc.LeftPort
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.LoginManager

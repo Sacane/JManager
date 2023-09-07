@@ -1,10 +1,14 @@
 package fr.sacane.jmanager.infrastructure.api.adapters
 
-import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.Administrator
-import fr.sacane.jmanager.infrastructure.api.*
+import fr.sacane.jmanager.infrastructure.api.RegisteredUserDTO
+import fr.sacane.jmanager.infrastructure.api.UserDTO
+import fr.sacane.jmanager.infrastructure.api.UserPasswordDTO
+import fr.sacane.jmanager.infrastructure.api.UserStorageDTO
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
@@ -12,7 +16,7 @@ import java.util.*
 import java.util.logging.Logger
 
 @Service
-@LeftAdapter
+@Adapter(DomainSide.API)
 class UserControlAdapter @Autowired constructor(private var userPort: Administrator) {
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())

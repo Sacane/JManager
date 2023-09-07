@@ -1,17 +1,17 @@
 package fr.sacane.jmanager.infrastructure.api.adapters
 
-import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.TransactionResolver
 import fr.sacane.jmanager.infrastructure.api.*
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.logging.Logger
 
-@LeftAdapter
+@Adapter(DomainSide.API)
 @Service
 class TransactionValidator {
 
