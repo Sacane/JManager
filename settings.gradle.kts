@@ -1,2 +1,2 @@
-rootProject.name = "Jmanager-back"
+rootProject.name = "Jmanager"
 include("domain", "infra", "client")
