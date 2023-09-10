@@ -21,6 +21,11 @@ data class UserPasswordDTO(
     val id: Long
 )
 
+data class UserIDSheetDTO(
+    val userId: Long,
+    val sheet: SheetDTO
+)
+
 data class SheetDTO(
     val id: Long,
     val label: String,

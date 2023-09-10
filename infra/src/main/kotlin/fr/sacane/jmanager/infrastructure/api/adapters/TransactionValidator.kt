@@ -83,4 +83,13 @@ class TransactionValidator {
         return apiPort.editAccount(userID, account.toModel(), Token(UUID.fromString(extractToken)))
             .map { it!!.toDTO() }.toResponseEntity()
     }
+    fun editSheet(userID: Long, sheet: SheetDTO, token: String): ResponseEntity<SheetDTO>{
+        return apiPort.editSheet(userID, sheet.toModel(), Token(UUID.fromString(token)))
+            .mapTo {
+                it ?: Response.invalid<SheetDTO>()
+                Response.ok(it)
+            }.map {
+                it!!.toDTO()
+            }.toResponseEntity()
+    }
 }

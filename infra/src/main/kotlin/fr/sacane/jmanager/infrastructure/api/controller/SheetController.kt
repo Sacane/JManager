@@ -39,8 +39,13 @@ class SheetController(
     }
 
     @PostMapping(path=["get"])
-    suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
+    fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
         return transactionValidator.getSheetAccountByDate(dto, extractToken(token))
+    }
+
+    @PostMapping("edit")
+    fun editSheet(@RequestParam("id") id: Long, @RequestBody dto: UserIDSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetDTO> {
+        return transactionValidator.editSheet(dto.userId, dto.sheet, extractToken(token))
     }
 
     companion object {
