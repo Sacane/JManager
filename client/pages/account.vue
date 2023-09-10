@@ -23,11 +23,10 @@ const data = reactive({
 })
 
 onMounted(async () => {
-  await fetch().then(accountArray => {
+  fetch().then(accountArray => {
     format(accountArray)
-    console.log(accounts)
+    isAccountFilled.ok = accounts.value.length > 0
   })
-  isAccountFilled.ok = accounts.value.length > 0
 })
 
 function format(accounts: Array<AccountDTO>) {
@@ -41,7 +40,6 @@ function format(accounts: Array<AccountDTO>) {
 }
 
 function onRowClick(event: any) {
-  console.log(event.data.amount)
   navigateTo({
     name: 'transaction',
     query: {
@@ -53,6 +51,10 @@ function onRowClick(event: any) {
 }
 
 const applyEdit = () => {
+  if(row.value === undefined) {
+    error('Il faut sélectionner un compte pour le modifier')
+    return
+  }
   navigateTo({
     name: 'updateAccount',
     query: {
@@ -64,9 +66,16 @@ const applyEdit = () => {
 }
 
 const applyDelete = () => {
+  if(row.value === undefined) {
+    error('Il faut sélectionner un compte pour le supprimer')
+    return
+  }
   deleteAccount(row.value?.id as number)
   .finally(() => {
     fetch().then(accountArray => format(accountArray))
+    .finally(() => {
+      success('Le compte a bien été supprimé')
+    })
   })
 }
 

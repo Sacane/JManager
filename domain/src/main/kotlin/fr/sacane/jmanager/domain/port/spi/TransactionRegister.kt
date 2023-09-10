@@ -23,4 +23,6 @@ interface TransactionRegister {
     fun deleteAccountByID(accountID: Long)
     fun saveAllSheets(sheets: List<Sheet>)
     fun deleteAllSheetsById(sheetIds: List<Long>)
+    fun findSheetByID(sheetID: Long): Sheet?
+    fun save(sheet: Sheet): Sheet?
 }

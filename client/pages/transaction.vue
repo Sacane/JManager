@@ -45,7 +45,7 @@ function retrieveSheets() {
   }
   findByDate(data.month, data.year, data.labelAccount)
   .then((value: SheetAverageDTO) => data.currentSheets = value.sheets)
-  .finally(() => updateSheets())
+  .finally(() => loadSheets())
 }
 
 const route = useRouter()
@@ -63,6 +63,7 @@ onMounted(async () => {
   
 })
 
+const jtoast = useJToast()
 
 
 // Fonction pour formater la date en format français (jour/mois/année)
@@ -84,7 +85,7 @@ function gotoTransaction() {
 const selectedSheets = ref<SheetDTO[]>([])
 const actualSheets = ref()
 
-const updateSheets = () => {
+const loadSheets = () => {
   fetch()
   actualSheets.value = data.currentSheets.map(sheet => {
     return {
@@ -95,7 +96,6 @@ const updateSheets = () => {
       accountAmount: `${sheet.accountAmount.toFixed(2)}€`
     }
   })
-  console.log(actualSheets.value)
 }
 
 const confirmDelete = async () => {
@@ -103,8 +103,8 @@ const confirmDelete = async () => {
   .then(() => retrieveSheets())
   .finally(() =>{
     fetch().then(accs => {
-      console.log(accounts.value.findLast(value => value.id === parseInt(data.currentAccountId))?.amount as number)
       data.accountAmount = accounts.value.findLast(value => value.id === parseInt(data.currentAccountId))?.amount as number
+      jtoast.success('La suppression de la transaction a été correctement effectué')
     })
   })
 }
@@ -119,9 +119,7 @@ const confirmDeleteButton = () => {
     message: 'Êtes-vous sûr de vouloir supprimer ces éléments ?',
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
-    accept: () => {
-      confirmDelete()
-    }
+    accept: () => confirmDelete()
   })
 }
 
