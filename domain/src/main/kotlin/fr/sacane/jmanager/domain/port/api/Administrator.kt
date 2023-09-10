@@ -11,7 +11,7 @@ import java.util.logging.Logger
 
 @Port(DomainSide.API)
 interface Administrator {
-    fun login(pseudonym: String, userPassword: Password): Response<Ticket>
+    fun login(pseudonym: String, userPassword: Password): Response<UserToken>
     fun logout(userId: UserId, userToken: Token): Response<Nothing>
     fun register(user: User): Response<User>
 }
@@ -22,14 +22,14 @@ class LoginManager(private val loginInventory: LoginManager, private val userTra
     companion object{
         private val LOGGER = Logger.getLogger(LoginManager::class.java.name)
     }
-    override fun login(pseudonym: String, userPassword: Password): Response<Ticket> {
+    override fun login(pseudonym: String, userPassword: Password): Response<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")
-        val user = userTransaction.findByPseudonym(pseudonym) ?: return Response.notFound()
+        val user = userTransaction.findByPseudonym(pseudonym) ?: return Response.notFound("The user has not been find")
         val canLogin = userPassword.matchWith(user.password)
         if(canLogin) {
             LOGGER.info("User $pseudonym logged")
             val ticket = loginInventory.generateToken(user) ?: return Response.invalid()
-            return Response.ok(Ticket(user, ticket))
+            return Response.ok(UserToken(user, ticket))
         }
         LOGGER.info("Failed to log user $pseudonym")
         return Response.invalid()

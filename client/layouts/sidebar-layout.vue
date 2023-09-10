@@ -6,6 +6,7 @@
   <div h-full w-auto class="overflow-auto flex-row">
     <!-- ------------------------------ -->
     <Sidebar class="mr5 h-screen" />
+    <PToast/>
     <div flex-col w-screen justify-between>
       <div class="m-2 flex-row justify-center">
         <slot />

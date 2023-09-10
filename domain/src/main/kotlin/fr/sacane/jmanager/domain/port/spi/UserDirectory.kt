@@ -7,9 +7,9 @@ import fr.sacane.jmanager.domain.models.*
 
 @Port(DomainSide.DATASOURCE)
 interface UserTransaction {
-    fun findById(userId: UserId): Ticket?
+    fun findById(userId: UserId): UserToken?
     fun findUserById(userId: UserId): User?
-    fun checkUser(pseudonym: String, pwd: Password): Ticket?
+    fun checkUser(pseudonym: String, pwd: Password): UserToken?
     fun findByPseudonym(pseudonym: String): User?
     fun create(user: User): User?
     fun register(user: User): User?

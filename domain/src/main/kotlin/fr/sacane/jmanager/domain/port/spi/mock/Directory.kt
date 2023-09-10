@@ -56,16 +56,16 @@ class Directory {
     @DefaultSource
     inner class UserTransactionMock : UserTransaction {
 
-        override fun findById(userId: UserId): Ticket? {
+        override fun findById(userId: UserId): UserToken? {
             val user = userInventory.find { it.id.get() == userId.get() } ?: return null
-            return tokenInventory[user.username]?.let { Ticket(user, it) }
+            return tokenInventory[user.username]?.let { UserToken(user, it) }
         }
 
         override fun findUserById(userId: UserId): User? {
             TODO("Not yet implemented")
         }
 
-        override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
+        override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
             TODO("Not yet implemented")
         }
         override fun findByPseudonym(pseudonym: String): User? {

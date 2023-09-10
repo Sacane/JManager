@@ -23,18 +23,18 @@ class ServerUserAdapter : UserTransaction{
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
-    override fun findById(userId: UserId): Ticket? {
+    override fun findById(userId: UserId): UserToken? {
         val user = userRepository.findById(userId.get())
         if(user.isEmpty) return null
         val token = loginRepository.findByUser(user.get()) ?: return null
-        return Ticket(user.get().toModel(), token.toModel())
+        return UserToken(user.get().toModel(), token.toModel())
     }
 
     override fun findUserById(userId: UserId): User? {
         return userRepository.findById(userId.get()).get().toModel()
     }
 
-    override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
+    override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
         val user = userRepository.findByUsername(pseudonym)
         if(!MessageDigest.isEqual(pwd.get(), user?.password)){
             LOGGER.info("Password is not correct")
@@ -42,7 +42,7 @@ class ServerUserAdapter : UserTransaction{
         }
         val token = Login(user!!, LocalDateTime.now())
         val tokenBack = loginRepository.save(token)
-        return Ticket(user.toModel(), Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
+        return UserToken(user.toModel(), Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {

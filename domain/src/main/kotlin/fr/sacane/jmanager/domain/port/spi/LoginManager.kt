@@ -6,9 +6,9 @@ import fr.sacane.jmanager.domain.models.*
 
 @Port(DomainSide.DATASOURCE)
 interface LoginManager {
-    fun login(userPseudonym: String, password: Password): Ticket?
+    fun login(userPseudonym: String, password: Password): UserToken?
     fun logout(userId: UserId, token: Token): Token?
-    fun refresh(userId: UserId, token: Token): Ticket?
+    fun refresh(userId: UserId, token: Token): UserToken?
     fun tokenBy(userId: UserId): Token?
     fun generateToken(user: User): Token?
 }

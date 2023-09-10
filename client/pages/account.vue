@@ -5,11 +5,18 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
+// toast
+
+const {success, error} = useJToast()
+
+//
+
 const { accounts, fetch, deleteAccount} = useAccounts()
 const isAccountFilled = reactive({ ok: false })
 const toAdd = () => {
   navigateTo('/addAccount')
 }
+
 
 const data = reactive({
   render: [] as AccountFormatted[]
@@ -65,11 +72,17 @@ const applyDelete = () => {
 
 const row = ref<AccountDTO | undefined>(undefined)
 const actionSelection = ref<AccountDTO | undefined>(undefined)
+
+
+
 </script>
 
 <template>
   <div w-full h-full flex items-center>
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
+      <p class="info-text">
+        Cliquez sur un compte pour visualiser ses transactions
+      </p>
       <PDataTable :value="data.render" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
         <template #header>
           <div class="flex flex-row hauto pl10px">
@@ -91,12 +104,18 @@ const actionSelection = ref<AccountDTO | undefined>(undefined)
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .container{
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  .info-text{
+    text-align: center;
+    font-size: 18px;
+    color: #555; 
+    margin-bottom: 20px;
+  }
 }
 
 </style>

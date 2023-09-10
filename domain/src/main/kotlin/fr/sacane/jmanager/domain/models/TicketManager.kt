@@ -20,7 +20,7 @@ data class Token(
         return lastRefresh.isBefore(LocalDateTime.now())
     }
 }
-class Ticket(
+data class UserToken(
     val user: User,
     val token: Token
 ){
