@@ -106,4 +106,12 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         sheetRepository.deleteAllById(sheetIds)
     }
+
+    override fun findSheetByID(sheetID: Long): Sheet? {
+        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
+    }
+
+    override fun save(sheet: Sheet): Sheet? {
+        return sheetRepository.save(sheet.asResource()).toModel()
+    }
 }

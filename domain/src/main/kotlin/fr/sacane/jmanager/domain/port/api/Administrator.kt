@@ -10,7 +10,7 @@ import java.util.logging.Logger
 
 
 @Port(DomainSide.API)
-interface Administrator {
+sealed interface Administrator {
     fun login(pseudonym: String, userPassword: Password): Response<UserToken>
     fun logout(userId: UserId, userToken: Token): Response<Nothing>
     fun register(user: User): Response<User>

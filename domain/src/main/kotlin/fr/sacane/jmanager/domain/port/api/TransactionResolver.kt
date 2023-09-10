@@ -4,6 +4,9 @@ import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
 import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Response.Companion.invalid
+import fr.sacane.jmanager.domain.models.Response.Companion.notFound
+import fr.sacane.jmanager.domain.models.Response.Companion.ok
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.Month
@@ -20,38 +23,39 @@ interface TransactionResolver {
     fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>)
     fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing>
     fun editAccount(userID: Long, account: Account, token: Token): Response<Account>
+    fun editSheet(sheet: Sheet): Response<Sheet>
 }
 
 @DomainImplementation
 class TransactionResolverImpl(private val register: TransactionRegister, private val userTransaction: UserTransaction): TransactionResolver {
     override fun openAccount(userId: UserId, token: Token, account: Account) : Response<Account> {
-        val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid(TransactionRegister.missingUserMessage)
+        val tokenResponse = userTransaction.getUserToken(userId) ?: return invalid(TransactionRegister.missingUserMessage)
         if(tokenResponse.id != token.id) {
             return Response.timeout(TransactionRegister.timeoutMessage)
         }
         val ticket = userTransaction.findById(userId)
-        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return Response.notFound(TransactionRegister.missingUserMessage)) {
-            return Response.invalid("Le profil contient déjà un compte avec ce label")
+        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return notFound(TransactionRegister.missingUserMessage)) {
+            return invalid("Le profil contient déjà un compte avec ce label")
         }
-        val userSaved = register.persist(userId, account) ?: return Response.invalid("Impossible de créer un compte")
-        return Response.ok(userSaved.accounts().find { it.label == account.label } ?: return Response.notFound("Le compte créé n'a pas été sauvegardé correctement"))
+        val userSaved = register.persist(userId, account) ?: return invalid("Impossible de créer un compte")
+        return ok(userSaved.accounts().find { it.label == account.label } ?: return notFound("Le compte créé n'a pas été sauvegardé correctement"))
     }
 
     override fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.notFound(TransactionRegister.missingUserMessage)
+        val userResponse = userTransaction.findById(userId) ?: return notFound(TransactionRegister.missingUserMessage)
         val user = userResponse.checkForIdentity(token) ?: return Response.timeout(TransactionRegister.timeoutMessage)
         val sheets = user.accounts()
             .find { it.label == account }
-            ?.retrieveSheetSurroundByDate(month, year) ?: return Response.invalid("Aucun compte ne correspond au label indiqué")
-        return Response.ok(sheets)
+            ?.retrieveSheetSurroundByDate(month, year) ?: return invalid("Aucun compte ne correspond au label indiqué")
+        return ok(sheets)
     }
 
     fun findAccount(userId: UserId, userToken: Token, labelAccount: String): Response<Account> {
-        val ticket = userTransaction.findById(userId) ?: return Response.notFound(TransactionRegister.missingUserMessage)
+        val ticket = userTransaction.findById(userId) ?: return notFound(TransactionRegister.missingUserMessage)
         val userTokenResponse = userTransaction.getUserToken(userId) ?: return Response.timeout(TransactionRegister.timeoutMessage)
         val user = ticket.user
         if(userTokenResponse.id == userToken.id) {
-            return Response.ok(user.accounts().find { it.label == labelAccount }!!)
+            return ok(user.accounts().find { it.label == labelAccount }!!)
         }
         return Response.timeout()
     }
@@ -89,45 +93,45 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
     }
 
     override fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
+        val userResponse = userTransaction.findById(userId) ?: return invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
-        val account = register.findAccountByLabel(userId, accountLabel) ?: return Response.notFound()
+        val account = register.findAccountByLabel(userId, accountLabel) ?: return notFound()
         if(!account.sheets.isNullOrEmpty()) {
-            val lastRecord = account.sheets.filter { it.date <= sheet.date }.maxByOrNull { it.position } ?: return Response.notFound()
+            val lastRecord = account.sheets.filter { it.date <= sheet.date }.maxByOrNull { it.position } ?: return notFound()
             sheet.position = lastRecord.position + 1
             sheet.updateSoldStartingWith(lastRecord.sold)
             updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
         } else {
             sheet.updateSoldStartingWith(account.sold)
         }
-        register.persist(userId, accountLabel, sheet) ?: return Response.invalid()
-        return Response.ok(sheet)
+        register.persist(userId, accountLabel, sheet) ?: return invalid()
+        return ok(sheet)
     }
 
     override fun createCategory(userId: UserId, token: Token, category: Category): Response<Category> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
+        val userResponse = userTransaction.findById(userId) ?: return invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
-        val categoryResponse = register.persist(userId, category) ?: return Response.invalid()
-        return Response.ok(categoryResponse)
+        val categoryResponse = register.persist(userId, category) ?: return invalid()
+        return ok(categoryResponse)
     }
 
     override fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid(TransactionRegister.missingUserMessage)
-        userResponse.checkForIdentity(token) ?: return Response.invalid(TransactionRegister.timeoutMessage)
-        return Response.ok(userResponse.user.accounts())
+        val userResponse = userTransaction.findById(userId) ?: return invalid(TransactionRegister.missingUserMessage)
+        userResponse.checkForIdentity(token) ?: return invalid(TransactionRegister.timeoutMessage)
+        return ok(userResponse.user.accounts())
     }
 
     override fun retrieveCategories(userId: UserId, token: Token): Response<List<Category>> {
-        val ticket = userTransaction.findById(userId) ?: return Response.invalid()
-        ticket.checkForIdentity(token) ?: return Response.invalid()
-        return Response.ok(ticket.user.categories())
+        val ticket = userTransaction.findById(userId) ?: return invalid()
+        ticket.checkForIdentity(token) ?: return invalid()
+        return ok(ticket.user.categories())
     }
 
     override fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
-        userResponse.checkForIdentity(token) ?: return Response.invalid()
-        val targetOne = userResponse.user.accounts().find { it.label == label } ?: return Response.notFound()
-        return Response.ok(targetOne)
+        val userResponse = userTransaction.findById(userId) ?: return invalid()
+        userResponse.checkForIdentity(token) ?: return invalid()
+        val targetOne = userResponse.user.accounts().find { it.label == label } ?: return notFound()
+        return ok(targetOne)
     }
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
@@ -144,20 +148,27 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
     }
 
     override fun deleteAccountById(profileID: UserId, accountID: Long) : Response<Nothing>{
-        val profile = userTransaction.findUserById(profileID) ?: return Response.notFound()
+        val profile = userTransaction.findUserById(profileID) ?: return notFound()
         profile.accounts.removeIf { it.id == accountID }
         userTransaction.upsert(profile)!!
         register.deleteAccountByID(accountID)
-        return Response.ok()
+        return ok()
     }
 
     override fun editAccount(userID: Long, account: Account, token: Token): Response<Account> {
-        val user = userTransaction.findById(UserId(userID)) ?: return Response.notFound()
-        user.checkForIdentity(token) ?: return Response.invalid()
-        val accountID = account.id ?: return Response.notFound()
-        val oldAccount = register.findAccountById(accountID) ?: return Response.notFound()
+        val user = userTransaction.findById(UserId(userID)) ?: return notFound()
+        user.checkForIdentity(token) ?: return invalid()
+        val accountID = account.id ?: return notFound()
+        val oldAccount = register.findAccountById(accountID) ?: return notFound()
         oldAccount.updateFrom(account)
-        val registered = register.persist(oldAccount) ?: return Response.invalid()
-        return Response.ok(registered)
+        val registered = register.persist(oldAccount) ?: return invalid()
+        return ok(registered)
+    }
+
+    override fun editSheet(sheet: Sheet): Response<Sheet> {
+        if(sheet.id == null || register.findSheetByID(sheet.id) == null) return notFound("L'ID de la transaction n'existe pas")
+        return register.save(sheet).run {
+            ok(this!!)
+        }
     }
 }

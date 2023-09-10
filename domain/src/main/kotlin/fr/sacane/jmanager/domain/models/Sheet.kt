@@ -4,12 +4,12 @@ import java.time.LocalDate
 
 class Sheet(
     val id: Long?,
-    val label: String,
+    var label: String,
     val date: LocalDate,
-    val expenses: Double,
-    val income: Double,
+    var expenses: Double,
+    var income: Double,
     var sold: Double,
-    val category: Category = CategoryFactory.DEFAULT_CATEGORY,
+    var category: Category = CategoryFactory.DEFAULT_CATEGORY,
     var position: Int = 0
 ) {
 
