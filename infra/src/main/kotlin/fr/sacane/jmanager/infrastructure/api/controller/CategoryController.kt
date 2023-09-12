@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api.controller
 
 
-import fr.sacane.jmanager.infrastructure.JmanagerBackApplication
+import fr.sacane.jmanager.infrastructure.JmanagerApplication
 import fr.sacane.jmanager.infrastructure.api.adapters.TransactionValidator
 import fr.sacane.jmanager.infrastructure.api.adapters.UserControlAdapter
 import fr.sacane.jmanager.domain.models.UserId
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 class CategoryController {
     companion object{
-        private val LOGGER: Logger = LoggerFactory.getLogger(JmanagerBackApplication::class.java.name)
+        private val LOGGER: Logger = LoggerFactory.getLogger(JmanagerApplication::class.java.name)
     }
 
     @Autowired

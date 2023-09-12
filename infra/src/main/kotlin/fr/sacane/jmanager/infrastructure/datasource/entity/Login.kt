@@ -1,14 +1,12 @@
-package fr.sacane.jmanager.infrastructure.server.entity
+package fr.sacane.jmanager.infrastructure.datasource.entity
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
+import jakarta.persistence.*
 import java.io.Serial
 import java.time.LocalDateTime
-import java.util.UUID
-import jakarta.persistence.*
+import java.util.*
 
 @Entity
 @Table(name="login")
-@DatasourceEntity
 class Login(
     @Id
     @GeneratedValue

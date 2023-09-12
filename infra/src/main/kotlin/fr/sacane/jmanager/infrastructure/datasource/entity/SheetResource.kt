@@ -1,13 +1,11 @@
-package fr.sacane.jmanager.infrastructure.server.entity
+package fr.sacane.jmanager.infrastructure.datasource.entity
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
-import java.time.LocalDate
 import jakarta.persistence.*
+import java.time.LocalDate
 
 
 @Entity
 @Table(name="sheet")
-@DatasourceEntity
 class SheetResource(
     @Id
     @GeneratedValue

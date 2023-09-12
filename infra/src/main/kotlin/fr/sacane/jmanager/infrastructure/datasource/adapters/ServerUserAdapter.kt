@@ -1,20 +1,21 @@
-package fr.sacane.jmanager.infrastructure.server.adapters
+package fr.sacane.jmanager.infrastructure.datasource.adapters
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
-import fr.sacane.jmanager.infrastructure.server.entity.Login
-import fr.sacane.jmanager.infrastructure.server.repositories.LoginRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.datasource.entity.Login
+import fr.sacane.jmanager.infrastructure.datasource.repositories.LoginRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.lang.Exception
 import java.security.MessageDigest
 import java.time.LocalDateTime
+import java.util.*
 import java.util.logging.Logger
 
 @Service
-@DatasourceAdapter
+@Adapter(DomainSide.DATASOURCE)
 class ServerUserAdapter : UserTransaction{
     @Autowired
     private lateinit var userRepository: UserRepository
@@ -23,31 +24,31 @@ class ServerUserAdapter : UserTransaction{
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
-    override fun findById(userId: UserId): Ticket? {
+    override fun findById(userId: UserId): UserToken? {
         val user = userRepository.findById(userId.get())
         if(user.isEmpty) return null
         val token = loginRepository.findByUser(user.get()) ?: return null
-        return Ticket(user.get().toModel(), token.toModel())
+        return UserToken(user.get().toModel(), token.toModel())
     }
 
     override fun findUserById(userId: UserId): User? {
         return userRepository.findById(userId.get()).get().toModel()
     }
 
-    override fun checkUser(pseudonym: String, pwd: Password): Ticket? {
-        val user = userRepository.findByUsername(pseudonym)
-        if(!MessageDigest.isEqual(pwd.get(), user?.password)){
+    override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
+        val user = userRepository.findByUsername(pseudonym) ?: return null
+        if(!MessageDigest.isEqual(pwd.get(), user.password)){
             LOGGER.info("Password is not correct")
             return null
         }
-        val token = Login(user!!, LocalDateTime.now())
+        val token = Login(user, LocalDateTime.now())
         val tokenBack = loginRepository.save(token)
-        return Ticket(user.toModel(), Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
+        return UserToken(user.toModel(), Token(tokenBack.id ?: UUID.randomUUID(), tokenBack.lastRefresh, tokenBack.refreshToken))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
-        val user = userRepository.findByUsername(pseudonym)
-        return user?.toModel()
+        val user = userRepository.findByUsername(pseudonym) ?: return null
+        return user.toModel()
     }
 
     override fun create(user: User): User?{

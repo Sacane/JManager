@@ -3,11 +3,13 @@
 import {useRouter} from 'vue-router'
 import useSheet from '../composables/useSheets';
 import { SheetDTO } from '../types/index';
+import useJToast from '../composables/useJToast';
 
 definePageMeta({
-  layout: 'sidebar-layout',
+  layout: 'sidebar-layout',     
 })
 
+const {success} = useJToast()
 const route = useRouter()
 const {saveSheet} = useSheet()
 const {fetch} = useAccounts()
@@ -36,6 +38,7 @@ const onConfirm = async () => {
     accountAmount: parseFloat(values.accountAmount)
   }).then(async (sheet: SheetDTO) => {
       await fetch()
+      success('La transaction a bien été ajouté')
       navigateTo({
       path:'/transaction',
       query: {

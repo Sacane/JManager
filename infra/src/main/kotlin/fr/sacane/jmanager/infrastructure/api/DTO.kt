@@ -21,13 +21,20 @@ data class UserPasswordDTO(
     val id: Long
 )
 
+data class UserIDSheetDTO(
+    val userId: Long,
+    val accountId: Long,
+    val sheet: SheetDTO
+)
+
 data class SheetDTO(
-    val id: Long,
+    val id: Long?,
     val label: String,
     val expenses: Double,
     val income: Double,
     val date: LocalDate,
-    val accountAmount: Double
+    val accountAmount: Double,
+    val position: Int
 )
 data class SheetsAndAverageDTO(
     val sheets: List<SheetDTO>,

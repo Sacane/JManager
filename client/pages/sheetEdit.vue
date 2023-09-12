@@ -1,0 +1,99 @@
+
+<script setup lang="ts">
+const route = useRoute()
+
+definePageMeta({
+  layout: 'sidebar-layout',
+})
+
+const data = reactive({
+  id: route.query.id as string,
+  label: route.query.label as string,
+  income: parseFloat(route.query.income as string),
+  expenses: parseFloat(route.query.expenses as string),
+  date: route.query.date as string,
+  amount: 0,
+  selectedMode: "expenses",
+  accountAmount: parseFloat(route.query.accountAmount as string),
+  accountId: parseInt(route.query.accountID as string)
+})
+
+const {editSheet} = useSheets()
+
+onMounted(() => {
+  data.amount = (data.income === 0) ? data.expenses : data.income
+  data.selectedMode = (data.income === 0) ? 'expenses' : 'income'
+})
+
+const onEdit = () => {
+  editSheet({
+    id: parseInt(data.id),
+    label: data.label,
+    expenses: data.selectedMode === 'expenses' ? data.amount : 0,
+    income: data.selectedMode === 'income' ? data.amount : 0,
+    date: data.date,
+    accountAmount: data.accountAmount
+  }, data.accountId).then(result => {
+    console.log(result)
+    console.log({
+        labelAccount: route.query.accountLabel,
+        id: route.query.accountID,
+        amount: route.query.currentAccountAmount
+      })
+    navigateTo({
+      name: 'transaction',
+      query: {
+        labelAccount: route.query.accountLabel,
+        id: data.accountId,
+        amount: route.query.currentAccountAmount
+      }
+    })
+    
+  })
+  .finally(() => {
+    
+  })
+
+}
+
+</script>
+
+
+<template>
+    <div wfull hfull flex items-center>
+    
+    <div class="form-container" flex-col mb5>
+      <PFieldset :legend="`Modifier la transaction`">
+        <div>
+          <label for="label" mt5px>Libelle</label>
+          <PInputText placeholder="Ex: Achat d'une chaise" v-model="data.label" id="label"/>
+        </div>
+        <div mt5px>
+          <label for="selectionType">Selectionner le type de transaction</label>
+          <div id="selectionType" flex-row flex-gap3 mt5px>
+            <div flex-row>
+              <PRadioButton v-model="data.selectedMode" inputId="selection1" value="expenses"/>
+              <label for="selection1" ml-2>Dépense</label>
+            </div>
+            <div flex-row>
+              <PRadioButton v-model="data.selectedMode" inputId="selection2" value="income"/>
+              <label for="selection2" ml-2>Recette</label>
+            </div>
+          </div>
+        </div>
+        <div mt5px>
+          <label for="number">Indiquer le montant de la transaction (en euros)</label>
+          <PInputNumber v-model="data.amount" id="number"/>
+        </div>
+        <div mt5px>
+          <label for="calendar">Indiquer la date de la transaction</label>
+          <PCalendar placeholder="Date" v-model="data.date" date-format="dd-mm-yy" id="calendar"/>
+        </div>
+        <div mt5px>
+          <PButton @click="onEdit" label="Ajouter une nouvelle transaction"/>
+        </div>
+      </PFieldset>
+      
+    </div>
+  </div>
+</template>

@@ -1,19 +1,20 @@
 package fr.sacane.jmanager.infrastructure.api.adapters
 
-import fr.sacane.jmanager.domain.hexadoc.LeftAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.api.Administrator
 import fr.sacane.jmanager.domain.port.api.TransactionResolver
 import fr.sacane.jmanager.infrastructure.api.*
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.logging.Logger
 
-@LeftAdapter
+@Adapter(DomainSide.API)
 @Service
-class TransactionValidator {
+class TransactionValidator(private val userRepository: Administrator) {
 
     @Autowired
     private lateinit var apiPort: TransactionResolver
@@ -51,7 +52,8 @@ class TransactionValidator {
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        val mapped = response.map { p -> p!!.map { AccountDTO(it.id!!, it.sold, it.label, it.sheets()?.map { s -> s.toDTO() }) } }
+        val mapped = response.map { p -> p!!.map { AccountDTO(it.id!!, it.sold, it.label,
+            it.sheets().map { s -> s.toDTO() }) } }
         return mapped.toResponseEntity()
     }
 
@@ -82,5 +84,29 @@ class TransactionValidator {
     fun updateAccount(userID: Long, account: AccountDTO, extractToken: String): ResponseEntity<AccountDTO> {
         return apiPort.editAccount(userID, account.toModel(), Token(UUID.fromString(extractToken)))
             .map { it!!.toDTO() }.toResponseEntity()
+    }
+    fun editSheet(userID: Long, accountID: Long, sheet: SheetDTO, token: String): ResponseEntity<SheetDTO>{
+        return apiPort.editSheet(userID, accountID, sheet.toModel(), Token(UUID.fromString(token)))
+            .mapBoth(
+                {s -> ResponseEntity.ok(s!!.toDTO()) },
+                {ResponseEntity.badRequest().build()}
+            ) ?: ResponseEntity.badRequest().build()
+    }
+
+    fun findSheetById(userID: Long, id: Long, extractToken: String): ResponseEntity<SheetDTO> {
+        return apiPort.findById(userID, id, Token(UUID.fromString(extractToken)))
+            .mapTo {
+                it ?: Response.invalid<SheetDTO>()
+                Response.ok(it)
+            }.map {
+                it!!.toDTO()
+            }.toResponseEntity()
+    }
+
+    fun findAccountById(userID: Long, accountID: Long, token: String): ResponseEntity<AccountDTO> {
+        return apiPort.findAccountById(UserId(userID), accountID, Token(UUID.fromString(token)))
+            .mapTo {
+                Response.ok(it!!.toDTO())
+            }.toResponseEntity()
     }
 }

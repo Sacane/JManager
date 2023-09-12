@@ -1,12 +1,10 @@
-package fr.sacane.jmanager.infrastructure.server.entity
+package fr.sacane.jmanager.infrastructure.datasource.entity
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
 import jakarta.persistence.*
 
 
 @Entity
 @Table(name = "account")
-@DatasourceEntity
 class AccountResource(
     @Id
     @GeneratedValue

@@ -53,6 +53,20 @@ class Response <S> private constructor(
         return s.invoke()
     }
 
+    private fun isSuccessAndNotEmpty(): Boolean {
+        return isSuccess() && value != null
+    }
+
+    fun <T> mapBoth(
+        onSuccess: (S?) -> T,
+        onFailure: (Pair<String, ResponseState>) -> T
+    ): T? = when {
+        isSuccess() && value == null -> null
+        isSuccessAndNotEmpty() -> onSuccess.invoke(value)
+        isFailure() -> onFailure.invoke(Pair(message, status))
+        else -> null
+    }
+
     fun isSuccess(): Boolean{
         return this.status.isSuccess()
     }
@@ -63,6 +77,7 @@ class Response <S> private constructor(
     fun <T> map(
         mapper: (S?) -> T
     ): Response<T> {
+        if(this.value == null) return Response(this.status, null)
         val mapped = mapper.invoke(this.value)
         return Response(this.status, mapped)
     }

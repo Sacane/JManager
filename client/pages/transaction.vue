@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import {useRouter} from 'vue-router';
 import { SheetAverageDTO, SheetDTO } from '../types/index';
 import { useConfirm } from "primevue/useconfirm";
 definePageMeta({
@@ -14,7 +13,7 @@ const addYear = () => {
   years.push(years.at(years.length - 1)!! + 1)
 }
 
-const {accounts, fetch} = useAccounts()
+const {accounts, fetch, findById} = useAccounts()
 const {findByDate, deleteSheet} = useSheets()
 const date = new Date()
 const data = reactive({
@@ -45,24 +44,29 @@ function retrieveSheets() {
   }
   findByDate(data.month, data.year, data.labelAccount)
   .then((value: SheetAverageDTO) => data.currentSheets = value.sheets)
-  .finally(() => updateSheets())
+  .finally(() => loadSheets())
 }
 
-const route = useRouter()
+const route = useRoute()
 
 const initAccount = () => {
-  data.labelAccount = route.currentRoute.value.query.labelAccount as string
-  data.currentAccountId = route.currentRoute.value.query.id as string
-  data.accountAmount = parseFloat(route.currentRoute.value.query.amount as string)
+  findById(parseFloat(route.query.id as string))
+  .then((account) => {
+    data.accountAmount = account.amount
+    data.labelAccount = account.labelAccount as string
+    data.currentAccountId = route.query.id as string
+  }).finally(() => {
+    retrieveSheets()
+  })
 }
 
 
 onMounted(async () => {
-  await initAccount()
-  await retrieveSheets()
+  initAccount()
   
 })
 
+const jtoast = useJToast()
 
 
 // Fonction pour formater la date en format français (jour/mois/année)
@@ -84,7 +88,7 @@ function gotoTransaction() {
 const selectedSheets = ref<SheetDTO[]>([])
 const actualSheets = ref()
 
-const updateSheets = () => {
+const loadSheets = () => {
   fetch()
   actualSheets.value = data.currentSheets.map(sheet => {
     return {
@@ -95,7 +99,6 @@ const updateSheets = () => {
       accountAmount: `${sheet.accountAmount.toFixed(2)}€`
     }
   })
-  console.log(actualSheets.value)
 }
 
 const confirmDelete = async () => {
@@ -103,8 +106,8 @@ const confirmDelete = async () => {
   .then(() => retrieveSheets())
   .finally(() =>{
     fetch().then(accs => {
-      console.log(accounts.value.findLast(value => value.id === parseInt(data.currentAccountId))?.amount as number)
       data.accountAmount = accounts.value.findLast(value => value.id === parseInt(data.currentAccountId))?.amount as number
+      jtoast.success('La suppression de la transaction a été correctement effectué')
     })
   })
 }
@@ -119,8 +122,24 @@ const confirmDeleteButton = () => {
     message: 'Êtes-vous sûr de vouloir supprimer ces éléments ?',
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
-    accept: () => {
-      confirmDelete()
+    accept: () => confirmDelete()
+  })
+}
+
+const onEditPage = (event: any) => {
+  console.log(data.accountAmount)
+  navigateTo({
+    name: 'sheetEdit',
+    query: {
+      id: event.data.id,
+      label: event.data.label,
+      expenses: event.data.expenses,
+      income: event.data.income,
+      date: event.data.date,
+      accountAmount: event.data.accountAmount,
+      accountID: data.currentAccountId,
+      accountLabel: data.labelAccount,
+      currentAccountAmount: data.accountAmount
     }
   })
 }
@@ -129,7 +148,6 @@ const confirmDeleteButton = () => {
 
 
 <template>
-  <PToast></PToast>
   <PConfirmDialog></PConfirmDialog>
   <div class="w-full h-full flex flex-col container-all">
     <div p-8  bg-white class="form-container" mt2px>
@@ -138,7 +156,7 @@ const confirmDeleteButton = () => {
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }} €</h2>
 
       </div>
-      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets">
+      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
         <template #header>
           <div style="text-align: left">
             <div class="pl10px flex flex-row hauto">

@@ -6,7 +6,7 @@ class Account(
         val id: Long?,
         private var amount: Double,
         private var labelAccount: String,
-        val sheets: MutableList<Sheet>?
+        val sheets: MutableList<Sheet> = mutableListOf()
 ){
 
     val label: String
@@ -15,11 +15,18 @@ class Account(
     val sold: Double
         get() = amount
 
+    fun updateSoldByLastSheet(): Boolean {
+        this.amount = sheets.maxByOrNull { it.position }?.sold ?: return false
+        return true
+    }
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
-    fun sheets(): List<Sheet>?{
-        if(sheets == null) return null
-        return if(sheets.isEmpty()) null else sheets.toList()
+    fun sheets(): List<Sheet>{
+        return sheets.toList()
+    }
+
+    fun addSheet(sheet: Sheet) {
+        sheets.add(sheet)
     }
 
     fun updateFrom(account: Account) {
@@ -56,7 +63,7 @@ class Account(
     }
     fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Sheet>?{
         return sheets
-            ?.filter { it.date.month == month && it.date.year == year }
+            .filter { it.date.month == month && it.date.year == year }
     }
 
     override fun toString(): String {
@@ -73,5 +80,9 @@ class Account(
     }
     fun cancelSheetsSupply(sheets: List<Sheet>) {
         sheets.forEach { cancelSheetAmount(it) }
+    }
+
+    fun setSoldFromSheet(sheetFromResource: Sheet) {
+        this.amount = sheetFromResource.sold
     }
 }

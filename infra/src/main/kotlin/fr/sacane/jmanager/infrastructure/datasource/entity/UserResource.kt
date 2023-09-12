@@ -1,13 +1,11 @@
-package fr.sacane.jmanager.infrastructure.server.entity
+package fr.sacane.jmanager.infrastructure.datasource.entity
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceEntity
-import org.springframework.lang.Nullable
 import jakarta.persistence.*
+import org.springframework.lang.Nullable
 
 
 @Table(name="userResource")
 @Entity
-@DatasourceEntity
 class UserResource(
     @Id
     @Nullable

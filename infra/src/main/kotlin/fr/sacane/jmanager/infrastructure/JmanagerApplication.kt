@@ -6,8 +6,8 @@ import org.springframework.boot.runApplication
 
 
 @SpringBootApplication
-class JmanagerBackApplication
+class JmanagerApplication
 
 fun main(args: Array<String>) {
-	runApplication<JmanagerBackApplication>(*args)
+	runApplication<JmanagerApplication>(*args)
 }

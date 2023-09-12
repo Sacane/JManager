@@ -1,14 +1,14 @@
-package fr.sacane.jmanager.infrastructure.server.adapters
+package fr.sacane.jmanager.infrastructure.datasource.adapters
 
-import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.server.entity.AccountResource
-import fr.sacane.jmanager.infrastructure.server.entity.CategoryResource
-import fr.sacane.jmanager.infrastructure.server.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.CategoryRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.SheetRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.datasource.entity.CategoryResource
+import fr.sacane.jmanager.infrastructure.datasource.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.CategoryRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.SheetRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service
 
 
 @Service
-@DatasourceAdapter
+@Adapter(DomainSide.DATASOURCE)
 class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : TransactionRegister{
 
     companion object{
@@ -42,7 +42,6 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
         return account.toModel()
     }
 
-    @Transactional
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
         val user = userRepository.findById(userId.get()).get()
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
@@ -86,14 +85,6 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
         val accountResponse = accountRepository.findById(accountId)
         return accountResponse.get().toModel()
     }
-    @Transactional
-    override fun deleteAllSheets(accountID: Long, sheets: List<Long>) {
-        try{
-
-        }catch(e: Exception) {
-            return
-        }
-    }
 
     override fun deleteAccountByID(accountID: Long) {
         accountRepository.deleteById(accountID)
@@ -105,5 +96,17 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
 
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         sheetRepository.deleteAllById(sheetIds)
+    }
+
+    override fun findSheetByID(sheetID: Long): Sheet? {
+        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
+    }
+
+    override fun save(sheet: Sheet): Sheet? {
+        return sheetRepository.save(sheet.asResource()).toModel()
+    }
+
+    override fun save(account: Account): Account? {
+        return accountRepository.save(account.asResource()).toModel()
     }
 }

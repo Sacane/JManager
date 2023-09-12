@@ -11,20 +11,6 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @EnableAutoConfiguration
 class HexagonInjectionConfiguration {
-
-
-//    @Bean
-//    fun userTransaction(): UserTransaction{
-//        return ServerUserAdapter()
-//    }
-//    @Bean
-//    fun serverAdapter(): TransactionRegister{
-//        return ServerTransactionAdapter()
-//    }
-//    @Bean
-//    fun loginTransactionInventory(): LoginInventory{
-//        return LoginTransactionAdapter()
-//    }
     @Bean
     fun transactionReaderAdapter(serverAdapter: TransactionRegister, userTransaction: UserTransaction): TransactionResolver {
         return TransactionResolverImpl(serverAdapter, userTransaction)

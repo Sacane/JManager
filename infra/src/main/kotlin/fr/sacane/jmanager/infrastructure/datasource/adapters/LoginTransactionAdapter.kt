@@ -1,12 +1,13 @@
-package fr.sacane.jmanager.infrastructure.server.adapters
+package fr.sacane.jmanager.infrastructure.datasource.adapters
 
 import fr.sacane.jmanager.domain.Hash
-import fr.sacane.jmanager.domain.hexadoc.DatasourceAdapter
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.LoginManager
-import fr.sacane.jmanager.infrastructure.server.entity.Login
-import fr.sacane.jmanager.infrastructure.server.repositories.LoginRepository
-import fr.sacane.jmanager.infrastructure.server.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.datasource.entity.Login
+import fr.sacane.jmanager.infrastructure.datasource.repositories.LoginRepository
+import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -14,7 +15,7 @@ import java.util.*
 import java.util.logging.Logger
 
 @Service
-@DatasourceAdapter
+@Adapter(DomainSide.DATASOURCE)
 class LoginTransactionAdapter : LoginManager {
 
     @Autowired
@@ -27,7 +28,7 @@ class LoginTransactionAdapter : LoginManager {
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
 
-    override fun login(userPseudonym: String, password: Password): Ticket? {
+    override fun login(userPseudonym: String, password: Password): UserToken? {
         LOGGER.info("Trying to login user $userPseudonym")
         val userResponse = userRepository.findByUsername(userPseudonym) ?: return null
         LOGGER.info("Find user ${userResponse.username}")
@@ -38,7 +39,7 @@ class LoginTransactionAdapter : LoginManager {
                     LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
                 ))
             LOGGER.info("User ${userResponse.username} logged in")
-            Ticket(userResponse.toModel(), login.toModel())
+            UserToken(userResponse.toModel(), login.toModel())
         }
         else null
     }
@@ -52,7 +53,7 @@ class LoginTransactionAdapter : LoginManager {
         return login.toModel()
     }
 
-    override fun refresh(userId: UserId, token: Token): Ticket? {
+    override fun refresh(userId: UserId, token: Token): UserToken? {
         val userResponse = userRepository.findById(userId.get())
         if (userResponse.isEmpty) return null
         val user = userResponse.get()
@@ -60,8 +61,8 @@ class LoginTransactionAdapter : LoginManager {
         login.id = UUID.randomUUID()
         login.refreshToken = UUID.randomUUID()
         login.lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
-        val response = loginRepository.save(login)
-        return Ticket(user.toModel(), login.toModel())
+        loginRepository.save(login)
+        return UserToken(user.toModel(), login.toModel())
     }
 
     override fun tokenBy(userId: UserId): Token? {

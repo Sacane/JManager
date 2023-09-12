@@ -1,8 +1,9 @@
 package fr.sacane.jmanager.domain.port.spi
-import fr.sacane.jmanager.domain.hexadoc.RightPort
+import fr.sacane.jmanager.domain.hexadoc.DomainSide
+import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
 
-@RightPort
+@Port(DomainSide.DATASOURCE)
 interface TransactionRegister {
 
     companion object{
@@ -15,11 +16,12 @@ interface TransactionRegister {
     fun removeCategory(userId: UserId, labelCategory: String): Category?
     fun findAccountByLabel(userId: UserId, labelAccount: String): Account?
     fun findAccountById(accountId: Long): Account?
-//    fun remove(targetCategory: Category)
     fun persist(account: Account) :Account?
     fun remove(targetCategory: Category)
-    fun deleteAllSheets(accountID: Long, sheets: List<Long>)
     fun deleteAccountByID(accountID: Long)
     fun saveAllSheets(sheets: List<Sheet>)
     fun deleteAllSheetsById(sheetIds: List<Long>)
+    fun findSheetByID(sheetID: Long): Sheet?
+    fun save(sheet: Sheet): Sheet?
+    fun save(account: Account): Account?
 }

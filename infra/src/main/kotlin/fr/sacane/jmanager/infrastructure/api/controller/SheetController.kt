@@ -21,14 +21,7 @@ class SheetController(
         return transactionValidator.saveSheet(
             userAccountSheetDTO.userId,
             userAccountSheetDTO.accountLabel,
-            SheetDTO(
-                userAccountSheetDTO.sheetDTO.id,
-                userAccountSheetDTO.sheetDTO.label,
-                userAccountSheetDTO.sheetDTO.expenses,
-                userAccountSheetDTO.sheetDTO.income,
-                userAccountSheetDTO.sheetDTO.date.plusDays(1),
-                userAccountSheetDTO.sheetDTO.accountAmount
-            ),
+            userAccountSheetDTO.sheetDTO,
             extractToken(token)
         ).apply { LOGGER.info("Sheet has been created") }
     }
@@ -39,9 +32,22 @@ class SheetController(
     }
 
     @PostMapping(path=["get"])
-    suspend fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
+    fun getSheets(@RequestBody dto: UserSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetsAndAverageDTO>{
         return transactionValidator.getSheetAccountByDate(dto, extractToken(token))
     }
+
+    @PostMapping("edit")
+    fun editSheet(@RequestBody dto: UserIDSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetDTO> {
+        LOGGER.info("edit : ${dto.sheet}")
+        return transactionValidator.editSheet(dto.userId, dto.accountId, dto.sheet, extractToken(token))
+    }
+
+    @GetMapping("/user/{userID}/find/{id}")
+    fun findById(@PathVariable("userID") userID: Long, @PathVariable("id") sheetID: Long, @RequestHeader("Authorization") token: String): ResponseEntity<SheetDTO> {
+        return transactionValidator.findSheetById(userID, sheetID, extractToken(token))
+    }
+
+
 
     companion object {
         private val LOGGER: Logger = Logger.getLogger(SheetController::javaClass.name)

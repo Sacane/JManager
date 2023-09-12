@@ -37,5 +37,13 @@ export default function useSheet() {
     })
   }
 
-  return {findByDate, saveSheet, deleteSheet}
+  function editSheet(sheet: SheetDTO, accountId: number): Promise<SheetDTO> {
+    return post('sheet/edit', {
+      userId: user.value?.id,
+      accountId: accountId,
+      sheet: sheet
+    })
+  }
+
+  return {findByDate, saveSheet, deleteSheet, editSheet}
 }

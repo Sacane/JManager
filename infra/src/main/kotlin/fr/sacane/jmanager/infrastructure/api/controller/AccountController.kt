@@ -44,4 +44,9 @@ class AccountController (
     fun deleteAccount(@PathVariable userId: Long, @PathVariable accountId: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
         return transactionValidator.deleteAccount(UserId(userId), accountId)
     }
+
+    @GetMapping("/user/{userID}/find/{accountID}")
+    fun findAccountById(@PathVariable("userID") userID: Long, @PathVariable("accountID") accountID: Long, @RequestHeader("Authorization") token: String): ResponseEntity<AccountDTO> {
+        return transactionValidator.findAccountById(userID, accountID, extractToken(token))
+    }
 }

@@ -1,8 +1,11 @@
-<script setup lang="ts">
 
+<script setup lang="ts">
+import useJToast from '../composables/useJToast';
 definePageMeta({
     layout: 'sidebar-layout'
 })
+
+const {success} = useJToast()
 
 const {createAccount, fetch} = useAccounts()
 
@@ -22,13 +25,13 @@ const toAccount = async () => {
   await createAccount(newAccount.label, integer + parseFloat(`0.${amount.decimalPart}`))
   .then(async () => {
     await fetch()
-  }).finally(() => navigateTo('/account'))
+    await success('Le compte a bien été créé')
+  }).finally(async () => await navigateTo('/account'))
 }
 </script>
 
 <template>
   <div class="flex items-center mt3">
-    
     <form class="p-8 mt-5 bg-white form-container">
       <h1 class="text-4xl font-bold c-#7F52FF text-center">Créer un nouveau compte</h1>
       <PFieldset>
