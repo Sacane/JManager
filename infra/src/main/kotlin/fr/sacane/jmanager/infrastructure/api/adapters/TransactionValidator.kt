@@ -109,4 +109,11 @@ class TransactionValidator(private val userRepository: Administrator) {
                 it!!.toDTO()
             }.toResponseEntity()
     }
+
+    fun findAccountById(userID: Long, accountID: Long, token: String): ResponseEntity<AccountDTO> {
+        return apiPort.findAccountById(UserId(userID), accountID, Token(UUID.fromString(token)))
+            .mapTo {
+                Response.ok(it!!.toDTO())
+            }.toResponseEntity()
+    }
 }

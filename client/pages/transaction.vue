@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import {useRouter} from 'vue-router';
 import { SheetAverageDTO, SheetDTO } from '../types/index';
 import { useConfirm } from "primevue/useconfirm";
 definePageMeta({
@@ -14,7 +13,7 @@ const addYear = () => {
   years.push(years.at(years.length - 1)!! + 1)
 }
 
-const {accounts, fetch} = useAccounts()
+const {accounts, fetch, findById} = useAccounts()
 const {findByDate, deleteSheet} = useSheets()
 const date = new Date()
 const data = reactive({
@@ -51,15 +50,19 @@ function retrieveSheets() {
 const route = useRoute()
 
 const initAccount = () => {
-  data.labelAccount = route.query.labelAccount as string
-  data.currentAccountId = route.query.id as string
-  data.accountAmount = parseFloat(route.query.amount as string)
+  findById(parseFloat(route.query.id as string))
+  .then((account) => {
+    data.accountAmount = account.amount
+    data.labelAccount = account.labelAccount as string
+    data.currentAccountId = route.query.id as string
+  }).finally(() => {
+    retrieveSheets()
+  })
 }
 
 
 onMounted(async () => {
-  await initAccount()
-  await retrieveSheets()
+  initAccount()
   
 })
 

@@ -58,5 +58,14 @@ export default function useAccounts(){
     async function deleteAccount(id: number): Promise<any> {
         return deleteQuery(`account/${user.value?.id}/delete/${id}`, undefined)
     }
-    return {accounts, createAccount, fetch, deleteAccount, accountFormatted, format, updateAccount}
+
+    async function findById(accountId: number) : Promise<AccountDTO> {
+        try {
+            return (await get(`account/user/${user.value?.id}/find/${accountId}`)).data
+        }catch(error){
+            console.error(error)
+            throw error
+        }
+    }
+    return {accounts, createAccount, fetch, deleteAccount, accountFormatted, format, updateAccount, findById}
 }

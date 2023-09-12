@@ -47,6 +47,8 @@ class SheetController(
         return transactionValidator.findSheetById(userID, sheetID, extractToken(token))
     }
 
+
+
     companion object {
         private val LOGGER: Logger = Logger.getLogger(SheetController::javaClass.name)
     }
