@@ -42,7 +42,6 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
         return account.toModel()
     }
 
-    @Transactional
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
         val user = userRepository.findById(userId.get()).get()
         val account = user.accounts?.find { it.label == accountLabel } ?: return null
@@ -113,5 +112,9 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
 
     override fun save(sheet: Sheet): Sheet? {
         return sheetRepository.save(sheet.asResource()).toModel()
+    }
+
+    override fun save(account: Account): Account? {
+        return accountRepository.save(account.asResource()).toModel()
     }
 }

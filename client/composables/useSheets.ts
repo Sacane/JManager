@@ -37,9 +37,10 @@ export default function useSheet() {
     })
   }
 
-  function editSheet(sheet: SheetDTO): Promise<SheetDTO> {
+  function editSheet(sheet: SheetDTO, accountId: number): Promise<SheetDTO> {
     return post('sheet/edit', {
       userId: user.value?.id,
+      accountId: accountId,
       sheet: sheet
     })
   }

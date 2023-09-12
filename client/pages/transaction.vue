@@ -15,7 +15,7 @@ const addYear = () => {
 }
 
 const {accounts, fetch} = useAccounts()
-const {findByDate, deleteSheet, editSheet} = useSheets()
+const {findByDate, deleteSheet} = useSheets()
 const date = new Date()
 const data = reactive({
   year: date.getFullYear(),
@@ -48,12 +48,12 @@ function retrieveSheets() {
   .finally(() => loadSheets())
 }
 
-const route = useRouter()
+const route = useRoute()
 
 const initAccount = () => {
-  data.labelAccount = route.currentRoute.value.query.labelAccount as string
-  data.currentAccountId = route.currentRoute.value.query.id as string
-  data.accountAmount = parseFloat(route.currentRoute.value.query.amount as string)
+  data.labelAccount = route.query.labelAccount as string
+  data.currentAccountId = route.query.id as string
+  data.accountAmount = parseFloat(route.query.amount as string)
 }
 
 
@@ -124,10 +124,19 @@ const confirmDeleteButton = () => {
 }
 
 const onEditPage = (event: any) => {
+  console.log(data.accountAmount)
   navigateTo({
     name: 'sheetEdit',
     query: {
-      id: event.data.id
+      id: event.data.id,
+      label: event.data.label,
+      expenses: event.data.expenses,
+      income: event.data.income,
+      date: event.data.date,
+      accountAmount: event.data.accountAmount,
+      accountID: data.currentAccountId,
+      accountLabel: data.labelAccount,
+      currentAccountAmount: data.accountAmount
     }
   })
 }
@@ -136,7 +145,6 @@ const onEditPage = (event: any) => {
 
 
 <template>
-  <PToast></PToast>
   <PConfirmDialog></PConfirmDialog>
   <div class="w-full h-full flex flex-col container-all">
     <div p-8  bg-white class="form-container" mt2px>

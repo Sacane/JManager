@@ -5,7 +5,7 @@ import java.time.LocalDate
 class Sheet(
     val id: Long?,
     var label: String,
-    val date: LocalDate,
+    var date: LocalDate,
     var expenses: Double,
     var income: Double,
     var sold: Double,
@@ -15,6 +15,29 @@ class Sheet(
 
     fun updateSoldStartingWith(start: Double) {
         sold = start.plus(income).minus(expenses)
+    }
+
+    private fun updateSoldFromIncomeAndExpenses(expenses: Double = 0.0, income: Double = 0.0) {
+        sold = sold.plus(this.expenses)
+            .plus(income)
+            .minus(expenses)
+            .minus(this.income)
+    }
+
+
+    /**
+     *
+     */
+    fun updateFromOther(other: Sheet): Boolean {
+        if(other.id != this.id) return false
+        updateSoldFromIncomeAndExpenses(other.expenses, other.income)
+        println("sold: $sold")
+        this.label = other.label
+        this.date = other.date
+        this.expenses = other.expenses
+        this.income = other.income
+        this.category = other.category
+        return true
     }
 
     override fun toString(): String {

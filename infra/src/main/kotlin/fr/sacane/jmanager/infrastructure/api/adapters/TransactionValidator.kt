@@ -52,7 +52,8 @@ class TransactionValidator(private val userRepository: Administrator) {
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        val mapped = response.map { p -> p!!.map { AccountDTO(it.id!!, it.sold, it.label, it.sheets()?.map { s -> s.toDTO() }) } }
+        val mapped = response.map { p -> p!!.map { AccountDTO(it.id!!, it.sold, it.label,
+            it.sheets().map { s -> s.toDTO() }) } }
         return mapped.toResponseEntity()
     }
 
@@ -84,12 +85,17 @@ class TransactionValidator(private val userRepository: Administrator) {
         return apiPort.editAccount(userID, account.toModel(), Token(UUID.fromString(extractToken)))
             .map { it!!.toDTO() }.toResponseEntity()
     }
-    fun editSheet(userID: Long, sheet: SheetDTO, token: String): ResponseEntity<SheetDTO>{
-        return apiPort.editSheet(userID, sheet.toModel(), Token(UUID.fromString(token)))
+    fun editSheet(userID: Long, accountID: Long, sheet: SheetDTO, token: String): ResponseEntity<SheetDTO>{
+        return apiPort.editSheet(userID, accountID, sheet.toModel(), Token(UUID.fromString(token)))
+            .also {
+                println(it.status)
+                println(it.message)
+            }
             .mapTo {
                 it ?: Response.invalid<SheetDTO>()
                 Response.ok(it)
             }.map {
+                it ?: ResponseEntity.status(400)
                 it!!.toDTO()
             }.toResponseEntity()
     }

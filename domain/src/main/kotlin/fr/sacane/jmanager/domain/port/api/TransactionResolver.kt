@@ -23,7 +23,7 @@ interface TransactionResolver {
     fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>)
     fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing>
     fun editAccount(userID: Long, account: Account, token: Token): Response<Account>
-    fun editSheet(userID: Long, sheet: Sheet, token: Token): Response<Sheet>
+    fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: Token): Response<Sheet>
     fun findById(userID: Long, id: Long, token: Token): Response<Sheet>
 }
 
@@ -63,7 +63,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
 
     private fun updateSheetSold(account: Account){
         val sheets = account.sheets
-        for(number in sheets!!.indices) {
+        for(number in sheets.indices) {
             sheets[number].position = number
         }
         register.saveAllSheets(
@@ -97,7 +97,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         val userResponse = userTransaction.findById(userId) ?: return invalid()
         userResponse.checkForIdentity(token) ?: return Response.timeout()
         val account = register.findAccountByLabel(userId, accountLabel) ?: return notFound()
-        if(!account.sheets.isNullOrEmpty()) {
+        if(account.sheets.isNotEmpty()) {
             val lastRecord = account.sheets.filter { it.date <= sheet.date }.maxByOrNull { it.position } ?: return notFound()
             sheet.position = lastRecord.position + 1
             sheet.updateSoldStartingWith(lastRecord.sold)
@@ -137,7 +137,6 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
         val account: Account = register.findAccountById(accountID) ?: return
-        if(account.sheets == null) return
         val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
         account.cancelSheetsSupply(
             account.sheets.filter(isSheetOnList)
@@ -166,12 +165,21 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         return ok(registered)
     }
 
-    override fun editSheet(userID: Long, sheet: Sheet, token: Token): Response<Sheet> {
-        if(sheet.id == null || register.findSheetByID(sheet.id) == null) return notFound("L'ID de la transaction n'existe pas")
-        userTransaction.findById(UserId(userID))?.checkForIdentity(token) ?: return notFound("L'utlisateur est inconnue")
-        return register.save(sheet).run {
+    override fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: Token): Response<Sheet> {
+        if(sheet.id == null) return notFound("L'ID de la transaction n'existe pas")
+        val user = userTransaction.findById(UserId(userID))?.checkForIdentity(token) ?: return notFound("L'utlisateur est inconnue")
+        val acc = user.accounts.find { it.id == accountID }
+        val sheetFromResource = acc?.sheets?.find { it.id == sheet.id } ?: return notFound("Aucune transaction n'existe avec l'ID suivant : ${sheet.id}")
+        sheetFromResource.updateFromOther(sheet)
+        if(sheetFromResource.position == 0){
+            acc.setSoldFromSheet(sheetFromResource)
+        }
+        updateSheetSold(acc)
+        acc.updateSoldByLastSheet()
+        return register.save(acc).run {
             this ?: return invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
-            ok(this)
+            println(this.sold)
+            ok(sheetFromResource)
         }
     }
 

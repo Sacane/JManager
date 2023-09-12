@@ -63,6 +63,7 @@ class Response <S> private constructor(
     fun <T> map(
         mapper: (S?) -> T
     ): Response<T> {
+        if(this.value == null) return Response(this.status, null)
         val mapped = mapper.invoke(this.value)
         return Response(this.status, mapped)
     }

@@ -21,14 +21,7 @@ class SheetController(
         return transactionValidator.saveSheet(
             userAccountSheetDTO.userId,
             userAccountSheetDTO.accountLabel,
-            SheetDTO(
-                userAccountSheetDTO.sheetDTO.id,
-                userAccountSheetDTO.sheetDTO.label,
-                userAccountSheetDTO.sheetDTO.expenses,
-                userAccountSheetDTO.sheetDTO.income,
-                userAccountSheetDTO.sheetDTO.date.plusDays(1),
-                userAccountSheetDTO.sheetDTO.accountAmount
-            ),
+            userAccountSheetDTO.sheetDTO,
             extractToken(token)
         ).apply { LOGGER.info("Sheet has been created") }
     }
@@ -45,7 +38,8 @@ class SheetController(
 
     @PostMapping("edit")
     fun editSheet(@RequestBody dto: UserIDSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetDTO> {
-        return transactionValidator.editSheet(dto.userId, dto.sheet, extractToken(token))
+        LOGGER.info("edit : ${dto.sheet}")
+        return transactionValidator.editSheet(dto.userId, dto.accountId, dto.sheet, extractToken(token))
     }
 
     @GetMapping("/user/{userID}/find/{id}")

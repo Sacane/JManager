@@ -20,7 +20,7 @@ internal fun Account.asResource(): AccountResource {
     val sheets = if(this.sheets().isNullOrEmpty()){
         mutableListOf()
     }else {
-        sheets()?.toMutableList()?.map { it.asResource() }?.toMutableList()
+        sheets().toMutableList().map { it.asResource() }.toMutableList()
     }
     val resource = AccountResource(this.sold, this.label, sheets)
     resource.idAccount = this.id
@@ -49,7 +49,7 @@ internal fun AccountResource.toModel(): Account{
         this.idAccount!!,
         this.amount!!,
         this.label!!,
-        this.sheets?.map { sheet -> sheet.toModel() }?.toMutableList())
+        this.sheets?.map { sheet -> sheet.toModel() }?.toMutableList()!!)
 }
 internal fun UserResource.toModel(): User{
     return User(
