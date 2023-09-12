@@ -48,6 +48,11 @@ class SheetController(
         return transactionValidator.editSheet(dto.userId, dto.sheet, extractToken(token))
     }
 
+    @GetMapping("/user/{userID}/find/{id}")
+    fun findById(@PathVariable("userID") userID: Long, @PathVariable("id") sheetID: Long, @RequestHeader("Authorization") token: String): ResponseEntity<SheetDTO> {
+        return transactionValidator.findSheetById(userID, sheetID, extractToken(token))
+    }
+
     companion object {
         private val LOGGER: Logger = Logger.getLogger(SheetController::javaClass.name)
     }

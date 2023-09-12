@@ -126,7 +126,9 @@ const confirmDeleteButton = () => {
 const onEditPage = (event: any) => {
   navigateTo({
     name: 'sheetEdit',
-    query: event.data.id
+    query: {
+      id: event.data.id
+    }
   })
 }
 

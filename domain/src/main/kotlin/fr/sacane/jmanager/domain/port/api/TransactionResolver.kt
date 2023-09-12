@@ -24,6 +24,7 @@ interface TransactionResolver {
     fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing>
     fun editAccount(userID: Long, account: Account, token: Token): Response<Account>
     fun editSheet(userID: Long, sheet: Sheet, token: Token): Response<Sheet>
+    fun findById(userID: Long, id: Long, token: Token): Response<Sheet>
 }
 
 @DomainImplementation
@@ -169,8 +170,14 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         if(sheet.id == null || register.findSheetByID(sheet.id) == null) return notFound("L'ID de la transaction n'existe pas")
         userTransaction.findById(UserId(userID))?.checkForIdentity(token) ?: return notFound("L'utlisateur est inconnue")
         return register.save(sheet).run {
-            this ?: return invalid()
+            this ?: return invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             ok(this)
         }
+    }
+
+    override fun findById(userID: Long, id: Long, token: Token): Response<Sheet> {
+        userTransaction.findById(UserId(userID))?.checkForIdentity(token) ?: return notFound("L'utlisateur est inconnue")
+        val sheet = register.findSheetByID(id) ?: return notFound("La transaction n'existe pas")
+        return ok(sheet)
     }
 }

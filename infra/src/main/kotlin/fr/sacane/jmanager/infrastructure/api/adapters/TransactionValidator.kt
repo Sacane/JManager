@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.api.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.api.Administrator
 import fr.sacane.jmanager.domain.port.api.TransactionResolver
 import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,7 +14,7 @@ import java.util.logging.Logger
 
 @Adapter(DomainSide.API)
 @Service
-class TransactionValidator {
+class TransactionValidator(private val userRepository: Administrator) {
 
     @Autowired
     private lateinit var apiPort: TransactionResolver
@@ -85,6 +86,16 @@ class TransactionValidator {
     }
     fun editSheet(userID: Long, sheet: SheetDTO, token: String): ResponseEntity<SheetDTO>{
         return apiPort.editSheet(userID, sheet.toModel(), Token(UUID.fromString(token)))
+            .mapTo {
+                it ?: Response.invalid<SheetDTO>()
+                Response.ok(it)
+            }.map {
+                it!!.toDTO()
+            }.toResponseEntity()
+    }
+
+    fun findSheetById(userID: Long, id: Long, extractToken: String): ResponseEntity<SheetDTO> {
+        return apiPort.findById(userID, id, Token(UUID.fromString(extractToken)))
             .mapTo {
                 it ?: Response.invalid<SheetDTO>()
                 Response.ok(it)
