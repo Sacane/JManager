@@ -61,7 +61,7 @@ class LoginTransactionAdapter : LoginManager {
         login.id = UUID.randomUUID()
         login.refreshToken = UUID.randomUUID()
         login.lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
-        val response = loginRepository.save(login)
+        loginRepository.save(login)
         return UserToken(user.toModel(), login.toModel())
     }
 

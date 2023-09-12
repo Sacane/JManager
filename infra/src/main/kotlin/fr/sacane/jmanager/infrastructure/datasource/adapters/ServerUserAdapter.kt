@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.time.LocalDateTime
+import java.util.*
 import java.util.logging.Logger
 
 @Service
@@ -35,19 +36,19 @@ class ServerUserAdapter : UserTransaction{
     }
 
     override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
-        val user = userRepository.findByUsername(pseudonym)
-        if(!MessageDigest.isEqual(pwd.get(), user?.password)){
+        val user = userRepository.findByUsername(pseudonym) ?: return null
+        if(!MessageDigest.isEqual(pwd.get(), user.password)){
             LOGGER.info("Password is not correct")
             return null
         }
-        val token = Login(user!!, LocalDateTime.now())
+        val token = Login(user, LocalDateTime.now())
         val tokenBack = loginRepository.save(token)
-        return UserToken(user.toModel(), Token(tokenBack.id!!, tokenBack.lastRefresh!!, tokenBack.refreshToken!!))
+        return UserToken(user.toModel(), Token(tokenBack.id ?: UUID.randomUUID(), tokenBack.lastRefresh, tokenBack.refreshToken))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
-        val user = userRepository.findByUsername(pseudonym)
-        return user?.toModel()
+        val user = userRepository.findByUsername(pseudonym) ?: return null
+        return user.toModel()
     }
 
     override fun create(user: User): User?{

@@ -85,14 +85,6 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
         val accountResponse = accountRepository.findById(accountId)
         return accountResponse.get().toModel()
     }
-    @Transactional
-    override fun deleteAllSheets(accountID: Long, sheets: List<Long>) {
-        try{
-
-        }catch(e: Exception) {
-            return
-        }
-    }
 
     override fun deleteAccountByID(accountID: Long) {
         accountRepository.deleteById(accountID)

@@ -87,17 +87,10 @@ class TransactionValidator(private val userRepository: Administrator) {
     }
     fun editSheet(userID: Long, accountID: Long, sheet: SheetDTO, token: String): ResponseEntity<SheetDTO>{
         return apiPort.editSheet(userID, accountID, sheet.toModel(), Token(UUID.fromString(token)))
-            .also {
-                println(it.status)
-                println(it.message)
-            }
-            .mapTo {
-                it ?: Response.invalid<SheetDTO>()
-                Response.ok(it)
-            }.map {
-                it ?: ResponseEntity.status(400)
-                it!!.toDTO()
-            }.toResponseEntity()
+            .mapBoth(
+                {s -> ResponseEntity.ok(s!!.toDTO()) },
+                {ResponseEntity.badRequest().build()}
+            ) ?: ResponseEntity.badRequest().build()
     }
 
     fun findSheetById(userID: Long, id: Long, extractToken: String): ResponseEntity<SheetDTO> {

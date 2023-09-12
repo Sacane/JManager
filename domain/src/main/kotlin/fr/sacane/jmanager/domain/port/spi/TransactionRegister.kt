@@ -18,7 +18,6 @@ interface TransactionRegister {
     fun findAccountById(accountId: Long): Account?
     fun persist(account: Account) :Account?
     fun remove(targetCategory: Category)
-    fun deleteAllSheets(accountID: Long, sheets: List<Long>)
     fun deleteAccountByID(accountID: Long)
     fun saveAllSheets(sheets: List<Sheet>)
     fun deleteAllSheetsById(sheetIds: List<Long>)

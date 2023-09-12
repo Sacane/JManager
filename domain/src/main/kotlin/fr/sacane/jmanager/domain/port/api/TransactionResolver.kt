@@ -62,7 +62,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         return Response.timeout()
     }
 
-    private fun updateSheetSold(account: Account){
+    private fun updateSheetSold(account: Account, update: Boolean = true){
         val sheets = account.sheets
         for(number in sheets.indices) {
             sheets[number].position = number
@@ -72,7 +72,7 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
                 val lastRecord = account.sheets.find { it.position == sheet.position - 1 }
                 sheet.also {
                     if(lastRecord == null) {
-                        sheet.sold = account.sold
+                        if(update) sheet.sold = account.sold
                     } else {
                         sheet.updateSoldStartingWith(lastRecord.sold)
                     }
@@ -175,8 +175,10 @@ class TransactionResolverImpl(private val register: TransactionRegister, private
         if(sheetFromResource.position == 0){
             acc.setSoldFromSheet(sheetFromResource)
         }
-        updateSheetSold(acc)
+        println(acc.sheets)
+        updateSheetSold(acc, false)
         acc.updateSoldByLastSheet()
+        println(acc.sold)
         return register.save(acc).run {
             this ?: return invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             println(this.sold)
