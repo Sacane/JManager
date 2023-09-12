@@ -44,7 +44,7 @@ class SheetController(
     }
 
     @PostMapping("edit")
-    fun editSheet(@RequestParam("id") id: Long, @RequestBody dto: UserIDSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetDTO> {
+    fun editSheet(@RequestBody dto: UserIDSheetDTO, @RequestHeader("Authorization") token: String): ResponseEntity<SheetDTO> {
         return transactionValidator.editSheet(dto.userId, dto.sheet, extractToken(token))
     }
 

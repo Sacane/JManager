@@ -15,7 +15,7 @@ const addYear = () => {
 }
 
 const {accounts, fetch} = useAccounts()
-const {findByDate, deleteSheet} = useSheets()
+const {findByDate, deleteSheet, editSheet} = useSheets()
 const date = new Date()
 const data = reactive({
   year: date.getFullYear(),
@@ -123,6 +123,13 @@ const confirmDeleteButton = () => {
   })
 }
 
+const onEditPage = (event: any) => {
+  navigateTo({
+    name: 'sheetEdit',
+    query: event.data.id
+  })
+}
+
 </script>
 
 
@@ -136,7 +143,7 @@ const confirmDeleteButton = () => {
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }} €</h2>
 
       </div>
-      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets">
+      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
         <template #header>
           <div style="text-align: left">
             <div class="pl10px flex flex-row hauto">
