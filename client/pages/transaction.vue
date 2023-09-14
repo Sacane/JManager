@@ -63,15 +63,15 @@ const initAccount = () => {
 
 onMounted(async () => {
   initAccount()
-  
+
 })
 
 const jtoast = useJToast()
 
 
 // Fonction pour formater la date en format français (jour/mois/année)
-function formatDateToFrench(numbers: number[]) {
-  return new Date(numbers[0], numbers[1] - 1, numbers[2]).toLocaleDateString('fr-FR').replace(/\//g, '-');
+function formatDateToFrench(date: string) {
+  return new Date(date).toLocaleDateString('fr-FR').replace(/\//g, '-');
 }
 
 function gotoTransaction() {
@@ -91,11 +91,12 @@ const actualSheets = ref()
 const loadSheets = () => {
   fetch()
   actualSheets.value = data.currentSheets.map(sheet => {
+    console.log(sheet.date)
     return {
       ...sheet,
       expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
       incomeRepresenttation: (sheet.income > 0.0) ? `${sheet.income.toFixed(2)}€` : '/',
-      date: formatDateToFrench(sheet.date),
+      date: sheet.date,
       accountAmount: `${sheet.accountAmount.toFixed(2)}€`
     }
   })

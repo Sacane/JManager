@@ -5,7 +5,7 @@ export interface SheetDTO{
     label: string,
     expenses: number,
     income: number,
-    date: number[3],
+    date: string,
     accountAmount: number
 }
 

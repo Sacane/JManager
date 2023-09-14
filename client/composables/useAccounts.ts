@@ -37,16 +37,6 @@ export default function useAccounts(){
         })
     }
 
-    function format(accounts: Array<AccountDTO>) {
-        accountFormatted.value = accounts.map(account => {
-          return {
-            id: account.id,
-            labelAccount: account.labelAccount,
-            amount: `${account.amount} €`,
-          };
-        });
-    }
-
     async function updateAccount(account: AccountDTO, onUpdate: (acc: AccountDTO) => void){
       post('account/update/' + user.value?.id, account)
             .then((acc) => {
@@ -67,5 +57,5 @@ export default function useAccounts(){
             throw error
         }
     }
-    return {accounts, createAccount, fetch, deleteAccount, accountFormatted, format, updateAccount, findById}
+    return {accounts: readonly(accounts), createAccount, fetch, deleteAccount, accountFormatted, updateAccount, findById}
 }

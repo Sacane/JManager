@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.api
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate
 import java.time.Month
 
@@ -32,6 +33,7 @@ data class SheetDTO(
     val label: String,
     val expenses: Double,
     val income: Double,
+    @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
     val accountAmount: Double,
     val position: Int

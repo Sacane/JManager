@@ -11,26 +11,25 @@ const {success, error} = useJToast()
 
 //
 
-const { accounts, fetch, deleteAccount} = useAccounts()
+const {fetch, deleteAccount} = useAccounts()
 const isAccountFilled = reactive({ ok: false })
 const toAdd = () => {
   navigateTo('/addAccount')
 }
 
 
-const data = reactive({
-  render: [] as AccountFormatted[]
-})
+const data = ref([] as AccountFormatted[])
 
-onMounted(async () => {
+onMounted(() => {
   fetch().then(accountArray => {
+    console.log(accountArray)
     format(accountArray)
-    isAccountFilled.ok = accounts.value.length > 0
+    isAccountFilled.ok = data.value.length > 0
   })
 })
 
 function format(accounts: Array<AccountDTO>) {
-  data.render = accounts.map(account => {
+  data.value = accounts.map(account => {
     return {
       id: account.id,
       labelAccount: account.labelAccount,
@@ -92,7 +91,7 @@ const actionSelection = ref<AccountDTO | undefined>(undefined)
       <p class="info-text">
         Cliquez sur un compte pour visualiser ses transactions
       </p>
-      <PDataTable :value="data.render" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
+      <PDataTable :value="data" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
         <template #header>
           <div class="flex flex-row hauto pl10px">
             <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit"/>
