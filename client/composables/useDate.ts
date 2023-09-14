@@ -1,3 +1,5 @@
+import { parse } from 'date-fns';
+
 export default function useDate() {
     function translate(month: string): string{
         let result = ''
@@ -51,5 +53,9 @@ export default function useDate() {
         'DECEMBER'
       ]
 
-      return {months, translate, monthFromNumber}
+      function dateFromString(dateString: string): Date {
+        return parse(dateString, 'dd-MM-yyyy', new Date())
+      }
+
+      return {months, translate, monthFromNumber, dateFromString}
 }
