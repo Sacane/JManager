@@ -23,15 +23,12 @@ const data = reactive({
   isRangeSelected: false,
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
-  accountAmount: 0.0
+  accountAmount: 0.0,
+  dateYear: new Date(),
+  dateMonth: new Date()
 })
 
 const isSelectionOk = () => data.year !== 0 && data.month !== '' && data.labelAccount !== ''
-
-function selectYear(year: number) {
-  data.year = year
-  retrieveSheets()
-}
 
 function selectMonth(month: string) {
   data.month = month
@@ -145,6 +142,25 @@ const onEditPage = (event: any) => {
   })
 }
 
+const cities = ref([
+    { name: 'New York', code: 'NY' },
+    { name: 'Rome', code: 'RM' },
+    { name: 'London', code: 'LDN' },
+    { name: 'Istanbul', code: 'IST' },
+    { name: 'Paris', code: 'PRS' }
+]);
+
+
+const onYearChange = () => {
+  data.year = data.dateYear.getFullYear()
+  retrieveSheets()
+}
+
+const onMonthChange = () => {
+  data.month = monthFromNumber(data.dateMonth.getMonth() + 1) as  string
+  retrieveSheets()
+}
+
 </script>
 
 
@@ -159,32 +175,13 @@ const onEditPage = (event: any) => {
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
         <template #header>
-          <div style="text-align: left">
-            <div class="pl10px flex flex-row hauto">
-              <PButton v-for="year in years"
-              :class="{ 'bg-gray-300': data.year === year }"
-              :key="year"
-              w-auto b mr2
-              @click="selectYear(year)"
-              id="month"
-              class="year-btn"
-              >
-              {{ year }}
-              </PButton>
-              <PButton ml5px @click="addYear" class="year-btn">
-                +
-              </PButton>
-            </div>
-            <div class="pl10px flex flex-row buttons ">
-              <PButton v-for="(month, key) in months"
-              :key="key"
-              w-auto b
-              @click="selectMonth(month.toString())"
-              class="btn-small"
-              :class="{ 'bg-gray-300': data.month === month }"
-              >
-              {{ translate(month) }}
-              </PButton>
+          <div style="text-align: left" class="w30%">
+            <div class="pl10px flex flex-row hauto justify-around">
+              <MonthPicker/>
+              <div>
+                <label for="yearPicker" class="block text-sm font-medium text-gray-700">Sélectionnez une année :</label>
+                <PCalendar v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
+              </div>
             </div>
           </div>
         </template>
