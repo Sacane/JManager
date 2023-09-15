@@ -4,11 +4,12 @@
 plugins {
     id("org.springframework.boot") version "3.1.3"
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
+    id("org.jetbrains.kotlin.plugin.jpa") version "1.6.21"
+    id("org.jetbrains.kotlin.plugin.allopen") version "1.6.21"
     war
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
-    kotlin("plugin.jpa") version "1.6.21"
-    id("org.jetbrains.kotlin.plugin.allopen") version "1.5.21"
+    kotlin("plugin.noarg") version "1.6.21"
 }
 
 repositories{

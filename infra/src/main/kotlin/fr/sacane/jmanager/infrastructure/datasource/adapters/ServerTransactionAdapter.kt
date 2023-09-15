@@ -31,22 +31,25 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
     private lateinit var categoryRepository: CategoryRepository
 
     override fun persist(userId: UserId, account: Account): User? {
-        val user = userRepository.findById(userId.get()).orElse(null) ?: return null
-        user.accounts?.add(account.asResource())
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id).orElseThrow()
+        user.accounts.add(account.asResource())
         return userRepository.save(user).toModel()
     }
 
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
-        val user = userRepository.findById(userId.get()).get()
-        val account = user.accounts?.find { it.label == labelAccount } ?: return null
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id).orElseThrow()
+        val account = user.accounts.find { it.label == labelAccount } ?: return null
         return account.toModel()
     }
 
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
-        val user = userRepository.findById(userId.get()).get()
-        val account = user.accounts?.find { it.label == accountLabel } ?: return null
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id).orElseThrow()
+        val account = user.accounts.find { it.label == accountLabel } ?: return null
         return try{
-            account.sheets?.add(sheet.asResource())
+            account.sheets.add(sheet.asResource())
             account.amount = sheet.sold
             // =================================================
             userRepository.saveAndFlush(user)
@@ -64,17 +67,19 @@ class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : T
     }
 
     override fun persist(userId: UserId, category: Category): Category? {
-        val user = userRepository.findById(userId.get()).get()
-        user.categories?.add(CategoryResource(category.label)) ?: return null
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id).orElseThrow()
+        user.categories.add(CategoryResource(label = category.label))
         userRepository.save(user)
         return category
     }
 
     override fun removeCategory(userId: UserId, labelCategory: String): Category? {
-        val user = userRepository.findById(userId.get()).get()
-        val category = user.categories?.find { it.label == labelCategory } ?: return null
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id).orElseThrow()
+        val category = user.categories.find { it.label == labelCategory } ?: return null
         categoryRepository.deleteByLabel(labelCategory)
-        return Category(category.label!!)
+        return Category(category.label)
     }
 
     override fun remove(targetCategory: Category) {

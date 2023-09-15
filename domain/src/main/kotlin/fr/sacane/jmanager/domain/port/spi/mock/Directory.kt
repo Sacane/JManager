@@ -57,7 +57,7 @@ class Directory {
     inner class UserTransactionMock : UserTransaction {
 
         override fun findById(userId: UserId): UserToken? {
-            val user = userInventory.find { it.id.get() == userId.get() } ?: return null
+            val user = userInventory.find { it.id.id == userId.id } ?: return null
             return tokenInventory[user.username]?.let { UserToken(user, it) }
         }
 
@@ -75,7 +75,7 @@ class Directory {
             return register(user)
         }
         override fun register(user: User): User? {
-            if(userInventory.find { it.username == user.username || it.id.get() == user.id.get() } != null) return null
+            if(userInventory.find { it.username == user.username || it.id.id == user.id.id } != null) return null
             userInventory.add(user)
             return user
         }

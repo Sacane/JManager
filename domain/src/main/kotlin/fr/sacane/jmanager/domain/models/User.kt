@@ -3,9 +3,7 @@ package fr.sacane.jmanager.domain.models
 import fr.sacane.jmanager.domain.Hash
 
 
-class UserId(private val id: Long){
-    fun get(): Long = id //In case there is a business rule for user's ID
-}
+data class UserId(val id: Long?)
 
 
 class Password(val value: String?){
@@ -37,7 +35,7 @@ class Password(val value: String?){
 class User(
     val id: UserId,
     val username: String,
-    val email: String,
+    val email: String?,
     val accounts: MutableList<Account>,
     val password: Password,
     private val categories: MutableList<Category>
@@ -47,7 +45,7 @@ class User(
 
     override fun toString(): String {
         return """
-            id: ${id.get()}
+            id: $id
             username: $username
         """.trimIndent()
     }

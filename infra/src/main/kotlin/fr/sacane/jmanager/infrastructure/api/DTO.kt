@@ -7,7 +7,7 @@ import java.time.Month
 data class UserDTO(
     val id: Long,
     val username: String,
-    val email: String
+    val email: String? = null
 )
 
 data class RegisteredUserDTO(
@@ -112,9 +112,9 @@ data class UserTokenDTO(
 )
 
 data class UserStorageDTO(
-    val id: Long,
+    val id: Long? = null,
     val username: String,
-    val email: String,
+    val email: String? = null,
     val token: String
 )
 

@@ -30,7 +30,7 @@ class UserControlAdapter @Autowired constructor(private var userPort: Administra
         val response = userPort.login(userDTO.username, Password(userDTO.password))
         LOGGER.info("Trying to login user ${userDTO.password} with password ${userDTO.password}")
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return response.map { u -> UserStorageDTO(u!!.user.id.get(), u.user.username, u.user.email, u.token.id.toString()) }.toResponseEntity()
+        return response.map { u -> UserStorageDTO(u!!.user.id.id!!, u.user.username, u.user.email, u.token.id.toString()) }.toResponseEntity()
     }
 
     fun logout(userId: Long, tokenDTO: String): ResponseEntity<Nothing>{

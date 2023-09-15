@@ -32,11 +32,11 @@ class LoginTransactionAdapter : LoginManager {
         LOGGER.info("Trying to login user $userPseudonym")
         val userResponse = userRepository.findByUsername(userPseudonym) ?: return null
         LOGGER.info("Find user ${userResponse.username}")
-        return if(Hash.contentEquals(userResponse.password!!, password.value!!)){
+        return if(Hash.contentEquals(userResponse.password, password.value!!)){
             val login = loginRepository.save(
                 Login(
-                    userResponse,
-                    LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
+                    user=userResponse,
+                    lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
                 ))
             LOGGER.info("User ${userResponse.username} logged in")
             UserToken(userResponse.toModel(), login.toModel())
@@ -45,7 +45,8 @@ class LoginTransactionAdapter : LoginManager {
     }
 
     override fun logout(userId: UserId, token: Token): Token? {
-        val userResponse = userRepository.findById(userId.get())
+        val id = userId.id ?: return null
+        val userResponse = userRepository.findById(id)
         if(userResponse.isEmpty) return null
         val user = userResponse.get()
         val login = loginRepository.findByUser(user) ?: return null
@@ -54,7 +55,8 @@ class LoginTransactionAdapter : LoginManager {
     }
 
     override fun refresh(userId: UserId, token: Token): UserToken? {
-        val userResponse = userRepository.findById(userId.get())
+        val id = userId.id ?: return null
+        val userResponse = userRepository.findById(id)
         if (userResponse.isEmpty) return null
         val user = userResponse.get()
         val login = loginRepository.findByUser(user) ?: return null
@@ -66,20 +68,22 @@ class LoginTransactionAdapter : LoginManager {
     }
 
     override fun tokenBy(userId: UserId): Token? {
-        val user = userRepository.findById(userId.get())
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id)
         if(user.isEmpty) return null
         val token = loginRepository.findByUser(user.get()) ?: return null
         return token.toModel()
     }
 
     override fun generateToken(user: User): Token? {
-        val userResponse = userRepository.findById(user.id.get())
+        val id = user.id.id ?: return null
+        val userResponse = userRepository.findById(id)
         if(userResponse.isEmpty) return null
         return loginRepository
             .saveAndFlush(
                 Login(
-                userResponse.get(),
-                LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
+                user = userResponse.get(),
+                lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
             ).toModel()
     }
 }

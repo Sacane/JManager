@@ -30,7 +30,7 @@ internal fun Sheet.toDTO(): SheetDTO {
 }
 
 internal fun User.toDTO(): UserDTO {
-    return UserDTO(this.id.get(), this.username, this.email)
+    return UserDTO(this.id.id ?: 0, this.username, this.email)
 }
 internal fun Long.id(): UserId {
     return UserId(this)

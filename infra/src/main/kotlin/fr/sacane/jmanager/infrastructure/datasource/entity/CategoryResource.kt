@@ -10,12 +10,7 @@ class CategoryResource(
     @Id
     @GeneratedValue
     @Column(unique = true, name = "id_category", nullable = false)
-    var idCategory: Long?,
+    var idCategory: Long? = null,
     @Column(name="label")
-    var label: String?
-){
-    constructor(): this(null, null)
-    constructor(
-        label: String?
-    ): this(null, label)
-}
+    var label: String = "undefined"
+)

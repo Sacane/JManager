@@ -25,14 +25,15 @@ class ServerUserAdapter : UserTransaction{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
     override fun findById(userId: UserId): UserToken? {
-        val user = userRepository.findById(userId.get())
-        if(user.isEmpty) return null
-        val token = loginRepository.findByUser(user.get()) ?: return null
-        return UserToken(user.get().toModel(), token.toModel())
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id).orElseThrow()
+        val token = loginRepository.findByUser(user) ?: return null
+        return UserToken(user.toModel(), token.toModel())
     }
 
     override fun findUserById(userId: UserId): User? {
-        return userRepository.findById(userId.get()).get().toModel()
+        val id = userId.id ?: return null
+        return userRepository.findById(id).orElse(null).toModel()
     }
 
     override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
@@ -41,7 +42,7 @@ class ServerUserAdapter : UserTransaction{
             LOGGER.info("Password is not correct")
             return null
         }
-        val token = Login(user, LocalDateTime.now())
+        val token = Login(user = user) // TODO Implement token implementation
         val tokenBack = loginRepository.save(token)
         return UserToken(user.toModel(), Token(tokenBack.id ?: UUID.randomUUID(), tokenBack.lastRefresh, tokenBack.refreshToken))
     }
@@ -74,8 +75,8 @@ class ServerUserAdapter : UserTransaction{
     }
 
     override fun getUserToken(userId: UserId): Token? {
-        val userResponse = userRepository.findById(userId.get())
-        if (userResponse.isEmpty) return null
-        return loginRepository.findByUser(userResponse.get())?.toModel()
+        val id = userId.id ?: return null
+        val user = userRepository.findById(id).orElseThrow()
+        return loginRepository.findByUser(user)?.toModel()
     }
 }
