@@ -175,11 +175,16 @@ const onMonthChange = () => {
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
         <template #header>
-          <div style="text-align: left" class="w30%">
+          <div style="text-align: left" class="w35%">
             <div class="pl10px flex flex-row hauto justify-around">
               <MonthPicker/>
-              <div>
-                <label for="yearPicker" class="block text-sm font-medium text-gray-700">Sélectionnez une année :</label>
+              <div class="w40% h10%">
+                <label 
+                for="yearPicker" 
+                class="block text-sm font-medium text-gray-700"
+                style="font-family: Arial, sans-serif;">
+                Sélectionnez une année :
+                </label>
                 <PCalendar v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
               </div>
             </div>

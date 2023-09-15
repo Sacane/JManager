@@ -15,7 +15,7 @@ selectedMonth.value = months[0];
 </script>
 
 <template>
-  <div class="relative month-picker">
+  <div class="relative month-picker w40% h10%">
     <label for="monthDropdown" class="block text-sm font-medium text-gray-700">Sélectionnez un mois :</label>
     <select
       v-model="selectedMonth"
@@ -37,10 +37,11 @@ selectedMonth.value = months[0];
   
 
   
-  <style scoped>
-  .month-picker {
-    font-family: Arial, sans-serif;
-  }
+<style scoped>
+.month-picker {
+  font-family: Arial, sans-serif;
+  
+}
 
 option {
   padding: 0.5rem 1rem;
