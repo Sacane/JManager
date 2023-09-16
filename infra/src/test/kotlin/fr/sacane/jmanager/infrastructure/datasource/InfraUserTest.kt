@@ -29,13 +29,8 @@ class InfraUserTest {
     lateinit var accountRepository: AccountRepository
 
     fun basicUserTest(): UserResource {
-        return UserResource(null, "johan_test", Password("0101012000").get(),"johan.ramaroson@test.com", null,null)
+        return UserResource("johan_test", Password("0101012000").get(),"johan.ramaroson@test.com")
     }
-
-    fun basicSheetTest(): SheetResource {
-        return SheetResource()
-    }
-
     @AfterEach
     fun clear(){
         userRepository.deleteByUsername("johan_test")
@@ -50,12 +45,8 @@ class InfraUserTest {
         val byName = userRepository.findByUsername("johan_test")
         assertThat(byName).isNotNull
         assertThat(byName!!.username).isEqualTo(user.username)
-        val password = Password.fromBytes(byName.password!!)
+        val password = Password.fromBytes(byName.password)
         assertThat(passwordUser.matchWith(password))
-
-    }
-
-    fun `sheets on account should be created correctly`(){
 
     }
 
@@ -66,7 +57,7 @@ class InfraUserTest {
         user.accounts = mutableListOf()
         userRepository.save(user)
 
-        val byName = userRepository.findByUsername(user.username!!)
+        val byName = userRepository.findByUsername(user.username)
         val account = AccountResource()
         account.amount = 102.toDouble()
         account.label = "test account"
