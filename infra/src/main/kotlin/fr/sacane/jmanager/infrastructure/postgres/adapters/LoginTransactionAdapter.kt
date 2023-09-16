@@ -1,13 +1,13 @@
-package fr.sacane.jmanager.infrastructure.datasource.adapters
+package fr.sacane.jmanager.infrastructure.postgres.adapters
 
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.LoginManager
-import fr.sacane.jmanager.infrastructure.datasource.entity.Login
-import fr.sacane.jmanager.infrastructure.datasource.repositories.LoginRepository
-import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.postgres.entity.Login
+import fr.sacane.jmanager.infrastructure.postgres.repositories.LoginRepository
+import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -37,7 +37,8 @@ class LoginTransactionAdapter : LoginManager {
                 Login(
                     user=userResponse,
                     lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
-                ))
+                )
+            )
             LOGGER.info("User ${userResponse.username} logged in")
             UserToken(userResponse.toModel(), login.toModel())
         }

@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.api
+package fr.sacane.jmanager.infrastructure.rest
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ResponseStatus

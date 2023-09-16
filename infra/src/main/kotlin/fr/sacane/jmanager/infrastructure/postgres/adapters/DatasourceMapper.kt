@@ -1,7 +1,8 @@
-package fr.sacane.jmanager.infrastructure.datasource.adapters
+package fr.sacane.jmanager.infrastructure.postgres.adapters
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.datasource.entity.*
+import fr.sacane.jmanager.infrastructure.postgres.entity.*
 
 
 internal fun Sheet.asResource(): SheetResource {

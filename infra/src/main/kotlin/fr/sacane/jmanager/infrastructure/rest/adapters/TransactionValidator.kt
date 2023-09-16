@@ -1,11 +1,11 @@
-package fr.sacane.jmanager.infrastructure.api.adapters
+package fr.sacane.jmanager.infrastructure.rest.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.Administrator
 import fr.sacane.jmanager.domain.port.api.TransactionResolver
-import fr.sacane.jmanager.infrastructure.api.*
+import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service

@@ -1,12 +1,12 @@
-package fr.sacane.jmanager.infrastructure.api.controller
+package fr.sacane.jmanager.infrastructure.rest.controller
 
 
 import fr.sacane.jmanager.infrastructure.JmanagerApplication
-import fr.sacane.jmanager.infrastructure.api.adapters.TransactionValidator
-import fr.sacane.jmanager.infrastructure.api.adapters.UserControlAdapter
+import fr.sacane.jmanager.infrastructure.rest.adapters.TransactionValidator
+import fr.sacane.jmanager.infrastructure.rest.adapters.UserControlAdapter
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.infrastructure.api.TokenDTO
-import fr.sacane.jmanager.infrastructure.api.UserCategoryDTO
+import fr.sacane.jmanager.infrastructure.rest.TokenDTO
+import fr.sacane.jmanager.infrastructure.rest.UserCategoryDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired

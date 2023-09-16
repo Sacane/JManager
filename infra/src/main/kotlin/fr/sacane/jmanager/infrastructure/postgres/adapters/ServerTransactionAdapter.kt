@@ -1,14 +1,14 @@
-package fr.sacane.jmanager.infrastructure.datasource.adapters
+package fr.sacane.jmanager.infrastructure.postgres.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.datasource.entity.CategoryResource
-import fr.sacane.jmanager.infrastructure.datasource.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.datasource.repositories.CategoryRepository
-import fr.sacane.jmanager.infrastructure.datasource.repositories.SheetRepository
-import fr.sacane.jmanager.infrastructure.datasource.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.postgres.entity.CategoryResource
+import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.postgres.repositories.CategoryRepository
+import fr.sacane.jmanager.infrastructure.postgres.repositories.SheetRepository
+import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired

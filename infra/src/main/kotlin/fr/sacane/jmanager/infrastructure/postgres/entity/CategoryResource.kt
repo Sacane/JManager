@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.datasource.entity
+package fr.sacane.jmanager.infrastructure.postgres.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

@@ -1,18 +1,20 @@
-package fr.sacane.jmanager.infrastructure.api.controller
+package fr.sacane.jmanager.infrastructure.rest.controller
 
-import fr.sacane.jmanager.infrastructure.api.*
-import fr.sacane.jmanager.infrastructure.api.adapters.UserControlAdapter
+import fr.sacane.jmanager.infrastructure.rest.*
+import fr.sacane.jmanager.infrastructure.rest.adapters.UserControlAdapter
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
 
 @RestController
 @RequestMapping("/user")
-class ProfileController
+class ProfileController(
+    private val userAdapter: UserControlAdapter
+){
+    companion object {
+        val LOGGER: Logger = Logger.getLogger("ProfileController")
+    }
 
-(private val userAdapter: UserControlAdapter){
-
-        private val LOGGER: Logger = Logger.getLogger("ProfileController")
     private fun extractToken(authorization: String): String{
         return authorization.replace("Bearer ", "");
     }

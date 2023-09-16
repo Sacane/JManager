@@ -1,7 +1,7 @@
-package fr.sacane.jmanager.infrastructure.api.controller
+package fr.sacane.jmanager.infrastructure.rest.controller
 
-import fr.sacane.jmanager.infrastructure.api.*
-import fr.sacane.jmanager.infrastructure.api.adapters.TransactionValidator
+import fr.sacane.jmanager.infrastructure.rest.*
+import fr.sacane.jmanager.infrastructure.rest.adapters.TransactionValidator
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger

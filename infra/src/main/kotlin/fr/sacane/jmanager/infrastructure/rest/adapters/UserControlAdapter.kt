@@ -1,14 +1,14 @@
-package fr.sacane.jmanager.infrastructure.api.adapters
+package fr.sacane.jmanager.infrastructure.rest.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.Administrator
-import fr.sacane.jmanager.infrastructure.api.RegisteredUserDTO
-import fr.sacane.jmanager.infrastructure.api.UserDTO
-import fr.sacane.jmanager.infrastructure.api.UserPasswordDTO
-import fr.sacane.jmanager.infrastructure.api.UserStorageDTO
+import fr.sacane.jmanager.infrastructure.rest.RegisteredUserDTO
+import fr.sacane.jmanager.infrastructure.rest.UserDTO
+import fr.sacane.jmanager.infrastructure.rest.UserPasswordDTO
+import fr.sacane.jmanager.infrastructure.rest.UserStorageDTO
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service

@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.api
+package fr.sacane.jmanager.infrastructure.rest
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate

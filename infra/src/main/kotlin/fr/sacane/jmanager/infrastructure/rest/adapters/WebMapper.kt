@@ -1,7 +1,7 @@
-package fr.sacane.jmanager.infrastructure.api.adapters
+package fr.sacane.jmanager.infrastructure.rest.adapters
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.infrastructure.api.*
+import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import java.util.*
 
