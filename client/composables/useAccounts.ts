@@ -16,21 +16,12 @@ export default function useAccounts(){
     const accountFormatted = ref<AccountFormatted[]>([])
 
     async function fetch(): Promise<Array<AccountDTO>>  {
-        try {
-            const response = await axios.get(`${API_PATH}account/${user.value?.id}`,
-            {
-                headers: defaultHeaders.value
-            })
-            accounts.value = response.data
-            return response.data
-        }catch(error) {
-            console.error(error)
-            throw error
-        }
+        const response = await get(`account/${user.value?.id}`)
+        return response.data
     }
     
-    async function createAccount(labelAccount: string, amount: number) {
-        post('account/create', {
+    async function createAccount(labelAccount: string, amount: number): Promise<any> {
+        return post('account/create', {
             id: user.value?.id,
             labelAccount,
             amount

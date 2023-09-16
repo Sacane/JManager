@@ -23,10 +23,11 @@ const amount = reactive({
 const toAccount = async () => {
   const integer = parseFloat(`${amount.integerPart}`)
   await createAccount(newAccount.label, integer + parseFloat(`0.${amount.decimalPart}`))
-  .then(async () => {
-    await fetch()
-    await success('Le compte a bien été créé')
-  }).finally(async () => await navigateTo('/account'))
+  .then(() => {
+    fetch()
+    success('Le compte a bien été créé')
+    navigateTo('/account')
+  })
 }
 </script>
 

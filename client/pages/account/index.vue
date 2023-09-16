@@ -18,10 +18,11 @@ const toAdd = () => {
 }
 
 
-const data = ref([] as AccountFormatted[])
+const data = ref()
 
-onMounted(() => {
-  fetch().then(accountArray => {
+
+onMounted(async () => {
+  await fetch().then((accountArray) => {
     console.log(accountArray)
     format(accountArray)
     isAccountFilled.ok = data.value.length > 0
@@ -40,9 +41,8 @@ function format(accounts: Array<AccountDTO>) {
 
 function onRowClick(event: any) {
   navigateTo({
-    name: 'transaction',
+    path: '/account/' + event.data.id,
     query: {
-      id: event.data.id,
       labelAccount: event.data.labelAccount,
       amount: event.data.amount
     }

@@ -37,7 +37,7 @@ const onEdit = () => {
     accountAmount: data.accountAmount
   }, data.accountId).then(result => {
     navigateTo({
-      name: 'transaction',
+      path: '/account/' + data.accountId,
       query: {
         labelAccount: route.query.accountLabel,
         id: data.accountId,

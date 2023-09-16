@@ -1,8 +1,8 @@
 <script setup lang="ts">
 
-import useSheet from '../composables/useSheets';
-import { SheetDTO } from '../types/index';
-import useJToast from '../composables/useJToast';
+import useSheet from '../../composables/useSheets';
+import { SheetDTO } from '../../types/index';
+import useJToast from '../../composables/useJToast';
 
 definePageMeta({
   layout: 'sidebar-layout',     
@@ -39,7 +39,7 @@ const onConfirm = async () => {
       fetch()
       success('La transaction a bien été ajouté')
       navigateTo({
-      path:'/transaction',
+      path:'/account/'+values.accountId,
       query: {
         id: values.accountId,
         labelAccount: values.accountLabel,
