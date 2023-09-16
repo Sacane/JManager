@@ -57,7 +57,7 @@ data class AccountInfoDTO(
 )
 
 data class AccountDTO(
-    val id: Long,
+    val id: Long?,
     val amount: Double,
     val labelAccount: String,
     val sheets: List<SheetDTO>?
