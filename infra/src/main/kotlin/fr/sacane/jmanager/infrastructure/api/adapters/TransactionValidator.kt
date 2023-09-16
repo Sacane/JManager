@@ -52,7 +52,7 @@ class TransactionValidator(private val userRepository: Administrator) {
         if(response.isFailure()){
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        val mapped = response.map { p -> p!!.map { AccountDTO(it.id!!, it.sold, it.label,
+        val mapped = response.map { p -> p!!.map { AccountDTO(it.id, it.sold, it.label,
             it.sheets().map { s -> s.toDTO() }) } }
         return mapped.toResponseEntity()
     }

@@ -23,20 +23,13 @@ const data = reactive({
   isRangeSelected: false,
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
-  accountAmount: 0.0
+  accountAmount: 0.0,
+  dateYear: new Date(),
+  dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string)
 })
 
 const isSelectionOk = () => data.year !== 0 && data.month !== '' && data.labelAccount !== ''
 
-function selectYear(year: number) {
-  data.year = year
-  retrieveSheets()
-}
-
-function selectMonth(month: string) {
-  data.month = month
-  retrieveSheets()
-}
 
 function retrieveSheets() {
   if(!isSelectionOk()) {
@@ -50,6 +43,7 @@ function retrieveSheets() {
 const route = useRoute()
 
 const initAccount = () => {
+  data.month = monthFromNumber(new Date().getMonth() + 1) as string
   findById(parseFloat(route.query.id as string))
   .then((account) => {
     data.accountAmount = account.amount
@@ -63,15 +57,15 @@ const initAccount = () => {
 
 onMounted(async () => {
   initAccount()
-  
+
 })
 
 const jtoast = useJToast()
 
 
 // Fonction pour formater la date en format français (jour/mois/année)
-function formatDateToFrench(numbers: number[]) {
-  return new Date(numbers[0], numbers[1] - 1, numbers[2]).toLocaleDateString('fr-FR').replace(/\//g, '-');
+function formatDateToFrench(date: string) {
+  return new Date(date).toLocaleDateString('fr-FR').replace(/\//g, '-');
 }
 
 function gotoTransaction() {
@@ -91,11 +85,12 @@ const actualSheets = ref()
 const loadSheets = () => {
   fetch()
   actualSheets.value = data.currentSheets.map(sheet => {
+    console.log(sheet.date)
     return {
       ...sheet,
       expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
       incomeRepresenttation: (sheet.income > 0.0) ? `${sheet.income.toFixed(2)}€` : '/',
-      date: formatDateToFrench(sheet.date),
+      date: sheet.date,
       accountAmount: `${sheet.accountAmount.toFixed(2)}€`
     }
   })
@@ -144,6 +139,13 @@ const onEditPage = (event: any) => {
   })
 }
 
+const onYearChange = () => {
+  data.year = data.dateYear.getFullYear()
+  retrieveSheets()
+}
+
+
+
 </script>
 
 
@@ -158,32 +160,20 @@ const onEditPage = (event: any) => {
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
         <template #header>
-          <div style="text-align: left">
-            <div class="pl10px flex flex-row hauto">
-              <PButton v-for="year in years"
-              :class="{ 'bg-gray-300': data.year === year }"
-              :key="year"
-              w-auto b mr2
-              @click="selectYear(year)"
-              id="month"
-              class="year-btn"
-              >
-              {{ year }}
-              </PButton>
-              <PButton ml5px @click="addYear" class="year-btn">
-                +
-              </PButton>
-            </div>
-            <div class="pl10px flex flex-row buttons ">
-              <PButton v-for="(month, key) in months"
-              :key="key"
-              w-auto b
-              @click="selectMonth(month.toString())"
-              class="btn-small"
-              :class="{ 'bg-gray-300': data.month === month }"
-              >
-              {{ translate(month) }}
-              </PButton>
+          <div style="text-align: left" class="w35%">
+            <div class="pl10px flex flex-row hauto justify-around">
+
+              <MonthPicker v-model="data.month" v-on:vnode-updated="retrieveSheets()"/>
+
+              <div class="w40% h10%">
+                <label 
+                for="yearPicker" 
+                class="block text-sm font-medium text-gray-700"
+                style="font-family: Arial, sans-serif;">
+                Sélectionnez une année :
+                </label>
+                <PCalendar v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
+              </div>
             </div>
           </div>
         </template>

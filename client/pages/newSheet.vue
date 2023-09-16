@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import {useRouter} from 'vue-router'
 import useSheet from '../composables/useSheets';
 import { SheetDTO } from '../types/index';
 import useJToast from '../composables/useJToast';
@@ -10,18 +9,18 @@ definePageMeta({
 })
 
 const {success} = useJToast()
-const route = useRouter()
+const route = useRoute()
 const {saveSheet} = useSheet()
 const {fetch} = useAccounts()
 
 const values = reactive({
-  accountId: route.currentRoute.value.query.id,
-  accountLabel: route.currentRoute.value.query.label as string,
-  accountAmount: route.currentRoute.value.query.amount as string,
+  accountId: route.query.id,
+  accountLabel: route.query.label as string,
+  accountAmount: route.query.amount as string,
   amount: 0.0,
   selectedMode: 'expenses',
   sheetLabel: '',
-  date: new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')
+  date: new Date()
 })
 
 const onConfirm = async () => {
@@ -34,10 +33,10 @@ const onConfirm = async () => {
     label: values.sheetLabel,
     expenses: (values.selectedMode === 'expenses') ? values.amount : 0.0,
     income: (values.selectedMode === 'income') ? values.amount : 0.0,
-    date: values.date,
+    date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: parseFloat(values.accountAmount)
-  }).then(async (sheet: SheetDTO) => {
-      await fetch()
+  }).then((sheet: SheetDTO) => {
+      fetch()
       success('La transaction a bien été ajouté')
       navigateTo({
       path:'/transaction',
@@ -49,11 +48,6 @@ const onConfirm = async () => {
     })
   })
 }
-
-onMounted(() => {
-  console.log(route.currentRoute.value.query.id)
-})
-
 </script>
 
 

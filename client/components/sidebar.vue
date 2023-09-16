@@ -7,22 +7,25 @@ const { isAuthenticated, logout } = useAuth()
 
 <template>
   <div class="flex-column border-r decoration-none w-15% h-screen text-center justify-between">
-    <div class="mt5">
-      <NuxtLink to="/" class="font-bold mb-2 title">
+    <div>
+      <NuxtLink to="/" class="font-bold mb-2  h-full title">
         JManager
       </NuxtLink>
-      <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF color-#fff">
-        <i class="pi pi-home text-20px"></i>
-        Accueil
-      </NuxtLink>
-      <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF">
-        <i class="pi pi-user text-20px"/> Mes comptes
-      </NuxtLink>
-      <!--<NuxtLink v-if="isAuthenticated" to="/transaction" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF">
-        <i class="pi pi-money-bill text-20px"/> Mes transactions
-      </NuxtLink>-->
+      <div class="mt5">
+        <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
+          <i class="pi pi-home text-20px"></i>
+          Accueil
+        </NuxtLink>
+        <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
+          <i class="pi pi-user text-20px"/> Mes comptes
+        </NuxtLink>
+        <!--<NuxtLink v-if="isAuthenticated" to="/transaction" class="hover:bg-gray-200 px-4 py-2" active-class="bg-#7F52FF">
+          <i class="pi pi-money-bill text-20px"/> Mes transactions
+        </NuxtLink>-->
 
+      </div>
     </div>
+
     <div class="flex-row text-15px flex justify-center">
         <NuxtLink v-if="isAuthenticated" class="icon-btn mb2px" @click="logout()">
           <i class="pi pi-sign-out" />
@@ -38,9 +41,15 @@ const { isAuthenticated, logout } = useAuth()
 
 <style scoped lang="scss">
 
+.title {
+  background-color: #7F52FF;
+  color: white;
+  text-align: center;
+}
+
 @media screen and (min-width: 1201px) {
   .title{
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 }
 

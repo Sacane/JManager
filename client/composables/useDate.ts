@@ -1,19 +1,21 @@
+import { parse } from 'date-fns';
+
 export default function useDate() {
     function translate(month: string): string{
         let result = ''
         switch(month){
-          case 'JANUARY': result = 'JANVIER'; break;
-          case 'FEBRUARY': result = 'FEVRIER'; break;
-          case 'MARCH': result = 'MARS'; break;
-          case 'APRIL': result = 'AVRIL'; break;
-          case 'MAY': result = 'MAI'; break;
-          case 'JUNE': result = 'JUIN'; break;
-          case 'JULY': result = 'JUILLET'; break;
-          case 'AUGUST': result = 'AOUT'; break;
-          case 'SEPTEMBER': result = 'SEPTEMBRE'; break;
-          case 'OCTOBER': result = 'OCTOBRE'; break;
-          case 'NOVEMBER': result = 'NOVEMBRE'; break;
-          case 'DECEMBER': result = 'DECEMBRE'; break;
+          case 'JANUARY': return 'JANVIER';
+          case 'FEBRUARY': return 'FEVRIER'; 
+          case 'MARCH': return 'MARS';
+          case 'APRIL': return 'AVRIL';
+          case 'MAY': return 'MAI';
+          case 'JUNE': return 'JUIN';
+          case 'JULY': return 'JUILLET';
+          case 'AUGUST': return 'AOUT';
+          case 'SEPTEMBER': return 'SEPTEMBRE';
+          case 'OCTOBER': return 'OCTOBRE';
+          case 'NOVEMBER': return 'NOVEMBRE';
+          case 'DECEMBER': return 'DECEMBRE';
         }
         return result;
       }
@@ -51,5 +53,9 @@ export default function useDate() {
         'DECEMBER'
       ]
 
-      return {months, translate, monthFromNumber}
+      function dateFromString(dateString: string): Date {
+        return parse(dateString, 'dd-MM-yyyy', new Date())
+      }
+
+      return {months, translate, monthFromNumber, dateFromString}
 }

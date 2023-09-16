@@ -1,6 +1,8 @@
 
 <script setup lang="ts">
+
 const route = useRoute()
+const {dateFromString} = useDate()
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -11,7 +13,7 @@ const data = reactive({
   label: route.query.label as string,
   income: parseFloat(route.query.income as string),
   expenses: parseFloat(route.query.expenses as string),
-  date: route.query.date as string,
+  date: dateFromString(route.query.date as string),
   amount: 0,
   selectedMode: "expenses",
   accountAmount: parseFloat(route.query.accountAmount as string),
@@ -31,15 +33,9 @@ const onEdit = () => {
     label: data.label,
     expenses: data.selectedMode === 'expenses' ? data.amount : 0,
     income: data.selectedMode === 'income' ? data.amount : 0,
-    date: data.date,
+    date: data.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: data.accountAmount
   }, data.accountId).then(result => {
-    console.log(result)
-    console.log({
-        labelAccount: route.query.accountLabel,
-        id: route.query.accountID,
-        amount: route.query.currentAccountAmount
-      })
     navigateTo({
       name: 'transaction',
       query: {
@@ -50,10 +46,6 @@ const onEdit = () => {
     })
     
   })
-  .finally(() => {
-    
-  })
-
 }
 
 </script>

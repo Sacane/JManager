@@ -12,36 +12,26 @@ class SheetResource(
     @Column(unique = true, name = "id_sheet", nullable = false)
     var idSheet: Long? = null,
     @Column(name = "label_sheet")
-    var label: String? = null,
+    var label: String = "undefined",
     @Column(name="date")
-    var date: LocalDate? = null,
+    var date: LocalDate = LocalDate.now(),
     @Column(name="expenses")
-    var expenses: Double? = null,
+    var expenses: Double = 0.0,
     @Column(name="income")
-    var income: Double? = null,
+    var income: Double = 0.0,
     @Column(name="account_amount")
-    var accountAmount: Double? = null,
+    var accountAmount: Double = 0.0,
     @OneToOne
     @JoinTable(
         name = "sheet_category",
         joinColumns = [JoinColumn(name = "id_sheet")],
         inverseJoinColumns = [JoinColumn(name = "id_category")]
     )
-    var category: CategoryResource?=null,
+    var category: CategoryResource? = null,
     @Column
-    var position: Int? = 0
+    var position: Int = 0
 
 ){
-    constructor(
-        label: String?,
-        date: LocalDate?,
-        expenses: Double?,
-        income: Double?,
-        category: CategoryResource?,
-        accountAmount: Double,
-        position: Int
-    ): this(null, label, date, expenses, income, accountAmount, category, position)
-
     override fun toString(): String {
         return """
             label : $label

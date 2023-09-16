@@ -6,30 +6,19 @@ import jakarta.persistence.*
 @Entity
 @Table(name = "account")
 class AccountResource(
-    @Id
-    @GeneratedValue
-    @Column(name = "id_account")
-    var idAccount: Long? = null,
-
     @Column(name = "amount")
-    var amount: Double? = null,
-
+    var amount: Double = 0.0,
     @Column(name = "label", unique = true)
-    var label: String? = null,
-
-
+    var label: String = "undefined",
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
     @JoinTable(
         name = "account_sheet",
         joinColumns = [JoinColumn(name = "id_account")],
         inverseJoinColumns = [JoinColumn(name = "id_sheet")]
     )
-    var sheets: MutableList<SheetResource>? = null
-){
-    constructor(
-        amount: Double?,
-        label: String?,
-        sheets: MutableList<SheetResource>?
-    ) : this(null, amount, label, sheets)
-}
-
+    var sheets: MutableList<SheetResource> = mutableListOf(),
+    @Id
+    @GeneratedValue
+    @Column(name = "id_account")
+    var idAccount: Long? = null
+)

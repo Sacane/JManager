@@ -11,11 +11,11 @@ class Login(
     @Id
     @GeneratedValue
     @Column(name = "id_token")
-    var id: UUID?,
+    var id: UUID? = null,
 
     @GeneratedValue
     @Column(name="token")
-    var token: UUID?,
+    var token: UUID = UUID.randomUUID(),
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinTable(
@@ -23,18 +23,16 @@ class Login(
         joinColumns = [JoinColumn(name = "id_token")],
         inverseJoinColumns = [JoinColumn(name = "id_user")]
     )
-    var user: UserResource?,
+    var user: UserResource? = null,
 
     @Column(name = "last_refresh")
-    var lastRefresh: LocalDateTime?,
+    var lastRefresh: LocalDateTime = LocalDateTime.now(),
 
     @GeneratedValue
     @Column(name="refresh_token")
-    var refreshToken: UUID?
+    var refreshToken: UUID = UUID.randomUUID()
 
 ){
-    constructor(): this(null, null, null, null, null)
-    constructor(user: UserResource, lastRefresh: LocalDateTime): this(null, UUID.randomUUID(), user, lastRefresh, UUID.randomUUID())
     companion object{
         @Serial
         val serialVersionUID: Long = 423542135L

@@ -22,6 +22,7 @@
     "sass": "^1.66.1"
   },
   "dependencies": {
+    "date-fns": "^2.30.0",
     "primeicons": "^6.0.1",
     "primevue": "^3.34.0"
   }

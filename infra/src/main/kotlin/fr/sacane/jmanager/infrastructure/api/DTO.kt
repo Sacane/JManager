@@ -1,12 +1,13 @@
 package fr.sacane.jmanager.infrastructure.api
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate
 import java.time.Month
 
 data class UserDTO(
     val id: Long,
     val username: String,
-    val email: String
+    val email: String? = null
 )
 
 data class RegisteredUserDTO(
@@ -32,6 +33,7 @@ data class SheetDTO(
     val label: String,
     val expenses: Double,
     val income: Double,
+    @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
     val accountAmount: Double,
     val position: Int
@@ -55,7 +57,7 @@ data class AccountInfoDTO(
 )
 
 data class AccountDTO(
-    val id: Long,
+    val id: Long?,
     val amount: Double,
     val labelAccount: String,
     val sheets: List<SheetDTO>?
@@ -110,9 +112,9 @@ data class UserTokenDTO(
 )
 
 data class UserStorageDTO(
-    val id: Long,
+    val id: Long? = null,
     val username: String,
-    val email: String,
+    val email: String? = null,
     val token: String
 )
 
