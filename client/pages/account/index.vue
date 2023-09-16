@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import useAccounts, { AccountFormatted } from '../composables/useAccounts'
-import { AccountDTO } from '../types/index';
+import useAccounts, { AccountFormatted } from '../../composables/useAccounts'
+import { AccountDTO } from '../../types/index';
 definePageMeta({
   layout: 'sidebar-layout',
 })
@@ -14,7 +14,7 @@ const {success, error} = useJToast()
 const {fetch, deleteAccount} = useAccounts()
 const isAccountFilled = reactive({ ok: false })
 const toAdd = () => {
-  navigateTo('/addAccount')
+  navigateTo('/account/persist')
 }
 
 
@@ -55,7 +55,7 @@ const applyEdit = () => {
     return
   }
   navigateTo({
-    name: 'updateAccount',
+    path: '/account/edit',
     query: {
       id: row.value?.id,
       labelAccount: row.value?.labelAccount,
@@ -80,7 +80,6 @@ const applyDelete = () => {
 
 const row = ref<AccountDTO | undefined>(undefined)
 const actionSelection = ref<AccountDTO | undefined>(undefined)
-
 
 
 </script>

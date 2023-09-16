@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-import useJToast from '../composables/useJToast';
+import useJToast from '../../composables/useJToast';
 definePageMeta({
     layout: 'sidebar-layout'
 })

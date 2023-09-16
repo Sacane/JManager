@@ -10,7 +10,6 @@ import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
-import java.time.LocalDateTime
 import java.util.*
 import java.util.logging.Logger
 

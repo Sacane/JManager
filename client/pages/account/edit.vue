@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {useRouter} from 'vue-router';
-import { AccountDTO } from '../types/index';
-import useJToast from '../composables/useJToast';
+import { AccountDTO } from '../../types/index';
+import useJToast from '../../composables/useJToast';
 
 
 definePageMeta({
