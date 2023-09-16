@@ -25,15 +25,11 @@ const data = reactive({
   currentAccountId: '',
   accountAmount: 0.0,
   dateYear: new Date(),
-  dateMonth: new Date()
+  dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string)
 })
 
 const isSelectionOk = () => data.year !== 0 && data.month !== '' && data.labelAccount !== ''
 
-function selectMonth(month: string) {
-  data.month = month
-  retrieveSheets()
-}
 
 function retrieveSheets() {
   if(!isSelectionOk()) {
@@ -47,6 +43,7 @@ function retrieveSheets() {
 const route = useRoute()
 
 const initAccount = () => {
+  data.month = monthFromNumber(new Date().getMonth() + 1) as string
   findById(parseFloat(route.query.id as string))
   .then((account) => {
     data.accountAmount = account.amount
@@ -142,24 +139,12 @@ const onEditPage = (event: any) => {
   })
 }
 
-const cities = ref([
-    { name: 'New York', code: 'NY' },
-    { name: 'Rome', code: 'RM' },
-    { name: 'London', code: 'LDN' },
-    { name: 'Istanbul', code: 'IST' },
-    { name: 'Paris', code: 'PRS' }
-]);
-
-
 const onYearChange = () => {
   data.year = data.dateYear.getFullYear()
   retrieveSheets()
 }
 
-const onMonthChange = () => {
-  data.month = monthFromNumber(data.dateMonth.getMonth() + 1) as  string
-  retrieveSheets()
-}
+
 
 </script>
 
@@ -177,7 +162,9 @@ const onMonthChange = () => {
         <template #header>
           <div style="text-align: left" class="w35%">
             <div class="pl10px flex flex-row hauto justify-around">
-              <MonthPicker/>
+
+              <MonthPicker v-model="data.month" v-on:vnode-updated="retrieveSheets()"/>
+
               <div class="w40% h10%">
                 <label 
                 for="yearPicker" 

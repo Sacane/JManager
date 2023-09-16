@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, defineProps, defineEmits} from 'vue';
 
-// Liste des mois
-const months = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-];
+const date = useDate()
 
 // Variable pour stocker le mois sélectionné
-const selectedMonth = ref('');
+const selectedMonth = ref('')
+const { modelValue } = defineProps(['modelValue']);
+const emits = defineEmits(['update:modelValue']);
+const currentMonth = date.translate(date.monthFromNumber(new Date().getMonth() + 1) as string)
 
-// Initialisez la variable avec le premier mois
-selectedMonth.value = months[0];
+watchEffect(() => {
+  emits('update:modelValue', selectedMonth.value);
+});
+
+
 </script>
 
 <template>
@@ -22,10 +24,19 @@ selectedMonth.value = months[0];
       id="monthDropdown"
       class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md focus:border-indigo-300 sm:text-sm"
     >
+          <!-- Utilisez une option par défaut pour le placeholder -->
+        <option
+        :value="''"
+        :selected="selectedMonth === ''"
+        disabled
+        hidden
+      >
+      {{ currentMonth }}
+      </option>
       <option
-        v-for="(month, index) in months"
+        v-for="(month, index) in date.months.map(s => date.translate(s))"
         :key="index"
-        :value="month"
+        :value="date.months[index]"
         class="dropdown-option"
       >
         {{ month }}
