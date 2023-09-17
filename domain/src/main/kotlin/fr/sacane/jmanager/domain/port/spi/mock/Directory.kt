@@ -54,37 +54,37 @@ class Directory {
 
 
     @DefaultSource
-    inner class UserTransactionMock : UserTransaction {
+    inner class UserTransactionMock {
 
-        override fun findById(userId: UserId): UserToken? {
+        fun findById(userId: UserId): UserToken? {
             val user = userInventory.find { it.id.id == userId.id } ?: return null
             return tokenInventory[user.username]?.let { UserToken(user, it) }
         }
 
-        override fun findUserById(userId: UserId): User? {
+        fun findUserById(userId: UserId): User? {
             TODO("Not yet implemented")
         }
 
-        override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
+        fun checkUser(pseudonym: String, pwd: Password): UserToken? {
             TODO("Not yet implemented")
         }
-        override fun findByPseudonym(pseudonym: String): User? {
+        fun findByPseudonym(pseudonym: String): User? {
             return userInventory.find { it.username == pseudonym }
         }
-        override fun create(user: User): User? {
+        fun create(user: User): User? {
             return register(user)
         }
-        override fun register(user: User): User? {
+        fun register(user: User): User? {
             if(userInventory.find { it.username == user.username || it.id.id == user.id.id } != null) return null
             userInventory.add(user)
             return user
         }
-        override fun getUserToken(userId: UserId): Token? {
+        fun getUserToken(userId: UserId): Token? {
             val user = findById(userId) ?: return null
             return tokenInventory[user.user.username]
         }
 
-        override fun upsert(user: User): User? {
+        fun upsert(user: User): User? {
             TODO("Not yet implemented")
         }
     }

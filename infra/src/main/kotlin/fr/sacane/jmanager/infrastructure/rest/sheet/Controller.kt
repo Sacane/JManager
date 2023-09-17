@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.rest.sheet
 
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Token
-import fr.sacane.jmanager.domain.port.api.TransactionResolver
+import fr.sacane.jmanager.domain.port.api.SheetFeature
 import fr.sacane.jmanager.infrastructure.extractToken
 import fr.sacane.jmanager.infrastructure.rest.*
 import fr.sacane.jmanager.infrastructure.rest.id
@@ -18,7 +18,7 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("/sheet")
 class SheetController(
-    private val transactionResolver: TransactionResolver
+    private val transactionResolver: SheetFeature
 ) {
 
     @PostMapping("/save")

@@ -1,15 +1,11 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
-import fr.sacane.jmanager.domain.hexadoc.DomainSide
-import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.LoginManager
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.util.logging.Logger
 
-
-@Port(DomainSide.API)
 sealed interface Administrator {
     fun login(pseudonym: String, userPassword: Password): Response<UserToken>
     fun logout(userId: UserId, userToken: Token): Response<Nothing>
