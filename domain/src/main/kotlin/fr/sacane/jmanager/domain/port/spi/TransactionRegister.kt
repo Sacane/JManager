@@ -1,9 +1,9 @@
 package fr.sacane.jmanager.domain.port.spi
-import fr.sacane.jmanager.domain.hexadoc.DomainSide
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
 
-@Port(DomainSide.DATASOURCE)
+@Port(Side.DATASOURCE)
 interface TransactionRegister {
 
     companion object{

@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.postgres.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
-import fr.sacane.jmanager.domain.hexadoc.DomainSide
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.infrastructure.postgres.entity.CategoryResource
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 
 
 @Service
-@Adapter(DomainSide.DATASOURCE)
+@Adapter(Side.DATASOURCE)
 class ServerTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userRepository: UserRepository,

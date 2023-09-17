@@ -1,10 +1,10 @@
 package fr.sacane.jmanager.domain.port.spi
 
-import fr.sacane.jmanager.domain.hexadoc.DomainSide
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
 
-@Port(DomainSide.DATASOURCE)
+@Port(Side.DATASOURCE)
 interface LoginManager {
     fun login(userPseudonym: String, password: Password): UserToken?
     fun logout(userId: UserId, token: Token): Token?

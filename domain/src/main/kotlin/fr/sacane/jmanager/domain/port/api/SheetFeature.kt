@@ -1,11 +1,14 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
+import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.Month
 
+@Port(Side.API)
 sealed interface SheetFeature {
     fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet>
     fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>>

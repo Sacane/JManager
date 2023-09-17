@@ -4,7 +4,7 @@ import java.lang.annotation.Inherited
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)
-annotation class Port(val domainSide: DomainSide = DomainSide.UNSPECIFIED)
+annotation class Port(val domainSide: Side = Side.UNSPECIFIED)
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)
@@ -15,9 +15,9 @@ annotation class DefaultSource
 @Inherited
 annotation class DomainImplementation
 
-annotation class Adapter(val domainSide: DomainSide = DomainSide.UNSPECIFIED)
+annotation class Adapter(val domainSide: Side = Side.UNSPECIFIED)
 
-enum class DomainSide{
+enum class Side{
     DATASOURCE,
     API,
     UNSPECIFIED

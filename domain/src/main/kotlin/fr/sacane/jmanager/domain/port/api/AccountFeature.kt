@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
-import fr.sacane.jmanager.domain.hexadoc.DomainSide
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Response
@@ -10,7 +10,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 
-@Port(DomainSide.API)
+@Port(Side.API)
 sealed interface AccountFeature {
     fun findAccountById(userId: UserId, accountID: Long, token: Token): Response<Account>
     fun editAccount(userID: Long, account: Account, token: Token): Response<Account>

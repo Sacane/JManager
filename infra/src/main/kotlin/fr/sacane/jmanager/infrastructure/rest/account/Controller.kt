@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.rest.account
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
-import fr.sacane.jmanager.domain.hexadoc.DomainSide
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.infrastructure.extractToken
@@ -17,7 +17,7 @@ import java.util.logging.Logger
 
 @RestController
 @RequestMapping("/account")
-@Adapter(DomainSide.API)
+@Adapter(Side.API)
 class AccountController (
     private val feature: AccountFeature
 ){
