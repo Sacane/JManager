@@ -1,12 +1,11 @@
-package fr.sacane.jmanager.infrastructure.rest.adapters
+package fr.sacane.jmanager.infrastructure.rest
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.infrastructure.rest.*
 import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
+import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
 import fr.sacane.jmanager.infrastructure.rest.user.RegisteredUserDTO
 import fr.sacane.jmanager.infrastructure.rest.user.UserDTO
 import org.springframework.http.ResponseEntity
-import java.util.*
 
 internal fun Account.toDTO(): AccountDTO {
     return AccountDTO(
@@ -46,19 +45,3 @@ internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
         ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
     }
 }
-
-internal fun TokenDTO.toToken(): Token {
-    return Token(UUID.fromString(this.token), null, UUID.fromString(this.refreshToken))
-}
-
-internal fun Token.toDTO(): TokenDTO {
-    return TokenDTO(this.id.toString(), this.refreshToken.toString())
-}
-
-//internal fun UserCredentialsDTO.toDataModel(): CredData{
-//    return CredData(
-//        this.id.id(),
-//        Password(this.password)
-//    )
-//}
-//data class CredData (val user: UserId, val password: Password, val token: Token)

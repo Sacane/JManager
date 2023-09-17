@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure.rest.account
 
-import fr.sacane.jmanager.infrastructure.rest.SheetDTO
+import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
 
 
 data class AccountDTO(

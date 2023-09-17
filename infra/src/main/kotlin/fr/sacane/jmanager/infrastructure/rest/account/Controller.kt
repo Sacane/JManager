@@ -5,10 +5,10 @@ import fr.sacane.jmanager.domain.hexadoc.DomainSide
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.TransactionResolver
 import fr.sacane.jmanager.infrastructure.extractToken
-import fr.sacane.jmanager.infrastructure.rest.adapters.id
-import fr.sacane.jmanager.infrastructure.rest.adapters.toDTO
-import fr.sacane.jmanager.infrastructure.rest.adapters.toModel
-import fr.sacane.jmanager.infrastructure.rest.adapters.toResponseEntity
+import fr.sacane.jmanager.infrastructure.rest.id
+import fr.sacane.jmanager.infrastructure.rest.toDTO
+import fr.sacane.jmanager.infrastructure.rest.toModel
+import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*

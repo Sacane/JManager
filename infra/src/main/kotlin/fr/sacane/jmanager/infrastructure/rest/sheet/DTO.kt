@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest
+package fr.sacane.jmanager.infrastructure.rest.sheet
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate
@@ -45,16 +45,6 @@ data class UserAccountSheetDTO(
     val accountLabel: String,
     val sheetDTO: SheetDTO
 )
-data class UserCategoryDTO(
-    val userId: Long,
-    val label: String
-)
-
-data class TokenDTO(
-    val token: String,
-    val refreshToken: String
-)
-
 
 data class AccountSheetIdsDTO(
     val accountId: Long,
