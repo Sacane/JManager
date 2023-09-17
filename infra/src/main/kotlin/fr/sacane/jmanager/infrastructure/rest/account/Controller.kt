@@ -20,8 +20,8 @@ import java.util.logging.Logger
 @Adapter(Side.API)
 class AccountController (
     private val feature: AccountFeature
-){
-    companion object{
+) {
+    companion object {
         private val LOGGER: Logger = Logger.getLogger("AccountController")
     }
 
@@ -29,14 +29,15 @@ class AccountController (
     fun findAccount(
         @PathVariable id: Long,
         @PathVariable label: String,
-        @RequestHeader("Authorization") token: String)
+        @RequestHeader("Authorization") token: String
+    )
             : ResponseEntity<AccountDTO> {
         val accounts = feature.retrieveAllRegisteredAccounts(
             id.id(),
             Token(UUID.fromString(extractToken(token)))
         )
-        if(accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
-        return accounts.map{list ->
+        if (accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
+        return accounts.map { list ->
             list?.find { it.label == label }?.toDTO()!!
         }.toResponseEntity()
     }
@@ -46,8 +47,12 @@ class AccountController (
         @RequestBody userAccount: UserAccountDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountInfoDTO> {
-        val response = feature.save(userAccount.id.id(), Token(UUID.fromString(token), null, UUID.randomUUID()), Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount))
-        if(response.isFailure()){
+        val response = feature.save(
+            userAccount.id.id(),
+            Token(UUID.fromString(token), null, UUID.randomUUID()),
+            Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount)
+        )
+        if (response.isFailure()) {
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
         return response.map { AccountInfoDTO(it!!.sold, it.label) }.toResponseEntity()
@@ -57,20 +62,31 @@ class AccountController (
     fun getAccounts(
         @PathVariable id: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<List<AccountDTO>>{
-        val response = feature.retrieveAllRegisteredAccounts(id.id(), Token(UUID.fromString(extractToken(token)), null, UUID.randomUUID()))
-        if(response.isFailure()){
+    ): ResponseEntity<List<AccountDTO>> {
+        val response = feature.retrieveAllRegisteredAccounts(
+            id.id(),
+            Token(UUID.fromString(extractToken(token)), null, UUID.randomUUID())
+        )
+        if (response.isFailure()) {
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        val mapped = response.map { p -> p!!.map { AccountDTO(it.id, it.sold, it.label,
-            it.sheets().map { s -> s.toDTO() }) } }
+        val mapped = response.map { p ->
+            p!!.map {
+                AccountDTO(it.id, it.sold, it.label,
+                    it.sheets().map { s -> s.toDTO() })
+            }
+        }
         return mapped.toResponseEntity()
     }
 
     @PostMapping(path = ["update/{userID}"])
-    fun updateAccount(@PathVariable userID: Long, @RequestBody account: AccountDTO, @RequestHeader("Authorization") token: String): ResponseEntity<AccountDTO>
-            = feature.editAccount(userID, account.toModel(), Token(UUID.fromString(extractToken(token))))
-        .map { it!!.toDTO() }.toResponseEntity()
+    fun updateAccount(
+        @PathVariable userID: Long,
+        @RequestBody account: AccountDTO,
+        @RequestHeader("Authorization") token: String
+    ): ResponseEntity<AccountDTO> =
+        feature.editAccount(userID, account.toModel(), Token(UUID.fromString(extractToken(token))))
+            .map { it!!.toDTO() }.toResponseEntity()
 
 
     @DeleteMapping(path = ["{userId}/delete/{accountId}"])
@@ -78,17 +94,14 @@ class AccountController (
         @PathVariable userId: Long,
         @PathVariable accountId: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<Nothing>
-            = feature.deleteAccountById(userId.id(), accountId).toResponseEntity()
+    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId).toResponseEntity()
 
     @GetMapping("/user/{userID}/find/{accountID}")
     fun findAccountById(
         @PathVariable("userID") userID: Long,
         @PathVariable("accountID") accountID: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountDTO>
-    = feature.findAccountById(userID.id(), accountID, Token(UUID.fromString(extractToken(token))))
-        .mapTo {
-            Response.ok(it!!.toDTO())
-        }.toResponseEntity()
-}
+    ): ResponseEntity<AccountDTO> =
+        feature.findAccountById(userID.id(), accountID, Token(UUID.fromString(extractToken(token))))
+            .map { it?.toDTO()!! }.toResponseEntity()
+    }

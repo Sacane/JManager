@@ -25,22 +25,25 @@ class AccountFeatureImpl(
     private val register: TransactionRegister,
     private val userTransaction: UserTransaction
 ): AccountFeature {
-    override fun findAccountById(userId: UserId, accountID: Long, token: Token): Response<Account> {
-        userTransaction.findById(userId)?.checkForIdentity(token) ?: return Response.notFound("L'utlisateur est inconnue")
-        return register.findAccountById(accountID).run {
-            this ?: return Response.notFound("Le compte n'existe pas")
+    override fun findAccountById(
+        userId: UserId,
+        accountID: Long,
+        token: Token
+    ): Response<Account> = userTransaction.authenticate(userId, token) {
+        register.findAccountById(accountID)?.run {
             Response.ok(this)
-        }
+        }?: Response.notFound("Le compte est introuvable")
     }
 
+
     override fun editAccount(userID: Long, account: Account, token: Token): Response<Account> {
-        val user = userTransaction.findById(UserId(userID)) ?: return Response.notFound()
-        user.checkForIdentity(token) ?: return Response.invalid()
-        val accountID = account.id ?: return Response.notFound()
-        val oldAccount = register.findAccountById(accountID) ?: return Response.notFound()
-        oldAccount.updateFrom(account)
-        val registered = register.persist(oldAccount) ?: return Response.invalid()
-        return Response.ok(registered)
+        return userTransaction.authenticate(UserId(userID), token) {
+            val accountID = account.id ?: return@authenticate Response.notFound()
+            val oldAccount = register.findAccountById(accountID) ?: return@authenticate Response.notFound()
+            oldAccount.updateFrom(account)
+            val registered = register.persist(oldAccount) ?: return@authenticate Response.invalid()
+            Response.ok(registered)
+        }
     }
 
     override fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing> {

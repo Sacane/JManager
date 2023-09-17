@@ -19,6 +19,14 @@ data class Token(
         }
         return lastRefresh.isBefore(LocalDateTime.now())
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Token && other.id == id
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
 }
 data class UserToken(
     val user: User,

@@ -73,7 +73,7 @@ class ServerUserAdapter (
 
     override fun getUserToken(userId: UserId): Token? {
         val id = userId.id ?: return null
-        val user = userRepository.findById(id).orElseThrow()
+        val user = userRepository.findById(id).orElse(null) ?: return null
         return loginRepository.findByUser(user)?.toModel()
     }
 }

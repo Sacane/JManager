@@ -65,12 +65,12 @@ class LoginTransactionAdapter(
         return UserToken(user.toModel(), login.toModel())
     }
 
-    override fun tokenBy(userId: UserId): Token? {
+    override fun tokenBy(userId: UserId): UserToken? {
         val id = userId.id ?: return null
         val user = userRepository.findById(id)
         if(user.isEmpty) return null
         val token = loginRepository.findByUser(user.get()) ?: return null
-        return token.toModel()
+        return UserToken(user.get().toModel(), token.toModel())
     }
 
     override fun generateToken(user: User): Token? {
@@ -83,5 +83,9 @@ class LoginTransactionAdapter(
                 user = userResponse.get(),
                 lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
             ).toModel()
+    }
+
+    override fun deleteToken(login: Login) {
+        loginRepository.delete(login)
     }
 }
