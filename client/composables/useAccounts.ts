@@ -11,7 +11,7 @@ export interface AccountFormatted{
 
 export default function useAccounts(){
     const accounts: Ref<Array<AccountDTO>> = ref([])
-    const {user, defaultHeaders} = useAuth()
+    const {user} = useAuth()
     const {get, post, deleteQuery} = useQuery()
     const accountFormatted = ref<AccountFormatted[]>([])
 

@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.models
 import java.time.Month
 
 class Account(
-        val id: Long?,
+        val id: Long? = null,
         private var amount: Double,
         private var labelAccount: String,
         val sheets: MutableList<Sheet> = mutableListOf()

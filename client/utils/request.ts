@@ -1,1 +1,1 @@
-export const API_PATH = 'http://localhost:8088/'
+export const API_PATH = 'http://localhost:8088/api/'
