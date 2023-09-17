@@ -7,7 +7,6 @@ import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import fr.sacane.jmanager.infrastructure.postgres.entity.Login
 import fr.sacane.jmanager.infrastructure.postgres.repositories.LoginRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.*
@@ -15,11 +14,10 @@ import java.util.logging.Logger
 
 @Service
 @Adapter(DomainSide.DATASOURCE)
-class ServerUserAdapter : UserTransaction{
-    @Autowired
-    private lateinit var userRepository: UserRepository
-    @Autowired
-    private lateinit var loginRepository: LoginRepository
+class ServerUserAdapter (
+    private val userRepository: UserRepository,
+    private val loginRepository: LoginRepository
+) : UserTransaction{
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }

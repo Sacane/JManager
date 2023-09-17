@@ -9,26 +9,17 @@ import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.CategoryRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.SheetRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
-import jakarta.transaction.Transactional
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 
 @Service
 @Adapter(DomainSide.DATASOURCE)
-class ServerTransactionAdapter(private val sheetRepository: SheetRepository) : TransactionRegister{
-
-    companion object{
-        private val LOGGER = LoggerFactory.getLogger("infra.server.adapters.ServerAdapter")
-    }
-
-    @Autowired
-    private lateinit var userRepository: UserRepository
-    @Autowired
-    private lateinit var accountRepository: AccountRepository
-    @Autowired
-    private lateinit var categoryRepository: CategoryRepository
+class ServerTransactionAdapter(
+    private val sheetRepository: SheetRepository,
+    private val userRepository: UserRepository,
+    private val accountRepository: AccountRepository,
+    private val categoryRepository: CategoryRepository
+    ) : TransactionRegister{
 
     override fun persist(userId: UserId, account: Account): User? {
         val id = userId.id ?: return null
