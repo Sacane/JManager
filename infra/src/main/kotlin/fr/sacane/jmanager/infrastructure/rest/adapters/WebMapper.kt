@@ -2,6 +2,9 @@ package fr.sacane.jmanager.infrastructure.rest.adapters
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.rest.*
+import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
+import fr.sacane.jmanager.infrastructure.rest.user.RegisteredUserDTO
+import fr.sacane.jmanager.infrastructure.rest.user.UserDTO
 import org.springframework.http.ResponseEntity
 import java.util.*
 

@@ -3,7 +3,6 @@ package fr.sacane.jmanager.infrastructure.rest.controller
 
 import fr.sacane.jmanager.infrastructure.JmanagerApplication
 import fr.sacane.jmanager.infrastructure.rest.adapters.TransactionValidator
-import fr.sacane.jmanager.infrastructure.rest.adapters.UserControlAdapter
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.rest.TokenDTO
 import fr.sacane.jmanager.infrastructure.rest.UserCategoryDTO
@@ -25,8 +24,6 @@ class CategoryController {
     @Autowired
     private lateinit var apiAdapter: TransactionValidator
 
-    @Autowired
-    private lateinit var userAdapter: UserControlAdapter
 
 
     @PostMapping(path = ["user/category"])
