@@ -4,7 +4,6 @@ import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.Administrator
 import fr.sacane.jmanager.infrastructure.extractToken
-import fr.sacane.jmanager.infrastructure.rest.adapters.*
 import fr.sacane.jmanager.infrastructure.rest.id
 import fr.sacane.jmanager.infrastructure.rest.toDTO
 import fr.sacane.jmanager.infrastructure.rest.toModel
