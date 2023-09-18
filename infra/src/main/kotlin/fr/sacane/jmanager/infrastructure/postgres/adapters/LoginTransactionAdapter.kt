@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.LoginManager
+import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
 import fr.sacane.jmanager.infrastructure.postgres.entity.Login
 import fr.sacane.jmanager.infrastructure.postgres.repositories.LoginRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
@@ -18,7 +18,7 @@ import java.util.logging.Logger
 class LoginTransactionAdapter(
     private val userRepository: UserRepository,
     private val loginRepository: LoginRepository
-) : LoginManager {
+) : LoginRegisterManager {
     companion object{
         private const val DEFAULT_TOKEN_LIFETIME_IN_HOURS = 1L //1hour
 //        private const val DEFAULT_REFRESH_TOKEN_LIFETIME = 60L* 60L * 24L * 5L * 1000L // 5 days
@@ -85,7 +85,8 @@ class LoginTransactionAdapter(
             ).toModel()
     }
 
-    override fun deleteToken(login: Login) {
-        loginRepository.delete(login)
+    override fun deleteToken(userId: UserId) {
+        TODO("Not yet implemented")
     }
+
 }

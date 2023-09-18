@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.LoginManager
+import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.util.logging.Logger
 
@@ -16,10 +16,10 @@ sealed interface Administrator {
 }
 
 @DomainImplementation
-class LoginManager(private val loginInventory: LoginManager, private val userTransaction: UserTransaction): Administrator{
+class LoginManager(private val loginInventory: LoginRegisterManager, private val userTransaction: UserTransaction): Administrator{
 
     companion object{
-        private val LOGGER = Logger.getLogger(LoginManager::class.java.name)
+        private val LOGGER = Logger.getLogger(LoginRegisterManager::class.java.name)
     }
     override fun login(pseudonym: String, userPassword: Password): Response<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")

@@ -5,8 +5,10 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Response
+import fr.sacane.jmanager.domain.models.Response.Companion.invalid
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 
@@ -23,63 +25,75 @@ sealed interface AccountFeature {
 @DomainImplementation
 class AccountFeatureImpl(
     private val register: TransactionRegister,
-    private val userTransaction: UserTransaction
+    private val userTransaction: UserTransaction,
+    private val loginManager: LoginRegisterManager
 ): AccountFeature {
     override fun findAccountById(
         userId: UserId,
         accountID: Long,
         token: Token
-    ): Response<Account> = userTransaction.authenticate(userId, token) {
+    ): Response<Account> = loginManager.authenticate(userId, token) {
         register.findAccountById(accountID)?.run {
             Response.ok(this)
         }?: Response.notFound("Le compte est introuvable")
     }
 
 
-    override fun editAccount(userID: Long, account: Account, token: Token): Response<Account> {
-        return userTransaction.authenticate(UserId(userID), token) {
-            val accountID = account.id ?: return@authenticate Response.notFound()
-            val oldAccount = register.findAccountById(accountID) ?: return@authenticate Response.notFound()
-            oldAccount.updateFrom(account)
-            val registered = register.persist(oldAccount) ?: return@authenticate Response.invalid()
-            Response.ok(registered)
-        }
+    override fun editAccount(
+        userID: Long,
+        account: Account,
+        token: Token
+    ): Response<Account> = loginManager.authenticate(UserId(userID), token) {
+        val accountID = account.id ?: return@authenticate Response.notFound()
+        val oldAccount = register.findAccountById(accountID) ?: return@authenticate Response.notFound()
+        oldAccount.updateFrom(account)
+        val registered = register.persist(oldAccount) ?: return@authenticate invalid()
+        Response.ok(registered)
     }
+
 
     override fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing> {
         val profile = userTransaction.findUserById(profileID) ?: return Response.notFound()
         profile.accounts.removeIf { it.id == accountID }
-        userTransaction.upsert(profile)!!
+        userTransaction.upsert(profile) ?: return invalid("Une erreur s'est produite lors de l'insertion du compte")
         register.deleteAccountByID(accountID)
         return Response.ok()
     }
 
-    override fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account> {
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid()
-        userResponse.checkForIdentity(token) ?: return Response.invalid()
-        val targetOne = userResponse.user.accounts().find { it.label == label } ?: return Response.notFound()
-        return Response.ok(targetOne)
+    override fun retrieveAccountByIdentityAndLabel(
+        userId: UserId,
+        token: Token,
+        label: String
+    ): Response<Account> = loginManager.authenticate(userId, token) {
+        Response.ok(
+            it.accounts()
+            .find { acc -> acc.label == label }
+            ?: return@authenticate Response.notFound("Le compte $label n'est pas enregistré en base")
+        )
     }
 
-    override fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>> {
-        println("User id : $userId")
-        val userResponse = userTransaction.findById(userId) ?: return Response.invalid(TransactionRegister.missingUserMessage)
-        userResponse.checkForIdentity(token) ?: return Response.invalid(TransactionRegister.timeoutMessage)
-        return Response.ok(userResponse.user.accounts())
+
+    override fun retrieveAllRegisteredAccounts(
+        userId: UserId,
+        token: Token
+    ): Response<List<Account>> = loginManager.authenticate(userId, token) {
+        Response.ok(it.accounts())
     }
 
-    override fun save(userId: UserId, token: Token, account: Account): Response<Account> {
-        val tokenResponse = userTransaction.getUserToken(userId) ?: return Response.invalid(TransactionRegister.missingUserMessage)
-        if(tokenResponse.id != token.id) {
-            return Response.timeout(TransactionRegister.timeoutMessage)
-        }
+    override fun save(
+        userId: UserId,
+        token: Token,
+        account: Account
+    ): Response<Account> = loginManager.authenticate(userId, token) {
         val ticket = userTransaction.findById(userId)
-        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return Response.notFound(TransactionRegister.missingUserMessage)) {
-            return Response.invalid("Le profil contient déjà un compte avec ce label")
+        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return@authenticate Response.notFound(TransactionRegister.missingUserMessage)) {
+            return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
-        val userSaved = register.persist(userId, account) ?: return Response.invalid("Impossible de créer un compte")
-        return Response.ok(userSaved.accounts().find { it.label == account.label }
-            ?: return Response.notFound("Le compte créé n'a pas été sauvegardé correctement"))
+        val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")
+        Response.ok(userSaved.accounts().find { it.label == account.label }
+            ?: return@authenticate Response.notFound("Le compte créé n'a pas été sauvegardé correctement"))
     }
+
+
 
 }

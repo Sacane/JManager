@@ -20,7 +20,8 @@ sealed interface SheetFeature {
 @DomainImplementation
 class SheetFeatureImplementation(
     private val register: TransactionRegister,
-    private val userTransaction: UserTransaction
+    private val userTransaction: UserTransaction,
+    private val loginManager: LoginManager
 ): SheetFeature{
 
     private fun updateSheetSold(account: Account, update: Boolean = true){
