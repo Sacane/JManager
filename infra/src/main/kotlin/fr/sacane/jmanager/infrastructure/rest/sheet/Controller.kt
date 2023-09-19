@@ -1,5 +1,7 @@
 package fr.sacane.jmanager.infrastructure.rest.sheet
 
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.SheetFeature
@@ -17,6 +19,7 @@ import java.util.logging.Logger
 
 @RestController
 @RequestMapping("/sheet")
+@Adapter(Side.API)
 class SheetController(
     private val transactionResolver: SheetFeature
 ) {

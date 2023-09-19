@@ -41,7 +41,7 @@ class ServerUserAdapter (
         }
         val token = Login(user = user) // TODO Implement token implementation
         val tokenBack = loginRepository.save(token)
-        return UserToken(user.toModel(), Token(tokenBack.id ?: UUID.randomUUID(), tokenBack.lastRefresh, tokenBack.refreshToken))
+        return UserToken(user.toModel(), Token(tokenBack.id ?: UUID.randomUUID(), tokenBack.tokenLifeTime, tokenBack.refreshToken))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {

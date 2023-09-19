@@ -12,6 +12,7 @@ interface LoginRegisterManager {
     fun tokenBy(userId: UserId): UserToken?
     fun generateToken(user: User): Token?
     fun deleteToken(userId: UserId)
+    fun refreshTokenLifetime(userID: UserId, refreshLifeTime: Boolean = false): Token?
 
     fun <T> authenticate(userId: UserId, token: Token, action: (user: User) -> Response<T>): Response<T> {
         val userToken = tokenBy(userId) ?: return Response.notFound("Il n'existe pas d'utilisateur avec cette ID : $userId")
@@ -21,7 +22,7 @@ interface LoginRegisterManager {
         if(userToken.token != token) {
             return Response.invalid("Le token n'est pas valide")
         }
-        
+        refreshTokenLifetime(userId, false)
         return action(userToken.user)
     }
 }

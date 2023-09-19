@@ -5,9 +5,11 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
+import fr.sacane.jmanager.infrastructure.Environment
 import fr.sacane.jmanager.infrastructure.postgres.entity.Login
 import fr.sacane.jmanager.infrastructure.postgres.repositories.LoginRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.rest.InvalidRequestException
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
@@ -33,7 +35,7 @@ class LoginTransactionAdapter(
             val login = loginRepository.save(
                 Login(
                     user=userResponse,
-                    lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
+                    tokenLifeTime = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
                 )
             )
             LOGGER.info("User ${userResponse.username} logged in")
@@ -60,7 +62,7 @@ class LoginTransactionAdapter(
         val login = loginRepository.findByUser(user) ?: return null
         login.id = UUID.randomUUID()
         login.refreshToken = UUID.randomUUID()
-        login.lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
+        login.tokenLifeTime = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS)
         loginRepository.save(login)
         return UserToken(user.toModel(), login.toModel())
     }
@@ -81,12 +83,29 @@ class LoginTransactionAdapter(
             .saveAndFlush(
                 Login(
                 user = userResponse.get(),
-                lastRefresh = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
+                tokenLifeTime = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
             ).toModel()
     }
 
     override fun deleteToken(userId: UserId) {
-        TODO("Not yet implemented")
+        val id = userId.id ?: return
+        val user = userRepository.findById(id)
+            .orElse(null) ?: return
+        val token = loginRepository.findByUser(user) ?: return
+        loginRepository.deleteById(token.id ?: throw InvalidRequestException("Impossible de supprimer le token car son ID est null"))
+    }
+
+    override fun refreshTokenLifetime(userID: UserId, refreshLifeTime: Boolean): Token? {
+        val id = userID.id ?: return null
+        val user = userRepository.findById(id)
+            .orElse(null) ?: return null
+        val token = loginRepository.findByUser(user) ?: return null
+        return loginRepository.saveAndFlush(token.also {
+            it.tokenLifeTime = LocalDateTime.now().plusHours(Environment.DEFAULT_TOKEN_LIFETIME_IN_HOURS)
+            if(refreshLifeTime) {
+                it.refreshTokenLifetime = LocalDateTime.now().plusDays(Environment.DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)
+            }
+        }).toModel()
     }
 
 }

@@ -1,5 +1,7 @@
 package fr.sacane.jmanager.infrastructure.rest.user
 
+import fr.sacane.jmanager.domain.hexadoc.Adapter
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.Administrator
@@ -15,6 +17,7 @@ import java.util.logging.Logger
 
 @RestController
 @RequestMapping("/user")
+@Adapter(Side.API)
 class ProfileController(
     private val administrator: Administrator
 ){
@@ -25,9 +28,9 @@ class ProfileController(
     @PostMapping(path= ["/auth"])
     fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO> {
         val response = administrator.login(userDTO.username, Password(userDTO.password))
-        LOGGER.info("Trying to login user ${userDTO.password} with password ${userDTO.password}")
+        LOGGER.info("Trying to login user ${userDTO.username}")
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return response.map { u -> UserStorageDTO(u!!.user.id.id!!, u.user.username, u.user.email, u.token.id.toString()) }.toResponseEntity()
+        return response.map { u -> UserStorageDTO(u!!.user.id.id!!, u.user.username, u.user.email, u.token.value.toString()) }.toResponseEntity()
     }
 
     @PostMapping(path = ["/logout/{id}"])

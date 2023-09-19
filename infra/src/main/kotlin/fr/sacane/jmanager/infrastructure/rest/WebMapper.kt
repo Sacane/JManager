@@ -7,14 +7,13 @@ import fr.sacane.jmanager.infrastructure.rest.user.RegisteredUserDTO
 import fr.sacane.jmanager.infrastructure.rest.user.UserDTO
 import org.springframework.http.ResponseEntity
 
-internal fun Account.toDTO(): AccountDTO {
-    return AccountDTO(
-        this.id!!,
-        this.sold,
-        this.label,
-        this.sheets().map { sheet -> sheet.toDTO() }
-    )
-}
+internal fun Account.toDTO(): AccountDTO = AccountDTO(
+    this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
+    this.sold,
+    this.label,
+    this.sheets().map { sheet -> sheet.toDTO() }
+)
+
 
 internal fun SheetDTO.toModel(): Sheet {
     return Sheet(this.id, this.label, this.date, this.expenses, this.income, this.accountAmount, position = this.position)

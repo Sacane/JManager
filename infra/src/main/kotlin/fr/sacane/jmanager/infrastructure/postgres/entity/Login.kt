@@ -12,7 +12,6 @@ class Login(
     @GeneratedValue
     @Column(name = "id_token")
     var id: UUID? = null,
-
     @GeneratedValue
     @Column(name="token")
     var token: UUID = UUID.randomUUID(),
@@ -24,13 +23,14 @@ class Login(
         inverseJoinColumns = [JoinColumn(name = "id_user")]
     )
     var user: UserResource? = null,
-
-    @Column(name = "last_refresh")
-    var lastRefresh: LocalDateTime = LocalDateTime.now(),
-
+    @Column(name = "token_lifetime")
+    var tokenLifeTime: LocalDateTime = LocalDateTime.now(),
     @GeneratedValue
     @Column(name="refresh_token")
-    var refreshToken: UUID = UUID.randomUUID()
+    var refreshToken: UUID = UUID.randomUUID(),
+
+    @Column(name="refresh_token_lifetime")
+    var refreshTokenLifetime: LocalDateTime = LocalDateTime.now()
 
 ){
     companion object{

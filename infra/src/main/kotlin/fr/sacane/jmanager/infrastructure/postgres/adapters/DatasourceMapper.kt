@@ -65,5 +65,5 @@ internal fun UserResource.toModel(): User{
 
 
 internal fun Login.toModel(): Token{
-    return Token(this.token, this.lastRefresh, this.refreshToken)
+    return Token(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
 }
