@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.AccountFeature
+import fr.sacane.jmanager.domain.toToken
 import fr.sacane.jmanager.infrastructure.extractToken
 import fr.sacane.jmanager.infrastructure.rest.id
 import fr.sacane.jmanager.infrastructure.rest.toDTO
@@ -49,7 +50,7 @@ class AccountController (
     ): ResponseEntity<AccountInfoDTO> {
         val response = feature.save(
             userAccount.id.id(),
-            Token(UUID.fromString(token), null, UUID.randomUUID()),
+            token.toToken(),
             Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount)
         )
         if (response.isFailure()) {
@@ -63,9 +64,10 @@ class AccountController (
         @PathVariable id: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<List<AccountDTO>> {
+        LOGGER.info("Trying to get accounts")
         val response = feature.retrieveAllRegisteredAccounts(
             id.id(),
-            Token(UUID.fromString(extractToken(token)), null, UUID.randomUUID())
+            token.toToken()
         )
         if (response.isFailure()) {
             return response.mapTo { ResponseEntity.badRequest().build() }
@@ -85,7 +87,7 @@ class AccountController (
         @RequestBody account: AccountDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> =
-        feature.editAccount(userID, account.toModel(), Token(UUID.fromString(extractToken(token))))
+        feature.editAccount(userID, account.toModel(), token.toToken())
             .map { it!!.toDTO() }.toResponseEntity()
 
 
@@ -94,7 +96,7 @@ class AccountController (
         @PathVariable userId: Long,
         @PathVariable accountId: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId).toResponseEntity()
+    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.toToken()).toResponseEntity()
 
     @GetMapping("/user/{userID}/find/{accountID}")
     fun findAccountById(

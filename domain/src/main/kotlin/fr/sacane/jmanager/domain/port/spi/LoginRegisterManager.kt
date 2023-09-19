@@ -15,12 +15,13 @@ interface LoginRegisterManager {
 
     fun <T> authenticate(userId: UserId, token: Token, action: (user: User) -> Response<T>): Response<T> {
         val userToken = tokenBy(userId) ?: return Response.notFound("Il n'existe pas d'utilisateur avec cette ID : $userId")
-        if(userToken.token.isExpired()) {
-            return Response.timeout("La session à expiré")
-        }
+//        if(userToken.token.isExpired()) {
+//            return Response.timeout("La session à expiré")
+//        }
         if(userToken.token != token) {
             return Response.invalid("Le token n'est pas valide")
         }
+        
         return action(userToken.user)
     }
 }

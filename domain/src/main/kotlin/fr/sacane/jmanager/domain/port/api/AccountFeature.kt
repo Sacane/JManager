@@ -16,7 +16,7 @@ import fr.sacane.jmanager.domain.port.spi.UserTransaction
 sealed interface AccountFeature {
     fun findAccountById(userId: UserId, accountID: Long, token: Token): Response<Account>
     fun editAccount(userID: Long, account: Account, token: Token): Response<Account>
-    fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing>
+    fun deleteAccountById(profileID: UserId, accountID: Long, token: Token): Response<Nothing>
     fun retrieveAccountByIdentityAndLabel(userId: UserId, token: Token, label: String): Response<Account>
     fun retrieveAllRegisteredAccounts(userId: UserId, token: Token): Response<List<Account>>
     fun save(userId: UserId, token: Token, account: Account): Response<Account>
@@ -34,8 +34,8 @@ class AccountFeatureImpl(
         token: Token
     ): Response<Account> = loginManager.authenticate(userId, token) {
         register.findAccountById(accountID)?.run {
-            Response.ok(this)
-        }?: Response.notFound("Le compte est introuvable")
+            return@authenticate Response.ok(this)
+        }?: return@authenticate Response.notFound("Le compte est introuvable")
     }
 
 
@@ -52,12 +52,13 @@ class AccountFeatureImpl(
     }
 
 
-    override fun deleteAccountById(profileID: UserId, accountID: Long): Response<Nothing> {
-        val profile = userTransaction.findUserById(profileID) ?: return Response.notFound()
-        profile.accounts.removeIf { it.id == accountID }
-        userTransaction.upsert(profile) ?: return invalid("Une erreur s'est produite lors de l'insertion du compte")
-        register.deleteAccountByID(accountID)
-        return Response.ok()
+    override fun deleteAccountById(profileID: UserId, accountID: Long, token: Token): Response<Nothing> {
+        return loginManager.authenticate(profileID, token) {
+            it.accounts.removeIf { acc -> acc.id == accountID }
+            userTransaction.upsert(it) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
+            register.deleteAccountByID(accountID)
+            Response.ok()
+        }
     }
 
     override fun retrieveAccountByIdentityAndLabel(
@@ -77,7 +78,7 @@ class AccountFeatureImpl(
         userId: UserId,
         token: Token
     ): Response<List<Account>> = loginManager.authenticate(userId, token) {
-        Response.ok(it.accounts())
+        return@authenticate Response.ok(it.accounts())
     }
 
     override fun save(

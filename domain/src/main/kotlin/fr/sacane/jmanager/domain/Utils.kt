@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain
 
+import fr.sacane.jmanager.domain.models.Token
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -7,7 +8,9 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.util.*
 
+fun String.toToken(): Token = Token(UUID.fromString(this.replace("Bearer ", "")))
 
 object Hash {
     private val md = MessageDigest.getInstance("SHA-512")
