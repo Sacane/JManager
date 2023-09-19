@@ -142,7 +142,7 @@ const onYearChange = () => {
           <div style="text-align: left" class="w35%">
             <div class="pl10px flex flex-row hauto justify-around">
 
-              <MonthPicker v-model="data.month" v-on:vnode-updated="retrieveSheets()"/>
+              <MonthPicker v-model="data.month" @vue:vnode-updated="retrieveSheets()"/>
 
               <div class="w40% h10%">
                 <label 
