@@ -30,5 +30,5 @@ What is not **OPTIONAL** has **NOT NULL** constraint
 
 ## TODO 
 
-- Remove *position* and *accountSold* fields from Sheet and put them into the entity **'Property'**.
 - Check all uniques conditions
+- implements the token lifecycle process

@@ -6,6 +6,8 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Response.Companion.invalid
+import fr.sacane.jmanager.domain.models.Response.Companion.notFound
+import fr.sacane.jmanager.domain.models.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
@@ -34,8 +36,8 @@ class AccountFeatureImpl(
         token: Token
     ): Response<Account> = loginManager.authenticate(userId, token) {
         register.findAccountById(accountID)?.run {
-            return@authenticate Response.ok(this)
-        }?: return@authenticate Response.notFound("Le compte est introuvable")
+            return@authenticate ok(this)
+        }?: return@authenticate notFound("Le compte est introuvable")
     }
 
 
@@ -44,8 +46,11 @@ class AccountFeatureImpl(
         account: Account,
         token: Token
     ): Response<Account> = loginManager.authenticate(UserId(userID), token) {
-        val accountID = account.id ?: return@authenticate Response.notFound()
-        val oldAccount = register.findAccountById(accountID) ?: return@authenticate Response.notFound()
+        val accountID = account.id ?: return@authenticate notFound("L'id du compte n'est pas valide")
+        val oldAccount = register.findAccountById(accountID) ?: return@authenticate notFound()
+        if(oldAccount.label == account.label){
+            return@authenticate invalid("Le libellé du compte existe déjà")
+        }
         oldAccount.updateFrom(account)
         val registered = register.persist(oldAccount) ?: return@authenticate invalid()
         Response.ok(registered)
@@ -69,7 +74,7 @@ class AccountFeatureImpl(
         Response.ok(
             this.accounts()
             .find { acc -> acc.label == label }
-            ?: return@authenticate Response.notFound("Le compte $label n'est pas enregistré en base")
+            ?: return@authenticate notFound("Le compte $label n'est pas enregistré en base")
         )
     }
 
@@ -87,12 +92,12 @@ class AccountFeatureImpl(
         account: Account
     ): Response<Account> = loginManager.authenticate(userId, token) {
         val ticket = userTransaction.findById(userId)
-        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return@authenticate Response.notFound(TransactionRegister.missingUserMessage)) {
+        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return@authenticate notFound(TransactionRegister.missingUserMessage)) {
             return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")
         Response.ok(userSaved.accounts().find { it.label == account.label }
-            ?: return@authenticate Response.notFound("Le compte créé n'a pas été sauvegardé correctement"))
+            ?: return@authenticate notFound("Le compte créé n'a pas été sauvegardé correctement"))
     }
 
 
