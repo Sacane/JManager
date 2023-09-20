@@ -73,15 +73,13 @@ class Account(
             label: $labelAccount
         """.trimIndent()
     }
-    private fun cancelSheetAmount(sheet: Sheet){
-        this.amount = this.amount
-            .plus(sheet.expenses)
-            .minus(sheet.income)
+    fun cancelSheetsAmount(sheets: List<Sheet>) {
+        sheets.forEach {
+            this.amount = this.amount
+            .plus(it.expenses)
+            .minus(it.income)
+        }
     }
-    fun cancelSheetsSupply(sheets: List<Sheet>) {
-        sheets.forEach { cancelSheetAmount(it) }
-    }
-
     fun setSoldFromSheet(sheetFromResource: Sheet) {
         this.amount = sheetFromResource.sold
     }

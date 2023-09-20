@@ -15,7 +15,7 @@ sealed interface SheetFeature {
     fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>>
     fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: Token): Response<Sheet>
     fun findById(userID: Long, id: Long, token: Token): Response<Sheet>
-    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>)
+    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: Token)
 }
 
 @DomainImplementation
@@ -127,12 +127,10 @@ class SheetFeatureImplementation(
         Response.ok(sheet)
     }
 
-    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>) {
+    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: Token) {
         val account: Account = register.findAccountById(accountID) ?: return
         val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
-        account.cancelSheetsSupply(
-            account.sheets.filter(isSheetOnList)
-        )
+        account.cancelSheetsAmount(account.sheets.filter(isSheetOnList))
         account.sheets.removeIf(isSheetOnList)
         updateSheetSold(account)
         register.persist(account)

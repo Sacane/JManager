@@ -22,10 +22,7 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("/sheet")
 @Adapter(Side.API)
-class SheetController(
-    private val transactionResolver: SheetFeature
-) {
-
+class SheetController(private val transactionResolver: SheetFeature) {
     @PostMapping("/save")
     suspend fun createSheet(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
@@ -47,7 +44,7 @@ class SheetController(
         @RequestBody sheetIds: AccountSheetIdsDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
-        = transactionResolver.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds).let {
+        = transactionResolver.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds, token.toToken()).let {
             ResponseEntity.ok().build()
         }
 
@@ -88,9 +85,6 @@ class SheetController(
             }.map {
                 it!!.toDTO()
             }.toResponseEntity()
-
-
-
 
     companion object {
         private val LOGGER: Logger = Logger.getLogger(SheetController::javaClass.name)
