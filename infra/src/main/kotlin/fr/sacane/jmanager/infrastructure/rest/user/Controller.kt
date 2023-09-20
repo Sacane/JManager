@@ -29,7 +29,7 @@ class ProfileController(
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return response.map { u ->
             UserStorageDTO(
-                u?.user?.id?.id ?: throw InvalidRequestException("Invalid response, something went wrong"),
+                u.user.id.id ?: throw InvalidRequestException("Invalid response, something went wrong"),
                 username = u.user.username,
                 email = u.user.email,
                 token = u.token.value.toString()
@@ -49,6 +49,6 @@ class ProfileController(
     suspend fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
         val response = administrator.register(userDTO.toModel())
         if(response.isFailure()) return ResponseEntity.badRequest().build()
-        return response.map { u -> u!!.toDTO() }.toResponseEntity()
+        return response.map { u -> u.toDTO() }.toResponseEntity()
     }
 }

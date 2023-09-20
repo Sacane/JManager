@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
 import java.util.function.Consumer
-import java.util.function.Supplier
 
 enum class ResponseState{
     OK,
@@ -75,11 +74,10 @@ class Response <S> private constructor(
     }
 
     fun <T> map(
-        mapper: (S?) -> T
+        mapper: (S) -> T
     ): Response<T> {
-        if(this.value == null) return Response(this.status, null)
-        val mapped = mapper.invoke(this.value)
-        return Response(this.status, mapped)
+        val value = this.value ?: return Response(this.status, null)
+        return Response(this.status, mapper.invoke(value))
     }
 
     fun <T> mapTo (

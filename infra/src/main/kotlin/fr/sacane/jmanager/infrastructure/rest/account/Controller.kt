@@ -39,7 +39,7 @@ class AccountController (
         )
         if (accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
         return accounts.map { list ->
-            list?.find { it.label == label }?.toDTO()!!
+            list.find { it.label == label }?.toDTO()!!
         }.toResponseEntity()
     }
 
@@ -56,7 +56,7 @@ class AccountController (
         if (response.isFailure()) {
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
-        return response.map { AccountInfoDTO(it!!.sold, it.label) }.toResponseEntity()
+        return response.map { AccountInfoDTO(it.sold, it.label) }.toResponseEntity()
     }
 
     @GetMapping(path = ["{id}"])
@@ -73,7 +73,7 @@ class AccountController (
             return response.mapTo { ResponseEntity.badRequest().build() }
         }
         val mapped = response.map { p ->
-            p!!.map {
+            p.map {
                 AccountDTO(it.id, it.sold, it.label,
                     it.sheets().map { s -> s.toDTO() })
             }
@@ -88,7 +88,7 @@ class AccountController (
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> =
         feature.editAccount(userID, account.toModel(), token.toToken())
-            .map { it!!.toDTO() }.toResponseEntity()
+            .map { it.toDTO() }.toResponseEntity()
 
 
     @DeleteMapping(path = ["{userId}/delete/{accountId}"])
@@ -105,5 +105,5 @@ class AccountController (
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> =
         feature.findAccountById(userID.id(), accountID, Token(UUID.fromString(extractToken(token))))
-            .map { it?.toDTO()!! }.toResponseEntity()
+            .map { it.toDTO() }.toResponseEntity()
     }

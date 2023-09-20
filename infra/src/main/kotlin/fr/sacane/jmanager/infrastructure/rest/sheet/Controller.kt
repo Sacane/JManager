@@ -3,16 +3,9 @@ package fr.sacane.jmanager.infrastructure.rest.sheet
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
-import fr.sacane.jmanager.domain.models.Token
-import fr.sacane.jmanager.domain.port.api.LoginManager
 import fr.sacane.jmanager.domain.port.api.SheetFeature
 import fr.sacane.jmanager.domain.toToken
-import fr.sacane.jmanager.infrastructure.extractToken
 import fr.sacane.jmanager.infrastructure.rest.*
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.toDTO
-import fr.sacane.jmanager.infrastructure.rest.toModel
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -35,8 +28,9 @@ class SheetController(private val transactionResolver: SheetFeature) {
             userAccountSheetDTO.sheetDTO.toModel()
         )
         if (queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        return queryResponse.map { SheetSendDTO(it!!.label, it.date, it.expenses, it.income, it.sold) }
-            .toResponseEntity()
+        return queryResponse.map {
+            SheetSendDTO(it.label, it.date, it.expenses, it.income, it.sold)
+        }.toResponseEntity()
     }
 
     @DeleteMapping("delete")
