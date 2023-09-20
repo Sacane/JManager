@@ -6,10 +6,7 @@ import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.Administrator
 import fr.sacane.jmanager.infrastructure.extractToken
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.toDTO
-import fr.sacane.jmanager.infrastructure.rest.toModel
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
+import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -30,7 +27,14 @@ class ProfileController(
         val response = administrator.login(userDTO.username, Password(userDTO.password))
         LOGGER.info("Trying to login user ${userDTO.username}")
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return response.map { u -> UserStorageDTO(u!!.user.id.id!!, u.user.username, u.user.email, u.token.value.toString()) }.toResponseEntity()
+        return response.map { u ->
+            UserStorageDTO(
+                u?.user?.id?.id ?: throw InvalidRequestException("Invalid response, something went wrong"),
+                username = u.user.username,
+                email = u.user.email,
+                token = u.token.value.toString()
+            )
+        }.toResponseEntity()
     }
 
     @PostMapping(path = ["/logout/{id}"])
