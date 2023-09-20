@@ -4,7 +4,9 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Token
+import fr.sacane.jmanager.domain.port.api.LoginManager
 import fr.sacane.jmanager.domain.port.api.SheetFeature
+import fr.sacane.jmanager.domain.toToken
 import fr.sacane.jmanager.infrastructure.extractToken
 import fr.sacane.jmanager.infrastructure.rest.*
 import fr.sacane.jmanager.infrastructure.rest.id
@@ -31,7 +33,7 @@ class SheetController(
     ): ResponseEntity<SheetSendDTO> {
         val queryResponse = transactionResolver.createSheetAndAssociateItWithAccount(
             userAccountSheetDTO.userId.id(),
-            Token(UUID.fromString(extractToken(token))),
+            token.toToken(),
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO.toModel()
         )
@@ -55,7 +57,7 @@ class SheetController(
         @RequestBody dto: UserSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetsAndAverageDTO> {
-        val response = transactionResolver.retrieveSheetsByMonthAndYear(dto.userId.id(), Token(UUID.fromString(extractToken(token)), null, UUID.randomUUID()), dto.month, dto.year, dto.accountLabel)
+        val response = transactionResolver.retrieveSheetsByMonthAndYear(dto.userId.id(), token.toToken(), dto.month, dto.year, dto.accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it -> it!!.map { it.toDTO() } }, 0.0))
     }
@@ -65,7 +67,7 @@ class SheetController(
         @RequestBody dto: UserIDSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), Token(UUID.fromString(extractToken(token))))
+        = transactionResolver.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.toToken())
             .mapBoth(
                 {s -> ResponseEntity.ok(s!!.toDTO()) },
                 {ResponseEntity.badRequest().build()}
@@ -79,7 +81,7 @@ class SheetController(
         @PathVariable("id") sheetID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.findById(userID, sheetID, Token(UUID.fromString(extractToken(token))))
+        = transactionResolver.findById(userID, sheetID, token.toToken())
             .mapTo {
                 it ?: Response.invalid<SheetDTO>()
                 Response.ok(it)

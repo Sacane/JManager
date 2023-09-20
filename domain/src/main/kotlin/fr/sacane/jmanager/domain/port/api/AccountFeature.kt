@@ -54,8 +54,8 @@ class AccountFeatureImpl(
 
     override fun deleteAccountById(profileID: UserId, accountID: Long, token: Token): Response<Nothing> {
         return loginManager.authenticate(profileID, token) {
-            it.accounts.removeIf { acc -> acc.id == accountID }
-            userTransaction.upsert(it) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
+            this.accounts.removeIf { acc -> acc.id == accountID }
+            userTransaction.upsert(this) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
             register.deleteAccountByID(accountID)
             Response.ok()
         }
@@ -67,7 +67,7 @@ class AccountFeatureImpl(
         label: String
     ): Response<Account> = loginManager.authenticate(userId, token) {
         Response.ok(
-            it.accounts()
+            this.accounts()
             .find { acc -> acc.label == label }
             ?: return@authenticate Response.notFound("Le compte $label n'est pas enregistré en base")
         )
@@ -78,7 +78,7 @@ class AccountFeatureImpl(
         userId: UserId,
         token: Token
     ): Response<List<Account>> = loginManager.authenticate(userId, token) {
-        return@authenticate Response.ok(it.accounts())
+        return@authenticate Response.ok(this.accounts())
     }
 
     override fun save(
