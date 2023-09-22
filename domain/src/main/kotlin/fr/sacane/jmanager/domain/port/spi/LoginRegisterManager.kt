@@ -23,7 +23,7 @@ interface LoginRegisterManager {
         if(userToken.token != token) {
             return Response.invalid("Le token n'est pas valide")
         }
-        refreshTokenLifetime(userId, false)
+        refreshTokenLifetime(userId)
         return action(userToken.user)
     }
 }
