@@ -53,25 +53,28 @@ class AccountFeatureImpl(
         }
         oldAccount.updateFrom(account)
         val registered = register.persist(oldAccount) ?: return@authenticate invalid()
-        Response.ok(registered)
+        ok(registered)
     }
 
 
-    override fun deleteAccountById(profileID: UserId, accountID: Long, token: Token): Response<Nothing> {
-        return loginManager.authenticate(profileID, token) {
-            this.accounts.removeIf { acc -> acc.id == accountID }
-            userTransaction.upsert(this) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
-            register.deleteAccountByID(accountID)
-            Response.ok()
-        }
+    override fun deleteAccountById
+                (profileID: UserId,
+                 accountID: Long,
+                 token: Token
+    ): Response<Nothing> = loginManager.authenticate(profileID, token) {
+        this.accounts.removeIf { acc -> acc.id == accountID }
+        userTransaction.upsert(this) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
+        register.deleteAccountByID(accountID)
+        ok()
     }
+
 
     override fun retrieveAccountByIdentityAndLabel(
         userId: UserId,
         token: Token,
         label: String
     ): Response<Account> = loginManager.authenticate(userId, token) {
-        Response.ok(
+        ok(
             this.accounts()
             .find { acc -> acc.label == label }
             ?: return@authenticate notFound("Le compte $label n'est pas enregistré en base")
@@ -83,7 +86,7 @@ class AccountFeatureImpl(
         userId: UserId,
         token: Token
     ): Response<List<Account>> = loginManager.authenticate(userId, token) {
-        return@authenticate Response.ok(this.accounts())
+        return@authenticate ok(this.accounts())
     }
 
     override fun save(
@@ -96,7 +99,7 @@ class AccountFeatureImpl(
             return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")
-        Response.ok(userSaved.accounts().find { it.label == account.label }
+        ok(userSaved.accounts().find { it.label == account.label }
             ?: return@authenticate notFound("Le compte créé n'a pas été sauvegardé correctement"))
     }
 

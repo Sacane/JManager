@@ -108,4 +108,8 @@ class LoginTransactionAdapter(
         }).toModel()
     }
 
+    override fun save(token: Token): Token? {
+        TODO()
+    }
+
 }

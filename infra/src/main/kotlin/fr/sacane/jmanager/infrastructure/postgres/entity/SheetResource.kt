@@ -42,3 +42,9 @@ class SheetResource(
         """.trimIndent()
     }
 }
+
+fun sheetResource(init: SheetResource.() -> Unit): SheetResource{
+    val sheet = SheetResource()
+    sheet.init()
+    return sheet
+}

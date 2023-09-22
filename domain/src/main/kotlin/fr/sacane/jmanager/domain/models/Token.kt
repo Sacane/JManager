@@ -8,6 +8,7 @@ enum class Role {
     ADMIN, USER
 }
 data class Token(
+    val id: UUID = UUID.randomUUID(),
     val value: UUID,
     var tokenLifeTime: LocalDateTime? = null,
     val refreshToken: UUID? = UUID.randomUUID(),

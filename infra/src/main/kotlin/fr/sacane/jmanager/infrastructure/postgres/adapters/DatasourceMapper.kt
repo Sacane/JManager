@@ -52,18 +52,16 @@ internal fun AccountResource.toModel(): Account{
         this.label,
         this.sheets.map { sheet -> sheet.toModel() }.toMutableList())
 }
-internal fun UserResource.toModel(): User{
-    return User(
-        UserId(this.idUser),
-        this.username,
-        this.email,
-        this.accounts.map { account -> account.toModel() }.toMutableList(),
-        Password.fromBytes(this.password),
-        CategoryFactory.allDefaultCategories()
-    )
-}
 
+internal fun UserResource.toModel()
+: User = User(
+    UserId(this.idUser),
+    this.username,
+    this.email,
+    this.accounts.map { account -> account.toModel() }.toMutableList(),
+    Password.fromBytes(this.password),
+    CategoryFactory.allDefaultCategories()
+)
 
-internal fun Login.toModel(): Token{
-    return Token(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
-}
+internal fun Login.toModel()
+: Token = Token(this.id!!, this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
