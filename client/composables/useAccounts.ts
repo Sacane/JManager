@@ -16,8 +16,8 @@ export default function useAccounts(){
     const accountFormatted = ref<AccountFormatted[]>([])
 
     async function fetch(): Promise<Array<AccountDTO>>  {
-        const response = await get(`account/${user.value?.id}`)
-        return response.data
+        return get(`account/${user.value?.id}`)
+
     }
     
     async function createAccount(labelAccount: string, amount: number): Promise<any> {
@@ -28,11 +28,11 @@ export default function useAccounts(){
         })
     }
 
-    async function updateAccount(account: AccountDTO, onUpdate: (acc: AccountDTO) => void){
+    async function updateAccount(account: AccountDTO, onUpdate: (acc: AccountDTO) => void, onFailure: (e: Error) => void = e => console.error(e)){
       post('account/update/' + user.value?.id, account)
-            .then((acc) => {
-              onUpdate(acc)
-            })
+        .then((acc) => {
+            onUpdate(acc)
+        }).catch(e => onFailure(e))
     }
     
 
@@ -41,12 +41,7 @@ export default function useAccounts(){
     }
 
     async function findById(accountId: number) : Promise<AccountDTO> {
-        try {
-            return (await get(`account/user/${user.value?.id}/find/${accountId}`)).data
-        }catch(error){
-            console.error(error)
-            throw error
-        }
+        return get(`account/user/${user.value?.id}/find/${accountId}`)
     }
     return {accounts: readonly(accounts), createAccount, fetch, deleteAccount, accountFormatted, updateAccount, findById}
 }

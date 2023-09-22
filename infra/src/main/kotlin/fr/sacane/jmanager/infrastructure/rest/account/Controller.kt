@@ -47,17 +47,14 @@ class AccountController (
     fun createAccount(
         @RequestBody userAccount: UserAccountDTO,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountInfoDTO> {
-        val response = feature.save(
-            userAccount.id.id(),
-            token.toToken(),
-            Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount)
-        )
-        if (response.isFailure()) {
-            return response.mapTo { ResponseEntity.badRequest().build() }
-        }
-        return response.map { AccountInfoDTO(it.sold, it.label) }.toResponseEntity()
-    }
+    )
+    : ResponseEntity<AccountInfoDTO> = feature.save(
+    userAccount.id.id(),
+    token.toToken(),
+    Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount))
+    .map { AccountInfoDTO(it.sold, it.label) }
+    .toResponseEntity()
+
 
     @GetMapping(path = ["{id}"])
     fun getAccounts(

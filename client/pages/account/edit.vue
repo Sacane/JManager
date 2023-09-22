@@ -32,6 +32,7 @@ onMounted(() => {
 })
 
 function onEditClick() {
+  console.log('test')
   const amount = parseFloat((parseFloat(`${data.integerPart}`) + parseFloat(`0.${data.decimalPart}`)).toFixed(2))
   updateAccount({
     id: data.id,
@@ -41,7 +42,9 @@ function onEditClick() {
   }, async (sheet) => {
     jtoast.success('Le compte a bien été édité')
     navigateTo('/account')
-  })
+  }).catch(e => {
+    jtoast.error(e);
+  });
   
 } 
 </script>

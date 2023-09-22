@@ -9,4 +9,5 @@ import java.util.UUID
 @Repository
 interface LoginRepository: JpaRepository<Login, UUID>{
     fun findByUser(user: UserResource): Login?
+    fun findByToken(tokenValue: UUID): Login?
 }

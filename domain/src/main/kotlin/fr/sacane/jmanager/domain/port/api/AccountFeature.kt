@@ -48,7 +48,7 @@ class AccountFeatureImpl(
     ): Response<Account> = loginManager.authenticate(UserId(userID), token) {
         val accountID = account.id ?: return@authenticate notFound("L'id du compte n'est pas valide")
         val oldAccount = register.findAccountById(accountID) ?: return@authenticate notFound()
-        if(oldAccount.label == account.label){
+        if(oldAccount.id != account.id && oldAccount.label == account.label){
             return@authenticate invalid("Le libellé du compte existe déjà")
         }
         oldAccount.updateFrom(account)
@@ -100,7 +100,7 @@ class AccountFeatureImpl(
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")
         ok(userSaved.accounts().find { it.label == account.label }
-            ?: return@authenticate notFound("Le compte créé n'a pas été sauvegardé correctement"))
+            ?: return@authenticate notFound("Une erreur s'est produite lors de la création du compte."))
     }
 
 
