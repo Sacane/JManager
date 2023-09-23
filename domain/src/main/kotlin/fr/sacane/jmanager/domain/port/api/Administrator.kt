@@ -23,15 +23,14 @@ class LoginManager(private val loginInventory: LoginRegisterManager, private val
     }
     override fun login(pseudonym: String, userPassword: Password): Response<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")
-        val user = userTransaction.findByPseudonym(pseudonym) ?: return Response.notFound("The user has not been find")
-        val canLogin = userPassword.matchWith(user.password)
-        if(canLogin) {
+        val user = userTransaction.findByPseudonym(pseudonym) ?: return Response.notFound("L'utilisateur $pseudonym n'existe pas")
+        if(userPassword.matchWith(user.password)) {
             LOGGER.info("User $pseudonym logged")
-            val ticket = loginInventory.generateToken(user) ?: return Response.invalid()
-            return Response.ok(UserToken(user, ticket))
+            val token = loginInventory.generateToken(user) ?: return Response.invalid()
+            return Response.ok(user.withToken(token))
         }
-        LOGGER.info("Failed to log user $pseudonym")
-        return Response.invalid()
+        LOGGER.warning("Failed to log user $pseudonym")
+        return Response.forbidden("Le pseudonyme ou le mot de passe est incorrect")
     }
 
     override fun logout(userId: UserId, userToken: Token): Response<Nothing> {
