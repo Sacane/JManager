@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
+import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.util.logging.Logger
 
@@ -16,17 +16,20 @@ sealed interface Administrator {
 }
 
 @DomainImplementation
-class LoginManager(private val loginInventory: LoginRegisterManager, private val userTransaction: UserTransaction): Administrator{
+class LoginManager(
+    private val loginRepository: SessionRepository,
+    private val userTransaction: UserTransaction
+): Administrator{
 
     companion object{
-        private val LOGGER = Logger.getLogger(LoginRegisterManager::class.java.name)
+        private val LOGGER = Logger.getLogger(SessionRepository::class.java.name)
     }
     override fun login(pseudonym: String, userPassword: Password): Response<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")
         val user = userTransaction.findByPseudonym(pseudonym) ?: return Response.notFound("L'utilisateur $pseudonym n'existe pas")
         if(userPassword.matchWith(user.password)) {
             LOGGER.info("User $pseudonym logged")
-            val token = loginInventory.generateToken(user) ?: return Response.invalid()
+            val token = loginRepository.generateToken(user) ?: return Response.invalid()
             return Response.ok(user.withToken(token))
         }
         LOGGER.warning("Failed to log user $pseudonym")
@@ -34,7 +37,7 @@ class LoginManager(private val loginInventory: LoginRegisterManager, private val
     }
 
     override fun logout(userId: UserId, userToken: Token): Response<Nothing> {
-        loginInventory.logout(userId, userToken) ?: return Response.invalid()
+        loginRepository.logout(userId, userToken) ?: return Response.invalid()
         return Response.ok()
     }
 

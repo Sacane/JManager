@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
+import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.infrastructure.Environment
 import fr.sacane.jmanager.infrastructure.postgres.entity.Login
 import fr.sacane.jmanager.infrastructure.postgres.repositories.LoginRepository
@@ -20,7 +20,7 @@ import java.util.logging.Logger
 class LoginTransactionAdapter(
     private val userRepository: UserRepository,
     private val loginRepository: LoginRepository
-) : LoginRegisterManager {
+) : SessionRepository {
     companion object{
         private const val DEFAULT_TOKEN_LIFETIME_IN_HOURS = 1L //1hour
 //        private const val DEFAULT_REFRESH_TOKEN_LIFETIME = 60L* 60L * 24L * 5L * 1000L // 5 days

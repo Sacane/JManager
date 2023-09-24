@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.LoginRegisterManager
+import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.Month
@@ -22,7 +22,7 @@ sealed interface SheetFeature {
 class SheetFeatureImplementation(
     private val register: TransactionRegister,
     private val userTransaction: UserTransaction,
-    private val loginManager: LoginRegisterManager
+    private val loginManager: SessionRepository
 ): SheetFeature{
 
     private fun updateSheetSold(account: Account, update: Boolean = true){

@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
 
 @Port(Side.DATASOURCE)
-interface LoginRegisterManager {
+interface SessionRepository {
     fun login(userPseudonym: String, password: Password): UserToken?
     fun logout(userId: UserId, token: Token): Token?
     fun refresh(userId: UserId, token: Token): UserToken?
