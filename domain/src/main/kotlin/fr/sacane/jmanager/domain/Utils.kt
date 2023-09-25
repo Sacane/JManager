@@ -14,10 +14,6 @@ fun String.asTokenUUID(): UUID = UUID.fromString(this.replace("Bearer ", ""))
 object Env {
     const val TOKEN_LIFETIME_IN_HOURS = 1L
     const val REFRESH_TOKEN_LIFETIME_IN_DAYS = 7L
-    object Role {
-        const val ADMIN = "Role_admin"
-        const val USER = "Role_user"
-    }
 }
 
 object Hash {
