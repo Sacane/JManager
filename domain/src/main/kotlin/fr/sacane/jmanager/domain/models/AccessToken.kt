@@ -7,8 +7,12 @@ import java.util.*
 enum class Role {
     ADMIN, USER
 }
-data class Token(
-    val value: UUID,
+
+val roleUser = arrayOf(Role.USER)
+val roleAdmin = arrayOf(Role.ADMIN)
+
+data class AccessToken(
+    val tokenValue: UUID,
     var tokenLifeTime: LocalDateTime? = null,
     val refreshToken: UUID? = UUID.randomUUID(),
     var refreshTokenLifetime: LocalDateTime? = null,
@@ -41,20 +45,28 @@ data class Token(
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is Token && other.value == value
+        return other is AccessToken && other.tokenValue == tokenValue
     }
 
     override fun hashCode(): Int {
-        return value.hashCode()
+        return tokenValue.hashCode()
     }
 }
 data class UserToken(
     val user: User,
-    val token: Token
+    val token: AccessToken
 ){
-    fun checkForIdentity(token: Token): User?{
-        return if(this.token.value == token.value || this.token.tokenLifeTime!!.isAfter(now())){
+    fun checkForIdentity(token: AccessToken): User?{
+        return if(this.token.tokenValue == token.tokenValue || this.token.tokenLifeTime!!.isAfter(now())){
             this.user
         } else null
     }
 }
+
+fun generateToken(role: Role = Role.USER)
+: AccessToken = AccessToken(
+    UUID.randomUUID(),
+    now().plusHours(Env.TOKEN_LIFETIME_IN_HOURS),
+    UUID.randomUUID(),
+    now().plusDays(Env.REFRESH_TOKEN_LIFETIME_IN_DAYS), role
+)

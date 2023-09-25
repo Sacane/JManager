@@ -29,7 +29,7 @@ class ExceptionHandler {
     @ExceptionHandler(TimeOutException::class)
     fun handleUnauthorizedException(ex: TimeOutException): ResponseEntity<ErrorMessage> {
         val errorMessage = ErrorMessage(
-            401,
+            307,
             ex.message
         )
         return ResponseEntity(errorMessage, HttpStatus.UNAUTHORIZED)
@@ -43,5 +43,13 @@ class ExceptionHandler {
         return ResponseEntity(errorMessage, HttpStatus.NOT_FOUND)
     }
 
+    @ExceptionHandler(UnauthorizedRequestException::class)
+    fun handleUnauthorizedRequestException(ex: UnauthorizedRequestException): ResponseEntity<ErrorMessage>{
+        val errorMessage = ErrorMessage(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.message
+        )
+        return ResponseEntity(errorMessage, HttpStatus.UNAUTHORIZED)
+    }
 
 }

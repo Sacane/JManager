@@ -1,8 +1,7 @@
-import { API_PATH } from './../utils/request';
-import axios from 'axios'
 import useAuth from './useAuth';
 import { AccountDTO } from '../types/index';
 import useQuery from './useQuery';
+import useJToast from './useJToast';
 
 export interface AccountFormatted{
     labelAccount: string,

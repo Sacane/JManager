@@ -8,7 +8,7 @@ import fr.sacane.jmanager.infrastructure.postgres.entity.CategoryResource
 import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.CategoryRepository
 import fr.sacane.jmanager.infrastructure.postgres.repositories.SheetRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.postgres.repositories.UserPostgresRepository
 import org.springframework.stereotype.Service
 
 
@@ -16,34 +16,34 @@ import org.springframework.stereotype.Service
 @Adapter(Side.DATASOURCE)
 class ServerTransactionAdapter(
     private val sheetRepository: SheetRepository,
-    private val userRepository: UserRepository,
+    private val userPostgresRepository: UserPostgresRepository,
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository
     ) : TransactionRegister{
 
     override fun persist(userId: UserId, account: Account): User? {
         val id = userId.id ?: return null
-        val user = userRepository.findById(id).orElseThrow()
+        val user = userPostgresRepository.findById(id).orElseThrow()
         user.accounts.add(account.asResource())
-        return userRepository.save(user).toModel()
+        return userPostgresRepository.save(user).toModel()
     }
 
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
         val id = userId.id ?: return null
-        val user = userRepository.findById(id).orElseThrow()
+        val user = userPostgresRepository.findById(id).orElseThrow()
         val account = user.accounts.find { it.label == labelAccount } ?: return null
         return account.toModel()
     }
 
     override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
         val id = userId.id ?: return null
-        val user = userRepository.findById(id).orElseThrow()
+        val user = userPostgresRepository.findById(id).orElseThrow()
         val account = user.accounts.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets.add(sheet.asResource())
             account.amount = sheet.sold
             // =================================================
-            userRepository.saveAndFlush(user)
+            userPostgresRepository.saveAndFlush(user)
             sheet
         }catch(e: Exception){
             null
@@ -59,15 +59,15 @@ class ServerTransactionAdapter(
 
     override fun persist(userId: UserId, category: Category): Category? {
         val id = userId.id ?: return null
-        val user = userRepository.findById(id).orElseThrow()
+        val user = userPostgresRepository.findById(id).orElseThrow()
         user.categories.add(CategoryResource(label = category.label))
-        userRepository.save(user)
+        userPostgresRepository.save(user)
         return category
     }
 
     override fun removeCategory(userId: UserId, labelCategory: String): Category? {
         val id = userId.id ?: return null
-        val user = userRepository.findById(id).orElseThrow()
+        val user = userPostgresRepository.findById(id).orElseThrow()
         val category = user.categories.find { it.label == labelCategory } ?: return null
         categoryRepository.deleteByLabel(labelCategory)
         return Category(category.label)

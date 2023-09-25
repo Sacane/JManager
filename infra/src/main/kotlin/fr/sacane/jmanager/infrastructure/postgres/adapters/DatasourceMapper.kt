@@ -62,4 +62,4 @@ internal fun UserResource.toModel()
 )
 
 internal fun Login.toModel()
-: Token = Token(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
+: AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)

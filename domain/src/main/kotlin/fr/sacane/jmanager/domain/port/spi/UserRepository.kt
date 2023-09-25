@@ -6,13 +6,13 @@ import fr.sacane.jmanager.domain.models.*
 
 
 @Port(Side.DATASOURCE)
-interface UserTransaction {
+interface UserRepository {
     fun findById(userId: UserId): UserToken?
     fun findUserById(userId: UserId): User?
     fun checkUser(pseudonym: String, pwd: Password): UserToken?
     fun findByPseudonym(pseudonym: String): User?
     fun create(user: User): User?
     fun register(user: User): User?
-    fun getUserToken(userId: UserId): Token?
+    fun getUserToken(userId: UserId): AccessToken?
     fun upsert(user: User): User?
 }

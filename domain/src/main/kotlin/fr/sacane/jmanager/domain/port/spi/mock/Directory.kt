@@ -2,7 +2,6 @@ package fr.sacane.jmanager.domain.port.spi.mock
 
 import fr.sacane.jmanager.domain.hexadoc.DefaultSource
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.UserTransaction
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Month
@@ -34,15 +33,15 @@ class Directory {
     )
 
     private val tokenInventory = mutableMapOf(
-        "test1" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test2" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test3" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test4" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test5" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test6" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test7" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test8" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test9" to Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
+        "test1" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test2" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test3" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test4" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test5" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test6" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test7" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test8" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
+        "test9" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
     )
 
     private val userInventory = mutableListOf(
@@ -79,7 +78,7 @@ class Directory {
             userInventory.add(user)
             return user
         }
-        fun getUserToken(userId: UserId): Token? {
+        fun getUserToken(userId: UserId): AccessToken? {
             val user = findById(userId) ?: return null
             return tokenInventory[user.user.username]
         }

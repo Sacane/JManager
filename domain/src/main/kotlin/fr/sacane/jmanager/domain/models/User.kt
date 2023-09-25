@@ -43,7 +43,7 @@ class User(
     fun accounts(): MutableList<Account> = accounts.toMutableList()
     fun categories(): MutableList<Category> = categories.distinct().toMutableList()
 
-    fun withToken(token: Token): UserToken = UserToken(this, token)
+    fun withToken(token: AccessToken): UserToken = UserToken(this, token)
 
     override fun toString(): String {
         return """

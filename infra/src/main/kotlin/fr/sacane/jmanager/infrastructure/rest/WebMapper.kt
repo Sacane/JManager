@@ -36,15 +36,12 @@ internal fun User.toDTO(): UserDTO {
 internal fun Long.id(): UserId {
     return UserId(this)
 }
-internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
-    if(this.isFailure()) {
-        println(this.message + this.status)
-    }
-    return when(this.status){
-        ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
-        ResponseState.NOT_FOUND -> throw NotFoundException(this.message)
-        ResponseState.INVALID -> throw InvalidRequestException(this.message)
-        ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
-        ResponseState.TIMEOUT -> throw TimeOutException(this.message)
-    }
+internal fun <T> Response<T>.toResponseEntity()
+: ResponseEntity<T> = when(this.status){
+    ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
+    ResponseState.NOT_FOUND -> throw NotFoundException(this.message)
+    ResponseState.INVALID -> throw InvalidRequestException(this.message)
+    ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
+    ResponseState.TIMEOUT  -> throw TimeOutException(this.message)
+    ResponseState.UNAUTHORIZED -> throw UnauthorizedRequestException(this.message)
 }

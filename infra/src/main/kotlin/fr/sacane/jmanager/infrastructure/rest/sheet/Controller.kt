@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.port.api.SheetFeature
-import fr.sacane.jmanager.domain.toToken
+import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -23,7 +23,7 @@ class SheetController(private val transactionResolver: SheetFeature) {
     ): ResponseEntity<SheetSendDTO> {
         val queryResponse = transactionResolver.createSheetAndAssociateItWithAccount(
             userAccountSheetDTO.userId.id(),
-            token.toToken(),
+            token.asTokenUUID(),
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO.toModel()
         )
@@ -38,7 +38,7 @@ class SheetController(private val transactionResolver: SheetFeature) {
         @RequestBody sheetIds: AccountSheetIdsDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
-        = transactionResolver.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds, token.toToken()).let {
+        = transactionResolver.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
             ResponseEntity.ok().build()
         }
 
@@ -48,7 +48,7 @@ class SheetController(private val transactionResolver: SheetFeature) {
         @RequestBody dto: UserSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetsAndAverageDTO> {
-        val response = transactionResolver.retrieveSheetsByMonthAndYear(dto.userId.id(), token.toToken(), dto.month, dto.year, dto.accountLabel)
+        val response = transactionResolver.retrieveSheetsByMonthAndYear(dto.userId.id(), token.asTokenUUID(), dto.month, dto.year, dto.accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it -> it!!.map { it.toDTO() } }, 0.0))
     }
@@ -58,7 +58,7 @@ class SheetController(private val transactionResolver: SheetFeature) {
         @RequestBody dto: UserIDSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.toToken())
+        = transactionResolver.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .mapBoth(
                 {s -> ResponseEntity.ok(s!!.toDTO()) },
                 {ResponseEntity.badRequest().build()}
@@ -72,7 +72,7 @@ class SheetController(private val transactionResolver: SheetFeature) {
         @PathVariable("id") sheetID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.findById(userID, sheetID, token.toToken())
+        = transactionResolver.findById(userID, sheetID, token.asTokenUUID())
             .mapTo {
                 it ?: Response.invalid<SheetDTO>()
                 Response.ok(it)

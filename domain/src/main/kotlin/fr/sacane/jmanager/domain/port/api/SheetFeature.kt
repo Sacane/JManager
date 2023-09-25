@@ -1,28 +1,29 @@
 package fr.sacane.jmanager.domain.port.api
 
-import fr.sacane.jmanager.domain.hexadoc.DomainImplementation
+import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.Session
 import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.domain.port.spi.UserTransaction
+import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
+import java.util.UUID
 
 @Port(Side.API)
 sealed interface SheetFeature {
-    fun createSheetAndAssociateItWithAccount(userId: UserId, token: Token, accountLabel: String, sheet: Sheet): Response<Sheet>
-    fun retrieveSheetsByMonthAndYear(userId: UserId, token: Token, month: Month, year: Int, account: String): Response<List<Sheet>>
-    fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: Token): Response<Sheet>
-    fun findById(userID: Long, id: Long, token: Token): Response<Sheet>
-    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: Token)
+    fun createSheetAndAssociateItWithAccount(userId: UserId, token: UUID, accountLabel: String, sheet: Sheet): Response<Sheet>
+    fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Sheet>>
+    fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: UUID): Response<Sheet>
+    fun findById(userID: Long, id: Long, token: UUID): Response<Sheet>
+    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: UUID)
 }
 
-@DomainImplementation
+@DomainService
 class SheetFeatureImplementation(
     private val register: TransactionRegister,
-    private val userTransaction: UserTransaction,
-    private val loginManager: SessionRepository
+    private val userRepository: UserRepository
 ): SheetFeature{
 
     private fun updateSheetSold(account: Account, update: Boolean = true){
@@ -58,12 +59,10 @@ class SheetFeatureImplementation(
 
     override fun createSheetAndAssociateItWithAccount(
         userId: UserId,
-        token: Token,
+        token: UUID,
         accountLabel: String,
         sheet: Sheet
-    ): Response<Sheet> = loginManager.authenticate(userId, token) {
-        val userResponse = userTransaction.findById(userId) ?: return@authenticate Response.invalid()
-        userResponse.checkForIdentity(token) ?: return@authenticate Response.timeout()
+    ): Response<Sheet> = Session.authenticate(userId, token) {
         val account = register.findAccountByLabel(userId, accountLabel) ?: return@authenticate Response.notFound()
         if(account.sheets.isNotEmpty()) {
             val lastRecord = account.sheets.filter { it.date <= sheet.date }.maxByOrNull { it.position } ?: return@authenticate Response.notFound()
@@ -81,11 +80,11 @@ class SheetFeatureImplementation(
 
     override fun retrieveSheetsByMonthAndYear(
         userId: UserId,
-        token: Token,
+        token: UUID,
         month: Month,
         year: Int,
         account: String
-    ): Response<List<Sheet>> = loginManager.authenticate(userId, token) {
+    ): Response<List<Sheet>> = Session.authenticate(userId, token) {
         Response.ok(this.accounts()
             .find { it.label == account }
             ?.retrieveSheetSurroundByDate(month, year)
@@ -99,35 +98,34 @@ class SheetFeatureImplementation(
         userID: Long,
         accountID: Long,
         sheet: Sheet,
-        token: Token
-    ): Response<Sheet> = loginManager.authenticate(UserId(userID), token) {
-            if(sheet.id == null) return@authenticate Response.notFound("L'ID de la transaction n'existe pas")
-            val acc = this.accounts.find { it.id == accountID }
-            val sheetFromResource = acc?.sheets?.find { it.id == sheet.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${sheet.id}")
-            sheetFromResource.updateFromOther(sheet)
-            if(sheetFromResource.position == 0){
-                acc.setSoldFromSheet(sheetFromResource)
-            }
-            updateSheetSold(acc, false)
-            acc.updateSoldByLastSheet()
-            return@authenticate register.save(acc).run {
-                this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
-                println(this.sold)
-                Response.ok(sheetFromResource)
-            }
+        token: UUID
+    ): Response<Sheet> = Session.authenticate(UserId(userID), token, roleUser) {
+        if(sheet.id == null) return@authenticate Response.notFound("L'ID de la transaction n'existe pas")
+        val acc = this.accounts.find { it.id == accountID }
+        val sheetFromResource = acc?.sheets?.find { it.id == sheet.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${sheet.id}")
+        sheetFromResource.updateFromOther(sheet)
+        if(sheetFromResource.position == 0){
+            acc.setSoldFromSheet(sheetFromResource)
         }
+        updateSheetSold(acc, false)
+        acc.updateSoldByLastSheet()
+        return@authenticate register.save(acc).run {
+            this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
+            println(this.sold)
+            Response.ok(sheetFromResource)
+        }
+    }
 
     override fun findById(
         userID: Long,
         id: Long,
-        token: Token
-    ): Response<Sheet> = loginManager.authenticate(UserId(userID), token) {
-        userTransaction.findById(UserId(userID))?.checkForIdentity(token) ?: return@authenticate Response.notFound("L'utlisateur est inconnue")
+        token: UUID
+    ): Response<Sheet> = Session.authenticate(UserId(userID), token, roleUser) {
         val sheet = register.findSheetByID(id) ?: return@authenticate Response.notFound("La transaction n'existe pas")
         Response.ok(sheet)
     }
 
-    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: Token) {
+    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: UUID) {
         val account: Account = register.findAccountById(accountID) ?: return
         val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
         account.cancelSheetsAmount(account.sheets.filter(isSheetOnList))

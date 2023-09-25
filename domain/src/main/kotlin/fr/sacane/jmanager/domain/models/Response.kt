@@ -7,7 +7,9 @@ enum class ResponseState{
     TIMEOUT,
     INVALID,
     FORBIDDEN,
-    NOT_FOUND;
+    NOT_FOUND,
+    UNAUTHORIZED;
+
     fun isSuccess(): Boolean{
         return this == OK
     }
@@ -36,6 +38,7 @@ class Response <S> private constructor(
         fun <S> invalid(message: String): Response<S> = Response(ResponseState.INVALID, error=message)
         fun <S> timeout(message: String): Response<S> = Response(ResponseState.TIMEOUT, error=message)
         fun <S> forbidden(message:String): Response<S> = Response(ResponseState.FORBIDDEN, error=message)
+        fun <S> unauthorized(message: String): Response<S> = Response(ResponseState.UNAUTHORIZED, error=message)
     }
 
     fun onSuccess(consumer: Consumer<S>): Response<S> {

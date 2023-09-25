@@ -13,7 +13,7 @@ annotation class DefaultSource
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
 @Inherited
-annotation class DomainImplementation
+annotation class DomainService
 
 annotation class Adapter(val domainSide: Side = Side.UNSPECIFIED)
 

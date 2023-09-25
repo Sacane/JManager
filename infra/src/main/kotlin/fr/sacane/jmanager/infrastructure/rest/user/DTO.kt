@@ -22,5 +22,6 @@ data class UserStorageDTO(
     val id: Long? = null,
     val username: String,
     val email: String? = null,
-    val token: String
+    val token: String,
+    val refreshToken: String
 )

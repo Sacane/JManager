@@ -12,7 +12,7 @@ class TokenTest {
 
     @Test
     fun `token should not be able to check its expiration when last refresh is not specified`(){
-        val token = Token(UUID.randomUUID(), null, UUID.randomUUID())
+        val token = AccessToken(UUID.randomUUID(), null, UUID.randomUUID())
         assertThrows<IllegalArgumentException> {
             token.isExpired()
         }
@@ -20,7 +20,7 @@ class TokenTest {
 
     @Test
     fun `Ticket check identity should be effective for same token`(){
-        val token = Token(UUID.randomUUID(), null, UUID.randomUUID())
+        val token = AccessToken(UUID.randomUUID(), null, UUID.randomUUID())
         val user = User(UserId(0), "test", "test@gmail.com", mutableListOf(), Password("test"), mutableListOf())
         val ticket = UserToken(user, token)
         val verifiedToken = token.copy()
@@ -31,7 +31,7 @@ class TokenTest {
 
     @Test
     fun `Token knows when it's expired or not`(){
-        val token = Token(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
+        val token = AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
         assertFalse(token.isExpired())
         Thread.sleep(5000)
         assertTrue(token.isExpired())
