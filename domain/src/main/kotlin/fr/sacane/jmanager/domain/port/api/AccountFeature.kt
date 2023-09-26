@@ -97,8 +97,7 @@ class AccountFeatureImpl(
         token: UUID,
         account: Account
     ): Response<Account> = Session.authenticate(userId, token) {
-        val ticket = userRepository.findById(userId)
-        if(ticket?.user?.accounts?.any { account.label == it.label } ?: return@authenticate notFound(TransactionRegister.missingUserMessage)) {
+        if(this.accounts.any { account.label == it.label }) {
             return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")

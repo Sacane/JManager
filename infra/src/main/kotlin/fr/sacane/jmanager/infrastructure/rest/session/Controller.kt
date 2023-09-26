@@ -1,16 +1,13 @@
-package fr.sacane.jmanager.infrastructure.rest.user
+package fr.sacane.jmanager.infrastructure.rest.session
 
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.port.api.LoginFeature
-import fr.sacane.jmanager.infrastructure.extractToken
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.*
 import java.util.logging.Logger
 
 @RestController
@@ -40,7 +37,7 @@ class SessionController(
     }
 
     @PostMapping(path = ["/logout/{id}"])
-    suspend fun logout(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
+    fun logout(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
         val ticket = loginFeature.logout(id.id(), token.asTokenUUID())
         if(ticket.status.isFailure()){
             return ResponseEntity.badRequest().build()
@@ -48,9 +45,22 @@ class SessionController(
         return ResponseEntity.ok().build()
     }
     @PostMapping(path= ["/create"])
-    suspend fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
+    fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
         val response = loginFeature.register(userDTO.toModel())
         if(response.isFailure()) return ResponseEntity.badRequest().build()
         return response.map { u -> u.toDTO() }.toResponseEntity()
     }
+
+    @PostMapping("/auth/refresh/{id}")
+    fun tryRefresh(@PathVariable id: Long, @RequestHeader("Authorization") refreshToken: String)
+    : ResponseEntity<UserStorageDTO> = loginFeature.tryRefresh(id.id(), refreshToken.asTokenUUID())
+            .map {
+                UserStorageDTO(
+                    it.first.id.id,
+                    it.first.username,
+                    it.first.email,
+                    it.second.tokenValue.toString(),
+                    it.second.refreshToken.toString()
+                )
+            }.toResponseEntity()
 }

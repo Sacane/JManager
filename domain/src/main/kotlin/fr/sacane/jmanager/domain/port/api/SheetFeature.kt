@@ -85,6 +85,7 @@ class SheetFeatureImplementation(
         year: Int,
         account: String
     ): Response<List<Sheet>> = Session.authenticate(userId, token) {
+        println(this.accounts())
         Response.ok(this.accounts()
             .find { it.label == account }
             ?.retrieveSheetSurroundByDate(month, year)

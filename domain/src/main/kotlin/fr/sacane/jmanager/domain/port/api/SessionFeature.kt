@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.Session
 import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import java.lang.IllegalStateException
 import java.util.UUID
 import java.util.logging.Logger
 
@@ -15,6 +16,7 @@ sealed interface LoginFeature {
     fun login(pseudonym: String, userPassword: Password): Response<UserToken>
     fun logout(userId: UserId, token: UUID): Response<Nothing>
     fun register(user: User): Response<User>
+    fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>>
 }
 
 @DomainService
@@ -49,6 +51,16 @@ class LoginManager(
     override fun register(user: User): Response<User> {
         val userResponse = userRepository.register(user) ?: return Response.invalid()
         return Response.ok(userResponse)
+    }
+
+    override fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>> {
+        val user = userRepository.findUserById(userId) ?: return Response.notFound("L'utilisateur n'est pas enregistré en base")
+        val session = Session.getSession(userId) ?: return Response.unauthorized("L'utilisateur n'a pas de session active")
+        if(session.refreshToken != refreshToken) return Response.forbidden("Les refresh tokens ne correspondent pas, l'utilisateur doit être déconnecté")
+        return Session.tryRefresh(userId, refreshToken)
+            .mapBoth({value -> Response.ok(Pair(user, value ?: AccessToken(UUID.randomUUID())))}) {
+                Response.invalid(it.first)
+            } ?: throw IllegalStateException("Invalid empty response has been given through this operation")
     }
 
 }

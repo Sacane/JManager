@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.user
+package fr.sacane.jmanager.infrastructure.rest.session
 
 data class UserDTO(
     val id: Long,

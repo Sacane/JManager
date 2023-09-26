@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.rest
 
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -29,10 +30,10 @@ class ExceptionHandler {
     @ExceptionHandler(TimeOutException::class)
     fun handleUnauthorizedException(ex: TimeOutException): ResponseEntity<ErrorMessage> {
         val errorMessage = ErrorMessage(
-            307,
+            HttpStatus.TEMPORARY_REDIRECT.value(),
             ex.message
         )
-        return ResponseEntity(errorMessage, HttpStatus.UNAUTHORIZED)
+        return ResponseEntity(errorMessage, HttpStatus.TEMPORARY_REDIRECT)
     }
     @ExceptionHandler(NotFoundException::class)
     fun handleNotFoundException(ex: NotFoundException): ResponseEntity<ErrorMessage> {

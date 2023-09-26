@@ -20,6 +20,7 @@ export default function useAccounts(){
     }
     
     async function createAccount(labelAccount: string, amount: number): Promise<any> {
+        console.log(user.value?.id)
         return post('account/create', {
             id: user.value?.id,
             labelAccount,

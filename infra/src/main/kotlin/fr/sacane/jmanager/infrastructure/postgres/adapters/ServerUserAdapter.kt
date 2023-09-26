@@ -21,14 +21,15 @@ class ServerUserAdapter (
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
-    override fun findById(userId: UserId): UserToken? {
-        val id = userId.id ?: return null
-        val user = userPostgresRepository.findById(id).orElseThrow()
-        val token = loginRepository.findByUser(user) ?: return null
-        return UserToken(user.toModel(), token.toModel())
-    }
+//    override fun findById(userId: UserId): UserToken? {
+//        val id = userId.id ?: return null
+//        val user = userPostgresRepository.findById(id).orElseThrow()
+//        val token = loginRepository.findByUser(user) ?: return null
+//        return UserToken(user.toModel(), token.toModel())
+//    }
 
     override fun findUserById(userId: UserId): User? {
+        println("findUserById: $userId")
         val id = userId.id ?: return null
         return userPostgresRepository.findById(id).orElse(null).toModel()
     }

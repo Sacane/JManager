@@ -1,5 +1,5 @@
+import { API_PATH } from './../utils/request';
 import axios from 'axios'
-import { API_PATH } from '../utils/request'
 
 export interface UserAuth {
   username: string
@@ -10,6 +10,7 @@ interface User {
   username: string
   email: string
   token: string
+  refreshToken: string
 }
 
 export default function useAuth() {
@@ -49,7 +50,7 @@ export default function useAuth() {
       await axios.post(`${API_PATH}user/logout/${user?.value?.id}`, null, config)
       user.value = null
       isAuthenticated.value = false
-      navigateTo('/')
+      navigateTo('/login')
       localStorage.removeItem('user')
     }
     catch (e: any) {
@@ -57,5 +58,21 @@ export default function useAuth() {
     }
   }
 
-  return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders}
+  async function tryRefresh() {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${user.value?.refreshToken}`,
+        Accept: 'application/json'
+      }
+    }
+    try {
+      const response = await axios.post(`${API_PATH}user/auth/refresh/${user.value?.id}`, null, config)
+      user.value = response.data
+    }catch(e: any) {
+      navigateTo('/login')
+      console.error(e.toString())
+    }
+  }
+
+  return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders, tryRefresh}
 }

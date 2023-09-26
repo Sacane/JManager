@@ -14,16 +14,17 @@ object Session {
 
     internal fun addSession(userId: UserId, session: AccessToken) {
         userSession[userId] = session
-        connectedUsers.removeIf { it.id == userId }
     }
 
     internal fun addUser(user: User) {
         connectedUsers.add(user)
+        println(connectedUsers)
     }
     internal infix fun removeSession(userId: UserId): AccessToken? {
+        connectedUsers.removeIf { it.id == userId }
         return userSession.remove(userId)
     }
-    private infix fun getSession(userId: UserId) = userSession[userId]
+    infix fun getSession(userId: UserId) = userSession[userId]
     private infix fun getUser(userId: UserId): User? = connectedUsers.find { it.id == userId }
     fun <T> authenticate(
         userId: UserId,

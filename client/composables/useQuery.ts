@@ -3,7 +3,7 @@ import { API_PATH } from '../utils/request';
 import useAuth from './useAuth';
 
 export default function useQuery() {
-    const {defaultHeaders} = useAuth()
+    const {defaultHeaders, tryRefresh} = useAuth()
     const toast = useJToast()
 
     async function get(url: string, authorized: boolean = true) {
@@ -42,6 +42,7 @@ export default function useQuery() {
     function handleError(error: Error) {
       if(axios.isAxiosError(error)){
         const axiosError = error as AxiosError<any, any>
+
         toast.error(axiosError.response?.data.message)
       }
       throw error

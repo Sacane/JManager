@@ -16,16 +16,4 @@ interface SessionRepository {
     fun refreshTokenLifetime(userID: UserId, refreshLifeTime: Boolean = false): AccessToken?
     fun save(token: AccessToken): AccessToken?
     fun tokens(): List<AccessToken>
-
-    fun <T> authenticate(userId: UserId, token: AccessToken, action: User.() -> Response<T>): Response<T> {
-        val userToken = tokenBy(userId) ?: return Response.notFound("Il n'existe pas d'utilisateur avec cette ID : $userId")
-//        if(userToken.token.isExpired()) {
-//            return Response.timeout("La session à expiré")
-//        }
-        if(userToken.token != token) {
-            return Response.invalid("Le token n'est pas valide")
-        }
-        refreshTokenLifetime(userId)
-        return action(userToken.user)
-    }
 }
