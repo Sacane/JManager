@@ -1,31 +1,42 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.Response.Companion.forbidden
 import fr.sacane.jmanager.domain.models.Response.Companion.invalid
 import fr.sacane.jmanager.domain.models.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.Response.Companion.timeout
 import fr.sacane.jmanager.domain.models.Response.Companion.unauthorized
+import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.*
+
+
+@DomainService
+class SessionManager(
+    private val userRepository: UserRepository
+) {
+
+}
 
 object Session {
     private val connectedUsers = mutableListOf<User>()
     private val userSession: MutableMap<UserId, AccessToken> = mutableMapOf()
 
-    internal fun addSession(userId: UserId, session: AccessToken) {
+    fun addSession(userId: UserId, session: AccessToken) {
         userSession[userId] = session
     }
 
-    internal fun addUser(user: User) {
+    fun addUser(user: User) {
+        connectedUsers.removeIf { it.id == user.id }
         connectedUsers.add(user)
-        println(connectedUsers)
     }
-    internal infix fun removeSession(userId: UserId): AccessToken? {
+
+    infix fun removeSession(userId: UserId): AccessToken? {
         connectedUsers.removeIf { it.id == userId }
         return userSession.remove(userId)
     }
     infix fun getSession(userId: UserId) = userSession[userId]
-    private infix fun getUser(userId: UserId): User? = connectedUsers.find { it.id == userId }
+    infix fun getUser(userId: UserId): User? = connectedUsers.find { it.id == userId }
     fun <T> authenticate(
         userId: UserId,
         token: UUID,

@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.Session
 import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.infrastructure.Environment
 import fr.sacane.jmanager.infrastructure.postgres.entity.Login

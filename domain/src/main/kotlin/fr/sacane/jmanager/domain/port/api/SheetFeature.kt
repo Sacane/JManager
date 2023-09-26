@@ -17,7 +17,7 @@ sealed interface SheetFeature {
     fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Sheet>>
     fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: UUID): Response<Sheet>
     fun findById(userID: Long, id: Long, token: UUID): Response<Sheet>
-    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: UUID)
+    fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID)
 }
 
 @DomainService
@@ -72,6 +72,7 @@ class SheetFeatureImplementation(
         } else {
             sheet.updateSoldStartingWith(account.sold)
         }
+        Session.getUser(userId)?.add(account) ?: return@authenticate Response.notFound("L'utilisateur n'est pas connecté")
         register.persist(userId, accountLabel, sheet) ?: return@authenticate Response.invalid()
         Response.ok(sheet)
     }
@@ -93,8 +94,6 @@ class SheetFeatureImplementation(
         )
     }
 
-
-
     override fun editSheet(
         userID: Long,
         accountID: Long,
@@ -110,6 +109,7 @@ class SheetFeatureImplementation(
         }
         updateSheetSold(acc, false)
         acc.updateSoldByLastSheet()
+        Session.getUser(UserId(userID))?.add(acc) ?: return@authenticate Response.notFound("L'utilisateur n'est pas connecté")
         return@authenticate register.save(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             println(this.sold)
@@ -126,12 +126,13 @@ class SheetFeatureImplementation(
         Response.ok(sheet)
     }
 
-    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: UUID) {
+    override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID) {
         val account: Account = register.findAccountById(accountID) ?: return
         val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
         account.cancelSheetsAmount(account.sheets.filter(isSheetOnList))
         account.sheets.removeIf(isSheetOnList)
         updateSheetSold(account)
+        Session.getUser(userId)?.add(account)
         register.persist(account)
         register.deleteAllSheetsById(sheetIds)
     }

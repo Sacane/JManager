@@ -31,7 +31,7 @@ export default function useSheet() {
   }
 
   function deleteSheet(accountId: number, ids: Array<number>) : Promise<any>{
-    return deleteQuery('sheet/delete', {
+    return deleteQuery('sheet/delete/' + user.value?.id, {
       accountId: accountId,
       sheetIds: ids
     })

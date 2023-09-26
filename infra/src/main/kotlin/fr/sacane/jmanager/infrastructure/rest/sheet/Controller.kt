@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.port.api.SheetFeature
 import fr.sacane.jmanager.domain.asTokenUUID
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -33,12 +34,13 @@ class SheetController(private val transactionResolver: SheetFeature) {
         }.toResponseEntity()
     }
 
-    @DeleteMapping("delete")
+    @DeleteMapping("delete/{userId}")
     fun deleteByIds(
+        @PathVariable("userId") userId: Long,
         @RequestBody sheetIds: AccountSheetIdsDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
-        = transactionResolver.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
+        = transactionResolver.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
             ResponseEntity.ok().build()
         }
 

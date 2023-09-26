@@ -45,6 +45,19 @@ class User(
 
     fun withToken(token: AccessToken): UserToken = UserToken(this, token)
 
+
+    fun add(account: Account) {
+        accounts.removeIf { it.id == account.id }
+        accounts.add(account)
+    }
+
+    fun addSheet(accountID: Long, sheet: Sheet): Boolean{
+        val account = accounts.find { it.id == accountID } ?: return false
+        val hasBeenRemoved = account.sheets.removeIf { it.id == sheet.id }
+        if(!hasBeenRemoved) return false
+        return account.sheets.add(sheet)
+    }
+
     override fun toString(): String {
         return """
             id: $id

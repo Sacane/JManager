@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.postgres.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.Session
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.infrastructure.postgres.entity.CategoryResource
 import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
@@ -42,8 +43,9 @@ class ServerTransactionAdapter(
         return try{
             account.sheets.add(sheet.asResource())
             account.amount = sheet.sold
-            // =================================================
-            userPostgresRepository.saveAndFlush(user)
+            userPostgresRepository.saveAndFlush(user).also {
+                Session.addUser(it.toModel())
+            }
             sheet
         }catch(e: Exception){
             null

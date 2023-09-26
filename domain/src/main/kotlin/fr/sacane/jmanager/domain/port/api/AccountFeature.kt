@@ -55,6 +55,7 @@ class AccountFeatureImpl(
         }
         oldAccount.updateFrom(account)
         val registered = register.persist(oldAccount) ?: return@authenticate invalid()
+        Session.getUser(UserId(userID))?.add(registered)
         ok(registered)
     }
 
@@ -101,6 +102,7 @@ class AccountFeatureImpl(
             return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")
+        Session.addUser(userSaved)
         ok(userSaved.accounts().find { it.label == account.label }
             ?: return@authenticate notFound("Une erreur s'est produite lors de la création du compte."))
     }
