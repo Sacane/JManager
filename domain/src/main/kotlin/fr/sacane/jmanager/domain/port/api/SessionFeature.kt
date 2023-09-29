@@ -4,7 +4,6 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.Session
 import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.lang.IllegalStateException
@@ -12,7 +11,7 @@ import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.API)
-sealed interface LoginFeature {
+sealed interface SessionFeature {
     fun login(pseudonym: String, userPassword: Password): Response<UserToken>
     fun logout(userId: UserId, token: UUID): Response<Nothing>
     fun register(user: User): Response<User>
@@ -20,9 +19,10 @@ sealed interface LoginFeature {
 }
 
 @DomainService
-class LoginManager(
-    private val userRepository: UserRepository
-): LoginFeature{
+class SessionFeatureImpl(
+    private val userRepository: UserRepository,
+    private val session: SessionManager
+): SessionFeature{
 
     companion object{
         private val LOGGER = Logger.getLogger(SessionRepository::class.java.name)
@@ -33,8 +33,7 @@ class LoginManager(
         if(userPassword.matchWith(user.password)) {
             LOGGER.info("User $pseudonym logged")
             val accessToken = generateToken(Role.USER)
-            Session.addSession(user.id, accessToken)
-            Session.addUser(user)
+            session.addSession(user.id, accessToken)
             return Response.ok(user.withToken(accessToken))
         }
         LOGGER.warning("Failed to log user $pseudonym")
@@ -42,8 +41,8 @@ class LoginManager(
     }
 
     override fun logout(userId: UserId, token: UUID)
-    : Response<Nothing>  = Session.authenticate(userId, token) {
-        Session.removeSession(userId) ?: return@authenticate Response.invalid("La session n'a pu être supprimé")
+    : Response<Nothing>  = session.authenticate(userId, token) {
+        session.removeSession(userId)
         Response.ok()
     }
 
@@ -55,9 +54,9 @@ class LoginManager(
 
     override fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>> {
         val user = userRepository.findUserById(userId) ?: return Response.notFound("L'utilisateur n'est pas enregistré en base")
-        val session = Session.getSession(userId) ?: return Response.unauthorized("L'utilisateur n'a pas de session active")
-        if(session.refreshToken != refreshToken) return Response.forbidden("Les refresh tokens ne correspondent pas, l'utilisateur doit être déconnecté")
-        return Session.tryRefresh(userId, refreshToken)
+        val token = session.getSession(userId) ?: return Response.unauthorized("L'utilisateur n'a pas de session active")
+        if(token.refreshToken != refreshToken) return Response.forbidden("Les refresh tokens ne correspondent pas, l'utilisateur doit être déconnecté")
+        return session.tryRefresh(userId, refreshToken)
             .mapBoth({value -> Response.ok(Pair(user, value ?: AccessToken(UUID.randomUUID())))}) {
                 Response.invalid(it.first)
             } ?: throw IllegalStateException("Invalid empty response has been given through this operation")

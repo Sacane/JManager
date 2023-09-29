@@ -4,8 +4,6 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.Session
-import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
@@ -23,7 +21,8 @@ sealed interface SheetFeature {
 @DomainService
 class SheetFeatureImplementation(
     private val register: TransactionRegister,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val session: SessionManager
 ): SheetFeature{
 
     private fun updateSheetSold(account: Account, update: Boolean = true){
@@ -62,17 +61,19 @@ class SheetFeatureImplementation(
         token: UUID,
         accountLabel: String,
         sheet: Sheet
-    ): Response<Sheet> = Session.authenticate(userId, token) {
+    ): Response<Sheet> = session.authenticate(userId, token) {
         val account = register.findAccountByLabel(userId, accountLabel) ?: return@authenticate Response.notFound()
         if(account.sheets.isNotEmpty()) {
-            val lastRecord = account.sheets.filter { it.date <= sheet.date }.maxByOrNull { it.position } ?: return@authenticate Response.notFound()
+            val lastRecord = account.sheets
+                .filter { it.date <= sheet.date }
+                .maxByOrNull { it.position }
+                ?: return@authenticate Response.invalid()
             sheet.position = lastRecord.position + 1
             sheet.updateSoldStartingWith(lastRecord.sold)
             updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
         } else {
             sheet.updateSoldStartingWith(account.sold)
         }
-        Session.getUser(userId)?.add(account) ?: return@authenticate Response.notFound("L'utilisateur n'est pas connecté")
         register.persist(userId, accountLabel, sheet) ?: return@authenticate Response.invalid()
         Response.ok(sheet)
     }
@@ -85,12 +86,12 @@ class SheetFeatureImplementation(
         month: Month,
         year: Int,
         account: String
-    ): Response<List<Sheet>> = Session.authenticate(userId, token) {
-        println(this.accounts())
-        Response.ok(this.accounts()
+    ): Response<List<Sheet>> = session.authenticate(userId, token) {
+        val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas en base")
+        Response.ok(user.accounts()
             .find { it.label == account }
             ?.retrieveSheetSurroundByDate(month, year)
-            ?: return@authenticate Response.invalid("Aucun compte ne correspond au label indiqué")
+            ?: return@authenticate Response.notFound("Aucun compte ne correspond au label indiqué")
         )
     }
 
@@ -99,9 +100,10 @@ class SheetFeatureImplementation(
         accountID: Long,
         sheet: Sheet,
         token: UUID
-    ): Response<Sheet> = Session.authenticate(UserId(userID), token, roleUser) {
+    ): Response<Sheet> = session.authenticate(UserId(userID), token, roleUser) {
+        val user = userRepository.findUserById(UserId(userID)) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas en base")
         if(sheet.id == null) return@authenticate Response.notFound("L'ID de la transaction n'existe pas")
-        val acc = this.accounts.find { it.id == accountID }
+        val acc = user.accounts.find { it.id == accountID }
         val sheetFromResource = acc?.sheets?.find { it.id == sheet.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${sheet.id}")
         sheetFromResource.updateFromOther(sheet)
         if(sheetFromResource.position == 0){
@@ -109,7 +111,6 @@ class SheetFeatureImplementation(
         }
         updateSheetSold(acc, false)
         acc.updateSoldByLastSheet()
-        Session.getUser(UserId(userID))?.add(acc) ?: return@authenticate Response.notFound("L'utilisateur n'est pas connecté")
         return@authenticate register.save(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             println(this.sold)
@@ -121,7 +122,7 @@ class SheetFeatureImplementation(
         userID: Long,
         id: Long,
         token: UUID
-    ): Response<Sheet> = Session.authenticate(UserId(userID), token, roleUser) {
+    ): Response<Sheet> = session.authenticate(UserId(userID), token, roleUser) {
         val sheet = register.findSheetByID(id) ?: return@authenticate Response.notFound("La transaction n'existe pas")
         Response.ok(sheet)
     }
@@ -132,7 +133,6 @@ class SheetFeatureImplementation(
         account.cancelSheetsAmount(account.sheets.filter(isSheetOnList))
         account.sheets.removeIf(isSheetOnList)
         updateSheetSold(account)
-        Session.getUser(userId)?.add(account)
         register.persist(account)
         register.deleteAllSheetsById(sheetIds)
     }

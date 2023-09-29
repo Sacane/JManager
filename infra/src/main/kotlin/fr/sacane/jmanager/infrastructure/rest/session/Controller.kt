@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.domain.port.api.LoginFeature
+import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -14,7 +14,7 @@ import java.util.logging.Logger
 @RequestMapping("/user")
 @Adapter(Side.API)
 class SessionController(
-    private val loginFeature: LoginFeature
+    private val loginFeature: SessionFeature
 ){
     companion object {
         val LOGGER: Logger = Logger.getLogger("ProfileController")

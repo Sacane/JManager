@@ -8,10 +8,7 @@ import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Response.Companion.invalid
 import fr.sacane.jmanager.domain.models.Response.Companion.notFound
 import fr.sacane.jmanager.domain.models.Response.Companion.ok
-import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.Session
-import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.UUID
@@ -30,13 +27,13 @@ sealed interface AccountFeature {
 class AccountFeatureImpl(
     private val register: TransactionRegister,
     private val userRepository: UserRepository,
-    private val loginManager: SessionRepository
+    private val session: SessionManager
 ): AccountFeature {
     override fun findAccountById(
         userId: UserId,
         accountID: Long,
         token: UUID
-    ): Response<Account> = Session.authenticate(userId, token) {
+    ): Response<Account> = session.authenticate(userId, token) {
         register.findAccountById(accountID)?.run {
             return@authenticate ok(this)
         }?: return@authenticate notFound("Le compte est introuvable")
@@ -47,7 +44,7 @@ class AccountFeatureImpl(
         userID: Long,
         account: Account,
         token: UUID
-    ): Response<Account> = Session.authenticate(UserId(userID), token) {
+    ): Response<Account> = session.authenticate(UserId(userID), token) {
         val accountID = account.id ?: return@authenticate notFound("L'id du compte n'est pas valide")
         val oldAccount = register.findAccountById(accountID) ?: return@authenticate notFound()
         if(oldAccount.id != account.id && oldAccount.label == account.label){
@@ -55,18 +52,17 @@ class AccountFeatureImpl(
         }
         oldAccount.updateFrom(account)
         val registered = register.persist(oldAccount) ?: return@authenticate invalid()
-        Session.getUser(UserId(userID))?.add(registered)
         ok(registered)
     }
 
 
-    override fun deleteAccountById
-                (profileID: UserId,
-                 accountID: Long,
-                 token: UUID
-    ): Response<Nothing> = Session.authenticate(profileID, token) {
-        this.accounts.removeIf { acc -> acc.id == accountID }
-        userRepository.upsert(this) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
+    override fun deleteAccountById(
+        profileID: UserId,
+        accountID: Long,
+        token: UUID
+    ): Response<Nothing> = session.authenticate(profileID, token) {
+        val user = userRepository.findUserById(profileID) ?: return@authenticate notFound("L'utilisateur recherché n'exite pas")
+        userRepository.upsert(user) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
         register.deleteAccountByID(accountID)
         ok()
     }
@@ -76,9 +72,10 @@ class AccountFeatureImpl(
         userId: UserId,
         token: UUID,
         label: String
-    ): Response<Account> = Session.authenticate(userId, token) {
+    ): Response<Account> = session.authenticate(userId, token) {
+        val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur recherché n'existe pas")
         ok(
-            this.accounts()
+            user.accounts()
             .find { acc -> acc.label == label }
             ?: return@authenticate notFound("Le compte $label n'est pas enregistré en base")
         )
@@ -88,25 +85,22 @@ class AccountFeatureImpl(
     override fun retrieveAllRegisteredAccounts(
         userId: UserId,
         token: UUID
-    ): Response<List<Account>> = Session.authenticate(userId, token) {
-        println("HELLO")
-        return@authenticate ok(this.accounts())
+    ): Response<List<Account>> = session.authenticate(userId, token) {
+        val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
+        return@authenticate ok(user.accounts())
     }
 
     override fun save(
         userId: UserId,
         token: UUID,
         account: Account
-    ): Response<Account> = Session.authenticate(userId, token) {
-        if(this.accounts.any { account.label == it.label }) {
+    ): Response<Account> = session.authenticate(userId, token) {
+        val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
+        if(user.accounts.any { account.label == it.label }) {
             return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")
-        Session.addUser(userSaved)
         ok(userSaved.accounts().find { it.label == account.label }
             ?: return@authenticate notFound("Une erreur s'est produite lors de la création du compte."))
     }
-
-
-
 }

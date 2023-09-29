@@ -11,7 +11,8 @@ enum class Role {
 val roleUser = arrayOf(Role.USER)
 val roleAdmin = arrayOf(Role.ADMIN)
 
-data class AccessToken(
+
+class AccessToken(
     val tokenValue: UUID,
     var tokenLifeTime: LocalDateTime? = null,
     val refreshToken: UUID? = UUID.randomUUID(),
