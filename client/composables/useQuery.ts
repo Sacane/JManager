@@ -43,11 +43,16 @@ export default function useQuery() {
       if(axios.isAxiosError(error)){
         const axiosError = error as AxiosError<any, any>
 
+        if(axiosError.response?.data.status === 307) {
+          tryRefresh()
+          return
+        }
+
         toast.error(axiosError.response?.data.message)
       }
       throw error
     }
  
 
-    return {get, post, deleteQuery}
+    return {get, post, deleteQuery, handleError}
 }
