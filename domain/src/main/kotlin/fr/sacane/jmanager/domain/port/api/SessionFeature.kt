@@ -54,8 +54,6 @@ class SessionFeatureImpl(
 
     override fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>> {
         val user = userRepository.findUserById(userId) ?: return Response.notFound("L'utilisateur n'est pas enregistré en base")
-        val token = session.getSession(userId) ?: return Response.unauthorized("L'utilisateur n'a pas de session active")
-        if(token.refreshToken != refreshToken) return Response.forbidden("Les refresh tokens ne correspondent pas, l'utilisateur doit être déconnecté")
         return session.tryRefresh(userId, refreshToken)
             .mapBoth({value -> Response.ok(Pair(user, value ?: AccessToken(UUID.randomUUID())))}) {
                 Response.invalid(it.first)

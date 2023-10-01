@@ -7,80 +7,56 @@ import fr.sacane.jmanager.domain.models.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.Response.Companion.timeout
 import fr.sacane.jmanager.domain.models.Response.Companion.unauthorized
 import java.util.*
+import java.util.logging.Logger
 
 
 @DomainService
 class SessionManager {
+    private val logger: Logger = Logger.getLogger(SessionManager::class.java.name)
+    companion object {
+        const val PURGE_DELAY = 86_400_000L // one day in milliseconds
+    }
+
+    private val lock: Any = Any()
     private val userSession: MutableMap<UserId, AccessToken> = mutableMapOf()
+
     fun addSession(userId: UserId, session: AccessToken) {
         userSession[userId] = session
     }
-    infix fun getSession(userId: UserId) = userSession[userId]
+    private infix fun getSession(userId: UserId) = userSession[userId]
     fun <T> authenticate(
         userId: UserId,
         token: UUID,
         requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
         block: (UserId) -> Response<T>
-    ): Response<T> {
+    ): Response<T> = synchronized(lock) {
         val session = getSession(userId) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
-        if(!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
-        if(session.isExpired()) return timeout("La session a expiré")
-        if(session.tokenValue != token) return unauthorized("Le token est invalide")
+        if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
+        if (session.isExpired()) return timeout("La session a expiré")
+        if (session.tokenValue != token) return unauthorized("Le token est invalide")
         session.updateLifetime()
         session.updateTokenLifetime()
         return block(userId)
     }
-    fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken> {
+    fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken> = synchronized(lock) {
         val session = getSession(id) ?: return unauthorized("L'utilisateur n'est pas connecté")
-        if(session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
-            return forbidden("Vous le refresh token est incorrect, impossible de renvoyer de token valide")
+        if (session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
+            return forbidden("Le refresh token est incorrect, impossible de renvoyer de token valide")
         }
         val regeneratedToken = generateToken(session.role)
         userSession[id] = regeneratedToken
         return ok(regeneratedToken)
     }
-    infix fun removeSession(userId: UserId) {
+    infix fun removeSession(userId: UserId) = synchronized(lock) {
         val session = userSession[userId] ?: return
-        if(session.isExpired()) {
+        if (session.isExpired()) {
             userSession.remove(userId)
         }
     }
+    fun purgeExpiredToken() = synchronized(lock) {
+        logger.info("Start purge expired tokens")
+        userSession.entries.removeIf { (_, token) ->
+            token.isExpired() && token.isRefreshTokenExpired()
+        }
+    }
 }
-
-//object Session {
-//    private val userSession: MutableMap<UserId, AccessToken> = mutableMapOf()
-//
-//    fun addSession(userId: UserId, session: AccessToken) {
-//        userSession[userId] = session
-//    }
-//
-//    infix fun getSession(userId: UserId) = userSession[userId]
-//    fun <T> authenticate(
-//        userId: UserId,
-//        token: UUID,
-//        requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
-//        block: (UserId) -> Response<T>
-//    ): Response<T> {
-//        val session = getSession(userId) ?: return unauthorized("L'utilisateur n'est pas connecté")
-//        if(!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
-//        if(session.isExpired()) return timeout("La session a expiré")
-//        if(session.tokenValue != token) return unauthorized("Le token est invalide")
-//        session.updateLifetime()
-//        session.updateTokenLifetime()
-//        return block(userId)
-//    }
-//
-//    fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken> {
-//        val session = getSession(id) ?: return unauthorized("L'utilisateur n'est pas connecté")
-//        if(session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
-//            return forbidden("Vous le refresh token est incorrect, impossible de renvoyer de token valide")
-//        }
-//        val regeneratedToken = generateToken(session.role)
-//        userSession[id] = regeneratedToken
-//        return ok(regeneratedToken)
-//    }
-//
-//    fun removeSession(userId: UserId) {
-//        userSession.remove(userId)
-//    }
-//}
