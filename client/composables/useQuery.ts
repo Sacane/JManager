@@ -42,13 +42,17 @@ export default function useQuery() {
     function handleError(error: Error) {
       if(axios.isAxiosError(error)){
         const axiosError = error as AxiosError<any, any>
-
-        if(axiosError.response?.data.status === 307) {
+        const status = axiosError.response?.data.status
+        const message = axiosError.response?.data.message
+        if(status === 307) {
           tryRefresh()
           return
+        } else if(status === 401) {
+          toast.error(message)
+          navigateTo('/login')
+          return
         }
-
-        toast.error(axiosError.response?.data.message)
+        toast.error(message)
       }
       throw error
     }

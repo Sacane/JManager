@@ -63,7 +63,7 @@ class AccountController (
             token.asTokenUUID()
         )
         if (response.isFailure()) {
-            throw ForbiddenException("L'utilisateur n'est pas authentifié")
+            throw UnauthorizedRequestException("L'utilisateur n'est pas authentifié")
         }
         return response.map { accounts ->
             accounts.map {

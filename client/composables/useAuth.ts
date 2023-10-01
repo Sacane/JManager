@@ -102,12 +102,14 @@ export default function useAuth() {
   function handleError(error: Error) {
     if(axios.isAxiosError(error)){
       const axiosError = error as AxiosError<any, any>
-
-      if(axiosError.response?.data.status === 307) {
+      const status = axiosError.response?.data.status
+      if(status === 307) {
         tryRefresh()
         return
+      } else if(status === 401) {
+        navigateTo('/login')
+        return
       }
-
       toast.error(axiosError.response?.data.message)
     }
     throw error

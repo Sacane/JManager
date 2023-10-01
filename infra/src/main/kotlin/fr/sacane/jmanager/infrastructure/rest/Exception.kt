@@ -1,12 +1,12 @@
 package fr.sacane.jmanager.infrastructure.rest
 
 data class ErrorMessage(
-    var status: Int? = null,
-    var message: String? = null
+    var status: Int,
+    var message: String
 )
 
-class ForbiddenException(s: String) : RuntimeException(s)
-class TimeOutException(s: String) : RuntimeException(s)
-class NotFoundException(s: String) : RuntimeException(s)
-class InvalidRequestException(s: String) : RuntimeException(s)
-class UnauthorizedRequestException(s: String): RuntimeException(s)
+class ForbiddenException(override val message: String) : RuntimeException(message)
+class TimeOutException(override val message: String) : RuntimeException(message)
+class NotFoundException(override val message: String) : RuntimeException(message)
+class InvalidRequestException(override val message: String) : RuntimeException(message)
+class UnauthorizedRequestException(override val message: String): RuntimeException(message)
