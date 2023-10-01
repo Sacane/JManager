@@ -64,4 +64,8 @@ class User(
             username: $username
         """.trimIndent()
     }
+
+    fun removeAccount(accountID: Long) {
+        accounts.removeIf { accountID == it.id }
+    }
 }
