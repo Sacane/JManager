@@ -6,7 +6,6 @@ plugins {
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
     id("org.jetbrains.kotlin.plugin.jpa") version "1.6.21"
     id("org.jetbrains.kotlin.plugin.allopen") version "1.6.21"
-    war
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
     kotlin("plugin.noarg") version "1.6.21"
@@ -21,14 +20,9 @@ allOpen {
 }
 
 group = "fr.sacane.jmanager"
-version = "1.6.21"
-java.sourceCompatibility = JavaVersion.VERSION_17
-
-
-
 dependencies {
 
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.1.3")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -39,7 +33,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
     implementation("org.postgresql:postgresql")
     implementation(project(mapOf("path" to ":domain")))
-    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.hamcrest:hamcrest:2.2")
     testImplementation("com.h2database:h2")
