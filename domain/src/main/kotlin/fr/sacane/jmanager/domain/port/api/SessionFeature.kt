@@ -14,7 +14,7 @@ import java.util.logging.Logger
 sealed interface SessionFeature {
     fun login(pseudonym: String, userPassword: Password): Response<UserToken>
     fun logout(userId: UserId, token: UUID): Response<Nothing>
-    fun register(user: User): Response<User>
+    fun register(username: String, email: String, password: String, confirmPassword: String): Response<User>
     fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>>
 }
 
@@ -46,8 +46,13 @@ class SessionFeatureImpl(
         Response.ok()
     }
 
-
-    override fun register(user: User): Response<User> {
+    override fun register(username: String, email: String, password: String, confirmPassword: String): Response<User> {
+        if(password != confirmPassword) return Response.invalid("Les mots de passes ne correspondent pas")
+        val user = User(
+            username = username,
+            email = email,
+            password= Password(password)
+        )
         val userResponse = userRepository.register(user) ?: return Response.invalid()
         return Response.ok(userResponse)
     }

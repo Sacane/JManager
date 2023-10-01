@@ -33,12 +33,12 @@ class Password(val value: String?){
 }
 
 class User(
-    val id: UserId,
+    val id: UserId = UserId(null),
     val username: String,
     val email: String?,
-    val accounts: MutableList<Account>,
+    val accounts: MutableList<Account> = mutableListOf(),
     val password: Password,
-    private val categories: MutableList<Category>
+    private val categories: MutableList<Category> = mutableListOf()
 ){
     fun accounts(): MutableList<Account> = accounts.toMutableList()
     fun categories(): MutableList<Category> = categories.distinct().toMutableList()
