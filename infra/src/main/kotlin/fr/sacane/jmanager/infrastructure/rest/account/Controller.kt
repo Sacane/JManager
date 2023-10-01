@@ -1,18 +1,14 @@
 package fr.sacane.jmanager.infrastructure.rest.account
 
+import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.ResponseState
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.domain.asTokenUUID
-import fr.sacane.jmanager.infrastructure.extractToken
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.toDTO
-import fr.sacane.jmanager.infrastructure.rest.toModel
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
+import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.*
 import java.util.logging.Logger
 
 
@@ -67,15 +63,18 @@ class AccountController (
             token.asTokenUUID()
         )
         if (response.isFailure()) {
-            return response.mapTo { ResponseEntity.badRequest().build() }
+            throw ForbiddenException("L'utilisateur n'est pas authentifié")
         }
-        val mapped = response.map { p ->
-            p.map {
-                AccountDTO(it.id, it.sold, it.label,
-                    it.sheets().map { s -> s.toDTO() })
+        return response.map { accounts ->
+            accounts.map {
+                AccountDTO(
+                    it.id,
+                    it.sold,
+                    it.label,
+                    it.sheets().map { sheet -> sheet.toDTO() }
+                )
             }
-        }
-        return mapped.toResponseEntity()
+        }.toResponseEntity()
     }
 
     @PostMapping(path = ["update/{userID}"])

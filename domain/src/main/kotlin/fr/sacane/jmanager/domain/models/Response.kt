@@ -46,11 +46,7 @@ class Response <S> private constructor(
         return this
     }
 
-    fun orElseGet(s: S): S? {
-        if(this.status.isFailure()) return s
-        return this.value
-    }
-
+    fun orElseGet(s: S): S = this.value ?: s
     fun orElse(s: () -> S): S {
         return s.invoke()
     }

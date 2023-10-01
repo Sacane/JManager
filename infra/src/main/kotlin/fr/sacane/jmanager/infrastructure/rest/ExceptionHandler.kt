@@ -52,5 +52,4 @@ class ExceptionHandler {
         )
         return ResponseEntity(errorMessage, HttpStatus.UNAUTHORIZED)
     }
-
 }
