@@ -113,7 +113,6 @@ class SheetFeatureImplementation(
         acc.updateSoldByLastSheet()
         return@authenticate register.save(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
-            println(this.sold)
             Response.ok(sheetFromResource)
         }
     }
