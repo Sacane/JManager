@@ -1,15 +1,20 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { API_PATH } from '../utils/request';
 import useAuth from './useAuth';
 
 export default function useQuery() {
-    const {defaultHeaders} = useAuth()
+    const {defaultHeaders, tryRefresh} = useAuth()
+    const toast = useJToast()
 
     async function get(url: string, authorized: boolean = true) {
+      try{
         const response = await axios.get(`${API_PATH}` + url , {
             headers: defaultHeaders.value,
         })
-        return response
+        return response.data
+      }catch(error: any) {
+        handleError(error)
+      }
     }
     async function deleteQuery(url: string, body: any | undefined){
       try{
@@ -18,9 +23,8 @@ export default function useQuery() {
           data: body
         })
         return response.data
-      }catch(error) {
-        console.error(error)
-        throw error
+      }catch(error: any) {
+        handleError(error)
       }
   }
 
@@ -30,12 +34,29 @@ export default function useQuery() {
                 headers: defaultHeaders.value,
             })
             return response.data
-        }catch(error) {
-            console.error(error)
-            throw error
+        }catch(error: any) {
+            handleError(error)
         }
+    }
+
+    function handleError(error: Error) {
+      if(axios.isAxiosError(error)){
+        const axiosError = error as AxiosError<any, any>
+        const status = axiosError.response?.data.status
+        const message = axiosError.response?.data.message
+        if(status === 307) {
+          tryRefresh()
+          return
+        } else if(status === 401) {
+          toast.error(message)
+          navigateTo('/login')
+          return
+        }
+        toast.error(message)
+      }
+      throw error
     }
  
 
-    return {get, post, deleteQuery}
+    return {get, post, deleteQuery, handleError}
 }

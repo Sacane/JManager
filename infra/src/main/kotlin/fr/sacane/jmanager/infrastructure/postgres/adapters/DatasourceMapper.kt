@@ -17,14 +17,12 @@ internal fun Sheet.asResource(): SheetResource {
     return resource
 }
 internal fun Account.asResource(): AccountResource {
-    val sheets = if(this.sheets().isEmpty()){
+    val sheets = if (this.sheets().isEmpty()) {
         mutableListOf()
-    }else {
+    } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    val resource = AccountResource(this.sold, this.label, sheets)
-    resource.idAccount = this.id
-    return resource
+    return AccountResource(idAccount = id, amount = sold, label = label, sheets = sheets)
 }
 
 internal fun User.asResource(): UserResource {
@@ -52,18 +50,16 @@ internal fun AccountResource.toModel(): Account{
         this.label,
         this.sheets.map { sheet -> sheet.toModel() }.toMutableList())
 }
-internal fun UserResource.toModel(): User{
-    return User(
-        UserId(this.idUser),
-        this.username,
-        this.email,
-        this.accounts.map { account -> account.toModel() }.toMutableList(),
-        Password.fromBytes(this.password),
-        CategoryFactory.allDefaultCategories()
-    )
-}
 
+internal fun UserResource.toModel()
+: User = User(
+    UserId(this.idUser),
+    this.username,
+    this.email,
+    this.accounts.map { account -> account.toModel() }.toMutableList(),
+    Password.fromBytes(this.password),
+    CategoryFactory.allDefaultCategories()
+)
 
-internal fun Login.toModel(): Token{
-    return Token(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
-}
+internal fun Login.toModel()
+: AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)

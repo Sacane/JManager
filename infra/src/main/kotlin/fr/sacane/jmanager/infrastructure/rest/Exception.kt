@@ -1,24 +1,12 @@
 package fr.sacane.jmanager.infrastructure.rest
 
-import org.springframework.http.HttpStatus
-import org.springframework.web.bind.annotation.ResponseStatus
+data class ErrorMessage(
+    var status: Int,
+    var message: String
+)
 
-
-
-@ResponseStatus(value= HttpStatus.FORBIDDEN)
-class ForbiddenException: RuntimeException {
-    constructor(s: String): super(s)
-    constructor(s: String, t: Throwable): super(s, t)
-}
-
-@ResponseStatus(value= HttpStatus.NOT_FOUND)
-class NotFoundException: RuntimeException {
-    constructor(s: String): super(s)
-    constructor(s: String, t: Throwable): super(s, t)
-}
-
-@ResponseStatus(value= HttpStatus.BAD_REQUEST)
-class InvalidRequestException: RuntimeException {
-    constructor(s: String): super(s)
-    constructor(s: String, t: Throwable): super(s, t)
-}
+class ForbiddenException(override val message: String) : RuntimeException(message)
+class TimeOutException(override val message: String) : RuntimeException(message)
+class NotFoundException(override val message: String) : RuntimeException(message)
+class InvalidRequestException(override val message: String) : RuntimeException(message)
+class UnauthorizedRequestException(override val message: String): RuntimeException(message)

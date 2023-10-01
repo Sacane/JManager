@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 
 @Repository
-interface UserRepository: JpaRepository<UserResource, Long>{
+interface UserPostgresRepository: JpaRepository<UserResource, Long>{
     fun findByUsername(username: String): UserResource?
 
     @Transactional

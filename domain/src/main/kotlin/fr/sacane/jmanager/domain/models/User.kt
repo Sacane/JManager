@@ -33,20 +33,39 @@ class Password(val value: String?){
 }
 
 class User(
-    val id: UserId,
+    val id: UserId = UserId(null),
     val username: String,
     val email: String?,
-    val accounts: MutableList<Account>,
+    val accounts: MutableList<Account> = mutableListOf(),
     val password: Password,
-    private val categories: MutableList<Category>
+    private val categories: MutableList<Category> = mutableListOf()
 ){
     fun accounts(): MutableList<Account> = accounts.toMutableList()
     fun categories(): MutableList<Category> = categories.distinct().toMutableList()
+
+    fun withToken(token: AccessToken): UserToken = UserToken(this, token)
+
+
+    fun add(account: Account) {
+        accounts.removeIf { it.id == account.id }
+        accounts.add(account)
+    }
+
+    fun addSheet(accountID: Long, sheet: Sheet): Boolean{
+        val account = accounts.find { it.id == accountID } ?: return false
+        val hasBeenRemoved = account.sheets.removeIf { it.id == sheet.id }
+        if(!hasBeenRemoved) return false
+        return account.sheets.add(sheet)
+    }
 
     override fun toString(): String {
         return """
             id: $id
             username: $username
         """.trimIndent()
+    }
+
+    fun removeAccount(accountID: Long) {
+        accounts.removeIf { accountID == it.id }
     }
 }

@@ -1,14 +1,15 @@
 package fr.sacane.jmanager.domain.models
 
 import java.util.function.Consumer
-import java.util.function.Supplier
 
 enum class ResponseState{
     OK,
     TIMEOUT,
     INVALID,
     FORBIDDEN,
-    NOT_FOUND;
+    NOT_FOUND,
+    UNAUTHORIZED;
+
     fun isSuccess(): Boolean{
         return this == OK
     }
@@ -37,6 +38,7 @@ class Response <S> private constructor(
         fun <S> invalid(message: String): Response<S> = Response(ResponseState.INVALID, error=message)
         fun <S> timeout(message: String): Response<S> = Response(ResponseState.TIMEOUT, error=message)
         fun <S> forbidden(message:String): Response<S> = Response(ResponseState.FORBIDDEN, error=message)
+        fun <S> unauthorized(message: String): Response<S> = Response(ResponseState.UNAUTHORIZED, error=message)
     }
 
     fun onSuccess(consumer: Consumer<S>): Response<S> {
@@ -44,11 +46,7 @@ class Response <S> private constructor(
         return this
     }
 
-    fun orElseGet(s: S): S? {
-        if(this.status.isFailure()) return s
-        return this.value
-    }
-
+    fun orElseGet(s: S): S = this.value ?: s
     fun orElse(s: () -> S): S {
         return s.invoke()
     }
@@ -75,11 +73,10 @@ class Response <S> private constructor(
     }
 
     fun <T> map(
-        mapper: (S?) -> T
+        mapper: (S) -> T
     ): Response<T> {
-        if(this.value == null) return Response(this.status, null)
-        val mapped = mapper.invoke(this.value)
-        return Response(this.status, mapped)
+        val value = this.value ?: return Response(this.status, null, error = this.error)
+        return Response(this.status, mapper.invoke(value))
     }
 
     fun <T> mapTo (

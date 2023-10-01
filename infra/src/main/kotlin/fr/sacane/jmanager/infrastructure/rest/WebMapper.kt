@@ -3,8 +3,8 @@ package fr.sacane.jmanager.infrastructure.rest
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
-import fr.sacane.jmanager.infrastructure.rest.user.RegisteredUserDTO
-import fr.sacane.jmanager.infrastructure.rest.user.UserDTO
+import fr.sacane.jmanager.infrastructure.rest.session.RegisteredUserDTO
+import fr.sacane.jmanager.infrastructure.rest.session.UserDTO
 import org.springframework.http.ResponseEntity
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
@@ -36,11 +36,12 @@ internal fun User.toDTO(): UserDTO {
 internal fun Long.id(): UserId {
     return UserId(this)
 }
-internal fun <T> Response<T>.toResponseEntity(): ResponseEntity<T>{
-    return when(this.status){
-        ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
-        ResponseState.TIMEOUT, ResponseState.NOT_FOUND -> throw NotFoundException(this.message)
-        ResponseState.INVALID -> throw InvalidRequestException(this.message)
-        ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
-    }
+internal fun <T> Response<T>.toResponseEntity()
+: ResponseEntity<T> = when(this.status){
+    ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
+    ResponseState.NOT_FOUND -> throw NotFoundException(this.message)
+    ResponseState.INVALID -> throw InvalidRequestException(this.message)
+    ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
+    ResponseState.TIMEOUT  -> throw TimeOutException(this.message)
+    ResponseState.UNAUTHORIZED -> throw UnauthorizedRequestException(this.message)
 }

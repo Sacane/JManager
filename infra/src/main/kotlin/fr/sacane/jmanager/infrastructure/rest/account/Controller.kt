@@ -1,18 +1,14 @@
 package fr.sacane.jmanager.infrastructure.rest.account
 
+import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.ResponseState
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.domain.toToken
-import fr.sacane.jmanager.infrastructure.extractToken
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.toDTO
-import fr.sacane.jmanager.infrastructure.rest.toModel
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
+import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.*
 import java.util.logging.Logger
 
 
@@ -35,11 +31,11 @@ class AccountController (
             : ResponseEntity<AccountDTO> {
         val accounts = feature.retrieveAllRegisteredAccounts(
             id.id(),
-            Token(UUID.fromString(extractToken(token)))
+            token.asTokenUUID()
         )
         if (accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
         return accounts.map { list ->
-            list?.find { it.label == label }?.toDTO()!!
+            list.find { it.label == label }?.toDTO()!!
         }.toResponseEntity()
     }
 
@@ -47,17 +43,14 @@ class AccountController (
     fun createAccount(
         @RequestBody userAccount: UserAccountDTO,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountInfoDTO> {
-        val response = feature.save(
-            userAccount.id.id(),
-            token.toToken(),
-            Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount)
-        )
-        if (response.isFailure()) {
-            return response.mapTo { ResponseEntity.badRequest().build() }
-        }
-        return response.map { AccountInfoDTO(it!!.sold, it.label) }.toResponseEntity()
-    }
+    )
+    : ResponseEntity<AccountInfoDTO> = feature.save(
+    userAccount.id.id(),
+    token.asTokenUUID(),
+    Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount))
+    .map { AccountInfoDTO(it.sold, it.label) }
+    .toResponseEntity()
+
 
     @GetMapping(path = ["{id}"])
     fun getAccounts(
@@ -67,18 +60,21 @@ class AccountController (
         LOGGER.info("Trying to get accounts")
         val response = feature.retrieveAllRegisteredAccounts(
             id.id(),
-            token.toToken()
+            token.asTokenUUID()
         )
         if (response.isFailure()) {
-            return response.mapTo { ResponseEntity.badRequest().build() }
+            throw UnauthorizedRequestException("L'utilisateur n'est pas authentifié")
         }
-        val mapped = response.map { p ->
-            p!!.map {
-                AccountDTO(it.id, it.sold, it.label,
-                    it.sheets().map { s -> s.toDTO() })
+        return response.map { accounts ->
+            accounts.map {
+                AccountDTO(
+                    it.id,
+                    it.sold,
+                    it.label,
+                    it.sheets().map { sheet -> sheet.toDTO() }
+                )
             }
-        }
-        return mapped.toResponseEntity()
+        }.toResponseEntity()
     }
 
     @PostMapping(path = ["update/{userID}"])
@@ -87,8 +83,8 @@ class AccountController (
         @RequestBody account: AccountDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> =
-        feature.editAccount(userID, account.toModel(), token.toToken())
-            .map { it!!.toDTO() }.toResponseEntity()
+        feature.editAccount(userID, account.toModel(), token.asTokenUUID())
+            .map { it.toDTO() }.toResponseEntity()
 
 
     @DeleteMapping(path = ["{userId}/delete/{accountId}"])
@@ -96,7 +92,7 @@ class AccountController (
         @PathVariable userId: Long,
         @PathVariable accountId: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.toToken()).toResponseEntity()
+    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.asTokenUUID()).toResponseEntity()
 
     @GetMapping("/user/{userID}/find/{accountID}")
     fun findAccountById(
@@ -104,6 +100,6 @@ class AccountController (
         @PathVariable("accountID") accountID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> =
-        feature.findAccountById(userID.id(), accountID, Token(UUID.fromString(extractToken(token))))
-            .map { it?.toDTO()!! }.toResponseEntity()
+        feature.findAccountById(userID.id(), accountID, token.asTokenUUID())
+            .map { it.toDTO() }.toResponseEntity()
     }

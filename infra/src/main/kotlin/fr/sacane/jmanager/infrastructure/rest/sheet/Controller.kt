@@ -3,14 +3,10 @@ package fr.sacane.jmanager.infrastructure.rest.sheet
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
-import fr.sacane.jmanager.domain.models.Token
 import fr.sacane.jmanager.domain.port.api.SheetFeature
-import fr.sacane.jmanager.infrastructure.extractToken
+import fr.sacane.jmanager.domain.asTokenUUID
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.rest.*
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.toDTO
-import fr.sacane.jmanager.infrastructure.rest.toModel
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -20,10 +16,7 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("/sheet")
 @Adapter(Side.API)
-class SheetController(
-    private val transactionResolver: SheetFeature
-) {
-
+class SheetController(private val transactionResolver: SheetFeature) {
     @PostMapping("/save")
     suspend fun createSheet(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
@@ -31,21 +24,23 @@ class SheetController(
     ): ResponseEntity<SheetSendDTO> {
         val queryResponse = transactionResolver.createSheetAndAssociateItWithAccount(
             userAccountSheetDTO.userId.id(),
-            Token(UUID.fromString(extractToken(token))),
+            token.asTokenUUID(),
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO.toModel()
         )
         if (queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        return queryResponse.map { SheetSendDTO(it!!.label, it.date, it.expenses, it.income, it.sold) }
-            .toResponseEntity()
+        return queryResponse.map {
+            SheetSendDTO(it.label, it.date, it.expenses, it.income, it.sold)
+        }.toResponseEntity()
     }
 
-    @DeleteMapping("delete")
+    @DeleteMapping("delete/{userId}")
     fun deleteByIds(
+        @PathVariable("userId") userId: Long,
         @RequestBody sheetIds: AccountSheetIdsDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
-        = transactionResolver.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds).let {
+        = transactionResolver.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
             ResponseEntity.ok().build()
         }
 
@@ -55,7 +50,7 @@ class SheetController(
         @RequestBody dto: UserSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetsAndAverageDTO> {
-        val response = transactionResolver.retrieveSheetsByMonthAndYear(dto.userId.id(), Token(UUID.fromString(extractToken(token)), null, UUID.randomUUID()), dto.month, dto.year, dto.accountLabel)
+        val response = transactionResolver.retrieveSheetsByMonthAndYear(dto.userId.id(), token.asTokenUUID(), dto.month, dto.year, dto.accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it -> it!!.map { it.toDTO() } }, 0.0))
     }
@@ -65,7 +60,7 @@ class SheetController(
         @RequestBody dto: UserIDSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), Token(UUID.fromString(extractToken(token))))
+        = transactionResolver.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .mapBoth(
                 {s -> ResponseEntity.ok(s!!.toDTO()) },
                 {ResponseEntity.badRequest().build()}
@@ -79,16 +74,13 @@ class SheetController(
         @PathVariable("id") sheetID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.findById(userID, sheetID, Token(UUID.fromString(extractToken(token))))
+        = transactionResolver.findById(userID, sheetID, token.asTokenUUID())
             .mapTo {
                 it ?: Response.invalid<SheetDTO>()
                 Response.ok(it)
             }.map {
                 it!!.toDTO()
             }.toResponseEntity()
-
-
-
 
     companion object {
         private val LOGGER: Logger = Logger.getLogger(SheetController::javaClass.name)

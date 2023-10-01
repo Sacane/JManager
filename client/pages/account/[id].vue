@@ -80,12 +80,11 @@ const actualSheets = ref()
 
 const confirmDelete = async () => {
   deleteSheet(parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
-  .then(() => retrieveSheets())
+  .then(() => initAccount())
   .finally(() =>{
-    fetch().then(accs => {
-      data.accountAmount = accounts.value.findLast(value => value.id === parseInt(data.currentAccountId))?.amount as number
-      jtoast.success('La suppression de la transaction a été correctement effectué')
-    })
+    findById(parseInt(data.currentAccountId)).then(account => {
+      data.accountAmount = account.amount
+    }).finally(() => jtoast.success('La suppression de la transaction a été correctement effectué'))
   })
 }
 

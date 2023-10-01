@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.domain
 
-import fr.sacane.jmanager.domain.models.Token
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -10,7 +9,12 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 
-fun String.toToken(): Token = Token(UUID.fromString(this.replace("Bearer ", "")))
+fun String.asTokenUUID(): UUID = UUID.fromString(this.replace("Bearer ", ""))
+
+object Env {
+    const val TOKEN_LIFETIME_IN_HOURS = 1L
+    const val REFRESH_TOKEN_LIFETIME_IN_DAYS = 7L
+}
 
 object Hash {
     private val md = MessageDigest.getInstance("SHA-512")

@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.user
+package fr.sacane.jmanager.infrastructure.rest.session
 
 data class UserDTO(
     val id: Long,
@@ -9,7 +9,8 @@ data class UserDTO(
 data class RegisteredUserDTO(
     val username: String,
     val email: String,
-    val password: String
+    val password: String,
+    val confirmPassword: String
 )
 
 data class UserPasswordDTO(
@@ -22,10 +23,6 @@ data class UserStorageDTO(
     val id: Long? = null,
     val username: String,
     val email: String? = null,
-    val token: String
-)
-
-data class TokenDTO(
     val token: String,
     val refreshToken: String
 )

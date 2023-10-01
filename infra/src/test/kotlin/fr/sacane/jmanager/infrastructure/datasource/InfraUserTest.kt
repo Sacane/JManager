@@ -2,10 +2,9 @@ package fr.sacane.jmanager.infrastructure.datasource
 
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.infrastructure.postgres.entity.AccountResource
-import fr.sacane.jmanager.infrastructure.postgres.entity.SheetResource
 import fr.sacane.jmanager.infrastructure.postgres.entity.UserResource
 import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.UserRepository
+import fr.sacane.jmanager.infrastructure.postgres.repositories.UserPostgresRepository
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -23,7 +22,7 @@ import org.springframework.test.context.TestPropertySource
 class InfraUserTest {
 
     @Autowired
-    lateinit var userRepository: UserRepository
+    lateinit var userPostgresRepository: UserPostgresRepository
 
     @Autowired
     lateinit var accountRepository: AccountRepository
@@ -33,7 +32,7 @@ class InfraUserTest {
     }
     @AfterEach
     fun clear(){
-        userRepository.deleteByUsername("johan_test")
+        userPostgresRepository.deleteByUsername("johan_test")
     }
 
     @Test
@@ -41,8 +40,8 @@ class InfraUserTest {
     fun `users should correctly be implement into database`(){
         val passwordUser = Password("01012000")
         val user = UserResource("johan_test", passwordUser.get(),"johan.ramaroson@test.com",  mutableListOf(), mutableListOf())
-        userRepository.save(user)
-        val byName = userRepository.findByUsername("johan_test")
+        userPostgresRepository.save(user)
+        val byName = userPostgresRepository.findByUsername("johan_test")
         assertThat(byName).isNotNull
         assertThat(byName!!.username).isEqualTo(user.username)
         val password = Password.fromBytes(byName.password)
@@ -55,21 +54,21 @@ class InfraUserTest {
     fun `users should got accounts while add them into database`(){
         val user = basicUserTest()
         user.accounts = mutableListOf()
-        userRepository.save(user)
+        userPostgresRepository.save(user)
 
-        val byName = userRepository.findByUsername(user.username)
+        val byName = userPostgresRepository.findByUsername(user.username)
         val account = AccountResource()
         account.amount = 102.toDouble()
         account.label = "test account"
 
         byName?.accounts!!.add(account)
 
-        userRepository.save(byName)
+        userPostgresRepository.save(byName)
 
-        assertThat(userRepository.count()).isLessThan(2)
+        assertThat(userPostgresRepository.count()).isLessThan(2)
         assertThat(byName.accounts).isNotEmpty
         assertThat(accountRepository.count()).isGreaterThan(0)
-        userRepository.deleteByUsername("johan_test")
+        userPostgresRepository.deleteByUsername("johan_test")
 
     }
 

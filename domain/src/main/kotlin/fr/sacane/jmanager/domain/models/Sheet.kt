@@ -12,7 +12,6 @@ class Sheet(
     var category: Category = CategoryFactory.DEFAULT_CATEGORY,
     var position: Int = 0
 ) {
-
     fun updateSoldStartingWith(start: Double) {
         sold = start.plus(income).minus(expenses)
     }
