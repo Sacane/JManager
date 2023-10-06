@@ -80,6 +80,7 @@ export default function useAuth() {
       user.value = response.data
     }catch(e: any) {
       navigateTo('/login')
+      handleError(e);
       console.error(e.toString())
     }
   }
@@ -98,7 +99,7 @@ export default function useAuth() {
     }
   }
 
-  
+
   function handleError(error: Error) {
     if(axios.isAxiosError(error)){
       const axiosError = error as AxiosError<any, any>

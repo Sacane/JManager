@@ -7,6 +7,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.text.NumberFormat
 import java.util.*
 
 fun String.asTokenUUID(): UUID = UUID.fromString(this.replace("Bearer ", ""))
@@ -45,3 +46,8 @@ object Hash {
     }
 }
 
+fun Double.toFrenchFormat(): Double{
+    val formatter = NumberFormat.getCurrencyInstance(Locale("fr", "FR"))
+    val format = formatter.format(this)
+    return format.replace(Regex("[^\\d,]"), "").replace(",", ".").toDouble()
+}

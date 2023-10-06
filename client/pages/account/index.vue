@@ -102,8 +102,13 @@ const actionSelection = ref<AccountDTO | undefined>(undefined)
         <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
     </div>
-    <div v-else min-w-500px>
-      Ce profil n'a pas encore de compte enregistrés
+    <div v-else class="text-center">
+      <div class="mb-4">
+        <p class="text-xl font-semibold text-gray-600">Vous n'avez pas encore de compte enregistré.</p>
+      </div>
+      <div class="mb-4">
+        <p class="text-lg text-gray-500">Commencez par ajouter un compte pour gérer vos finances.</p>
+      </div>
     </div>
     <div class="w-full mt-2 flex items-center" >
       <PButton label="Ajouter un nouveau compte" class="bg-purple w-250px" @click="toAdd" />
@@ -120,7 +125,7 @@ const actionSelection = ref<AccountDTO | undefined>(undefined)
   .info-text{
     text-align: center;
     font-size: 18px;
-    color: #555; 
+    color: #555;
     margin-bottom: 20px;
   }
 }

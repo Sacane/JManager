@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.ResponseState
 import fr.sacane.jmanager.domain.port.api.AccountFeature
+import fr.sacane.jmanager.domain.toFrenchFormat
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -69,7 +70,7 @@ class AccountController (
             accounts.map {
                 AccountDTO(
                     it.id,
-                    it.sold,
+                    it.sold.toFrenchFormat(),
                     it.label,
                     it.sheets().map { sheet -> sheet.toDTO() }
                 )

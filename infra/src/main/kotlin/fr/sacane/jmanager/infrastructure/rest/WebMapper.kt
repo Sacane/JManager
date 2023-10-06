@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.rest
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.toFrenchFormat
 import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
 import fr.sacane.jmanager.infrastructure.rest.session.RegisteredUserDTO
@@ -16,7 +17,7 @@ internal fun Account.toDTO(): AccountDTO = AccountDTO(
 
 
 internal fun SheetDTO.toModel(): Sheet {
-    return Sheet(this.id, this.label, this.date, this.expenses, this.income, this.accountAmount, position = this.position)
+    return Sheet(this.id, this.label, this.date, this.expenses.toFrenchFormat(), this.income.toFrenchFormat(), this.accountAmount, position = this.position)
 }
 internal fun AccountDTO.toModel(): Account {
     return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }!!.toMutableList())
@@ -27,7 +28,7 @@ internal fun RegisteredUserDTO.toModel(): User {
 }
 
 internal fun Sheet.toDTO(): SheetDTO {
-    return SheetDTO(this.id!!, this.label, this.expenses, this.income, this.date, this.sold, position = this.position)
+    return SheetDTO(this.id!!, this.label, this.expenses.toFrenchFormat(), this.income.toFrenchFormat(), this.date, this.sold, position = this.position)
 }
 
 internal fun User.toDTO(): UserDTO {

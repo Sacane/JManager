@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.web.invoke
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
-
     @Bean
     fun filterChain(
         http: HttpSecurity
