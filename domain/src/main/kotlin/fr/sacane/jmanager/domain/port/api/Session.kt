@@ -56,5 +56,6 @@ class SessionManager {
     fun purgeExpiredToken() = synchronized(lock) {
         logger.info("Start purge expired tokens")
         userSession.values.forEach { it.removeIf {token -> token.isExpired() && token.isRefreshTokenExpired()} }
+        userSession.entries.removeIf { (id, set) -> set.isEmpty() }
     }
 }
