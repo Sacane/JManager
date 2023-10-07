@@ -18,6 +18,7 @@ sealed interface SessionFeature {
     fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>>
 }
 
+
 @DomainService
 class SessionFeatureImpl(
     private val userRepository: UserRepository,

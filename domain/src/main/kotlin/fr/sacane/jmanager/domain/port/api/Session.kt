@@ -18,19 +18,21 @@ class SessionManager {
     }
 
     private val lock: Any = Any()
-    private val userSession: MutableMap<UserId, AccessToken> = mutableMapOf()
+    private val userSession: MutableMap<UserId, MutableSet<AccessToken>> = mutableMapOf()
 
-    fun addSession(userId: UserId, session: AccessToken) {
-        userSession[userId] = session
+    fun addSession(userId: UserId, session: AccessToken) = synchronized(lock){
+        val sessions = userSession.computeIfAbsent(userId) { mutableSetOf() }
+        sessions.add(session)
     }
-    private infix fun getSession(userId: UserId) = userSession[userId]
+    private fun getSession(userId: UserId, token: UUID): AccessToken? = userSession[userId]?.first { token == it.tokenValue || token == it.refreshToken }
     fun <T> authenticate(
         userId: UserId,
         token: UUID,
         requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
         block: (UserId) -> Response<T>
     ): Response<T> = synchronized(lock) {
-        val session = getSession(userId) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
+        val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
+
         if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
         if (session.isExpired()) return timeout("La session a expiré")
         if (session.tokenValue != token) return unauthorized("Le token est invalide")
@@ -39,24 +41,20 @@ class SessionManager {
         return block(userId)
     }
     fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken> = synchronized(lock) {
-        val session = getSession(id) ?: return unauthorized("L'utilisateur n'est pas connecté")
+        val session = getSession(id, refreshToken) ?: return unauthorized("L'utilisateur n'est pas connecté")
         if (session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
             return forbidden("Le refresh token est incorrect, impossible de renvoyer de token valide")
         }
+
         val regeneratedToken = generateToken(session.role)
-        userSession[id] = regeneratedToken
+        addSession(id, regeneratedToken)
         return ok(regeneratedToken)
     }
     infix fun removeSession(userId: UserId) = synchronized(lock) {
-        val session = userSession[userId] ?: return
-        if (session.isExpired()) {
-            userSession.remove(userId)
-        }
+        userSession[userId]?.removeIf {it.isExpired()}
     }
     fun purgeExpiredToken() = synchronized(lock) {
         logger.info("Start purge expired tokens")
-        userSession.entries.removeIf { (_, token) ->
-            token.isExpired() && token.isRefreshTokenExpired()
-        }
+        userSession.values.forEach { it.removeIf {token -> token.isExpired() && token.isRefreshTokenExpired()} }
     }
 }
