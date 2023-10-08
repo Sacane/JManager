@@ -20,19 +20,22 @@ const values = reactive({
   amount: 0.0,
   selectedMode: 'expenses',
   sheetLabel: '',
-  date: new Date()
+  date: new Date(),
+  integerPart: 0.0,
+  decimalPart: 0.0
 })
 
 const onConfirm = async () => {
-  if(values.amount === 0.0 || values.sheetLabel === '') {
+  if((values.integerPart === 0 && values.decimalPart === 0) || values.sheetLabel === '') {
     return
   }
-  
+  const amount = parseFloat((parseFloat(`${values.integerPart}`) + parseFloat(`0.${values.decimalPart}`)).toFixed(2))
+  console.log(amount)
   await saveSheet(values.accountLabel, {
     id: 0,
     label: values.sheetLabel,
-    expenses: (values.selectedMode === 'expenses') ? values.amount : 0.0,
-    income: (values.selectedMode === 'income') ? values.amount : 0.0,
+    expenses: (values.selectedMode === 'expenses') ? amount : 0,
+    income: (values.selectedMode === 'income') ? amount : 0,
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: parseFloat(values.accountAmount)
   }).then((sheet: SheetDTO) => {
@@ -43,7 +46,7 @@ const onConfirm = async () => {
       query: {
         id: values.accountId,
         labelAccount: values.accountLabel,
-        amount: sheet.accountAmount
+        amount: amount
       }
     })
   })
@@ -52,9 +55,8 @@ const onConfirm = async () => {
 
 
 <template>
-  <div wfull hfull flex items-center>
-    
-    <div class="form-container" flex-col mb5>
+  <div class="wfull hfull flex items-center justify-center content ">
+    <div class="flex-col w60% mb5 form-container">
       <PFieldset :legend="`Ajouter une nouvelle transaction pour le compte ${values.accountLabel }`">
         <div>
           <label for="label" mt5px>Libelle</label>
@@ -73,12 +75,16 @@ const onConfirm = async () => {
             </div>
           </div>
         </div>
-        <div mt5px>
-          <label for="number">Indiquer le montant de la transaction (en euros)</label>
-          <PInputNumber v-model="values.amount" id="number"/>
+        <div id="labelAmount">
+          <label for="amount">Selectionner le montant de la transaction (en €)</label>
+          <div class="flex-row space-x-2 mt5px" id="amount">
+            <PInputNumber placeholder="Partie entière" v-model="values.integerPart" />
+            <div>.</div>
+            <PInputNumber placeholder="Partie décimal" v-model="values.decimalPart" maxlength="2"/>
+          </div>
         </div>
         <div mt5px>
-          <label for="calendar">Indiquer la date de la transaction</label>
+          <label for="calendar">Date de la transaction</label>
           <PCalendar placeholder="Date" v-model="values.date" date-format="dd-mm-yy" id="calendar"/>
         </div>
         <div mt5px>
@@ -92,10 +98,16 @@ const onConfirm = async () => {
 
 <style scoped lang="scss">
 
-.form-container{
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
+
+.content{
+
+  .form-container{
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
+    justify-content: center;
+  }
 }
+
 </style>

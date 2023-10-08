@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
-    this.sold,
+    this.sold.toFrenchFormat(),
     this.label,
     this.sheets().map { sheet -> sheet.toDTO() }
 )
@@ -22,11 +22,6 @@ internal fun SheetDTO.toModel(): Sheet {
 internal fun AccountDTO.toModel(): Account {
     return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }!!.toMutableList())
 }
-internal fun RegisteredUserDTO.toModel(): User {
-    return User(UserId(0), this.username, this.email, mutableListOf(), Password(this.password), mutableListOf(
-        CategoryFactory.DEFAULT_CATEGORY))
-}
-
 internal fun Sheet.toDTO(): SheetDTO {
     return SheetDTO(this.id!!, this.label, this.expenses.toFrenchFormat(), this.income.toFrenchFormat(), this.date, this.sold, position = this.position)
 }

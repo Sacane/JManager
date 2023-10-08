@@ -41,11 +41,11 @@ class SessionManager {
         return block(userId)
     }
     fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken> = synchronized(lock) {
+        logger.info("Trying to refresh session user $id")
         val session = getSession(id, refreshToken) ?: return unauthorized("L'utilisateur n'est pas connecté")
         if (session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
             return forbidden("Le refresh token est incorrect, impossible de renvoyer de token valide")
         }
-
         val regeneratedToken = generateToken(session.role)
         addSession(id, regeneratedToken)
         return ok(regeneratedToken)
@@ -57,5 +57,6 @@ class SessionManager {
         logger.info("Start purge expired tokens")
         userSession.values.forEach { it.removeIf {token -> token.isExpired() && token.isRefreshTokenExpired()} }
         userSession.entries.removeIf { (id, set) -> set.isEmpty() }
+        logger.info("Purge done")
     }
 }

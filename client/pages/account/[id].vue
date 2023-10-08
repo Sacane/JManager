@@ -133,7 +133,7 @@ const onYearChange = () => {
     <div p-8  bg-white class="form-container" mt2px>
       <div flex-row justify-between>
         <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ data.labelAccount }}</h2>
-        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }} €</h2>
+        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount.toFixed(2) }} €</h2>
 
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
