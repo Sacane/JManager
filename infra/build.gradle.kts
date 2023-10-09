@@ -61,6 +61,8 @@ tasks {
                 mergeStrategy = "append"
             }
         )
+        from("salt.txt")
+
     }
     jar{
         manifest {

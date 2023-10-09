@@ -1,12 +1,8 @@
 package fr.sacane.jmanager.domain
 
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileReader
-import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 import java.security.MessageDigest
+import java.security.SecureRandom
 import java.text.NumberFormat
 import java.util.*
 
@@ -19,9 +15,11 @@ object Env {
 
 object Hash {
     private val md = MessageDigest.getInstance("SHA-512")
-    private val salt: ByteArray?
+    private val salt: ByteArray
     init{
-        salt = salt()
+        val random = SecureRandom()
+        salt = ByteArray(16)
+        random.nextBytes(salt)
     }
 
     fun hash(pwd: String): ByteArray{
@@ -32,17 +30,6 @@ object Hash {
     fun contentEquals(pwd: ByteArray, other: String): Boolean{
         val digest = hash(other)
         return pwd.contentEquals(digest)
-    }
-
-    private fun salt(): ByteArray?{
-        val path: File = Path.of(System.getProperty("user.dir").plus("/salt.txt")).toFile()
-        return try{
-            BufferedReader(FileReader(path)).use {
-                it.lines().findFirst().get()
-            }.toByteArray()
-        }catch(e: IOException){
-            null
-        }
     }
 }
 
