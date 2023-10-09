@@ -80,7 +80,7 @@ class LoginTransactionAdapter(
         val userResponse = userPostgresRepository.findById(id)
         if(userResponse.isEmpty) return null
         return loginRepository
-            .saveAndFlush(
+            .save(
                 Login(
                 user = userResponse.get(),
                 tokenLifeTime = LocalDateTime.now().plusHours(DEFAULT_TOKEN_LIFETIME_IN_HOURS))
@@ -104,7 +104,7 @@ class LoginTransactionAdapter(
         val user = userPostgresRepository.findById(id)
             .orElse(null) ?: return null
         val token = loginRepository.findByUser(user) ?: return null
-        return loginRepository.saveAndFlush(token.also {
+        return loginRepository.save(token.also {
             it.tokenLifeTime = LocalDateTime.now().plusHours(Environment.DEFAULT_TOKEN_LIFETIME_IN_HOURS)
             if(refreshLifeTime) {
                 it.refreshTokenLifetime = LocalDateTime.now().plusDays(Environment.DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)

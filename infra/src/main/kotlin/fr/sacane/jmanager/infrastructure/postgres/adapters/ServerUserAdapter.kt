@@ -68,7 +68,7 @@ class ServerUserAdapter (
 
     override fun upsert(user: User): User? {
         val userResource = user.asExistingResource()
-        val userResponse = userPostgresRepository.saveAndFlush(userResource)
+        val userResponse = userPostgresRepository.save(userResource)
         return userResponse.toModel()
     }
 

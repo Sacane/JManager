@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
 plugins {
-	war
 	kotlin("jvm") version "1.6.21"
 }
 group = "fr.sacane.jmanager"

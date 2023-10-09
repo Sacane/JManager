@@ -42,7 +42,7 @@ class ServerTransactionAdapter(
         return try{
             account.sheets.add(sheet.asResource())
             account.amount = sheet.sold
-            userPostgresRepository.saveAndFlush(user)
+            userPostgresRepository.save(user)
             sheet
         }catch(e: Exception){
             null
@@ -52,7 +52,6 @@ class ServerTransactionAdapter(
     override fun persist(account: Account) :Account?{
         val accountGet = account.asResource()
         val registered = accountRepository.save(accountGet)
-        accountRepository.flush()
         return registered.toModel()
     }
 
