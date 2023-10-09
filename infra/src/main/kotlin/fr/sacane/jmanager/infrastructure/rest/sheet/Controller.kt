@@ -14,7 +14,7 @@ import java.util.logging.Logger
 
 
 @RestController
-@RequestMapping("/sheet")
+@RequestMapping("api/sheet")
 @Adapter(Side.API)
 class SheetController(private val transactionResolver: SheetFeature) {
     @PostMapping("/save")

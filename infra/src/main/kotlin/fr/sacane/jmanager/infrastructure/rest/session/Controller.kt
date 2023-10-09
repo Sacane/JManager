@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("api/user")
 @Adapter(Side.API)
 class SessionController(
     private val loginFeature: SessionFeature

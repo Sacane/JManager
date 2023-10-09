@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.0.0"
@@ -46,15 +47,26 @@ tasks {
         }
     }
     shadowJar {
+        mergeServiceFiles()
         archiveBaseName.set("Jmanager")
         archiveClassifier.set("")
         archiveVersion.set(project.version.toString())
         destinationDirectory.set(file("$rootDir/executables"))
+        append("META-INF/spring.handlers")
+        append("META-INF/spring.schemas")
+        append("META-INF/spring.tooling")
+        transform(
+            PropertiesFileTransformer().apply {
+                paths = mutableListOf("META-INF/spring.factories")
+                mergeStrategy = "append"
+            }
+        )
     }
     jar{
         manifest {
             attributes["Main-Class"] = "fr.sacane.jmanager.infrastructure.JmanagerApplicationKt"
         }
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
     processResources {
         mustRunAfter(":client:bundle")
