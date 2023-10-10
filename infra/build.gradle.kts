@@ -62,7 +62,6 @@ tasks {
             }
         )
         from("salt.txt")
-
     }
     jar{
         manifest {
