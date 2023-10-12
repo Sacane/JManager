@@ -14,16 +14,16 @@ val roleAdmin = arrayOf(Role.ADMIN)
 
 class AccessToken(
     val tokenValue: UUID,
-    var tokenLifeTime: LocalDateTime? = null,
+    var tokenExpirationDate: LocalDateTime? = null,
     val refreshToken: UUID? = UUID.randomUUID(),
     var refreshTokenLifetime: LocalDateTime? = null,
     val role: Role = Role.USER
 ){
     fun isExpired(): Boolean{
-        check(tokenLifeTime != null){
+        check(tokenExpirationDate != null){
             "trying to check a token that has been created without lastRefresh indication"
         }
-        return tokenLifeTime!!.isBefore(now())
+        return tokenExpirationDate!!.isBefore(now())
     }
     fun isRefreshTokenExpired(): Boolean {
         check(refreshTokenLifetime != null) {
@@ -33,10 +33,10 @@ class AccessToken(
     }
 
     fun updateLifetime() {
-        check(tokenLifeTime != null) {
+        check(tokenExpirationDate != null) {
             "Impossible de mettre à jour le temps de vie d'un token inexistant"
         }
-        tokenLifeTime = tokenLifeTime!!.plusHours(Env.TOKEN_LIFETIME_IN_HOURS)
+        tokenExpirationDate = tokenExpirationDate!!.plusHours(Env.TOKEN_LIFETIME_IN_HOURS)
     }
     fun updateTokenLifetime() {
         check(refreshTokenLifetime != null) {
@@ -58,7 +58,7 @@ data class UserToken(
     val token: AccessToken
 ){
     fun checkForIdentity(token: AccessToken): User?{
-        return if(this.token.tokenValue == token.tokenValue || this.token.tokenLifeTime!!.isAfter(now())){
+        return if(this.token.tokenValue == token.tokenValue || this.token.tokenExpirationDate!!.isAfter(now())){
             this.user
         } else null
     }
