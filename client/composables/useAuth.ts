@@ -35,7 +35,7 @@ export default function useAuth() {
     isAuthenticated.value = false
   }
 
-  async function login(userAuth: UserAuth) {
+  async function login(userAuth: UserAuth, onError: (e: Error) => void = e => console.error(e)) {
     try {
       const response = await axios.post(`${API_PATH}user/auth`, userAuth)
       console.log(userAuth)
@@ -45,7 +45,7 @@ export default function useAuth() {
       localStorage.setItem('user', JSON.stringify(user.value))
     }
     catch (e: any) {
-      console.error(e.toString())
+      onError(e);
     }
   }
   const defaultHeaders = computed(() => ({
@@ -84,7 +84,7 @@ export default function useAuth() {
       console.error(e.toString())
     }
   }
-  async function register(registeredUser: UserRegister) {
+  async function register(registeredUser: UserRegister, onSuccess: () => void = () => console.log('success'), onError: (e: Error) => void = e => console.error(e)) {
     const config = {
       headers: {
         Authorization: `Bearer ${user.value?.refreshToken}`,
@@ -93,9 +93,9 @@ export default function useAuth() {
     }
     try {
       const response = await axios.post(`${API_PATH}user/create`, registeredUser, config)
+      onSuccess();
     }catch(e: any) {
-      navigateTo('/login')
-      console.error(e.toString())
+      onError(e)
     }
   }
 

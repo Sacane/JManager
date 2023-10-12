@@ -2,8 +2,8 @@
   <div class="login-container">
     <h1 class="title">JManager Application</h1>
     <div class="form-container">
-      <h2 class="form-title">{{ mode.login ? 'Se connecter' : "S'enregistrer" }}</h2>
-      <div v-if="mode.login">
+      <h2 class="form-title">{{ mode ? 'Se connecter' : "S'enregistrer" }}</h2>
+      <div v-if="mode">
         <form class="form">
         <div class="form-group">
           <label for="username">Nom d'utilisateur</label>
@@ -13,7 +13,10 @@
           <label for="password">Mot de passe</label>
           <input v-model="userAuth.password" type="password" class="input" />
         </div>
-        <button type="button" class="btn-primary" @click="login(userAuth)">Login</button>
+        <button type="button" class="btn-primary" @click="log()">Login</button>
+        <div v-if="hasFailedlogin">
+          <h2 class="color-#FF0000">Le nom d'utilisateur et le mot de passe ne correspondent pas</h2>
+        </div>
       </form>
       </div>
       <div v-else>
@@ -34,12 +37,15 @@
             <label for="confirm">Confirmer le mot de passe *</label>
             <input id="confirm" v-model="userRegistered.confirmPassword" type="password" class="input" />
           </div>
-          <button type="button" class="btn-primary" @click="register(userRegistered)">Login</button>
+          <button type="button" class="btn-primary" @click="registerUser()">S'enregistrer</button>
+          <div v-if="hasFailedRegister">
+            <h2>Les mots de passent ne correspondent pas</h2>
+          </div>
         </form>
       </div>
       <div class="switch-mode">
-        <p>{{ mode.login ? "Vous n'avez pas de compte ?" : 'Vous avez déjà un compte ?' }}</p>
-        <button @click="switchMode">{{ mode.login ? 'S\'enregistrer' : 'Se connecter' }}</button>
+        <p>{{ mode ? "Vous n'avez pas de compte ?" : 'Vous avez déjà un compte ?' }}</p>
+        <button @click="switchMode">{{ mode ? 'S\'enregistrer' : 'Se connecter' }}</button>
       </div>
     </div>
   </div>
@@ -47,6 +53,7 @@
 
 <script setup lang="ts">
 import useAuth from '../composables/useAuth';
+import { UserAuth } from '../composables/useAuth';
 
 const { login, register } = useAuth();
 const userAuth = reactive({
@@ -61,11 +68,27 @@ const userRegistered = reactive({
   confirmPassword: ''
 })
 
-const mode = reactive({ login: true });
+const mode = ref(true);
 
 const switchMode = () => {
-  mode.login = !mode.login;
+  mode.value = !mode.value;
 };
+
+const hasFailedlogin = ref(false);
+const hasFailedRegister = ref(false);
+
+const log = () => {
+  login(userAuth, e => {
+    hasFailedlogin.value = true;
+    console.error(e)
+  })
+}
+const registerUser = () => {
+  register(userRegistered, () => switchMode(), e => {
+    hasFailedRegister.value = true;
+  })
+}
+
 </script>
 
 <style scoped>
