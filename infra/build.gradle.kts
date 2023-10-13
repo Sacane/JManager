@@ -15,7 +15,7 @@ repositories{
 }
 
 group = "fr.sacane.jmanager"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web:3.1.3")
@@ -62,6 +62,9 @@ tasks {
             }
         )
         from("salt.txt")
+        from("infra/src/main/resources/application.properties") {
+            into("executables")
+        }
     }
     jar{
         manifest {
