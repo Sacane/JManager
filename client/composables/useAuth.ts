@@ -1,6 +1,5 @@
 import { API_PATH } from './../utils/request';
 import axios, { AxiosError } from 'axios'
-import { useToast } from 'primevue/usetoast';
 import useJToast from './useJToast';
 
 export interface UserAuth {
@@ -12,7 +11,9 @@ interface User {
   username: string
   email: string
   token: string
-  refreshToken: string
+  refreshToken: string,
+  tokenExpirationDate: Date,
+  refreshExpirationDate: Date
 }
 interface UserRegister {
   username: string
@@ -79,8 +80,8 @@ export default function useAuth() {
       const response = await axios.post(`${API_PATH}user/auth/refresh/${user.value?.id}`, null, config)
       user.value = response.data
     }catch(e: any) {
+      isAuthenticated.value = false
       navigateTo('/login')
-      handleError(e);
       console.error(e.toString())
     }
   }
@@ -108,6 +109,7 @@ export default function useAuth() {
         tryRefresh()
         return
       } else if(status === 401) {
+        isAuthenticated.value = false
         navigateTo('/login')
         return
       }

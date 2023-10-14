@@ -1,6 +1,18 @@
+import useAuth from '../composables/useAuth';
 <script setup lang="ts">
 definePageMeta({
   layout: 'sidebar-layout',
+})
+
+const {user, isAuthenticated} = useAuth()
+
+onMounted(() => {
+  const currentDate = new Date();
+  console.log(user.value?.tokenExpirationDate)
+  if(user.value == null || user.value.refreshExpirationDate > currentDate) {
+    isAuthenticated.value = false
+    navigateTo('/login')
+  }
 })
 </script>
 

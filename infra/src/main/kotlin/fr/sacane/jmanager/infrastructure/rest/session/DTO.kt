@@ -1,5 +1,7 @@
 package fr.sacane.jmanager.infrastructure.rest.session
 
+import java.time.LocalDateTime
+
 data class UserDTO(
     val id: Long,
     val username: String,
@@ -24,5 +26,7 @@ data class UserStorageDTO(
     val username: String,
     val email: String? = null,
     val token: String,
-    val refreshToken: String
+    val refreshToken: String,
+    val tokenExpirationDate: LocalDateTime,
+    val refreshExpirationDate: LocalDateTime
 )

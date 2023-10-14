@@ -25,24 +25,23 @@ class SessionController(
         val response = loginFeature.login(userDTO.username, Password(userDTO.password))
         LOGGER.info("Trying to login user ${userDTO.username}")
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return response.map { u ->
+        return response.map {
             UserStorageDTO(
-                u.user.id.id ?: throw InvalidRequestException("Invalid response, something went wrong"),
-                username = u.user.username,
-                email = u.user.email,
-                token = u.token.tokenValue.toString(),
-                refreshToken = u.token.refreshToken.toString()
+                it.user.id.id ?: throw InvalidRequestException("Invalid response, something went wrong"),
+                username = it.user.username,
+                email = it.user.email,
+                token = it.token.tokenValue.toString(),
+                refreshToken = it.token.refreshToken.toString(),
+                tokenExpirationDate = it.token.tokenExpirationDate,
+                refreshExpirationDate = it.token.refreshTokenLifetime
             )
         }.toResponseEntity()
     }
 
     @PostMapping(path = ["/logout/{id}"])
     fun logout(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
-        val ticket = loginFeature.logout(id.id(), token.asTokenUUID())
-        if(ticket.status.isFailure()){
-            return ResponseEntity.badRequest().build()
-        }
-        return ResponseEntity.ok().build()
+        return loginFeature.logout(id.id(), token.asTokenUUID())
+            .toResponseEntity()
     }
     @PostMapping(path= ["/create"])
     fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
@@ -60,7 +59,9 @@ class SessionController(
                     it.first.username,
                     it.first.email,
                     it.second.tokenValue.toString(),
-                    it.second.refreshToken.toString()
+                    it.second.refreshToken.toString(),
+                    it.second.tokenExpirationDate,
+                    it.second.refreshTokenLifetime
                 )
             }.toResponseEntity()
 }

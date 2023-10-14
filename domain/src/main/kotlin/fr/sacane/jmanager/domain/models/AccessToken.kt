@@ -14,9 +14,9 @@ val roleAdmin = arrayOf(Role.ADMIN)
 
 class AccessToken(
     val tokenValue: UUID,
-    var tokenExpirationDate: LocalDateTime? = null,
+    var tokenExpirationDate: LocalDateTime = now().plusHours(1),
     val refreshToken: UUID? = UUID.randomUUID(),
-    var refreshTokenLifetime: LocalDateTime? = null,
+    var refreshTokenLifetime: LocalDateTime = now().plusDays(1),
     val role: Role = Role.USER
 ){
     fun isExpired(): Boolean{
