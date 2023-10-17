@@ -4,7 +4,7 @@ import java.time.Month
 
 class Account(
         val id: Long? = null,
-        private var amount: Double,
+        private var amount: Amount,
         private var labelAccount: String,
         val sheets: MutableList<Sheet> = mutableListOf()
 ){
@@ -12,7 +12,7 @@ class Account(
     val label: String
         get() = labelAccount
 
-    val sold: Double
+    val sold: Amount
         get() = amount
 
     fun updateSoldByLastSheet(): Boolean {
@@ -34,25 +34,17 @@ class Account(
         labelAccount = account.label
     }
 
-    fun earn(earned: Double) {
-        amount += earned
-    }
-
-    fun loss(loss: Double) {
-        amount -= loss
-    }
-
     override fun hashCode(): Int {
         return labelAccount.hashCode()
     }
-    operator fun plusAssign(earned: Double){
-        this.earn(earned)
+    operator fun plusAssign(earned: Amount){
+        this.amount = this.amount + earned
     }
-    operator fun minusAssign(loss: Double){
-        this.loss(loss)
+    operator fun minusAssign(loss: Amount){
+        this.amount = this.amount - loss
     }
 
-    fun transaction(delta: Double, otherAccount: Account, isEntry: Boolean){
+    fun transaction(delta: Amount, otherAccount: Account, isEntry: Boolean){
         if(isEntry){
             this += delta
             otherAccount -= delta

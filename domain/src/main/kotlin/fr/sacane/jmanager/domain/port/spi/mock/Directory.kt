@@ -11,13 +11,13 @@ class Directory {
 
     companion object{
         val sheetInventory = mutableListOf(
-            Sheet(0, "Piano", LocalDate.of(2022, Month.DECEMBER, 1), 450.toDouble(), 0.0, 100.0, Category("Fun")),
-            Sheet(1, "Salary", LocalDate.now(), 3500.toDouble(), 0.0,100.0, Category("Work")),
-            Sheet(2, "SingLessons", LocalDate.now(), 450.toDouble(), 0.0,100.0, Category("Fun")),
-            Sheet(3, "Restaurant", LocalDate.of(2022, Month.DECEMBER, 4), 100.toDouble(), 0.0,100.0, Category("Fun")),
-            Sheet(4, "Laptop", LocalDate.of(2022, Month.DECEMBER, 31), 450.toDouble(), 0.0, 100.0,Category("Nothing")),
-            Sheet(5, "", LocalDate.now(), 450.toDouble(), 0.0, 100.0,Category("Fun")),
-            Sheet(6, "Money From testX", LocalDate.now(), 450.toDouble(), 0.0, 100.0,Category("Transaction"))
+            Sheet(0, "Piano", LocalDate.of(2022, Month.DECEMBER, 1), 450.toAmount(), 0.0.toAmount(), 100.0.toAmount(), Category("Fun")),
+            Sheet(1, "Salary", LocalDate.now(), 3500.toAmount(), 0.0.toAmount(),100.0.toAmount(), Category("Work")),
+            Sheet(2, "SingLessons", LocalDate.now(), 450.toAmount(), 0.0.toAmount(),100.0.toAmount(), Category("Fun")),
+            Sheet(3, "Restaurant", LocalDate.of(2022, Month.DECEMBER, 4), 100.toAmount(), 0.0.toAmount(),100.0.toAmount(), Category("Fun")),
+            Sheet(4, "Laptop", LocalDate.of(2022, Month.DECEMBER, 31), 450.toAmount(), 0.0.toAmount(), 100.0.toAmount(),Category("Nothing")),
+            Sheet(5, "", LocalDate.now(), 450.toAmount(), 0.0.toAmount(), 100.0.toAmount(),Category("Fun")),
+            Sheet(6, "Money From testX", LocalDate.now(), 450.toAmount(), 0.0.toAmount(), 100.0.toAmount(),Category("Transaction"))
         )
     }
     private val categories = mutableListOf(
@@ -29,7 +29,7 @@ class Directory {
 
 
     private val accountInventory = mutableListOf(
-        Account(1, 0.toDouble(), "Principal", sheetInventory)
+        Account(1, 0.toAmount(), "Principal", sheetInventory)
     )
 
     private val tokenInventory = mutableMapOf(

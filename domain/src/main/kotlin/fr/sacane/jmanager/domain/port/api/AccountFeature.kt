@@ -45,7 +45,7 @@ class AccountFeatureImpl(
         account: Account,
         token: UUID
     ): Response<Account> = session.authenticate(UserId(userID), token) {
-        val accountID = account.id ?: return@authenticate notFound("L'id du compte n'est pas valide")
+        val accountID = account.id ?: return@authenticate notFound("Le compte est introuvable en base")
         val oldAccount = register.findAccountById(accountID) ?: return@authenticate notFound()
         if(oldAccount.id != account.id && oldAccount.label == account.label){
             return@authenticate invalid("Le libellé du compte existe déjà")

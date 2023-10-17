@@ -6,27 +6,23 @@ class Sheet(
     val id: Long?,
     var label: String,
     var date: LocalDate,
-    var expenses: Double,
-    var income: Double,
-    var sold: Double,
+    var expenses: Amount,
+    var income: Amount,
+    var sold: Amount,
     var category: Category = CategoryFactory.DEFAULT_CATEGORY,
     var position: Int = 0
 ) {
-    fun updateSoldStartingWith(start: Double) {
+    fun updateSoldStartingWith(start: Amount) {
         sold = start.plus(income).minus(expenses)
     }
 
-    private fun updateSoldFromIncomeAndExpenses(expenses: Double = 0.0, income: Double = 0.0) {
+    private fun updateSoldFromIncomeAndExpenses(expenses: Amount, income: Amount) {
         sold = sold.plus(this.expenses)
             .plus(income)
             .minus(expenses)
             .minus(this.income)
     }
 
-
-    /**
-     *
-     */
     fun updateFromOther(other: Sheet): Boolean {
         if(other.id != this.id) return false
         updateSoldFromIncomeAndExpenses(other.expenses, other.income)
