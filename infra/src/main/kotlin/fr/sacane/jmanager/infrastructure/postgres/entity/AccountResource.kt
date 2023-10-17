@@ -1,13 +1,14 @@
 package fr.sacane.jmanager.infrastructure.postgres.entity
 
 import jakarta.persistence.*
+import java.math.BigDecimal
 
 
 @Entity
 @Table(name = "account")
 class AccountResource(
     @Column(name = "amount")
-    var amount: Double = 0.0,
+    var amount: BigDecimal = BigDecimal(0.0),
     @Column(name = "label", unique = true)
     var label: String = "undefined",
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)

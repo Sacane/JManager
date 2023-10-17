@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.postgres.entity
 
 import jakarta.persistence.*
+import java.math.BigDecimal
 import java.time.LocalDate
 
 
@@ -15,12 +16,12 @@ class SheetResource(
     var label: String = "undefined",
     @Column(name="date")
     var date: LocalDate = LocalDate.now(),
-    @Column(name="expenses")
-    var expenses: Double = 0.0,
-    @Column(name="income")
-    var income: Double = 0.0,
-    @Column(name="account_amount")
-    var accountAmount: Double = 0.0,
+    @Column(name="expenses", scale = 2)
+    var expenses: BigDecimal = BigDecimal(0.0),
+    @Column(name="income", scale = 2)
+    var income: BigDecimal = BigDecimal(0.0),
+    @Column(name="account_amount", scale = 2)
+    var accountAmount: BigDecimal = BigDecimal(0.0),
     @OneToOne
     @JoinTable(
         name = "sheet_category",
@@ -41,10 +42,4 @@ class SheetResource(
             accountAmount: $accountAmount
         """.trimIndent()
     }
-}
-
-fun sheetResource(init: SheetResource.() -> Unit): SheetResource{
-    val sheet = SheetResource()
-    sheet.init()
-    return sheet
 }

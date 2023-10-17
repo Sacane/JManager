@@ -4,7 +4,6 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.SessionRepository
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.lang.IllegalStateException
 import java.util.UUID
@@ -26,7 +25,7 @@ class SessionFeatureImpl(
 ): SessionFeature{
 
     companion object{
-        private val LOGGER = Logger.getLogger(SessionRepository::class.java.name)
+        private val LOGGER = Logger.getLogger(SessionFeatureImpl::class.java.name)
     }
     override fun login(pseudonym: String, userPassword: Password): Response<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")
