@@ -11,18 +11,17 @@ const {createAccount, fetch} = useAccounts()
 
 const newAccount = reactive({
   label: '',
-  amount: 0.0
+  amount: ''
 })
 
 const amount = reactive({
-  integerPart: 0,
-  decimalPart: 0
+  integerPart: '',
+  decimalPart: ''
 })
 
 
 const toAccount = async () => {
-  const integer = parseFloat(`${amount.integerPart}`)
-  createAccount(newAccount.label, integer + parseFloat(`0.${amount.decimalPart}`))
+  createAccount(newAccount.label, `${amount.integerPart}.${amount.decimalPart} €`)
   .then(() => {
     fetch()
     success('Le compte a bien été créé')
@@ -42,9 +41,9 @@ const toAccount = async () => {
         <PInputText v-model="newAccount.label" id="label"/>
         <label for="labelAmount">Montant</label>
         <div class="flex-row space-x-2" id="labelAmount">
-          <PInputNumber placeholder="Partie entière" v-model="amount.integerPart" />
+          <PInputText placeholder="Partie entière" v-model="amount.integerPart" />
           <div class="p-2">.</div>
-          <PInputNumber placeholder="Partie décimal" v-model="amount.decimalPart" maxlength="2"/>
+          <PInputText placeholder="Partie décimal" v-model="amount.decimalPart" maxlength="2"/>
         </div>
         <PButton label="Créer" class="mt-3 bg-#7F52FF" @click="toAccount" />
       </PFieldset>

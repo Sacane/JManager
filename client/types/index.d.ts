@@ -3,22 +3,22 @@
 export interface SheetDTO{
     id: number,
     label: string,
-    expenses: number,
-    income: number,
+    expenses: string,
+    income: string,
     date: string,
-    accountAmount: number
+    accountAmount: string
 }
 
 export interface AccountDTO {
     id: number | undefined,
-    amount: number,
+    amount: string,
     labelAccount: string,
     sheets: Array<SheetDTO>
 }
 
 export interface UserAccountDTO {
     id: number,
-    amount: number,
+    amount: string,
     labelAccount: string
 }
 

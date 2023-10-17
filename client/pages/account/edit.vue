@@ -16,28 +16,25 @@ const route = useRouter()
 const data = reactive({
   id: 0,
   label: '',
-  amount: 0,
-  integerPart: 0,
-  decimalPart: 0,
+  amount: '',
+  integerPart: '',
+  decimalPart: '',
   acc: undefined as AccountDTO | undefined
 })
 
 onMounted(() => {
-  const value = Math.floor(parseFloat(route.currentRoute.value.query.amount as string))
+  const amountValue = (route.currentRoute.value.query.amount as string).split(".")
   data.id = parseFloat(route.currentRoute.value.query.id as string)
   data.label = route.currentRoute.value.query.labelAccount as string
-  data.amount = value
-  data.integerPart = Math.floor(value)
-  data.decimalPart = data.amount - data.integerPart
+  data.integerPart = amountValue[0]
+  data.decimalPart = amountValue[1].split(" ")[0]
 })
 
 function onEditClick() {
-  console.log('test')
-  const amount = parseFloat((parseFloat(`${data.integerPart}`) + parseFloat(`0.${data.decimalPart}`)).toFixed(2))
   updateAccount({
     id: data.id,
     labelAccount: data.label,
-    amount: amount,
+    amount: `${data.integerPart}.${data.decimalPart} €`,
     sheets: []
   }, async (sheet) => {
     jtoast.success('Le compte a bien été édité')
@@ -60,9 +57,9 @@ function onEditClick() {
         <PInputText v-model="data.label" id="label"/>
         <label for="labelAmount">Montant</label>
         <div class="flex-row space-x-2" id="labelAmount">
-          <PInputNumber placeholder="Partie entière" v-model="data.integerPart" />
+          <PInputText placeholder="Partie entière" v-model="data.integerPart" />
           <div class="p-2">.</div>
-          <PInputNumber placeholder="Partie décimal" v-model="data.decimalPart" maxlength="2"/>
+          <PInputText placeholder="Partie décimal" v-model="data.decimalPart" maxlength="2"/>
         </div>
         <PButton label="Mettre à jour" class="mt-3 bg-#7F52FF" @click="onEditClick"/>
       </PFieldset>

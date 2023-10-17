@@ -34,7 +34,7 @@ function format(accounts: Array<AccountDTO>) {
     return {
       id: account.id,
       labelAccount: account.labelAccount,
-      amount: `${account.amount} €`,
+      amount: `${account.amount}`,
     };
   });
 }

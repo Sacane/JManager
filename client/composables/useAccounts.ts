@@ -1,7 +1,6 @@
 import useAuth from './useAuth';
 import { AccountDTO } from '../types/index';
 import useQuery from './useQuery';
-import useJToast from './useJToast';
 
 export interface AccountFormatted{
     labelAccount: string,
@@ -19,7 +18,7 @@ export default function useAccounts(){
 
     }
     
-    async function createAccount(labelAccount: string, amount: number): Promise<any> {
+    async function createAccount(labelAccount: string, amount: string): Promise<any> {
         console.log(user.value?.id)
         return post('account/create', {
             id: user.value?.id,

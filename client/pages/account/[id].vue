@@ -17,7 +17,7 @@ const data = reactive({
   isRangeSelected: false,
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
-  accountAmount: 0.0,
+  accountAmount: '',
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string)
 })
@@ -33,10 +33,10 @@ function retrieveSheets() {
     actualSheets.value = value.sheets.map(sheet => {
       return {
       ...sheet,
-      expensesRepresentation: (sheet.expenses > 0.0) ? `${sheet.expenses.toFixed(2)}€` : '/',
-      incomeRepresenttation: (sheet.income > 0.0) ? `${sheet.income.toFixed(2)}€` : '/',
+      expensesRepresentation: (sheet.expenses != '') ? `${sheet.expenses}` : '/',
+      incomeRepresenttation: (sheet.income != '') ? `${sheet.income}` : '/',
       date: sheet.date,
-      accountAmount: `${sheet.accountAmount.toFixed(2)}€`
+      accountAmount: `${sheet.accountAmount}€`
       }
     })
   })
@@ -133,7 +133,7 @@ const onYearChange = () => {
     <div p-8  bg-white class="form-container" mt2px>
       <div flex-row justify-between>
         <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ data.labelAccount }}</h2>
-        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount.toFixed(2) }} €</h2>
+        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }}</h2>
 
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
