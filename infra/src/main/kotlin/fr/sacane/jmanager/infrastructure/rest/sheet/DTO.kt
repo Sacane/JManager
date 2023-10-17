@@ -13,11 +13,11 @@ data class UserIDSheetDTO(
 data class SheetDTO(
     val id: Long?,
     val label: String,
-    val expenses: Double,
-    val income: Double,
+    val expenses: String,
+    val income: String,
     @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
-    val accountAmount: Double,
+    val accountAmount: String,
     val position: Int
 )
 data class SheetsAndAverageDTO(
@@ -28,9 +28,9 @@ data class SheetsAndAverageDTO(
 data class SheetSendDTO(
     val label: String,
     val date: LocalDate,
-    val expenses: Double,
-    val income: Double,
-    val accountAmount: Double
+    val expenses: String,
+    val income: String,
+    val accountAmount: String
 )
 
 data class UserSheetDTO(

@@ -1,29 +1,26 @@
 package fr.sacane.jmanager.infrastructure.rest
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.toFrenchFormat
 import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
-import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
-import fr.sacane.jmanager.infrastructure.rest.session.RegisteredUserDTO
 import fr.sacane.jmanager.infrastructure.rest.session.UserDTO
+import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
 import org.springframework.http.ResponseEntity
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
-    this.sold.toFrenchFormat(),
+    this.sold.toString(),
     this.label,
     this.sheets().map { sheet -> sheet.toDTO() }
 )
 
-
 internal fun SheetDTO.toModel(): Sheet {
-    return Sheet(this.id, this.label, this.date, this.expenses.toFrenchFormat(), this.income.toFrenchFormat(), this.accountAmount, position = this.position)
+    return Sheet(this.id, this.label, this.date, Amount.fromString(this.expenses), Amount.fromString(this.income), Amount.fromString(this.accountAmount), position = this.position)
 }
 internal fun AccountDTO.toModel(): Account {
-    return Account(this.id, this.amount, this.labelAccount, this.sheets?.map { it.toModel() }!!.toMutableList())
+    return Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }!!.toMutableList())
 }
 internal fun Sheet.toDTO(): SheetDTO {
-    return SheetDTO(this.id!!, this.label, this.expenses.toFrenchFormat(), this.income.toFrenchFormat(), this.date, this.sold, position = this.position)
+    return SheetDTO(this.id!!, this.label, this.expenses.toString(), this.income.toString(), this.date, this.sold.toString(), position = this.position)
 }
 
 internal fun User.toDTO(): UserDTO {

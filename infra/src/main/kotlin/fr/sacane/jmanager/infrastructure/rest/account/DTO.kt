@@ -5,18 +5,18 @@ import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
 
 data class AccountDTO(
     val id: Long?,
-    val amount: Double,
+    val amount: String,
     val labelAccount: String,
     val sheets: List<SheetDTO>?
 )
 
 data class AccountInfoDTO(
-    val amount: Double,
+    val amount: String,
     val label: String
 )
 
 data class UserAccountDTO(
     val id: Long,
     val labelAccount: String,
-    val amount: Double
+    val amount: String
 )
