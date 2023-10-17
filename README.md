@@ -2,6 +2,14 @@
 
 A WebApp that allow you to manage your personal budget.
 
+## How to use
+
+To build this application you can launch the following commands : 
+In linux 
+```shell
+gradle 
+```
+
 ## Features
 
 - You can register and login, so you can manipulate your own data

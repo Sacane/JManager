@@ -41,7 +41,7 @@ class ServerTransactionAdapter(
         val account = user.accounts.find { it.label == accountLabel } ?: return null
         return try{
             account.sheets.add(sheet.asResource())
-            account.amount = sheet.sold
+            account.amount = sheet.sold.applyOnValue { it }
             userPostgresRepository.save(user)
             sheet
         }catch(e: Exception){

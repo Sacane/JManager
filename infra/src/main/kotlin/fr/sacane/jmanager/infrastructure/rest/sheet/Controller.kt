@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.port.api.SheetFeature
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -30,7 +31,9 @@ class SheetController(private val transactionResolver: SheetFeature) {
         )
         if (queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
         return queryResponse.map {
-            SheetSendDTO(it.label, it.date, it.expenses, it.income, it.sold)
+            it.exportAmountValues { expense, income, sold ->
+                SheetSendDTO(it.label, it.date, expense.toAmount().toString(), income.toAmount().toString(), sold.toAmount().toString())
+            }
         }.toResponseEntity()
     }
 

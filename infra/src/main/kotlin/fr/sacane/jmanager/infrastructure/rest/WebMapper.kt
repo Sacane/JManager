@@ -5,6 +5,7 @@ import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.rest.session.UserDTO
 import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
 import org.springframework.http.ResponseEntity
+import java.lang.IllegalStateException
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
@@ -17,10 +18,10 @@ internal fun SheetDTO.toModel(): Sheet {
     return Sheet(this.id, this.label, this.date, Amount.fromString(this.expenses), Amount.fromString(this.income), Amount.fromString(this.accountAmount), position = this.position)
 }
 internal fun AccountDTO.toModel(): Account {
-    return Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }!!.toMutableList())
+    return Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"))
 }
 internal fun Sheet.toDTO(): SheetDTO {
-    return SheetDTO(this.id!!, this.label, this.expenses.toString(), this.income.toString(), this.date, this.sold.toString(), position = this.position)
+    return SheetDTO(this.id, this.label, this.expenses.toString(), this.income.toString(), this.date, this.sold.toString(), position = this.position)
 }
 
 internal fun User.toDTO(): UserDTO {
@@ -37,4 +38,13 @@ internal fun <T> Response<T>.toResponseEntity()
     ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
     ResponseState.TIMEOUT  -> throw TimeOutException(this.message)
     ResponseState.UNAUTHORIZED -> throw UnauthorizedRequestException(this.message)
+}
+
+internal fun <T> String.toAmountAsResponse()
+: Response<Amount> = try {
+    Response.ok(Amount.fromString(this))
+}catch (ex: InvalidMoneyFormatException){
+    Response.invalid(ex.message ?: "La monnaie est invalide: $this")
+}catch (ex: Exception) {
+    Response.invalid(ex.message ?: "Une erreur est survenue")
 }

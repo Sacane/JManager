@@ -8,9 +8,11 @@ internal fun Sheet.asResource(): SheetResource {
     val resource = SheetResource()
     resource.label = this.label
     resource.date = this.date
-    resource.expenses = this.expenses
-    resource.income = this.income
-    resource.accountAmount = this.sold
+    this.exportAmountValues { expense, income, sold ->
+        resource.expenses = expense
+        resource.income = income
+        resource.accountAmount = sold
+    }
     resource.category = resource.category
     resource.idSheet = this.id
     resource.position = this.position
@@ -22,7 +24,7 @@ internal fun Account.asResource(): AccountResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return AccountResource(idAccount = id, amount = sold, label = label, sheets = sheets)
+    return AccountResource(idAccount = id, amount = sold.applyOnValue { it }, label = label, sheets = sheets)
 }
 
 internal fun User.asResource(): UserResource {
@@ -38,15 +40,15 @@ internal fun SheetResource.toModel(): Sheet{
     return Sheet(this.idSheet,
         this.label,
         this.date,
-        this.expenses,
-        this.income,
-        this.accountAmount,
+        this.expenses.toAmount(),
+        this.income.toAmount(),
+        this.accountAmount.toAmount(),
         position=this.position)
 }
 internal fun AccountResource.toModel(): Account{
     return Account(
         this.idAccount,
-        this.amount,
+        this.amount.toAmount(),
         this.label,
         this.sheets.map { sheet -> sheet.toModel() }.toMutableList())
 }

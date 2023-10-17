@@ -55,6 +55,10 @@ class Amount(private var amount: BigDecimal, private val currency: String = "€
         var result = amount.hashCode()
         result = 31 * result + currency.hashCode()
         return result
+
+    }
+    fun <T> applyOnValue(function: (BigDecimal) -> T): T{
+        return function(amount)
     }
 }
 

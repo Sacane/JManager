@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.ResponseState
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.domain.toFrenchFormat
@@ -48,8 +49,8 @@ class AccountController (
     : ResponseEntity<AccountInfoDTO> = feature.save(
     userAccount.id.id(),
     token.asTokenUUID(),
-    Account(amount = userAccount.amount, labelAccount = userAccount.labelAccount))
-    .map { AccountInfoDTO(it.sold, it.label) }
+    Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount))
+    .map { AccountInfoDTO(it.sold.toString(), it.label) }
     .toResponseEntity()
 
 
@@ -70,7 +71,7 @@ class AccountController (
             accounts.map {
                 AccountDTO(
                     it.id,
-                    it.sold.toFrenchFormat(),
+                    it.sold.toString(),
                     it.label,
                     it.sheets().map { sheet -> sheet.toDTO() }
                 )

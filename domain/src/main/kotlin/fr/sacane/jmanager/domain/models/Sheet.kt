@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
+import java.math.BigDecimal
 import java.time.LocalDate
 
 class Sheet(
@@ -44,5 +45,15 @@ class Sheet(
             sold: $sold
             position: $position
         """.trimIndent()
+    }
+
+    fun <T> exportAmountValues(function: (BigDecimal, BigDecimal, BigDecimal) -> T): T{
+        return expenses.applyOnValue { expenseValue ->
+            income.applyOnValue { incomeValue ->
+                sold.applyOnValue { soldValue ->
+                    function(expenseValue, incomeValue, soldValue)
+                }
+            }
+        }
     }
 }
