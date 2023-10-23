@@ -7,7 +7,7 @@ definePageMeta({
 
 const {translate, monthFromNumber} = useDate()
 
-const {accounts, fetch, findById} = useAccounts()
+const {findById} = useAccounts()
 const {findByDate, deleteSheet} = useSheets()
 const date = new Date()
 const data = reactive({
@@ -36,7 +36,7 @@ function retrieveSheets() {
       expensesRepresentation: (sheet.expenses != '') ? `${sheet.expenses}` : '/',
       incomeRepresenttation: (sheet.income != '') ? `${sheet.income}` : '/',
       date: sheet.date,
-      accountAmount: `${sheet.accountAmount}€`
+      accountAmount: sheet.accountAmount
       }
     })
   })

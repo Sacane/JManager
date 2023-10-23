@@ -21,23 +21,23 @@ const values = reactive({
   selectedMode: 'expenses',
   sheetLabel: '',
   date: new Date(),
-  integerPart: 0.0,
-  decimalPart: 0.0
+  integerPart: '0',
+  decimalPart: '0'
 })
 
 const onConfirm = async () => {
-  if((values.integerPart === 0 && values.decimalPart === 0) || values.sheetLabel === '') {
+  if((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
     return
   }
-  const amount = parseFloat((parseFloat(`${values.integerPart}`) + parseFloat(`0.${values.decimalPart}`)).toFixed(2))
+  const amount = `${values.integerPart}.${values.decimalPart} €`;
   console.log(amount)
   await saveSheet(values.accountLabel, {
     id: 0,
     label: values.sheetLabel,
-    expenses: (values.selectedMode === 'expenses') ? amount : 0,
-    income: (values.selectedMode === 'income') ? amount : 0,
+    expenses: (values.selectedMode === 'expenses') ? amount : '0 €',
+    income: (values.selectedMode === 'income') ? amount : '0 €',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
-    accountAmount: parseFloat(values.accountAmount)
+    accountAmount: `${values.accountAmount}`
   }).then((sheet: SheetDTO) => {
       fetch()
       success('La transaction a bien été ajouté')
@@ -78,9 +78,9 @@ const onConfirm = async () => {
         <div id="labelAmount">
           <label for="amount">Selectionner le montant de la transaction (en €)</label>
           <div class="flex-row space-x-2 mt5px" id="amount">
-            <PInputNumber placeholder="Partie entière" v-model="values.integerPart" />
+            <PInputText placeholder="Partie entière" v-model="values.integerPart" />
             <div>.</div>
-            <PInputNumber placeholder="Partie décimal" v-model="values.decimalPart" maxlength="2"/>
+            <PInputText placeholder="Partie décimal" v-model="values.decimalPart" maxlength="2"/>
           </div>
         </div>
         <div mt5px>

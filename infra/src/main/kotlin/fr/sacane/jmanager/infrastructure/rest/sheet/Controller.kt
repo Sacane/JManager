@@ -10,32 +10,37 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.*
+import java.time.Month
 import java.util.logging.Logger
 
 
 @RestController
 @RequestMapping("api/sheet")
 @Adapter(Side.API)
-class SheetController(private val transactionResolver: SheetFeature) {
+class SheetController(private val sheetFeature: SheetFeature) {
     @PostMapping("/save")
     suspend fun createSheet(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetSendDTO> {
-        val queryResponse = transactionResolver.createSheetAndAssociateItWithAccount(
+        return sheetFeature.saveAndLink(
             userAccountSheetDTO.userId.id(),
             token.asTokenUUID(),
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO.toModel()
-        )
-        if (queryResponse.status.isFailure()) return ResponseEntity.badRequest().build()
-        return queryResponse.map {
+        ).map {
             it.exportAmountValues { expense, income, sold ->
-                SheetSendDTO(it.label, it.date, expense.toAmount().toString(), income.toAmount().toString(), sold.toAmount().toString())
+                SheetSendDTO(
+                    it.label,
+                    it.date,
+                    expense.toAmount().toString(),
+                    income.toAmount().toString(),
+                    sold.toAmount().toString()
+                )
             }
         }.toResponseEntity()
     }
+
 
     @DeleteMapping("delete/{userId}")
     fun deleteByIds(
@@ -43,19 +48,23 @@ class SheetController(private val transactionResolver: SheetFeature) {
         @RequestBody sheetIds: AccountSheetIdsDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
-        = transactionResolver.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
+        = sheetFeature.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
             ResponseEntity.ok().build()
         }
 
 
-    @PostMapping(path=["get"])
+    @GetMapping
     fun getSheets(
-        @RequestBody dto: UserSheetDTO,
+//        @RequestBody dto: UserSheetDTO,
+        @RequestParam("userId") userId: Long,
+        @RequestParam("month") month: Month,
+        @RequestParam("year") year: Int,
+        @RequestParam("accountLabel") accountLabel: String,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetsAndAverageDTO> {
-        val response = transactionResolver.retrieveSheetsByMonthAndYear(dto.userId.id(), token.asTokenUUID(), dto.month, dto.year, dto.accountLabel)
+        val response = sheetFeature.retrieveSheetsByMonthAndYear(userId.id(), token.asTokenUUID(), month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it -> it!!.map { it.toDTO() } }, 0.0))
+        return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }, 0.0))
     }
 
     @PostMapping("edit")
@@ -63,7 +72,7 @@ class SheetController(private val transactionResolver: SheetFeature) {
         @RequestBody dto: UserIDSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
+        = sheetFeature.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .mapBoth(
                 {s -> ResponseEntity.ok(s!!.toDTO()) },
                 {ResponseEntity.badRequest().build()}
@@ -77,7 +86,7 @@ class SheetController(private val transactionResolver: SheetFeature) {
         @PathVariable("id") sheetID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = transactionResolver.findById(userID, sheetID, token.asTokenUUID())
+        = sheetFeature.findById(userID, sheetID, token.asTokenUUID())
             .mapTo {
                 it ?: Response.invalid<SheetDTO>()
                 Response.ok(it)

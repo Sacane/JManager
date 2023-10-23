@@ -6,10 +6,11 @@ export default function useQuery() {
     const {defaultHeaders, tryRefresh} = useAuth()
     const toast = useJToast()
 
-    async function get(url: string, authorized: boolean = true) {
+    async function get(url: string, params: any | undefined = undefined) {
       try{
         const response = await axios.get(`${API_PATH}` + url , {
             headers: defaultHeaders.value,
+            params: params
         })
         return response.data
       }catch(error: any) {

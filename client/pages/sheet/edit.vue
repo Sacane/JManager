@@ -20,6 +20,11 @@ const data = reactive({
   accountId: parseInt(route.query.accountID as string)
 })
 
+const values = reactive({
+  integerPart: '0',
+  decimalPart: '0'
+})
+
 const {editSheet} = useSheets()
 
 onMounted(() => {
@@ -28,13 +33,14 @@ onMounted(() => {
 })
 
 const onEdit = () => {
+  const amount = `${values.integerPart}.${values.decimalPart} €`;
   editSheet({
     id: parseInt(data.id),
     label: data.label,
-    expenses: data.selectedMode === 'expenses' ? data.amount : 0,
-    income: data.selectedMode === 'income' ? data.amount : 0,
+    expenses: data.selectedMode === 'expenses' ? amount : '0 €',
+    income: data.selectedMode === 'income' ? amount : '0 €',
     date: data.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
-    accountAmount: data.accountAmount
+    accountAmount: `${data.accountAmount} €`
   }, data.accountId).then(result => {
     navigateTo({
       path: '/account/' + data.accountId,

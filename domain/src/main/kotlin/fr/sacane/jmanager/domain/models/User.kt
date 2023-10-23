@@ -3,7 +3,8 @@ package fr.sacane.jmanager.domain.models
 import fr.sacane.jmanager.domain.Hash
 
 
-data class UserId(val id: Long?)
+@JvmInline
+value class UserId(val id: Long?)
 
 
 class Password(val value: String?){

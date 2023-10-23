@@ -11,7 +11,7 @@ import java.util.UUID
 
 @Port(Side.API)
 sealed interface SheetFeature {
-    fun createSheetAndAssociateItWithAccount(userId: UserId, token: UUID, accountLabel: String, sheet: Sheet): Response<Sheet>
+    fun saveAndLink(userId: UserId, token: UUID, accountLabel: String, sheet: Sheet): Response<Sheet>
     fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Sheet>>
     fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: UUID): Response<Sheet>
     fun findById(userID: Long, id: Long, token: UUID): Response<Sheet>
@@ -56,7 +56,7 @@ class SheetFeatureImplementation(
         register.saveAllSheets(sheets)
     }
 
-    override fun createSheetAndAssociateItWithAccount(
+    override fun saveAndLink(
         userId: UserId,
         token: UUID,
         accountLabel: String,
@@ -74,6 +74,7 @@ class SheetFeatureImplementation(
         } else {
             sheet.updateSoldStartingWith(account.sold)
         }
+        println("test")
         register.persist(userId, accountLabel, sheet) ?: return@authenticate Response.invalid()
         Response.ok(sheet)
     }
