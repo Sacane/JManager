@@ -79,9 +79,13 @@ const onEdit = () => {
             </div>
           </div>
         </div>
-        <div mt5px>
-          <label for="number">Indiquer le montant de la transaction (en euros)</label>
-          <PInputNumber v-model="data.amount" id="number"/>
+        <div id="labelAmount">
+          <label for="amount">Selectionner le montant de la transaction (en €)</label>
+          <div class="flex-row space-x-2 mt5px" id="amount">
+            <PInputText placeholder="Partie entière" v-model="values.integerPart" />
+            <div>.</div>
+            <PInputText placeholder="Partie décimal" v-model="values.decimalPart" maxlength="2"/>
+          </div>
         </div>
         <div mt5px>
           <label for="calendar">Indiquer la date de la transaction</label>

@@ -2,16 +2,18 @@ import useAuth from '../composables/useAuth';
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
 import 'primeicons/primeicons.css';
-const { isAuthenticated, logout } = useAuth()
+const { isAuthenticated, logout, user } = useAuth()
+const username = ref(isAuthenticated ? user.value?.username : '')
 </script>
 
 <template>
-  <div class="flex-column border-r decoration-none w-15% h-screen text-center justify-between">
+  <div class="flex-column border-r decoration-none w-15% h-screen text-center justify-between content">
     <div>
       <NuxtLink to="/" class="font-bold mb-2  h-full title">
         JManager
       </NuxtLink>
       <div class="mt5">
+        <p class="text-lg mb-2" v-if="isAuthenticated">Connecté en tant que : {{ username }}</p>
         <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
           <i class="pi pi-home text-20px"></i>
           Accueil
@@ -61,5 +63,7 @@ const { isAuthenticated, logout } = useAuth()
   }
 }
 
-
+.content{
+  font-style: sans-serif;
+}
 </style>

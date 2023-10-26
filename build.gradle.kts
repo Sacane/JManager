@@ -1,13 +1,11 @@
-import com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 
 
 plugins {
 	kotlin("jvm") version "1.6.21"
 	id("com.github.johnrengelman.shadow") version "7.0.0"
 }
-group = "fr.sacane.jmanager"
+group = "fr.sacane"
 java.sourceCompatibility = JavaVersion.VERSION_17
 dependencies{
 	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")

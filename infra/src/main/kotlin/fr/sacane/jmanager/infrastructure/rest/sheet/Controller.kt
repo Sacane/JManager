@@ -55,7 +55,6 @@ class SheetController(private val sheetFeature: SheetFeature) {
 
     @GetMapping
     fun getSheets(
-//        @RequestBody dto: UserSheetDTO,
         @RequestParam("userId") userId: Long,
         @RequestParam("month") month: Month,
         @RequestParam("year") year: Int,
