@@ -1,14 +1,18 @@
 # JManager
 
-A WebApp that allow you to manage your personal budget.
+A Web App that allow you to manage your personal budget and increase the global visual over it.
 
-## How to use
+## Build
 
-To build this application you can launch the following commands : 
-In linux 
+Run the following task to generate the complete JAR using the shadow plugin.
 ```shell
-gradle 
+#On linux
+gradle assemble
+
+#On windows
+.\gradlew assemble
 ```
+
 
 ## Features
 
@@ -18,51 +22,12 @@ gradle
 - You can easily visualize feedback to your budget state by months.
 - You can easily visualize feedback to all of your registered accounts.
 
-
-## Implementation
-
-This architecture does separate the project in 2 distinct submodules :
-
-* **Domain**, which contains all the business models and logics.
-* **Infrastructure**, which briefly, contains all the dependencies that support the application. Such as the database and the api-rest implementation.
-
-Annotation documentation in the common package is available to easily read which class is used for.
-
-for example : 
-```kotlin
-@Service
-@DatasourceAdapter
-class LoginTransactionAdapter(val userRepository: UserRepository, val loginRepository: LoginRepository) : LoginTransactor
-```
-This class is an adapter to the dataSource, so here we are currently in the right-side of the hexagon.
-This class implements **LoginTransactor** which is part of the domain : 
-```kotlin
-@PortToRight
-interface LoginTransactor {
-    fun login(userPseudonym: String, password: Password): Ticket?
-    fun logout(userId: UserId, token: Token): Ticket?
-    fun refresh(userId: UserId, token: Token): Ticket?
-}
-```
-This class is a port which goes to the right-side of the hexagon.
-
-## Focus on the hexagon
+## Software architecture
 
 Here is the diagram corresponding to the current state of the project :
 
-![ Texte alternatif](doc/Jmanager-hexagon-0.1.jpg)
-
-
-
-## Values
-
-* To be as flexible as possible by implementing each side separately.
-* To feel free to change my dependencies at any time for future releases without break all the architecture. 
-* To test each side independently, or only centered on the domain-side. 
-* To make a first step with DDD (Domain driven design).
-* To train the port/adapter design pattern.
-
-## Dependencies : 
+This project use 
+## Dependencies
 
 * [Kotlin](https://kotlinlang.org/), modern programming language based on the JVM.
 * [Spring](https://spring.io/) 
