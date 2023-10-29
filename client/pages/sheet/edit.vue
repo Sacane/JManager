@@ -41,7 +41,8 @@ const onEdit = () => {
     income: data.selectedMode === 'income' ? amount : '0 €',
     date: data.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: `${data.accountAmount} €`
-  }, data.accountId).then(result => {
+  }, data.accountId).then(_ => {
+
     navigateTo({
       path: '/account/' + data.accountId,
       query: {
@@ -50,6 +51,8 @@ const onEdit = () => {
         amount: route.query.currentAccountAmount
       }
     })
+    
+  }).catch(e => {
     
   })
 }

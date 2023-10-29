@@ -13,7 +13,6 @@ const username = ref(isAuthenticated ? user.value?.username : '')
         JManager
       </NuxtLink>
       <div class="mt5">
-        <p class="text-lg mb-2" v-if="isAuthenticated">Connecté en tant que : {{ username }}</p>
         <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
           <i class="pi pi-home text-20px"></i>
           Accueil
@@ -23,8 +22,10 @@ const username = ref(isAuthenticated ? user.value?.username : '')
         </NuxtLink>
       </div>
     </div>
-
-    <div class="flex-row text-15px flex justify-center">
+    
+    <div class="m2">
+      <p class="mb5">Connecté en tant que <b>{{ user?.username }}</b></p>
+      <div class="flex-row text-15px flex justify-center">
         <NuxtLink v-if="isAuthenticated" class="icon-btn mb2px" @click="logout()">
           <i class="pi pi-sign-out" />
           Se deconnecter
@@ -35,6 +36,8 @@ const username = ref(isAuthenticated ? user.value?.username : '')
         </NuxtLink>
       </div>
   </div>
+</div>
+
 </template>
 
 <style scoped lang="scss">
