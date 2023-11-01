@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.datasource
 
 import fr.sacane.jmanager.domain.models.Password
+import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.infrastructure.postgres.entity.AccountResource
 import fr.sacane.jmanager.infrastructure.postgres.entity.UserResource
 import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
@@ -13,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.test.context.TestPropertySource
-
+import java.math.BigDecimal
 
 
 @DataJpaTest
@@ -58,7 +59,7 @@ class InfraUserTest {
 
         val byName = userPostgresRepository.findByUsername(user.username)
         val account = AccountResource()
-        account.amount = 102.toDouble()
+        account.amount = BigDecimal(102)
         account.label = "test account"
 
         byName?.accounts!!.add(account)
