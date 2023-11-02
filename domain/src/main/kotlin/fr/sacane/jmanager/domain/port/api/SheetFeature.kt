@@ -73,8 +73,8 @@ class SheetFeatureImplementation(
             } else {
                 sheet.position = lastRecord.position + 1
                 sheet.updateSoldStartingWith(lastRecord.sold)
-                updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
             }
+            updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
         } else {
             sheet.updateSoldStartingWith(account.sold)
         }

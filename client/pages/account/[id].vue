@@ -24,8 +24,6 @@ const data = reactive({
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string)
 })
 
-const isSelectionOk = () => data.year !== 0 && data.month !== '' && data.labelAccount !== ''
-
 function retrieveSheets() {
   console.log('Trying to get sheets')
   findByDate(data.month, data.year, data.labelAccount)
