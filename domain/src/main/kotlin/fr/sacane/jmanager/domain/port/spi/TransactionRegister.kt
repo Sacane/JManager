@@ -12,12 +12,12 @@ interface TransactionRegister {
     }
     fun persist(userId: UserId, account: Account): User?
     fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet?
-    fun persist(userId: UserId, category: Category): Category?
-    fun removeCategory(userId: UserId, labelCategory: String): Category?
+    fun persist(userId: UserId, category: Tag): Tag?
+    fun removeCategory(userId: UserId, labelCategory: String): Tag?
     fun findAccountByLabel(userId: UserId, labelAccount: String): Account?
     fun findAccountById(accountId: Long): Account?
     fun persist(account: Account) :Account?
-    fun remove(targetCategory: Category)
+    fun remove(targetCategory: Tag)
     fun deleteAccountByID(accountID: Long)
     fun saveAllSheets(sheets: List<Sheet>)
     fun deleteAllSheetsById(sheetIds: List<Long>)

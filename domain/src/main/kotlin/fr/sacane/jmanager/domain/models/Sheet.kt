@@ -10,7 +10,7 @@ class Sheet(
     var expenses: Amount,
     var income: Amount,
     var sold: Amount,
-    var category: Category = CategoryFactory.DEFAULT_CATEGORY,
+    var category: Tag = Tag("Aucune"),
     var position: Int = 0
 ) {
     fun updateSoldStartingWith(start: Amount) {

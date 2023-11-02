@@ -2,16 +2,23 @@
 import { ref, defineProps, defineEmits} from 'vue';
 
 const date = useDate()
-
+const props = defineProps({
+  modelValue: String,
+  onMonthChange: Function,
+});
 // Variable pour stocker le mois sélectionné
 const selectedMonth = ref('')
-const { modelValue } = defineProps(['modelValue']);
 const emits = defineEmits(['update:modelValue']);
 const currentMonth = date.translate(date.monthFromNumber(new Date().getMonth() + 1) as string)
+
 
 watchEffect(() => {
   emits('update:modelValue', selectedMonth.value);
 });
+
+function onMonthChange() {
+  emits('update:modelValue', selectedMonth.value);
+}
 
 
 </script>
@@ -23,6 +30,7 @@ watchEffect(() => {
       v-model="selectedMonth"
       id="monthDropdown"
       class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md focus:border-indigo-300 sm:text-sm"
+      @change="onMonthChange"
     >
           <!-- Utilisez une option par défaut pour le placeholder -->
         <option

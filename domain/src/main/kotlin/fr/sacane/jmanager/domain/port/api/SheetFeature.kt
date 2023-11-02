@@ -67,14 +67,17 @@ class SheetFeatureImplementation(
             val lastRecord = account.sheets
                 .filter { it.date <= sheet.date }
                 .maxByOrNull { it.position }
-                ?: return@authenticate Response.invalid()
-            sheet.position = lastRecord.position + 1
-            sheet.updateSoldStartingWith(lastRecord.sold)
-            updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
+            if(lastRecord == null) {
+                sheet.position = 0
+                sheet.updateSoldStartingWith(account.sold)
+            } else {
+                sheet.position = lastRecord.position + 1
+                sheet.updateSoldStartingWith(lastRecord.sold)
+                updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
+            }
         } else {
             sheet.updateSoldStartingWith(account.sold)
         }
-        println("test")
         register.persist(userId, accountLabel, sheet) ?: return@authenticate Response.invalid()
         Response.ok(sheet)
     }

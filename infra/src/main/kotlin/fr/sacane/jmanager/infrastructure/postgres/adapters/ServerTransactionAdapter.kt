@@ -55,7 +55,7 @@ class ServerTransactionAdapter(
         return registered.toModel()
     }
 
-    override fun persist(userId: UserId, category: Category): Category? {
+    override fun persist(userId: UserId, category: Tag): Tag? {
         val id = userId.id ?: return null
         val user = userPostgresRepository.findById(id).orElseThrow()
         user.categories.add(CategoryResource(label = category.label))
@@ -63,15 +63,15 @@ class ServerTransactionAdapter(
         return category
     }
 
-    override fun removeCategory(userId: UserId, labelCategory: String): Category? {
+    override fun removeCategory(userId: UserId, labelCategory: String): Tag? {
         val id = userId.id ?: return null
         val user = userPostgresRepository.findById(id).orElseThrow()
         val category = user.categories.find { it.label == labelCategory } ?: return null
         categoryRepository.deleteByLabel(labelCategory)
-        return Category(category.label)
+        return Tag(category.label)
     }
 
-    override fun remove(targetCategory: Category) {
+    override fun remove(targetCategory: Tag) {
         categoryRepository.deleteByLabel(targetCategory.label)
     }
 

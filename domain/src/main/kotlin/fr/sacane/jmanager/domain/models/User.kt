@@ -39,10 +39,10 @@ class User(
     val email: String?,
     val accounts: MutableList<Account> = mutableListOf(),
     val password: Password,
-    private val categories: MutableList<Category> = mutableListOf()
+    private val categories: MutableList<Tag> = mutableListOf()
 ){
     fun accounts(): MutableList<Account> = accounts.toMutableList()
-    fun categories(): MutableList<Category> = categories.distinct().toMutableList()
+    fun categories(): MutableList<Tag> = categories.distinct().toMutableList()
 
     fun withToken(token: AccessToken): UserToken = UserToken(this, token)
 

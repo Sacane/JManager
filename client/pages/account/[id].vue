@@ -5,6 +5,8 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
+const route = useRoute()
+
 const {translate, monthFromNumber} = useDate()
 
 const {findById} = useAccounts()
@@ -13,7 +15,7 @@ const date = new Date()
 const data = reactive({
   year: date.getFullYear(),
   month: monthFromNumber(new Date().getMonth() + 1) as string,
-  labelAccount: '',
+  labelAccount: route.query.labelAccount as string,
   isRangeSelected: false,
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
@@ -25,9 +27,7 @@ const data = reactive({
 const isSelectionOk = () => data.year !== 0 && data.month !== '' && data.labelAccount !== ''
 
 function retrieveSheets() {
-  if(!isSelectionOk()) {
-    return
-  }
+  console.log('Trying to get sheets')
   findByDate(data.month, data.year, data.labelAccount)
   .then((value: SheetAverageDTO) => {
     actualSheets.value = value.sheets.map(sheet => {
@@ -42,7 +42,6 @@ function retrieveSheets() {
   })
 }
 
-const route = useRoute()
 
 const initAccount = () => {
   findById(parseFloat(route.params.id as string))
@@ -50,8 +49,9 @@ const initAccount = () => {
     data.accountAmount = account.amount
     data.labelAccount = account.labelAccount as string
     data.currentAccountId = route.params.id as string
-    retrieveSheets()
+    
   })
+  retrieveSheets()
 }
 
 
@@ -124,6 +124,8 @@ const onYearChange = () => {
   data.year = data.dateYear.getFullYear()
   retrieveSheets()
 }
+
+
 </script>
 
 
@@ -141,7 +143,7 @@ const onYearChange = () => {
           <div style="text-align: left" class="w35%">
             <div class="pl10px flex flex-row hauto justify-around">
 
-              <MonthPicker v-model="data.month" @vue:vnode-updated="retrieveSheets()"/>
+              <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" />
 
               <div class="w40% h10%">
                 <label 

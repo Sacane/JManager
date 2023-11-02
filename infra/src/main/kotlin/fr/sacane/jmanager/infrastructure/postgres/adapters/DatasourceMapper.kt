@@ -60,7 +60,7 @@ internal fun UserResource.toModel()
     this.email,
     this.accounts.map { account -> account.toModel() }.toMutableList(),
     Password.fromBytes(this.password),
-    CategoryFactory.allDefaultCategories()
+    tags().toMutableList()
 )
 
 internal fun Login.toModel()

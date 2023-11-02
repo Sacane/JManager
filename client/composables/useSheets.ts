@@ -11,11 +11,12 @@ interface UserSheetDTO {
 export default function useSheet() {
   const {deleteQuery, post, get} = useQuery()
   const {user} = useAuth()
+  const dateUse = useDate()
 
-  async function findByDate(month: string, year: number, accountLabel: string) {
+  async function findByDate(month: string | undefined, year: number, accountLabel: string) {
     const response = get('sheet', {
       userId: user.value?.id,
-      month: month,
+      month: month ?? dateUse.monthFromNumber(new Date().getMonth() + 1) ?? "NOVEMBER",
       year: year,
       accountLabel: accountLabel
     })
