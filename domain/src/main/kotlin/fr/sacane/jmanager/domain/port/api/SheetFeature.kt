@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import java.time.LocalDate
 import java.time.Month
 import java.util.UUID
 
@@ -25,14 +26,15 @@ class SheetFeatureImplementation(
     private val session: SessionManager
 ): SheetFeature{
 
-    private fun updateSheetSold(account: Account, update: Boolean = true){
-        val sheets = account.sheets
+    private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
+        val sheets = account.sheets.filter { it.date.month == month }
         for(number in sheets.indices) {
-            sheets[number].position = number
+            if(number == 0) continue
+            sheets[number].position = sheets[number - 1].position
         }
         register.saveAllSheets(
             sheets.map{ sheet ->
-                val lastRecord = account.sheets.find { it.position == sheet.position - 1 }
+                val lastRecord = sheets.find { it.position == sheet.position - 1 }
                 sheet.also {
                     if(lastRecord == null) {
                         if(update) sheet.sold = account.sold
@@ -113,7 +115,7 @@ class SheetFeatureImplementation(
         if(sheetFromResource.position == 0){
             acc.setSoldFromSheet(sheetFromResource)
         }
-        updateSheetSold(acc, false)
+        updateSheetSoldFrom(acc, sheet.date.month, false)
         acc.updateSoldByLastSheet()
         return@authenticate register.save(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
@@ -133,9 +135,10 @@ class SheetFeatureImplementation(
     override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID) {
         val account: Account = register.findAccountById(accountID) ?: return
         val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
+        val month = account.sheets.filter(isSheetOnList)[0].date.month
         account.cancelSheetsAmount(account.sheets.filter(isSheetOnList))
         account.sheets.removeIf(isSheetOnList)
-        updateSheetSold(account)
+        updateSheetSoldFrom(account, month)
         register.persist(account)
         register.deleteAllSheetsById(sheetIds)
     }
