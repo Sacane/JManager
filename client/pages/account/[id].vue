@@ -152,13 +152,13 @@ const onRowSelect = (event: any) => {
 <template>
   <PConfirmDialog></PConfirmDialog>
   <div class="w-full h-full flex flex-row container-all">
-    <div p-8  bg-white class="form-container" mt2px>
+    <div p-8  bg-white class="mr10px form-container" mt2px>
       <div flex-row justify-between>
         <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ data.labelAccount }}</h2>
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }}</h2>
 
       </div>
-      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" selectionMode="multiple" table-style="min-width: 50rem" v-model:selection="selectedSheets">
+      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" selectionMode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage" v-model:selection="selectedSheets">
         <template #header #body-cell="{value, field}">
           <div style="text-align: left" class="w35%">
             <div class="pl10px flex flex-row hauto justify-around">
@@ -184,9 +184,9 @@ const onRowSelect = (event: any) => {
         <PColumn field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
     </div>
-    <div class="pt5px flex-col justify-between">
-      <PButton w-auto @click="gotoTransaction">Ajouter une transaction</PButton>
-      <PButton @click="confirmDeleteButton" label="Supprimer" icon="pi pi-trash" severity="danger"/>
+    <div class="pt5px flex-col">
+      <PButton w-auto @click="gotoTransaction" icon="pi pi-plus"></PButton>
+      <PButton @click="confirmDeleteButton" icon="pi pi-trash" severity="danger"/>
     </div>
   </div>
 </template>
@@ -199,7 +199,6 @@ const onRowSelect = (event: any) => {
   }
   .form-container{
     background-color: white;
-    padding: 20px;
     border-radius: 8px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
   }
