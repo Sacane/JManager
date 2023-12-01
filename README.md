@@ -22,11 +22,6 @@ gradle assemble
 - You can easily visualize feedback to your budget state by months.
 - You can easily visualize feedback to all of your registered accounts.
 
-## Software architecture
-
-Here is the diagram corresponding to the current state of the project :
-
-This project use 
 ## Dependencies
 
 * [Kotlin](https://kotlinlang.org/), modern programming language based on the JVM.
