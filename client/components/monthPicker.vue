@@ -24,12 +24,15 @@ function onMonthChange() {
 </script>
 
 <template>
-  <div class="relative month-picker w40% h10%">
-    <label for="monthDropdown" class="block text-sm font-medium text-gray-700">Sélectionnez un mois :</label>
+  <div class="relative month-picker h10% flex flex-row">
+    <div class="flex justify-center mr2">
+      <label for="monthDropdown" class="text-sm font-medium text-gray-700">Sélectionnez un mois :</label>
+    </div>
+    
     <select
       v-model="selectedMonth"
       id="monthDropdown"
-      class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md focus:border-indigo-300 sm:text-sm"
+      class="mt-1 block py-2 px-3 border border-gray-300 bg-white rounded-md focus:border-indigo-300 sm:text-sm"
       @change="onMonthChange"
     >
           <!-- Utilisez une option par défaut pour le placeholder -->

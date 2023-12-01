@@ -35,7 +35,7 @@ onMounted(() => {
         Ajouter une fiche
       </h2>
       <p>
-        Une fiche est une ligne à renseigner pour mettre à jour l'état de son budget.<br>
+        Une fiche est une transaction permettant de mettre à jour la vue du budget d'un compte.<br>
         Elle contient la date à laquelle la dépense à été effectué, le montant, le compte concerné, et son label.
       </p>
     </section>

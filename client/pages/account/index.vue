@@ -87,13 +87,13 @@ const actionSelection = ref<AccountDTO | undefined>(undefined)
 <template>
   <div w-full h-full flex items-center>
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
-      <p class="info-text">
+      <h2 class="info-text">
         Cliquez sur un compte pour visualiser ses transactions
-      </p>
+      </h2>
       <PDataTable :value="data" table-style="min-width: 50rem" @row-click="onRowClick" v-model:selection="row">
         <template #header>
           <div class="flex flex-row hauto pl10px">
-            <PButton w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit"/>
+            <PButton class="button" w-auto b mr2 label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit"/>
             <PButton w-auto b mr2 label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete"/>
           </div>
         </template>

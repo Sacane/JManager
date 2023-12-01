@@ -100,10 +100,6 @@ const confirmDeleteButton = () => {
   })
 }
 
-const select = (event: any) => {
-
-}
-
 const onEditPage = (event: any) => {
   navigateTo({
     path: '/sheet/edit',
@@ -160,19 +156,19 @@ const onRowSelect = (event: any) => {
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" selectionMode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage" v-model:selection="selectedSheets">
         <template #header #body-cell="{value, field}">
-          <div style="text-align: left" class="w35%">
-            <div class="pl10px flex flex-row hauto justify-around">
-
+          <div style="text-align: left" class="wfull">
+            <div class="flex flex-row hauto justify-between">
               <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" />
-
-              <div class="w40% h10%">
-                <label 
-                for="yearPicker" 
-                class="block text-sm font-medium text-gray-700"
-                style="font-family: Arial, sans-serif;">
-                Sélectionnez une année :
-                </label>
-                <PCalendar v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
+              <div class="w26% flex flex-row">
+                <div class="flex justify-center mr2">
+                  <label 
+                  for="yearPicker" 
+                  class="block text-sm font-medium text-gray-700"
+                  style="font-family: Arial, sans-serif;">
+                  Sélectionnez une année :
+                  </label>
+                </div>
+                <PCalendar class="h10 w32" v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
               </div>
             </div>
           </div>
@@ -185,7 +181,7 @@ const onRowSelect = (event: any) => {
       </PDataTable>
     </div>
     <div class="pt5px flex-col">
-      <PButton w-auto @click="gotoTransaction" icon="pi pi-plus"></PButton>
+      <PButton w-auto @click="gotoTransaction" icon="pi pi-plus" ></PButton>
       <PButton @click="confirmDeleteButton" icon="pi pi-trash" severity="danger"/>
     </div>
   </div>
@@ -199,8 +195,14 @@ const onRowSelect = (event: any) => {
   }
   .form-container{
     background-color: white;
+    width: 100%;
     border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    .custom-calendar {
+      v-picker{
+        background-color: red;
+      }
+    }
   }
   .buttons {
     margin-top: 15px;

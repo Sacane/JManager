@@ -43,7 +43,7 @@ const username = ref(isAuthenticated ? user.value?.username : '')
 <style scoped lang="scss">
 
 .title {
-  background-color: #7F52FF;
+  background-color: var(--primary);
   color: white;
   text-align: center;
 }
