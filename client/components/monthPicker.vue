@@ -1,26 +1,22 @@
 <script setup lang="ts">
 import { ref, defineProps, defineEmits} from 'vue';
-
-const date = useDate()
 const props = defineProps({
   modelValue: String,
   onMonthChange: Function,
-});
-// Variable pour stocker le mois sélectionné
+})
+const date = useDate()
+
 const selectedMonth = ref('')
 const emits = defineEmits(['update:modelValue']);
 const currentMonth = date.translate(date.monthFromNumber(new Date().getMonth() + 1) as string)
 
-
 watchEffect(() => {
   emits('update:modelValue', selectedMonth.value);
-});
+})
 
 function onMonthChange() {
   emits('update:modelValue', selectedMonth.value);
 }
-
-
 </script>
 
 <template>
@@ -28,7 +24,7 @@ function onMonthChange() {
     <div class="flex justify-center mr2">
       <label for="monthDropdown" class="text-sm font-medium text-gray-700">Sélectionnez un mois :</label>
     </div>
-    
+
     <select
       v-model="selectedMonth"
       id="monthDropdown"
@@ -56,13 +52,11 @@ function onMonthChange() {
 
   </div>
 </template>
-  
 
-  
 <style scoped>
 .month-picker {
   font-family: Arial, sans-serif;
-  
+
 }
 
 option {
