@@ -29,7 +29,6 @@ class ServerUserAdapter (
 //    }
 
     override fun findUserById(userId: UserId): User? {
-        println("findUserById: $userId")
         val id = userId.id ?: return null
         return userPostgresRepository.findById(id).orElse(null).toModel()
     }

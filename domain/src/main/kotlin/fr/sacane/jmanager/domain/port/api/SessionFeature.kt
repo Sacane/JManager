@@ -42,7 +42,7 @@ class SessionFeatureImpl(
 
     override fun logout(userId: UserId, token: UUID)
     : Response<Nothing>  = session.authenticate(userId, token) {
-        session.removeSession(userId)
+        session.removeSession(userId, token)
         Response.ok()
     }
 

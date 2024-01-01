@@ -3,7 +3,7 @@ import { API_PATH } from '../utils/request';
 import useAuth from './useAuth';
 
 export default function useQuery() {
-    const {defaultHeaders, tryRefresh} = useAuth()
+    const {defaultHeaders, tryRefresh, logout} = useAuth()
     const toast = useJToast()
 
     async function get(url: string, params: any | undefined = undefined) {
@@ -50,7 +50,9 @@ export default function useQuery() {
           return
         } else if(status === 401) {
           toast.error(message)
+          localStorage.removeItem('user')
           navigateTo('/login')
+          logout()
           return
         }
         toast.error(message)

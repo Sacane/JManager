@@ -51,7 +51,10 @@ class SessionManager {
         return ok(regeneratedToken)
     }
     infix fun removeSession(userId: UserId) = synchronized(lock) {
-        userSession[userId]?.removeIf {it.isExpired()}
+        userSession[userId]?.clear()
+    }
+    fun removeSession(userId: UserId, token: UUID) = synchronized(lock){
+        userSession[userId]?.removeIf{it.tokenValue == token}
     }
     fun purgeExpiredToken() = synchronized(lock) {
         logger.info("Start purge expired tokens")
