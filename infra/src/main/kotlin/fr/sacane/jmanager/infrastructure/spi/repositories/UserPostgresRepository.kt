@@ -1,6 +1,6 @@
-package fr.sacane.jmanager.infrastructure.postgres.repositories
+package fr.sacane.jmanager.infrastructure.spi.repositories
 
-import fr.sacane.jmanager.infrastructure.postgres.entity.UserResource
+import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional

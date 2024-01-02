@@ -1,11 +1,10 @@
 package fr.sacane.jmanager.infrastructure.datasource
 
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.infrastructure.postgres.entity.AccountResource
-import fr.sacane.jmanager.infrastructure.postgres.entity.UserResource
-import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.UserPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
+import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
+import fr.sacane.jmanager.infrastructure.spi.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.junit.jupiter.api.Test
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach

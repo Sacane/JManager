@@ -1,12 +1,12 @@
-package fr.sacane.jmanager.infrastructure.postgres.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import fr.sacane.jmanager.infrastructure.postgres.entity.Login
-import fr.sacane.jmanager.infrastructure.postgres.repositories.LoginRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.UserPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.Login
+import fr.sacane.jmanager.infrastructure.spi.repositories.LoginRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.util.*

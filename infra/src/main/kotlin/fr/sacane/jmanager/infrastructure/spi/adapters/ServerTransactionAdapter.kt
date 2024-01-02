@@ -1,14 +1,14 @@
-package fr.sacane.jmanager.infrastructure.postgres.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.postgres.entity.CategoryResource
-import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.CategoryRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.SheetRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.UserPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.CategoryResource
+import fr.sacane.jmanager.infrastructure.spi.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.CategoryRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.SheetRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Service
 
 

@@ -2,8 +2,8 @@ package fr.sacane.jmanager.infrastructure.domain_server
 
 import fr.sacane.jmanager.domain.Hash
 import fr.sacane.jmanager.domain.models.Password
-import fr.sacane.jmanager.infrastructure.postgres.entity.UserResource
-import fr.sacane.jmanager.infrastructure.postgres.repositories.UserPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
+import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
