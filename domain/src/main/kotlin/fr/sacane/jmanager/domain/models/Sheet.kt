@@ -14,12 +14,10 @@ class Sheet(
     var position: Int = 0
 ) {
     fun updateSoldStartingWith(start: Amount) {
-        println("ON PASSE ICI -> $sold | income -> $income | expenses -> $expenses")
         sold = start.plus(income).minus(expenses)
     }
 
     private fun updateSoldFromIncomeAndExpenses(expenses: Amount, income: Amount) {
-        println("ON PASSE LA")
         sold = sold.plus(this.expenses)
             .plus(income)
             .minus(expenses)
@@ -29,7 +27,6 @@ class Sheet(
     fun updateFromOther(other: Sheet): Boolean {
         if(other.id != this.id) return false
         updateSoldFromIncomeAndExpenses(other.expenses, other.income)
-        println("sold: $sold")
         this.label = other.label
         this.date = other.date
         this.expenses = other.expenses
