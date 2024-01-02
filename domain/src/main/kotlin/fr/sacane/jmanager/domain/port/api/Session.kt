@@ -46,9 +46,9 @@ class SessionManager {
         if (session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
             return forbidden("Le refresh token est incorrect, impossible de renvoyer de token valide")
         }
-        val regeneratedToken = generateToken(session.role)
-        addSession(id, regeneratedToken)
-        return ok(regeneratedToken)
+        session.updateLifetime()
+        session.updateTokenLifetime()
+        return ok(session)
     }
     infix fun removeSession(userId: UserId) = synchronized(lock) {
         userSession[userId]?.clear()
