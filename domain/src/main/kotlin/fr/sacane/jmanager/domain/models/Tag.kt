@@ -12,3 +12,5 @@ fun tags(): List<Tag> {
         Tag("Bien-etre")
     )
 }
+
+fun String.asTag(): Tag = Tag(this)

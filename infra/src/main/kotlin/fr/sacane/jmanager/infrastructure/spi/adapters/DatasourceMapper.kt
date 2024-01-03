@@ -28,12 +28,12 @@ internal fun Account.asResource(): AccountResource {
 }
 
 internal fun User.asResource(): UserResource {
-    return UserResource(username, password.get(), email, mutableListOf(), categories().map { CategoryResource(label = it.label) }.toMutableList())
+    return UserResource(username, password.get(), email, mutableListOf(), distinctCategories.map { CategoryResource(label = it.label) }.toMutableList())
 }
 
 internal fun User.asExistingResource(): UserResource {
     return UserResource(idUser = this.id.id,
-        username = username, password = password.get(), email = email, accounts = this.accounts().map {it.asResource()}.toMutableList())
+        username = username, password = password.get(), email = email, accounts = this.accounts.map {it.asResource()}.toMutableList())
 }
 
 internal fun SheetResource.toModel(): Sheet{

@@ -37,28 +37,33 @@ class User(
     val id: UserId = UserId(null),
     val username: String,
     val email: String?,
-    val accounts: MutableList<Account> = mutableListOf(),
+    private val accounts_: MutableList<Account> = mutableListOf(),
     val password: Password,
-    private val categories: MutableList<Tag> = mutableListOf()
-){
-    fun accounts(): MutableList<Account> = accounts.toMutableList()
-    fun categories(): MutableList<Tag> = categories.distinct().toMutableList()
+    private val categories: MutableList<Tag> = mutableListOf(
+        "Loisir".asTag(),
+        "Repas".asTag(),
+        "Autres".asTag(),
+        "Mise en epargne".asTag(),
+        "Education".asTag(),
+        "Cadeaux".asTag(),
+        "Remboursement".asTag(),
+        "Sante".asTag(),
+        "Vie quotidienne".asTag(),
+        "Voyage et Transports".asTag(),
+        "Revenus".asTag(),
+        "Abonnements".asTag()
+    )
+) {
+    val distinctCategories: List<Tag>
+        get() = categories.distinct()
 
+    val accounts: MutableList<Account>
+        get() = accounts_
     fun withToken(token: AccessToken): UserToken = UserToken(this, token)
 
-
-    fun add(account: Account) {
-        accounts.removeIf { it.id == account.id }
-        accounts.add(account)
-    }
-
-    override fun toString(): String {
-        return """
-            username: $username
-        """.trimIndent()
-    }
+    override fun toString(): String = "username: $username"
 
     fun removeAccount(accountID: Long) {
-        accounts.removeIf { accountID == it.id }
+        accounts.removeIf { it.id == accountID }
     }
 }
