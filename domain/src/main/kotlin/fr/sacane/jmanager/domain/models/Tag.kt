@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
-@JvmInline
-value class Tag(val label: String)
+class Tag(val label: String, val id: Long? = null)
 fun tags(): List<Tag> {
     return listOf(
         Tag("Aucun"),

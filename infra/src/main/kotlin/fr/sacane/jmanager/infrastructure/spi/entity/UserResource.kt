@@ -27,9 +27,20 @@ class UserResource(
         inverseJoinColumns = [JoinColumn(name="id_category")]
     )
     var categories: MutableList<CategoryResource> = mutableListOf(),
+    @OneToMany(cascade = [CascadeType.ALL])
+    @JoinTable(
+        name="user_tags",
+        joinColumns = [JoinColumn(name="id_user")],
+        inverseJoinColumns = [JoinColumn(name="id_tag")]
+    )
+    var tags: MutableList<TagResource> = mutableListOf(),
     @Id
     @Nullable
     @GeneratedValue
     @Column(name = "id_user", nullable = false)
     var idUser: Long? = null,
-)
+){
+    fun addTag(tag: TagResource){
+        tags.add(tag)
+    }
+}

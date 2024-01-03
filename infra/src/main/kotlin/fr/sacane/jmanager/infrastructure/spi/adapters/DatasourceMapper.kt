@@ -33,9 +33,14 @@ internal fun User.asResource(): UserResource {
 
 internal fun User.asExistingResource(): UserResource {
     return UserResource(idUser = this.id.id,
-        username = username, password = password.get(), email = email, accounts = this.accounts.map {it.asResource()}.toMutableList())
+        username = username,
+        password = password.get(),
+        email = email,
+        accounts = this.accounts.map {it.asResource()}.toMutableList(),
+        tags = this.distinctCategories.map { it.asResource() }.toMutableList()
+    )
 }
-
+internal fun Tag.asResource(): TagResource = TagResource(this.id, this.label)
 internal fun SheetResource.toModel(): Sheet{
     return Sheet(this.idSheet,
         this.label,
@@ -60,8 +65,10 @@ internal fun UserResource.toModel()
     this.email,
     this.accounts.map { account -> account.toModel() }.toMutableList(),
     Password.fromBytes(this.password),
-    tags().toMutableList()
+    this.tags.map { it.toModel() }.toMutableList()
 )
+
+internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag)
 
 internal fun Login.toModel()
 : AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)

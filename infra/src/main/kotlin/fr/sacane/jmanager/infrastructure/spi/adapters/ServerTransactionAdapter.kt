@@ -4,11 +4,8 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.spi.entity.CategoryResource
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.CategoryRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.SheetRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.TagResource
+import fr.sacane.jmanager.infrastructure.spi.repositories.*
 import org.springframework.stereotype.Service
 
 
@@ -18,7 +15,8 @@ class ServerTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userPostgresRepository: UserPostgresRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val tagRepository: TagRepository
     ) : TransactionRegister{
 
     override fun persist(userId: UserId, account: Account): User? {
@@ -58,7 +56,7 @@ class ServerTransactionAdapter(
     override fun persist(userId: UserId, category: Tag): Tag? {
         val id = userId.id ?: return null
         val user = userPostgresRepository.findById(id).orElseThrow()
-        user.categories.add(CategoryResource(label = category.label))
+        user.tags.add(TagResource(name = category.label))
         userPostgresRepository.save(user)
         return category
     }
