@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.Hash
 value class UserId(val id: Long?)
 
 
-class Password(val value: String?){
+class Password(value: String?){
     private lateinit var hashedPassword: ByteArray
     private var fromString: Boolean = true
     private constructor(byteArray: ByteArray): this(byteArray.toString()){
@@ -52,16 +52,8 @@ class User(
         accounts.add(account)
     }
 
-    fun addSheet(accountID: Long, sheet: Sheet): Boolean{
-        val account = accounts.find { it.id == accountID } ?: return false
-        val hasBeenRemoved = account.sheets.removeIf { it.id == sheet.id }
-        if(!hasBeenRemoved) return false
-        return account.sheets.add(sheet)
-    }
-
     override fun toString(): String {
         return """
-            id: $id
             username: $username
         """.trimIndent()
     }
