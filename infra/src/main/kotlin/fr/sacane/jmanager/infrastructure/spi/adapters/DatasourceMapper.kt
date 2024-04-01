@@ -67,7 +67,24 @@ internal fun UserResource.toModel()
     Password.fromBytes(this.password),
     this.tags.map { it.toModel() }.toMutableList()
 )
+internal fun UserResource.toModelWithAccounts()
+        : User = User(
+    id = UserId(this.idUser),
+    username = this.username,
+    email = this.email,
+    accounts_ = this.accounts.map { account -> account.toModel() }.toMutableList(),
+    password = Password.fromBytes(this.password)
+)
 
+internal fun UserResource.toMinimalUserRepresentation()
+: MinimalUserRepresentation = MinimalUserRepresentation(
+    UserId(this.idUser),
+    this.username,
+    this.email
+)
+
+internal fun UserResource.toModelWithPasswords() : User =
+    User(id = UserId(this.idUser), username = this.username, email = this.email, password = Password.fromBytes(this.password))
 internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag)
 
 internal fun Login.toModel()

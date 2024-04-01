@@ -87,7 +87,7 @@ class AccountFeatureImpl(
         userId: UserId,
         token: UUID
     ): Response<List<Account>> = session.authenticate(userId, token) {
-        val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
+        val user = userRepository.findUserByIdWithAccounts(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
         return@authenticate ok(user.accounts)
     }
 

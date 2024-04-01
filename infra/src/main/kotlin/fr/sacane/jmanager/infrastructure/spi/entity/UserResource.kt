@@ -3,7 +3,6 @@ package fr.sacane.jmanager.infrastructure.spi.entity
 import jakarta.persistence.*
 import org.springframework.lang.Nullable
 
-
 @Table(name="userResource")
 @Entity
 class UserResource(
@@ -13,7 +12,7 @@ class UserResource(
     var password: ByteArray = ByteArray(1),
     @Column(unique = true, nullable = true)
     var email: String? = null,
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinTable(
         name = "user_account",
         joinColumns = [JoinColumn(name = "id_user")],
@@ -39,8 +38,4 @@ class UserResource(
     @GeneratedValue
     @Column(name = "id_user", nullable = false)
     var idUser: Long? = null,
-){
-    fun addTag(tag: TagResource){
-        tags.add(tag)
-    }
-}
+)

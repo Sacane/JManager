@@ -56,8 +56,7 @@ class Directory {
     inner class UserTransactionMock {
 
         fun findById(userId: UserId): UserToken? {
-            val user = userInventory.find { it.id.id == userId.id } ?: return null
-            return tokenInventory[user.username]?.let { UserToken(user, it) }
+            TODO("Not yet implemented")
         }
 
         fun findUserById(userId: UserId): User? {

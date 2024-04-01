@@ -24,7 +24,6 @@ class SessionController(
     fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO> {
         val response = loginFeature.login(userDTO.username, Password(userDTO.password))
         LOGGER.info("Trying to login user ${userDTO.username}")
-        if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return response.map {
             UserStorageDTO(
                 it.user.id.id ?: throw InvalidRequestException("Invalid response, something went wrong"),

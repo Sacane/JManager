@@ -33,6 +33,12 @@ class Password(value: String?){
     }
 }
 
+class MinimalUserRepresentation(
+    val id: UserId = UserId(null),
+    val username: String,
+    val email: String? = null,
+)
+
 class User(
     val id: UserId = UserId(null),
     val username: String,
@@ -59,7 +65,7 @@ class User(
 
     val accounts: MutableList<Account>
         get() = accounts_
-    fun withToken(token: AccessToken): UserToken = UserToken(this, token)
+    fun withToken(token: AccessToken): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
 
     override fun toString(): String = "username: $username"
 

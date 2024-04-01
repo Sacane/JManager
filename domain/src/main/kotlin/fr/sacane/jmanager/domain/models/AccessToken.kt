@@ -42,7 +42,7 @@ class AccessToken(
     }
 }
 data class UserToken(
-    val user: User,
+    val user: MinimalUserRepresentation,
     val token: AccessToken
 )
 

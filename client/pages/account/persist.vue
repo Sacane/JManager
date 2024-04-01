@@ -36,7 +36,7 @@ const toAccount = async () => {
   <div class="flex items-center mt3">
     <form class="p-8 mt-5 bg-white form-container">
       <h1 class="text-4xl font-bold c-#7F52FF text-center">Créer un nouveau compte</h1>
-      <PFieldset>
+      <div>
         <label for="label">Libelle du compte</label>
         <PInputText v-model="newAccount.label" id="label"/>
         <label for="labelAmount">Montant</label>
@@ -46,7 +46,7 @@ const toAccount = async () => {
           <PInputText placeholder="Partie décimal" v-model="amount.decimalPart" maxlength="2"/>
         </div>
         <PButton label="Créer" class="mt-3 bg-#7F52FF" @click="toAccount" />
-      </PFieldset>
+      </div>
     </form>
   </div>
 </template>

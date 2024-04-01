@@ -21,16 +21,15 @@ class ServerUserAdapter (
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
-//    override fun findById(userId: UserId): UserToken? {
-//        val id = userId.id ?: return null
-//        val user = userPostgresRepository.findById(id).orElseThrow()
-//        val token = loginRepository.findByUser(user) ?: return null
-//        return UserToken(user.toModel(), token.toModel())
-//    }
 
     override fun findUserById(userId: UserId): User? {
         val id = userId.id ?: return null
         return userPostgresRepository.findById(id).orElse(null).toModel()
+    }
+
+    override fun findUserByIdWithAccounts(userId: UserId): User? {
+        val id = userId.id ?: return null
+        return userPostgresRepository.findByIdWithAccount(id)?.toModelWithAccounts()
     }
 
     override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
@@ -41,12 +40,12 @@ class ServerUserAdapter (
         }
         val token = Login(user = user) // TODO Implement token implementation
         val tokenBack = loginRepository.save(token)
-        return UserToken(user.toModel(), AccessToken(tokenBack.id ?: UUID.randomUUID(), tokenBack.tokenLifeTime, tokenBack.refreshToken))
+        return UserToken(user.toMinimalUserRepresentation(), AccessToken(tokenBack.id ?: UUID.randomUUID(), tokenBack.tokenLifeTime, tokenBack.refreshToken))
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
         val user = userPostgresRepository.findByUsername(pseudonym) ?: return null
-        return user.toModel()
+        return user.toModelWithPasswords()
     }
 
     override fun create(user: User): User?{
