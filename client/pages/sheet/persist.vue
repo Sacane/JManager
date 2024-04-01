@@ -1,18 +1,18 @@
 <script setup lang="ts">
 
 import useSheet from '../../composables/useSheets';
-import { SheetDTO } from '../../types/index';
+import { SheetDTO, AccountDTO } from '../../types/index';
 import useJToast from '../../composables/useJToast';
 
 definePageMeta({
   layout: 'sidebar-layout',     
 })
 
-const {success} = useJToast()
+const {success, error} = useJToast()
 const route = useRoute()
 const {saveSheet} = useSheet()
-const {fetch} = useAccounts()
-
+const {fetch, findById} = useAccounts()
+const account = ref<AccountDTO>()
 const values = reactive({
   accountId: route.query.id,
   accountLabel: route.query.label as string,
@@ -23,6 +23,10 @@ const values = reactive({
   date: new Date(),
   integerPart: '0',
   decimalPart: '0'
+})
+
+onMounted(() => {
+  findById(parseInt(values.accountId as string)).then(res => account.value = res).catch(err => error(err))
 })
 
 const onConfirm = async () => {
@@ -37,7 +41,7 @@ const onConfirm = async () => {
     expenses: (values.selectedMode === 'expenses') ? amount : '0 €',
     income: (values.selectedMode === 'income') ? amount : '0 €',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
-    accountAmount: `${values.accountAmount}`
+    accountAmount: `${account.value?.amount}`,
   }).then((sheet: SheetDTO) => {
       fetch()
       success('La transaction a bien été ajouté')

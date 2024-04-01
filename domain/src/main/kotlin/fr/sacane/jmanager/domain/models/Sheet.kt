@@ -10,7 +10,7 @@ class Sheet(
     var expenses: Amount,
     var income: Amount,
     var sold: Amount,
-    var category: Category = CategoryFactory.DEFAULT_CATEGORY,
+    var category: Tag = Tag("Aucune"),
     var position: Int = 0
 ) {
     fun updateSoldStartingWith(start: Amount) {
@@ -27,7 +27,6 @@ class Sheet(
     fun updateFromOther(other: Sheet): Boolean {
         if(other.id != this.id) return false
         updateSoldFromIncomeAndExpenses(other.expenses, other.income)
-        println("sold: $sold")
         this.label = other.label
         this.date = other.date
         this.expenses = other.expenses

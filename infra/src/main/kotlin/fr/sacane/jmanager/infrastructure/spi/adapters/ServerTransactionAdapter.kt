@@ -1,14 +1,11 @@
-package fr.sacane.jmanager.infrastructure.postgres.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.postgres.entity.CategoryResource
-import fr.sacane.jmanager.infrastructure.postgres.repositories.AccountRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.CategoryRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.SheetRepository
-import fr.sacane.jmanager.infrastructure.postgres.repositories.UserPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.TagResource
+import fr.sacane.jmanager.infrastructure.spi.repositories.*
 import org.springframework.stereotype.Service
 
 
@@ -18,7 +15,8 @@ class ServerTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userPostgresRepository: UserPostgresRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val tagRepository: TagRepository
     ) : TransactionRegister{
 
     override fun persist(userId: UserId, account: Account): User? {
@@ -55,23 +53,23 @@ class ServerTransactionAdapter(
         return registered.toModel()
     }
 
-    override fun persist(userId: UserId, category: Category): Category? {
+    override fun persist(userId: UserId, category: Tag): Tag? {
         val id = userId.id ?: return null
         val user = userPostgresRepository.findById(id).orElseThrow()
-        user.categories.add(CategoryResource(label = category.label))
+        user.tags.add(TagResource(name = category.label))
         userPostgresRepository.save(user)
         return category
     }
 
-    override fun removeCategory(userId: UserId, labelCategory: String): Category? {
+    override fun removeCategory(userId: UserId, labelCategory: String): Tag? {
         val id = userId.id ?: return null
         val user = userPostgresRepository.findById(id).orElseThrow()
         val category = user.categories.find { it.label == labelCategory } ?: return null
         categoryRepository.deleteByLabel(labelCategory)
-        return Category(category.label)
+        return Tag(category.label)
     }
 
-    override fun remove(targetCategory: Category) {
+    override fun remove(targetCategory: Tag) {
         categoryRepository.deleteByLabel(targetCategory.label)
     }
 

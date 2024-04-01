@@ -76,7 +76,7 @@ class AccountFeatureImpl(
     ): Response<Account> = session.authenticate(userId, token) {
         val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur recherché n'existe pas")
         ok(
-            user.accounts()
+            user.accounts
             .find { acc -> acc.label == label }
             ?: return@authenticate notFound("Le compte $label n'est pas enregistré en base")
         )
@@ -88,7 +88,7 @@ class AccountFeatureImpl(
         token: UUID
     ): Response<List<Account>> = session.authenticate(userId, token) {
         val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
-        return@authenticate ok(user.accounts())
+        return@authenticate ok(user.accounts)
     }
 
     override fun save(
@@ -101,7 +101,7 @@ class AccountFeatureImpl(
             return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")
-        ok(userSaved.accounts().find { it.label == account.label }
+        ok(userSaved.accounts.find { it.label == account.label }
             ?: return@authenticate notFound("Une erreur s'est produite lors de la création du compte."))
     }
 }

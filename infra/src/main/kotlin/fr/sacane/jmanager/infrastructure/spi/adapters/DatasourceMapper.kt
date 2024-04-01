@@ -1,7 +1,7 @@
-package fr.sacane.jmanager.infrastructure.postgres.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.infrastructure.postgres.entity.*
+import fr.sacane.jmanager.infrastructure.spi.entity.*
 
 
 internal fun Sheet.asResource(): SheetResource {
@@ -28,14 +28,19 @@ internal fun Account.asResource(): AccountResource {
 }
 
 internal fun User.asResource(): UserResource {
-    return UserResource(username, password.get(), email, mutableListOf(), categories().map { CategoryResource(label = it.label) }.toMutableList())
+    return UserResource(username, password.get(), email, mutableListOf(), distinctCategories.map { CategoryResource(label = it.label) }.toMutableList())
 }
 
 internal fun User.asExistingResource(): UserResource {
     return UserResource(idUser = this.id.id,
-        username = username, password = password.get(), email = email, accounts = this.accounts().map {it.asResource()}.toMutableList())
+        username = username,
+        password = password.get(),
+        email = email,
+        accounts = this.accounts.map {it.asResource()}.toMutableList(),
+        tags = this.distinctCategories.map { it.asResource() }.toMutableList()
+    )
 }
-
+internal fun Tag.asResource(): TagResource = TagResource(this.id, this.label)
 internal fun SheetResource.toModel(): Sheet{
     return Sheet(this.idSheet,
         this.label,
@@ -60,8 +65,10 @@ internal fun UserResource.toModel()
     this.email,
     this.accounts.map { account -> account.toModel() }.toMutableList(),
     Password.fromBytes(this.password),
-    CategoryFactory.allDefaultCategories()
+    this.tags.map { it.toModel() }.toMutableList()
 )
+
+internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag)
 
 internal fun Login.toModel()
 : AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)

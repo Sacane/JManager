@@ -13,10 +13,8 @@ class AccountTest {
     fun `account should be capable to earn and loss amount correctly`(){
         val account = Account(null, Amount(BigDecimal(100)), "courant")
         account += 20.toAmount()
-        println(account.sold)
         account -= 10.toAmount()
         account += 50.toAmount()
-        println(account.sold)
         account -= 15.toAmount()
         assertEquals(account.sold, 145.toAmount())
     }
@@ -41,7 +39,7 @@ class AccountTest {
         )
 
         val pwdUser = Password("D5301012000MAMacita")
-        val user = User(UserId(1), "johan", "johan.test@test.fr", accounts, pwdUser, CategoryFactory.allDefaultCategories())
+        val user = User(UserId(1), "johan", "johan.test@test.fr", accounts, pwdUser, tags().toMutableList())
         assertTrue{
             user.accounts.contains(Account(null, constantValue, "test", mutableListOf()))
         }

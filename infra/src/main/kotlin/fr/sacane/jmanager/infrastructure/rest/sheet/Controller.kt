@@ -10,6 +10,8 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.Month
 import java.util.logging.Logger
 
@@ -23,6 +25,8 @@ class SheetController(private val sheetFeature: SheetFeature) {
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetSendDTO> {
+        LOGGER.info("Trying to add the following sheet")
+        LOGGER.info(userAccountSheetDTO.sheetDTO.toString())
         return sheetFeature.saveAndLink(
             userAccountSheetDTO.userId.id(),
             token.asTokenUUID(),
@@ -56,12 +60,13 @@ class SheetController(private val sheetFeature: SheetFeature) {
     @GetMapping
     fun getSheets(
         @RequestParam("userId") userId: Long,
-        @RequestParam("month") month: Month,
+        @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
         @RequestParam("accountLabel") accountLabel: String,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetsAndAverageDTO> {
-        val response = sheetFeature.retrieveSheetsByMonthAndYear(userId.id(), token.asTokenUUID(), month, year, accountLabel)
+        LOGGER.info("Start getting sheets for account $accountLabel")
+        val response = sheetFeature.retrieveSheetsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }, 0.0))
     }

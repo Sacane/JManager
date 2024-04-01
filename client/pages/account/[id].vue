@@ -5,6 +5,8 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
+const route = useRoute()
+
 const {translate, monthFromNumber} = useDate()
 
 const {findById} = useAccounts()
@@ -13,7 +15,7 @@ const date = new Date()
 const data = reactive({
   year: date.getFullYear(),
   month: monthFromNumber(new Date().getMonth() + 1) as string,
-  labelAccount: '',
+  labelAccount: route.query.labelAccount as string,
   isRangeSelected: false,
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
@@ -22,12 +24,8 @@ const data = reactive({
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string)
 })
 
-const isSelectionOk = () => data.year !== 0 && data.month !== '' && data.labelAccount !== ''
-
 function retrieveSheets() {
-  if(!isSelectionOk()) {
-    return
-  }
+  console.log('Trying to get sheets')
   findByDate(data.month, data.year, data.labelAccount)
   .then((value: SheetAverageDTO) => {
     actualSheets.value = value.sheets.map(sheet => {
@@ -42,7 +40,6 @@ function retrieveSheets() {
   })
 }
 
-const route = useRoute()
 
 const initAccount = () => {
   findById(parseFloat(route.params.id as string))
@@ -50,8 +47,9 @@ const initAccount = () => {
     data.accountAmount = account.amount
     data.labelAccount = account.labelAccount as string
     data.currentAccountId = route.params.id as string
-    retrieveSheets()
+    
   })
+  retrieveSheets()
 }
 
 
@@ -103,7 +101,6 @@ const confirmDeleteButton = () => {
 }
 
 const onEditPage = (event: any) => {
-  console.log(data.accountAmount)
   navigateTo({
     path: '/sheet/edit',
     query: {
@@ -124,38 +121,58 @@ const onYearChange = () => {
   data.year = data.dateYear.getFullYear()
   retrieveSheets()
 }
+
+const selectedRows = ref([]);
+
+const isSelected = (event: any) => {
+  console.log(event.data);
+  return true;
+};
+
+const onRowSelect = (event: any) => {
+  if (isSelected(event)) {
+    // La ligne est déjà sélectionnée, donc désélectionnez-la.
+    selectedSheets.value = selectedSheets.value.filter(
+      (sheet: any) => sheet.label !== event.data.label
+    );
+
+  } else {
+    // La ligne n'est pas sélectionnée, donc ajoutez-la à la sélection.
+    selectedSheets.value.push(event.data);
+  }
+};
+
 </script>
 
 
 <template>
   <PConfirmDialog></PConfirmDialog>
-  <div class="w-full h-full flex flex-col container-all">
-    <div p-8  bg-white class="form-container" mt2px>
+  <div class="w-full h-full flex flex-row container-all">
+    <div p-8  bg-white class="mr10px form-container" mt2px>
       <div flex-row justify-between>
         <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ data.labelAccount }}</h2>
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }}</h2>
 
       </div>
-      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" table-style="min-width: 50rem" v-model:selection="selectedSheets" @row-click="onEditPage">
-        <template #header>
-          <div style="text-align: left" class="w35%">
-            <div class="pl10px flex flex-row hauto justify-around">
-
-              <MonthPicker v-model="data.month" @vue:vnode-updated="retrieveSheets()"/>
-
-              <div class="w40% h10%">
-                <label 
-                for="yearPicker" 
-                class="block text-sm font-medium text-gray-700"
-                style="font-family: Arial, sans-serif;">
-                Sélectionnez une année :
-                </label>
-                <PCalendar v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
+      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" selectionMode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage" v-model:selection="selectedSheets">
+        <template #header #body-cell="{value, field}">
+          <div style="text-align: left" class="wfull">
+            <div class="flex flex-row hauto justify-between">
+              <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" />
+              <div class="w26% flex flex-row">
+                <div class="flex justify-center mr2">
+                  <label 
+                  for="yearPicker" 
+                  class="block text-sm font-medium text-gray-700"
+                  style="font-family: Arial, sans-serif;">
+                  Sélectionnez une année :
+                  </label>
+                </div>
+                <PCalendar class="h10 w32" v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
               </div>
             </div>
           </div>
         </template>
-        <PColumn selectionMode="multiple" style="width: 3rem" :exportable="false"></PColumn>
         <PColumn sortable field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
         <PColumn field="expensesRepresentation" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }"/>
@@ -163,9 +180,9 @@ const onYearChange = () => {
         <PColumn field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
     </div>
-    <div  pt5px flex-row justify-between>
-      <PButton w-auto @click="gotoTransaction">Ajouter une transaction</PButton>
-      <PButton @click="confirmDeleteButton" label="Supprimer" icon="pi pi-trash" severity="danger"/>
+    <div class="pt5px flex-col">
+      <PButton w-auto @click="gotoTransaction" icon="pi pi-plus" ></PButton>
+      <PButton @click="confirmDeleteButton" icon="pi pi-trash" severity="danger"/>
     </div>
   </div>
 </template>
@@ -178,9 +195,14 @@ const onYearChange = () => {
   }
   .form-container{
     background-color: white;
-    padding: 20px;
+    width: 100%;
     border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Ajoutez l'ombre ici */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    .custom-calendar {
+      v-picker{
+        background-color: red;
+      }
+    }
   }
   .buttons {
     margin-top: 15px;
@@ -192,6 +214,9 @@ const onYearChange = () => {
 
 }
 
+.selected-row{
+  color: blue;
+}
 
 
 

@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.postgres.entity
+package fr.sacane.jmanager.infrastructure.spi.entity
 
 import jakarta.persistence.*
 import java.io.Serial
