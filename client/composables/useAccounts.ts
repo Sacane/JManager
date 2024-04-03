@@ -1,5 +1,5 @@
 import useAuth from './useAuth';
-import { AccountDTO } from '../types/index';
+import {AccountDTO} from '../types/index';
 import useQuery from './useQuery';
 
 export interface AccountFormatted{
@@ -17,7 +17,7 @@ export default function useAccounts(){
         return get(`account/${user.value?.id}`)
 
     }
-    
+
     async function createAccount(labelAccount: string, amount: string): Promise<any> {
         console.log(user.value?.id)
         return post('account/create', {
@@ -33,7 +33,7 @@ export default function useAccounts(){
             onUpdate(acc)
         }).catch(e => onFailure(e))
     }
-    
+
 
     async function deleteAccount(id: number): Promise<any> {
         return deleteQuery(`account/${user.value?.id}/delete/${id}`, undefined)

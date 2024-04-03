@@ -1,5 +1,5 @@
-import { API_PATH } from './../utils/request';
-import axios, { AxiosError } from 'axios'
+import {API_PATH} from './../utils/request';
+import axios, {AxiosError} from 'axios'
 import useJToast from './useJToast';
 
 export interface UserAuth {

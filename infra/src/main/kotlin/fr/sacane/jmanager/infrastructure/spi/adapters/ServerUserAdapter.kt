@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.Login
+import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.LoginRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Service
@@ -62,10 +63,10 @@ class ServerUserAdapter (
         }
     }
 
-    override fun register(user: User): User? {
-        val userResource = user.asResource()
-        LOGGER.info("Trying to register $userResource into database")
-        val userResponse = userPostgresRepository.save(userResource)
+    override fun register(username: String, email: String, password: Password): User? {
+        val userResponse = userPostgresRepository.save(
+            UserResource(username = username, password = password.get(), email = email)
+        )
         return userResponse.toModel()
     }
 

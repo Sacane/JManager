@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.domain.models
 
-import java.lang.RuntimeException
 import java.math.BigDecimal
 
 // For now, it only handles euro but should be upgrade later

@@ -9,7 +9,7 @@ import java.math.BigDecimal
 class AccountResource(
     @Column(name = "amount")
     var amount: BigDecimal = BigDecimal(0.0),
-    @Column(name = "label", unique = true)
+    @Column(name = "label")
     var label: String = "undefined",
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
     @JoinTable(

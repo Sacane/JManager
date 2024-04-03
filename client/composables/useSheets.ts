@@ -1,5 +1,5 @@
 import useQuery from './useQuery';
-import { SheetDTO } from '../types/index';
+import {SheetDTO} from '../types/index';
 
 interface UserSheetDTO {
   userId: number,
@@ -22,7 +22,7 @@ export default function useSheet() {
     })
     return response
   }
-  
+
   function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<SheetDTO> {
     return post('sheet/save', {
       userId: user.value?.id,

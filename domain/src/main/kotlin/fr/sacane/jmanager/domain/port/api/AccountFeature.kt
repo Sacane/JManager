@@ -1,8 +1,8 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
-import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Response.Companion.invalid
@@ -11,7 +11,7 @@ import fr.sacane.jmanager.domain.models.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import java.util.UUID
+import java.util.*
 
 @Port(Side.API)
 sealed interface AccountFeature {
@@ -88,7 +88,9 @@ class AccountFeatureImpl(
         token: UUID
     ): Response<List<Account>> = session.authenticate(userId, token) {
         val user = userRepository.findUserByIdWithAccounts(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
-        return@authenticate ok(user.accounts)
+        val entity = user.accounts
+        user.accounts.forEach { println(it.label) }
+        return@authenticate ok(entity)
     }
 
     override fun save(

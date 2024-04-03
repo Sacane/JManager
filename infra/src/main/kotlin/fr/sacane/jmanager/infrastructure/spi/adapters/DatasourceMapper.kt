@@ -24,6 +24,7 @@ internal fun Account.asResource(): AccountResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
+
     return AccountResource(idAccount = id, amount = sold.applyOnValue { it }, label = label, sheets = sheets)
 }
 

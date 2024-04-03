@@ -1,11 +1,11 @@
-import { parse } from 'date-fns';
+import {parse} from 'date-fns';
 
 export default function useDate() {
     function translate(month: string): string{
         let result = ''
         switch(month){
           case 'JANUARY': return 'JANVIER';
-          case 'FEBRUARY': return 'FEVRIER'; 
+          case 'FEBRUARY': return 'FEVRIER';
           case 'MARCH': return 'MARS';
           case 'APRIL': return 'AVRIL';
           case 'MAY': return 'MAI';
@@ -19,7 +19,7 @@ export default function useDate() {
         }
         return result;
       }
-      
+
       function monthFromNumber(num: number): string | undefined {
         switch(num) {
           case 1: return 'JANUARY'
@@ -39,7 +39,7 @@ export default function useDate() {
       }
 
       const months = [
-        'JANUARY', 
+        'JANUARY',
         'FEBRUARY',
         'MARCH',
         'APRIL',

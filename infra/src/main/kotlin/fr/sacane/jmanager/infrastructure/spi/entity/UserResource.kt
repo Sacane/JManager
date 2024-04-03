@@ -6,18 +6,13 @@ import org.springframework.lang.Nullable
 @Table(name="userResource")
 @Entity
 class UserResource(
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     var username: String = "",
     @Column
-    var password: ByteArray = ByteArray(1),
+    var password: ByteArray = ByteArray(0),
     @Column(unique = true, nullable = true)
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
-    @JoinTable(
-        name = "user_account",
-        joinColumns = [JoinColumn(name = "id_user")],
-        inverseJoinColumns = [JoinColumn(name = "idAccount")]
-    )
     var accounts: MutableList<AccountResource> = mutableListOf(),
     @OneToMany(cascade = [CascadeType.ALL])
     @JoinTable(
@@ -36,6 +31,11 @@ class UserResource(
     @Id
     @Nullable
     @GeneratedValue
-    @Column(name = "id_user", nullable = false)
+    @Column(name = "id_user")
     var idUser: Long? = null,
-)
+) {
+    fun addAccount(accountResource: AccountResource) {
+        accountResource.owner = this
+        accounts.add(accountResource)
+    }
+}

@@ -4,7 +4,7 @@ import fr.sacane.jmanager.infrastructure.spi.entity.Login
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
-import java.util.UUID
+import java.util.*
 
 @Repository
 interface LoginRepository: CrudRepository<Login, UUID> {

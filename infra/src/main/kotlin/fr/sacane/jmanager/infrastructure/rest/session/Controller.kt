@@ -5,7 +5,10 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.port.api.SessionFeature
-import fr.sacane.jmanager.infrastructure.rest.*
+import fr.sacane.jmanager.infrastructure.rest.InvalidRequestException
+import fr.sacane.jmanager.infrastructure.rest.id
+import fr.sacane.jmanager.infrastructure.rest.toDTO
+import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger

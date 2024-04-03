@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { SheetAverageDTO, SheetDTO } from '../../types/index';
-import { useConfirm } from "primevue/useconfirm";
+import {SheetAverageDTO, SheetDTO} from '../../types/index';
+import {useConfirm} from "primevue/useconfirm";
+
 definePageMeta({
   layout: 'sidebar-layout',
 })
@@ -47,7 +48,7 @@ const initAccount = () => {
     data.accountAmount = account.amount
     data.labelAccount = account.labelAccount as string
     data.currentAccountId = route.params.id as string
-    
+
   })
   retrieveSheets()
 }
@@ -161,8 +162,8 @@ const onRowSelect = (event: any) => {
               <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" />
               <div class="w26% flex flex-row">
                 <div class="flex justify-center mr2">
-                  <label 
-                  for="yearPicker" 
+                  <label
+                  for="yearPicker"
                   class="block text-sm font-medium text-gray-700"
                   style="font-family: Arial, sans-serif;">
                   Sélectionnez une année :

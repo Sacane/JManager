@@ -1,6 +1,7 @@
 
 <script setup lang="ts">
 import useJToast from '../../composables/useJToast';
+
 const route = useRoute()
 const toast = useJToast()
 

@@ -22,7 +22,7 @@ class ServerTransactionAdapter(
     override fun persist(userId: UserId, account: Account): User? {
         val id = userId.id ?: return null
         val user = userPostgresRepository.findByIdWithAccount(id) ?: return null
-        user.accounts.add(account.asResource())
+        user.addAccount(account.asResource())
         return userPostgresRepository.save(user).toModel()
     }
 

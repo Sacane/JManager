@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
 import useSheet from '../../composables/useSheets';
-import { SheetDTO, AccountDTO } from '../../types/index';
+import {AccountDTO, SheetDTO} from '../../types/index';
 import useJToast from '../../composables/useJToast';
 
 definePageMeta({
-  layout: 'sidebar-layout',     
+  layout: 'sidebar-layout',
 })
 
 const {success, error} = useJToast()
@@ -95,7 +95,7 @@ const onConfirm = async () => {
           <PButton @click="onConfirm" label="Ajouter une nouvelle transaction"/>
         </div>
       </PFieldset>
-      
+
     </div>
   </div>
 </template>

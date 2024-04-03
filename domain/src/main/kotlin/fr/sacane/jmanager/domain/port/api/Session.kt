@@ -1,11 +1,14 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.AccessToken
+import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Response.Companion.forbidden
 import fr.sacane.jmanager.domain.models.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.Response.Companion.timeout
 import fr.sacane.jmanager.domain.models.Response.Companion.unauthorized
+import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.UserId
 import java.util.*
 import java.util.logging.Logger
 

@@ -1,5 +1,5 @@
-import axios, { AxiosError } from 'axios'
-import { API_PATH } from '../utils/request';
+import axios, {AxiosError} from 'axios'
+import {API_PATH} from '../utils/request';
 import useAuth from './useAuth';
 
 export default function useQuery() {
@@ -59,7 +59,7 @@ export default function useQuery() {
       }
       throw error
     }
- 
+
 
     return {get, post, deleteQuery, handleError}
 }

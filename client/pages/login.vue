@@ -53,7 +53,6 @@
 
 <script setup lang="ts">
 import useAuth from '../composables/useAuth';
-import { UserAuth } from '../composables/useAuth';
 
 const { login, register } = useAuth();
 const userAuth = reactive({

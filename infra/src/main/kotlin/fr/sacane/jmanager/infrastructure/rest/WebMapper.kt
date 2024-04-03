@@ -5,7 +5,6 @@ import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.rest.session.UserDTO
 import fr.sacane.jmanager.infrastructure.rest.sheet.SheetDTO
 import org.springframework.http.ResponseEntity
-import java.lang.IllegalStateException
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),

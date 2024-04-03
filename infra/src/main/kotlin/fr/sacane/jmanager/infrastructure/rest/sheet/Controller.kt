@@ -1,16 +1,18 @@
 package fr.sacane.jmanager.infrastructure.rest.sheet
 
+import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
-import fr.sacane.jmanager.domain.port.api.SheetFeature
-import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.infrastructure.rest.*
+import fr.sacane.jmanager.domain.port.api.SheetFeature
+import fr.sacane.jmanager.infrastructure.rest.id
+import fr.sacane.jmanager.infrastructure.rest.toDTO
+import fr.sacane.jmanager.infrastructure.rest.toModel
+import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Month
 import java.util.logging.Logger

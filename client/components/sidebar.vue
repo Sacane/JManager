@@ -2,6 +2,7 @@ import useAuth from '../composables/useAuth';
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
 import 'primeicons/primeicons.css';
+
 const { isAuthenticated, logout, user } = useAuth()
 const username = ref(isAuthenticated ? user.value?.username : '')
 </script>
@@ -22,7 +23,7 @@ const username = ref(isAuthenticated ? user.value?.username : '')
         </NuxtLink>
       </div>
     </div>
-    
+
     <div class="m2">
       <p class="mb5">Connecté en tant que <b>{{ user?.username }}</b></p>
       <div class="flex-row text-15px flex justify-center">

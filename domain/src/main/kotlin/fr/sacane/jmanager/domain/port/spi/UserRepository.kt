@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.domain.port.spi
 
-import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 
 
@@ -13,7 +13,7 @@ interface UserRepository {
     fun checkUser(pseudonym: String, pwd: Password): UserToken?
     fun findByPseudonym(pseudonym: String): User?
     fun create(user: User): User?
-    fun register(user: User): User?
+    fun register(username: String, email: String, password: Password): User?
     fun getUserToken(userId: UserId): AccessToken?
     fun upsert(user: User): User?
 }

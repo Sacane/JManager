@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain.port.spi
-import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 
 @Port(Side.DATASOURCE)

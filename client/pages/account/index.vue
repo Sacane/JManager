@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import useAccounts from '../../composables/useAccounts'
-import { AccountDTO } from '../../types/index';
+import {AccountDTO} from '../../types/index';
+
 definePageMeta({
   layout: 'sidebar-layout',
 })
@@ -26,6 +27,7 @@ onMounted(async () => {
     console.log(accountArray)
     format(accountArray)
     isAccountFilled.ok = data.value.length > 0
+    console.log(data.value)
   })
 })
 

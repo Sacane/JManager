@@ -1,12 +1,11 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
-import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import java.lang.IllegalStateException
-import java.util.UUID
+import java.util.*
 import java.util.logging.Logger
 
 @Port(Side.API)
@@ -48,12 +47,7 @@ class SessionFeatureImpl(
 
     override fun register(username: String, email: String, password: String, confirmPassword: String): Response<User> {
         if(password != confirmPassword) return Response.invalid("Les mots de passes ne correspondent pas")
-        val user = User(
-            username = username,
-            email = email,
-            password= Password(password)
-        )
-        val userResponse = userRepository.register(user) ?: return Response.invalid()
+        val userResponse = userRepository.register(username, email, Password(password)) ?: return Response.invalid()
         return Response.ok(userResponse)
     }
 
