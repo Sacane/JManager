@@ -12,7 +12,7 @@ class UserResource(
     var password: ByteArray = ByteArray(1),
     @Column(unique = true, nullable = true)
     var email: String? = null,
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     @JoinTable(
         name = "user_account",
         joinColumns = [JoinColumn(name = "id_user")],

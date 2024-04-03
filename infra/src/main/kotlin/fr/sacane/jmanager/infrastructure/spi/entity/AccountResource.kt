@@ -18,6 +18,8 @@ class AccountResource(
         inverseJoinColumns = [JoinColumn(name = "id_sheet")]
     )
     var sheets: MutableList<SheetResource> = mutableListOf(),
+    @ManyToOne
+    var owner: UserResource? = null,
     @Id
     @GeneratedValue
     @Column(name = "id_account")

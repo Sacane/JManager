@@ -32,6 +32,11 @@ class ServerUserAdapter (
         return userPostgresRepository.findByIdWithAccount(id)?.toModelWithAccounts()
     }
 
+    override fun findUserByIdWithSheets(userId: UserId): User? {
+        val id = userId.id ?: return null
+        return userPostgresRepository.findByIdWithSheets(id)
+    }
+
     override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
         val user = userPostgresRepository.findByUsername(pseudonym) ?: return null
         if(!MessageDigest.isEqual(pwd.get(), user.password)){

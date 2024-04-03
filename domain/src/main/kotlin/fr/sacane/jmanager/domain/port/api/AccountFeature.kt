@@ -96,8 +96,8 @@ class AccountFeatureImpl(
         token: UUID,
         account: Account
     ): Response<Account> = session.authenticate(userId, token) {
-        val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
-        if(user.accounts.any { account.label == it.label }) {
+        val user = userRepository.findUserByIdWithAccounts(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
+        if(user.hasAccount(account.label)) {
             return@authenticate invalid("Le profil contient déjà un compte avec ce label")
         }
         val userSaved = register.persist(userId, account) ?: return@authenticate invalid("Impossible de créer un compte")

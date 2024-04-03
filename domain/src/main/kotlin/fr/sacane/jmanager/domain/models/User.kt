@@ -66,7 +66,7 @@ class User(
     val accounts: MutableList<Account>
         get() = accounts_
     fun withToken(token: AccessToken): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
-
+    fun hasAccount(labelAccount: String): Boolean = accounts.any { labelAccount == it.label }
     override fun toString(): String = "username: $username"
 
     fun removeAccount(accountID: Long) {

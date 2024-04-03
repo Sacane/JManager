@@ -93,7 +93,7 @@ class SheetFeatureImplementation(
         year: Int,
         account: String
     ): Response<List<Sheet>> = session.authenticate(userId, token) {
-        val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas en base")
+        val user = userRepository.findUserByIdWithSheets(userId) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas en base")
         Response.ok(user.accounts
             .find { it.label == account }
             ?.retrieveSheetSurroundByDate(month, year)
