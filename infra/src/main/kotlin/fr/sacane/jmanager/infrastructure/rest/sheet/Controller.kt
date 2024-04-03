@@ -66,7 +66,7 @@ class SheetController(private val sheetFeature: SheetFeature) {
         @RequestParam("year") year: Int,
         @RequestParam("accountLabel") accountLabel: String,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<SheetsAndAverageDTO> {
+        ): ResponseEntity<SheetsAndAverageDTO> {
         LOGGER.info("Start getting sheets for account $accountLabel")
         val response = sheetFeature.retrieveSheetsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()

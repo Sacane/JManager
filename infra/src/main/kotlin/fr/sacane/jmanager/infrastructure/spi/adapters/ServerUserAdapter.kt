@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.Login
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
+import fr.sacane.jmanager.infrastructure.spi.repositories.AccountRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.LoginRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Service
@@ -17,6 +18,7 @@ import java.util.logging.Logger
 @Adapter(Side.DATASOURCE)
 class ServerUserAdapter (
     private val userPostgresRepository: UserPostgresRepository,
+    private val accountRepository: AccountRepository,
     private val loginRepository: LoginRepository
 ) : UserRepository{
     companion object{
@@ -33,10 +35,11 @@ class ServerUserAdapter (
         return userPostgresRepository.findByIdWithAccount(id)?.toModelWithAccounts()
     }
 
-    override fun findUserByIdWithSheets(userId: UserId): User? {
-        val id = userId.id ?: return null
-        return userPostgresRepository.findByIdWithSheets(id)?.toModel()
-    }
+//    override fun findUserByIdWithSheets(userId: UserId): User? {
+//        val id = userId.id ?: return null
+//        println("find user by id with sheets...")
+//        return userPostgresRepository.findByIdWithSheets(id)?.toModel()
+//    }
 
     override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
         val user = userPostgresRepository.findByUsername(pseudonym) ?: return null

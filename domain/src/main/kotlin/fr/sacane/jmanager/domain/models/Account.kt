@@ -59,7 +59,7 @@ class Account(
             otherAccount += delta
         }
     }
-    fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Sheet>?{
+    fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Sheet>{
         return sheets
             .filter { it.date.month == month && it.date.year == year }
     }

@@ -24,4 +24,5 @@ interface TransactionRegister {
     fun findSheetByID(sheetID: Long): Sheet?
     fun save(sheet: Sheet): Sheet?
     fun save(account: Account): Account?
+    fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account?
 }

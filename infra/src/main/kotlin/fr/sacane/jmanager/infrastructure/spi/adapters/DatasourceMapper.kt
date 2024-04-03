@@ -61,12 +61,10 @@ internal fun AccountResource.toModel(): Account{
 
 internal fun UserResource.toModel()
 : User = User(
-    UserId(this.idUser),
-    this.username,
-    this.email,
-    this.accounts.map { account -> account.toModel() }.toMutableList(),
-    Password.fromBytes(this.password),
-    this.tags.map { it.toModel() }.toMutableList()
+    id = UserId(this.idUser),
+    username = this.username,
+    email = this.email,
+    password = Password.fromBytes(this.password)
 )
 internal fun UserResource.toModelWithAccounts()
         : User = User(

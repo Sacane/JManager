@@ -101,4 +101,10 @@ class ServerTransactionAdapter(
     override fun save(account: Account): Account? {
         return accountRepository.save(account.asResource()).toModel()
     }
+
+    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
+        if(userId.id == null) return null
+        return accountRepository.findSheetsByLabelAndAccountOf(label, userId.id!!)
+            ?.toModel()
+    }
 }
