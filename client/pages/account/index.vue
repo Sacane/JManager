@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import useAccounts, { AccountFormatted } from '../../composables/useAccounts'
+import useAccounts from '../../composables/useAccounts'
 import { AccountDTO } from '../../types/index';
 definePageMeta({
   layout: 'sidebar-layout',
@@ -85,7 +85,7 @@ const actionSelection = ref<AccountDTO | undefined>(undefined)
 </script>
 
 <template>
-  <div w-full h-full flex items-center>
+  <div class="w-full h-full flex items-center mt-10">
     <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
       <h2 class="info-text">
         Cliquez sur un compte pour visualiser ses transactions
@@ -102,7 +102,7 @@ const actionSelection = ref<AccountDTO | undefined>(undefined)
         <PColumn field="amount" header="Montant actuel" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </PDataTable>
     </div>
-    <div v-else class="text-center">
+    <div v-else class="text-center justify-center align-center">
       <div class="mb-4">
         <p class="text-xl font-semibold text-gray-600">Vous n'avez pas encore de compte enregistré.</p>
       </div>

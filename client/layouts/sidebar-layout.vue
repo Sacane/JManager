@@ -3,12 +3,12 @@
 </script>
 
 <template>
-  <div h-full wfull w-auto class="overflow-auto flex-row">
+  <div class="overflow-auto flex-row h-full w-full">
     <!-- ------------------------------ -->
     <Sidebar class="mr5" />
     <PToast/>
-    <div flex-col w-screen justify-between hfull>
-      <div class="m-2 flex-row justify-center hfull">
+    <div class="flex-col w-screen justify-between h-full">
+      <div class="m-2 h-full">
         <slot />
       </div>
       <footer class="bottom-0 text-center">
