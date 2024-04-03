@@ -32,7 +32,7 @@ class ServerUserAdapter (
 
     override fun findUserByIdWithAccounts(userId: UserId): User? {
         val id = userId.id ?: return null
-        return userPostgresRepository.findByIdWithAccount(id)?.toModelWithAccounts()
+        return userPostgresRepository.findByIdWithAccount(id)?.toModelWithSimpleAccounts()
     }
 
 //    override fun findUserByIdWithSheets(userId: UserId): User? {

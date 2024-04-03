@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.spi.entity.*
+import java.math.BigDecimal
 
 
 internal fun Sheet.asResource(): SheetResource {
@@ -66,14 +67,16 @@ internal fun UserResource.toModel()
     email = this.email,
     password = Password.fromBytes(this.password)
 )
-internal fun UserResource.toModelWithAccounts()
+internal fun UserResource.toModelWithSimpleAccounts()
         : User = User(
     id = UserId(this.idUser),
     username = this.username,
     email = this.email,
-    accounts_ = this.accounts.map { account -> account.toModel() }.toMutableList(),
+    accounts_ = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
     password = Password.fromBytes(this.password)
 )
+
+internal fun AccountResource.toSimpleModel(): Account = Account(this.idAccount, this.amount.toAmount(), this.label)
 
 internal fun UserResource.toMinimalUserRepresentation()
 : MinimalUserRepresentation = MinimalUserRepresentation(

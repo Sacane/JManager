@@ -12,4 +12,8 @@ interface AccountRepository: CrudRepository<AccountResource, Long>{
     fun findByLabel(label: String): AccountResource?
     @Query("SELECT acc FROM AccountResource acc LEFT JOIN FETCH acc.sheets sheets WHERE acc.owner.idUser = :userId AND acc.label = :label")
     fun findSheetsByLabelAndAccountOf(label: String, userId: Long): AccountResource?
+
+
+    @Query("SELECT acc FROM AccountResource acc LEFT JOIN FETCH acc.sheets WHERE acc.idAccount = :id")
+    fun findByIdWithSheets(id: Long): AccountResource?
 }

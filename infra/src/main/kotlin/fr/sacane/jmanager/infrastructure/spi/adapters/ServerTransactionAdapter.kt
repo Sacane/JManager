@@ -23,7 +23,7 @@ class ServerTransactionAdapter(
         val id = userId.id ?: return null
         val user = userPostgresRepository.findByIdWithAccount(id) ?: return null
         user.addAccount(account.asResource())
-        return userPostgresRepository.save(user).toModel()
+        return userPostgresRepository.save(user).toModelWithSimpleAccounts()
     }
 
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
@@ -74,8 +74,8 @@ class ServerTransactionAdapter(
     }
 
     override fun findAccountById(accountId: Long): Account? {
-        val accountResponse = accountRepository.findById(accountId)
-        return accountResponse.get().toModel()
+        val accountResponse = accountRepository.findByIdWithSheets(accountId)
+        return accountResponse?.toModel()
     }
 
     override fun deleteAccountByID(accountID: Long) {

@@ -51,7 +51,7 @@ class AccountFeatureImpl(
             return@authenticate invalid("Le libellé du compte existe déjà")
         }
         oldAccount.updateFrom(account)
-        val registered = register.persist(oldAccount) ?: return@authenticate invalid()
+        val registered = register.persist(oldAccount) ?: return@authenticate invalid("Une erreur s'est produite lors de la mise à jour du compte")
         ok(registered)
     }
 

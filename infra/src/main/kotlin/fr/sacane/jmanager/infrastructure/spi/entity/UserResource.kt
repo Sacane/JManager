@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
 import jakarta.persistence.*
-import org.springframework.lang.Nullable
 
 @Table(name="userResource")
 @Entity
@@ -29,7 +28,6 @@ class UserResource(
     )
     var tags: MutableList<TagResource> = mutableListOf(),
     @Id
-    @Nullable
     @GeneratedValue
     @Column(name = "id_user")
     var idUser: Long? = null,

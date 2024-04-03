@@ -9,5 +9,5 @@ data class TagResource(
     @Id
     @GeneratedValue
     val idTag: Long? = null,
-    val name: String
+    val name: String = ""
 )

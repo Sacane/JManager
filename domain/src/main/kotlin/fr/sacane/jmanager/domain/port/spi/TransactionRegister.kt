@@ -5,11 +5,6 @@ import fr.sacane.jmanager.domain.models.*
 
 @Port(Side.DATASOURCE)
 interface TransactionRegister {
-
-    companion object{
-        const val timeoutMessage: String = "Le temps d'utilisation du jeton d'authentification est écoulé"
-        const val missingUserMessage: String = "L'utilisateur n'existe pas"
-    }
     fun persist(userId: UserId, account: Account): User?
     fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet?
     fun persist(userId: UserId, category: Tag): Tag?

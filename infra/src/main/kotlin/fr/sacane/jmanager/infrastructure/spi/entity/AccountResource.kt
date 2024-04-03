@@ -11,7 +11,7 @@ class AccountResource(
     var amount: BigDecimal = BigDecimal(0.0),
     @Column(name = "label")
     var label: String = "undefined",
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.EAGER)
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinTable(
         name = "account_sheet",
         joinColumns = [JoinColumn(name = "id_account")],

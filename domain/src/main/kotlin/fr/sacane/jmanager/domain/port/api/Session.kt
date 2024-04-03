@@ -17,7 +17,7 @@ import java.util.logging.Logger
 class SessionManager {
     private val logger: Logger = Logger.getLogger(SessionManager::class.java.name)
     companion object {
-        const val PURGE_DELAY = 86_400_000L // one day in milliseconds
+        const val PURGE_DELAY = 3_600_000L // one hour in milliseconds
     }
 
     private val lock: Any = Any()
