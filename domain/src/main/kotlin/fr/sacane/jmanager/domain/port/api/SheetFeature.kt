@@ -93,7 +93,6 @@ class SheetFeatureImplementation(
         account: String
     ): Response<List<Sheet>> = session.authenticate(userId, token) {
         val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("The user does not exists")
-        println("AFTER FETCHING USER...")
         Response.ok(register.findAccountWithSheetByLabelAndUser(account, user.id)
             ?.retrieveSheetSurroundByDate(month, year)
             ?: return@authenticate Response.notFound("Aucun compte ne correspond au label indiqué")
