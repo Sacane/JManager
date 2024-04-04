@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.repositories
 
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
 import fr.sacane.jmanager.infrastructure.spi.entity.SheetResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
@@ -16,4 +17,7 @@ interface AccountRepository: CrudRepository<AccountResource, Long>{
 
     @Query("SELECT acc FROM AccountResource acc LEFT JOIN FETCH acc.sheets WHERE acc.idAccount = :id")
     fun findByIdWithSheets(id: Long): AccountResource?
+
+    @Query("SELECT account FROM AccountResource account LEFT JOIN FETCH account.sheets WHERE account.owner.idUser = :userId AND account.label = :labelAccount")
+    fun findByOwnerAndLabelWithSheets(userId: Long, labelAccount: String): AccountResource?
 }

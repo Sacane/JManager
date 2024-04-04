@@ -149,15 +149,15 @@ const onRowSelect = (event: any) => {
 <template>
   <PConfirmDialog></PConfirmDialog>
   <div class="w-full h-full flex flex-row container-all">
-    <div p-8  bg-white class="mr10px form-container" mt2px>
-      <div flex-row justify-between>
+    <div class="mr10px form-container p-8  bg-white mt2px" >
+      <div class="flex-row justify-between">
         <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ data.labelAccount }}</h2>
         <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }}</h2>
 
       </div>
       <PDataTable :value="actualSheets" scrollable scrollHeight="450px" selectionMode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage" v-model:selection="selectedSheets">
-        <template #header #body-cell="{value, field}">
-          <div style="text-align: left" class="wfull">
+        <template #header>
+          <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
               <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" />
               <div class="w26% flex flex-row">
@@ -169,7 +169,7 @@ const onRowSelect = (event: any) => {
                   Sélectionnez une année :
                   </label>
                 </div>
-                <PCalendar class="h10 w32" v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
+                <PCalendar class="h10" v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
               </div>
             </div>
           </div>
@@ -198,7 +198,7 @@ const onRowSelect = (event: any) => {
     background-color: white;
     width: 100%;
     border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     .custom-calendar {
       v-picker{
         background-color: red;

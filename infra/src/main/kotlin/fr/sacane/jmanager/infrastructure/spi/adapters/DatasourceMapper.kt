@@ -1,9 +1,23 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.*
+import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
+import org.springframework.stereotype.Component
 import java.math.BigDecimal
 
+@Component
+class AccountMapper(val userRepository: UserPostgresRepository){
+    fun asResource(account: Account): AccountResource {
+        val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
+        return if(userResource != null) {
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.sheets.map { it.asResource() }.toMutableList(), userResource.get(), idAccount = account.id)
+        } else {
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.sheets.map { it.asResource() }.toMutableList(), idAccount = account.id)
+        }
+    }
+}
 
 internal fun Sheet.asResource(): SheetResource {
     val resource = SheetResource()
@@ -25,7 +39,6 @@ internal fun Account.asResource(): AccountResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-
     return AccountResource(idAccount = id, amount = sold.applyOnValue { it }, label = label, sheets = sheets)
 }
 
@@ -57,7 +70,8 @@ internal fun AccountResource.toModel(): Account{
         this.idAccount,
         this.amount.toAmount(),
         this.label,
-        this.sheets.map { sheet -> sheet.toModel() }.toMutableList())
+        this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
+        this.owner?.toModel())
 }
 
 internal fun UserResource.toModel()

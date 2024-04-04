@@ -3,10 +3,11 @@ package fr.sacane.jmanager.domain.models
 import java.time.Month
 
 class Account(
-        val id: Long? = null,
-        private var amount: Amount,
-        private var labelAccount: String,
-        val sheets: MutableList<Sheet> = mutableListOf()
+    val id: Long? = null,
+    private var amount: Amount,
+    private var labelAccount: String,
+    val sheets: MutableList<Sheet> = mutableListOf(),
+    val owner : User? = null
 ){
 
     val label: String
@@ -38,6 +39,7 @@ class Account(
             addition = if(it.expenses == Amount(0.toBigDecimal())) addition - it.income else addition + it.expenses
             Sheet(it.id, it.label, it.date, it.expenses, it.income, addition, it.category, it.position)
         }
+
     }
 
     override fun hashCode(): Int {
