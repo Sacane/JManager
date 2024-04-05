@@ -160,7 +160,7 @@ const onRowSelect = (event: any) => {
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
               <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" />
-              <div class="w26% flex flex-row">
+              <div class="w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
                   <label
                   for="yearPicker"

@@ -15,12 +15,17 @@ function onMonthChange() {
 </script>
 
 <template>
-  <div>
-    <label for="fruit">Choisissez un mois :</label>
-    <select v-model="selectedMonth" id="fruit" @change="onMonthChange">
-      <option :value="currentMonth" disabled hidden>Choisissez un mois</option>
-      <option v-for="(fruit, index) in date.months" :key="index" :value="fruit">{{ fruit }}</option>
-    </select>
+  <div class="flex flex-col items-start">
+    <label for="monthSelect" class="mb-2 text-sm font-medium text-gray-700">Choisissez un mois :</label>
+    <div class="relative w-full">
+      <select v-model="selectedMonth" id="monthSelect" @change="onMonthChange" class="block w-full p-3 rounded-md bg-white border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition duration-300 ease-in-out">
+        <option :value="currentMonth" disabled hidden>Choisissez un mois</option>
+        <option v-for="(month, index) in date.months" :key="index" :value="month" class="py-2">
+          {{ month }}
+        </option>
+      </select>
+      <i class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 fal fa-angle-down"></i>
+    </div>
   </div>
 </template>
 

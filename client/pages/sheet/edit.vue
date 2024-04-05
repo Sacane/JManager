@@ -21,8 +21,8 @@ const data = reactive({
 })
 
 const values = reactive({
-  integerPart: '0',
-  decimalPart: '0'
+  integerPart: 0,
+  decimalPart: 0
 })
 
 const {editSheet} = useSheets()
@@ -51,9 +51,9 @@ const onEdit = () => {
         amount: route.query.currentAccountAmount
       }
     })
-    
+
   }).catch(e => {
-    
+
   })
 }
 
@@ -61,17 +61,15 @@ const onEdit = () => {
 
 
 <template>
-    <div wfull hfull flex items-center>
-    
-    <div class="form-container" flex-col mb5>
-      <PFieldset :legend="`Modifier la transaction`">
+  <div class="h-full flex justify-center items-center">
+      <PFieldset :legend="`Modifier la transaction`" class="form-container w-50% p-3">
         <div>
-          <label for="label" mt5px>Libelle</label>
+          <label for="label">Libelle</label>
           <PInputText placeholder="Ex: Achat d'une chaise" v-model="data.label" id="label"/>
         </div>
         <div mt5px>
           <label for="selectionType">Selectionner le type de transaction</label>
-          <div id="selectionType" flex-row flex-gap3 mt5px>
+          <div id="selectionType" class="flex-row flex-gap3 mt5px" >
             <div flex-row>
               <PRadioButton v-model="data.selectedMode" inputId="selection1" value="expenses"/>
               <label for="selection1" ml-2>Dépense</label>
@@ -85,9 +83,9 @@ const onEdit = () => {
         <div id="labelAmount">
           <label for="amount">Selectionner le montant de la transaction (en €)</label>
           <div class="flex-row space-x-2 mt5px" id="amount">
-            <PInputText placeholder="Partie entière" v-model="values.integerPart" />
+            <PInputNumber placeholder="Partie entière" v-model="values.integerPart" />
             <div>.</div>
-            <PInputText placeholder="Partie décimal" v-model="values.decimalPart" maxlength="2"/>
+            <PInputNumber placeholder="Partie décimal" v-model="values.decimalPart" maxlength="2"/>
           </div>
         </div>
         <div mt5px>
@@ -98,7 +96,5 @@ const onEdit = () => {
           <PButton @click="onEdit" label="Ajouter une nouvelle transaction"/>
         </div>
       </PFieldset>
-      
-    </div>
   </div>
 </template>
