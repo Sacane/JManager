@@ -33,14 +33,16 @@ class SessionManager {
         token: UUID,
         requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
         block: (UserId) -> Response<T>
-    ): Response<T> = synchronized(lock) {
-        val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
+    ): Response<T> {
+        synchronized(lock) {
+            val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
 
-        if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
-        if (session.isExpired()) return timeout("La session a expiré")
-        if (session.tokenValue != token) return unauthorized("Le token est invalide")
-        session.updateLifetime()
-        session.updateTokenLifetime()
+            if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
+            if (session.isExpired()) return timeout("La session a expiré")
+            if (session.tokenValue != token) return unauthorized("Le token est invalide")
+            session.updateLifetime()
+            session.updateTokenLifetime()
+        }
         return block(userId)
     }
     fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken> = synchronized(lock) {
