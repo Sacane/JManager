@@ -6,7 +6,7 @@ class Account(
     val id: Long? = null,
     private var amount: Amount,
     private var labelAccount: String,
-    val sheets: MutableList<Sheet> = mutableListOf(),
+    val transactions: MutableList<Transaction> = mutableListOf(),
     val owner : User? = null
 ){
 
@@ -17,17 +17,17 @@ class Account(
         get() = amount
 
     fun updateSoldByLastSheet(): Boolean {
-        this.amount = sheets.maxByOrNull { it.position }?.sold ?: return false
+        this.amount = transactions.maxByOrNull { it.position }?.sold ?: return false
         return true
     }
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
-    fun sheets(): List<Sheet>{
-        return sheets.toList()
+    fun sheets(): List<Transaction>{
+        return transactions.toList()
     }
 
-    fun addSheet(sheet: Sheet) {
-        sheets.add(sheet)
+    fun addSheet(transaction: Transaction) {
+        transactions.add(transaction)
     }
 
     fun updateFrom(account: Account) {
@@ -35,9 +35,9 @@ class Account(
         labelAccount = account.label
         var addition = account.sold
         //TODO remplacer les sheets lors de la modification d'un comptes
-        sheets.replaceAll {
+        transactions.replaceAll {
             addition = if(it.expenses == Amount(0.toBigDecimal())) addition - it.income else addition + it.expenses
-            Sheet(it.id, it.label, it.date, it.expenses, it.income, addition, it.category, it.position)
+            Transaction(it.id, it.label, it.date, it.expenses, it.income, addition, it.category, it.position)
         }
 
     }
@@ -61,8 +61,8 @@ class Account(
             otherAccount += delta
         }
     }
-    fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Sheet>{
-        return sheets
+    fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Transaction>{
+        return transactions
             .filter { it.date.month == month && it.date.year == year }
     }
 
@@ -73,14 +73,14 @@ class Account(
             label: $labelAccount
         """.trimIndent()
     }
-    fun cancelSheetsAmount(sheets: List<Sheet>) {
-        sheets.forEach {
+    fun cancelSheetsAmount(transactions: List<Transaction>) {
+        transactions.forEach {
             this.amount = this.amount
             .plus(it.expenses)
             .minus(it.income)
         }
     }
-    fun setSoldFromSheet(sheetFromResource: Sheet) {
-        this.amount = sheetFromResource.sold
+    fun setSoldFromSheet(transactionFromResource: Transaction) {
+        this.amount = transactionFromResource.sold
     }
 }

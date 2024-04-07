@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.models
 import java.math.BigDecimal
 import java.time.LocalDate
 
-class Sheet(
+class Transaction(
     val id: Long?,
     var label: String,
     var date: LocalDate,
@@ -24,7 +24,7 @@ class Sheet(
             .minus(this.income)
     }
 
-    fun updateFromOther(other: Sheet): Boolean {
+    fun updateFromOther(other: Transaction): Boolean {
         if(other.id != this.id) return false
         updateSoldFromIncomeAndExpenses(other.expenses, other.income)
         this.label = other.label

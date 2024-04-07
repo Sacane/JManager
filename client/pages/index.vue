@@ -32,10 +32,10 @@ onMounted(() => {
     </section>
     <section class="text-center">
       <h2 class="text-2xl mt-2xl italic">
-        Ajouter une fiche
+        Ajouter une transaction
       </h2>
       <p>
-        Une fiche est une transaction permettant de mettre à jour la vue du budget d'un compte.<br>
+        Une transaction permet de mettre à jour la vue du budget d'un compte.<br>
         Elle contient la date à laquelle la dépense à été effectué, le montant, le compte concerné, et son label.
       </p>
     </section>

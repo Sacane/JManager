@@ -1,25 +1,23 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 
 @Component
 class AccountMapper(val userRepository: UserPostgresRepository){
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.sheets.map { it.asResource() }.toMutableList(), userResource.get(), idAccount = account.id)
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource() }.toMutableList(), userResource.get(), idAccount = account.id)
         } else {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.sheets.map { it.asResource() }.toMutableList(), idAccount = account.id)
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource() }.toMutableList(), idAccount = account.id)
         }
     }
 }
 
-internal fun Sheet.asResource(): SheetResource {
+internal fun Transaction.asResource(): SheetResource {
     val resource = SheetResource()
     resource.label = this.label
     resource.date = this.date
@@ -56,8 +54,8 @@ internal fun User.asExistingResource(): UserResource {
     )
 }
 internal fun Tag.asResource(): TagResource = TagResource(this.id, this.label)
-internal fun SheetResource.toModel(): Sheet{
-    return Sheet(this.idSheet,
+internal fun SheetResource.toModel(): Transaction{
+    return Transaction(this.idSheet,
         this.label,
         this.date,
         this.expenses.toAmount(),
@@ -105,3 +103,6 @@ internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag)
 
 internal fun Login.toModel()
 : AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
+
+internal fun Tag.toEntity()
+: TagResource = TagResource(name = this.label)

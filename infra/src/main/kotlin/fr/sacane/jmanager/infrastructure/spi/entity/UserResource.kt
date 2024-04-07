@@ -20,12 +20,7 @@ class UserResource(
         inverseJoinColumns = [JoinColumn(name="id_category")]
     )
     var categories: MutableList<CategoryResource> = mutableListOf(),
-    @OneToMany(cascade = [CascadeType.ALL])
-    @JoinTable(
-        name="user_tags",
-        joinColumns = [JoinColumn(name="id_user")],
-        inverseJoinColumns = [JoinColumn(name="id_tag")]
-    )
+    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner")
     var tags: MutableList<TagResource> = mutableListOf(),
     @Id
     @GeneratedValue
@@ -35,5 +30,8 @@ class UserResource(
     fun addAccount(accountResource: AccountResource) {
         accountResource.owner = this
         accounts.add(accountResource)
+    }
+    fun addTag(tag: TagResource) {
+        tags.add(tag)
     }
 }

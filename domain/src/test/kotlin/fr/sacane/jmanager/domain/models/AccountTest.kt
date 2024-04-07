@@ -47,7 +47,7 @@ class AccountTest {
 
     @Test
     fun `by giving a year and a month, accounts should retrieve its corresponding sheets`(){
-        val sheets = Directory.sheetInventory
+        val sheets = Directory.transactionInventories
         val account = Account(2.toLong(), 1050.toAmount(), "Primary", sheets)
         val sheetsOfDecember = account.retrieveSheetSurroundByDate(Month.DECEMBER, 2022)
         assertTrue {

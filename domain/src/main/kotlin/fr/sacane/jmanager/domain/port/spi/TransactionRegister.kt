@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.*
 @Port(Side.DATASOURCE)
 interface TransactionRegister {
     fun persist(userId: UserId, account: Account): User?
-    fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet?
+    fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?
     fun persist(userId: UserId, category: Tag): Tag?
     fun removeCategory(userId: UserId, labelCategory: String): Tag?
     fun findAccountByLabel(userId: UserId, labelAccount: String): Account?
@@ -14,10 +14,10 @@ interface TransactionRegister {
     fun persist(account: Account) :Account?
     fun remove(targetCategory: Tag)
     fun deleteAccountByID(accountID: Long)
-    fun saveAllSheets(sheets: List<Sheet>)
+    fun saveAllSheets(transactions: List<Transaction>)
     fun deleteAllSheetsById(sheetIds: List<Long>)
-    fun findSheetByID(sheetID: Long): Sheet?
-    fun save(sheet: Sheet): Sheet?
+    fun findSheetByID(sheetID: Long): Transaction?
+    fun save(transaction: Transaction): Transaction?
     fun save(account: Account): Account?
     fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account?
 }

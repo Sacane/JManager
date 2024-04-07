@@ -35,17 +35,17 @@ class ServerTransactionAdapter(
     }
 
     @Transactional
-    override fun persist(userId: UserId, accountLabel: String, sheet: Sheet): Sheet? {
+    override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         println("try to persist it")
         val id = userId.id ?: return null
         val account = accountRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
         return try{
             println("conversion")
-            val sheetResource = sheet.asResource()
+            val sheetResource = transaction.asResource()
             val saved = sheetRepository.save(sheetResource)
             account.sheets.add(saved)
-            account.amount = sheet.sold.applyOnValue { it }
-            sheet
+            account.amount = transaction.sold.applyOnValue { it }
+            transaction
         }catch(e: Exception){
             println("error ?")
             null
@@ -87,20 +87,20 @@ class ServerTransactionAdapter(
         accountRepository.deleteById(accountID)
     }
     @Transactional
-    override fun saveAllSheets(sheets: List<Sheet>) {
-        sheetRepository.saveAll(sheets.map { it.asResource() })
+    override fun saveAllSheets(transactions: List<Transaction>) {
+        sheetRepository.saveAll(transactions.map { it.asResource() })
     }
     @Transactional
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         sheetRepository.deleteAllById(sheetIds)
     }
     @Transactional
-    override fun findSheetByID(sheetID: Long): Sheet? {
+    override fun findSheetByID(sheetID: Long): Transaction? {
         return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
     }
     @Transactional
-    override fun save(sheet: Sheet): Sheet? {
-        return sheetRepository.save(sheet.asResource()).toModel()
+    override fun save(transaction: Transaction): Transaction? {
+        return sheetRepository.save(transaction.asResource()).toModel()
     }
     @Transactional
     override fun save(account: Account): Account? {

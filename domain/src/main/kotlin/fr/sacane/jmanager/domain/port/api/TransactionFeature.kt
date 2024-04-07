@@ -11,10 +11,10 @@ import java.util.*
 
 @Port(Side.API)
 sealed interface SheetFeature {
-    fun saveAndLink(userId: UserId, token: UUID, accountLabel: String, sheet: Sheet): Response<Sheet>
-    fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Sheet>>
-    fun editSheet(userID: Long, accountID: Long, sheet: Sheet, token: UUID): Response<Sheet>
-    fun findById(userID: Long, id: Long, token: UUID): Response<Sheet>
+    fun saveAndLink(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
+    fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
+    fun editSheet(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
+    fun findById(userID: Long, id: Long, token: UUID): Response<Transaction>
     fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID)
 }
 
@@ -26,7 +26,7 @@ class SheetFeatureImplementation(
 ): SheetFeature{
 
     private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
-        val sheets = account.sheets.filter { it.date.month == month }
+        val sheets = account.transactions.filter { it.date.month == month }
         for(number in sheets.indices) {
             if(number == 0) continue
             sheets[number].position = sheets[number - 1].position
@@ -46,7 +46,7 @@ class SheetFeatureImplementation(
     }
     private fun updateSheetPosition(accountID: Long, year: Int, month: Month) {
         val account = register.findAccountById(accountID)
-        val sheets = account?.sheets
+        val sheets = account?.transactions
             ?.filter { it.date.year == year && it.date.month == month }
             ?.sortedBy { it.position }
             ?: return
@@ -61,26 +61,26 @@ class SheetFeatureImplementation(
         userId: UserId,
         token: UUID,
         accountLabel: String,
-        sheet: Sheet
-    ): Response<Sheet> = session.authenticate(userId, token) {
+        transaction: Transaction
+    ): Response<Transaction> = session.authenticate(userId, token) {
         val account = register.findAccountByLabel(userId, accountLabel) ?: return@authenticate Response.notFound()
-        if(account.sheets.isNotEmpty()) {
-            val lastRecord = account.sheets
-                .filter { it.date <= sheet.date }
+        if(account.transactions.isNotEmpty()) {
+            val lastRecord = account.transactions
+                .filter { it.date <= transaction.date }
                 .maxByOrNull { it.position }
             if(lastRecord == null) {
-                sheet.position = 0
-                sheet.updateSoldStartingWith(account.sold)
+                transaction.position = 0
+                transaction.updateSoldStartingWith(account.sold)
             } else {
-                sheet.position = lastRecord.position + 1
-                sheet.updateSoldStartingWith(lastRecord.sold)
+                transaction.position = lastRecord.position + 1
+                transaction.updateSoldStartingWith(lastRecord.sold)
             }
-            updateSheetPosition(account.id!!, sheet.date.year, sheet.date.month)
+            updateSheetPosition(account.id!!, transaction.date.year, transaction.date.month)
         } else {
-            sheet.updateSoldStartingWith(account.sold)
+            transaction.updateSoldStartingWith(account.sold)
         }
-        register.persist(userId, accountLabel, sheet) ?: return@authenticate Response.invalid()
-        Response.ok(sheet)
+        register.persist(userId, accountLabel, transaction) ?: return@authenticate Response.invalid()
+        Response.ok(transaction)
     }
 
 
@@ -91,7 +91,7 @@ class SheetFeatureImplementation(
         month: Month,
         year: Int,
         account: String
-    ): Response<List<Sheet>> = session.authenticate(userId, token) {
+    ): Response<List<Transaction>> = session.authenticate(userId, token) {
         val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("The user does not exists")
         Response.ok(register.findAccountWithSheetByLabelAndUser(account, user.id)
             ?.retrieveSheetSurroundByDate(month, year)
@@ -102,18 +102,18 @@ class SheetFeatureImplementation(
     override fun editSheet(
         userID: Long,
         accountID: Long,
-        sheet: Sheet,
+        transaction: Transaction,
         token: UUID
-    ): Response<Sheet> = session.authenticate(UserId(userID), token, roleUser) {
+    ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
         val user = userRepository.findUserById(UserId(userID)) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas en base")
-        if(sheet.id == null) return@authenticate Response.notFound("L'ID de la transaction n'existe pas")
+        if(transaction.id == null) return@authenticate Response.notFound("L'ID de la transaction n'existe pas")
         val acc = user.accounts.find { it.id == accountID }
-        val sheetFromResource = acc?.sheets?.find { it.id == sheet.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${sheet.id}")
-        sheetFromResource.updateFromOther(sheet)
+        val sheetFromResource = acc?.transactions?.find { it.id == transaction.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
+        sheetFromResource.updateFromOther(transaction)
         if(sheetFromResource.position == 0){
             acc.setSoldFromSheet(sheetFromResource)
         }
-        updateSheetSoldFrom(acc, sheet.date.month, false)
+        updateSheetSoldFrom(acc, transaction.date.month, false)
         acc.updateSoldByLastSheet()
         return@authenticate register.save(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
@@ -125,17 +125,17 @@ class SheetFeatureImplementation(
         userID: Long,
         id: Long,
         token: UUID
-    ): Response<Sheet> = session.authenticate(UserId(userID), token, roleUser) {
+    ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
         val sheet = register.findSheetByID(id) ?: return@authenticate Response.notFound("La transaction n'existe pas")
         Response.ok(sheet)
     }
 
     override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID) {
         val account: Account = register.findAccountById(accountID) ?: return
-        val isSheetOnList: (s: Sheet) -> Boolean = { sheetIds.contains(it.id) }
-        val month = account.sheets.filter(isSheetOnList)[0].date.month
-        account.cancelSheetsAmount(account.sheets.filter(isSheetOnList))
-        account.sheets.removeIf(isSheetOnList)
+        val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
+        val month = account.transactions.filter(isSheetOnList)[0].date.month
+        account.cancelSheetsAmount(account.transactions.filter(isSheetOnList))
+        account.transactions.removeIf(isSheetOnList)
         updateSheetSoldFrom(account, month)
         register.persist(account)
         register.deleteAllSheetsById(sheetIds)
