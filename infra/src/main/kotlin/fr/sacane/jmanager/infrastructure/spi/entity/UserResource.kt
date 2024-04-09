@@ -33,5 +33,6 @@ class UserResource(
     }
     fun addTag(tag: TagResource) {
         tags.add(tag)
+        tag.owner = this
     }
 }

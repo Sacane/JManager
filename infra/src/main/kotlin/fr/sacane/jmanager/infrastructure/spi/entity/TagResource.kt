@@ -13,5 +13,5 @@ data class TagResource(
     var name: String = "",
 
     @ManyToOne
-    var owner: UserResource
+    var owner: UserResource? = null
 )

@@ -26,15 +26,10 @@ class Account(
         return transactions.toList()
     }
 
-    fun addSheet(transaction: Transaction) {
-        transactions.add(transaction)
-    }
-
     fun updateFrom(account: Account) {
         amount = account.sold
         labelAccount = account.label
         var addition = account.sold
-        //TODO remplacer les sheets lors de la modification d'un comptes
         transactions.replaceAll {
             addition = if(it.expenses == Amount(0.toBigDecimal())) addition - it.income else addition + it.expenses
             Transaction(it.id, it.label, it.date, it.expenses, it.income, addition, it.category, it.position)

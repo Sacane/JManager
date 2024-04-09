@@ -16,7 +16,8 @@ class TagRepositoryAdapter(
     @Transactional
     override fun save(userId: UserId, tag: Tag): Tag? {
         val user = userPostgresRepository.findByIdWithTags(userId.id) ?: return null
-        user.addTag(tag.toEntity())
+        val tag1 = tag.toEntity()
+        user.addTag(tag1)
         return tag
     }
     @Transactional
@@ -28,5 +29,4 @@ class TagRepositoryAdapter(
                 .map { it.toModel() }
         } ?: emptyList()
     }
-
 }

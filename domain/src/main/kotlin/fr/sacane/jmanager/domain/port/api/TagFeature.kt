@@ -28,6 +28,6 @@ class TagFeatureImpl(
     }
 
     override fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>> = session.authenticate(userId, token) {
-        Response.ok(tagRepository.getAll())
+        Response.ok(tagRepository.getAll(it))
     }
 }

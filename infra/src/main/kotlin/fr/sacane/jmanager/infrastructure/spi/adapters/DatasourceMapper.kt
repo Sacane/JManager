@@ -44,15 +44,15 @@ internal fun User.asResource(): UserResource {
     return UserResource(username, password.get(), email, mutableListOf(), distinctCategories.map { CategoryResource(label = it.label) }.toMutableList())
 }
 
-internal fun User.asExistingResource(): UserResource {
-    return UserResource(idUser = this.id.id,
+internal fun User.asExistingResource(): UserResource
+    = UserResource(idUser = this.id.id,
         username = username,
         password = password.get(),
         email = email,
         accounts = this.accounts.map {it.asResource()}.toMutableList(),
         tags = this.distinctCategories.map { it.asResource() }.toMutableList()
     )
-}
+
 internal fun Tag.asResource(): TagResource = TagResource(this.id, this.label)
 internal fun SheetResource.toModel(): Transaction{
     return Transaction(this.idSheet,
