@@ -21,7 +21,7 @@ function onMonthChange() {
       <select v-model="selectedMonth" id="monthSelect" @change="onMonthChange" class="block w-full p-3 rounded-md bg-white border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition duration-300 ease-in-out">
         <option :value="currentMonth" disabled hidden>Choisissez un mois</option>
         <option v-for="(month, index) in date.months" :key="index" :value="month" class="py-2">
-          {{ month }}
+          {{ date.translate(month) }}
         </option>
       </select>
       <i class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 fal fa-angle-down"></i>

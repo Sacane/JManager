@@ -8,12 +8,13 @@ const username = ref(isAuthenticated ? user.value?.username : '')
 </script>
 
 <template>
-  <div class="flex-column border-r decoration-none w-15% h-screen text-center justify-between content">
-    <div>
+  <div class="border-r decoration-none w-15% h-screen text-center justify-between
+   content">
+    <div class="sections">
       <NuxtLink to="/" class="font-bold mb-2  h-full title">
         JManager
       </NuxtLink>
-      <div class="mt5">
+      <div class="parts">
         <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
           <i class="pi pi-home text-20px"></i>
           Accueil
@@ -71,6 +72,15 @@ const username = ref(isAuthenticated ? user.value?.username : '')
 }
 
 .content{
-  font-style: sans-serif;
+  display: flex;
+  flex-direction: column;
+  .sections{
+    display: flex;
+    flex-direction: column;
+    .parts{
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }
 </style>
