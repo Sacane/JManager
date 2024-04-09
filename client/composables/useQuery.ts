@@ -1,5 +1,5 @@
 import axios, {AxiosError} from 'axios'
-import {API_PATH} from '../utils/request';
+import {API_PATH} from '~/utils/request';
 import useAuth from './useAuth';
 
 export default function useQuery() {
@@ -49,13 +49,13 @@ export default function useQuery() {
           tryRefresh()
           return
         } else if(status === 401) {
-          toast.error(message)
+          //toast.error(message)
           localStorage.removeItem('user')
           navigateTo('/login')
           logout()
           return
         }
-        toast.error(message)
+        //toast.error(message)
       }
       throw error
     }

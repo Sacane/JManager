@@ -3,17 +3,15 @@
 </script>
 
 <template>
-  <div class="overflow-auto flex-row h-full w-full">
+  <div class="flex flex-row flex-gap-3">
     <!-- ------------------------------ -->
     <Sidebar class="mr5" />
-    <PToast/>
-    <div class="flex-col w-screen justify-between h-full">
-      <div class="m-2 h-full">
-        <slot />
-      </div>
-      <footer class="bottom-0 text-center">
-        @copyright 2023
-      </footer>
+    <div class="w-full h-full flex flex-col justify-center items-center">
+      <slot />
     </div>
   </div>
 </template>
+
+<style scoped>
+
+</style>

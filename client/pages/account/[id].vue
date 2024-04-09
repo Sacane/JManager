@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import {SheetAverageDTO, SheetDTO} from '../../types/index';
-import {useConfirm} from "primevue/useconfirm";
+import { useConfirm } from 'primevue/useconfirm'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -8,10 +7,10 @@ definePageMeta({
 
 const route = useRoute()
 
-const {translate, monthFromNumber} = useDate()
+const { translate, monthFromNumber } = useDate()
 
-const {findById} = useAccounts()
-const {findByDate, deleteSheet} = useSheets()
+const { findById } = useAccounts()
+const { findByDate, deleteSheet } = useSheets()
 const date = new Date()
 const data = reactive({
   year: date.getFullYear(),
@@ -22,45 +21,39 @@ const data = reactive({
   currentAccountId: '',
   accountAmount: '',
   dateYear: new Date(),
-  dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string)
+  dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
 })
 
 function retrieveSheets() {
   console.log('Trying to get sheets')
   findByDate(data.month, data.year, data.labelAccount)
-  .then((value: SheetAverageDTO) => {
-    actualSheets.value = value.sheets.map(sheet => {
-      return {
-      ...sheet,
-      expensesRepresentation: (sheet.expenses != '') ? `${sheet.expenses}` : '/',
-      incomeRepresenttation: (sheet.income != '') ? `${sheet.income}` : '/',
-      date: sheet.date,
-      accountAmount: sheet.accountAmount
-      }
+    .then((value: SheetAverageDTO) => {
+      actualSheets.value = value.sheets.map((sheet) => {
+        return {
+          ...sheet,
+          expensesRepresentation: (sheet.expenses != '') ? `${sheet.expenses}` : '/',
+          incomeRepresenttation: (sheet.income != '') ? `${sheet.income}` : '/',
+          date: sheet.date,
+          accountAmount: sheet.accountAmount,
+        }
+      })
     })
-  })
 }
 
-
-const initAccount = () => {
-  findById(parseFloat(route.params.id as string))
-  .then((account) => {
-    data.accountAmount = account.amount
-    data.labelAccount = account.labelAccount as string
-    data.currentAccountId = route.params.id as string
-
-  })
+function initAccount() {
+  findById(Number.parseFloat(route.params?.id as string))
+    .then((account) => {
+      data.accountAmount = account.amount
+      data.labelAccount = account.labelAccount as string
+      data.currentAccountId = route.params?.id as string
+    })
   retrieveSheets()
 }
-
 
 onMounted(() => {
   data.month = monthFromNumber(new Date().getMonth() + 1) as string
   initAccount()
 })
-
-const jtoast = useJToast()
-
 
 function gotoTransaction() {
   navigateTo({
@@ -68,40 +61,39 @@ function gotoTransaction() {
     query: {
       id: data.currentAccountId,
       label: data.labelAccount,
-      amount: data.accountAmount
-    }
+      amount: data.accountAmount,
+    },
   })
 }
 
 const selectedSheets = ref<SheetDTO[]>([])
 const actualSheets = ref()
 
-
-const confirmDelete = async () => {
-  deleteSheet(parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
-  .then(() => initAccount())
-  .finally(() =>{
-    findById(parseInt(data.currentAccountId)).then(account => {
-      data.accountAmount = account.amount
-    }).finally(() => jtoast.success('La suppression de la transaction a été correctement effectué'))
-  })
+async function confirmDelete() {
+  deleteSheet(Number.parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
+    .then(() => initAccount())
+    .finally(() => {
+      findById(Number.parseInt(data.currentAccountId)).then((account) => {
+        data.accountAmount = account.amount
+      })
+    })
 }
 
 const confirm = useConfirm()
 
-const confirmDeleteButton = () => {
-  if(selectedSheets.value.length === 0){
-    return;
+function confirmDeleteButton() {
+  if (selectedSheets.value.length === 0) {
+    return
   }
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer ces éléments ?',
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
-    accept: () => confirmDelete()
+    accept: () => confirmDelete(),
   })
 }
 
-const onEditPage = (event: any) => {
+function onEditPage(event: any) {
   navigateTo({
     path: '/sheet/edit',
     query: {
@@ -113,49 +105,44 @@ const onEditPage = (event: any) => {
       accountAmount: event.data.accountAmount,
       accountID: data.currentAccountId,
       accountLabel: data.labelAccount,
-      currentAccountAmount: data.accountAmount
-    }
+      currentAccountAmount: data.accountAmount,
+    },
   })
 }
 
-const onYearChange = () => {
+function onYearChange() {
   data.year = data.dateYear.getFullYear()
   retrieveSheets()
 }
 
-const selectedRows = ref([]);
+function isSelected(event: any) {
+  return true
+}
 
-const isSelected = (event: any) => {
-  console.log(event.data);
-  return true;
-};
-
-const onRowSelect = (event: any) => {
+function onRowSelect(event: any) {
   if (isSelected(event)) {
-    // La ligne est déjà sélectionnée, donc désélectionnez-la.
     selectedSheets.value = selectedSheets.value.filter(
-      (sheet: any) => sheet.label !== event.data.label
-    );
-
+      (sheet: any) => sheet.label !== event.data.label,
+    )
   } else {
-    // La ligne n'est pas sélectionnée, donc ajoutez-la à la sélection.
-    selectedSheets.value.push(event.data);
+    selectedSheets.value.push(event.data)
   }
-};
-
+}
 </script>
 
-
 <template>
-  <PConfirmDialog></PConfirmDialog>
+  <ConfirmDialog />
   <div class="w-full h-full flex flex-row container-all">
-    <div class="mr10px form-container p-8  bg-white mt2px" >
+    <div class="mr10px form-container p-8  bg-white mt2px">
       <div class="flex-row justify-between">
-        <h2 class="text-2xl font-bold mb-4">Les transactions sur le compte {{ data.labelAccount }}</h2>
-        <h2 class="text-2xl font-bold mb-4">Solde du compte : {{ data.accountAmount }}</h2>
-
+        <h2 class="text-2xl font-bold mb-4">
+          Les transactions sur le compte {{ data.labelAccount }}
+        </h2>
+        <h2 class="text-2xl font-bold mb-4">
+          Solde du compte : {{ data.accountAmount }}
+        </h2>
       </div>
-      <PDataTable :value="actualSheets" scrollable scrollHeight="450px" selectionMode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage" v-model:selection="selectedSheets">
+      <DataTable v-model:selection="selectedSheets" :value="actualSheets" scrollable scroll-height="450px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
@@ -163,27 +150,28 @@ const onRowSelect = (event: any) => {
               <div class="w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
                   <label
-                  for="yearPicker"
-                  class="block text-sm font-medium text-gray-700"
-                  style="font-family: Arial, sans-serif;">
-                  Sélectionnez une année :
+                    for="yearPicker"
+                    class="block text-sm font-medium text-gray-700"
+                    style="font-family: Arial, sans-serif;"
+                  >
+                    Sélectionnez une année :
                   </label>
                 </div>
-                <PCalendar class="h10" v-model="data.dateYear"  view="year" dateFormat="yy" @date-select="onYearChange" id="yearPicker"/>
+                <Calendar id="yearPicker" v-model="data.dateYear" class="h10 text-center" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
             </div>
           </div>
         </template>
-        <PColumn sortable field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="expensesRepresentation" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }"/>
-        <PColumn field="incomeRepresenttation" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <PColumn field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-      </PDataTable>
+        <Column sortable field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <Column field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <Column field="expensesRepresentation" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <Column field="incomeRepresenttation" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <Column field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+      </DataTable>
     </div>
     <div class="pt5px flex-col">
-      <PButton w-auto @click="gotoTransaction" icon="pi pi-plus" ></PButton>
-      <PButton @click="confirmDeleteButton" icon="pi pi-trash" severity="danger"/>
+      <Button class="w-auto" icon="pi pi-plus" @click="gotoTransaction" />
+      <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
   </div>
 </template>
@@ -218,8 +206,4 @@ const onRowSelect = (event: any) => {
 .selected-row{
   color: blue;
 }
-
-
-
-
 </style>

@@ -1,29 +1,26 @@
-import useAuth from '../composables/useAuth';
 <script setup lang="ts">
-import useAuth from '@/composables/useAuth'
-import 'primeicons/primeicons.css';
+import useAuth from '../composables/useAuth'
+import 'primeicons/primeicons.css'
 
 const { isAuthenticated, logout, user } = useAuth()
-const username = ref(isAuthenticated ? user.value?.username : '')
 </script>
 
 <template>
-  <div class="border-r decoration-none w-15% h-screen text-center justify-between
-   content">
-    <div class="sections">
+  <div class="flex flex-col border-r decoration-none w-15% h-screen text-center justify-between content">
+    <div class="flex flex-col">
       <NuxtLink to="/" class="font-bold mb-2  h-full title">
         JManager
       </NuxtLink>
-      <div class="parts">
+      <div class="mt5 flex flex-col">
         <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
           <i class="pi pi-home text-20px"></i>
           Accueil
         </NuxtLink>
         <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
-          <i class="pi pi-user text-20px"/> Mes comptes
+          <i class="pi pi-user text-20px" /> Mes comptes
         </NuxtLink>
         <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2" active-class="bg-gray-200">
-          <i class="pi pi-user text-20px"/> Mes tags
+          <i class="pi pi-user text-20px" /> Mes tags
         </NuxtLink>
       </div>
     </div>
@@ -40,13 +37,11 @@ const username = ref(isAuthenticated ? user.value?.username : '')
           Se connecter
         </NuxtLink>
       </div>
-  </div>
+    </div>
 </div>
-
 </template>
 
 <style scoped lang="scss">
-
 .title {
   background-color: var(--primary);
   color: white;
@@ -68,19 +63,6 @@ const username = ref(isAuthenticated ? user.value?.username : '')
 @media screen and (min-width: 769px) and (max-width: 1200px) {
   .title{
     font-size: 1.5rem;
-  }
-}
-
-.content{
-  display: flex;
-  flex-direction: column;
-  .sections{
-    display: flex;
-    flex-direction: column;
-    .parts{
-      display: flex;
-      flex-direction: column;
-    }
   }
 }
 </style>

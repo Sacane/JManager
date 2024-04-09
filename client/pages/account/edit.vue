@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import {useRouter} from 'vue-router';
-import {AccountDTO} from '../../types/index';
-import useJToast from '../../composables/useJToast';
-
+import { useRouter } from 'vue-router'
 
 definePageMeta({
   layout: 'sidebar-layout',
 })
 
-const jtoast = useJToast()
-
-const {updateAccount, fetch} = useAccounts()
+const { updateAccount } = useAccounts()
 
 const route = useRouter()
 const data = reactive({
@@ -19,15 +14,15 @@ const data = reactive({
   amount: '',
   integerPart: '',
   decimalPart: '',
-  acc: undefined as AccountDTO | undefined
+  acc: undefined as AccountDTO | undefined,
 })
 
 onMounted(() => {
-  const amountValue = (route.currentRoute.value.query.amount as string).split(".")
-  data.id = parseFloat(route.currentRoute.value.query.id as string)
+  const amountValue = (route.currentRoute.value.query.amount as string).split('.')
+  data.id = Number.parseFloat(route.currentRoute.value.query.id as string)
   data.label = route.currentRoute.value.query.labelAccount as string
   data.integerPart = amountValue[0]
-  data.decimalPart = amountValue[1].split(" ")[0]
+  data.decimalPart = amountValue[1].split(' ')[0]
 })
 
 function onEditClick() {
@@ -35,40 +30,34 @@ function onEditClick() {
     id: data.id,
     labelAccount: data.label,
     amount: `${data.integerPart}.${data.decimalPart} €`,
-    sheets: []
-  }, async (sheet) => {
-    jtoast.success('Le compte a bien été édité')
+    sheets: [],
+  }, async () => {
     navigateTo('/account')
-  }).catch(e => {
-    jtoast.error(e);
-  });
-
+  })
 }
 </script>
 
-
 <template>
   <div class="flex items-center mt3">
-    <PToast/>
+    <Toast/>
     <form class="p-8 mt-5 bg-white form-container">
       <h1 class="text-4xl font-bold c-#7F52FF text-center">Mettre à jour le compte</h1>
-      <PFieldset>
+      <Fieldset>
         <label for="label">Libelle du compte</label>
-        <PInputText v-model="data.label" id="label"/>
+        <InputText v-model="data.label" id="label"/>
         <label for="labelAmount">Montant</label>
         <div class="flex-row space-x-2" id="labelAmount">
-          <PInputText placeholder="Partie entière" v-model="data.integerPart" />
+          <InputText placeholder="Partie entière" v-model="data.integerPart" />
           <div class="p-2">.</div>
-          <PInputText placeholder="Partie décimal" v-model="data.decimalPart" maxlength="2"/>
+          <InputText placeholder="Partie décimal" v-model="data.decimalPart" maxlength="2"/>
         </div>
-        <PButton label="Mettre à jour" class="mt-3 bg-#7F52FF" @click="onEditClick"/>
-      </PFieldset>
+        <Button label="Mettre à jour" class="mt-3 bg-#7F52FF" @click="onEditClick"/>
+      </Fieldset>
     </form>
   </div>
 </template>
 
 <style scoped>
-
 .form-container{
   background-color: white;
   padding: 20px;

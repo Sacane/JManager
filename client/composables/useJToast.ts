@@ -1,9 +1,10 @@
-import {useToast} from "primevue/usetoast";
+
+
 
 export default function useJToast() {
-    const toast = useToast()
 
-    function success(message: string, life: number=3000) {
+
+    /*function success(message: string, life: number=3000) {
         toast.add({
             severity: 'success',
             summary: 'Succès',
@@ -37,5 +38,5 @@ export default function useJToast() {
             life: 3000
         })
     }
-    return {success, info, warn, error}
+    return {success, info, warn, error}*/
 }
