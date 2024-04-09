@@ -2,7 +2,6 @@ package fr.sacane.jmanager.domain.models
 
 import java.math.BigDecimal
 
-// For now, it only handles euro but should be upgrade later
 class Amount(private var amount: BigDecimal, private val currency: String = "€") {
 
     init{
