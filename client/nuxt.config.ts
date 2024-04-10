@@ -10,7 +10,7 @@ const locales = fs.readdirSync('locales')
 export default defineNuxtConfig({
   app: {
     head: {
-      title: 'Nightrunner',
+      title: 'JManager',
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
@@ -45,10 +45,7 @@ export default defineNuxtConfig({
 
   // global CSS files
   css: [
-    '@unocss/reset/tailwind.css',
-    '@/assets/css/reset.css',
-    'primevue/resources/primevue.css',
-    'primevue/resources/themes/lara-light-blue/theme.css',
+    'primevue/resources/themes/lara-light-purple/theme.css',
   ],
 
   // plugin configurations

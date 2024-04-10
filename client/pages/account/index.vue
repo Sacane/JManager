@@ -40,7 +40,7 @@ function onRowClick(event: any) {
 }
 
 function applyEdit() {
-  if(row.value === undefined) {
+  if (row.value === undefined) {
     return
   }
   navigateTo({
@@ -54,13 +54,13 @@ function applyEdit() {
 }
 
 function applyDelete() {
-  if(row.value === undefined) {
+  if (row.value === undefined) {
     return
   }
   deleteAccount(row.value?.id as number)
-  .finally(() => {
-    fetch().then(accountArray => format(accountArray))
-  })
+    .finally(() => {
+      fetch().then(accountArray => format(accountArray))
+    })
 }
 
 const row = ref<AccountDTO | undefined>(undefined)
@@ -89,43 +89,49 @@ async function toAccount() {
 </script>
 
 <template>
-  <div v-if="isAccountFilled.ok" class=" bg-#f0f0f0 p20px container">
+  <div v-if="isAccountFilled.ok" class="p20px container">
     <h2 class="info-text">
       Cliquez sur un compte pour visualiser ses transactions
     </h2>
-    <DataTable v-model:selection="row" :value="data" @row-click="onRowClick">
+    <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
       <template #header>
-        <div class="flex flex-row hauto pl10px">
-          <Button class="b mr2 bg-purple w-350px h-50px" label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit" />
-          <Button class="b mr2 bg-purple w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
+        <div class="flex flex-row h-auto pl10px">
+          <Button class="b mr2 w-350px h-50px" label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit" />
+          <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
         </div>
       </template>
-      <Column selection-mode="single" :exportable="false" v-model="actionSelection" />
+      <Column v-model="actionSelection" selection-mode="single" :exportable="false" />
       <Column field="labelAccount" header="Libellé du compte" />
       <Column field="amount" header="Montant actuel" />
     </DataTable>
   </div>
   <div v-else class="text-center justify-center align-center">
     <div class="mb-4">
-      <p class="text-xl font-semibold text-gray-600">Vous n'avez pas encore de compte enregistré.</p>
+      <p class="text-xl font-semibold text-gray-600">
+        Vous n'avez pas encore de compte enregistré.
+      </p>
     </div>
     <div class="mb-4">
-      <p class="text-lg text-gray-500">Commencez par ajouter un compte pour gérer vos finances.</p>
+      <p class="text-lg text-gray-500">
+        Commencez par ajouter un compte pour gérer vos finances.
+      </p>
     </div>
   </div>
-  <Button label="Ajouter un nouveau compte" class="bg-purple w-250px h-50px" @click="isAddAccountDialogOpen = true" />
-  <Dialog v-model:visible="isAddAccountDialogOpen" modal header="Ajouter un nouveau compte" :style="{ width: '25rem' }">
+  <Button label="Ajouter un nouveau compte" class="w-250px h-50px" @click="isAddAccountDialogOpen = true" />
+  <Dialog v-model:visible="isAddAccountDialogOpen" class="bg-grey" modal header="Ajouter un nouveau compte">
     <div class="mt-6">
-      <label for="label" class="block text-sm font-medium text-gray-700">Libellé du compte</label>
-      <InputText v-model="newAccount.label" id="label" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"/>
+      <div class="flex flex-col gap-3">
+        <label for="label" class="block text-sm font-medium text-gray-700">Libellé du compte</label>
+        <InputText id="label" v-model="newAccount.label" type="text" autocomplete="off" />
+      </div>
 
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
-      <div class="flex-row" id="labelAmount">
-        <InputText placeholder="Partie entière" v-model="newAccount.amount.integerPart" class="w-1/2"/>
-        <InputText placeholder="Partie décimale" v-model="newAccount.amount.decimalPart" maxlength="2" class="w-1/2"/>
+      <div id="labelAmount" class="flex-row">
+        <InputText v-model="newAccount.amount.integerPart" type="number" placeholder="Partie entière" class="" />
+        <InputText v-model="newAccount.amount.decimalPart" type="number" placeholder="Partie décimale" maxlength="2" class="" />
       </div>
       <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="toAccount" />
-      <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isAddAccountDialogOpen = false"/>
+      <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isAddAccountDialogOpen = false" />
     </div>
   </Dialog>
 </template>
