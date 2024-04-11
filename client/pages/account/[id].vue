@@ -23,16 +23,16 @@ const data = reactive({
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
 })
-
+const selectedSheets = ref<SheetDTO[]>([])
+const actualSheets = ref()
 function retrieveSheets() {
-  console.log('Trying to get sheets')
   findByDate(data.month, data.year, data.labelAccount)
     .then((value: SheetAverageDTO) => {
-      actualSheets.value = value.sheets.map((sheet) => {
+      actualSheets.value = value.sheets.map((sheet: SheetDTO) => {
         return {
           ...sheet,
-          expensesRepresentation: (sheet.expenses != '') ? `${sheet.expenses}` : '/',
-          incomeRepresenttation: (sheet.income != '') ? `${sheet.income}` : '/',
+          expensesRepresentation: (sheet.expenses !== '') ? `${sheet.expenses}` : '/',
+          incomeRepresenttation: (sheet.income !== '') ? `${sheet.income}` : '/',
           date: sheet.date,
           accountAmount: sheet.accountAmount,
         }
@@ -65,9 +65,6 @@ function gotoTransaction() {
     },
   })
 }
-
-const selectedSheets = ref<SheetDTO[]>([])
-const actualSheets = ref()
 
 async function confirmDelete() {
   deleteSheet(Number.parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
@@ -128,6 +125,7 @@ function onRowSelect(event: any) {
     selectedSheets.value.push(event.data)
   }
 }
+const uDate = useDate()
 </script>
 
 <template>
@@ -146,7 +144,8 @@ function onRowSelect(event: any) {
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
-              <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" />
+              <!-- <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" /> -->
+              <Dropdown v-model="data.month" :options="uDate.months" placeholder="Selectionner un mois" class="w-full md:w-14rem" @change="retrieveSheets()" />
               <div class="w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
                   <label

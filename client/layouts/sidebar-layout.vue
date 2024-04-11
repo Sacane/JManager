@@ -3,9 +3,9 @@
 </script>
 
 <template>
-  <div class="flex flex-row flex-gap-3">
+  <div class="flex flex-row">
     <!-- ------------------------------ -->
-    <Sidebar class="mr5 sidebar" />
+    <Sidebar class="sidebar" />
     <div class="w-full h-full flex flex-col justify-center items-center">
       <slot />
     </div>

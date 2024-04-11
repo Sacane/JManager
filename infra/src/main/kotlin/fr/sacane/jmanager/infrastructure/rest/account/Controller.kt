@@ -6,7 +6,6 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.ResponseState
-import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.infrastructure.rest.*
 import org.springframework.http.ResponseEntity

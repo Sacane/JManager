@@ -12,14 +12,16 @@ const { isAuthenticated, logout, user } = useAuth()
         JManager
       </NuxtLink>
       <div class="mt5 flex flex-col">
-        <NuxtLink to="/" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-gray-200">
+        <NuxtLink
+          to="/" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white"
+        >
           <i class="pi pi-home text-20px" />
           Accueil
         </NuxtLink>
-        <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-gray-200">
+        <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white">
           <i class="pi pi-user text-20px" /> Mes comptes
         </NuxtLink>
-        <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-gray-200">
+        <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white">
           <i class="pi pi-user text-20px" /> Mes tags
         </NuxtLink>
       </div>
@@ -44,6 +46,10 @@ const { isAuthenticated, logout, user } = useAuth()
 </template>
 
 <style scoped lang="scss">
+.content{
+  color: var(--primary);
+  border-right: 1px solid black;
+}
 .title {
   color: var(--primary);
   text-align: center;
@@ -65,5 +71,9 @@ const { isAuthenticated, logout, user } = useAuth()
   .title{
     font-size: 1.5rem;
   }
+}
+.bg-primary-color-white{
+  background-color: var(--primary);
+  color: white;
 }
 </style>

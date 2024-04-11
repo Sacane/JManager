@@ -24,11 +24,17 @@ tryOnBeforeMount(() => {
 :root{
   --primary: #7F52FF;
 }
-
+body, html {
+  margin: 0;
+  padding: 0;
+}
 .button {
   background-color: var(--primary);
 }
 pi {
   width: 100px;
+}
+.bg-primary{
+  background-color: var(--primary)
 }
 </style>
