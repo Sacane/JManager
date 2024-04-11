@@ -1,6 +1,6 @@
-import {API_PATH} from './../utils/request';
+import {API_PATH} from '~/utils/request';
 import axios, {AxiosError} from 'axios'
-import useJToast from './useJToast';
+import type {Ref} from "vue";
 
 export interface UserAuth {
   username: string
@@ -25,7 +25,6 @@ interface UserRegister {
 export default function useAuth() {
   const user: Ref<User | null> = ref(null)
   const storedUser: User | undefined = JSON.parse(localStorage.getItem('user') as string)
-  const toast = useJToast()
   const isAuthenticated = ref<boolean>(false)
   if (storedUser) {
     user.value = storedUser
@@ -44,6 +43,7 @@ export default function useAuth() {
       isAuthenticated.value = true
       navigateTo('/')
       localStorage.setItem('user', JSON.stringify(user.value))
+
     }
     catch (e: any) {
       onError(e);
@@ -113,7 +113,7 @@ export default function useAuth() {
         navigateTo('/login')
         return
       }
-      toast.error(axiosError.response?.data.message)
+      //toast.error(axiosError.response?.data.message)
     }
     throw error
   }

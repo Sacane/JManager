@@ -1,29 +1,34 @@
-
-
-export interface SheetDTO{
+declare global {
+  // declare your types here
+  interface SheetDTO{
     id: number,
     label: string,
     expenses: string,
     income: string,
     date: string,
     accountAmount: string,
-    
-}
 
-export interface AccountDTO {
+  }
+
+  interface AccountDTO {
     id: number | undefined,
     amount: string,
     labelAccount: string,
     sheets: Array<SheetDTO>
-}
+  }
 
-export interface UserAccountDTO {
+  interface UserAccountDTO {
     id: number,
     amount: string,
     labelAccount: string
-}
+  }
 
-export interface SheetAverageDTO{
+  interface SheetAverageDTO{
     sheets: SheetDTO[],
     sum: number
+  }
+
 }
+
+
+

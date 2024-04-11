@@ -6,7 +6,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Component
 
 @Component
-internal class AccountMapper(val userRepository: UserPostgresRepository){
+class AccountMapper(val userRepository: UserPostgresRepository){
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
         return if(userResource != null) {

@@ -1,35 +1,74 @@
+import fs from 'node:fs'
+
+const locales = fs.readdirSync('locales')
+  .map(file => ({
+    code: file.replace(/\.(yml|yaml|json)$/, ''),
+    file,
+  }))
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   app: {
     head: {
-      title: 'Jmanager',
-      link: [{
-        rel: 'icon',
-        type: 'image/x-icon',
-        href: '/favicon.ico',
-      }],
+      title: 'JManager',
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
-  ssr: false,
-  css: [
-    '@unocss/reset/antfu.css',
-    'primevue/resources/themes/lara-light-blue/theme.css',
-    'primevue/resources/primevue.css',
-  ],
-  sourcemap: {
-    server: true,
-    client: false,
+  imports: { // add folders here to auto-import them in your application
+    dirs: [
+      'stores',
+      'composables/**',
+    ],
   },
-  imports: {
-    dirs: ['stores'],
+  components: [{ path: '~/components', pathPrefix: false }],
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        moduleResolution: 'bundler',
+      },
+    },
   },
-  components: [{
-    path: '~/components',
-    pathPrefix: false,
-  }],
+  vite: {
+    vue: {
+      script: {
+        defineModel: true,
+        propsDestructure: true,
+      },
+    },
+  },
+  experimental: {
+    typedPages: true,
+  },
 
-  modules: ['@vueuse/nuxt', '@unocss/nuxt', '@pinia/nuxt', '@notkamui/nuxt-primevue'],
-  pinia: {
-    autoImports: ['defineStore', ['defineStore', 'definePiniaStore'], 'storeToRefs'],
+  // uncomment to disable SSR. This will basically make the app a SPA, like a normal Vue app, but with all the Nuxt goodies
+  // ssr: false,
+
+  // global CSS files
+  css: [
+    'primevue/resources/themes/lara-light-purple/theme.css',
+  ],
+
+  // plugin configurations
+  modules: [
+    '@nuxtjs/i18n',
+    '@vueuse/nuxt',
+    '@unocss/nuxt',
+    '@nuxtjs/critters',
+    '@nuxtjs/color-mode',
+    '@pinia/nuxt',
+    'nuxt-primevue',
+  ],
+  i18n: {
+    langDir: 'locales',
+    defaultLocale: 'en',
+    locales,
   },
+  colorMode: {
+    preference: 'system',
+    fallback: 'light',
+    classPrefix: '',
+    classSuffix: '',
+    storageKey: 'color-scheme',
+  },
+  ssr: false,
 })
