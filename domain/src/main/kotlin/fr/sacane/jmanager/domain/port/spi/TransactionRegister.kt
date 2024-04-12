@@ -8,7 +8,6 @@ interface TransactionRegister {
     fun persist(userId: UserId, account: Account): User?
     fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?
     fun persist(userId: UserId, category: Tag): Tag?
-    fun removeCategory(userId: UserId, labelCategory: String): Tag?
     fun findAccountByLabel(userId: UserId, labelAccount: String): Account?
     fun findAccountById(accountId: Long): Account?
     fun persist(account: Account) :Account?

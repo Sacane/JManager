@@ -6,4 +6,5 @@ import fr.sacane.jmanager.domain.models.UserId
 interface TagRepository {
     fun save(userId: UserId, tag: Tag): Tag?
     fun getAll(userId: UserId): List<Tag>
+    fun deleteByLabel(label: String)
 }

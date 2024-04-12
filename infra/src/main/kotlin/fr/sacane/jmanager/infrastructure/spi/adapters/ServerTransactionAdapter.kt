@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.infrastructure.spi.entity.TagResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.*
@@ -16,8 +17,8 @@ class ServerTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userPostgresRepository: UserPostgresRepository,
     private val accountRepository: AccountRepository,
-    private val categoryRepository: CategoryRepository,
-    private val accountMapper: AccountMapper
+    private val accountMapper: AccountMapper,
+    private val tagRepository: TagPostgresRepository
     ) : TransactionRegister{
 
     @Transactional
@@ -65,17 +66,10 @@ class ServerTransactionAdapter(
         userPostgresRepository.save(user)
         return category
     }
-    @Transactional
-    override fun removeCategory(userId: UserId, labelCategory: String): Tag? {
-        val id = userId.id ?: return null
-        val user = userPostgresRepository.findById(id).orElseThrow()
-        val category = user.categories.find { it.label == labelCategory } ?: return null
-        categoryRepository.deleteByLabel(labelCategory)
-        return Tag(category.label)
-    }
+
     @Transactional
     override fun remove(targetCategory: Tag) {
-        categoryRepository.deleteByLabel(targetCategory.label)
+        tagRepository.deleteByName(targetCategory.label)
     }
     @Transactional
     override fun findAccountById(accountId: Long): Account? {

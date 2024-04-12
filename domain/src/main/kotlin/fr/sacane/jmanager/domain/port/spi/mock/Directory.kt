@@ -20,13 +20,6 @@ class Directory {
             Transaction(6, "Money From testX", LocalDate.now(), 450.toAmount(), 0.0.toAmount(), 100.0.toAmount(),Tag("Transaction"))
         )
     }
-    private val categories = mutableListOf(
-        Tag("Fun"),
-        Tag("Work"),
-        Tag("Nothing"),
-        Tag("Transaction")
-    )
-
 
     private val accountInventory = mutableListOf(
         Account(1, 0.toAmount(), "Principal", transactionInventories)
@@ -45,9 +38,9 @@ class Directory {
     )
 
     private val userInventory = mutableListOf(
-        User(UserId(1L), "test1", "test1.test@test.fr",  accountInventory, Password("01010122321"), categories),
-        User(UserId(2L), "test2", "test2.test@test.fr",  accountInventory, Password("01010122332"), categories),
-        User(UserId(3L), "test3", "test3.test@test.fr",  accountInventory, Password("01010122323"), categories),
+        User(UserId(1L), "test1", "test1.test@test.fr",  accountInventory, Password("01010122321")),
+        User(UserId(2L), "test2", "test2.test@test.fr",  accountInventory, Password("01010122332")),
+        User(UserId(3L), "test3", "test3.test@test.fr",  accountInventory, Password("01010122323")),
     )
 
 

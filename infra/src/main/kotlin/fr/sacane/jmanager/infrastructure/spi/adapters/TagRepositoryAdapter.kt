@@ -29,4 +29,8 @@ class TagRepositoryAdapter(
                 .map { it.toModel() }
         } ?: emptyList()
     }
+
+    override fun deleteByLabel(label: String) {
+        tagPostgresRepository.deleteByName(label)
+    }
 }
