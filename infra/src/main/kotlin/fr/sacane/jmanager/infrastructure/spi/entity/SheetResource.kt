@@ -22,13 +22,6 @@ class SheetResource(
     var income: BigDecimal = BigDecimal(0.0),
     @Column(name="account_amount", scale = 2)
     var accountAmount: BigDecimal = BigDecimal(0.0),
-    @OneToOne
-    @JoinTable(
-        name = "sheet_category",
-        joinColumns = [JoinColumn(name = "id_sheet")],
-        inverseJoinColumns = [JoinColumn(name = "id_category")]
-    )
-    var category: CategoryResource? = null,
     @Column
     var position: Int = 0
 

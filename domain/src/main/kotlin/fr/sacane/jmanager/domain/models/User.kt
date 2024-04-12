@@ -45,7 +45,7 @@ class User(
     val email: String?,
     private val accounts_: MutableList<Account> = mutableListOf(),
     val password: Password,
-    private val categories: MutableList<Tag> = mutableListOf(
+    val tags: MutableSet<Tag> = mutableSetOf(
         "Loisir".asTag(),
         "Repas".asTag(),
         "Autres".asTag(),
@@ -60,8 +60,6 @@ class User(
         "Abonnements".asTag()
     )
 ) {
-    val distinctCategories: List<Tag>
-        get() = categories.distinct()
 
     val accounts: MutableList<Account>
         get() = accounts_

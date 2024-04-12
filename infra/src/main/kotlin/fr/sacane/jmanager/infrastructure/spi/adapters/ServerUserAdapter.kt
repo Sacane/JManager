@@ -37,11 +37,6 @@ class ServerUserAdapter (
         return userPostgresRepository.findByIdWithAccount(id)?.toModelWithSimpleAccounts()
     }
 
-//    override fun findUserByIdWithSheets(userId: UserId): User? {
-//        val id = userId.id ?: return null
-//        println("find user by id with sheets...")
-//        return userPostgresRepository.findByIdWithSheets(id)?.toModel()
-//    }
     @Transactional
     override fun checkUser(pseudonym: String, pwd: Password): UserToken? {
         val user = userPostgresRepository.findByUsername(pseudonym) ?: return null
@@ -49,7 +44,7 @@ class ServerUserAdapter (
             LOGGER.info("Password is not correct")
             return null
         }
-        val token = Login(user = user) // TODO Implement token implementation
+        val token = Login(user = user)
         val tokenBack = loginRepository.save(token)
         return UserToken(user.toMinimalUserRepresentation(), AccessToken(tokenBack.id ?: UUID.randomUUID(), tokenBack.tokenLifeTime, tokenBack.refreshToken))
     }
@@ -61,7 +56,10 @@ class ServerUserAdapter (
     @Transactional
     override fun create(user: User): User?{
         return try{
-            userPostgresRepository.save(user.asResource()).toModel()
+            val userAsResource = user.asResource()
+            val saved = userPostgresRepository.save(userAsResource)
+            user.tags.map { it.asResource() }.forEach { saved.addTag(it) }
+            saved.toModel()
         }catch(e: Exception){
             LOGGER.severe("Failed to save user into database")
             null

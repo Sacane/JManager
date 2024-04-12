@@ -6,7 +6,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.ManyToOne
 
 @Entity
-data class TagResource(
+class TagResource(
     @Id
     @GeneratedValue
     var idTag: Long? = null,

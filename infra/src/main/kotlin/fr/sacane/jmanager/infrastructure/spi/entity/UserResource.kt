@@ -14,13 +14,6 @@ class UserResource(
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var accounts: MutableList<AccountResource> = mutableListOf(),
     @OneToMany(cascade = [CascadeType.ALL])
-    @JoinTable(
-        name="user_categories",
-        joinColumns = [JoinColumn(name="id_user")],
-        inverseJoinColumns = [JoinColumn(name="id_category")]
-    )
-    var categories: MutableList<CategoryResource> = mutableListOf(),
-    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner")
     var tags: MutableList<TagResource> = mutableListOf(),
     @Id
     @GeneratedValue

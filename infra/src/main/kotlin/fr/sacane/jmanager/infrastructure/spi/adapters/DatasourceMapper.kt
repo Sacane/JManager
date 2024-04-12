@@ -26,7 +26,6 @@ internal fun Transaction.asResource(): SheetResource {
         resource.income = income
         resource.accountAmount = sold
     }
-    resource.category = resource.category
     resource.idSheet = this.id
     resource.position = this.position
     return resource
@@ -41,7 +40,7 @@ internal fun Account.asResource(): AccountResource {
 }
 
 internal fun User.asResource(): UserResource {
-    return UserResource(username, password.get(), email, mutableListOf(), distinctCategories.map { CategoryResource(label = it.label) }.toMutableList())
+    return UserResource(username = username, password = password.get(), email = email, mutableListOf(), tags = tags.map { TagResource(idTag = it.id, name = it.label) }.toMutableList())
 }
 
 internal fun User.asExistingResource(): UserResource
@@ -50,7 +49,7 @@ internal fun User.asExistingResource(): UserResource
         password = password.get(),
         email = email,
         accounts = this.accounts.map {it.asResource()}.toMutableList(),
-        tags = this.distinctCategories.map { it.asResource() }.toMutableList()
+        tags = this.tags.map { it.asResource() }.toMutableList()
     )
 
 internal fun Tag.asResource(): TagResource = TagResource(this.id, this.label)
