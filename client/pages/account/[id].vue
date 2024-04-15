@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useSheet from '~/composables/useSheets'
 
@@ -8,6 +9,8 @@ definePageMeta({
 
 const route = useRoute()
 
+const selectedSheets = ref()
+
 const { translate, monthFromNumber } = useDate()
 
 const { findById } = useAccounts()
@@ -16,7 +19,7 @@ const date = new Date()
 const data = reactive({
   year: date.getFullYear(),
   month: monthFromNumber(new Date().getMonth() + 1) as string,
-  labelAccount: route.query.labelAccount as string,
+  labelAccount: '',
   isRangeSelected: false,
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
@@ -50,25 +53,14 @@ function initAccount() {
       data.accountAmount = account.amount
       data.labelAccount = account.labelAccount as string
       data.currentAccountId = route.params?.id as string
+      retrieveSheets()
     })
-  retrieveSheets()
 }
 
 onMounted(() => {
   data.month = monthFromNumber(new Date().getMonth() + 1) as string
   initAccount()
 })
-
-function gotoTransaction() {
-  navigateTo({
-    path: '/sheet/persist',
-    query: {
-      id: data.currentAccountId,
-      label: data.labelAccount,
-      amount: data.accountAmount,
-    },
-  })
-}
 
 async function confirmDelete() {
   deleteSheet(Number.parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
@@ -77,6 +69,7 @@ async function confirmDelete() {
       findById(Number.parseInt(data.currentAccountId)).then((account) => {
         data.accountAmount = account.amount
       })
+      selectedSheets.value = []
     })
 }
 
@@ -116,10 +109,6 @@ function onYearChange() {
   retrieveSheets()
 }
 
-function isSelected(event: any) {
-  return true
-}
-
 const uDate = useDate()
 
 // dialog
@@ -133,7 +122,7 @@ const { saveSheet } = useSheet()
 const values = reactive({
   accountId: data.currentAccountId,
   accountLabel: data.labelAccount,
-  accountAmount: data.accountAmount as string,
+  accountAmount: data.accountAmount,
   amount: 0.0,
   selectedMode: 'expenses',
   sheetLabel: '',
@@ -141,12 +130,13 @@ const values = reactive({
   integerPart: '0',
   decimalPart: '0',
 })
+const toastr = useJToast()
 async function onConfirm() {
   if ((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
     return
   }
   const amount = `${values.integerPart}.${values.decimalPart} €`
-  await saveSheet(values.accountLabel, {
+  await saveSheet(data.labelAccount, {
     id: 0,
     label: values.sheetLabel,
     expenses: (values.selectedMode === 'expenses') ? amount : '0 €',
@@ -156,7 +146,7 @@ async function onConfirm() {
   }).then((sheet: SheetDTO) => {
     // actualSheets.value.push(asDisplayableTransaction(sheet))
     initAccount()
-  }).finally(() => isNewTransactionDialogOpen.value = false)
+  }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => isNewTransactionDialogOpen.value = false)
 }
 </script>
 

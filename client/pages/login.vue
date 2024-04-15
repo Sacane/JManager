@@ -2,6 +2,7 @@
 import useAuth from '../composables/useAuth'
 
 const { login, register } = useAuth()
+const toastr = useJToast()
 const userAuth = reactive({
   username: '',
   password: '',
@@ -26,12 +27,13 @@ const hasFailedRegister = ref(false)
 function log() {
   login(userAuth, (e) => {
     hasFailedlogin.value = true
-    console.error(e)
+    toastr.errorAxios(e)
   })
 }
 function registerUser() {
-  register(userRegistered, () => switchMode(), () => {
+  register(userRegistered, () => switchMode(), (error) => {
     hasFailedRegister.value = true
+    toastr.errorAxios(error, 'Erreur d\'enregistrement')
   })
 }
 </script>
@@ -45,14 +47,14 @@ function registerUser() {
       <div v-if="mode">
         <form @submit.prevent="log">
           <div class="mb-4">
-            <label for="username" class="block text-sm font-medium text-gray-600">Nom d'utilisateur</label>
-            <input id="username" v-model="userAuth.username" type="text" class="mt-1 p-2 w-full border rounded-md">
+            <label for="username">Nom d'utilisateur</label>
+            <InputText id="username" v-model="userAuth.username" type="text" class="mt-1 p-2 w-full" />
           </div>
           <div class="mb-4">
-            <label for="password" class="block text-sm font-medium text-gray-600">Mot de passe</label>
-            <input v-model="userAuth.password" type="password" class="mt-1 p-2 w-full border rounded-md">
+            <label for="password">Mot de passe</label>
+            <InputText v-model="userAuth.password" type="password" class="mt-1 p-2 w-full border rounded-md" />
           </div>
-          <Button type="submit" class="w-full text-white px-4 py-2 rounded-md transition-colors">
+          <Button type="submit" class="w-full">
             Se connecter
           </Button>
           <div v-if="hasFailedlogin" class="text-red-500 mt-2">
@@ -64,27 +66,24 @@ function registerUser() {
       <div v-else>
         <form @submit.prevent="registerUser">
           <div class="mb-4">
-            <label for="username" class="block text-sm font-medium text-gray-600">Nom d'utilisateur *</label>
-            <input id="username" v-model="userRegistered.username" type="text" class="mt-1 p-2 w-full border rounded-md">
+            <label for="username" class="">Nom d'utilisateur *</label>
+            <InputText id="username" v-model="userRegistered.username" type="text" class="mt-1 p-2 w-full border rounded-md" />
           </div>
           <div class="mb-4">
-            <label for="email" class="block text-sm font-medium text-gray-600">Email</label>
-            <input id="email" v-model="userRegistered.email" type="email" class="mt-1 p-2 w-full border rounded-md">
+            <label for="email" class="">Email</label>
+            <InputText id="email" v-model="userRegistered.email" type="email" class="mt-1 p-2 w-full border rounded-md" />
           </div>
           <div class="mb-4">
-            <label for="password" class="block text-sm font-medium text-gray-600">Mot de passe *</label>
-            <input v-model="userRegistered.password" type="password" class="mt-1 p-2 w-full border rounded-md">
+            <label for="password">Mot de passe *</label>
+            <InputText v-model="userRegistered.password" type="password" class="mt-1 p-2 w-full border rounded-md" />
           </div>
           <div class="mb-4">
-            <label for="confirm" class="block text-sm font-medium text-gray-600">Confirmer le mot de passe *</label>
-            <input id="confirm" v-model="userRegistered.confirmPassword" type="password" class="mt-1 p-2 w-full border rounded-md">
+            <label for="confirm">Confirmer le mot de passe *</label>
+            <InputText id="confirm" v-model="userRegistered.confirmPassword" type="password" class="mt-1 p-2 w-full border rounded-md" />
           </div>
-          <button type="submit" class="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors">
+          <Button type="submit" class="">
             S'enregistrer
-          </button>
-          <div v-if="hasFailedRegister" class="text-red-500 mt-2">
-            <h2>Les mots de passe ne correspondent pas</h2>
-          </div>
+          </Button>
         </form>
       </div>
 
@@ -92,9 +91,9 @@ function registerUser() {
         <p class="text-gray-600">
           {{ mode ? "Vous n'avez pas de compte ?" : 'Vous avez déjà un compte ?' }}
         </p>
-        <button class="text-purple-600 font-semibold hover:underline" @click="switchMode">
+        <Button class="" @click="switchMode">
           {{ mode ? 'S\'enregistrer' : 'Se connecter' }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

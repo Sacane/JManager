@@ -47,7 +47,7 @@ class SessionFeatureImpl(
 
     override fun register(username: String, email: String, password: String, confirmPassword: String): Response<User> {
         if(password != confirmPassword) return Response.invalid("Les mots de passes ne correspondent pas")
-        val userResponse = userRepository.register(username, email, Password(password)) ?: return Response.invalid()
+        val userResponse = userRepository.register(username, email, Password(password)) ?: return Response.invalid("Une erreur est survenue")
         return Response.ok(userResponse)
     }
 

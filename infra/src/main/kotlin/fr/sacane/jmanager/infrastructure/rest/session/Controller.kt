@@ -48,7 +48,6 @@ class SessionController(
     @PostMapping(path= ["/create"])
     fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
         val response = loginFeature.register(userDTO.username, userDTO.email, userDTO.password, userDTO.confirmPassword)
-        if(response.isFailure()) return ResponseEntity.badRequest().build()
         return response.map { u -> u.toDTO() }.toResponseEntity()
     }
 

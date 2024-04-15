@@ -15,6 +15,7 @@ tryOnBeforeMount(() => {
   <div font="text">
     <NuxtLoadingIndicator />
     <NuxtLayout>
+      <Toast />
       <NuxtPage />
     </NuxtLayout>
   </div>

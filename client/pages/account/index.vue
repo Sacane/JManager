@@ -32,24 +32,6 @@ function format(accounts: Array<AccountDTO>) {
 function onRowClick(event: any) {
   navigateTo({
     path: `/account/${event.data.id}`,
-    query: {
-      labelAccount: event.data.labelAccount,
-      amount: event.data.amount,
-    },
-  })
-}
-
-function applyEdit() {
-  if (row.value === undefined) {
-    return
-  }
-  navigateTo({
-    path: '/account/edit',
-    query: {
-      id: row.value?.id,
-      labelAccount: row.value?.labelAccount,
-      amount: row.value?.amount,
-    },
   })
 }
 

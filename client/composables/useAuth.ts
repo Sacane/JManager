@@ -1,6 +1,7 @@
-import {API_PATH} from '~/utils/request';
-import axios, {AxiosError} from 'axios'
-import type {Ref} from "vue";
+import type { AxiosError } from 'axios'
+import axios from 'axios'
+import type { Ref } from 'vue'
+import { API_PATH } from '~/utils/request'
 
 export interface UserAuth {
   username: string
@@ -11,14 +12,14 @@ interface User {
   username: string
   email: string
   token: string
-  refreshToken: string,
-  tokenExpirationDate: Date,
+  refreshToken: string
+  tokenExpirationDate: Date
   refreshExpirationDate: Date
 }
 interface UserRegister {
   username: string
   email: string
-  password: string,
+  password: string
   confirmPassword: string
 }
 
@@ -29,24 +30,20 @@ export default function useAuth() {
   if (storedUser) {
     user.value = storedUser
     isAuthenticated.value = true
-  }
-  else {
+  } else {
     user.value = null
     isAuthenticated.value = false
   }
 
-  async function login(userAuth: UserAuth, onError: (e: Error) => void = e => console.error(e)) {
+  async function login(userAuth: UserAuth, onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
       const response = await axios.post(`${API_PATH}user/auth`, userAuth)
-      console.log(userAuth)
       user.value = response.data
       isAuthenticated.value = true
       navigateTo('/')
       localStorage.setItem('user', JSON.stringify(user.value))
-
-    }
-    catch (e: any) {
-      onError(e);
+    } catch (e: any) {
+      onError(e)
     }
   }
   const defaultHeaders = computed(() => ({
@@ -63,8 +60,7 @@ export default function useAuth() {
       isAuthenticated.value = false
       navigateTo('/login')
       localStorage.removeItem('user')
-    }
-    catch (e: any) {
+    } catch (e: any) {
       handleError(e)
     }
   }
@@ -73,50 +69,49 @@ export default function useAuth() {
     const config = {
       headers: {
         Authorization: `Bearer ${user.value?.refreshToken}`,
-        Accept: 'application/json'
-      }
+        Accept: 'application/json',
+      },
     }
     try {
       const response = await axios.post(`${API_PATH}user/auth/refresh/${user.value?.id}`, null, config)
       user.value = response.data
-    }catch(e: any) {
+    } catch (e: any) {
       isAuthenticated.value = false
       navigateTo('/login')
       console.error(e.toString())
     }
   }
-  async function register(registeredUser: UserRegister, onSuccess: () => void = () => console.log('success'), onError: (e: Error) => void = e => console.error(e)) {
+  async function register(registeredUser: UserRegister, onSuccess: () => void = () => console.log('success'), onError: (e: AxiosError) => void = e => console.error(e)) {
     const config = {
       headers: {
         Authorization: `Bearer ${user.value?.refreshToken}`,
-        Accept: 'application/json'
-      }
+        Accept: 'application/json',
+      },
     }
     try {
-      const response = await axios.post(`${API_PATH}user/create`, registeredUser, config)
-      onSuccess();
-    }catch(e: any) {
+      await axios.post(`${API_PATH}user/create`, registeredUser, config)
+      onSuccess()
+    } catch (e: any) {
       onError(e)
     }
   }
 
-
   function handleError(error: Error) {
-    if(axios.isAxiosError(error)){
+    if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<any, any>
       const status = axiosError.response?.data.status
-      if(status === 307) {
-        tryRefresh()
+      if (status === 307) {
+        tryRefresh().then()
         return
-      } else if(status === 401) {
+      } else if (status === 401) {
         isAuthenticated.value = false
         navigateTo('/login')
         return
       }
-      //toast.error(axiosError.response?.data.message)
+      // toast.error(axiosError.response?.data.message)
     }
     throw error
   }
 
-  return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders, tryRefresh, register}
+  return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders, tryRefresh, register }
 }

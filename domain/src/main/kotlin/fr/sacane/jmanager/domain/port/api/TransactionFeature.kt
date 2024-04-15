@@ -63,7 +63,7 @@ class SheetFeatureImplementation(
         accountLabel: String,
         transaction: Transaction
     ): Response<Transaction> = session.authenticate(userId, token) {
-        val account = register.findAccountByLabel(userId, accountLabel) ?: return@authenticate Response.notFound()
+        val account = register.findAccountByLabel(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         if(account.transactions.isNotEmpty()) {
             val lastRecord = account.transactions
                 .filter { it.date <= transaction.date }
@@ -80,6 +80,7 @@ class SheetFeatureImplementation(
             transaction.updateSoldStartingWith(account.sold)
         }
         register.persist(userId, accountLabel, transaction) ?: return@authenticate Response.invalid()
+        println("IDJOIUAHFZOIF")
         Response.ok(transaction)
     }
 
