@@ -80,7 +80,6 @@ class SheetFeatureImplementation(
             transaction.updateSoldStartingWith(account.sold)
         }
         register.persist(userId, accountLabel, transaction) ?: return@authenticate Response.invalid()
-        println("IDJOIUAHFZOIF")
         Response.ok(transaction)
     }
 
