@@ -37,18 +37,15 @@ class ServerTransactionAdapter(
 
     @Transactional
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
-        println("try to persist it")
         val id = userId.id ?: return null
         val account = accountRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
         return try{
-            println("conversion")
             val sheetResource = transaction.asResource()
             val saved = sheetRepository.save(sheetResource)
             account.sheets.add(saved)
             account.amount = transaction.sold.applyOnValue { it }
             transaction
         }catch(e: Exception){
-            println("error ?")
             null
         }
     }
