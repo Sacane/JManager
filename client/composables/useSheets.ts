@@ -8,7 +8,7 @@ export default function useSheet() {
   async function findByDate(month: string | undefined, year: number, accountLabel: string) {
     return get('sheet', {
       userId: user.value?.id,
-      month: month ?? dateUse.monthFromNumber(new Date().getMonth() + 1) ?? 'NOVEMBER',
+      month: month ?? dateUse.monthFromNumber(new Date().getMonth() + 1),
       year,
       accountLabel,
     })

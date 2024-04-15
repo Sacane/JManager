@@ -13,7 +13,7 @@ class UserResource(
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var accounts: MutableList<AccountResource> = mutableListOf(),
-    @OneToMany(cascade = [CascadeType.ALL])
+    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner")
     var tags: MutableList<TagResource> = mutableListOf(),
     @Id
     @GeneratedValue
@@ -25,7 +25,8 @@ class UserResource(
         accounts.add(accountResource)
     }
     fun addTag(tag: TagResource) {
-        tags.add(tag)
         tag.owner = this
+        tags.add(tag)
+
     }
 }

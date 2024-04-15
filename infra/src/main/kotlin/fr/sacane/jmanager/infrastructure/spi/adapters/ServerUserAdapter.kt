@@ -67,8 +67,10 @@ class ServerUserAdapter (
     }
     @Transactional
     override fun register(username: String, email: String, password: Password): User? {
+        val userResource = UserResource(username = username, password = password.get(), email = email)
+        tags().map { it.asResource() }.forEach { userResource.addTag(it) }
         val userResponse = userPostgresRepository.save(
-            UserResource(username = username, password = password.get(), email = email)
+            userResource
         )
         return userResponse.toModel()
     }
