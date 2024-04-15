@@ -1,12 +1,13 @@
 package fr.sacane.jmanager.domain.models
 
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 class Amount(private var amount: BigDecimal, private val currency: String = "€") {
 
     init{
-        check(amount.scale() <= 2){
-            "Expected scale at most 2, get ${amount.scale()}"
+        if(amount.scale() <= 2){
+            amount = amount.setScale(2, RoundingMode.UP)
         }
     }
     operator fun plusAssign(other: Amount) {

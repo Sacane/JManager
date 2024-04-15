@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
+import useSheet from '~/composables/useSheets'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -23,26 +24,29 @@ const data = reactive({
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
 })
-const selectedSheets = ref<SheetDTO[]>([])
 const actualSheets = ref()
+
+function asDisplayableTransaction(transaction: SheetDTO): any {
+  return {
+    ...transaction,
+    expensesRepresentation: (transaction.expenses !== '') ? `${transaction.expenses}` : '/',
+    incomeRepresenttation: (transaction.income !== '') ? `${transaction.income}` : '/',
+    date: transaction.date,
+    accountAmount: transaction.accountAmount,
+  }
+}
 function retrieveSheets() {
   findByDate(data.month, data.year, data.labelAccount)
     .then((value: SheetAverageDTO) => {
       actualSheets.value = value.sheets.map((sheet: SheetDTO) => {
-        return {
-          ...sheet,
-          expensesRepresentation: (sheet.expenses !== '') ? `${sheet.expenses}` : '/',
-          incomeRepresenttation: (sheet.income !== '') ? `${sheet.income}` : '/',
-          date: sheet.date,
-          accountAmount: sheet.accountAmount,
-        }
+        return asDisplayableTransaction(sheet)
       })
     })
 }
 
 function initAccount() {
   findById(Number.parseFloat(route.params?.id as string))
-    .then((account) => {
+    .then((account: AccountDTO) => {
       data.accountAmount = account.amount
       data.labelAccount = account.labelAccount as string
       data.currentAccountId = route.params?.id as string
@@ -116,16 +120,44 @@ function isSelected(event: any) {
   return true
 }
 
-function onRowSelect(event: any) {
-  if (isSelected(event)) {
-    selectedSheets.value = selectedSheets.value.filter(
-      (sheet: any) => sheet.label !== event.data.label,
-    )
-  } else {
-    selectedSheets.value.push(event.data)
-  }
-}
 const uDate = useDate()
+
+// dialog
+
+const isNewTransactionDialogOpen = ref<boolean>(false)
+
+// transaction persistance
+
+const { saveSheet } = useSheet()
+
+const values = reactive({
+  accountId: data.currentAccountId,
+  accountLabel: data.labelAccount,
+  accountAmount: data.accountAmount as string,
+  amount: 0.0,
+  selectedMode: 'expenses',
+  sheetLabel: '',
+  date: new Date(),
+  integerPart: '0',
+  decimalPart: '0',
+})
+async function onConfirm() {
+  if ((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
+    return
+  }
+  const amount = `${values.integerPart}.${values.decimalPart} €`
+  await saveSheet(values.accountLabel, {
+    id: 0,
+    label: values.sheetLabel,
+    expenses: (values.selectedMode === 'expenses') ? amount : '0 €',
+    income: (values.selectedMode === 'income') ? amount : '0 €',
+    date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
+    accountAmount: `${data.accountAmount}`,
+  }).then((sheet: SheetDTO) => {
+    // actualSheets.value.push(asDisplayableTransaction(sheet))
+    initAccount()
+  }).finally(() => isNewTransactionDialogOpen.value = false)
+}
 </script>
 
 <template>
@@ -133,10 +165,10 @@ const uDate = useDate()
   <div class="w-full h-full flex flex-row container-all">
     <div class="mr10px form-container p-8  bg-white mt2px">
       <div class="flex-row justify-between">
-        <h2 class="text-2xl font-bold mb-4">
+        <h2 class="text-2xl font-bold mb-4 info-text">
           Les transactions sur le compte {{ data.labelAccount }}
         </h2>
-        <h2 class="text-2xl font-bold mb-4">
+        <h2 class="text-2xl mb-4">
           Solde du compte : {{ data.accountAmount }}
         </h2>
       </div>
@@ -144,7 +176,6 @@ const uDate = useDate()
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
-              <!-- <MonthPicker v-model="data.month" @update:model-value="retrieveSheets()" /> -->
               <Dropdown v-model="data.month" :options="uDate.months" placeholder="Selectionner un mois" class="w-full md:w-14rem" @change="retrieveSheets()" />
               <div class="w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
@@ -168,11 +199,30 @@ const uDate = useDate()
         <Column field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
       </DataTable>
     </div>
-    <div class="pt5px flex-col">
-      <Button class="w-auto" icon="pi pi-plus" @click="gotoTransaction" />
+    <div class="pt5px flex flex-col gap-3 mr2">
+      <Button icon="pi pi-plus" @click="isNewTransactionDialogOpen = true" />
       <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
   </div>
+  <Dialog v-model:visible="isNewTransactionDialogOpen" modal header="Ajouter une nouvelle transaction">
+    <div class="mt-6">
+      <div class="flex flex-col gap-3">
+        <label for="label" class="block text-sm font-medium text-gray-700">Libelle</label>
+        <InputText id="label" v-model="values.sheetLabel" type="text" autocomplete="off" />
+      </div>
+      <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
+      <div id="labelAmount" class="flex-row">
+        <InputText v-model="values.integerPart" type="number" placeholder="Partie entière" class="" />
+        <InputText v-model="values.decimalPart" type="number" placeholder="Partie décimale" maxlength="2" class="" />
+      </div>
+      <div mt5px class="flex flex-col gap-3">
+        <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
+        <Calendar id="calendar" v-model="values.date" placeholder="Date" date-format="dd-mm-yy" />
+      </div>
+      <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onConfirm" />
+      <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isNewTransactionDialogOpen = false" />
+    </div>
+  </Dialog>
 </template>
 
 <style scoped lang="scss">
@@ -186,11 +236,6 @@ const uDate = useDate()
     width: 100%;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    .custom-calendar {
-      v-picker{
-        background-color: red;
-      }
-    }
   }
   .buttons {
     margin-top: 15px;
@@ -200,6 +245,12 @@ const uDate = useDate()
     }
   }
 
+}
+
+.info-text{
+  text-align: center;
+  color: #555;
+  margin-bottom: 20px;
 }
 
 .selected-row{

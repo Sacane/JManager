@@ -8,14 +8,14 @@ definePageMeta({
 // toast
 //
 const { fetch, deleteAccount, createAccount } = useAccounts()
-const isAccountFilled = reactive({ ok: false })
+const isAccountFilled = ref<boolean>(false)
 
 const data = ref()
 
 onMounted(async () => {
   await fetch().then((accountArray) => {
     format(accountArray)
-    isAccountFilled.ok = data.value.length > 0
+    isAccountFilled.value = accountArray.length > 0
   })
 })
 
@@ -59,7 +59,10 @@ function applyDelete() {
   }
   deleteAccount(row.value?.id as number)
     .finally(() => {
-      fetch().then(accountArray => format(accountArray))
+      fetch().then((accountArray) => {
+        format(accountArray)
+        isAccountFilled.value = accountArray.length > 0
+      })
     })
 }
 
@@ -81,7 +84,10 @@ async function toAccount() {
   const { label, amount } = newAccount
   createAccount(label, `${amount.integerPart}.${amount.decimalPart} €`)
     .then(() => {
-      fetch().then(accountArray => format(accountArray)).finally(() => {
+      fetch().then((accountArray) => {
+        format(accountArray)
+        isAccountFilled.value = accountArray.length > 0
+      }).finally(() => {
         isAddAccountDialogOpen.value = false
       })
     })
@@ -89,14 +95,14 @@ async function toAccount() {
 </script>
 
 <template>
-  <div v-if="isAccountFilled.ok" class="p20px container">
+  <div v-if="isAccountFilled" class="p20px container">
     <h2 class="info-text">
       Cliquez sur un compte pour visualiser ses transactions
     </h2>
     <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
       <template #header>
         <div class="flex flex-row h-auto pl10px">
-          <Button class="b mr2 w-350px h-50px" label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit" />
+          <!-- <Button class="b mr2 w-350px h-50px" label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit" /> -->
           <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
         </div>
       </template>

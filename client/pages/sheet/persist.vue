@@ -29,7 +29,7 @@ async function onConfirm() {
   if ((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
     return
   }
-  const amount = `${values.integerPart}.${values.decimalPart} €`;
+  const amount = `${values.integerPart}.${values.decimalPart} €`
   await saveSheet(values.accountLabel, {
     id: 0,
     label: values.sheetLabel,
@@ -40,7 +40,7 @@ async function onConfirm() {
   }).then((sheet: SheetDTO) => {
     fetch()
     navigateTo({
-      path:`/account/${values.accountId}`,
+      path: `/account/${values.accountId}`,
       query: {
         id: values.accountId,
         labelAccount: values.accountLabel,
@@ -50,44 +50,44 @@ async function onConfirm() {
   })
 }
 </script>
+
 <template>
-  <div class="wfull hfull flex items-center justify-center content ">
+  <div class="w-full h-full flex items-center justify-center content ">
     <div class="flex-col w60% mb5 form-container">
-      <Fieldset :legend="`Ajouter une nouvelle transaction pour le compte ${values.accountLabel }`">
+      <Fieldset :legend="`Ajouter une nouvelle transaction pour le compte ${values.accountLabel}`">
         <div>
           <label for="label" mt5px>Libelle</label>
-          <InputText placeholder="Ex: Achat d'une chaise" v-model="values.sheetLabel" id="label"/>
+          <InputText id="label" v-model="values.sheetLabel" placeholder="Ex: Achat d'une chaise" />
         </div>
         <div mt5px>
           <label for="selectionType">Selectionner le type de transaction</label>
-          <div id="selectionType" class ="flex-row flex-gap3 mt5px">
+          <div id="selectionType" class="flex-row flex-gap3 mt5px">
             <div flex-row>
-              <RadioButton v-model="values.selectedMode" input-id="selection1" value="expenses"/>
-              <label for="selection1"  class="ml-2">Dépense</label>
+              <RadioButton v-model="values.selectedMode" input-id="selection1" value="expenses" />
+              <label for="selection1" class="ml-2">Dépense</label>
             </div>
             <div class="flex-row">
-              <RadioButton v-model="values.selectedMode" input-id="selection2" value="income"/>
+              <RadioButton v-model="values.selectedMode" input-id="selection2" value="income" />
               <label for="selection2" class="ml-2">Recette</label>
             </div>
           </div>
         </div>
         <div id="labelAmount">
           <label for="amount">Selectionner le montant de la transaction (en €)</label>
-          <div class="flex-row space-x-2 mt5px" id="amount">
-            <InputText placeholder="Partie entière" v-model="values.integerPart" />
+          <div id="amount" class="flex-row space-x-2 mt5px">
+            <InputText v-model="values.integerPart" placeholder="Partie entière" />
             <div>.</div>
-            <InputText placeholder="Partie décimal" v-model="values.decimalPart" maxlength="2"/>
+            <InputText v-model="values.decimalPart" placeholder="Partie décimal" maxlength="2" />
           </div>
         </div>
         <div mt5px>
           <label for="calendar">Date de la transaction</label>
-          <Calendar placeholder="Date" v-model="values.date" date-format="dd-mm-yy" id="calendar"/>
+          <Calendar id="calendar" v-model="values.date" placeholder="Date" date-format="dd-mm-yy" />
         </div>
         <div mt5px>
           <Button label="Ajouter une nouvelle transaction" @click="onConfirm" />
         </div>
       </Fieldset>
-
     </div>
   </div>
 </template>
