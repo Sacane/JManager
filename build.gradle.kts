@@ -48,6 +48,8 @@ tasks {
 	build {
 		actions.clear()
 		dependsOn(":client:bundle")
+		dependsOn(":domain:assemble")
+		dependsOn(":infra:assemble")
 		dependsOn(":infra:shadowJar")
 	}
 }

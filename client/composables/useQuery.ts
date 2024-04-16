@@ -1,13 +1,14 @@
 import type { AxiosError } from 'axios'
 import axios from 'axios'
 import useAuth from './useAuth'
-import { API_PATH } from '~/utils/request'
 
 export default function useQuery() {
+  const config = useRuntimeConfig()
+  const host = config.public.websocketUrl
   const { defaultHeaders, tryRefresh, logout } = useAuth()
   async function get(url: string, params: any | undefined = undefined) {
     try {
-      const response = await axios.get(`${API_PATH}${url}`, {
+      const response = await axios.get(`${host}${url}`, {
         headers: defaultHeaders.value,
         params,
       })
@@ -18,7 +19,7 @@ export default function useQuery() {
   }
   async function deleteQuery(url: string, body: any | undefined) {
     try {
-      const response = await axios.delete(`${API_PATH}${url}`, {
+      const response = await axios.delete(`${host}${url}`, {
         headers: defaultHeaders.value,
         data: body,
       })
@@ -30,7 +31,7 @@ export default function useQuery() {
 
   async function post(url: string, body: any | undefined) {
     try {
-      const response = await axios.post(`${API_PATH}${url}`, body, {
+      const response = await axios.post(`${host}${url}`, body, {
         headers: defaultHeaders.value,
       })
       return response.data
