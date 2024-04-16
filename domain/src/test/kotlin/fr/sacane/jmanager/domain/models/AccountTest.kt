@@ -39,7 +39,7 @@ class AccountTest {
         )
 
         val pwdUser = Password("D5301012000MAMacita")
-        val user = User(UserId(1), "johan", "johan.test@test.fr", accounts, pwdUser, tags().toMutableList())
+        val user = User(UserId(1), "johan", "johan.test@test.fr", accounts, pwdUser, tags().toMutableSet())
         assertTrue{
             user.accounts.contains(Account(null, constantValue, "test", mutableListOf()))
         }

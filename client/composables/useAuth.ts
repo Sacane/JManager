@@ -1,7 +1,6 @@
 import type { AxiosError } from 'axios'
 import axios from 'axios'
 import type { Ref } from 'vue'
-import { API_PATH } from '~/utils/request'
 
 export interface UserAuth {
   username: string
@@ -27,6 +26,8 @@ export default function useAuth() {
   const user: Ref<User | null> = ref(null)
   const storedUser: User | undefined = JSON.parse(localStorage.getItem('user') as string)
   const isAuthenticated = ref<boolean>(false)
+  const config = useRuntimeConfig()
+  const host = config.public.websocketUrl
   if (storedUser) {
     user.value = storedUser
     isAuthenticated.value = true
@@ -37,7 +38,7 @@ export default function useAuth() {
 
   async function login(userAuth: UserAuth, onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
-      const response = await axios.post(`${API_PATH}user/auth`, userAuth)
+      const response = await axios.post(`${host}user/auth`, userAuth)
       user.value = response.data
       isAuthenticated.value = true
       navigateTo('/')
@@ -55,7 +56,7 @@ export default function useAuth() {
       headers: defaultHeaders.value,
     }
     try {
-      await axios.post(`${API_PATH}user/logout/${user?.value?.id}`, null, config)
+      await axios.post(`${host}user/logout/${user?.value?.id}`, null, config)
       user.value = null
       isAuthenticated.value = false
       navigateTo('/login')
@@ -73,7 +74,7 @@ export default function useAuth() {
       },
     }
     try {
-      const response = await axios.post(`${API_PATH}user/auth/refresh/${user.value?.id}`, null, config)
+      const response = await axios.post(`${host}user/auth/refresh/${user.value?.id}`, null, config)
       user.value = response.data
     } catch (e: any) {
       isAuthenticated.value = false
@@ -89,7 +90,7 @@ export default function useAuth() {
       },
     }
     try {
-      await axios.post(`${API_PATH}user/create`, registeredUser, config)
+      await axios.post(`${host}user/create`, registeredUser, config)
       onSuccess()
     } catch (e: any) {
       onError(e)
