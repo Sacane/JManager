@@ -12,6 +12,12 @@ onMounted(() => {
     navigateTo('/login')
   }
 })
+
+function navigateIfAuthenticated() {
+  if (isAuthenticated) {
+    navigateTo('/account')
+  }
+}
 </script>
 
 <template>
@@ -19,9 +25,7 @@ onMounted(() => {
     <h1 class="text-3xl font-bold text-center mb-8">
       Un sommaire rapide et pratique pour gérer votre budget et vos dépenses
     </h1>
-
-    <!-- Ajouter un compte -->
-    <div class="card rounded-lg shadow-lg bg-white p-6 mb-8 text-center">
+    <div class="card rounded-lg shadow-lg bg-white p-6 mb-8 text-center" @click="navigateIfAuthenticated()">
       <h2 class="text-2xl italic mb-4">
         Ajouter un compte
       </h2>
@@ -30,9 +34,7 @@ onMounted(() => {
         Vous pouvez ainsi gérer les dépenses de plusieurs personnes, entités, projets, et autres avec un seul profil.
       </p>
     </div>
-
-    <!-- Ajouter une transaction -->
-    <div class="card rounded-lg shadow-lg bg-white p-6 text-center">
+    <div class="card rounded-lg shadow-lg bg-white p-6 text-center" @click="navigateIfAuthenticated()">
       <h2 class="text-2xl italic mb-4">
         Ajouter une transaction
       </h2>
