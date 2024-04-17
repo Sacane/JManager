@@ -29,8 +29,18 @@ class TagRepositoryAdapter(
                 .map { it.toModel() }
         } ?: emptyList()
     }
-
+    @Transactional
     override fun deleteByLabel(label: String) {
         tagPostgresRepository.deleteByName(label)
     }
+    @Transactional
+    override fun getAllDefault(userId: UserId): List<Tag> {
+        val defaults = tagPostgresRepository.findAllDefault()
+        val personal = userId.id?.let { tagPostgresRepository.findAllByOwnerId(it) } ?: emptyList()
+        return defaults.map { it.toModel() }.plus(personal.map { it.toModel() })
+    }
+    @Transactional
+    override fun existsByLabelAndUserId(userId: UserId, tag: Tag): Boolean
+    = userId.id?.let { tagPostgresRepository.existsTagByNameAndOwnerId(tag.label, it) } ?: false
+
 }

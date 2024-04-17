@@ -3,10 +3,13 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.infrastructure.spi.entity.SheetResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagResource
-import fr.sacane.jmanager.infrastructure.spi.repositories.*
+import fr.sacane.jmanager.infrastructure.spi.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.SheetRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.TagPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 
@@ -19,7 +22,7 @@ class ServerTransactionAdapter(
     private val accountRepository: AccountRepository,
     private val accountMapper: AccountMapper,
     private val tagRepository: TagPostgresRepository
-    ) : TransactionRegister{
+) : TransactionRegister{
 
     @Transactional
     override fun persist(userId: UserId, account: Account): User? {
@@ -39,8 +42,15 @@ class ServerTransactionAdapter(
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         val id = userId.id ?: return null
         val account = accountRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
+        val sheetResource: SheetResource
+        if(transaction.tag.label == "Aucune"){
+            val noneTag = tagRepository.findUnknownTag()
+            sheetResource = transaction.asResource(noneTag)
+        }else {
+            val tag = (transaction.tag.id?.let { tagRepository.findById(it) } ?: tagRepository.findUnknownTag()) as TagResource
+            sheetResource = transaction.asResource(tag)
+        }
         return try{
-            val sheetResource = transaction.asResource()
             val saved = sheetRepository.save(sheetResource)
             account.sheets.add(saved)
             account.amount = transaction.sold.applyOnValue { it }

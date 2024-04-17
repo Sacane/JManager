@@ -7,4 +7,6 @@ interface TagRepository {
     fun save(userId: UserId, tag: Tag): Tag?
     fun getAll(userId: UserId): List<Tag>
     fun deleteByLabel(label: String)
+    fun getAllDefault(userId: UserId): List<Tag>
+    fun existsByLabelAndUserId(userId: UserId, tag: Tag): Boolean
 }

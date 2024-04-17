@@ -19,7 +19,6 @@ import java.util.logging.Logger
 @Adapter(Side.DATASOURCE)
 class ServerUserAdapter (
     private val userPostgresRepository: UserPostgresRepository,
-    private val accountRepository: AccountRepository,
     private val loginRepository: LoginRepository
 ) : UserRepository{
     companion object{
@@ -68,7 +67,7 @@ class ServerUserAdapter (
     @Transactional
     override fun register(username: String, email: String, password: Password): User? {
         val userResource = UserResource(username = username, password = password.get(), email = email)
-        tags().map { it.asResource() }.forEach { userResource.addTag(it) }
+        defaultTags().map { it.asResource() }.forEach { userResource.addTag(it) }
         val userResponse = userPostgresRepository.save(
             userResource
         )

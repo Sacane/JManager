@@ -10,7 +10,7 @@ class Transaction(
     var expenses: Amount,
     var income: Amount,
     var sold: Amount,
-    var category: Tag = Tag("Aucune"),
+    var tag: Tag = Tag("Aucune", isDefault = true),
     var position: Int = 0
 ) {
     fun updateSoldStartingWith(start: Amount) {
@@ -31,7 +31,7 @@ class Transaction(
         this.date = other.date
         this.expenses = other.expenses
         this.income = other.income
-        this.category = other.category
+        this.tag = other.tag
         return true
     }
 

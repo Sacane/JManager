@@ -32,7 +32,7 @@ class Account(
         var addition = account.sold
         transactions.replaceAll {
             addition = if(it.expenses == Amount(0.toBigDecimal())) addition - it.income else addition + it.expenses
-            Transaction(it.id, it.label, it.date, it.expenses, it.income, addition, it.category, it.position)
+            Transaction(it.id, it.label, it.date, it.expenses, it.income, addition, it.tag, it.position)
         }
 
     }
