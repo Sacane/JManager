@@ -27,6 +27,5 @@ class UserResource(
     fun addTag(tag: TagResource) {
         tag.owner = this
         tags.add(tag)
-
     }
 }

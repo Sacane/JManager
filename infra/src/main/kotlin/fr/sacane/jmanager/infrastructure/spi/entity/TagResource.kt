@@ -1,9 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.ManyToOne
+import jakarta.persistence.*
 
 @Entity
 class TagResource(
@@ -11,7 +8,11 @@ class TagResource(
     @GeneratedValue
     var idTag: Long? = null,
     var name: String = "",
-
+    @Embedded
+    var color: Color = Color(0, 0, 0),
+    var isDefault: Boolean = false,
     @ManyToOne
-    var owner: UserResource? = null
+    var owner: UserResource? = null,
+    @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "tag")
+    var linkedTransaction: MutableSet<SheetResource> = mutableSetOf()
 )

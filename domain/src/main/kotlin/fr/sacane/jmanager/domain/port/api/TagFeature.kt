@@ -23,11 +23,14 @@ class TagFeatureImpl(
     private val session: SessionManager
 ): TagFeature{
     override fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag> = session.authenticate(userId, token){
+        if(!tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
+            return@authenticate Response.invalid("Le label '${tag.label}' est déjà pris")
+        }
         val save = tagRepository.save(it, tag) ?: return@authenticate Response.notFound("User has not been found")
         Response.ok(save)
     }
 
     override fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>> = session.authenticate(userId, token) {
-        Response.ok(tagRepository.getAll(it))
+        Response.ok(tagRepository.getAllDefault(userId))
     }
 }

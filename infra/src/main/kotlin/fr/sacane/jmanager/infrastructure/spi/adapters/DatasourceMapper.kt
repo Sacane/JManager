@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Component
+import java.awt.Color
 
 @Component
 class AccountMapper(val userRepository: UserPostgresRepository){
@@ -17,7 +18,7 @@ class AccountMapper(val userRepository: UserPostgresRepository){
     }
 }
 
-internal fun Transaction.asResource(): SheetResource {
+internal fun Transaction.asResource(tagResource: TagResource? = null): SheetResource {
     val resource = SheetResource()
     resource.label = this.label
     resource.date = this.date
@@ -28,6 +29,9 @@ internal fun Transaction.asResource(): SheetResource {
     }
     resource.idSheet = this.id
     resource.position = this.position
+    if(tagResource != null) {
+        resource.tag = tagResource
+    }
     return resource
 }
 internal fun Account.asResource(): AccountResource {
@@ -98,10 +102,10 @@ internal fun UserResource.toMinimalUserRepresentation()
 
 internal fun UserResource.toModelWithPasswords() : User =
     User(id = UserId(this.idUser), username = this.username, email = this.email, password = Password.fromBytes(this.password))
-internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag)
+internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag, color = Color(this.color.red, this.color.green, this.color.blue), isDefault = this.isDefault)
 
 internal fun Login.toModel()
 : AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
 
 internal fun Tag.toEntity()
-: TagResource = TagResource(name = this.label)
+: TagResource = TagResource(name = this.label, color = fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue), isDefault = this.isDefault)

@@ -23,7 +23,9 @@ class SheetResource(
     @Column(name="account_amount", scale = 2)
     var accountAmount: BigDecimal = BigDecimal(0.0),
     @Column
-    var position: Int = 0
+    var position: Int = 0,
+    @ManyToOne
+    var tag: TagResource? = null
 
 ){
     override fun toString(): String {
@@ -34,5 +36,10 @@ class SheetResource(
             income: $income
             accountAmount: $accountAmount
         """.trimIndent()
+    }
+
+    fun linkTag(tag: TagResource) {
+        this.tag = tag
+        tag.linkedTransaction.add(this)
     }
 }
