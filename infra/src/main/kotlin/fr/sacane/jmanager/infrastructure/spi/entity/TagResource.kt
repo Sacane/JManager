@@ -15,4 +15,8 @@ class TagResource(
     var owner: UserResource? = null,
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "tag")
     var linkedTransaction: MutableSet<SheetResource> = mutableSetOf()
-)
+){
+    override fun toString(): String {
+        return "id = $idTag, name = $name, color = $color, isDefault = $isDefault"
+    }
+}

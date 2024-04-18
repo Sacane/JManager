@@ -5,7 +5,7 @@ export default function useTag() {
     return post('tag', {
       userId: user.value?.id,
       tagLabel: label,
-      color: colorDTO,
+      colorDTO,
     })
   }
 
