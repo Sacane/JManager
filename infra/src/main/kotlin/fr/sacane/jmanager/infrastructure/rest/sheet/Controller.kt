@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.port.api.SheetFeature
+import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.rest.id
 import fr.sacane.jmanager.infrastructure.rest.toDTO
 import fr.sacane.jmanager.infrastructure.rest.toModel
@@ -21,15 +21,13 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("api/sheet")
 @Adapter(Side.API)
-class SheetController(private val sheetFeature: SheetFeature) {
+class SheetController(private val transactionFeature: TransactionFeature) {
     @PostMapping("/save")
     suspend fun createSheet(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetSendDTO> {
-        LOGGER.info("Trying to add the following sheet")
-        LOGGER.info(userAccountSheetDTO.sheetDTO.toString())
-        return sheetFeature.saveAndLink(
+        return transactionFeature.saveAndLink(
             userAccountSheetDTO.userId.id(),
             token.asTokenUUID(),
             userAccountSheetDTO.accountLabel,
@@ -54,7 +52,7 @@ class SheetController(private val sheetFeature: SheetFeature) {
         @RequestBody sheetIds: AccountSheetIdsDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
-        = sheetFeature.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
+        = transactionFeature.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID()).let {
             ResponseEntity.ok().build()
         }
 
@@ -68,7 +66,7 @@ class SheetController(private val sheetFeature: SheetFeature) {
         @RequestHeader("Authorization") token: String
         ): ResponseEntity<SheetsAndAverageDTO> {
         LOGGER.info("Start getting sheets for account $accountLabel")
-        val response = sheetFeature.retrieveSheetsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
+        val response = transactionFeature.retrieveSheetsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }, 0.0))
     }
@@ -78,7 +76,7 @@ class SheetController(private val sheetFeature: SheetFeature) {
         @RequestBody dto: UserIDSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = sheetFeature.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
+        = transactionFeature.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .mapBoth(
                 {s -> ResponseEntity.ok(s!!.toDTO()) },
                 {ResponseEntity.badRequest().build()}
@@ -92,7 +90,7 @@ class SheetController(private val sheetFeature: SheetFeature) {
         @PathVariable("id") sheetID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
-        = sheetFeature.findById(userID, sheetID, token.asTokenUUID())
+        = transactionFeature.findById(userID, sheetID, token.asTokenUUID())
             .mapTo {
                 it ?: Response.invalid<SheetDTO>()
                 Response.ok(it)

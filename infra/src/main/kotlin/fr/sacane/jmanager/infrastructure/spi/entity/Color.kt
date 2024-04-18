@@ -4,7 +4,7 @@ import jakarta.persistence.Embeddable
 
 @Embeddable
 class Color(
-    var red: Int,
-    var green: Int,
-    var blue: Int
+    var red: Int = 0,
+    var green: Int = 0,
+    var blue: Int = 0
 )

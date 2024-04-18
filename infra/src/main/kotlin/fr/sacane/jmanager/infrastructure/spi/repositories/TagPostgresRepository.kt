@@ -20,4 +20,7 @@ interface TagPostgresRepository : CrudRepository<TagResource, Long>{
     fun findUnknownTag(): TagResource?
     @Query("SELECT CASE WHEN COUNT(t) > 0 THEN TRUE ELSE FALSE END FROM TagResource t WHERE t.name = :name AND t.owner.idUser = :ownerId")
     fun existsTagByNameAndOwnerId(name: String, ownerId: Long): Boolean
+
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN TRUE ELSE FALSE END FROM TagResource t WHERE t.isDefault = true")
+    fun existsDefault(): Boolean
 }

@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import java.util.*
@@ -14,6 +15,7 @@ import java.util.*
 interface TagFeature {
     fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag>
     fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>>
+    fun addDefaultTags()
 }
 
 @DomainService
@@ -21,7 +23,7 @@ class TagFeatureImpl(
     private val register: TransactionRegister,
     private val tagRepository: TagRepository,
     private val session: SessionManager
-): TagFeature{
+): TagFeature {
     override fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag> = session.authenticate(userId, token){
         if(!tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
             return@authenticate Response.invalid("Le label '${tag.label}' est déjà pris")
@@ -32,5 +34,12 @@ class TagFeatureImpl(
 
     override fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>> = session.authenticate(userId, token) {
         Response.ok(tagRepository.getAllDefault(userId))
+    }
+
+    override fun addDefaultTags() {
+        if(tagRepository.existsDefault()){
+            return
+        }
+        tagRepository.saveAll(defaultTags)
     }
 }

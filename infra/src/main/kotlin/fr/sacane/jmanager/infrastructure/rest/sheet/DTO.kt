@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.rest.sheet
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import fr.sacane.jmanager.infrastructure.rest.tag.TagDTO
 import java.time.LocalDate
 import java.time.Month
 
@@ -10,6 +11,8 @@ data class UserIDSheetDTO(
     val sheet: SheetDTO
 )
 
+
+
 data class SheetDTO(
     val id: Long?,
     val label: String,
@@ -18,7 +21,8 @@ data class SheetDTO(
     @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
     val accountAmount: String,
-    val position: Int
+    val position: Int,
+    val tagDTO: TagDTO? = null
 )
 data class SheetsAndAverageDTO(
     val sheets: List<SheetDTO>,
