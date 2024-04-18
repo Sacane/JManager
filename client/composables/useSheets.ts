@@ -1,5 +1,3 @@
-import useQuery from './useQuery'
-
 export default function useSheet() {
   const { deleteQuery, post, get } = useQuery()
   const { user } = useAuth()
