@@ -43,4 +43,13 @@ class TagRepositoryAdapter(
     override fun existsByLabelAndUserId(userId: UserId, tag: Tag): Boolean
     = userId.id?.let { tagPostgresRepository.existsTagByNameAndOwnerId(tag.label, it) } ?: false
 
+    @Transactional
+    override fun saveAll(defaultTags: List<Tag>) {
+        tagPostgresRepository.saveAll(defaultTags.map { it.toEntity() })
+    }
+    @Transactional
+    override fun existsDefault(): Boolean {
+        return tagPostgresRepository.existsDefault()
+    }
+
 }
