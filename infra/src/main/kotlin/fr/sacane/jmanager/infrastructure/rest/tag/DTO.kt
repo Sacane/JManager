@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.rest.tag
 data class TagDTO(
     val tagId: Long,
     val label: String,
+    val colorDTO: ColorDTO = ColorDTO(0, 0, 0),
     val isDefault: Boolean = false
 )
 

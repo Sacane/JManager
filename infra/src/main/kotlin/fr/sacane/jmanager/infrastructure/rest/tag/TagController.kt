@@ -25,7 +25,7 @@ class TagController(
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<TagDTO>
     = tagFeature.addTag(userId = userTagDTO.userId.id(), token = token.asTokenUUID(), userTagDTO.tagLabel.asTag(userTagDTO.colorDTO.asAwtColor()))
-            .map { TagDTO(it.id!!, it.label, it.isDefault) }.toResponseEntity()
+            .map { TagDTO(it.id!!, label = it.label, isDefault =  it.isDefault) }.toResponseEntity()
 
 
     @GetMapping("/user/{userId}")

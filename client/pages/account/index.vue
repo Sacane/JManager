@@ -4,7 +4,7 @@ import useAccounts from '../../composables/useAccounts'
 definePageMeta({
   layout: 'sidebar-layout',
 })
-
+const row = ref<AccountDTO | undefined>(undefined)
 // toast
 //
 const { fetch, deleteAccount, createAccount } = useAccounts()
@@ -48,7 +48,6 @@ function applyDelete() {
     })
 }
 
-const row = ref<AccountDTO | undefined>(undefined)
 const actionSelection = ref<AccountDTO | undefined>(undefined)
 
 // ==================== Dialog management ==================== //
