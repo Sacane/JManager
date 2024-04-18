@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.rest.tag
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.models.asTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.infrastructure.rest.asAwtColor
@@ -24,7 +25,7 @@ class TagController(
         @RequestBody userTagDTO: UserTagDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<TagDTO>
-    = tagFeature.addTag(userId = userTagDTO.userId.id(), token = token.asTokenUUID(), userTagDTO.tagLabel.asTag(userTagDTO.colorDTO.asAwtColor()))
+    = tagFeature.addTag(userId = userTagDTO.userId.id(), token = token.asTokenUUID(), userTagDTO.tagLabel.asPersonalTag(userTagDTO.colorDTO.asAwtColor()))
             .map { TagDTO(it.id!!, label = it.label, isDefault =  it.isDefault) }.toResponseEntity()
 
 
