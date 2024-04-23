@@ -17,7 +17,7 @@ import java.util.logging.Logger
 class SessionManager {
     private val logger: Logger = Logger.getLogger(SessionManager::class.java.name)
     companion object {
-        const val PURGE_DELAY = 3_600_000L // one hour in milliseconds
+        const val PURGE_DELAY = 1_800_000L // 30 minutes in milliseconds
     }
 
     private val lock: Any = Any()
@@ -62,9 +62,15 @@ class SessionManager {
         userSession[userId]?.removeIf{it.tokenValue == token}
     }
     fun purgeExpiredToken() = synchronized(lock) {
+        var counter = 0
         logger.info("Start purge expired tokens")
-        userSession.values.forEach { it.removeIf {token -> token.isExpired()} }
+        userSession.values.forEach {
+            val result = it.removeIf {token ->
+                token.isExpired()
+            }
+            if(result) counter++
+        }
         userSession.entries.removeIf { (id, set) -> set.isEmpty() }
-        logger.info("Purge done")
+        logger.info("Purge done, erased $counter tokens")
     }
 }

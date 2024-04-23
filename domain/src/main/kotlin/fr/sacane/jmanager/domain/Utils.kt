@@ -8,7 +8,7 @@ import java.util.*
 fun String.asTokenUUID(): UUID = UUID.fromString(this.replace("Bearer ", ""))
 
 object Env {
-    const val TOKEN_LIFETIME_IN_HOURS = 1L
+    const val TOKEN_LIFETIME_IN_MINUTES = 30L
     const val REFRESH_TOKEN_LIFETIME_IN_DAYS = 7L
     const val TEST = "test"
     const val PROD = "prod"
