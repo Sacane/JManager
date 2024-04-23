@@ -52,5 +52,9 @@ class TagRepositoryAdapter(
     override fun existsDefault(): Boolean {
         return tagPostgresRepository.existsDefault()
     }
+    @Transactional
+    override fun deleteById(tagId: Long) {
+        tagPostgresRepository.deleteById(tagId)
+    }
 
 }

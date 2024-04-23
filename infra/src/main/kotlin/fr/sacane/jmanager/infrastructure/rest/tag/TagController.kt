@@ -26,7 +26,7 @@ class TagController(
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<TagDTO>
     = tagFeature.addTag(userId = userTagDTO.userId.id(), token = token.asTokenUUID(), userTagDTO.tagLabel.asPersonalTag(userTagDTO.colorDTO.asAwtColor()))
-            .map { TagDTO(it.id!!, label = it.label, isDefault =  it.isDefault) }.toResponseEntity()
+            .map { it.toDTO() }.toResponseEntity()
 
 
     @GetMapping("/user/{userId}")
@@ -35,5 +35,15 @@ class TagController(
         @PathVariable("userId") userId: Long
     ): ResponseEntity<List<TagDTO>>
     = tagFeature.getAllTags(userId.id(), token.asTokenUUID()).map { it.map { tag -> tag.toDTO() } }.toResponseEntity()
+
+
+    @DeleteMapping("{tagId}/user/{userId}")
+    fun deleteTag(
+        @RequestHeader("Authorization") token: String,
+        @PathVariable("userId") userId: Long,
+        @PathVariable("tagId") tagId: Long
+    ): ResponseEntity<Nothing>
+       = tagFeature.deleteTag(userId.id(), token.asTokenUUID(), tagId)
+           .toResponseEntity()
 
 }

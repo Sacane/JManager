@@ -11,4 +11,5 @@ interface TagRepository {
     fun existsByLabelAndUserId(userId: UserId, tag: Tag): Boolean
     fun saveAll(defaultTags: List<Tag>)
     fun existsDefault(): Boolean
+    fun deleteById(tagId: Long)
 }

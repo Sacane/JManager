@@ -12,10 +12,11 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import java.util.*
 
 @Port(Side.API)
-interface TagFeature {
+sealed interface TagFeature {
     fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag>
     fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>>
     fun addDefaultTags()
+    fun deleteTag(userId: UserId, token: UUID, tagId: Long): Response<Nothing>
 }
 
 @DomainService
@@ -41,5 +42,10 @@ class TagFeatureImpl(
             return
         }
         tagRepository.saveAll(defaultTags)
+    }
+
+    override fun deleteTag(userId: UserId, token: UUID, tagId: Long): Response<Nothing> = session.authenticate(userId, token){
+        tagRepository.deleteById(tagId)
+        Response.ok()
     }
 }

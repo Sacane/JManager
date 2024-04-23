@@ -55,4 +55,4 @@ internal fun ColorDTO.asAwtColor(): Color = Color(this.red, this.green, this.blu
 
 internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 
-internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = ColorDTO(this.color.red, this.color.green, this.color.blue))
+internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
