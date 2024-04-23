@@ -33,7 +33,7 @@ declare global {
     blue: number
   }
   interface TagDTO {
-    id: number | undefined
+    tagId: number | undefined
     label: string | undefined
     colorDTO: ColorDTO
     isDefault: boolean
