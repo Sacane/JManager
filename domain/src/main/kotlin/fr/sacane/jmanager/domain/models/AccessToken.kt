@@ -27,7 +27,7 @@ class AccessToken(
     }
 
     fun updateLifetime() {
-        tokenExpirationDate = tokenExpirationDate.plusHours(Env.TOKEN_LIFETIME_IN_HOURS)
+        tokenExpirationDate = tokenExpirationDate.plusHours(Env.TOKEN_LIFETIME_IN_MINUTES)
     }
     fun updateTokenLifetime() {
         refreshTokenLifetime = refreshTokenLifetime.plusDays(Env.REFRESH_TOKEN_LIFETIME_IN_DAYS)
@@ -49,7 +49,7 @@ data class UserToken(
 fun generateToken(role: Role = Role.USER)
 : AccessToken = AccessToken(
     UUID.randomUUID(),
-    now().plusHours(Env.TOKEN_LIFETIME_IN_HOURS),
+    now().plusMinutes(Env.TOKEN_LIFETIME_IN_MINUTES),
     UUID.randomUUID(),
     now().plusDays(Env.REFRESH_TOKEN_LIFETIME_IN_DAYS), role
 )
