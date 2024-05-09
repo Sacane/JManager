@@ -104,8 +104,6 @@ internal fun UserResource.toModelWithPasswords() : User =
     User(id = UserId(this.idUser), username = this.username, email = this.email, password = Password.fromBytes(this.password))
 internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag, color = Color(this.color.red, this.color.green, this.color.blue), isDefault = this.isDefault)
 
-internal fun Login.toModel()
-: AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
 
 internal fun Tag.toEntity()
 : TagResource = TagResource(name = this.label, color = fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue), isDefault = this.isDefault)

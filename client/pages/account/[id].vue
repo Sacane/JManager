@@ -12,10 +12,12 @@ const route = useRoute()
 const selectedSheets = ref()
 
 const { translate, monthFromNumber } = useDate()
+const tag = useTag()
 
 const { findById } = useAccounts()
 const { findByDate, deleteSheet } = useSheets()
 const date = new Date()
+const tags = ref<TagDTO[]>([])
 const data = reactive({
   year: date.getFullYear(),
   month: monthFromNumber(new Date().getMonth() + 1) as string,
@@ -26,6 +28,7 @@ const data = reactive({
   accountAmount: '',
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
+  tagDTO: undefined,
 })
 const actualSheets = ref()
 
@@ -46,6 +49,9 @@ function retrieveSheets() {
       })
     })
 }
+function retrieveTags() {
+  tag.getAllTags().then(tagDTOs => tags.value = tagDTOs)
+}
 
 function initAccount() {
   findById(Number.parseFloat(route.params?.id as string))
@@ -60,6 +66,7 @@ function initAccount() {
 onMounted(() => {
   data.month = monthFromNumber(new Date().getMonth() + 1) as string
   initAccount()
+  retrieveTags()
 })
 
 async function confirmDelete() {
@@ -209,6 +216,14 @@ async function onConfirm() {
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
         <Calendar id="calendar" v-model="values.date" placeholder="Date" date-format="dd-mm-yy" />
       </div>
+      <Dropdown v-model="data.tagDTO" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
+        <template #option="slotTag">
+          <div class="flex flex-row gap-2">
+            <div />
+            {{ slotTag.option.label }}
+          </div>
+        </template>
+      </Dropdown>
       <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onConfirm" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isNewTransactionDialogOpen = false" />
     </div>

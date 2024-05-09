@@ -7,7 +7,7 @@ declare global {
     income: string
     date: string
     accountAmount: string
-
+    color: ColorDTO
   }
 
   interface AccountDTO {
