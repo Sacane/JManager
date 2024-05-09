@@ -10,9 +10,7 @@ fun String.asTokenUUID(): UUID = UUID.fromString(this.replace("Bearer ", ""))
 object Env {
     const val TOKEN_LIFETIME_IN_MINUTES = 30L
     const val REFRESH_TOKEN_LIFETIME_IN_DAYS = 7L
-    const val TEST = "test"
     const val PROD = "prod"
-    const val DEV = "dev"
 
     val isProd: Boolean
         get() = System.getProperty("JMANAGER_ENV") == PROD
@@ -23,12 +21,10 @@ object Hash {
     private val md = MessageDigest.getInstance("SHA-512")
     private val salt: ByteArray
     init{
-        val file = this::class.java.classLoader.getResourceAsStream("salt.txt")
-        salt = if(file == null) {
-            "FJZOIDJ".toByteArray()
-        } else {
-            file.readAllBytes()
-        }
+        salt = this::class.java.classLoader
+            .getResourceAsStream("salt.txt")
+            ?.readAllBytes()
+            ?: "FADSA".toByteArray()
     }
 
     fun hash(pwd: String): ByteArray{
