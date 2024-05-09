@@ -22,6 +22,7 @@ import java.util.logging.Logger
 @RequestMapping("api/sheet")
 @Adapter(Side.API)
 class SheetController(private val transactionFeature: TransactionFeature) {
+    private val logger = Logger.getLogger(SheetController::class.java.name)
     @PostMapping("/save")
     suspend fun createSheet(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
@@ -42,7 +43,9 @@ class SheetController(private val transactionFeature: TransactionFeature) {
                     sold.toAmount().toString()
                 )
             }
-        }.toResponseEntity()
+        }.toResponseEntity().apply {
+            logger.info("Creating new transaction => ${userAccountSheetDTO.sheetDTO}")
+        }
     }
 
 

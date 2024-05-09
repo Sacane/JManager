@@ -150,6 +150,7 @@ async function onConfirm() {
     income: (values.selectedMode === 'income') ? amount : '0 €',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: `${data.accountAmount}`,
+    tagDTO: data.tagDTO,
   }).then((sheet: SheetDTO) => {
     // actualSheets.value.push(asDisplayableTransaction(sheet))
     initAccount()
@@ -206,6 +207,19 @@ async function onConfirm() {
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libelle</label>
         <InputText id="label" v-model="values.sheetLabel" type="text" autocomplete="off" />
+      </div>
+      <div class="mt5 flex flex-col gap-3">
+        <label for="selectionType">Selectionner le type de transaction</label>
+        <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
+          <div>
+            <RadioButton v-model="values.selectedMode" input-id="selection1" value="expenses" />
+            <label for="selection1">Dépense</label>
+          </div>
+          <div>
+            <RadioButton v-model="values.selectedMode" input-id="selection2" value="income" />
+            <label for="selection2">Recette</label>
+          </div>
+        </div>
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
