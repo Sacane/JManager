@@ -39,6 +39,7 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
     incomeRepresenttation: (transaction.income !== '') ? `${transaction.income}` : '/',
     date: transaction.date,
     accountAmount: transaction.accountAmount,
+    tagDTO: transaction.tagDTO,
   }
 }
 function retrieveSheets() {
@@ -93,22 +94,28 @@ function confirmDeleteButton() {
     accept: () => confirmDelete(),
   })
 }
+const isNewTransactionDialogOpen = ref<boolean>(false)
+const isEditTransactionDialogOpen = ref<boolean>(false)
 
-function onEditPage(event: any) {
-  navigateTo({
-    path: '/sheet/edit',
-    query: {
-      id: event.data.id,
-      label: event.data.label,
-      expenses: event.data.expenses,
-      income: event.data.income,
-      date: event.data.date,
-      accountAmount: event.data.accountAmount,
-      accountID: data.currentAccountId,
-      accountLabel: data.labelAccount,
-      currentAccountAmount: data.accountAmount,
-    },
-  })
+const editTransactionInfo = reactive({
+  id: 0,
+  label: '',
+  date: new Date(),
+  amount: 0,
+  selectedMode: 'expenses',
+  accountAmount: 0.0,
+  accountId: 0,
+  integerPart: '0',
+  decimalPart: '0',
+  tagDTO: '',
+})
+
+function onEditPage(event: SheetDTO) {
+  editTransactionInfo.label = event.label
+  editTransactionInfo.id = event.id
+  editTransactionInfo.date = event.date
+  editTransactionInfo.amount = event.accountAmount
+  isEditTransactionDialogOpen.value = true
 }
 
 function onYearChange() {
@@ -118,13 +125,9 @@ function onYearChange() {
 
 const uDate = useDate()
 
-// dialog
-
-const isNewTransactionDialogOpen = ref<boolean>(false)
-
 // transaction persistance
 
-const { saveSheet } = useSheet()
+const { saveSheet, editSheet } = useSheet()
 
 const values = reactive({
   accountId: data.currentAccountId,
@@ -155,6 +158,22 @@ async function onConfirm() {
     // actualSheets.value.push(asDisplayableTransaction(sheet))
     initAccount()
   }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => isNewTransactionDialogOpen.value = false)
+}
+async function onEditTransaction() {
+  if ((editTransactionInfo.integerPart === '0' && editTransactionInfo.decimalPart === '0') || editTransactionInfo.label === '') {
+    return
+  }
+  const amount = `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart} €`
+  await editSheet({
+    id: 0,
+    label: editTransactionInfo.label,
+    expenses: (editTransactionInfo.selectedMode === 'expenses') ? amount : '0 €',
+    income: (editTransactionInfo.selectedMode === 'income') ? amount : '0 €',
+    date: editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
+    accountAmount: `${editTransactionInfo.accountAmount}`,
+    tagDTO: editTransactionInfo.tagDTO,
+  }, Number.parseInt(data.currentAccountId))
+    .then((_: SheetDTO) => initAccount())
 }
 </script>
 
@@ -190,11 +209,12 @@ async function onConfirm() {
             </div>
           </div>
         </template>
-        <Column sortable field="date" header="Date" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <Column field="label" header="Libellé" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <Column field="expensesRepresentation" header="Dépenses" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <Column field="incomeRepresenttation" header="Recettes" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
-        <Column field="accountAmount" header="Solde" :body-style="{ textAlign: 'center' }" :header-style="{ textAlign: 'center' }" />
+        <Column sortable field="date" header="Date" :header-style="{ textAlign: 'center' }" />
+        <Column field="label" header="Libellé" :header-style="{ textAlign: 'center' }" />
+        <Column field="expensesRepresentation" header="Dépenses" :header-style="{ textAlign: 'center' }" />
+        <Column field="incomeRepresenttation" header="Recettes" :header-style="{ textAlign: 'center' }" />
+        <Column field="accountAmount" header="Solde" />
+        <Column field="tagDTO" header="Tag" />
       </DataTable>
     </div>
     <div class="pt5px flex flex-col gap-3 mr2">
@@ -240,6 +260,46 @@ async function onConfirm() {
       </Dropdown>
       <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onConfirm" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isNewTransactionDialogOpen = false" />
+    </div>
+  </Dialog>
+  <Dialog v-model:visible="isEditTransactionDialogOpen" modal header="Mettre à jour la transaction">
+    <div class="mt-6">
+      <div class="flex flex-col gap-3">
+        <label for="label" class="block text-sm font-medium text-gray-700">Libelle</label>
+        <InputText id="label" v-model="editTransactionInfo.label" type="text" autocomplete="off" />
+      </div>
+      <div class="mt5 flex flex-col gap-3">
+        <label for="selectionType">Selectionner le type de transaction</label>
+        <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
+          <div>
+            <RadioButton v-model="editTransactionInfo.selectedMode" input-id="selection1" value="expenses" />
+            <label for="selection1">Dépense</label>
+          </div>
+          <div>
+            <RadioButton v-model="editTransactionInfo.selectedMode" input-id="selection2" value="income" />
+            <label for="selection2">Recette</label>
+          </div>
+        </div>
+      </div>
+      <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
+      <div id="labelAmount" class="flex-row">
+        <InputText v-model="editTransactionInfo.integerPart" type="number" placeholder="Partie entière" class="" />
+        <InputText v-model="editTransactionInfo.decimalPart" type="number" placeholder="Partie décimale" maxlength="2" class="" />
+      </div>
+      <div mt5px class="flex flex-col gap-3">
+        <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
+        <Calendar id="calendar" v-model="editTransactionInfo.date" placeholder="Date" date-format="dd-mm-yy" />
+      </div>
+      <Dropdown v-model="editTransactionInfo.tagDTO" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
+        <template #option="slotTag">
+          <div class="flex flex-row gap-2">
+            <div />
+            {{ slotTag.option.label }}
+          </div>
+        </template>
+      </Dropdown>
+      <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onEditTransaction" />
+      <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isEditTransactionDialogOpen = false" />
     </div>
   </Dialog>
 </template>
