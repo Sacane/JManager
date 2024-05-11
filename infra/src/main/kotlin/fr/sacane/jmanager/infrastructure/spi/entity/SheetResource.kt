@@ -25,7 +25,9 @@ class SheetResource(
     @Column
     var position: Int = 0,
     @ManyToOne
-    var tag: TagResource? = null
+    var tag: DefaultTagResource? = null,
+    @ManyToOne
+    var personalTag:TagPersonalResource? = null
 
 ){
     override fun toString(): String {
@@ -38,8 +40,10 @@ class SheetResource(
         """.trimIndent()
     }
 
-    fun linkTag(tag: TagResource) {
+    fun linkPersonalTag(tag: TagPersonalResource) {
+        this.personalTag = tag
+    }
+    fun linkDefaultTag(tag: DefaultTagResource) {
         this.tag = tag
-        tag.linkedTransaction.add(this)
     }
 }
