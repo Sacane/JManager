@@ -2,7 +2,9 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Password
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
