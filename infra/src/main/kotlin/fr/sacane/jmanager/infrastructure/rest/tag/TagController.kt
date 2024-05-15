@@ -4,7 +4,6 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.asPersonalTag
-import fr.sacane.jmanager.domain.models.asTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.infrastructure.rest.asAwtColor
 import fr.sacane.jmanager.infrastructure.rest.id

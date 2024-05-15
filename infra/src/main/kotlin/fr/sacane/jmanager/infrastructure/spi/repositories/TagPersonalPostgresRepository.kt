@@ -10,4 +10,7 @@ interface TagPersonalPostgresRepository: CrudRepository<TagPersonalResource, Lon
     fun existsTagByNameAndOwnerId(name: String, ownerId: Long): Boolean
     @Query("SELECT tag FROM TagPersonalResource tag WHERE tag.owner.idUser = :userId")
     fun findAllByOwnerId(userId: Long): List<TagPersonalResource>
+
+    @Query("SELECT tag FROM TagPersonalResource tag WHERE tag.idTag = :id")
+    fun findByIdNullable(id: Long?): TagPersonalResource?
 }

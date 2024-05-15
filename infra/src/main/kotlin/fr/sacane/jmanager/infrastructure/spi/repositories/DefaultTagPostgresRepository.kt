@@ -11,4 +11,7 @@ interface DefaultTagPostgresRepository : CrudRepository<DefaultTagResource, Long
     fun deleteByName(name: String)
     @Query("SELECT tag FROM DefaultTagResource tag WHERE tag.name = 'Aucune'")
     fun findUnknownTag(): DefaultTagResource?
+
+    @Query("SELECT tag FROM DefaultTagResource tag WHERE tag.idTag = :id")
+    fun findByIdNullable(id: Long): DefaultTagResource?
 }
