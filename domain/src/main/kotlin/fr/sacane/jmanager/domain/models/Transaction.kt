@@ -43,6 +43,7 @@ class Transaction(
             income: $income
             sold: $sold
             position: $position
+            tag: $tag
         """.trimIndent()
     }
 

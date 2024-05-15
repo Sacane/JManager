@@ -5,6 +5,7 @@ import fr.sacane.jmanager.infrastructure.rest.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Component
+import java.awt.Color
 
 @Component
 class AccountMapper(val userRepository: UserPostgresRepository){
@@ -68,7 +69,8 @@ internal fun SheetResource.toModel(): Transaction{
         this.expenses.toAmount(),
         this.income.toAmount(),
         this.accountAmount.toAmount(),
-        position=this.position)
+        position=this.position,
+        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)))
 }
 internal fun AccountResource.toModel(): Account{
     return Account(

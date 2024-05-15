@@ -27,7 +27,7 @@ class AccessToken(
     }
 
     fun updateLifetime() {
-        tokenExpirationDate = tokenExpirationDate.plusHours(Env.TOKEN_LIFETIME_IN_MINUTES)
+        tokenExpirationDate = tokenExpirationDate.plusMinutes(Env.TOKEN_LIFETIME_IN_MINUTES)
     }
     fun updateTokenLifetime() {
         refreshTokenLifetime = refreshTokenLifetime.plusDays(Env.REFRESH_TOKEN_LIFETIME_IN_DAYS)

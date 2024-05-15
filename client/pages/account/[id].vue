@@ -214,7 +214,16 @@ async function onEditTransaction() {
         <Column field="expensesRepresentation" header="Dépenses" :header-style="{ textAlign: 'center' }" />
         <Column field="incomeRepresenttation" header="Recettes" :header-style="{ textAlign: 'center' }" />
         <Column field="accountAmount" header="Solde" />
-        <Column field="tagDTO" header="Tag" />
+        <Column field="tagDTO" header="Tag">
+          <template #body="{ data }">
+            <div class="flex flex-row">
+              <p :style="{ color: `rgb(${data.tagDTO.colorDTO.red}, ${data.tagDTO.colorDTO.green}, ${data.tagDTO.colorDTO.blue})` }">
+                {{ data.tagDTO.label }}
+              </p>
+              <div class="color-square" :style="{ backgroundColor: `rgb(${data.tagDTO.colorDTO.r}, ${data.tagDTO.colorDTO.g}, ${data.tagDTO.colorDTO.b})` }" />
+            </div>
+          </template>
+        </Column>
       </DataTable>
     </div>
     <div class="pt5px flex flex-col gap-3 mr2">
@@ -334,5 +343,11 @@ async function onEditTransaction() {
 
 .selected-row{
   color: blue;
+}
+.color-square {
+  width: 20px; /* Largeur du carré de couleur */
+  height: 20px; /* Hauteur du carré de couleur */
+  border-radius: 4px; /* Pour rendre le carré de couleur légèrement arrondi */
+  border: 1px solid #000; /* Bordure du carré de couleur */
 }
 </style>

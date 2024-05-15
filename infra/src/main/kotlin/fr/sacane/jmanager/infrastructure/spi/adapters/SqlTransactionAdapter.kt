@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @Adapter(Side.DATASOURCE)
-class ServerTransactionAdapter(
+class SqlTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userPostgresRepository: UserPostgresRepository,
     private val accountRepository: AccountRepository,
@@ -99,7 +99,9 @@ class ServerTransactionAdapter(
     }
     @Transactional
     override fun findSheetByID(sheetID: Long): Transaction? {
-        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
+        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel().also {
+            println(it)
+        }
     }
     @Transactional
     override fun save(transaction: Transaction): Transaction? {

@@ -8,7 +8,7 @@ declare global {
     date: string
     accountAmount: string
     color: ColorDTO
-    tagDTO: string
+    tagDTO: TagDTO
   }
 
   interface AccountDTO {

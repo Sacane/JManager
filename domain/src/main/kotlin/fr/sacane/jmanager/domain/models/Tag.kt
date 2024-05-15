@@ -4,7 +4,11 @@ import java.awt.Color
 
 class Tag(val label: String, val id: Long? = null, val color: Color = Color(0f, 0f, 0f, 0f), val isDefault: Boolean = false){
     override fun toString(): String {
-        return "$color"
+        return """
+            name: $label
+            id: $id
+            color: $color
+        """.trimIndent()
     }
 }
 
