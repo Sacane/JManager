@@ -1,9 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.repositories
 
-import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
-import fr.sacane.jmanager.infrastructure.spi.entity.SheetResource
-import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository

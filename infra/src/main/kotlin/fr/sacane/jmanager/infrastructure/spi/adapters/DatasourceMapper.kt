@@ -1,9 +1,11 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.infrastructure.rest.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Component
+import java.awt.Color
 
 @Component
 class AccountMapper(val userRepository: UserPostgresRepository){
@@ -17,7 +19,9 @@ class AccountMapper(val userRepository: UserPostgresRepository){
     }
 }
 
-internal fun Transaction.asResource(): SheetResource {
+
+
+internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): SheetResource {
     val resource = SheetResource()
     resource.label = this.label
     resource.date = this.date
@@ -28,6 +32,12 @@ internal fun Transaction.asResource(): SheetResource {
     }
     resource.idSheet = this.id
     resource.position = this.position
+    if(tagResource != null) {
+        when(tagResource) {
+            is DefaultTagResource -> resource.tag = tagResource
+            is TagPersonalResource -> resource.personalTag = tagResource
+        }
+    }
     return resource
 }
 internal fun Account.asResource(): AccountResource {
@@ -40,7 +50,7 @@ internal fun Account.asResource(): AccountResource {
 }
 
 internal fun User.asResource(): UserResource {
-    return UserResource(username = username, password = password.get(), email = email, mutableListOf(), tags = tags.map { TagResource(idTag = it.id, name = it.label) }.toMutableList())
+    return UserResource(username = username, password = password.get(), email = email, mutableListOf(), tags = tags.map { it.toPersonalTag() }.toMutableList())
 }
 
 internal fun User.asExistingResource(): UserResource
@@ -49,10 +59,9 @@ internal fun User.asExistingResource(): UserResource
         password = password.get(),
         email = email,
         accounts = this.accounts.map {it.asResource()}.toMutableList(),
-        tags = this.tags.map { it.asResource() }.toMutableList()
+        tags = this.tags.map { it.toPersonalTag() }.toMutableList()
     )
 
-internal fun Tag.asResource(): TagResource = TagResource(this.id, this.label)
 internal fun SheetResource.toModel(): Transaction{
     return Transaction(this.idSheet,
         this.label,
@@ -60,7 +69,8 @@ internal fun SheetResource.toModel(): Transaction{
         this.expenses.toAmount(),
         this.income.toAmount(),
         this.accountAmount.toAmount(),
-        position=this.position)
+        position=this.position,
+        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)))
 }
 internal fun AccountResource.toModel(): Account{
     return Account(
@@ -98,10 +108,20 @@ internal fun UserResource.toMinimalUserRepresentation()
 
 internal fun UserResource.toModelWithPasswords() : User =
     User(id = UserId(this.idUser), username = this.username, email = this.email, password = Password.fromBytes(this.password))
-internal fun TagResource.toModel(): Tag = Tag(this.name, this.idTag)
 
-internal fun Login.toModel()
-: AccessToken = AccessToken(this.token, this.tokenLifeTime, this.refreshToken, this.refreshTokenLifetime)
+fun Tag.asResource(): AbstractTagResource {
+    return when(this.isDefault) {
+        true -> DefaultTagResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue))
+        false -> TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue))
+    }
+}
+fun AbstractTagResource.toDomain(): Tag {
+    return when(this) {
+        is DefaultTagResource -> Tag(this.name, this.idTag, this.color.asAwtColor(), true)
+        is TagPersonalResource -> Tag(this.name, this.idTag, this.color.asAwtColor(), false)
+    }
+}
 
-internal fun Tag.toEntity()
-: TagResource = TagResource(name = this.label)
+fun Tag.toPersonalTag(userResource: UserResource? = null): TagPersonalResource{
+    return TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(color.red, color.green, color.blue), userResource)
+}

@@ -10,7 +10,7 @@ import java.time.Month
 import java.util.*
 
 @Port(Side.API)
-sealed interface SheetFeature {
+sealed interface TransactionFeature {
     fun saveAndLink(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
     fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
     fun editSheet(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
@@ -19,11 +19,11 @@ sealed interface SheetFeature {
 }
 
 @DomainService
-class SheetFeatureImplementation(
+class TransactionFeatureImpl(
     private val register: TransactionRegister,
     private val userRepository: UserRepository,
     private val session: SessionManager
-): SheetFeature{
+): TransactionFeature{
 
     private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
         val sheets = account.transactions.filter { it.date.month == month }
@@ -79,11 +79,9 @@ class SheetFeatureImplementation(
         } else {
             transaction.updateSoldStartingWith(account.sold)
         }
-        register.persist(userId, accountLabel, transaction) ?: return@authenticate Response.invalid()
+        register.persist(userId, accountLabel, transaction) ?: return@authenticate Response.invalid("Une erreur est survenue lors de l'ajout de la transaction")
         Response.ok(transaction)
     }
-
-
 
     override fun retrieveSheetsByMonthAndYear(
         userId: UserId,
@@ -106,7 +104,7 @@ class SheetFeatureImplementation(
         token: UUID
     ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
         val user = userRepository.findUserById(UserId(userID)) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas en base")
-        if(transaction.id == null) return@authenticate Response.notFound("L'ID de la transaction n'existe pas")
+        if(transaction.id == null) return@authenticate Response.invalid("L'ID de la transaction est null")
         val acc = user.accounts.find { it.id == accountID }
         val sheetFromResource = acc?.transactions?.find { it.id == transaction.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
         sheetFromResource.updateFromOther(transaction)

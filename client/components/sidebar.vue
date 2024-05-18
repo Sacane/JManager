@@ -21,9 +21,9 @@ const { isAuthenticated, logout, user } = useAuth()
         <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white">
           <i class="pi pi-user text-20px" /> Mes comptes
         </NuxtLink>
-        <!-- <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white">
+        <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white">
           <i class="pi pi-user text-20px" /> Mes tags
-        </NuxtLink> -->
+        </NuxtLink>
       </div>
     </div>
 
