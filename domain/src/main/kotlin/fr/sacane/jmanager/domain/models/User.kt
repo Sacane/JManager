@@ -45,20 +45,7 @@ class User(
     val email: String?,
     private val accounts_: MutableList<Account> = mutableListOf(),
     val password: Password,
-    val tags: MutableSet<Tag> = mutableSetOf(
-        "Loisir".asTag(),
-        "Repas".asTag(),
-        "Autres".asTag(),
-        "Mise en epargne".asTag(),
-        "Education".asTag(),
-        "Cadeaux".asTag(),
-        "Remboursement".asTag(),
-        "Sante".asTag(),
-        "Vie quotidienne".asTag(),
-        "Voyage et Transports".asTag(),
-        "Revenus".asTag(),
-        "Abonnements".asTag()
-    )
+    val tags: MutableSet<Tag> = mutableSetOf()
 ) {
 
     val accounts: MutableList<Account>

@@ -3,9 +3,8 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.spi.entity.TagResource
+import fr.sacane.jmanager.infrastructure.spi.entity.SheetResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.*
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
@@ -13,13 +12,14 @@ import org.springframework.stereotype.Service
 
 @Service
 @Adapter(Side.DATASOURCE)
-class ServerTransactionAdapter(
+class SqlTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userPostgresRepository: UserPostgresRepository,
     private val accountRepository: AccountRepository,
     private val accountMapper: AccountMapper,
-    private val tagRepository: TagPostgresRepository
-    ) : TransactionRegister{
+    private val tagRepository: DefaultTagPostgresRepository,
+    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
+) : TransactionRegister{
 
     @Transactional
     override fun persist(userId: UserId, account: Account): User? {
@@ -39,8 +39,20 @@ class ServerTransactionAdapter(
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         val id = userId.id ?: return null
         val account = accountRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
+        val sheetResource: SheetResource
+        if(transaction.tag.label == "Aucune"){
+            val noneTag = tagRepository.findUnknownTag()
+            sheetResource = transaction.asResource(noneTag)
+        } else {
+            val tag = transaction.tag.id?.let { if(transaction.tag.isDefault) {
+                    tagRepository.findByIdNullable(it)
+                } else {
+                    tagPersonalPostgresRepository.findByIdNullable(it)
+                }
+            }
+            sheetResource = transaction.asResource(tag)
+        }
         return try{
-            val sheetResource = transaction.asResource()
             val saved = sheetRepository.save(sheetResource)
             account.sheets.add(saved)
             account.amount = transaction.sold.applyOnValue { it }
@@ -56,12 +68,12 @@ class ServerTransactionAdapter(
         return registered.toModel()
     }
     @Transactional
-    override fun persist(userId: UserId, category: Tag): Tag? {
+    override fun persist(userId: UserId, tag: Tag): Tag? {
         val id = userId.id ?: return null
         val user = userPostgresRepository.findById(id).orElseThrow()
-        user.tags.add(TagResource(name = category.label))
+        user.tags.add(tag.toPersonalTag())
         userPostgresRepository.save(user)
-        return category
+        return tag
     }
 
     @Transactional
@@ -87,7 +99,9 @@ class ServerTransactionAdapter(
     }
     @Transactional
     override fun findSheetByID(sheetID: Long): Transaction? {
-        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
+        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel().also {
+            println(it)
+        }
     }
     @Transactional
     override fun save(transaction: Transaction): Transaction? {

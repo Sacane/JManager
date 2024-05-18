@@ -16,21 +16,22 @@ repositories{
 
 group = "fr.sacane.jmanager"
 version = "1.0"
+val springVersion = "3.1.3"
 dependencies {
 
-    implementation("org.springframework.boot:spring-boot-starter-web:3.1.3")
+    implementation("org.springframework.boot:spring-boot-starter-web:${springVersion}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.1.3")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:${springVersion}")
     implementation("com.ToxicBakery.library.bcrypt:bcrypt:1.0.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
     implementation("org.postgresql:postgresql")
-    implementation("org.springframework.boot:spring-boot-starter-security:3.1.3")
+    implementation("org.springframework.boot:spring-boot-starter-security:${springVersion}")
     implementation(project(mapOf("path" to ":domain")))
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.1.3")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${springVersion}")
     testImplementation("org.hamcrest:hamcrest:2.2")
     testImplementation("com.h2database:h2")
 }

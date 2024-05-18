@@ -13,8 +13,8 @@ class UserResource(
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var accounts: MutableList<AccountResource> = mutableListOf(),
-    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner")
-    var tags: MutableList<TagResource> = mutableListOf(),
+    @OneToMany(mappedBy = "owner")
+    var tags: MutableList<TagPersonalResource> = mutableListOf(),
     @Id
     @GeneratedValue
     @Column(name = "id_user")
@@ -24,9 +24,13 @@ class UserResource(
         accountResource.owner = this
         accounts.add(accountResource)
     }
-    fun addTag(tag: TagResource) {
+    fun addTag(tag: TagPersonalResource) {
         tag.owner = this
         tags.add(tag)
-
+    }
+    fun addAllTag(tags: List<TagPersonalResource>) {
+        tags.forEach {
+            addTag(it)
+        }
     }
 }
