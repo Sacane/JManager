@@ -216,11 +216,13 @@ async function onEditTransaction() {
         <Column field="accountAmount" header="Solde" />
         <Column field="tagDTO" header="Tag">
           <template #body="{ data }">
-            <div class="flex flex-row">
-              <p :style="{ color: `rgb(${data.tagDTO.colorDTO.red}, ${data.tagDTO.colorDTO.green}, ${data.tagDTO.colorDTO.blue})` }">
+            <div class="flex flex-row align-center flex-gap-2">
+              <p>
                 {{ data.tagDTO.label }}
               </p>
-              <div class="color-square" :style="{ backgroundColor: `rgb(${data.tagDTO.colorDTO.r}, ${data.tagDTO.colorDTO.g}, ${data.tagDTO.colorDTO.b})` }" />
+              <div class="flex flex-col align-center justify-center">
+                <div class="color-square" :style="{ backgroundColor: `rgb(${data.tagDTO.colorDTO.red}, ${data.tagDTO.colorDTO.green}, ${data.tagDTO.colorDTO.blue})` }" />
+              </div>
             </div>
           </template>
         </Column>
