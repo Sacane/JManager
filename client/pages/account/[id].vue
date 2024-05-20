@@ -9,7 +9,7 @@ definePageMeta({
 
 const route = useRoute()
 
-const selectedSheets = ref()
+const selectedSheets = ref([])
 
 const { translate, monthFromNumber } = useDate()
 const tag = useTag()
@@ -180,6 +180,10 @@ async function onEditTransaction() {
   }, Number.parseInt(data.currentAccountId))
     .then((_: SheetDTO) => initAccount())
 }
+
+function test(row): any | undefined {
+  return selectedSheets.value.includes(row) ? 'background-color: #D3D3D3 ' : undefined
+}
 </script>
 
 <template>
@@ -197,7 +201,7 @@ async function onEditTransaction() {
           </h2>
         </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :value="actualSheets" scrollable scroll-height="450px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="450px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
@@ -360,5 +364,8 @@ async function onEditTransaction() {
   height: 20px; /* Hauteur du carré de couleur */
   border-radius: 4px; /* Pour rendre le carré de couleur légèrement arrondi */
   border: 1px solid #000; /* Bordure du carré de couleur */
+}
+.test{
+  background-color: blue;
 }
 </style>
