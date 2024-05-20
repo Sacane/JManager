@@ -9,7 +9,7 @@ definePageMeta({
 
 const route = useRoute()
 
-const selectedSheets = ref()
+const selectedSheets = ref([])
 
 const { translate, monthFromNumber } = useDate()
 const tag = useTag()
@@ -116,11 +116,16 @@ function onEditPage(event: SheetDTO) {
   editTransactionInfo.date = event.date
   editTransactionInfo.amount = event.accountAmount
   isEditTransactionDialogOpen.value = true
+  console.log(editTransactionInfo)
+  console.log(event.label)
 }
 
 function onYearChange() {
   data.year = data.dateYear.getFullYear()
   retrieveSheets()
+}
+function back() {
+  navigateTo('/account')
 }
 
 const uDate = useDate()
@@ -175,6 +180,10 @@ async function onEditTransaction() {
   }, Number.parseInt(data.currentAccountId))
     .then((_: SheetDTO) => initAccount())
 }
+
+function test(row): any | undefined {
+  return selectedSheets.value.includes(row) ? 'background-color: #D3D3D3 ' : undefined
+}
 </script>
 
 <template>
@@ -185,11 +194,14 @@ async function onEditTransaction() {
         <h2 class="text-2xl font-bold mb-4 info-text">
           Les transactions sur le compte {{ data.labelAccount }}
         </h2>
-        <h2 class="text-2xl mb-4">
-          Solde du compte : {{ data.accountAmount }}
-        </h2>
+        <div class="flex flex-row gap-3">
+          <Button class="w-2% h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
+          <h2 class="text-2xl mb-4">
+            Solde du compte : {{ data.accountAmount }}
+          </h2>
+        </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :value="actualSheets" scrollable scroll-height="450px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="450px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
@@ -228,7 +240,7 @@ async function onEditTransaction() {
         </Column>
       </DataTable>
     </div>
-    <div class="pt5px flex flex-col gap-3 mr2">
+    <div class="pt10px flex flex-col gap-3 mr2 ">
       <Button icon="pi pi-plus" @click="isNewTransactionDialogOpen = true" />
       <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
@@ -346,10 +358,14 @@ async function onEditTransaction() {
 .selected-row{
   color: blue;
 }
+
 .color-square {
   width: 20px; /* Largeur du carré de couleur */
   height: 20px; /* Hauteur du carré de couleur */
   border-radius: 4px; /* Pour rendre le carré de couleur légèrement arrondi */
   border: 1px solid #000; /* Bordure du carré de couleur */
+}
+.test{
+  background-color: blue;
 }
 </style>

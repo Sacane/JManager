@@ -63,7 +63,7 @@ class TransactionFeatureImpl(
         accountLabel: String,
         transaction: Transaction
     ): Response<Transaction> = session.authenticate(userId, token) {
-        val account = register.findAccountByLabel(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
+        val account = register.findAccountWithSheetByLabelAndUser(accountLabel, userId) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         if(account.transactions.isNotEmpty()) {
             val lastRecord = account.transactions
                 .filter { it.date <= transaction.date }
