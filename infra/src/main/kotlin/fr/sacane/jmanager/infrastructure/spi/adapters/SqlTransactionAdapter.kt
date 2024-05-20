@@ -44,13 +44,7 @@ class SqlTransactionAdapter(
             val noneTag = tagRepository.findUnknownTag()
             sheetResource = transaction.asResource(noneTag)
         } else {
-            val tag = transaction.tag.id?.let { if(transaction.tag.isDefault) {
-                    tagRepository.findByIdNullable(it)
-                } else {
-                    tagPersonalPostgresRepository.findByIdNullable(it)
-                }
-            }
-            sheetResource = transaction.asResource(tag)
+            sheetResource = transaction.mapToRightTag()
         }
         return try{
             val saved = sheetRepository.save(sheetResource)
@@ -91,7 +85,17 @@ class SqlTransactionAdapter(
     }
     @Transactional
     override fun saveAllSheets(transactions: List<Transaction>) {
-        sheetRepository.saveAll(transactions.map { it.asResource() })
+        sheetRepository.saveAll(transactions.map { it.mapToRightTag() })
+    }
+    private fun Transaction.mapToRightTag(): SheetResource {
+        val tag = this.tag.id?.let {
+            if(this.tag.isDefault) {
+                tagRepository.findByIdNullable(it)
+            } else {
+                tagPersonalPostgresRepository.findByIdNullable(it)
+            }
+        }
+        return this.asResource(tag)
     }
     @Transactional
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
