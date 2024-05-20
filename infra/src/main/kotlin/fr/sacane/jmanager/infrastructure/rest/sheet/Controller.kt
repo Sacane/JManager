@@ -28,6 +28,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetSendDTO> {
+        println(userAccountSheetDTO.sheetDTO)
         return transactionFeature.saveAndLink(
             userAccountSheetDTO.userId.id(),
             token.asTokenUUID(),
