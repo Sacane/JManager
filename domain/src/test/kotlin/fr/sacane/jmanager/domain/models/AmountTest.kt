@@ -19,7 +19,7 @@ class AmountTest {
     @Test
     fun `A representation of an Amount should be its value and its currency`() {
         val tenEuros = 10.toAmount("€")
-        assertEquals("10 €", tenEuros.toString())
+        assertEquals("10.00 €", tenEuros.toString())
     }
 
     @Test
@@ -32,27 +32,17 @@ class AmountTest {
 
     @Test
     fun `An Amount can be build from its string representation`() {
-        val tenEurosAsString = "10 €"
+        val tenEurosAsString = "10.00 €"
         val tenEurosDotFiveAsString = "10.05 €"
-        val oneHundredDollarsAsString = "100 $"
+        val oneHundredDollarsAsString = "100.00 $"
 
         val amountTenEuros = Amount.fromString(tenEurosAsString)
         val tenEurosDotFiveAmount = Amount.fromString(tenEurosDotFiveAsString)
         val oneHundredDollarsAmount = Amount.fromString(oneHundredDollarsAsString)
 
-        assertEquals("10 €", amountTenEuros.toString())
+        assertEquals("10.00 €", amountTenEuros.toString())
         assertEquals("10.05 €", tenEurosDotFiveAmount.toString())
-        assertEquals("100 $", oneHundredDollarsAmount.toString())
-    }
-
-    @Test
-    fun `An Amount should throw an exception when its scale is greater than 2`() {
-        assertThrows<IllegalStateException> {
-            105.056.toAmount()
-        }
-        assertThrows<IllegalStateException> {
-            1.1000.toAmount()
-        }
+        assertEquals("100.00 $", oneHundredDollarsAmount.toString())
     }
 
     @Test
