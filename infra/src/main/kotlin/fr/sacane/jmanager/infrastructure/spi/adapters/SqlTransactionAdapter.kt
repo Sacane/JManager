@@ -103,9 +103,7 @@ class SqlTransactionAdapter(
     }
     @Transactional
     override fun findSheetByID(sheetID: Long): Transaction? {
-        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel().also {
-            println(it)
-        }
+        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
     }
     @Transactional
     override fun save(transaction: Transaction): Transaction? {

@@ -27,7 +27,13 @@ class SessionManager {
         val sessions = userSession.computeIfAbsent(userId) { mutableSetOf() }
         sessions.add(session)
     }
-    private fun getSession(userId: UserId, token: UUID): AccessToken? = userSession[userId]?.first { token == it.tokenValue || token == it.refreshToken }
+    private fun getSession(userId: UserId, token: UUID): AccessToken? {
+        return try {
+            userSession[userId]?.first { token == it.tokenValue || token == it.refreshToken }
+        }catch (noSuchElementEx: NoSuchElementException){
+            null
+        }
+    }
     fun <T> authenticate(
         userId: UserId,
         token: UUID,
@@ -35,6 +41,7 @@ class SessionManager {
         block: (UserId) -> Response<T>
     ): Response<T> {
         synchronized(lock) {
+            println(userSession)
             val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
 
             if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
@@ -70,7 +77,7 @@ class SessionManager {
             }
             if(result) counter++
         }
-        userSession.entries.removeIf { (id, set) -> set.isEmpty() }
+        userSession.entries.removeIf { (_, set) -> set.isEmpty() }
         logger.info("Purge done, erased $counter tokens")
     }
 }
