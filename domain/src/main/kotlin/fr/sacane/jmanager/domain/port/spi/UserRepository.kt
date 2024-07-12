@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 
 
-@Port(Side.DATASOURCE)
+@Port(Side.INFRASTRUCTURE)
 interface UserRepository {
     fun findUserById(userId: UserId): User?
     fun findUserByIdWithAccounts(userId: UserId): User?

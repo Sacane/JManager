@@ -15,7 +15,7 @@ import java.util.logging.Logger
 
 @RestController
 @RequestMapping("api/user")
-@Adapter(Side.API)
+@Adapter(Side.APPLICATION)
 class SessionController(
     private val loginFeature: SessionFeature
 ){

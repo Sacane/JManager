@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 
 
 @Service
-@Adapter(Side.DATASOURCE)
+@Adapter(Side.INFRASTRUCTURE)
 class SqlTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userPostgresRepository: UserPostgresRepository,

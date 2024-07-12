@@ -18,7 +18,7 @@ annotation class DomainService
 annotation class Adapter(val domainSide: Side = Side.UNSPECIFIED)
 
 enum class Side{
-    DATASOURCE,
-    API,
+    INFRASTRUCTURE,
+    APPLICATION,
     UNSPECIFIED
 }

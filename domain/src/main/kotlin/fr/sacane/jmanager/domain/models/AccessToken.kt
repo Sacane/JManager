@@ -12,7 +12,7 @@ val roleUser = arrayOf(Role.USER)
 val roleAdmin = arrayOf(Role.ADMIN)
 
 
-class AccessToken(
+data class AccessToken(
     val tokenValue: UUID,
     var tokenExpirationDate: LocalDateTime = now().plusHours(1),
     val refreshToken: UUID? = UUID.randomUUID(),
@@ -27,7 +27,7 @@ class AccessToken(
     }
 
     fun updateLifetime() {
-        tokenExpirationDate = tokenExpirationDate.plusMinutes(Env.TOKEN_LIFETIME_IN_MINUTES)
+        tokenExpirationDate = now().plusMinutes(Env.TOKEN_LIFETIME_IN_MINUTES)
     }
     fun updateTokenLifetime() {
         refreshTokenLifetime = refreshTokenLifetime.plusDays(Env.REFRESH_TOKEN_LIFETIME_IN_DAYS)

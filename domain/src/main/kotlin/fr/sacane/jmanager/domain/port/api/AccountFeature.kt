@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.*
 
-@Port(Side.API)
+@Port(Side.APPLICATION)
 sealed interface AccountFeature {
     fun findAccountById(userId: UserId, accountID: Long, token: UUID): Response<Account>
     fun editAccount(userID: Long, account: Account, token: UUID): Response<Account>

@@ -11,7 +11,7 @@ import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import java.util.*
 
-@Port(Side.API)
+@Port(Side.APPLICATION)
 sealed interface TagFeature {
     fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag>
     fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>>

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("api/tag")
-@Adapter(Side.API)
+@Adapter(Side.APPLICATION)
 class TagController(
     val tagFeature: TagFeature
 ) {
