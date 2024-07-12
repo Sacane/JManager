@@ -3,7 +3,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 
-@Port(Side.DATASOURCE)
+@Port(Side.INFRASTRUCTURE)
 interface TransactionRegister {
     fun persist(userId: UserId, account: Account): User?
     fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?

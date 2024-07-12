@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 import java.util.logging.Logger
 
 @Service
-@Adapter(Side.DATASOURCE)
+@Adapter(Side.INFRASTRUCTURE)
 class ServerUserAdapter (
     private val userPostgresRepository: UserPostgresRepository
 ) : UserRepository{

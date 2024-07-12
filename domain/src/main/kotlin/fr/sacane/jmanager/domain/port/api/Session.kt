@@ -1,6 +1,8 @@
 package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
+import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.Response.Companion.forbidden
@@ -12,6 +14,17 @@ import fr.sacane.jmanager.domain.models.UserId
 import java.util.*
 import java.util.logging.Logger
 
+
+@Port(Side.INFRASTRUCTURE)
+interface SessionManagerPort{
+    fun addSession(userId: UserId, session: AccessToken)
+    fun <T> authenticate(
+        userId: UserId,
+        token: UUID,
+        requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
+        block: (UserId) -> Response<T>
+    ): Response<T>
+}
 
 @DomainService
 class SessionManager {
@@ -41,7 +54,7 @@ class SessionManager {
         block: (UserId) -> Response<T>
     ): Response<T> {
         synchronized(lock) {
-            println(userSession)
+            println("values => $userSession")
             val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
 
             if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
@@ -70,9 +83,9 @@ class SessionManager {
     }
     fun purgeExpiredToken() = synchronized(lock) {
         var counter = 0
-        logger.info("Start purge expired tokens")
+        logger.info("Start purge expired tokens of => ${userSession.count()}")
         userSession.values.forEach {
-            val result = it.removeIf {token ->
+            val result = it.removeIf { token ->
                 token.isExpired()
             }
             if(result) counter++

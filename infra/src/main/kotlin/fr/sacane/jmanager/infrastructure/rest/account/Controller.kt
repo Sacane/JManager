@@ -15,7 +15,7 @@ import java.util.logging.Logger
 
 @RestController
 @RequestMapping("api/account")
-@Adapter(Side.API)
+@Adapter(Side.APPLICATION)
 class AccountController (
     private val feature: AccountFeature
 ) {

@@ -20,7 +20,7 @@ import java.util.logging.Logger
 
 @RestController
 @RequestMapping("api/sheet")
-@Adapter(Side.API)
+@Adapter(Side.APPLICATION)
 class SheetController(private val transactionFeature: TransactionFeature) {
     private val logger = Logger.getLogger(SheetController::class.java.name)
     @PostMapping("/save")

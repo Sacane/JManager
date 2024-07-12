@@ -9,7 +9,7 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
 import java.util.*
 
-@Port(Side.API)
+@Port(Side.APPLICATION)
 sealed interface TransactionFeature {
     fun saveAndLink(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
     fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>

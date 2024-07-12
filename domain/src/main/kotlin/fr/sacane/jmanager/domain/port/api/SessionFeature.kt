@@ -8,7 +8,7 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.*
 import java.util.logging.Logger
 
-@Port(Side.API)
+@Port(Side.APPLICATION)
 sealed interface SessionFeature {
     fun login(pseudonym: String, userPassword: Password): Response<UserToken>
     fun logout(userId: UserId, token: UUID): Response<Nothing>
