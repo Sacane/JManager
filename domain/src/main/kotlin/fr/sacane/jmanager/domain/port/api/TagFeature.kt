@@ -23,7 +23,7 @@ sealed interface TagFeature {
 class TagFeatureImpl(
     private val register: TransactionRegister,
     private val tagRepository: TagRepository,
-    private val session: SessionManager
+    private val session: InMemorySessionManager
 ): TagFeature {
     override fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag> = session.authenticate(userId, token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
