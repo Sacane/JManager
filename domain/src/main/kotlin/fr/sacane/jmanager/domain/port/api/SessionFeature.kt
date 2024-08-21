@@ -20,7 +20,7 @@ sealed interface SessionFeature {
 @DomainService
 class SessionFeatureImpl(
     private val userRepository: UserRepository,
-    private val session: SessionManager
+    private val session: InMemorySessionManager
 ): SessionFeature{
 
     companion object{

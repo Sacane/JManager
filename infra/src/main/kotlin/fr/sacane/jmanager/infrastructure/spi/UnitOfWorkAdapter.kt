@@ -7,6 +7,6 @@ open class UnitOfWorkAdapter: InfraTransactionProviderPort {
 
     @Transactional
     override fun <T, R> executeInTransaction(input: T, executable: (T) -> R): R {
-        TODO("Not yet implemented")
+        return executable(input)
     }
 }

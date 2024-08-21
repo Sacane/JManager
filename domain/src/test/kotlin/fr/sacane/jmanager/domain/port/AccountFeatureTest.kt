@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.domain.port.api.AccountFeatureImpl
-import fr.sacane.jmanager.domain.port.api.SessionManager
+import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,9 +18,9 @@ class AccountFeatureTest {
     companion object{
         private val inMemoryUserProvider = InMemoryUserProvider()
         private val register: TransactionRegister = InMemoryTransactionRepository(inMemoryUserProvider)
-        private val sessionManager: SessionManager = SessionManager()
+        private val inMemorySessionManager: InMemorySessionManager = InMemorySessionManager()
         private val userRepository: UserRepository = InMemoryUserRepository(inMemoryUserProvider)
-        private val accountFeature: AccountFeature = AccountFeatureImpl(register = register, session = sessionManager, userRepository = userRepository)
+        private val accountFeature: AccountFeature = AccountFeatureImpl(register = register, session = inMemorySessionManager, userRepository = userRepository)
         private lateinit var user: User
         private val tokenValue = UUID.randomUUID()
         private val session: AccessToken = AccessToken(tokenValue)
@@ -37,7 +37,7 @@ class AccountFeatureTest {
         }
 
         private fun connectUser(user: User) {
-            sessionManager.addSession(user.id, session)
+            inMemorySessionManager.addSession(user.id, session)
         }
     }
 

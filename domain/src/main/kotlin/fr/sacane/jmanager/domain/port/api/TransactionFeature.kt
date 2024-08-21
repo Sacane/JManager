@@ -22,7 +22,7 @@ sealed interface TransactionFeature {
 class TransactionFeatureImpl(
     private val register: TransactionRegister,
     private val userRepository: UserRepository,
-    private val session: SessionManager
+    private val session: InMemorySessionManager
 ): TransactionFeature{
 
     private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
