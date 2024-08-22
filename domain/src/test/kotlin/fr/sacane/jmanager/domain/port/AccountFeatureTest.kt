@@ -1,12 +1,12 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.AuthenticationTest
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.domain.port.api.AccountFeatureImpl
 import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
@@ -42,21 +42,12 @@ class AccountFeatureTest {
     }
 
     @Nested
-    inner class AuthenticationTest {
-        @Test
-        fun `Authenticate on findAccountById method`() {
-            val response = accountFeature.findAccountById(user.id, 50L, UUID.randomUUID())
-
-            assertTrue(response.isFailure())
-            assertEquals(ResponseState.UNAUTHORIZED, response.status)
-        }
-
-        @Test
-        fun `Authenticate on save`() {
-            val response = accountFeature.save(user.id, UUID.randomUUID(), element)
-            assertTrue(response.isFailure())
-            assertEquals(ResponseState.UNAUTHORIZED, response.status)
-        }
+    inner class AccountFeatureAuthTest: AuthenticationTest {
+        override val action: List<Response<out Any>>
+            get() = listOf(
+                accountFeature.findAccountById(user.id, 50L, UUID.randomUUID()),
+                accountFeature.save(user.id, UUID.randomUUID(), element)
+            )
     }
 
     @Test
@@ -67,5 +58,4 @@ class AccountFeatureTest {
             assertTrue(it.label == "test")
         }
     }
-
 }
