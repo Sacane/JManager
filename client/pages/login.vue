@@ -70,10 +70,6 @@ function registerUser() {
             <InputText id="username" v-model="userRegistered.username" type="text" class="mt-1 p-2 w-full border rounded-md" />
           </div>
           <div class="mb-4">
-            <label for="email" class="">Email</label>
-            <InputText id="email" v-model="userRegistered.email" type="email" class="mt-1 p-2 w-full border rounded-md" />
-          </div>
-          <div class="mb-4">
             <label for="password">Mot de passe *</label>
             <InputText v-model="userRegistered.password" type="password" class="mt-1 p-2 w-full border rounded-md" />
           </div>
