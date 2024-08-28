@@ -32,9 +32,12 @@ const data = reactive({
 })
 const actualSheets = ref()
 
+const { saveSheet, editSheet, findTransactionById } = useSheet()
+
 function asDisplayableTransaction(transaction: SheetDTO): any {
   return {
     ...transaction,
+    id: transaction.id,
     expensesRepresentation: (transaction.expenses !== '') ? `${transaction.expenses}` : '/',
     incomeRepresenttation: (transaction.income !== '') ? `${transaction.income}` : '/',
     date: transaction.date,
@@ -110,14 +113,14 @@ const editTransactionInfo = reactive({
   tagDTO: '',
 })
 
-function onEditPage(event: SheetDTO) {
-  editTransactionInfo.label = event.label
-  editTransactionInfo.id = event.id
-  editTransactionInfo.date = event.date
-  editTransactionInfo.amount = event.accountAmount
-  isEditTransactionDialogOpen.value = true
-  console.log(editTransactionInfo)
-  console.log(event.label)
+function onEditPage(event: any) {
+  findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
+    editTransactionInfo.label = transaction.label
+    editTransactionInfo.id = transaction.id
+    editTransactionInfo.date = transaction.date
+    editTransactionInfo.amount = transaction.accountAmount
+    isEditTransactionDialogOpen.value = true
+  }).catch(err => console.error(err))
 }
 
 function onYearChange() {
@@ -132,8 +135,6 @@ const uDate = useDate()
 
 // transaction persistance
 
-const { saveSheet, editSheet } = useSheet()
-
 const values = reactive({
   accountId: data.currentAccountId,
   accountLabel: data.labelAccount,
@@ -145,6 +146,7 @@ const values = reactive({
   integerPart: '0',
   decimalPart: '0',
 })
+
 const toastr = useJToast()
 async function onConfirm() {
   if ((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
@@ -168,6 +170,7 @@ async function onEditTransaction() {
   if ((editTransactionInfo.integerPart === '0' && editTransactionInfo.decimalPart === '0') || editTransactionInfo.label === '') {
     return
   }
+  console.log(`Transaction => ${editTransactionInfo.amount}`)
   const amount = `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart} €`
   await editSheet({
     id: 0,
@@ -321,7 +324,7 @@ function test(row): any | undefined {
           </div>
         </template>
       </Dropdown>
-      <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onEditTransaction" />
+      <Button label="Modifier la transaction" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onEditTransaction" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isEditTransactionDialogOpen = false" />
     </div>
   </Dialog>
