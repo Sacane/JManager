@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.sheet
+package fr.sacane.jmanager.infrastructure.rest.transaction
 
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
@@ -88,9 +88,9 @@ class SheetController(private val transactionFeature: TransactionFeature) {
             .also { LOGGER.info("edit : ${dto.sheet}") }
 
 
-    @GetMapping("/user/{userID}/find/{id}")
+    @GetMapping("transaction/{id}")
     fun findById(
-        @PathVariable("userID") userID: Long,
+        @RequestParam("userID") userID: Long,
         @PathVariable("id") sheetID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>

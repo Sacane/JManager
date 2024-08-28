@@ -11,6 +11,11 @@ export default function useSheet() {
       accountLabel,
     })
   }
+  async function findTransactionById(id: number) {
+    return get(`sheet/transaction/${id}`, {
+      userID: user.value?.id,
+    })
+  }
 
   function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<SheetDTO> {
     console.error(`label : ${accountLabel}`)
@@ -36,5 +41,5 @@ export default function useSheet() {
     })
   }
 
-  return { findByDate, saveSheet, deleteSheet, editSheet }
+  return { findByDate, saveSheet, deleteSheet, editSheet, findTransactionById }
 }
