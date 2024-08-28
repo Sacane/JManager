@@ -17,7 +17,7 @@ val defaultTags: List<Tag> = listOf(
     Tag("Esthetique", color = Color.ORANGE, isDefault = true),
     Tag("Courses", color = Color.YELLOW, isDefault = true),
     Tag("Sport", color = Color.RED, isDefault = true),
-    Tag("Bien-etre", color = Color.GREEN, isDefault = true)
+    Tag("Bien-etre", color = Color.GREEN, isDefault = true),
+    Tag("Aucune", color = Color.WHITE, isDefault = true),
 )
-fun String.asTag(color: Color = Color(0f, 0f, 0f, 0f), isDefault: Boolean = false): Tag = Tag(this, color = color, isDefault = isDefault)
 fun String.asPersonalTag(color: Color = Color(0f, 0f, 0f, 0f)): Tag = Tag(this, color = color, isDefault = false)

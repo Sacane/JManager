@@ -3,8 +3,8 @@ declare global {
   interface SheetDTO {
     id: number
     label: string
-    expenses: string
-    income: string
+    value: string
+    isIncome: boolean
     date: string
     accountAmount: string
     color: ColorDTO

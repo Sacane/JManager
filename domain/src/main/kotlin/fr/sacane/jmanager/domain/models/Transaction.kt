@@ -7,14 +7,14 @@ class Transaction(
     val id: Long?,
     var label: String,
     var date: LocalDate,
-    var value: Amount,
+    var amount: Amount,
     var isIncome: Boolean,
     var sold: Amount,
     var tag: Tag = Tag("Aucune", isDefault = true),
     var position: Int = 0
 ) {
     fun updateSoldStartingWith(start: Amount) {
-        sold = if(isIncome) start.plus(value) else start.minus(value)
+        sold = if(isIncome) start.plus(amount) else start.minus(amount)
     }
 
     private fun updateSoldFromIncomeAndExpenses(value: Amount, isIncome: Boolean) {
@@ -23,10 +23,10 @@ class Transaction(
 
     fun updateFromOther(other: Transaction): Boolean {
         if(other.id != this.id) return false
-        updateSoldFromIncomeAndExpenses(other.value, other.isIncome)
+        updateSoldFromIncomeAndExpenses(other.amount, other.isIncome)
         this.label = other.label
         this.date = other.date
-        this.value = other.value
+        this.amount = other.amount
         this.isIncome = other.isIncome
         this.tag = other.tag
         return true
@@ -36,7 +36,7 @@ class Transaction(
         return """
             label: $label
             date: $date
-            value: $value
+            value: $amount
             isIncome: $isIncome
             sold: $sold
             position: $position
@@ -45,7 +45,7 @@ class Transaction(
     }
 
     fun <T> exportAmountValues(function: (BigDecimal, Boolean, BigDecimal) -> T): T{
-        return value.applyOnValue { expenseValue ->
+        return amount.applyOnValue { expenseValue ->
             sold.applyOnValue { soldValue ->
                 function(expenseValue, isIncome, soldValue)
             }

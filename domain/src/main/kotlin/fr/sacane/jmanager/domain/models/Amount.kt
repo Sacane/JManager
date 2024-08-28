@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.models
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class Amount(private var amount: BigDecimal, private val currency: String = "€") {
+class Amount(private var amount: BigDecimal, val currency: String = "€") {
 
     init{
         if(amount.scale() <= 2){
@@ -58,11 +58,15 @@ class Amount(private var amount: BigDecimal, private val currency: String = "€
     fun <T> applyOnValue(function: (BigDecimal) -> T): T{
         return function(amount)
     }
+
+    fun toStringValue(): String {
+        return amount.toString()
+    }
 }
 
 class InvalidMoneyFormatException(s: String): RuntimeException(s)
 
-fun BigDecimal.toAmount(currency: String = "€"): Amount {
+fun BigDecimal.toAmount(    currency: String = "€"): Amount {
     return Amount(this, currency)
 }
 

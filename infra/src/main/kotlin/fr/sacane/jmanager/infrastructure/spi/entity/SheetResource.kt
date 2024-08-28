@@ -17,9 +17,8 @@ class SheetResource(
     @Column(name="date")
     var date: LocalDate = LocalDate.now(),
     @Column(name="expenses", scale = 2)
-    var expenses: BigDecimal = BigDecimal(0.0),
-    @Column(name="income", scale = 2)
-    var income: BigDecimal = BigDecimal(0.0),
+    var value: BigDecimal = BigDecimal(0.0),
+    var isIncome: Boolean? = false,
     @Column(name="account_amount", scale = 2)
     var accountAmount: BigDecimal = BigDecimal(0.0),
     @Column
@@ -27,15 +26,15 @@ class SheetResource(
     @ManyToOne
     var tag: DefaultTagResource? = null,
     @ManyToOne
-    var personalTag:TagPersonalResource? = null
+    var personalTag:TagPersonalResource? = null,
+    var currency: String = "€"
 
 ){
     override fun toString(): String {
         return """
             label : $label
             date: $date
-            expenses: $expenses
-            income: $income
+            value: $value
             accountAmount: $accountAmount
         """.trimIndent()
     }
