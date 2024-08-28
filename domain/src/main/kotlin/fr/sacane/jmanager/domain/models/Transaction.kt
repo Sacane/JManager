@@ -7,30 +7,27 @@ class Transaction(
     val id: Long?,
     var label: String,
     var date: LocalDate,
-    var expenses: Amount,
-    var income: Amount,
+    var value: Amount,
+    var isIncome: Boolean,
     var sold: Amount,
     var tag: Tag = Tag("Aucune", isDefault = true),
     var position: Int = 0
 ) {
     fun updateSoldStartingWith(start: Amount) {
-        sold = start.plus(income).minus(expenses)
+        sold = if(isIncome) start.plus(value) else start.minus(value)
     }
 
-    private fun updateSoldFromIncomeAndExpenses(expenses: Amount, income: Amount) {
-        sold = sold.plus(this.expenses)
-            .plus(income)
-            .minus(expenses)
-            .minus(this.income)
+    private fun updateSoldFromIncomeAndExpenses(value: Amount, isIncome: Boolean) {
+        sold = if(isIncome) sold.plus(value) else sold.minus(value)
     }
 
     fun updateFromOther(other: Transaction): Boolean {
         if(other.id != this.id) return false
-        updateSoldFromIncomeAndExpenses(other.expenses, other.income)
+        updateSoldFromIncomeAndExpenses(other.value, other.isIncome)
         this.label = other.label
         this.date = other.date
-        this.expenses = other.expenses
-        this.income = other.income
+        this.value = other.value
+        this.isIncome = other.isIncome
         this.tag = other.tag
         return true
     }
@@ -39,20 +36,18 @@ class Transaction(
         return """
             label: $label
             date: $date
-            expenses: $expenses
-            income: $income
+            value: $value
+            isIncome: $isIncome
             sold: $sold
             position: $position
             tag: $tag
         """.trimIndent()
     }
 
-    fun <T> exportAmountValues(function: (BigDecimal, BigDecimal, BigDecimal) -> T): T{
-        return expenses.applyOnValue { expenseValue ->
-            income.applyOnValue { incomeValue ->
-                sold.applyOnValue { soldValue ->
-                    function(expenseValue, incomeValue, soldValue)
-                }
+    fun <T> exportAmountValues(function: (BigDecimal, Boolean, BigDecimal) -> T): T{
+        return value.applyOnValue { expenseValue ->
+            sold.applyOnValue { soldValue ->
+                function(expenseValue, isIncome, soldValue)
             }
         }
     }

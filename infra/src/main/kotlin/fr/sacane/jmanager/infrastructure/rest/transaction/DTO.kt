@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.sheet
+package fr.sacane.jmanager.infrastructure.rest.transaction
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import fr.sacane.jmanager.infrastructure.rest.tag.TagDTO
@@ -16,8 +16,8 @@ data class UserIDSheetDTO(
 data class SheetDTO(
     val id: Long?,
     val label: String,
-    val expenses: String,
-    val income: String,
+    val value: String,
+    val currency: String = "€",
     @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
     val accountAmount: String,
@@ -32,8 +32,8 @@ data class SheetsAndAverageDTO(
 data class SheetSendDTO(
     val label: String,
     val date: LocalDate,
-    val expenses: String,
-    val income: String,
+    val value: String,
+    val isIncome: Boolean,
     val accountAmount: String
 )
 
