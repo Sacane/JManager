@@ -27,7 +27,7 @@ sealed interface AccountFeature {
 class AccountFeatureImpl(
     private val register: TransactionRegister,
     private val userRepository: UserRepository,
-    private val session: InMemorySessionManager
+    private val session: SessionManager
 ): AccountFeature {
     override fun findAccountById(
         userId: UserId,

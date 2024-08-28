@@ -28,7 +28,6 @@ class SheetController(private val transactionFeature: TransactionFeature) {
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetSendDTO> {
-        println(userAccountSheetDTO.sheetDTO)
         return transactionFeature.saveAndLink(
             userAccountSheetDTO.userId.id(),
             token.asTokenUUID(),
@@ -40,7 +39,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
                     it.label,
                     it.date,
                     expense.toAmount().toString(),
-                    income.toAmount().toString(),
+                    income,
                     sold.toAmount().toString()
                 )
             }

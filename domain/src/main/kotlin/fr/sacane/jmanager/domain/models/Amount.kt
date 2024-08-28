@@ -34,7 +34,7 @@ class Amount(private var amount: BigDecimal, private val currency: String = "€
     companion object {
         fun fromString(representation: String): Amount {
             val regex = """([\d.]+) ([^\d.]+)""".toRegex()
-            val matchResult = regex.find(representation) ?: throw InvalidMoneyFormatException("The amount format is not valid")
+            val matchResult = regex.find(representation) ?: throw InvalidMoneyFormatException("The amount format is not valid : $representation")
             val (amount, foundCurrency) = matchResult.destructured
             if(foundCurrency.length > 1) throw InvalidMoneyFormatException("The length of the currency should exactly be equals to 1")
             return try {

@@ -31,8 +31,8 @@ class Account(
         labelAccount = account.label
         var addition = account.sold
         transactions.replaceAll {
-            addition = if(it.expenses == Amount(0.toBigDecimal())) addition - it.income else addition + it.expenses
-            Transaction(it.id, it.label, it.date, it.expenses, it.income, addition, it.tag, it.position)
+            addition = if(it.isIncome) addition + it.value else addition - it.value
+            Transaction(it.id, it.label, it.date, it.value, it.isIncome, addition, it.tag, it.position)
         }
 
     }
@@ -70,9 +70,7 @@ class Account(
     }
     fun cancelSheetsAmount(transactions: List<Transaction>) {
         transactions.forEach {
-            this.amount = this.amount
-            .plus(it.expenses)
-            .minus(it.income)
+            this.amount = if(it.isIncome) this.amount + it.value else it.value
         }
     }
     fun setSoldFromSheet(transactionFromResource: Transaction) {
