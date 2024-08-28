@@ -25,9 +25,9 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): S
     val resource = SheetResource()
     resource.label = this.label
     resource.date = this.date
-    this.exportAmountValues { expense, income, sold ->
-        resource.expenses = expense
-        resource.income = income
+    this.exportAmountValues { expense, isIncome, sold ->
+        resource.value = expense
+        resource.isIncome = isIncome
         resource.accountAmount = sold
     }
     resource.idSheet = this.id
@@ -63,11 +63,12 @@ internal fun User.asExistingResource(): UserResource
     )
 
 internal fun SheetResource.toModel(): Transaction{
-    return Transaction(this.idSheet,
+    return Transaction(
+        this.idSheet,
         this.label,
         this.date,
-        this.expenses.toAmount(),
-        this.income.toAmount(),
+        this.value.toAmount(),
+        this.isIncome!!,
         this.accountAmount.toAmount(),
         position=this.position,
         tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)))

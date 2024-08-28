@@ -23,7 +23,7 @@ import java.util.logging.Logger
 @Adapter(Side.APPLICATION)
 class SheetController(private val transactionFeature: TransactionFeature) {
     private val logger = Logger.getLogger(SheetController::class.java.name)
-    @PostMapping("/save")
+    @PostMapping
     suspend fun createSheet(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
         @RequestHeader("Authorization") token: String

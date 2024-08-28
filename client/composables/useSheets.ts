@@ -18,8 +18,7 @@ export default function useSheet() {
   }
 
   function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<SheetDTO> {
-    console.error(`label : ${accountLabel}`)
-    return post('sheet/save', {
+    return post('sheet', {
       userId: user.value?.id,
       accountLabel,
       sheetDTO,

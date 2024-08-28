@@ -38,8 +38,8 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: (transaction.expenses !== '') ? `${transaction.expenses}` : '/',
-    incomeRepresenttation: (transaction.income !== '') ? `${transaction.income}` : '/',
+    expensesRepresentation: !(transaction.isIncome) ? `${transaction.value}` : '/',
+    incomeRepresenttation: transaction.income ? `${transaction.value}` : '/',
     date: transaction.date,
     accountAmount: transaction.accountAmount,
     tagDTO: transaction.tagDTO,
@@ -152,12 +152,13 @@ async function onConfirm() {
   if ((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
     return
   }
-  const amount = `${values.integerPart}.${values.decimalPart} €`
+  const amount = `${values.integerPart}.${values.decimalPart}`
   await saveSheet(data.labelAccount, {
     id: 0,
     label: values.sheetLabel,
-    expenses: (values.selectedMode === 'expenses') ? amount : '0 €',
-    income: (values.selectedMode === 'income') ? amount : '0 €',
+    value: amount,
+    isIncome: values.selectedMode === 'income',
+    currency: '€',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: `${data.accountAmount}`,
     tagDTO: data.tagDTO,

@@ -18,6 +18,7 @@ data class SheetDTO(
     val label: String,
     val value: String,
     val currency: String = "€",
+    val isIncome: Boolean,
     @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
     val accountAmount: String,
