@@ -38,10 +38,10 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !(transaction.isIncome) ? `${transaction.value}` : '/',
-    incomeRepresenttation: transaction.income ? `${transaction.value}` : '/',
+    expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '/',
+    incomeRepresenttation: transaction.isIncome ? `${transaction.value} €` : '/',
     date: transaction.date,
-    accountAmount: transaction.accountAmount,
+    accountAmount: `${transaction.accountAmount} €`,
     tagDTO: transaction.tagDTO,
   }
 }
@@ -111,14 +111,29 @@ const editTransactionInfo = reactive({
   integerPart: '0',
   decimalPart: '0',
   tagDTO: '',
+  isIncome: false,
 })
+
+function resetEditTransaction(): void {
+  editTransactionInfo.label = ''
+  editTransactionInfo.id = 0
+  editTransactionInfo.date = new Date()
+  editTransactionInfo.amount = 0
+  editTransactionInfo.accountAmount = 0.0
+  editTransactionInfo.isIncome = false
+  editTransactionInfo.tagDTO = ''
+  editTransactionInfo.accountId = 0
+  editTransactionInfo.selectedMode = 'expenses'
+}
 
 function onEditPage(event: any) {
   findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
     editTransactionInfo.label = transaction.label
     editTransactionInfo.id = transaction.id
     editTransactionInfo.date = transaction.date
-    editTransactionInfo.amount = transaction.accountAmount
+    editTransactionInfo.amount = transaction.value
+    editTransactionInfo.accountAmount = transaction.accountAmount
+    editTransactionInfo.isIncome = transaction.isIncome
     isEditTransactionDialogOpen.value = true
   }).catch(err => console.error(err))
 }
@@ -145,6 +160,7 @@ const values = reactive({
   date: new Date(),
   integerPart: '0',
   decimalPart: '0',
+  isIncome: false,
 })
 
 const toastr = useJToast()
@@ -171,18 +187,21 @@ async function onEditTransaction() {
   if ((editTransactionInfo.integerPart === '0' && editTransactionInfo.decimalPart === '0') || editTransactionInfo.label === '') {
     return
   }
-  console.log(`Transaction => ${editTransactionInfo.amount}`)
-  const amount = `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart} €`
   await editSheet({
-    id: 0,
+    id: editTransactionInfo.id,
     label: editTransactionInfo.label,
-    expenses: (editTransactionInfo.selectedMode === 'expenses') ? amount : '0 €',
-    income: (editTransactionInfo.selectedMode === 'income') ? amount : '0 €',
-    date: editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
+    value: `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart}`,
+    isIncome: (editTransactionInfo.selectedMode === 'income'),
+    date: editTransactionInfo.date,
     accountAmount: `${editTransactionInfo.accountAmount}`,
     tagDTO: editTransactionInfo.tagDTO,
   }, Number.parseInt(data.currentAccountId))
-    .then((_: SheetDTO) => initAccount())
+    .then((_: SheetDTO) => {
+      initAccount()
+      toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
+      isEditTransactionDialogOpen.value = false
+      resetEditTransaction()
+    }).catch(err => toastr.errorAxios(err))
 }
 
 function test(row): any | undefined {
@@ -201,7 +220,7 @@ function test(row): any | undefined {
         <div class="flex flex-row gap-3">
           <Button class="w-2% h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
           <h2 class="text-2xl mb-4">
-            Solde du compte : {{ data.accountAmount }}
+            Solde du compte : {{ data.accountAmount }} €
           </h2>
         </div>
       </div>

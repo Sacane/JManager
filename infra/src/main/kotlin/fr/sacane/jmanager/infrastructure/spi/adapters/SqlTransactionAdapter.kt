@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 class SqlTransactionAdapter(
     private val sheetRepository: SheetRepository,
     private val userPostgresRepository: UserPostgresRepository,
-    private val accountRepository: AccountRepository,
+    private val accountJpaRepository: AccountJpaRepository,
     private val accountMapper: AccountMapper,
     private val tagRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
@@ -31,14 +31,14 @@ class SqlTransactionAdapter(
     @Transactional
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
         val id = userId.id ?: return null
-        return accountRepository.findByOwnerAndLabelWithSheets(id, labelAccount)
+        return accountJpaRepository.findByOwnerAndLabelWithSheets(id, labelAccount)
             ?.toModel()
     }
 
     @Transactional
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         val id = userId.id ?: return null
-        val account = accountRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
+        val account = accountJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
         val sheetResource: SheetResource
         if(transaction.tag.label == "Aucune"){
             val noneTag = tagRepository.findUnknownTag()
@@ -58,7 +58,7 @@ class SqlTransactionAdapter(
     @Transactional
     override fun persist(account: Account) :Account?{
         val accountGet = accountMapper.asResource(account)
-        val registered = accountRepository.save(accountGet)
+        val registered = accountJpaRepository.save(accountGet)
         return registered.toModel()
     }
     @Transactional
@@ -76,12 +76,12 @@ class SqlTransactionAdapter(
     }
     @Transactional
     override fun findAccountById(accountId: Long): Account? {
-        val accountResponse = accountRepository.findByIdWithSheets(accountId)
+        val accountResponse = accountJpaRepository.findByIdWithSheets(accountId)
         return accountResponse?.toModel()
     }
     @Transactional
     override fun deleteAccountByID(accountID: Long) {
-        accountRepository.deleteById(accountID)
+        accountJpaRepository.deleteById(accountID)
     }
     @Transactional
     override fun saveAllSheets(transactions: List<Transaction>) {
@@ -111,12 +111,12 @@ class SqlTransactionAdapter(
     }
     @Transactional
     override fun save(account: Account): Account? {
-        return accountRepository.save(account.asResource()).toModel()
+        return accountJpaRepository.save(account.asResource()).toModel()
     }
     @Transactional
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
         if(userId.id == null) return null
-        return accountRepository.findSheetsByLabelAndAccountOf(label, userId.id!!)
+        return accountJpaRepository.findSheetsByLabelAndAccountOf(label, userId.id!!)
             ?.toModel()
     }
 }

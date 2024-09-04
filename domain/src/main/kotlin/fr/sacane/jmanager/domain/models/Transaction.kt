@@ -28,7 +28,7 @@ class Transaction(
         this.date = other.date
         this.amount = other.amount
         this.isIncome = other.isIncome
-        this.tag = other.tag
+        if(tag != other.tag) this.tag = other.tag
         return true
     }
 

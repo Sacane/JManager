@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.spi.AccountRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
@@ -22,7 +23,8 @@ sealed interface TransactionFeature {
 class TransactionFeatureImpl(
     private val register: TransactionRegister,
     private val userRepository: UserRepository,
-    private val session: InMemorySessionManager
+    private val session: InMemorySessionManager,
+    private val accountRepository: AccountRepository
 ): TransactionFeature{
 
     private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
@@ -103,17 +105,17 @@ class TransactionFeatureImpl(
         transaction: Transaction,
         token: UUID
     ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
-        val user = userRepository.findUserById(UserId(userID)) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas en base")
         if(transaction.id == null) return@authenticate Response.invalid("L'ID de la transaction est null")
-        val acc = user.accounts.find { it.id == accountID }
+        val acc = register.findAccountById(accountID)
         val sheetFromResource = acc?.transactions?.find { it.id == transaction.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
         sheetFromResource.updateFromOther(transaction)
         if(sheetFromResource.position == 0){
             acc.setSoldFromSheet(sheetFromResource)
         }
+        register.save(sheetFromResource)
         updateSheetSoldFrom(acc, transaction.date.month, false)
         acc.updateSoldByLastSheet()
-        return@authenticate register.save(acc).run {
+        return@authenticate accountRepository.editFromAnother(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             Response.ok(sheetFromResource)
         }

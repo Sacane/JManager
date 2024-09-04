@@ -12,19 +12,20 @@ import java.math.BigDecimal
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
-    this.sold.toString(),
+    this.sold.toStringValue(),
     this.label,
     this.sheets().map { sheet -> sheet.toDTO() }
 )
 
 internal fun SheetDTO.toModel(): Transaction
-= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, Amount.fromString(this.accountAmount), position = this.position, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault))
+= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, Amount(BigDecimal(this.accountAmount)), position = this.position, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault))
 
 internal fun AccountDTO.toModel(user: User? = null): Account
 = Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user)
 
-internal fun Transaction.toDTO(): SheetDTO
-= SheetDTO(this.id, this.label, this.amount.toStringValue(), this.amount.currency, this.isIncome, this.date, this.sold.toString(), position = this.position, tagDTO = tag.toDTO())
+internal fun Transaction.toDTO(): SheetDTO {
+    return SheetDTO(this.id, this.label, this.amount.toStringValue(), this.amount.currency, this.isIncome, this.date, this.sold.toStringValue(), position = this.position, tagDTO = this.tag.toDTO())
+}
 
 
 internal fun User.toDTO(): UserDTO
