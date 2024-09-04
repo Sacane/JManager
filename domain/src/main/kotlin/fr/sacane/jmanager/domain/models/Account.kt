@@ -17,7 +17,7 @@ class Account(
         get() = amount
 
     fun updateSoldByLastSheet(): Boolean {
-        this.amount = transactions.maxByOrNull { it.position }?.sold ?: return false
+        this.amount = transactions.maxByOrNull { it.position }?.accountAmount ?: return false
         return true
     }
 
@@ -73,7 +73,10 @@ class Account(
             this.amount = if(it.isIncome) this.amount - it.amount else it.amount + this.amount
         }
     }
-    fun setSoldFromSheet(transactionFromResource: Transaction) {
-        this.amount = transactionFromResource.sold
+    fun updateSoldFromTransactions(oldTransaction: Transaction, newTransaction: Transaction) {
+         // First modification
+        this.amount = if(oldTransaction.isIncome) amount - oldTransaction.amount else amount + oldTransaction.amount
+        // Second modification
+        this.amount = if(newTransaction.isIncome) amount + newTransaction.amount else amount - newTransaction.amount
     }
 }

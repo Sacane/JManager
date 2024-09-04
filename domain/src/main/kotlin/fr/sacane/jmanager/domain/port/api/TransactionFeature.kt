@@ -38,9 +38,9 @@ class TransactionFeatureImpl(
                 val lastRecord = sheets.find { it.position == sheet.position - 1 }
                 sheet.also {
                     if(lastRecord == null) {
-                        if(update) sheet.sold = account.sold
+                        if(update) sheet.accountAmount = account.sold
                     } else {
-                        sheet.updateSoldStartingWith(lastRecord.sold)
+                        sheet.updateSoldStartingWith(lastRecord.accountAmount)
                     }
                 }
             }.toList()
@@ -75,7 +75,7 @@ class TransactionFeatureImpl(
                 transaction.updateSoldStartingWith(account.sold)
             } else {
                 transaction.position = lastRecord.position + 1
-                transaction.updateSoldStartingWith(lastRecord.sold)
+                transaction.updateSoldStartingWith(lastRecord.accountAmount)
             }
             updateSheetPosition(account.id!!, transaction.date.year, transaction.date.month)
         } else {
@@ -108,13 +108,13 @@ class TransactionFeatureImpl(
         if(transaction.id == null) return@authenticate Response.invalid("L'ID de la transaction est null")
         val acc = register.findAccountById(accountID)
         val sheetFromResource = acc?.transactions?.find { it.id == transaction.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
+        acc.updateSoldFromTransactions(sheetFromResource, transaction)
         sheetFromResource.updateFromOther(transaction)
-        if(sheetFromResource.position == 0){
-            acc.setSoldFromSheet(sheetFromResource)
-        }
+        sheetFromResource.accountAmount = acc.sold
         register.save(sheetFromResource)
         updateSheetSoldFrom(acc, transaction.date.month, false)
-        acc.updateSoldByLastSheet()
+
+        //acc.updateSoldByLastSheet()
         return@authenticate accountRepository.editFromAnother(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             Response.ok(sheetFromResource)
