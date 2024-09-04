@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.datasource
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -25,7 +25,7 @@ class InfraUserTest {
     lateinit var userPostgresRepository: UserPostgresRepository
 
     @Autowired
-    lateinit var accountRepository: AccountRepository
+    lateinit var accountJpaRepository: AccountJpaRepository
 
     fun basicUserTest(): UserResource {
         return UserResource("johan_test", Password("0101012000").get(),"johan.ramaroson@test.com")
@@ -67,7 +67,7 @@ class InfraUserTest {
 
         assertThat(userPostgresRepository.count()).isLessThan(2)
         assertThat(byName.accounts).isNotEmpty
-        assertThat(accountRepository.count()).isGreaterThan(0)
+        assertThat(accountJpaRepository.count()).isGreaterThan(0)
         userPostgresRepository.deleteByUsername("johan_test")
 
     }

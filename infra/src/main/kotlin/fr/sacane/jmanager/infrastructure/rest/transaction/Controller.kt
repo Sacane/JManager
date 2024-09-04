@@ -78,13 +78,15 @@ class SheetController(private val transactionFeature: TransactionFeature) {
     fun editSheet(
         @RequestBody dto: UserIDSheetDTO,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<SheetDTO>
-        = transactionFeature.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
+    ): ResponseEntity<SheetDTO> {
+        logger.info("transaction => ${dto.sheet}")
+        return transactionFeature.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .mapBoth(
-                {s -> ResponseEntity.ok(s!!.toDTO()) },
-                {ResponseEntity.badRequest().build()}
-            ) ?: ResponseEntity.badRequest().build<SheetDTO?>()
+                { s -> ResponseEntity.ok(s!!.toDTO()) },
+                { ResponseEntity.badRequest().build() }
+            ) ?: ResponseEntity.badRequest().build<SheetDTO>()
             .also { LOGGER.info("edit : ${dto.sheet}") }
+    }
 
 
     @GetMapping("transaction/{id}")

@@ -61,7 +61,7 @@ class Response <S> private constructor(
     ): T? = when {
         isSuccess() && value == null -> null
         isSuccessAndNotEmpty() -> onSuccess.invoke(value)
-        isFailure() -> onFailure.invoke(Pair(message, status))
+        isFailure() -> onFailure(Pair(message, status))
         else -> null
     }
 
