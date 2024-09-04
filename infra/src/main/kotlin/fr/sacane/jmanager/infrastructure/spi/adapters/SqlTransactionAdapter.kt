@@ -49,7 +49,7 @@ class SqlTransactionAdapter(
         return try{
             val saved = sheetRepository.save(sheetResource)
             account.sheets.add(saved)
-            account.amount = transaction.sold.applyOnValue { it }
+            account.amount = transaction.accountAmount.applyOnValue { it }
             transaction
         }catch(e: Exception){
             null

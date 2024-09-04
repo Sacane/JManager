@@ -9,16 +9,16 @@ class Transaction(
     var date: LocalDate,
     var amount: Amount,
     var isIncome: Boolean,
-    var sold: Amount,
+    var accountAmount: Amount,
     var tag: Tag = Tag("Aucune", isDefault = true),
     var position: Int = 0
 ) {
     fun updateSoldStartingWith(start: Amount) {
-        sold = if(isIncome) start.plus(amount) else start.minus(amount)
+        accountAmount = if(isIncome) start.plus(amount) else start.minus(amount)
     }
 
     private fun updateSoldFromIncomeAndExpenses(value: Amount, isIncome: Boolean) {
-        sold = if(isIncome) sold.plus(value) else sold.minus(value)
+        accountAmount = if(isIncome) accountAmount.plus(value) else accountAmount.minus(value)
     }
 
     fun updateFromOther(other: Transaction): Boolean {
@@ -38,17 +38,13 @@ class Transaction(
             date: $date
             value: $amount
             isIncome: $isIncome
-            sold: $sold
+            sold: $accountAmount
             position: $position
             tag: $tag
         """.trimIndent()
     }
 
     fun <T> exportAmountValues(function: (BigDecimal, Boolean, BigDecimal) -> T): T{
-        return amount.applyOnValue { expenseValue ->
-            sold.applyOnValue { soldValue ->
-                function(expenseValue, isIncome, soldValue)
-            }
-        }
+        return function(amount.amount, isIncome, accountAmount.amount)
     }
 }
