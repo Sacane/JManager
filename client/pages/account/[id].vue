@@ -8,7 +8,7 @@ definePageMeta({
 })
 
 const route = useRoute()
-
+const toastr = useJToast()
 const selectedSheets = ref([])
 
 const { translate, monthFromNumber } = useDate()
@@ -134,8 +134,12 @@ function onEditPage(event: any) {
     editTransactionInfo.amount = transaction.value
     editTransactionInfo.accountAmount = transaction.accountAmount
     editTransactionInfo.isIncome = transaction.isIncome
+    const [integerPart, decimalPart] = transaction.value.toString().split('.')
+    editTransactionInfo.integerPart = integerPart
+    editTransactionInfo.decimalPart = decimalPart
+    editTransactionInfo.tagDTO = transaction.tagDTO
     isEditTransactionDialogOpen.value = true
-  }).catch(err => console.error(err))
+  }).catch(err => toastr.errorAxios(err))
 }
 
 function onYearChange() {
@@ -163,7 +167,6 @@ const values = reactive({
   isIncome: false,
 })
 
-const toastr = useJToast()
 async function onConfirm() {
   if ((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
     return

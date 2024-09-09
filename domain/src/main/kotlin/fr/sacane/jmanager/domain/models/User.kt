@@ -33,7 +33,7 @@ class Password(value: String?){
     }
 }
 
-class MinimalUserRepresentation(
+data class MinimalUserRepresentation(
     val id: UserId = UserId(null),
     val username: String,
     val email: String? = null,
@@ -44,17 +44,24 @@ class User(
     val username: String,
     val email: String?,
     private val accounts_: MutableList<Account> = mutableListOf(),
-    val password: Password,
     val tags: MutableSet<Tag> = mutableSetOf()
 ) {
 
-    val accounts: MutableList<Account>
+    val accounts: List<Account>
         get() = accounts_
     fun withToken(token: AccessToken): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
     fun hasAccount(labelAccount: String): Boolean = accounts.any { labelAccount == it.label }
     override fun toString(): String = "username: $username"
 
     fun removeAccount(accountID: Long) {
-        accounts.removeIf { it.id == accountID }
+        accounts_.removeIf { it.id == accountID }
+    }
+    fun addAccount(account: Account) {
+        accounts_.add(account)
     }
 }
+
+data class UserWithPassword(
+    val user: User,
+    val password: Password,
+)

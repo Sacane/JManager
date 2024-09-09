@@ -28,8 +28,9 @@ class SessionFeatureImpl(
     }
     override fun login(pseudonym: String, userPassword: Password): Response<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")
-        val user = userRepository.findByPseudonym(pseudonym) ?: return Response.notFound("L'utilisateur $pseudonym n'existe pas")
-        if(userPassword.matchWith(user.password)) {
+        val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym) ?: return Response.notFound("L'utilisateur $pseudonym n'existe pas")
+        val user = userWithPassword.user
+        if(userPassword.matchWith(userWithPassword.password)) {
             LOGGER.info("User $pseudonym logged")
             val accessToken = generateToken(Role.USER)
             session.addSession(user.id, accessToken)

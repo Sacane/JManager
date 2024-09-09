@@ -14,13 +14,13 @@ class InMemoryTransactionRepository(
     private val accounts = mutableSetOf<Account>()
 
     override fun persist(userId: UserId, account: Account): User? {
-        val user = inMemoryUserProvider.users[userId]
-        user?.accounts?.add(account)
+        val user = inMemoryUserProvider.users[userId]?.user
+        user?.addAccount(account)
         return user
     }
 
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
-        inMemoryUserProvider.users[userId]
+        inMemoryUserProvider.users[userId]?.user
             ?.accounts
             ?.find { it.label == accountLabel }
         ?.transactions
@@ -31,21 +31,21 @@ class InMemoryTransactionRepository(
     override fun persist(userId: UserId, category: Tag): Tag? {
         tags.add(category)
         inMemoryUserProvider.users[userId]
-            ?.tags?.add(category) ?: return null
+            ?.user?.tags?.add(category) ?: return null
         return category
     }
 
     override fun persist(account: Account): Account? {
-        inMemoryUserProvider.users[account.owner?.id]?.accounts?.add(account) ?: return null
+        inMemoryUserProvider.users[account.owner?.id]?.user?.addAccount(account) ?: return null
         return account
     }
 
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
-        return inMemoryUserProvider.users[userId]?.accounts?.find { it.label == labelAccount }
+        return inMemoryUserProvider.users[userId]?.user?.accounts?.find { it.label == labelAccount }
     }
 
     override fun findAccountById(accountId: Long): Account? {
-        for(user in inMemoryUserProvider.users.values) {
+        for(user in inMemoryUserProvider.users.values.map { it.user }) {
             for(account in user.accounts) {
                 if(account.id == accountId) {
                     return account
@@ -57,14 +57,14 @@ class InMemoryTransactionRepository(
 
     override fun remove(targetCategory: Tag) {
         tags.remove(targetCategory)
-        inMemoryUserProvider.users.values.forEach {
+        inMemoryUserProvider.users.values.map { it.user }.forEach {
             it.tags.removeIf { tag -> tag.id == targetCategory.id }
         }
     }
 
     override fun deleteAccountByID(accountID: Long) {
-        inMemoryUserProvider.users.values.forEach {
-            it.accounts.removeIf { account -> account.id == accountID }
+        inMemoryUserProvider.users.values.map { it.user }.forEach {
+            it.removeAccount(accountID)
         }
     }
 
@@ -89,7 +89,7 @@ class InMemoryTransactionRepository(
     }
 
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
-        return inMemoryUserProvider.users[userId]?.accounts?.find { it.label == label }
+        return inMemoryUserProvider.users[userId]?.user?.accounts?.find { it.label == label }
     }
 }
 
@@ -100,25 +100,29 @@ class InMemoryUserRepository (
     private val random = Random()
 
     override fun findUserById(userId: UserId): User? {
-        return inMemoryUserProvider.users[userId]
+        return inMemoryUserProvider.users[userId]?.user
     }
 
     override fun findUserByIdWithAccounts(userId: UserId): User? {
-        return inMemoryUserProvider.users[userId]
+        return inMemoryUserProvider.users[userId]?.user
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
-        return inMemoryUserProvider.users.values.find { it.username == pseudonym }
+        return inMemoryUserProvider.users.values.find { it.user.username == pseudonym }?.user
     }
 
-    override fun create(user: User): User? {
-        if(inMemoryUserProvider.users.put(user.id, user) == null) return null
-        return user
+    override fun findByPseudonymWithEncodedPassword(pseudonym: String): UserWithPassword? {
+        return inMemoryUserProvider.users.values.find { it.user.username == pseudonym }
+    }
+
+    override fun create(user: UserWithPassword): User? {
+        if(inMemoryUserProvider.users.put(user.user.id, UserWithPassword(user.user, user.password)) == null) return null
+        return user.user
     }
 
     override fun register(username: String, email: String, password: Password): User? {
-        val element = User(id = UserId(random.nextLong()), username = username, email = email, password = password)
-        inMemoryUserProvider.users[element.id] = element
+        val element = User(id = UserId(random.nextLong()), username = username, email = email)
+        inMemoryUserProvider.users[element.id] = UserWithPassword(element, password)
         return element
     }
 
@@ -131,5 +135,5 @@ class InMemoryUserRepository (
 }
 
 class InMemoryUserProvider {
-    val users = mutableMapOf<UserId, User>()
+    val users = mutableMapOf<UserId, UserWithPassword>()
 }
