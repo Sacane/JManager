@@ -38,9 +38,9 @@ class Directory {
     )
 
     private val userInventory = mutableListOf(
-        User(UserId(1L), "test1", "test1.test@test.fr",  accountInventory, Password("01010122321")),
-        User(UserId(2L), "test2", "test2.test@test.fr",  accountInventory, Password("01010122332")),
-        User(UserId(3L), "test3", "test3.test@test.fr",  accountInventory, Password("01010122323")),
+        User(UserId(1L), "test1", "test1.test@test.fr",  accountInventory),
+        User(UserId(2L), "test2", "test2.test@test.fr",  accountInventory),
+        User(UserId(3L), "test3", "test3.test@test.fr",  accountInventory),
     )
 
 

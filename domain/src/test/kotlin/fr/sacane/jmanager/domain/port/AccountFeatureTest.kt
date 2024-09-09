@@ -32,7 +32,7 @@ class AccountFeatureTest {
             user = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
             connectUser(user)
             element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
-            user.accounts.add(element)
+            user.addAccount(element)
             accountFeature.save(user.id, tokenValue!!, element)
         }
 

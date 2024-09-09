@@ -49,14 +49,13 @@ internal fun Account.asResource(): AccountResource {
     return AccountResource(idAccount = id, amount = sold.applyOnValue { it }, label = label, sheets = sheets)
 }
 
-internal fun User.asResource(): UserResource {
+internal fun User.asResource(password: Password): UserResource {
     return UserResource(username = username, password = password.get(), email = email, mutableListOf(), tags = tags.map { it.toPersonalTag() }.toMutableList())
 }
 
 internal fun User.asExistingResource(): UserResource
     = UserResource(idUser = this.id.id,
         username = username,
-        password = password.get(),
         email = email,
         accounts = this.accounts.map {it.asResource()}.toMutableList(),
         tags = this.tags.map { it.toPersonalTag() }.toMutableList()
@@ -87,7 +86,6 @@ internal fun UserResource.toModel()
     id = UserId(this.idUser),
     username = this.username,
     email = this.email,
-    password = Password.fromBytes(this.password)
 )
 internal fun UserResource.toModelWithSimpleAccounts()
         : User = User(
@@ -95,7 +93,6 @@ internal fun UserResource.toModelWithSimpleAccounts()
     username = this.username,
     email = this.email,
     accounts_ = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
-    password = Password.fromBytes(this.password)
 )
 
 internal fun AccountResource.toSimpleModel(): Account = Account(this.idAccount, this.amount.toAmount(), this.label)
@@ -107,8 +104,8 @@ internal fun UserResource.toMinimalUserRepresentation()
     this.email
 )
 
-internal fun UserResource.toModelWithPasswords() : User =
-    User(id = UserId(this.idUser), username = this.username, email = this.email, password = Password.fromBytes(this.password))
+internal fun UserResource.toModelWithPasswords() : UserWithPassword =
+    UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = this.email), Password.fromBytes(this.password))
 
 fun Tag.asResource(): AbstractTagResource {
     return when(this.isDefault) {

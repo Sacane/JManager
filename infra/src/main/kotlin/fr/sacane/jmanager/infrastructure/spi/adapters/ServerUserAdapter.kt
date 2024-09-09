@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
@@ -35,12 +36,18 @@ class ServerUserAdapter (
     @Transactional
     override fun findByPseudonym(pseudonym: String): User? {
         val user = userPostgresRepository.findByUsername(pseudonym) ?: return null
+        return user.toModel()
+    }
+
+    override fun findByPseudonymWithEncodedPassword(pseudonym: String): UserWithPassword? {
+        val user = userPostgresRepository.findByUsername(pseudonym) ?: return null
         return user.toModelWithPasswords()
     }
+
     @Transactional
-    override fun create(user: User): User?{
+    override fun create(user: UserWithPassword): User?{
         return try{
-            val userAsResource = user.asResource()
+            val userAsResource = user.user.asResource(user.password)
             userPostgresRepository.save(userAsResource).toModel()
         }catch(e: Exception){
             LOGGER.severe("Failed to save user into database")
