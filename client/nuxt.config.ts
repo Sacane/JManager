@@ -17,14 +17,18 @@ export default defineNuxtConfig({
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
+
   runtimeConfig: isDev ? devRuntimeConfig : runtimeConfig,
+
   imports: { // add folders here to auto-import them in your application
     dirs: [
       'stores',
       'composables/**',
     ],
   },
+
   components: [{ path: '~/components', pathPrefix: false }],
+
   typescript: {
     tsConfig: {
       compilerOptions: {
@@ -32,6 +36,7 @@ export default defineNuxtConfig({
       },
     },
   },
+
   vite: {
     vue: {
       script: {
@@ -40,6 +45,7 @@ export default defineNuxtConfig({
       },
     },
   },
+
   experimental: {
     typedPages: true,
   },
@@ -62,11 +68,13 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     'nuxt-primevue',
   ],
+
   i18n: {
     langDir: 'locales',
     defaultLocale: 'en',
     locales,
   },
+
   colorMode: {
     preference: 'system',
     fallback: 'light',
@@ -74,5 +82,7 @@ export default defineNuxtConfig({
     classSuffix: '',
     storageKey: 'color-scheme',
   },
+
   ssr: false,
+  compatibilityDate: '2024-09-09',
 })
