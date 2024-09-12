@@ -32,10 +32,9 @@ class TransactionFeatureImpl(
     }
 
     private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
-        val sheets = account.transactions.filter { it.date.month == month }
-        for(number in sheets.indices) {
-            if(number == 0) continue
-            sheets[number].position = sheets[number - 1].position
+        val sheets = account.transactions.filter { it.date.month == month }.sortedBy { it.date }
+        for((position, number) in sheets.indices.withIndex()) {
+            sheets[number].position = position
         }
         register.saveAllSheets(
             sheets.map{ sheet ->
@@ -99,9 +98,9 @@ class TransactionFeatureImpl(
         year: Int,
         account: String
     ): Response<List<Transaction>> = session.authenticate(userId, token) {
-        val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("The user does not exists")
+        val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas")
         Response.ok(register.findAccountWithSheetByLabelAndUser(account, user.id)
-            ?.retrieveSheetSurroundByDate(month, year)
+            ?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate Response.notFound("Aucun compte ne correspond au label indiqué")
         )
     }
@@ -144,7 +143,6 @@ class TransactionFeatureImpl(
         account.cancelSheetsAmount(account.transactions.filter(isSheetOnList))
         account.transactions.removeIf(isSheetOnList)
         updateSheetSoldFrom(account, month)
-        println(account.sheets().map { it.tag })
         register.persist(account)
         register.deleteAllSheetsById(sheetIds)
     }

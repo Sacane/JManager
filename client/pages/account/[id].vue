@@ -197,7 +197,7 @@ async function onEditTransaction() {
     label: editTransactionInfo.label,
     value: `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart}`,
     isIncome: (editTransactionInfo.selectedMode === 'income'),
-    date: editTransactionInfo.date,
+    date: editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: `${editTransactionInfo.accountAmount}`,
     tagDTO: editTransactionInfo.tagDTO,
   }, Number.parseInt(data.currentAccountId))
