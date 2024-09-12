@@ -120,7 +120,7 @@ class TransactionFeatureImpl(
         register.save(sheetFromResource)
         updateSheetSoldFrom(acc, transaction.date.month, false)
 
-        //acc.updateSoldByLastSheet()
+
         return@authenticate accountRepository.editFromAnother(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             Response.ok(sheetFromResource)
