@@ -23,9 +23,9 @@ class SheetResource(
     var accountAmount: BigDecimal = BigDecimal(0.0),
     @Column
     var position: Int = 0,
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     var tag: DefaultTagResource? = null,
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     var personalTag:TagPersonalResource? = null,
     var currency: String = "€"
 

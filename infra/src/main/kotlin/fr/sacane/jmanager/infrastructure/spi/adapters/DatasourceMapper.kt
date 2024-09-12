@@ -12,9 +12,9 @@ class AccountMapper(val userRepository: UserPostgresRepository){
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource() }.toMutableList(), userResource.get(), idAccount = account.id)
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(), idAccount = account.id)
         } else {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource() }.toMutableList(), idAccount = account.id)
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), idAccount = account.id)
         }
     }
 }
