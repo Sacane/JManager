@@ -176,7 +176,7 @@ async function onConfirm() {
     id: 0,
     label: values.sheetLabel,
     value: amount,
-    isIncome: values.selectedMode === 'income',
+    isIncome: values.isIncome,
     currency: '€',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     accountAmount: `${data.accountAmount}`,
@@ -184,7 +184,9 @@ async function onConfirm() {
   }).then((sheet: SheetDTO) => {
     // actualSheets.value.push(asDisplayableTransaction(sheet))
     initAccount()
-  }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => isNewTransactionDialogOpen.value = false)
+  }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => {
+    isNewTransactionDialogOpen.value = false
+  })
 }
 async function onEditTransaction() {
   if ((editTransactionInfo.integerPart === '0' && editTransactionInfo.decimalPart === '0') || editTransactionInfo.label === '') {
@@ -281,11 +283,11 @@ function test(row): any | undefined {
         <label for="selectionType">Selectionner le type de transaction</label>
         <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
           <div>
-            <RadioButton v-model="values.selectedMode" input-id="selection1" value="expenses" />
+            <RadioButton v-model="values.isIncome" input-id="selection1" value="false" />
             <label for="selection1">Dépense</label>
           </div>
           <div>
-            <RadioButton v-model="values.selectedMode" input-id="selection2" value="income" />
+            <RadioButton v-model="values.isIncome" input-id="selection2" value="true" />
             <label for="selection2">Recette</label>
           </div>
         </div>

@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRegister
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
 import java.util.*
+import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
@@ -26,6 +27,9 @@ class TransactionFeatureImpl(
     private val session: InMemorySessionManager,
     private val accountRepository: AccountRepository
 ): TransactionFeature{
+    companion object {
+        private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
+    }
 
     private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
         val sheets = account.transactions.filter { it.date.month == month }
@@ -71,11 +75,14 @@ class TransactionFeatureImpl(
                 .filter { it.date <= transaction.date }
                 .maxByOrNull { it.position }
             if(lastRecord == null) {
+                logger.info("last record null")
                 transaction.position = 0
                 transaction.updateSoldStartingWith(account.sold)
             } else {
+
                 transaction.position = lastRecord.position + 1
                 transaction.updateSoldStartingWith(lastRecord.accountAmount)
+                logger.info("last record not null ${transaction.position}")
             }
             updateSheetPosition(account.id!!, transaction.date.year, transaction.date.month)
         } else {
@@ -137,6 +144,7 @@ class TransactionFeatureImpl(
         account.cancelSheetsAmount(account.transactions.filter(isSheetOnList))
         account.transactions.removeIf(isSheetOnList)
         updateSheetSoldFrom(account, month)
+        println(account.sheets().map { it.tag })
         register.persist(account)
         register.deleteAllSheetsById(sheetIds)
     }
