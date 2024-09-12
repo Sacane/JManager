@@ -30,6 +30,13 @@ const data = reactive({
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
   tagDTO: undefined,
 })
+
+function translateChange(): void {
+  console.log('TEST')
+  console.log(editTransactionInfo.date)
+  editTransactionInfo.date = editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-')
+}
+
 const actualSheets = ref()
 
 const { saveSheet, editSheet, findTransactionById } = useSheet()
@@ -103,7 +110,7 @@ const isEditTransactionDialogOpen = ref<boolean>(false)
 const editTransactionInfo = reactive({
   id: 0,
   label: '',
-  date: new Date(),
+  date: '',
   amount: 0,
   selectedMode: 'expenses',
   accountAmount: 0.0,
@@ -192,12 +199,13 @@ async function onEditTransaction() {
   if ((editTransactionInfo.integerPart === '0' && editTransactionInfo.decimalPart === '0') || editTransactionInfo.label === '') {
     return
   }
+  console.log(editTransactionInfo.date)
   await editSheet({
     id: editTransactionInfo.id,
     label: editTransactionInfo.label,
     value: `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart}`,
     isIncome: (editTransactionInfo.selectedMode === 'income'),
-    date: editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
+    date: editTransactionInfo.date,
     accountAmount: `${editTransactionInfo.accountAmount}`,
     tagDTO: editTransactionInfo.tagDTO,
   }, Number.parseInt(data.currentAccountId))
@@ -339,7 +347,7 @@ function test(row): any | undefined {
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
-        <Calendar id="calendar" v-model="editTransactionInfo.date" placeholder="Date" date-format="dd-mm-yy" />
+        <Calendar id="calendar" v-model="editTransactionInfo.date" placeholder="Date" date-format="dd-mm-yy" @date-select="translateChange()" />
       </div>
       <Dropdown v-model="editTransactionInfo.tagDTO" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
         <template #option="slotTag">
