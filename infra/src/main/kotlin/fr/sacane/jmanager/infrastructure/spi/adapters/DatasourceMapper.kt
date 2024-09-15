@@ -12,9 +12,9 @@ class AccountMapper(val userRepository: UserPostgresRepository){
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(), idAccount = account.id)
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(), initialSold = account.initialSold.amount, idAccount = account.id)
         } else {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), idAccount = account.id)
+            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = account.initialSold.amount, idAccount = account.id)
         }
     }
 }
@@ -46,7 +46,7 @@ internal fun Account.asResource(): AccountResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return AccountResource(idAccount = id, amount = sold.applyOnValue { it }, label = label, sheets = sheets)
+    return AccountResource(idAccount = id, amount = sold.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.amount)
 }
 
 internal fun User.asResource(password: Password): UserResource {
@@ -61,25 +61,28 @@ internal fun User.asExistingResource(): UserResource
         tags = this.tags.map { it.toPersonalTag() }.toMutableList()
     )
 
-internal fun SheetResource.toModel(): Transaction{
-    return Transaction(
-        this.idSheet,
-        this.label,
-        this.date,
-        this.value.toAmount(),
-        this.isIncome!!,
-        this.accountAmount.toAmount(),
-        position=this.position,
-        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)))
-}
-internal fun AccountResource.toModel(): Account{
-    return Account(
-        this.idAccount,
-        this.amount.toAmount(),
-        this.label,
-        this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
-        this.owner?.toModel())
-}
+internal fun SheetResource.toModel(): Transaction
+= Transaction(
+    this.idSheet,
+    this.label,
+    this.date,
+    this.value.toAmount(),
+    this.isIncome!!,
+    this.accountAmount.toAmount(),
+    position=this.position,
+    tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0))
+)
+
+internal fun AccountResource.toModel(): Account
+= Account(
+    this.idAccount,
+    this.amount.toAmount(),
+    this.label,
+    this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
+    this.owner?.toModel(),
+    initialSold = Amount(this.initialSold)
+)
+
 
 internal fun UserResource.toModel()
 : User = User(

@@ -20,6 +20,7 @@ class AccountResource(
     var sheets: MutableList<SheetResource> = mutableListOf(),
     @ManyToOne
     var owner: UserResource? = null,
+    var initialSold: BigDecimal = BigDecimal.ZERO,
     @Id
     @GeneratedValue
     @Column(name = "id_account")
