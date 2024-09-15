@@ -22,7 +22,7 @@ class Directory {
     }
 
     private val accountInventory = mutableListOf(
-        Account(1, 0.toAmount(), "Principal", transactionInventories)
+        Account(1, 0.toAmount(), "Principal", transactionInventories, initialSold = 0.toAmount())
     )
 
     private val tokenInventory = mutableMapOf(
