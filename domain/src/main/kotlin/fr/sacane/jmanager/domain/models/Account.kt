@@ -60,7 +60,7 @@ class Account(
     fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
         return transactions
             .filter { it.date.month == month && it.date.year == year }
-            .sortedBy { it.date }
+            .sortedBy { it.position }
     }
 
     override fun toString(): String {

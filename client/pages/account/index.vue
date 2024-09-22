@@ -78,7 +78,7 @@ async function toAccount() {
 <template>
   <div v-if="isAccountFilled" class="p20px container">
     <h2 class="info-text">
-      Cliquez sur un compte pour visualiser ses transactions
+      Double cliquez sur un compte pour visualiser ses transactions
     </h2>
     <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
       <template #header>

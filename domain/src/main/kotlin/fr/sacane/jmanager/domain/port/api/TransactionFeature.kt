@@ -51,12 +51,20 @@ class TransactionFeatureImpl(
     }
     private fun updateSheetPosition(accountID: Long, transaction: Transaction) {
         val account = register.findAccountById(accountID) ?: return
-        val sheets = account.transactions.filter { it.date >= transaction.date }
-
+        val sheets = account.transactions.filter { transaction.position <= it.position }.sortedBy { it.position }
         for(number in sheets.indices) {
-            if(sheets[number].id != transaction.id) {
-                if(number > 0) sheets[number].updateAccountSoldStartWith(sheets[number - 1].accountAmount)
-                else sheets[number].updateAccountSoldStartWith(account.sold)
+            val actualTransaction = sheets[number]
+            if(actualTransaction.date == transaction.date) {
+                continue
+            }
+            actualTransaction.position += 1
+            if(actualTransaction.position <= transaction.position) {
+                continue
+            }
+            if(number == 0) {
+                actualTransaction.updateAccountSoldStartWith(transaction.accountAmount)
+            } else {
+                actualTransaction.updateAccountSoldStartWith(sheets[number - 1].accountAmount)
             }
         }
         register.saveAllSheets(sheets)
