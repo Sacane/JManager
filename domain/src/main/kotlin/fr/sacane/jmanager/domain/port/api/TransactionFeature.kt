@@ -43,21 +43,21 @@ class TransactionFeatureImpl(
                     if(lastRecord == null) {
                         if(update) sheet.accountAmount = account.sold
                     } else {
-                        sheet.updateSoldStartingWith(lastRecord.accountAmount)
+                        sheet.updateAccountSoldStartWith(lastRecord.accountAmount)
                     }
                 }
             }.toList()
         )
     }
-    private fun updateSheetPosition(accountID: Long, year: Int, month: Month) {
-        val account = register.findAccountById(accountID)
-        val sheets = account?.transactions
-            ?.filter { it.date.year == year && it.date.month == month }
-            ?.sortedBy { it.position }
-            ?: return
+    private fun updateSheetPosition(accountID: Long, transaction: Transaction) {
+        val account = register.findAccountById(accountID) ?: return
+        val sheets = account.transactions.filter { it.date >= transaction.date }
 
         for(number in sheets.indices) {
-            sheets[number].position = number
+            if(sheets[number].id != transaction.id) {
+                if(number > 0) sheets[number].updateAccountSoldStartWith(sheets[number - 1].accountAmount)
+                else sheets[number].updateAccountSoldStartWith(account.sold)
+            }
         }
         register.saveAllSheets(sheets)
     }
@@ -73,19 +73,19 @@ class TransactionFeatureImpl(
             val lastRecord = account.transactions
                 .filter { it.date <= transaction.date }
                 .maxByOrNull { it.position }
+
             if(lastRecord == null) {
                 logger.info("last record null")
                 transaction.position = 0
-                transaction.updateSoldStartingWith(account.sold)
+                transaction.updateAccountSoldStartWith(account.initialSold)
             } else {
-
+                logger.info("last record not null")
                 transaction.position = lastRecord.position + 1
-                transaction.updateSoldStartingWith(lastRecord.accountAmount)
-                logger.info("last record not null ${transaction.position}")
+                transaction.updateAccountSoldStartWith(lastRecord.accountAmount)
             }
-            updateSheetPosition(account.id!!, transaction.date.year, transaction.date.month)
+            updateSheetPosition(account.id!!, transaction)
         } else {
-            transaction.updateSoldStartingWith(account.sold)
+            transaction.updateAccountSoldStartWith(account.sold)
         }
         register.persist(userId, accountLabel, transaction) ?: return@authenticate Response.invalid("Une erreur est survenue lors de l'ajout de la transaction")
         Response.ok(transaction)
@@ -105,26 +105,61 @@ class TransactionFeatureImpl(
         )
     }
 
+//    override fun editSheet(
+//        userID: Long,
+//        accountID: Long,
+//        transaction: Transaction,
+//        token: UUID
+//    ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
+//        if(transaction.id == null) return@authenticate Response.invalid("L'ID de la transaction est null")
+//        val acc = register.findAccountById(accountID)
+//        val sheetFromResource = acc?.transactions?.find { it.id == transaction.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
+//        acc.updateSoldFromTransactions(sheetFromResource, transaction)
+//        sheetFromResource.updateFromOther(transaction)
+//        sheetFromResource.accountAmount = acc.sold
+//        register.save(sheetFromResource)
+//        updateSheetSoldFrom(acc, transaction.date.month, false)
+//
+//
+//        return@authenticate accountRepository.editFromAnother(acc).run {
+//            this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
+//            Response.ok(sheetFromResource)
+//        }
+//    }
+
     override fun editSheet(
         userID: Long,
         accountID: Long,
         transaction: Transaction,
         token: UUID
-    ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
+    ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser){
         if(transaction.id == null) return@authenticate Response.invalid("L'ID de la transaction est null")
         val acc = register.findAccountById(accountID)
         val sheetFromResource = acc?.transactions?.find { it.id == transaction.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
+
         acc.updateSoldFromTransactions(sheetFromResource, transaction)
         sheetFromResource.updateFromOther(transaction)
-        sheetFromResource.accountAmount = acc.sold
+
         register.save(sheetFromResource)
-        updateSheetSoldFrom(acc, transaction.date.month, false)
+
+        updateAccountTransactionSold(acc, transaction)
+
+        // updateSheetSoldFrom(acc, transaction.date.month, false)
 
 
         return@authenticate accountRepository.editFromAnother(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             Response.ok(sheetFromResource)
         }
+    }
+
+    private fun updateAccountTransactionSold(account: Account, transaction: Transaction) {
+        val sheets = account.transactions.filter { it.date >= transaction.date }
+        val sheetsSorted = sheets.sortedBy { it.date }
+
+        val previousAccountSold = account.transactions.filter { it.date < transaction.date }.maxByOrNull { it.date }
+
+
     }
 
     override fun findById(
