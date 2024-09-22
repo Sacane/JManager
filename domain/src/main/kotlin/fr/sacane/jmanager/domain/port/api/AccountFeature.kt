@@ -61,9 +61,6 @@ class AccountFeatureImpl(
         accountID: Long,
         token: UUID
     ): Response<Nothing> = session.authenticate(profileID, token) {
-        val user = userRepository.findUserById(profileID) ?: return@authenticate notFound("L'utilisateur recherché n'exite pas")
-        user.removeAccount(accountID)
-        userRepository.upsert(user) ?: return@authenticate invalid("Une erreur s'est produite lors de l'insertion du compte")
         register.deleteAccountByID(accountID)
         ok()
     }

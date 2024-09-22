@@ -13,7 +13,7 @@ class Transaction(
     var tag: Tag = Tag("Aucune", isDefault = true),
     var position: Int = 0
 ) {
-    fun updateSoldStartingWith(start: Amount) {
+    fun updateAccountSoldStartWith(start: Amount) {
         accountAmount = if(isIncome) start.plus(amount) else start.minus(amount)
     }
 
