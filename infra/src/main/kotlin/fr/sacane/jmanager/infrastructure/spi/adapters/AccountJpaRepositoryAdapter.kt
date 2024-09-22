@@ -16,4 +16,9 @@ class AccountJpaRepositoryAdapter(
         accountFromDatabase.amount = account.sold.amount
         return accountFromDatabase.toModel()
     }
+
+    @Transactional
+    override fun getLastSheetPosition(accountId: Long): Int? {
+        return accountRepository.findLastSheetPosition(accountId)
+    }
 }

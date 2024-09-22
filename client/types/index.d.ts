@@ -6,7 +6,6 @@ declare global {
     value: string
     isIncome: boolean
     date: string
-    accountAmount: string
     color: ColorDTO
     tagDTO: TagDTO
   }
