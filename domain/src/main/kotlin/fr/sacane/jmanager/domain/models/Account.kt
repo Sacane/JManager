@@ -17,10 +17,6 @@ class Account(
     val sold: Amount
         get() = amount
 
-    fun updateSoldByLastSheet(): Boolean {
-        this.amount = transactions.maxByOrNull { it.position }?.accountAmount ?: return false
-        return true
-    }
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
     fun sheets(): List<Transaction>{
@@ -30,10 +26,8 @@ class Account(
     fun updateFrom(account: Account) {
         amount = account.sold
         labelAccount = account.label
-        var addition = account.sold
         transactions.replaceAll {
-            addition = if(it.isIncome) addition + it.amount else addition - it.amount
-            Transaction(it.id, it.label, it.date, it.amount, it.isIncome, addition, it.tag, it.position)
+            Transaction(it.id, it.label, it.date, it.amount, it.isIncome, it.tag, it.position)
         }
 
     }

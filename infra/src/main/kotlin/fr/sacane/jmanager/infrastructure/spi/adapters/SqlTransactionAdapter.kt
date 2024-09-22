@@ -107,7 +107,7 @@ class SqlTransactionAdapter(
     }
     @Transactional
     override fun save(transaction: Transaction): Transaction? {
-        return sheetRepository.save(transaction.asResource()).toModel()
+        return sheetRepository.save(transaction.asResource(transaction.tag.asResource())).toModel()
     }
     @Transactional
     override fun save(account: Account): Account? {

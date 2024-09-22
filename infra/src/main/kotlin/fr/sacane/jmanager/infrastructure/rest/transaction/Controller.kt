@@ -34,13 +34,12 @@ class SheetController(private val transactionFeature: TransactionFeature) {
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO.toModel()
         ).map {
-            it.exportAmountValues { expense, income, sold ->
+            it.exportAmountValues { expense, income ->
                 SheetSendDTO(
                     it.label,
                     it.date,
                     expense.toAmount().toString(),
-                    income,
-                    sold.toAmount().toString()
+                    income
                 )
             }
         }.toResponseEntity().apply {

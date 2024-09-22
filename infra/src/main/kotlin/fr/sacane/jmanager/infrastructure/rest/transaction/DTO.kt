@@ -21,7 +21,6 @@ data class SheetDTO(
     val isIncome: Boolean,
     @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
-    val accountAmount: String,
     val position: Int,
     val tagDTO: TagDTO? = null
 )
@@ -34,8 +33,7 @@ data class SheetSendDTO(
     val label: String,
     val date: LocalDate,
     val value: String,
-    val isIncome: Boolean,
-    val accountAmount: String
+    val isIncome: Boolean
 )
 
 data class UserSheetDTO(

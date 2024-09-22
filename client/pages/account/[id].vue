@@ -48,7 +48,6 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
     expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '/',
     incomeRepresenttation: transaction.isIncome ? `${transaction.value} €` : '/',
     date: transaction.date,
-    accountAmount: `${transaction.accountAmount} €`,
     tagDTO: transaction.tagDTO,
   }
 }
@@ -67,9 +66,9 @@ function retrieveTags() {
 function initAccount() {
   findById(Number.parseFloat(route.params?.id as string))
     .then((account: AccountDTO) => {
-      data.accountAmount = account.amount
       data.labelAccount = account.labelAccount as string
       data.currentAccountId = route.params?.id as string
+      data.accountAmount = account.amount
       retrieveSheets()
     })
 }
@@ -113,7 +112,6 @@ const editTransactionInfo = reactive({
   date: '',
   amount: 0,
   selectedMode: 'expenses',
-  accountAmount: 0.0,
   accountId: 0,
   integerPart: '0',
   decimalPart: '0',
@@ -126,7 +124,6 @@ function resetEditTransaction(): void {
   editTransactionInfo.id = 0
   editTransactionInfo.date = new Date()
   editTransactionInfo.amount = 0
-  editTransactionInfo.accountAmount = 0.0
   editTransactionInfo.isIncome = false
   editTransactionInfo.tagDTO = ''
   editTransactionInfo.accountId = 0
@@ -139,7 +136,6 @@ function onEditPage(event: any) {
     editTransactionInfo.id = transaction.id
     editTransactionInfo.date = transaction.date
     editTransactionInfo.amount = transaction.value
-    editTransactionInfo.accountAmount = transaction.accountAmount
     editTransactionInfo.isIncome = transaction.isIncome
     const [integerPart, decimalPart] = transaction.value.toString().split('.')
     editTransactionInfo.integerPart = integerPart
@@ -164,7 +160,6 @@ const uDate = useDate()
 const values = reactive({
   accountId: data.currentAccountId,
   accountLabel: data.labelAccount,
-  accountAmount: data.accountAmount,
   amount: 0.0,
   selectedMode: 'expenses',
   sheetLabel: '',
@@ -186,10 +181,8 @@ async function onConfirm() {
     isIncome: values.isIncome,
     currency: '€',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
-    accountAmount: `${data.accountAmount}`,
     tagDTO: data.tagDTO,
-  }).then((sheet: SheetDTO) => {
-    // actualSheets.value.push(asDisplayableTransaction(sheet))
+  }).then(() => {
     initAccount()
   }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => {
     isNewTransactionDialogOpen.value = false
@@ -199,14 +192,12 @@ async function onEditTransaction() {
   if ((editTransactionInfo.integerPart === '0' && editTransactionInfo.decimalPart === '0') || editTransactionInfo.label === '') {
     return
   }
-  console.log(editTransactionInfo.date)
   await editSheet({
     id: editTransactionInfo.id,
     label: editTransactionInfo.label,
     value: `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart}`,
     isIncome: (editTransactionInfo.selectedMode === 'income'),
     date: editTransactionInfo.date,
-    accountAmount: `${editTransactionInfo.accountAmount}`,
     tagDTO: editTransactionInfo.tagDTO,
   }, Number.parseInt(data.currentAccountId))
     .then((_: SheetDTO) => {
@@ -237,7 +228,7 @@ function test(row): any | undefined {
           </h2>
         </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="450px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="500px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
@@ -261,7 +252,6 @@ function test(row): any | undefined {
         <Column field="label" header="Libellé" :header-style="{ textAlign: 'center' }" />
         <Column field="expensesRepresentation" header="Dépenses" :header-style="{ textAlign: 'center' }" />
         <Column field="incomeRepresenttation" header="Recettes" :header-style="{ textAlign: 'center' }" />
-        <Column field="accountAmount" header="Solde" />
         <Column field="tagDTO" header="Tag">
           <template #body="{ data }">
             <div class="flex flex-row align-center flex-gap-2">
