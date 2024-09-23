@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.AccountRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
@@ -10,15 +11,8 @@ class InMemoryTransactionRepository(
     private val inMemoryUserProvider: InMemoryUserProvider
 ): TransactionRepositoryPort {
 
-    private val tags = mutableSetOf<Tag>()
     private val transactions = mutableSetOf<Transaction>()
-    private val accounts = mutableSetOf<Account>()
 
-    override fun persist(userId: UserId, account: Account): User? {
-        val user = inMemoryUserProvider.users[userId]?.user
-        user?.addAccount(account)
-        return user
-    }
 
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         inMemoryUserProvider.users[userId]?.user
@@ -29,17 +23,6 @@ class InMemoryTransactionRepository(
         return transaction
     }
 
-    override fun persist(userId: UserId, category: Tag): Tag? {
-        tags.add(category)
-        inMemoryUserProvider.users[userId]
-            ?.user?.tags?.add(category) ?: return null
-        return category
-    }
-
-    override fun persist(account: Account): Account? {
-        inMemoryUserProvider.users[account.owner?.id]?.user?.addAccount(account) ?: return null
-        return account
-    }
 
     override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
         return inMemoryUserProvider.users[userId]?.user?.accounts?.find { it.label == labelAccount }
@@ -54,19 +37,6 @@ class InMemoryTransactionRepository(
             }
         }
         return null
-    }
-
-    override fun remove(targetCategory: Tag) {
-        tags.remove(targetCategory)
-        inMemoryUserProvider.users.values.map { it.user }.forEach {
-            it.tags.removeIf { tag -> tag.id == targetCategory.id }
-        }
-    }
-
-    override fun deleteAccountByID(accountID: Long) {
-        inMemoryUserProvider.users.values.map { it.user }.forEach {
-            it.removeAccount(accountID)
-        }
     }
 
     override fun saveAllSheets(transactions: List<Transaction>) {
@@ -85,9 +55,6 @@ class InMemoryTransactionRepository(
         return if(this.transactions.add(transaction)) transaction else null
     }
 
-    override fun save(account: Account): Account? {
-        return if(this.accounts.add(account)) account else null
-    }
 
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
         return inMemoryUserProvider.users[userId]?.user?.accounts?.find { it.label == label }
@@ -97,7 +64,6 @@ class InMemoryTransactionRepository(
 class InMemoryUserRepository (
     private val inMemoryUserProvider: InMemoryUserProvider
 ): UserRepository {
-    private val users = mutableSetOf<User>()
     private val random = Random()
 
     override fun findUserById(userId: UserId): User? {
@@ -128,20 +94,24 @@ class InMemoryUserRepository (
     }
 
     override fun upsert(user: User): User? {
-        val userFound = inMemoryUserProvider.users[user.id] ?: users.add(user)
-        users.remove(userFound)
-        users.add(user)
+        inMemoryUserProvider.users[user.id]?.password?.let {
+            inMemoryUserProvider.users[user.id] = UserWithPassword(user, it)
+        } ?: return null
         return user
     }
 }
 
-class InMemoryAccountRepository: AccountRepository {
+data class AccountByOwner(
+    val account: List<Account>,
+    val userId: UserId
+)
 
-    private val accounts = mutableListOf<Account>()
+class InMemoryAccountRepository(
+    private val inMemoryUserProvider: InMemoryUserProvider
+): AccountRepository, State<AccountByOwner> {
 
     override fun editFromAnother(account: Account): Account {
-        accounts.removeIf { it.id == account.id }
-        accounts.add(account)
+        inMemoryUserProvider.upsert(account)
         return account
     }
 
@@ -150,26 +120,87 @@ class InMemoryAccountRepository: AccountRepository {
     }
 
     override fun save(ownerId: UserId, account: Account): Account? {
-        accounts.add(account)
+        inMemoryUserProvider.addAccount(ownerId, account)
         return account
     }
 
     override fun findAccountByIdWithTransactions(accountId: Long): Account? {
-        return accounts.find { it.id == accountId }
+        return inMemoryUserProvider.findAccountById(accountId)
     }
 
     override fun deleteAccountById(accountId: Long) {
-        accounts.removeIf { it.id == accountId }
+        inMemoryUserProvider.removeAccountById(accountId)
     }
 
     override fun upsert(account: Account): Account {
-        accounts.removeIf { it.id == account.id }
-        accounts.add(account)
+        account.id?.let {
+            inMemoryUserProvider.upsert(account)
+        }
         return account
     }
 
+    override fun getStates(): Collection<AccountByOwner> {
+        return inMemoryUserProvider.accountsByOwner()
+    }
+
+    override fun clear() {
+        inMemoryUserProvider.clearAccounts()
+    }
+
+    override fun init(initialState: Collection<AccountByOwner>) {
+        inMemoryUserProvider.initAccounts(initialState)
+    }
 }
+
 
 class InMemoryUserProvider {
     val users = mutableMapOf<UserId, UserWithPassword>()
+    val accounts = mutableMapOf<UserId, MutableList<Account>>()
+
+    fun addAccount(ownerId: UserId, account: Account) {
+        accounts.computeIfAbsent(ownerId) { mutableListOf() }.add(account)
+    }
+    fun removeAccountById(accountId: Long) {
+        accounts.forEach { (key, value) ->
+            value.removeIf { it.id == accountId }
+        }
+    }
+
+    fun upsert(account: Account) {
+        val accountId = account.id
+        var ownerId = UserId(0)
+        accounts.forEach { (key, value) ->
+            value.removeIf { it.id == accountId }
+            ownerId = key
+        }
+        accounts.computeIfAbsent(ownerId) { mutableListOf() }.add(account)
+    }
+
+    fun findAccountById(accountId: Long): Account? {
+        println("ACCOUNTS : ${accounts}")
+        for(accountList in accounts.values) {
+            val result = accountList.find { it.id == accountId }
+            if(result != null) {
+                println("TROUVE")
+                return result
+            }
+        }
+        return null
+    }
+
+    fun clearAccounts() {
+        accounts.clear()
+    }
+
+    fun accountsByOwner(): Collection<AccountByOwner> {
+        return accounts.map { AccountByOwner(it.value, it.key) }
+    }
+
+    fun initAccounts(initialState: Collection<AccountByOwner>) {
+        initialState.forEach {
+            accounts[it.userId] = it.account.toMutableList()
+        }
+        println(accounts)
+    }
+
 }
