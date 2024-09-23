@@ -131,9 +131,10 @@ async function toAccount() {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   .info-text{
     text-align: center;
-    font-size: 18px;
     color: #555;
     margin-bottom: 20px;
+    font-weight: 900;
+    font-size: 2rem;
   }
 }
 </style>

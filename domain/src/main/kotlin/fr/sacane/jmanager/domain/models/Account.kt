@@ -29,7 +29,14 @@ class Account(
         transactions.replaceAll {
             Transaction(it.id, it.label, it.date, it.amount, it.isIncome, it.tag, it.position)
         }
+    }
 
+    fun transactionsByMonthSortedByDate(month: Month): List<Transaction> {
+        return transactions.filter { it.date.month == month }.sortedBy { it.date }
+    }
+
+    fun transactionsFilterAndSortedByPositionBefore(position: Int): List<Transaction> {
+        return transactions.filter { it.position <= position }.sortedBy { position }
     }
 
     override fun hashCode(): Int {

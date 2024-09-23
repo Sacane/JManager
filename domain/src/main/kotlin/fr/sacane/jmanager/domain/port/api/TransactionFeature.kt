@@ -31,8 +31,8 @@ class TransactionFeatureImpl(
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
     }
 
-    private fun updateSheetSoldFrom(account: Account, month: Month, update: Boolean = true){
-        val sheets = account.transactions.filter { it.date.month == month }.sortedBy { it.date }
+    private fun updateSheetSoldFrom(account: Account, month: Month){
+        val sheets = account.transactionsByMonthSortedByDate(month)
         for((position, number) in sheets.indices.withIndex()) {
             sheets[number].position = position
         }
@@ -42,7 +42,7 @@ class TransactionFeatureImpl(
     }
     private fun updateSheetPosition(accountID: Long, transaction: Transaction) {
         val account = register.findAccountById(accountID) ?: return
-        val sheets = account.transactions.filter { transaction.position <= it.position }.sortedBy { it.position }
+        val sheets = account.transactionsFilterAndSortedByPositionBefore(transaction.position)
         for(number in sheets.indices) {
             val actualTransaction = sheets[number]
             if(actualTransaction.date == transaction.date) {
