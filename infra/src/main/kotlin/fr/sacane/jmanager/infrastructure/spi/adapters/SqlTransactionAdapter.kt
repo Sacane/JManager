@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.infrastructure.spi.entity.SheetResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.*
 import jakarta.transaction.Transactional
@@ -19,7 +19,7 @@ class SqlTransactionAdapter(
     private val accountMapper: AccountMapper,
     private val tagRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
-) : TransactionRegister{
+) : TransactionRepositoryPort{
 
     @Transactional
     override fun persist(userId: UserId, account: Account): User? {

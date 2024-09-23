@@ -8,7 +8,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.spi.TagRepository
-import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import java.util.*
 
 @Port(Side.APPLICATION)
@@ -21,7 +21,7 @@ sealed interface TagFeature {
 
 @DomainService
 class TagFeatureImpl(
-    private val register: TransactionRegister,
+    private val register: TransactionRepositoryPort,
     private val tagRepository: TagRepository,
     private val session: InMemorySessionManager
 ): TagFeature {

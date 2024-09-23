@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.AccountRepository
-import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
 import java.util.*
@@ -22,7 +22,7 @@ sealed interface TransactionFeature {
 
 @DomainService
 class TransactionFeatureImpl(
-    private val register: TransactionRegister,
+    private val register: TransactionRepositoryPort,
     private val userRepository: UserRepository,
     private val session: InMemorySessionManager,
     private val accountRepository: AccountRepository
@@ -160,7 +160,7 @@ class TransactionFeatureImpl(
         account.cancelSheetsAmount(account.transactions.filter(isSheetOnList))
         account.transactions.removeIf(isSheetOnList)
         updateSheetSoldFrom(account, month)
-        register.persist(account)
+        accountRepository.upsert(account)
         register.deleteAllSheetsById(sheetIds)
     }
 

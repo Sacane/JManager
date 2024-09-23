@@ -1,13 +1,14 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.TransactionRegister
+import fr.sacane.jmanager.domain.port.spi.AccountRepository
+import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.Random
 
 class InMemoryTransactionRepository(
     private val inMemoryUserProvider: InMemoryUserProvider
-): TransactionRegister {
+): TransactionRepositoryPort {
 
     private val tags = mutableSetOf<Tag>()
     private val transactions = mutableSetOf<Transaction>()
@@ -132,6 +133,41 @@ class InMemoryUserRepository (
         users.add(user)
         return user
     }
+}
+
+class InMemoryAccountRepository: AccountRepository {
+
+    private val accounts = mutableListOf<Account>()
+
+    override fun editFromAnother(account: Account): Account {
+        accounts.removeIf { it.id == account.id }
+        accounts.add(account)
+        return account
+    }
+
+    override fun getLastSheetPosition(accountId: Long): Int {
+        return 0
+    }
+
+    override fun save(ownerId: UserId, account: Account): Account? {
+        accounts.add(account)
+        return account
+    }
+
+    override fun findAccountByIdWithTransactions(accountId: Long): Account? {
+        return accounts.find { it.id == accountId }
+    }
+
+    override fun deleteAccountById(accountId: Long) {
+        accounts.removeIf { it.id == accountId }
+    }
+
+    override fun upsert(account: Account): Account {
+        accounts.removeIf { it.id == account.id }
+        accounts.add(account)
+        return account
+    }
+
 }
 
 class InMemoryUserProvider {
