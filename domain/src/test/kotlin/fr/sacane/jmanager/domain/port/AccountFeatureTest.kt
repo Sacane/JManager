@@ -1,11 +1,11 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.AuthenticationTest
+import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.domain.port.api.AccountFeatureImpl
-import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
@@ -15,11 +15,8 @@ import java.util.*
 class AccountFeatureTest {
 
     companion object{
-        private val inMemoryUserProvider = InMemoryUserProvider()
-        private val inMemorySessionManager: InMemorySessionManager = InMemorySessionManager()
-        private val userRepository: UserRepository = InMemoryUserRepository(inMemoryUserProvider)
-        private val accountRepository = InMemoryAccountRepository()
-        private val accountFeature: AccountFeature = AccountFeatureImpl(session = inMemorySessionManager, userRepository = userRepository, accountRepository = accountRepository)
+        private lateinit var userRepository: UserRepository
+        private lateinit var accountFeature: AccountFeature
         private lateinit var user: User
         private val tokenValue = UUID.randomUUID()
         private val session: AccessToken = AccessToken(tokenValue)
@@ -28,16 +25,21 @@ class AccountFeatureTest {
         @JvmStatic
         @BeforeAll
         fun setup() {
+            userRepository = FakeFactory.fakeUserRepository()
             user = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
             connectUser(user)
             element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
-            user.addAccount(element)
-            accountFeature.save(user.id, tokenValue!!, element)
+            accountFeature = FakeFactory.accountFeature
         }
 
         private fun connectUser(user: User) {
-            inMemorySessionManager.addSession(user.id, session)
+            FakeFactory.sessionManager.addSession(user.id, session)
         }
+    }
+
+    @AfterEach
+    fun clear(){
+        FakeFactory.clearAll()
     }
 
     @Nested
@@ -51,7 +53,12 @@ class AccountFeatureTest {
 
     @Test
     fun `Should find account by its Id`() {
+        val accountState = FakeFactory.accountState()
+        accountState.init(listOf(
+            AccountByOwner(listOf(element), user.id)
+        ))
         val response = accountFeature.findAccountById(user.id, 50L, session.tokenValue)
+        println(response.status)
         assertTrue(response.isSuccess())
         response.onSuccess{
             assertTrue(it.label == "test")
