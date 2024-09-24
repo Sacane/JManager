@@ -72,8 +72,8 @@ class SqlTransactionAdapter(
         sheetRepository.deleteAllById(sheetIds)
     }
     @Transactional
-    override fun findSheetByID(sheetID: Long): Transaction? {
-        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
+    override fun findTransactionById(transactionId: Long): Transaction? {
+        return sheetRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
     }
     @Transactional
     override fun save(transaction: Transaction): Transaction? {
