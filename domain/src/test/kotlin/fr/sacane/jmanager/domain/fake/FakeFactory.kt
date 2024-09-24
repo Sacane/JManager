@@ -11,9 +11,9 @@ import fr.sacane.jmanager.domain.port.api.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 
 object FakeFactory {
-    private val userProvider = InMemoryDatabase()
-    private val fakeAccountRepository: InMemoryAccountRepository = InMemoryAccountRepository(userProvider)
-    private val userRepository = InMemoryUserRepository(userProvider)
+    private val inMemoryDatabase = InMemoryDatabase()
+    private val fakeAccountRepository: InMemoryAccountRepository = InMemoryAccountRepository(inMemoryDatabase)
+    private val userRepository = InMemoryUserRepository(inMemoryDatabase)
     val sessionManager: SessionManager = InMemorySessionManager()
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
 
