@@ -149,7 +149,7 @@ class TransactionFeatureImpl(
         id: Long,
         token: UUID
     ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
-        val sheet = register.findSheetByID(id) ?: return@authenticate Response.notFound("La transaction n'existe pas")
+        val sheet = register.findTransactionById(id) ?: return@authenticate Response.notFound("La transaction n'existe pas")
         Response.ok(sheet)
     }
 
