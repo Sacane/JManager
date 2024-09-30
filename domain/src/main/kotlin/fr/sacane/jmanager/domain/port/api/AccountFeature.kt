@@ -18,8 +18,8 @@ sealed interface AccountFeature {
     fun findAccountById(userId: UserId, accountID: Long, token: UUID): Response<Account>
     fun editAccount(userID: Long, account: Account, token: UUID): Response<Account>
     fun deleteAccountById(profileID: UserId, accountID: Long, token: UUID): Response<Nothing>
-    fun retrieveAccountByIdentityAndLabel(userId: UserId, token: UUID, label: String): Response<Account>
-    fun retrieveAllRegisteredAccounts(userId: UserId, token: UUID): Response<List<Account>>
+    fun findByLabelAndUserId(userId: UserId, token: UUID, label: String): Response<Account>
+    fun findAllRegisteredAccounts(userId: UserId, token: UUID): Response<List<Account>>
     fun save(userId: UserId, token: UUID, account: Account): Response<Account>
 }
 
@@ -67,12 +67,12 @@ class AccountFeatureImpl(
     }
 
 
-    override fun retrieveAccountByIdentityAndLabel(
+    override fun findByLabelAndUserId(
         userId: UserId,
         token: UUID,
         label: String
     ): Response<Account> = session.authenticate(userId, token) {
-        val user = userRepository.findUserById(userId) ?: return@authenticate notFound("L'utilisateur recherché n'existe pas")
+        val user = userRepository.findUserByIdWithAccounts(userId) ?: return@authenticate notFound("L'utilisateur recherché n'existe pas")
         ok(
             user.accounts
             .find { acc -> acc.label == label }
@@ -81,7 +81,7 @@ class AccountFeatureImpl(
     }
 
 
-    override fun retrieveAllRegisteredAccounts(
+    override fun findAllRegisteredAccounts(
         userId: UserId,
         token: UUID
     ): Response<List<Account>> = session.authenticate(userId, token) {

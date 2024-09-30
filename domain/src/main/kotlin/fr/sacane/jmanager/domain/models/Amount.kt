@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class Amount(var amount: BigDecimal, val currency: String = "€") {
+    constructor(longAmount: Long) : this(BigDecimal(longAmount), currency = "€")
 
     init{
         if(amount.scale() <= 2){

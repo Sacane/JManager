@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
     private val fakeAccountRepository: InMemoryAccountRepository = InMemoryAccountRepository(inMemoryDatabase)
-    private val userRepository = InMemoryUserRepository(inMemoryDatabase)
+    private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
     val sessionManager: SessionManager = InMemorySessionManager()
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
 
@@ -24,6 +24,7 @@ object FakeFactory {
 
     fun clearAll() {
         fakeAccountRepository.clear()
+        userRepository.clear()
     }
 
     fun fakeUserRepository(): UserRepository {

@@ -69,7 +69,14 @@ class InMemoryUserRepository (
     }
 
     override fun findUserByIdWithAccounts(userId: UserId): User? {
-        return inMemoryDatabase.users[userId]?.user
+        val user = inMemoryDatabase.users[userId]?.user ?: return null
+        val accounts = inMemoryDatabase.accountsByOwner().find { it.userId == userId }
+        if(accounts != null) {
+            for(account in accounts.account) {
+                user.addAccount(account)
+            }
+        }
+        return user
     }
 
     override fun findByPseudonym(pseudonym: String): User? {
@@ -97,12 +104,20 @@ class InMemoryUserRepository (
         } ?: return null
         return user
     }
+
+    fun clear() {
+        inMemoryDatabase.clearUsers()
+    }
 }
 
 data class AccountByOwner(
     val account: List<Account>,
     val userId: UserId
-)
+) {
+    fun existsById(accountId: Long): Account? {
+        return account.find { it.id == accountId }
+    }
+}
 
 class InMemoryAccountRepository(
     private val inMemoryDatabase: InMemoryDatabase
@@ -224,5 +239,9 @@ class InMemoryDatabase {
             return it.value.find { tr -> tr.id == transactionId }
         }
         return null
+    }
+
+    fun clearUsers() {
+        users.clear()
     }
 }
