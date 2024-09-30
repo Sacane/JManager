@@ -39,7 +39,7 @@ class FakeUserRepository: UserRepository, State<User> {
         return user
     }
 
-    override fun upsert(user: User): User? {
+    override fun upsert(user: User): User {
         if(findUserById(user.id) != null) {
             users.removeIf { it.user.id == user.id }
         }

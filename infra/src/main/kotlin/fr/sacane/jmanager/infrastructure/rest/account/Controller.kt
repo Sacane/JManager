@@ -30,7 +30,7 @@ class AccountController (
         @RequestHeader("Authorization") token: String
     )
             : ResponseEntity<AccountDTO> {
-        val accounts = feature.retrieveAllRegisteredAccounts(
+        val accounts = feature.findAllRegisteredAccounts(
             id.id(),
             token.asTokenUUID()
         )
@@ -59,7 +59,7 @@ class AccountController (
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<List<AccountDTO>> {
         LOGGER.info("Trying to get accounts")
-        val response = feature.retrieveAllRegisteredAccounts(
+        val response = feature.findAllRegisteredAccounts(
             id.id(),
             token.asTokenUUID()
         )
