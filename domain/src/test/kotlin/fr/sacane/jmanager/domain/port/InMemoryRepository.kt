@@ -7,9 +7,14 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.Random
 
+data class IdUserAccountByTransaction(
+    val id: IdUserAccount,
+    val transactions: MutableList<Transaction>
+)
+
 class InMemoryTransactionRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): TransactionRepositoryPort {
+): TransactionRepositoryPort, State<IdUserAccountByTransaction> {
 
 
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
@@ -18,22 +23,6 @@ class InMemoryTransactionRepository(
         inMemoryDatabase.addTransaction(userAccountId, transaction)
 
         return transaction
-    }
-
-
-    override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
-        return inMemoryDatabase.users[userId]?.user?.accounts?.find { it.label == labelAccount }
-    }
-
-    override fun findAccountById(accountId: Long): Account? {
-        for(user in inMemoryDatabase.users.values.map { it.user }) {
-            for(account in user.accounts) {
-                if(account.id == accountId) {
-                    return account
-                }
-            }
-        }
-        return null
     }
 
     override fun saveAllSheets(transactions: List<Transaction>) {
@@ -57,11 +46,23 @@ class InMemoryTransactionRepository(
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
         return inMemoryDatabase.users[userId]?.user?.accounts?.find { it.label == label }
     }
+
+    override fun getStates(): Collection<IdUserAccountByTransaction> {
+        return inMemoryDatabase.findTransactions()
+    }
+
+    override fun clear() {
+        inMemoryDatabase.clearTransactions()
+    }
+
+    override fun init(initialState: Collection<IdUserAccountByTransaction>) {
+        inMemoryDatabase.addMassiveTransaction(initialState)
+    }
 }
 
 class InMemoryUserRepository (
     private val inMemoryDatabase: InMemoryDatabase
-): UserRepository {
+): UserRepository, State<UserWithPassword> {
     private val random = Random()
 
     override fun findUserById(userId: UserId): User? {
@@ -105,7 +106,15 @@ class InMemoryUserRepository (
         return user
     }
 
-    fun clear() {
+    override fun getStates(): Collection<UserWithPassword> {
+        return inMemoryDatabase.users.values
+    }
+
+    override fun init(initialState: Collection<UserWithPassword>) {
+        inMemoryDatabase.initUsers(initialState)
+    }
+
+    override fun clear() {
         inMemoryDatabase.clearUsers()
     }
 }
@@ -141,6 +150,10 @@ class InMemoryAccountRepository(
         return inMemoryDatabase.findAccountById(accountId)
     }
 
+    override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Account? {
+        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, accountLabel)
+    }
+
     override fun deleteAccountById(accountId: Long) {
         inMemoryDatabase.removeAccountById(accountId)
     }
@@ -173,7 +186,7 @@ data class IdUserAccount(
 class InMemoryDatabase {
     val users = mutableMapOf<UserId, UserWithPassword>()
     private val accounts = mutableMapOf<UserId, MutableList<Account>>()
-    private val transactions = mutableMapOf<IdUserAccount, MutableList<Transaction>>()
+    private val transactions = mutableMapOf<IdUserAccount, IdUserAccountByTransaction>()
 
     fun addAccount(ownerId: UserId, account: Account) {
         accounts.computeIfAbsent(ownerId) { mutableListOf() }.add(account)
@@ -213,35 +226,62 @@ class InMemoryDatabase {
     }
 
     fun initAccounts(initialState: Collection<AccountByOwner>) {
-        initialState.forEach {
-            accounts[it.userId] = it.account.toMutableList()
+        initialState.forEach { accByOwn ->
+            accByOwn.account.forEach {
+                addAccount(accByOwn.userId, it)
+            }
         }
     }
 
     fun addTransaction(userAccountId: IdUserAccount, transaction: Transaction) {
-         transactions.computeIfAbsent(userAccountId) { mutableListOf() }.add(transaction)
+        transactions.computeIfAbsent(userAccountId) { IdUserAccountByTransaction(userAccountId, mutableListOf(transaction)) }.transactions.add(transaction)
+    }
+    fun addMassiveTransaction(collection: Collection<IdUserAccountByTransaction>){
+        collection.forEach { idByTr ->
+            transactions.computeIfAbsent(idByTr.id) { IdUserAccountByTransaction(idByTr.id, idByTr.transactions) }
+        }
     }
 
     fun upsertTransactions(transactionList: List<Transaction>) {
         transactions.forEach { (key, trs) ->
-            trs.removeIf { transaction -> transaction.id in transactionList.map { it.id } }
-            trs.addAll(transactionList)
+            trs.transactions.removeIf { transaction -> transaction.id in transactionList.map { it.id } }
+            trs.transactions.addAll(transactionList)
         }
     }
     fun removeAllTransactionsById(transactionIds: List<Long>) {
         transactions.forEach { (key, trs) ->
-            trs.removeIf { it.id in transactionIds }
+            trs.transactions.removeIf { it.id in transactionIds }
         }
     }
 
     fun findTransactionById(transactionId: Long): Transaction? {
         transactions.forEach {
-            return it.value.find { tr -> tr.id == transactionId }
+            return it.value.transactions.find { tr -> tr.id == transactionId }
         }
         return null
     }
 
     fun clearUsers() {
         users.clear()
+    }
+
+    fun initUsers(userCollection: Collection<UserWithPassword>) {
+        users.putAll(userCollection.associateBy { it.user.id })
+    }
+
+    fun findTransactions(): Collection<IdUserAccountByTransaction> {
+        return transactions.values
+    }
+
+    fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account? {
+        accounts.entries.filter{it.key == userId}.forEach { accByOwn ->
+            val acc: Account? = accByOwn.value.find { acc -> acc.label == accountLabel }
+            if(acc != null) return acc
+        }
+        return null
+    }
+
+    fun clearTransactions() {
+        transactions.clear()
     }
 }

@@ -41,6 +41,12 @@ class AccountJpaRepositoryAdapter(
         return accountResponse?.toModel()
     }
 
+    override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Account? {
+        if(userId.id == null) return null
+        val account = userRepository.findByIdWithAccount(userId.id!!) ?: return null
+        return account.accounts.find { it.label == accountLabel }?.toModel()
+    }
+
     override fun deleteAccountById(accountId: Long) {
         accountRepository.deleteById(accountId)
     }

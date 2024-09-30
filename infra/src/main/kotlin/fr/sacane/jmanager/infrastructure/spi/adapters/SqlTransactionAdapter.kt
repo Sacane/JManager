@@ -20,13 +20,6 @@ class SqlTransactionAdapter(
 ) : TransactionRepositoryPort{
 
     @Transactional
-    override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
-        val id = userId.id ?: return null
-        return accountJpaRepository.findByOwnerAndLabelWithSheets(id, labelAccount)
-            ?.toModel()
-    }
-
-    @Transactional
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         val id = userId.id ?: return null
         val account = accountJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
@@ -45,12 +38,6 @@ class SqlTransactionAdapter(
         }catch(e: Exception){
             null
         }
-    }
-
-    @Transactional
-    override fun findAccountById(accountId: Long): Account? {
-        val accountResponse = accountJpaRepository.findByIdWithSheets(accountId)
-        return accountResponse?.toModel()
     }
 
     @Transactional
