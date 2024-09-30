@@ -24,7 +24,7 @@ sealed interface TransactionFeature {
 class TransactionFeatureImpl(
     private val register: TransactionRepositoryPort,
     private val userRepository: UserRepository,
-    private val session: InMemorySessionManager,
+    private val session: SessionManager,
     private val accountRepository: AccountRepository
 ): TransactionFeature{
     companion object {
@@ -41,7 +41,7 @@ class TransactionFeatureImpl(
         )
     }
     private fun updateSheetPosition(accountID: Long, transaction: Transaction) {
-        val account = register.findAccountById(accountID) ?: return
+        val account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return
         val sheets = account.transactionsFilterAndSortedByPositionBefore(transaction.position)
         for(number in sheets.indices) {
             val actualTransaction = sheets[number]
@@ -80,7 +80,7 @@ class TransactionFeatureImpl(
     ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser){
         if(transaction.id == null) return@authenticate Response.invalid("L'ID de la transaction est null")
 
-        val acc = register.findAccountById(accountID)
+        val acc = accountRepository.findAccountByIdWithTransactions(accountID)
         val sheetFromResource = acc?.transactions?.find { it.id == transaction.id } ?: return@authenticate Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
 
         if(sheetFromResource.amount != transaction.amount) {
@@ -113,7 +113,7 @@ class TransactionFeatureImpl(
         accountLabel: String,
         transaction: Transaction
     ): Response<Transaction> = session.authenticate(userId, token) {
-        val account = register.findAccountWithSheetByLabelAndUser(accountLabel, userId) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
+        val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         if(account.transactions.isNotEmpty()) {
             val lastRecord = account.transactions
                 .filter { it.date <= transaction.date }
@@ -154,7 +154,7 @@ class TransactionFeatureImpl(
     }
 
     override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID) {
-        val account: Account = register.findAccountById(accountID) ?: return
+        val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return
         val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
         val month = account.transactions.filter(isSheetOnList)[0].date.month
         account.cancelSheetsAmount(account.transactions.filter(isSheetOnList))
