@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.infrastructure.rest.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
@@ -8,7 +9,10 @@ import org.springframework.stereotype.Component
 import java.awt.Color
 
 @Component
-class AccountMapper(val userRepository: UserPostgresRepository){
+class AccountMapper(
+    val userRepository: UserPostgresRepository,
+    val tagRepository: TagRepository
+){
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
         return if(userResource != null) {
