@@ -43,8 +43,7 @@ class AccountJpaRepositoryAdapter(
 
     override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Account? {
         if(userId.id == null) return null
-        val account = userRepository.findByIdWithAccount(userId.id!!) ?: return null
-        return account.accounts.find { it.label == accountLabel }?.toModel()
+        return accountRepository.findByOwnerAndLabelWithSheets(userId.id!!, accountLabel)?.toModel() ?: return null
     }
 
     override fun deleteAccountById(accountId: Long) {
@@ -52,6 +51,6 @@ class AccountJpaRepositoryAdapter(
     }
 
     override fun upsert(account: Account): Account {
-        return accountRepository.save(account.asResource()).toModel()
+        return accountRepository.save(accountMapper.asResource(account)).toModel()
     }
 }

@@ -22,7 +22,7 @@ sealed interface TransactionFeature {
 
 @DomainService
 class TransactionFeatureImpl(
-    private val register: TransactionRepositoryPort,
+    private val transactionRepository: TransactionRepositoryPort,
     private val userRepository: UserRepository,
     private val session: SessionManager,
     private val accountRepository: AccountRepository
@@ -36,7 +36,7 @@ class TransactionFeatureImpl(
         for((position, number) in sheets.indices.withIndex()) {
             sheets[number].position = position
         }
-        register.saveAllSheets(
+        transactionRepository.saveAllSheets(
             sheets.toList()
         )
     }
@@ -53,7 +53,7 @@ class TransactionFeatureImpl(
                 continue
             }
         }
-        register.saveAllSheets(sheets)
+        transactionRepository.saveAllSheets(sheets)
     }
     private fun updateSheetPositionFromPositionRange(account: Account, transaction: Transaction, range: IntRange) {
         val sheets = account.transactions.filter { range.first <= it.position }.sortedBy { it.position }
@@ -70,7 +70,7 @@ class TransactionFeatureImpl(
                 continue
             }
         }
-        register.saveAllSheets(sheets)
+        transactionRepository.saveAllSheets(sheets)
     }
     override fun editSheet(
         userID: Long,
@@ -100,7 +100,7 @@ class TransactionFeatureImpl(
 
         }
         sheetFromResource.updateFromOther(transaction)
-        register.save(sheetFromResource)
+        transactionRepository.save(sheetFromResource)
 
         return@authenticate accountRepository.editFromAnother(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
@@ -126,7 +126,9 @@ class TransactionFeatureImpl(
             }
             updateSheetPosition(account.id!!, transaction)
         }
-        register.persist(userId, accountLabel, transaction) ?: return@authenticate Response.invalid("Une erreur est survenue lors de l'ajout de la transaction")
+
+        account.addTransaction(transaction)
+        accountRepository.upsert(account)
         Response.ok(transaction)
     }
 
@@ -138,7 +140,7 @@ class TransactionFeatureImpl(
         account: String
     ): Response<List<Transaction>> = session.authenticate(userId, token) {
         val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas")
-        Response.ok(register.findAccountWithSheetByLabelAndUser(account, user.id)
+        Response.ok(transactionRepository.findAccountWithSheetByLabelAndUser(account, user.id)
             ?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate Response.notFound("Aucun compte ne correspond au label indiqué")
         )
@@ -149,7 +151,7 @@ class TransactionFeatureImpl(
         id: Long,
         token: UUID
     ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
-        val sheet = register.findTransactionById(id) ?: return@authenticate Response.notFound("La transaction n'existe pas")
+        val sheet = transactionRepository.findTransactionById(id) ?: return@authenticate Response.notFound("La transaction n'existe pas")
         Response.ok(sheet)
     }
 
@@ -161,7 +163,7 @@ class TransactionFeatureImpl(
         account.transactions.removeIf(isSheetOnList)
         updateSheetSoldFrom(account, month)
         accountRepository.upsert(account)
-        register.deleteAllSheetsById(sheetIds)
+        transactionRepository.deleteAllSheetsById(sheetIds)
     }
 
 }

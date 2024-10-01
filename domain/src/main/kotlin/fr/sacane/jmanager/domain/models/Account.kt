@@ -82,4 +82,9 @@ class Account(
         // Second modification
         this.amount = if(newTransaction.isIncome) amount + newTransaction.amount else amount - newTransaction.amount
     }
+
+    fun addTransaction(transaction: Transaction) {
+        this.transactions.add(transaction)
+        this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+    }
 }

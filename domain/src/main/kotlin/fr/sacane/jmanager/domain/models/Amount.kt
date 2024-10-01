@@ -32,6 +32,9 @@ class Amount(var amount: BigDecimal, val currency: String = "€") {
     override fun toString(): String {
         return "$amount $currency"
     }
+    fun negate(): Amount {
+        return Amount(amount.negate(), currency)
+    }
     companion object {
         fun fromString(representation: String): Amount {
             val regex = """([\d.]+) ([^\d.]+)""".toRegex()
