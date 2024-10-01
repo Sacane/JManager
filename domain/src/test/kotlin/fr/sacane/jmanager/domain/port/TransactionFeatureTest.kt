@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.toAmount
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.*
@@ -46,7 +47,6 @@ class TransactionFeatureTest {
     }
 
 
-
     @AfterEach
     fun cleanUp() {
         userState.clear()
@@ -54,23 +54,26 @@ class TransactionFeatureTest {
         accountState.clear()
     }
 
-    @Test
-    fun `As an account owner, when I add a new transaction, it should persist it and update the account amount`() {
-        val johnId = createAndConnect("John")
-        val account = createAccount(johnId, "test", Amount(100))
-        val transactionToSave = generateTransaction("test", 100L.toAmount(), true)
+    @Nested
+    inner class SaveTransactionInAccountFeatureTest {
+        @Test
+        fun `As an account owner, when I add a new transaction, it should persist it and update the account amount`() {
+            val johnId = createAndConnect("John")
+            val account = createAccount(johnId, "test", Amount(100))
+            val transactionToSave = generateTransaction("test", 100L.toAmount(), true)
 
 
-        transactionFeature.saveAndLink(johnId, session.tokenValue, account.label, transactionToSave)
-            .assertTrue {
-                this.amount == transactionToSave.amount && this.label == transactionToSave.label
-            }
-        val accountStates = accountState.getStates()
-        assertTrue(accountStates.contains(AccountByOwner(account.asSingleton(), johnId)))
+            transactionFeature.saveInAccount(johnId, session.tokenValue, account.label, transactionToSave)
+                .assertTrue {
+                    this.amount == transactionToSave.amount && this.label == transactionToSave.label
+                }
+            val accountStates = accountState.getStates()
+            assertTrue(accountStates.contains(AccountByOwner(account.asSingleton(), johnId)))
 
-        val accountByOwnerTarget = accountStates.find { it.userId == johnId }
-        val accountExpected = accountByOwnerTarget?.account?.find { it.id == account.id }
-        assertNotNull(accountExpected)
-        assertEquals(Amount(200), accountExpected?.sold)
+            val accountByOwnerTarget = accountStates.find { it.userId == johnId }
+            val accountExpected = accountByOwnerTarget?.account?.find { it.id == account.id }
+            assertNotNull(accountExpected)
+            assertEquals(Amount(200), accountExpected?.sold)
+        }
     }
 }
