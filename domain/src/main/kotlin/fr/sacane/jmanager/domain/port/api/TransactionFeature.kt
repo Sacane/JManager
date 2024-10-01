@@ -13,7 +13,7 @@ import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
-    fun saveAndLink(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
+    fun saveInAccount(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
     fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
     fun editSheet(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
     fun findById(userID: Long, id: Long, token: UUID): Response<Transaction>
@@ -107,7 +107,7 @@ class TransactionFeatureImpl(
             Response.ok(sheetFromResource)
         }
     }
-    override fun saveAndLink(
+    override fun saveInAccount(
         userId: UserId,
         token: UUID,
         accountLabel: String,
