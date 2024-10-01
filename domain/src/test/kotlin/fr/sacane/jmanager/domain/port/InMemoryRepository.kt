@@ -211,6 +211,11 @@ class InMemoryDatabase {
         for(accountList in accounts.values) {
             val result = accountList.find { it.id == accountId }
             if(result != null) {
+                transactions.forEach {
+                    if(it.key.accountId == accountId) {
+                        result.addAllTransaction(it.value.transactions)
+                    }
+                }
                 return result
             }
         }
@@ -240,6 +245,7 @@ class InMemoryDatabase {
         collection.forEach { idByTr ->
             transactions.computeIfAbsent(idByTr.id) { IdUserAccountByTransaction(idByTr.id, idByTr.transactions) }
         }
+        println("collection: $collection")
     }
 
     fun upsertTransactions(transactionList: List<Transaction>) {
@@ -276,7 +282,14 @@ class InMemoryDatabase {
     fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account? {
         accounts.entries.filter{it.key == userId}.forEach { accByOwn ->
             val acc: Account? = accByOwn.value.find { acc -> acc.label == accountLabel }
-            if(acc != null) return acc
+            if(acc != null) {
+                transactions.forEach {
+                    if(it.key.accountId == acc.id) {
+                        acc.addAllTransaction(it.value.transactions)
+                    }
+                }
+                return acc
+            }
         }
         return null
     }

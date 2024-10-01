@@ -87,4 +87,9 @@ class Account(
         this.transactions.add(transaction)
         this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
+    fun addAllTransaction(transactions: List<Transaction>) {
+        transactions.forEach {
+            this.transactions.add(it)
+        }
+    }
 }

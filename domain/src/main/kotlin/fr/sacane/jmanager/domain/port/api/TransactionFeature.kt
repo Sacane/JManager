@@ -118,7 +118,6 @@ class TransactionFeatureImpl(
             val lastRecord = account.transactions
                 .filter { it.date <= transaction.date }
                 .maxByOrNull { it.position }
-
             if(lastRecord == null) {
                 transaction.position = 0
             } else {
@@ -126,7 +125,6 @@ class TransactionFeatureImpl(
             }
             updateSheetPosition(account.id!!, transaction)
         }
-
         account.addTransaction(transaction)
         accountRepository.upsert(account)
         Response.ok(transaction)
