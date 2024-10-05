@@ -1,20 +1,27 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.State
+import fr.sacane.jmanager.domain.assertEquals
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.toAmount
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.Month
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
+
+data class AccountTokenUserId(
+    val userId: UserId,
+    val tokenValue: UUID,
+    val account: Account
+)
 
 class TransactionFeatureTest {
     companion object{
@@ -32,6 +39,16 @@ class TransactionFeatureTest {
             userState.init(listOf(UserWithPassword(User(userId, username, "$username@test.fr"), Password("test"))))
             FakeFactory.sessionManager.addSession(userId, session)
             return userId
+        }
+        private fun withConnectedUserGivingTransactions(transactions: List<Transaction>, action: AccountTokenUserId.() -> Unit){
+            val johnId = createAndConnect("John")
+            val account = createAccount(johnId, "test", Amount(100))
+            val idUserAccount = IdUserAccount(johnId, account.id!!)
+
+            transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactions.toMutableList())))
+
+            action(AccountTokenUserId(johnId, session.tokenValue, account))
+            FakeFactory.sessionManager.removeSession(johnId, session.tokenValue)
         }
 
         private fun createAccount(userId: UserId, label: String, amount: Amount): Account {
@@ -84,55 +101,111 @@ class TransactionFeatureTest {
 
         @Test
         fun `When I add a transaction in an account that already have some, its position should be coherent regarding the date`() {
-            val johnId = createAndConnect("John")
-            val account = createAccount(johnId, "test", Amount(100))
-            val transactionToSave = generateTransaction("test", 100.toAmount(), true, "05/01/2024".toDate())
-            val idUserAccount = IdUserAccount(johnId, account.id!!)
-
-            transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, mutableListOf(
+            withConnectedUserGivingTransactions(listOf(
                 generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
                 generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
                 generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate(), 2),
                 generateTransaction("test4", 100.toAmount(), true, "04/01/2024".toDate(), 3)
-            ))))
-
-            transactionFeature.saveInAccount(johnId, session.tokenValue, account.label, transactionToSave)
-                .assertTrue {
-                    println(this.position)
-                    this.amount == transactionToSave.amount
-                        && this.label == transactionToSave.label
-                        && this.position == 4
+            )){
+                val transactionToSave = generateTransaction("test", 100.toAmount(), true, "05/01/2024".toDate())
+                transactionFeature.saveInAccount(this.userId, this.tokenValue, this.account.label, transactionToSave)
+                    .assertTrue {
+                        println(this.position)
+                        this.amount == transactionToSave.amount
+                                && this.label == transactionToSave.label
+                                && this.position == 4
+                    }
             }
         }
 
         @Test
         fun `When I add a transaction in the middle of an account that already have some, its position should be coherent regarding the date`() {
-            val johnId = createAndConnect("John")
-            val account = createAccount(johnId, "test", Amount(100))
-            val transactionToSave = generateTransaction("test", 100.toAmount(), true, "04/01/2024".toDate())
-            val idUserAccount = IdUserAccount(johnId, account.id!!)
-
-
-            val transactionList = mutableListOf(
+            withConnectedUserGivingTransactions(listOf(
                 generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
                 generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
                 generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate(), 2),
                 generateTransaction("test4", 100.toAmount(), true, "05/01/2024".toDate(), 3)
-            ).associateBy { it.label }
-            transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactionList.values.toMutableList())))
+            )) {
+                val transactionToSave = generateTransaction("test", 100.toAmount(), true, "04/01/2024".toDate())
 
-            transactionFeature.saveInAccount(johnId, session.tokenValue, account.label, transactionToSave)
-                .assertTrue {
-                    this.amount == transactionToSave.amount
-                            && this.label == transactionToSave.label
-                            && this.position == 3
+                transactionFeature.saveInAccount(userId, tokenValue, account.label, transactionToSave)
+                    .assertTrue {
+                        this.amount == transactionToSave.amount
+                                && this.label == transactionToSave.label
+                                && this.position == 3
+                    }
+
+                val transactions = transactionState.getStates().find { it.id.userId == userId }
+                assertNotNull(transactions)
+                val expectedTransactionPosition = 4
+                val actualTransactionPosition = transactions!!.transactions.find { it.label == "test4" }!!.position
+                assertEquals(expectedTransactionPosition, actualTransactionPosition)
+            }
+        }
+
+        @Test
+        fun `When I add a transaction with a same date as existing some, it should be in the last position of them`() {
+            withConnectedUserGivingTransactions(mutableListOf(
+                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
+                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
+                generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2),
+                generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
+            )) {
+
+
+                val transactionToSave = generateTransaction("test", 100.toAmount(), true, "02/01/2024".toDate())
+
+                transactionFeature.saveInAccount(userId, session.tokenValue, account.label, transactionToSave)
+                    .map { it.position }
+                    .assertEquals(3)
+
+                assertEquals(5,
+                    transactionState.getStates()
+                        .find { it.id == IdUserAccount(userId, account.id!!) }?.transactions?.size
+                )
+            }
+        }
+        @Test
+        fun `Giving a user with a transaction, when booking a transaction that is older that the others, it should have its position to 0`() {
+            withConnectedUserGivingTransactions(
+                mutableListOf(
+                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
+                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
+                    generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2),
+                    generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
+                )
+            ) {
+                val transactionToSave = generateTransaction("test", 100.toAmount(), true, "23/12/2023".toDate())
+
+                transactionFeature.saveInAccount(userId, session.tokenValue, account.label, transactionToSave)
+                    .map { it.position }
+                    .assertEquals(0)
+            }
+        }
+    }
+
+    @Nested
+    inner class RetrieveSheetsByMonthAndYearFeature {
+        @Test
+        fun `As a user with existing transactions, I should retrieve them ordering by date and position`() {
+            val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0)
+            val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1)
+            val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2)
+            val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
+            val t5 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 4)
+            withConnectedUserGivingTransactions(
+                mutableListOf(
+                    t1, t2, t4, t3, t5,
+                    generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate(), 5),
+                    generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate(), 6),
+                )
+            ) {
+                val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId, session.tokenValue, Month.JANUARY, 2024, account.label)
+                response.assertTrue {
+                    size == 5 && all { it.date.month == Month.JANUARY }
                 }
-
-            val transactions = transactionState.getStates().find { it.id.userId == johnId }
-            assertNotNull(transactions)
-            val expectedTransactionPosition = 5
-            val actualTransactionPosition = transactions!!.transactions.find { it.label == "test4" }!!.position
-            assertEquals(expectedTransactionPosition, actualTransactionPosition)
+                response.assertEquals(listOf(t1, t2, t3, t4, t5))
+            }
         }
     }
 }

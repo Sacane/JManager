@@ -51,7 +51,7 @@ class AccountTest {
         val account = Account(2.toLong(), 1050.toAmount(), "Primary", sheets)
         val sheetsOfDecember = account.retrieveSheetSurroundAndSortedByDate(Month.DECEMBER, 2022)
         assertTrue {
-            sheetsOfDecember.all { it.date.month == Month.DECEMBER && it.date.year == 2022 } && sheetsOfDecember.size == 3
+            sheetsOfDecember != null && sheetsOfDecember.all { it.date.month == Month.DECEMBER && it.date.year == 2022 } && sheetsOfDecember.size == 3
         }
     }
 }

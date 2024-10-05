@@ -42,9 +42,8 @@ class InMemoryTransactionRepository(
         return transaction
     }
 
-
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
-        return inMemoryDatabase.users[userId]?.user?.accounts?.find { it.label == label }
+        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
     }
 
     override fun getStates(): Collection<IdUserAccountByTransaction> {
@@ -161,6 +160,7 @@ class InMemoryAccountRepository(
     override fun upsert(account: Account): Account {
         account.id?.let {
             inMemoryDatabase.upsert(account)
+            inMemoryDatabase.upsertTransactions(account.transactions)
         }
         return account
     }
@@ -200,11 +200,14 @@ class InMemoryDatabase {
     fun upsert(account: Account) {
         val accountId = account.id
         var ownerId = UserId(0)
+        accounts.forEach { (t, u) -> u.forEach { println("size => ${it.transactions.size}") } }
         accounts.forEach { (key, value) ->
             value.removeIf { it.id == accountId }
             ownerId = key
         }
+
         accounts.computeIfAbsent(ownerId) { mutableListOf() }.add(account)
+        accounts.forEach { (t, u) -> u.forEach { println("size => ${it.transactions.size}") } }
     }
 
     fun findAccountById(accountId: Long): Account? {
@@ -213,6 +216,7 @@ class InMemoryDatabase {
             if(result != null) {
                 transactions.forEach {
                     if(it.key.accountId == accountId) {
+
                         result.addAllTransaction(it.value.transactions)
                     }
                 }
@@ -249,9 +253,16 @@ class InMemoryDatabase {
     }
 
     fun upsertTransactions(transactionList: List<Transaction>) {
+        println("KNFZIOFDHZIOUDJZOJZDZFZFZFZFZ")
+        transactions.forEach{
+            println(it.value.transactions.size)
+        }
         transactions.forEach { (key, trs) ->
-            trs.transactions.removeIf { transaction -> transaction.id in transactionList.map { it.id } }
+            trs.transactions.removeAll { transaction -> transaction.id in transactionList.map { it.id } }
             trs.transactions.addAll(transactionList)
+        }
+        transactions.forEach{
+            println(it.value.transactions.size)
         }
     }
     fun removeAllTransactionsById(transactionIds: List<Long>) {

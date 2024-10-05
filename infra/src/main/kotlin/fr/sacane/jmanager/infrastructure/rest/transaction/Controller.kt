@@ -68,7 +68,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
         @RequestHeader("Authorization") token: String
         ): ResponseEntity<SheetsAndAverageDTO> {
         LOGGER.info("Start getting sheets for account $accountLabel")
-        val response = transactionFeature.retrieveSheetsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
+        val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }, 0.0))
     }
@@ -79,7 +79,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO> {
         logger.info("transaction => ${dto.sheet}")
-        return transactionFeature.editSheet(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
+        return transactionFeature.editTransaction(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .mapBoth(
                 { s -> ResponseEntity.ok(s!!.toDTO()) },
                 { ResponseEntity.badRequest().build() }
