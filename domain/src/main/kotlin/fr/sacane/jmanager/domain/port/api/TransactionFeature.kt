@@ -14,8 +14,8 @@ import java.util.logging.Logger
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
     fun saveInAccount(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
-    fun retrieveSheetsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
-    fun editSheet(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
+    fun retrieveTransactionsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
+    fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
     fun findById(userID: Long, id: Long, token: UUID): Response<Transaction>
     fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID)
 }
@@ -72,7 +72,7 @@ class TransactionFeatureImpl(
         }
         transactionRepository.saveAllSheets(sheets)
     }
-    override fun editSheet(
+    override fun editTransaction(
         userID: Long,
         accountID: Long,
         transaction: Transaction,
@@ -130,7 +130,7 @@ class TransactionFeatureImpl(
         Response.ok(transaction)
     }
 
-    override fun retrieveSheetsByMonthAndYear(
+    override fun retrieveTransactionsByMonthAndYear(
         userId: UserId,
         token: UUID,
         month: Month,
