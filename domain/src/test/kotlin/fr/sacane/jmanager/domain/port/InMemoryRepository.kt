@@ -201,24 +201,24 @@ class InMemoryDatabase {
         val accountId = account.id
         var ownerId = UserId(0)
         accounts.forEach { (key, value) ->
-            value.removeIf { it.id == accountId }
+            value.removeAll { it.id == accountId }
             ownerId = key
         }
-
         accounts.computeIfAbsent(ownerId) { mutableListOf() }.add(account)
     }
 
     fun findAccountById(accountId: Long): Account? {
         for(accountList in accounts.values) {
             val result = accountList.find { it.id == accountId }
+            val accountCopy = Account(result!!.id, result.sold, result.label, result.transactions, result.owner, result.initialSold)
             if(result != null) {
                 transactions.forEach {
                     if(it.key.accountId == accountId) {
 
-                        result.addAllTransaction(it.value.transactions)
+                        accountCopy.addAllTransaction(it.value.transactions)
                     }
                 }
-                return result
+                return accountCopy
             }
         }
         return null
@@ -245,6 +245,8 @@ class InMemoryDatabase {
     }
     fun addMassiveTransaction(collection: Collection<IdUserAccountByTransaction>){
         collection.forEach { idByTr ->
+            println(collection)
+            accounts.computeIfAbsent(idByTr.id.userId) { mutableListOf() }.find { it.id == idByTr.id.accountId }?.addAllTransaction(idByTr.transactions)
             transactions.computeIfAbsent(idByTr.id) { IdUserAccountByTransaction(idByTr.id, idByTr.transactions) }
         }
     }
@@ -253,6 +255,7 @@ class InMemoryDatabase {
         transactions.forEach { (key, trs) ->
             trs.transactions.removeAll { transaction -> transaction.id in transactionList.map { it.id } }
             trs.transactions.addAll(transactionList)
+
         }
     }
     fun removeAllTransactionsById(transactionIds: List<Long>) {
@@ -282,15 +285,14 @@ class InMemoryDatabase {
 
     fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account? {
         accounts.entries.filter{it.key == userId}.forEach { accByOwn ->
-            val acc: Account? = accByOwn.value.find { acc -> acc.label == accountLabel }
-            if(acc != null) {
-                transactions.forEach {
-                    if(it.key.accountId == acc.id) {
-                        acc.addAllTransaction(it.value.transactions)
-                    }
+            val acc = accByOwn.value.find { acc -> acc.label == accountLabel } ?: return null
+            val copyAcc = Account(acc.id, 0.toAmount(), acc.label, acc.transactions, acc.owner, acc.initialSold)
+            transactions.forEach {
+                if(it.key.accountId == acc.id) {
+                    copyAcc.addAllTransaction(it.value.transactions)
                 }
-                return acc
             }
+            return copyAcc
         }
         return null
     }

@@ -15,7 +15,6 @@ import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
 
-
 class TransactionFeatureTest {
     data class AccountTokenUserId(
         val userId: UserId,
@@ -40,7 +39,7 @@ class TransactionFeatureTest {
         }
         private fun withConnectedUserGivingTransactions(transactions: List<Transaction> = listOf(), action: AccountTokenUserId.() -> Unit){
             val johnId = createAndConnect("John")
-            val account = createAccount(johnId, "test", Amount(100))
+            val account = createAccount(johnId, "test", Amount(0))
             val idUserAccount = IdUserAccount(johnId, account.id!!)
 
             transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactions.toMutableList())))
@@ -79,11 +78,11 @@ class TransactionFeatureTest {
             val transactionToSave = generateTransaction("test", 100.toAmount(), true)
             val transactionToSave2 = generateTransaction("test", 50.toAmount(), false)
 
-            transactionFeature.saveInAccount(johnId, session.tokenValue, account.label, transactionToSave)
+            transactionFeature.bookTransaction(johnId, session.tokenValue, account.label, transactionToSave)
                 .assertTrue {
                     this.amount == transactionToSave.amount && this.label == transactionToSave.label
                 }
-            transactionFeature.saveInAccount(johnId, session.tokenValue, account.label, transactionToSave2)
+            transactionFeature.bookTransaction(johnId, session.tokenValue, account.label, transactionToSave2)
                 .assertTrue {
                     this.amount == transactionToSave2.amount && this.label == transactionToSave2.label
                 }
@@ -106,7 +105,7 @@ class TransactionFeatureTest {
                 generateTransaction("test4", 100.toAmount(), true, "04/01/2024".toDate(), 3)
             )){
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "05/01/2024".toDate())
-                transactionFeature.saveInAccount(this.userId, this.tokenValue, this.account.label, transactionToSave)
+                transactionFeature.bookTransaction(this.userId, this.tokenValue, this.account.label, transactionToSave)
                     .assertTrue {
                         this.amount == transactionToSave.amount
                                 && this.label == transactionToSave.label
@@ -125,7 +124,7 @@ class TransactionFeatureTest {
             )) {
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "04/01/2024".toDate())
 
-                transactionFeature.saveInAccount(userId, tokenValue, account.label, transactionToSave)
+                transactionFeature.bookTransaction(userId, tokenValue, account.label, transactionToSave)
                     .assertTrue {
                         this.amount == transactionToSave.amount
                                 && this.label == transactionToSave.label
@@ -152,7 +151,7 @@ class TransactionFeatureTest {
 
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "02/01/2024".toDate())
 
-                transactionFeature.saveInAccount(userId, session.tokenValue, account.label, transactionToSave)
+                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave)
                     .map { it.position }
                     .assertEquals(3)
 
@@ -174,7 +173,7 @@ class TransactionFeatureTest {
             ) {
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "23/12/2023".toDate())
 
-                transactionFeature.saveInAccount(userId, session.tokenValue, account.label, transactionToSave)
+                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave)
                     .map { it.position }
                     .assertEquals(0)
             }
@@ -269,9 +268,9 @@ class TransactionFeatureTest {
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
-                    ?.transactions ?: fail()
+                    ?.transactions
 
-                transactions.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+                transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
                     .asResponse()
                     .assertContainsAtPosition(0, t2)
                     .assertContainsAtPosition(1, t3)
@@ -280,8 +279,22 @@ class TransactionFeatureTest {
         }
 
         @Test
-        fun `Giving existing transaction, `() {
+        fun `Giving a user that save a transaction, when we edit it, the new amount of the account should take in count`() {
+            withConnectedUserGivingTransactions(listOf(
+                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+            )) {
+                val actualAccount1 = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
 
+                assertEquals(100.toAmount(), actualAccount1!!.sold)
+
+                val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
+                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transaction)
+                    .assertSuccess()
+
+                val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
+
+                assertEquals(200.toAmount(), actualAccount!!.sold)
+            }
         }
     }
 }
