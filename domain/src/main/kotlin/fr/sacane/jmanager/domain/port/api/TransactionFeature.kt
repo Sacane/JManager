@@ -14,7 +14,7 @@ import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
-    fun saveInAccount(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
+    fun bookTransaction(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
     fun retrieveTransactionsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
     fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
     fun findById(userID: Long, id: Long, token: UUID): Response<Transaction>
@@ -41,8 +41,7 @@ class TransactionFeatureImpl(
             sheets.toList()
         )
     }
-    private fun updateSheetPosition(accountID: Long, transaction: Transaction) {
-        val account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return
+    private fun updateSheetPosition(account: Account, transaction: Transaction) {
         val sheets = account.transactionsFilterAndSortedByPositionBefore(transaction.position)
         for(number in sheets.indices) {
             val actualTransaction = sheets[number]
@@ -105,7 +104,7 @@ class TransactionFeatureImpl(
             Response.ok(sheetFromResource)
         }
     }
-    override fun saveInAccount(
+    override fun bookTransaction(
         userId: UserId,
         token: UUID,
         accountLabel: String,
@@ -121,7 +120,7 @@ class TransactionFeatureImpl(
             } else {
                 transaction.position = lastRecord.position + 1
             }
-            updateSheetPosition(account.id!!, transaction)
+           //updateSheetPosition(account, transaction)
         }
         account.addTransaction(transaction)
         accountRepository.upsert(account)
