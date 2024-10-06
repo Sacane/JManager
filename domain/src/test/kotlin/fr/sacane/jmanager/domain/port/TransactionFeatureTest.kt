@@ -1,8 +1,6 @@
 package fr.sacane.jmanager.domain.port
 
-import fr.sacane.jmanager.domain.State
-import fr.sacane.jmanager.domain.assertEquals
-import fr.sacane.jmanager.domain.assertTrue
+import fr.sacane.jmanager.domain.*
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
 import org.junit.jupiter.api.AfterEach
@@ -17,13 +15,13 @@ import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
 
-data class AccountTokenUserId(
-    val userId: UserId,
-    val tokenValue: UUID,
-    val account: Account
-)
 
 class TransactionFeatureTest {
+    data class AccountTokenUserId(
+        val userId: UserId,
+        val tokenValue: UUID,
+        val account: Account
+    )
     companion object{
         private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
         private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
@@ -40,7 +38,7 @@ class TransactionFeatureTest {
             FakeFactory.sessionManager.addSession(userId, session)
             return userId
         }
-        private fun withConnectedUserGivingTransactions(transactions: List<Transaction>, action: AccountTokenUserId.() -> Unit){
+        private fun withConnectedUserGivingTransactions(transactions: List<Transaction> = listOf(), action: AccountTokenUserId.() -> Unit){
             val johnId = createAndConnect("John")
             val account = createAccount(johnId, "test", Amount(100))
             val idUserAccount = IdUserAccount(johnId, account.id!!)
@@ -110,7 +108,6 @@ class TransactionFeatureTest {
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "05/01/2024".toDate())
                 transactionFeature.saveInAccount(this.userId, this.tokenValue, this.account.label, transactionToSave)
                     .assertTrue {
-                        println(this.position)
                         this.amount == transactionToSave.amount
                                 && this.label == transactionToSave.label
                                 && this.position == 4
@@ -185,7 +182,7 @@ class TransactionFeatureTest {
     }
 
     @Nested
-    inner class RetrieveSheetsByMonthAndYearFeature {
+    inner class RetrieveTransactionsByMonthAndYearFeature {
         @Test
         fun `As a user with existing transactions, I should retrieve them ordering by date and position`() {
             val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0)
@@ -194,7 +191,7 @@ class TransactionFeatureTest {
             val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
             val t5 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 4)
             withConnectedUserGivingTransactions(
-                mutableListOf(
+                listOf(
                     t1, t2, t4, t3, t5,
                     generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate(), 5),
                     generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate(), 6),
@@ -206,6 +203,85 @@ class TransactionFeatureTest {
                 }
                 response.assertEquals(listOf(t1, t2, t3, t4, t5))
             }
+        }
+    }
+    @Nested
+    inner class EditTransactionFeature {
+
+        @Test
+        fun `Giving an existing transaction, I should correctly edit label, amount and date from it`() {
+            val elements = generateTransaction("test1", 100.toAmount(), true, "01/02/2024".toDate(), 0)
+            withConnectedUserGivingTransactions(
+                elements.asSingleton()
+            ) {
+                val expectedLabel = "test1.0"
+                val expectedAmount = 105.toAmount()
+                val expectedDate = "02/02/2024".toDate()
+                transactionFeature.editTransaction(
+                    userId.id!!, account.id!!, elements.copy(label = "test1.0", amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
+                ).assertTrue { label == expectedLabel && amount == expectedAmount && date == expectedDate}
+
+                val actualTransaction = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions?.find { tr -> tr.id == elements.id }
+
+                assertEquals(expectedLabel, actualTransaction?.label)
+                assertEquals(expectedAmount, actualTransaction?.amount)
+                assertEquals(expectedDate, actualTransaction?.date)
+            }
+        }
+
+        @Test
+        fun `Giving existing transactions, when one is edited with a older date, all the position after should still be coherent`() {
+            val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
+            val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
+            val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate())
+            val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
+            val t5 = generateTransaction("test5", 100.toAmount(), true, "03/01/2024".toDate())
+            withConnectedUserGivingTransactions(
+                listOf(t1, t2, t3, t4, t5)
+            ) {
+                transactionFeature.editTransaction(userId.id!!, account.id!!, t5.copy(date = "31/12/2023".toDate()), session.tokenValue)
+                    .assertSuccess()
+
+                val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions
+
+                transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+                    .asResponse()
+                    .assertContainsAtPosition(0, t5)
+                    .assertContainsAtPosition(1, t1)
+                    .assertContainsAtPosition(2, t2)
+                    .assertContainsAtPosition(3, t3)
+                    .assertContainsAtPosition(4, t4)
+            }
+        }
+        @Test
+        fun `Giving existing transactions, when one is edited with a more recent new date, all the position after should still be coherent`() {
+            val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
+            val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
+            val t3 = generateTransaction("test3", 100.toAmount(), true, "02/01/2024".toDate())
+            val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
+            val t5 = generateTransaction("test5", 100.toAmount(), true, "04/01/2024".toDate())
+            withConnectedUserGivingTransactions(
+                listOf(t1, t2, t3, t4, t5)
+            ) {
+                transactionFeature.editTransaction(userId.id!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
+                    .assertSuccess()
+
+                val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions ?: fail()
+
+                transactions.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+                    .asResponse()
+                    .assertContainsAtPosition(0, t2)
+                    .assertContainsAtPosition(1, t3)
+                    .assertContainsAtPosition(2, t1)
+            }
+        }
+
+        @Test
+        fun `Giving existing transaction, `() {
+
         }
     }
 }

@@ -53,7 +53,6 @@ class InMemorySessionManager : SessionManager {
         block: (UserId) -> Response<T>
     ): Response<T> {
         synchronized(lock) {
-            println("values => $userSession")
             val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
 
             if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")

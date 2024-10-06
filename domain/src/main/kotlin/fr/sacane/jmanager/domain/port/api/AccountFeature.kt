@@ -51,7 +51,6 @@ class AccountFeatureImpl(
             return@authenticate invalid("Le libellé du compte existe déjà")
         }
         oldAccount.updateFrom(account)
-        println(oldAccount)
         val registered = accountRepository.upsert(oldAccount)
         ok(registered)
     }

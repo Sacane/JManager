@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
-import fr.sacane.jmanager.infrastructure.spi.entity.SheetResource
+import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.*
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
@@ -23,17 +23,17 @@ class SqlTransactionAdapter(
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         val id = userId.id ?: return null
         val account = accountJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
-        val sheetResource: SheetResource
+        val transactionResource: TransactionResource
         if(transaction.tag.label == "Aucune"){
             val noneTag = tagRepository.findUnknownTag()
-            sheetResource = transaction.asResource(noneTag)
+            transactionResource = transaction.asResource(noneTag)
         } else {
-            sheetResource = transaction.mapToRightTag()
+            transactionResource = transaction.mapToRightTag()
         }
         return try{
-            val saved = sheetRepository.save(sheetResource)
+            val saved = sheetRepository.save(transactionResource)
             account.sheets.add(saved)
-            account.amount = if(sheetResource.isIncome!!) sheetResource.value + account.amount else account.amount - sheetResource.value
+            account.amount = if(transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
             transaction
         }catch(e: Exception){
             null
@@ -44,7 +44,7 @@ class SqlTransactionAdapter(
     override fun saveAllSheets(transactions: List<Transaction>) {
         sheetRepository.saveAll(transactions.map { it.mapToRightTag() })
     }
-    private fun Transaction.mapToRightTag(): SheetResource {
+    private fun Transaction.mapToRightTag(): TransactionResource {
         val tag = this.tag.id?.let {
             if(this.tag.isDefault) {
                 tagRepository.findByIdNullable(it)
