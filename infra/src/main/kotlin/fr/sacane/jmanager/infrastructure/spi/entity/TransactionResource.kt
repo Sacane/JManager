@@ -3,11 +3,12 @@ package fr.sacane.jmanager.infrastructure.spi.entity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 
 @Entity
 @Table(name="sheet")
-class SheetResource(
+class TransactionResource(
     @Id
     @GeneratedValue
     @Column(unique = true, name = "id_sheet", nullable = false)
@@ -27,9 +28,10 @@ class SheetResource(
     var tag: DefaultTagResource? = null,
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     var personalTag:TagPersonalResource? = null,
-    var currency: String = "€"
-
-){
+    var currency: String = "€",
+    @Column(name="last_modified")
+    var lastModified: LocalDateTime? = null
+    ){
     override fun toString(): String {
         return """
             label : $label

@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.AccountRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import java.time.LocalDateTime
 import java.time.Month
 import java.util.*
 import java.util.logging.Logger
@@ -57,12 +58,9 @@ class TransactionFeatureImpl(
     }
     private fun updateSheetPositionFromPositionRange(account: Account, transaction: Transaction, range: IntRange) {
         val sheets = account.transactions.filter { range.first <= it.position }.sortedBy { it.position }
-        for(number in sheets.indices) {
-            if(sheets[number].position !in range) {
-                continue
-            }
+        for(number in range) {
             val actualTransaction = sheets[number]
-            if(actualTransaction.date == transaction.date) {
+            if(actualTransaction.date == transaction.date && actualTransaction.id != transaction.id) {
                 continue
             }
             actualTransaction.position += 1
@@ -86,7 +84,7 @@ class TransactionFeatureImpl(
         if(sheetFromResource.amount != transaction.amount) {
             acc.updateSoldFromTransactions(sheetFromResource, transaction)
         }
-
+        /*
         val oldPosition = sheetFromResource.position
         val newPosition = acc.transactions.filter { it.date <= transaction.date }.maxByOrNull { it.position }?.position ?: 0
 
@@ -97,9 +95,9 @@ class TransactionFeatureImpl(
             } else {
                 updateSheetPositionFromPositionRange(acc, transaction, oldPosition..newPosition)
             }
-
-        }
+        }*/
         sheetFromResource.updateFromOther(transaction)
+        sheetFromResource.lastModified = LocalDateTime.now()
         transactionRepository.save(sheetFromResource)
 
         return@authenticate accountRepository.editFromAnother(acc).run {

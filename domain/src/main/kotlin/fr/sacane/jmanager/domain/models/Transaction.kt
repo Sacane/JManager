@@ -2,15 +2,17 @@ package fr.sacane.jmanager.domain.models
 
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 
-class Transaction(
+data class Transaction(
     val id: Long?,
     var label: String,
     var date: LocalDate,
     var amount: Amount,
     var isIncome: Boolean,
     var tag: Tag = Tag("Aucune", isDefault = true),
-    var position: Int = 0
+    var position: Int = 0,
+    var lastModified: LocalDateTime = LocalDateTime.now()
 ) {
 
 
@@ -33,6 +35,7 @@ class Transaction(
             isIncome: $isIncome
             position: $position
             tag: $tag
+            lastModified: $lastModified
         """.trimIndent()
     }
 

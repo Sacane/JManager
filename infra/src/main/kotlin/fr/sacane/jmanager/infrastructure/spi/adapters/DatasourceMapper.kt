@@ -7,6 +7,7 @@ import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Component
 import java.awt.Color
+import java.time.LocalDateTime
 
 @Component
 class AccountMapper(
@@ -25,8 +26,8 @@ class AccountMapper(
 
 
 
-internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): SheetResource {
-    val resource = SheetResource()
+internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): TransactionResource {
+    val resource = TransactionResource()
     resource.label = this.label
     resource.date = this.date
     this.exportAmountValues { expense, isIncome ->
@@ -35,6 +36,7 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): S
     }
     resource.idSheet = this.id
     resource.position = this.position
+    resource.lastModified = this.lastModified
     if(tagResource != null) {
         when(tagResource) {
             is DefaultTagResource -> resource.tag = tagResource
@@ -64,7 +66,7 @@ internal fun User.asExistingResource(): UserResource
         tags = this.tags.map { it.toPersonalTag() }.toMutableList()
     )
 
-internal fun SheetResource.toModel(): Transaction
+internal fun TransactionResource.toModel(): Transaction
 = Transaction(
     this.idSheet,
     this.label,
@@ -72,7 +74,8 @@ internal fun SheetResource.toModel(): Transaction
     this.value.toAmount(),
     this.isIncome!!,
     position=this.position,
-    tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0))
+    tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
+    lastModified = this.lastModified ?: LocalDateTime.now(),
 )
 
 internal fun AccountResource.toModel(): Account
