@@ -8,11 +8,7 @@ import java.util.*
 import kotlin.random.Random
 
 open class FeatureTest {
-    data class AccountTokenUserId(
-        val userId: UserId,
-        val tokenValue: UUID,
-        val account: Account
-    )
+
     private val accountState: State<AccountByOwner> = FakeFactory.accountState()
     private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
     private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
@@ -32,7 +28,7 @@ open class FeatureTest {
     fun createAndConnect(username: String): UserId {
         val userId = UserId(Random.nextLong())
         userState.init(listOf(UserWithPassword(User(userId, username, "$username@test.fr"), Password("test"))))
-        FakeFactory.sessionManager.addSession(userId, session)
+        sessionManager.addSession(userId, session)
         return userId
     }
     fun withConnectedUserGivingTransactions(transactions: List<Transaction> = listOf(), action: AccountTokenUserId.() -> Unit){
@@ -43,6 +39,16 @@ open class FeatureTest {
         transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactions.toMutableList())))
 
         action(AccountTokenUserId(johnId, session.tokenValue, account))
-        FakeFactory.sessionManager.removeSession(johnId, session.tokenValue)
+        sessionManager.removeSession(johnId, session.tokenValue)
+    }
+
+    inner class AccountTokenUserId(
+        val userId: UserId,
+        val tokenValue: UUID,
+        val account: Account
+    ) {
+        fun withTransactions(transactions: List<Transaction>) {
+            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(userId, account.id!!), transactions.toMutableList())))
+        }
     }
 }
