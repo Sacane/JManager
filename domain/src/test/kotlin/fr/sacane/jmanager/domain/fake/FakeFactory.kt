@@ -32,4 +32,8 @@ object FakeFactory {
     fun fakeTransactionRepository(): State<IdUserAccountByTransaction> {
         return transactionRepository
     }
+
+    fun sessionManager(): SessionManager {
+        return sessionManager
+    }
 }

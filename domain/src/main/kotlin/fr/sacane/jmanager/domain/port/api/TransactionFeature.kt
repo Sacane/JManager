@@ -83,18 +83,6 @@ class TransactionFeatureImpl(
         if(sheetFromResource.amount != transaction.amount) {
             acc.updateSoldFromTransactions(sheetFromResource, transaction)
         }
-        /*
-        val oldPosition = sheetFromResource.position
-        val newPosition = acc.transactions.filter { it.date <= transaction.date }.maxByOrNull { it.position }?.position ?: 0
-
-        if(oldPosition != newPosition) {
-            transaction.position = newPosition
-            if (oldPosition > newPosition) {
-                updateSheetPositionFromPositionRange(acc, transaction, newPosition..oldPosition)
-            } else {
-                updateSheetPositionFromPositionRange(acc, transaction, oldPosition..newPosition)
-            }
-        }*/
         sheetFromResource.updateFromOther(transaction)
         sheetFromResource.lastModified = LocalDateTime.now()
         transactionRepository.save(sheetFromResource)
@@ -111,17 +99,6 @@ class TransactionFeatureImpl(
         transaction: Transaction
     ): Response<Transaction> = session.authenticate(userId, token) {
         val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
-        if(account.transactions.isNotEmpty()) {
-            val lastRecord = account.transactions
-                .filter { it.date <= transaction.date }
-                .maxByOrNull { it.position }
-            if(lastRecord == null) {
-                transaction.position = 0
-            } else {
-                transaction.position = lastRecord.position + 1
-            }
-           //updateSheetPosition(account, transaction)
-        }
         account.addTransaction(transaction)
         accountRepository.upsert(account)
         Response.ok(transaction)

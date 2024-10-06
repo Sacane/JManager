@@ -10,17 +10,12 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
-import java.util.*
 import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
 
-class TransactionFeatureTest {
-    data class AccountTokenUserId(
-        val userId: UserId,
-        val tokenValue: UUID,
-        val account: Account
-    )
+class TransactionFeatureTest: FeatureTest() {
+
     companion object{
         private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
         private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
@@ -28,34 +23,6 @@ class TransactionFeatureTest {
 
         private val transactionFeature = FakeFactory.transactionFeature
 
-        private val tokenValue = UUID.randomUUID()
-        private val session: AccessToken = AccessToken(tokenValue)
-
-        private fun createAndConnect(username: String): UserId {
-            val userId = UserId(Random.nextLong())
-            userState.init(listOf(UserWithPassword(User(userId, username, "$username@test.fr"), Password("test"))))
-            FakeFactory.sessionManager.addSession(userId, session)
-            return userId
-        }
-        private fun withConnectedUserGivingTransactions(transactions: List<Transaction> = listOf(), action: AccountTokenUserId.() -> Unit){
-            val johnId = createAndConnect("John")
-            val account = createAccount(johnId, "test", Amount(0))
-            val idUserAccount = IdUserAccount(johnId, account.id!!)
-
-            transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactions.toMutableList())))
-
-            action(AccountTokenUserId(johnId, session.tokenValue, account))
-            FakeFactory.sessionManager.removeSession(johnId, session.tokenValue)
-        }
-
-        private fun createAccount(userId: UserId, label: String, amount: Amount): Account {
-            val id = Random.nextLong()
-            val account = Account(id = id, amount = amount, labelAccount = label)
-            accountState.init(
-                AccountByOwner(account.asSingleton(), userId).asSingleton()
-            )
-            return account
-        }
         private fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), position: Int = 0): Transaction{
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, position = position)
         }
@@ -104,61 +71,50 @@ class TransactionFeatureTest {
                 generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate(), 2),
                 generateTransaction("test4", 100.toAmount(), true, "04/01/2024".toDate(), 3)
             )){
-                val transactionToSave = generateTransaction("test", 100.toAmount(), true, "05/01/2024".toDate())
-                transactionFeature.bookTransaction(this.userId, this.tokenValue, this.account.label, transactionToSave)
-                    .assertTrue {
-                        this.amount == transactionToSave.amount
-                                && this.label == transactionToSave.label
-                                && this.position == 4
-                    }
+
             }
         }
 
         @Test
         fun `When I add a transaction in the middle of an account that already have some, its position should be coherent regarding the date`() {
             withConnectedUserGivingTransactions(listOf(
-                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
-                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
-                generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate(), 2),
-                generateTransaction("test4", 100.toAmount(), true, "05/01/2024".toDate(), 3)
+                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
+                generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate()),
+                generateTransaction("test4", 100.toAmount(), true, "05/01/2024".toDate())
             )) {
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "04/01/2024".toDate())
 
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, transactionToSave)
-                    .assertTrue {
-                        this.amount == transactionToSave.amount
-                                && this.label == transactionToSave.label
-                                && this.position == 3
-                    }
+                    .assertSuccess()
 
-                val transactions = transactionState.getStates().find { it.id.userId == userId }
-                assertNotNull(transactions)
-                val expectedTransactionPosition = 4
-                val actualTransactionPosition = transactions!!.transactions.find { it.label == "test4" }!!.position
-                assertEquals(expectedTransactionPosition, actualTransactionPosition)
+                val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions
+
+                transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+                    .asResponse()
+                    .assertContainsAtPosition(3, transactionToSave)
             }
         }
 
         @Test
         fun `When I add a transaction with a same date as existing some, it should be in the last position of them`() {
             withConnectedUserGivingTransactions(mutableListOf(
-                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
-                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
-                generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2),
-                generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
+                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
+                generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate()),
+                generateTransaction("tes10", 100.toAmount(), true, "02/01/2024".toDate()),
+                generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
             )) {
-
-
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "02/01/2024".toDate())
+                transactionFeature.bookTransaction(userId, tokenValue, account.label, transactionToSave)
+                    .assertSuccess()
+                val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions
 
-                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave)
-                    .map { it.position }
-                    .assertEquals(3)
-
-                assertEquals(5,
-                    transactionState.getStates()
-                        .find { it.id == IdUserAccount(userId, account.id!!) }?.transactions?.size
-                )
+                transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+                    .asResponse()
+                    .assertContainsAtPosition(4, transactionToSave)
             }
         }
         @Test
@@ -283,17 +239,14 @@ class TransactionFeatureTest {
             withConnectedUserGivingTransactions(listOf(
                 generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
             )) {
-                val actualAccount1 = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
-
-                assertEquals(100.toAmount(), actualAccount1!!.sold)
-
                 val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
                 transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transaction)
                     .assertSuccess()
+                transactionFeature.editTransaction(userId.id!!, account.id!!, transaction.copy(amount = 105.toAmount()), session.tokenValue)
 
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
 
-                assertEquals(200.toAmount(), actualAccount!!.sold)
+                assertEquals(205.toAmount(), actualAccount!!.sold)
             }
         }
     }

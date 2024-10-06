@@ -73,6 +73,7 @@ class Account(
         """.trimIndent()
     }
     fun cancelSheetsAmount(transactions: List<Transaction>) {
+        this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
         transactions.forEach {
             this.amount = if(it.isIncome) this.amount - it.amount else it.amount + this.amount
         }
@@ -89,6 +90,7 @@ class Account(
         this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
     fun addAllTransaction(transactions: List<Transaction>) {
+        this.amount = 0.toAmount()
         this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
         transactions.forEach {
             addTransaction(it)
