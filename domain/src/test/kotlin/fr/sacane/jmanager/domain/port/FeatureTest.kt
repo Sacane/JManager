@@ -3,7 +3,6 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.TransactionFeatureTest.Companion
 import fr.sacane.jmanager.domain.port.api.SessionManager
 import org.junit.jupiter.api.AfterEach
 import java.util.*
@@ -27,7 +26,7 @@ open class FeatureTest {
     }
     fun createAccount(userId: UserId, label: String, amount: Amount): Account {
         val id = Random.nextLong()
-        val account = Account(id = id, sold = amount, labelAccount = label)
+        val account = Account(id = id, amount = amount, labelAccount = label)
         accountState.init(
             AccountByOwner(account.asSingleton(), userId).asSingleton()
         )

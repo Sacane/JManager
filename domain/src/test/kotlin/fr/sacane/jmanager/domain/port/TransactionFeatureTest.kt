@@ -48,7 +48,7 @@ class TransactionFeatureTest: FeatureTest() {
             val accountByOwnerTarget = accountStates.find { it.userId == johnId }
             val accountExpected = accountByOwnerTarget?.account?.find { it.id == account.id }
             assertNotNull(accountExpected)
-            assertEquals(Amount(150), accountExpected?.sold)
+            assertEquals(Amount(150), accountExpected?.amount)
         }
 
         @Test
@@ -251,7 +251,7 @@ class TransactionFeatureTest: FeatureTest() {
 
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
 
-                assertEquals(205.toAmount(), actualAccount!!.sold)
+                assertEquals(205.toAmount(), actualAccount!!.amount)
             }
         }
         @Test

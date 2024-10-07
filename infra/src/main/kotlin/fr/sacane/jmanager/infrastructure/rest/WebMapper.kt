@@ -12,7 +12,7 @@ import java.math.BigDecimal
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
-    this.sold.toStringValue(),
+    this.amount.toStringValue(),
     this.label,
     this.sheets().map { sheet -> sheet.toDTO() }
 )

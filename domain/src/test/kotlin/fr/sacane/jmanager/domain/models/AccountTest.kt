@@ -16,7 +16,7 @@ class AccountTest {
         account -= 10.toAmount()
         account += 50.toAmount()
         account -= 15.toAmount()
-        assertEquals(account.sold, 145.toAmount())
+        assertEquals(account.amount, 145.toAmount())
     }
 
     @Test
@@ -24,8 +24,8 @@ class AccountTest {
         val account = Account(null, 100.toAmount(), "courant")
         val account2 = Account(null, 100.toAmount(), "secondaire")
         account.transaction(10.toAmount(), account2, true)
-        assertEquals(account.sold, 110.toAmount())
-        assertEquals(account2.sold, 90.toAmount())
+        assertEquals(account.amount, 110.toAmount())
+        assertEquals(account2.amount, 90.toAmount())
     }
 
     @Test
