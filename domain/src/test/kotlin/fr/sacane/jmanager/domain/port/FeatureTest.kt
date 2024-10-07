@@ -3,7 +3,9 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.TransactionFeatureTest.Companion
 import fr.sacane.jmanager.domain.port.api.SessionManager
+import org.junit.jupiter.api.AfterEach
 import java.util.*
 import kotlin.random.Random
 
@@ -14,6 +16,12 @@ open class FeatureTest {
     private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
     private val sessionManager: SessionManager = FakeFactory.sessionManager()
 
+    @AfterEach
+    fun cleanUp() {
+        userState.clear()
+        transactionState.clear()
+        accountState.clear()
+    }
     companion object {
         val session: AccessToken = AccessToken(UUID.randomUUID())
     }
@@ -31,12 +39,12 @@ open class FeatureTest {
         sessionManager.addSession(userId, session)
         return userId
     }
-    fun withConnectedUserGivingTransactions(transactions: List<Transaction> = listOf(), action: AccountTokenUserId.() -> Unit){
+    fun launchWithConnectedUserInstance(action: AccountTokenUserId.() -> Unit){
         val johnId = createAndConnect("John")
         val account = createAccount(johnId, "test", Amount(0))
         val idUserAccount = IdUserAccount(johnId, account.id!!)
 
-        transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactions.toMutableList())))
+        //transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactions.toMutableList())))
 
         action(AccountTokenUserId(johnId, session.tokenValue, account))
         sessionManager.removeSession(johnId, session.tokenValue)
@@ -47,7 +55,7 @@ open class FeatureTest {
         val tokenValue: UUID,
         val account: Account
     ) {
-        fun withTransactions(transactions: List<Transaction>) {
+        fun initTransactions(transactions: List<Transaction>) {
             transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(userId, account.id!!), transactions.toMutableList())))
         }
     }
