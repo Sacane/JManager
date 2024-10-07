@@ -28,9 +28,4 @@ class UserResource(
         tag.owner = this
         tags.add(tag)
     }
-    fun addAllTag(tags: List<TagPersonalResource>) {
-        tags.forEach {
-            addTag(it)
-        }
-    }
 }

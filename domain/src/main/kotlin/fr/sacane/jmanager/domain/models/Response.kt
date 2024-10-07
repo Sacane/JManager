@@ -1,7 +1,5 @@
 package fr.sacane.jmanager.domain.models
 
-import java.util.function.Consumer
-
 enum class ResponseState{
     OK,
     TIMEOUT,
@@ -20,7 +18,7 @@ enum class ResponseState{
 
 class Response <S> private constructor(
     val status: ResponseState,
-    private var value: S? = null,
+    private var data: S? = null,
     private var error: String = "This response is not an error"
 ){
     val message: String
@@ -41,26 +39,28 @@ class Response <S> private constructor(
         fun <S> unauthorized(message: String): Response<S> = Response(ResponseState.UNAUTHORIZED, error=message)
     }
 
-    fun onSuccess(consumer: Consumer<S>): Response<S> {
-        if(this.status.isSuccess()) consumer.accept(this.value!!)
+    fun onSuccess(consumer: (S) -> Unit): Response<S> {
+        if(!this.status.isSuccess()) {
+            return this
+        }
+        if(data == null) {
+            return this
+        } else {
+            consumer(data!!)
+        }
         return this
     }
 
-    fun orElseGet(s: S): S = this.value ?: s
-    fun orElse(s: () -> S): S {
-        return s.invoke()
-    }
-
     private fun isSuccessAndNotEmpty(): Boolean {
-        return isSuccess() && value != null
+        return isSuccess() && data != null
     }
 
     fun <T> mapBoth(
         onSuccess: (S?) -> T,
         onFailure: (Pair<String, ResponseState>) -> T
     ): T? = when {
-        isSuccess() && value == null -> null
-        isSuccessAndNotEmpty() -> onSuccess.invoke(value)
+        isSuccess() && data == null -> null
+        isSuccessAndNotEmpty() -> onSuccess.invoke(data)
         isFailure() -> onFailure(Pair(message, status))
         else -> null
     }
@@ -75,13 +75,13 @@ class Response <S> private constructor(
     fun <T> map(
         mapper: (S) -> T
     ): Response<T> {
-        val value = this.value ?: return Response(this.status, null, error = this.error)
+        val value = this.data ?: return Response(this.status, null, error = this.error)
         return Response(this.status, mapper.invoke(value))
     }
 
     fun <T> mapTo (
             mapper: (S?) -> T
     ): T {
-        return mapper.invoke(this.value)
+        return mapper.invoke(this.data)
     }
 }

@@ -18,13 +18,13 @@ internal fun Account.toDTO(): AccountDTO = AccountDTO(
 )
 
 internal fun SheetDTO.toModel(): Transaction
-= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, Amount(BigDecimal(this.accountAmount)), position = this.position, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault))
+= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, position = this.position, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault))
 
 internal fun AccountDTO.toModel(user: User? = null): Account
 = Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user)
 
 internal fun Transaction.toDTO(): SheetDTO {
-    return SheetDTO(this.id, this.label, this.amount.toStringValue(), this.amount.currency, this.isIncome, this.date, this.accountAmount.toStringValue(), position = this.position, tagDTO = this.tag.toDTO())
+    return SheetDTO(this.id, this.label, this.amount.toStringValue(), this.amount.currency, this.isIncome, this.date, position = this.position, tagDTO = this.tag.toDTO())
 }
 
 

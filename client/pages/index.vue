@@ -22,7 +22,7 @@ function navigateIfAuthenticated() {
 
 <template>
   <div class="container mx-auto px-4 mt-10">
-    <h1 class="text-3xl font-bold text-center mb-8">
+    <h1 class="text-3xl font-bold text-center mb-8 ">
       Un sommaire rapide et pratique pour gérer votre budget et vos dépenses
     </h1>
     <div class="card rounded-lg shadow-lg bg-white p-6 mb-8 text-center" @click="navigateIfAuthenticated()">
@@ -49,6 +49,11 @@ function navigateIfAuthenticated() {
 <style scoped>
 .container {
   max-width: 800px;
+}
+.container h1{
+  font-family: 'aktiv', sans-serif;
+  font-weight: 800;
+  color: var(--primary);
 }
 
 .card {

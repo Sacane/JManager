@@ -11,18 +11,18 @@ class Directory {
 
     companion object{
         val transactionInventories = mutableListOf(
-            Transaction(0, "Piano", LocalDate.of(2022, Month.DECEMBER, 1), 450.toAmount(), true, 100.0.toAmount(), Tag("Fun")),
-            Transaction(1, "Salary", LocalDate.now(), 3500.toAmount(), true,100.0.toAmount(), Tag("Work")),
-            Transaction(2, "SingLessons", LocalDate.now(), 450.toAmount(), true,100.0.toAmount(), Tag("Fun")),
-            Transaction(3, "Restaurant", LocalDate.of(2022, Month.DECEMBER, 4), 100.toAmount(), true,100.0.toAmount(), Tag("Fun")),
-            Transaction(4, "Laptop", LocalDate.of(2022, Month.DECEMBER, 31), 450.toAmount(), true, 100.0.toAmount(),Tag("Nothing")),
-            Transaction(5, "", LocalDate.now(), 450.toAmount(), true, 100.0.toAmount(),Tag("Fun")),
-            Transaction(6, "Money From testX", LocalDate.now(), 450.toAmount(), true, 100.0.toAmount(),Tag("Transaction"))
+            Transaction(0, "Piano", LocalDate.of(2022, Month.DECEMBER, 1), 450.toAmount(), true, Tag("Fun")),
+            Transaction(1, "Salary", LocalDate.now(), 3500.toAmount(), true, Tag("Work")),
+            Transaction(2, "SingLessons", LocalDate.now(), 450.toAmount(), true, Tag("Fun")),
+            Transaction(3, "Restaurant", LocalDate.of(2022, Month.DECEMBER, 4), 100.toAmount(), true, Tag("Fun")),
+            Transaction(4, "Laptop", LocalDate.of(2022, Month.DECEMBER, 31), 450.toAmount(), true,Tag("Nothing")),
+            Transaction(5, "", LocalDate.now(), 450.toAmount(), true,Tag("Fun")),
+            Transaction(6, "Money From testX", LocalDate.now(), 450.toAmount(), true,Tag("Transaction"))
         )
     }
 
     private val accountInventory = mutableListOf(
-        Account(1, 0.toAmount(), "Principal", transactionInventories)
+        Account(1, 0.toAmount(), "Principal", transactionInventories, initialSold = 0.toAmount())
     )
 
     private val tokenInventory = mutableMapOf(

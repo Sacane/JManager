@@ -17,9 +17,10 @@ class AccountResource(
         joinColumns = [JoinColumn(name = "id_account")],
         inverseJoinColumns = [JoinColumn(name = "id_sheet")]
     )
-    var sheets: MutableList<SheetResource> = mutableListOf(),
+    var sheets: MutableList<TransactionResource> = mutableListOf(),
     @ManyToOne
     var owner: UserResource? = null,
+    var initialSold: BigDecimal = BigDecimal.ZERO,
     @Id
     @GeneratedValue
     @Column(name = "id_account")

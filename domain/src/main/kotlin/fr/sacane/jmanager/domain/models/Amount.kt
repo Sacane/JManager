@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class Amount(var amount: BigDecimal, val currency: String = "€") {
+    constructor(longAmount: Long) : this(BigDecimal(longAmount), currency = "€")
 
     init{
         if(amount.scale() <= 2){
@@ -30,6 +31,9 @@ class Amount(var amount: BigDecimal, val currency: String = "€") {
     }
     override fun toString(): String {
         return "$amount $currency"
+    }
+    fun negate(): Amount {
+        return Amount(amount.negate(), currency)
     }
     companion object {
         fun fromString(representation: String): Amount {

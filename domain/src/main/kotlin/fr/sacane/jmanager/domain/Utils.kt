@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain
 
+import fr.sacane.jmanager.domain.models.Amount
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.*
@@ -33,3 +34,5 @@ object Hash {
         return pwd.contentEquals(digest)
     }
 }
+
+fun Long.toAmount(): Amount = Amount(this)
