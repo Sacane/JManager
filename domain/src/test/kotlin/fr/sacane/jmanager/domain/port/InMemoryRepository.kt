@@ -2,7 +2,7 @@ package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.AccountRepository
+import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.Random
@@ -129,7 +129,7 @@ data class AccountByOwner(
 
 class InMemoryAccountRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): AccountRepository, State<AccountByOwner> {
+): AccountRepositoryPort, State<AccountByOwner> {
 
     override fun editFromAnother(account: Account): Account {
         inMemoryDatabase.upsert(account)

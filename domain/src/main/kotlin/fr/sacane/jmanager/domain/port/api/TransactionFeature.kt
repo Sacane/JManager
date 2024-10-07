@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.AccountRepository
+import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.LocalDateTime
@@ -26,7 +26,7 @@ class TransactionFeatureImpl(
     private val transactionRepository: TransactionRepositoryPort,
     private val userRepository: UserRepository,
     private val session: SessionManager,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepositoryPort
 ): TransactionFeature{
     companion object {
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
@@ -64,7 +64,6 @@ class TransactionFeatureImpl(
         val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         account.addTransaction(transaction)
         accountRepository.upsert(account)
-        println("after booking : ${account.transactions}\n => ${account.amount}")
         Response.ok(transaction)
     }
 

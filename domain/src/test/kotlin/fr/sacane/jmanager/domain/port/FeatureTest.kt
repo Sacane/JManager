@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.SessionManager
 import org.junit.jupiter.api.AfterEach
+import java.time.LocalDate
 import java.util.*
 import kotlin.random.Random
 
@@ -23,6 +24,9 @@ open class FeatureTest {
     }
     companion object {
         val session: AccessToken = AccessToken(UUID.randomUUID())
+        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction{
+            return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
+        }
     }
     fun createAccount(userId: UserId, label: String, amount: Amount): Account {
         val id = Random.nextLong()

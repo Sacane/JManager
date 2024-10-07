@@ -14,8 +14,6 @@ data class Transaction(
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false
 ) {
-
-
     fun updateFromOther(other: Transaction): Boolean {
         if(other.id != this.id) return false
         this.label = other.label
