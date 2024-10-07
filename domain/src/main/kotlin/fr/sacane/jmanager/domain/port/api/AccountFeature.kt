@@ -9,7 +9,7 @@ import fr.sacane.jmanager.domain.models.Response.Companion.invalid
 import fr.sacane.jmanager.domain.models.Response.Companion.notFound
 import fr.sacane.jmanager.domain.models.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.spi.AccountRepository
+import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.*
 
@@ -27,7 +27,7 @@ sealed interface AccountFeature {
 class AccountFeatureImpl(
     private val userRepository: UserRepository,
     private val session: SessionManager,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepositoryPort
 ): AccountFeature {
     override fun findAccountById(
         userId: UserId,

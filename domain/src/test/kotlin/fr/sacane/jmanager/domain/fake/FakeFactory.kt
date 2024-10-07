@@ -2,10 +2,7 @@ package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.port.*
-import fr.sacane.jmanager.domain.port.api.AccountFeatureImpl
-import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
-import fr.sacane.jmanager.domain.port.api.SessionManager
-import fr.sacane.jmanager.domain.port.api.TransactionFeatureImpl
+import fr.sacane.jmanager.domain.port.api.*
 
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
@@ -15,6 +12,7 @@ object FakeFactory {
     val sessionManager: SessionManager = InMemorySessionManager()
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, userRepository, sessionManager, fakeAccountRepository)
+    val previewTransactionFeature = PreviewTransactionFeatureImpl(fakeAccountRepository, transactionRepository, sessionManager)
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository
     }

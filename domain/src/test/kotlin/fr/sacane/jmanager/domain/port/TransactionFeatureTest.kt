@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
-import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
 
@@ -19,9 +18,7 @@ class TransactionFeatureTest: FeatureTest() {
         private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
         private val transactionFeature = FakeFactory.transactionFeature
-        private fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now()): Transaction{
-            return Transaction(Random.nextLong(), label, localDate, amount, isIncome)
-        }
+
     }
 
     @Nested

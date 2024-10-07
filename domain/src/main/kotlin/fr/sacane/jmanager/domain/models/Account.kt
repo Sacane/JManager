@@ -32,9 +32,9 @@ class Account(
         return labelAccount.hashCode()
     }
 
-    fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
+    fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int, searchIsPreview: Boolean = false): List<Transaction>{
         return transactions
-            .filter { it.date.month == month && it.date.year == year }
+            .filter { it.date.month == month && it.date.year == year && it.isPreview == searchIsPreview }
             .sortedWith(compareBy<Transaction>{it.date}.thenBy { it.lastModified })
     }
 

@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.spi.AccountRepository
+import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
@@ -13,7 +13,7 @@ class AccountJpaRepositoryAdapter(
     private val accountRepository: AccountJpaRepository,
     private val userRepository: UserPostgresRepository,
     private val accountMapper: AccountMapper
-): AccountRepository {
+): AccountRepositoryPort {
     @Transactional
     override fun editFromAnother(account: Account): Account? {
         val accountFromDatabase = accountRepository.findByIdWithSheets(account.id!!) ?: return null
