@@ -32,43 +32,6 @@ class TransactionFeatureImpl(
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
     }
 
-    private fun updateSheetSoldFrom(account: Account, month: Month){
-        val sheets = account.transactionsByMonthSortedByDate(month)
-        for((position, number) in sheets.indices.withIndex()) {
-            sheets[number].position = position
-        }
-        transactionRepository.saveAllSheets(
-            sheets.toList()
-        )
-    }
-    private fun updateSheetPosition(account: Account, transaction: Transaction) {
-        val sheets = account.transactionsFilterAndSortedByPositionBefore(transaction.position)
-        for(number in sheets.indices) {
-            val actualTransaction = sheets[number]
-            if(actualTransaction.date == transaction.date) {
-                continue
-            }
-            actualTransaction.position += 1
-            if(actualTransaction.position <= transaction.position) {
-                continue
-            }
-        }
-        transactionRepository.saveAllSheets(sheets)
-    }
-    private fun updateSheetPositionFromPositionRange(account: Account, transaction: Transaction, range: IntRange) {
-        val sheets = account.transactions.filter { range.first <= it.position }.sortedBy { it.position }
-        for(number in range) {
-            val actualTransaction = sheets[number]
-            if(actualTransaction.date == transaction.date && actualTransaction.id != transaction.id) {
-                continue
-            }
-            actualTransaction.position += 1
-            if(actualTransaction.position <= transaction.position) {
-                continue
-            }
-        }
-        transactionRepository.saveAllSheets(sheets)
-    }
     override fun editTransaction(
         userID: Long,
         accountID: Long,
@@ -130,10 +93,8 @@ class TransactionFeatureImpl(
     override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID) {
         val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return
         val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
-        val month = account.transactions.filter(isSheetOnList)[0].date.month
         account.cancelSheetsAmount(account.transactions.filter(isSheetOnList))
         account.transactions.removeIf(isSheetOnList)
-        updateSheetSoldFrom(account, month)
         accountRepository.upsert(account)
         transactionRepository.deleteAllSheetsById(sheetIds)
     }
