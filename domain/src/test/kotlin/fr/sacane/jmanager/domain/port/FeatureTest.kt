@@ -42,9 +42,6 @@ open class FeatureTest {
     fun launchWithConnectedUserInstance(action: AccountTokenUserId.() -> Unit){
         val johnId = createAndConnect("John")
         val account = createAccount(johnId, "test", Amount(0))
-        val idUserAccount = IdUserAccount(johnId, account.id!!)
-
-        //transactionState.init(listOf(IdUserAccountByTransaction(idUserAccount, transactions.toMutableList())))
 
         action(AccountTokenUserId(johnId, session.tokenValue, account))
         sessionManager.removeSession(johnId, session.tokenValue)

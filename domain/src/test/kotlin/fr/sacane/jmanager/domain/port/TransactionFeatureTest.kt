@@ -16,12 +16,9 @@ fun <T> T.asSingleton(): List<T> = listOf(this)
 class TransactionFeatureTest: FeatureTest() {
 
     companion object{
-        private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
         private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
-
         private val transactionFeature = FakeFactory.transactionFeature
-
         private fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), position: Int = 0): Transaction{
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, position = position)
         }
@@ -227,9 +224,7 @@ class TransactionFeatureTest: FeatureTest() {
             val t3 = generateTransaction("test3", 100.toAmount(), true, "02/01/2024".toDate())
             val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
             val t5 = generateTransaction("test5", 100.toAmount(), true, "04/01/2024".toDate())
-            launchWithConnectedUserInstance(
-
-            ) {
+            launchWithConnectedUserInstance {
                 initTransactions(listOf(t1, t2, t3, t4, t5))
                 transactionFeature.editTransaction(userId.id!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
                     .assertSuccess()
@@ -246,7 +241,7 @@ class TransactionFeatureTest: FeatureTest() {
 
         @Test
         fun `Giving a user that save a transaction, when we edit it, the new amount of the account should take in count`() {
-            launchWithConnectedUserInstance() {
+            launchWithConnectedUserInstance {
                 initTransactions(listOf(
                     generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
                 ))
@@ -258,6 +253,15 @@ class TransactionFeatureTest: FeatureTest() {
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
 
                 assertEquals(205.toAmount(), actualAccount!!.sold)
+            }
+        }
+        @Test
+        fun `Giving a user with existing transaction, it should be retrieving it by its ID`() {
+            launchWithConnectedUserInstance {
+                val toInsert = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
+                initTransactions(toInsert.asSingleton())
+                transactionFeature.findById(userId.id!!, toInsert.id!!, tokenValue)
+                    .assertTrue { this.label == toInsert.label && this.amount == toInsert.amount }
             }
         }
     }
