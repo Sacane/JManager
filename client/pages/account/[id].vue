@@ -30,6 +30,13 @@ const data = reactive({
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
   tagDTO: undefined,
 })
+
+function translateChange(): void {
+  console.log('TEST')
+  console.log(editTransactionInfo.date)
+  editTransactionInfo.date = editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-')
+}
+
 const actualSheets = ref()
 
 const { saveSheet, editSheet, findTransactionById } = useSheet()
@@ -41,7 +48,6 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
     expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '/',
     incomeRepresenttation: transaction.isIncome ? `${transaction.value} €` : '/',
     date: transaction.date,
-    accountAmount: `${transaction.accountAmount} €`,
     tagDTO: transaction.tagDTO,
   }
 }
@@ -60,9 +66,9 @@ function retrieveTags() {
 function initAccount() {
   findById(Number.parseFloat(route.params?.id as string))
     .then((account: AccountDTO) => {
-      data.accountAmount = account.amount
       data.labelAccount = account.labelAccount as string
       data.currentAccountId = route.params?.id as string
+      data.accountAmount = account.amount
       retrieveSheets()
     })
 }
@@ -103,10 +109,9 @@ const isEditTransactionDialogOpen = ref<boolean>(false)
 const editTransactionInfo = reactive({
   id: 0,
   label: '',
-  date: new Date(),
+  date: '',
   amount: 0,
   selectedMode: 'expenses',
-  accountAmount: 0.0,
   accountId: 0,
   integerPart: '0',
   decimalPart: '0',
@@ -119,7 +124,6 @@ function resetEditTransaction(): void {
   editTransactionInfo.id = 0
   editTransactionInfo.date = new Date()
   editTransactionInfo.amount = 0
-  editTransactionInfo.accountAmount = 0.0
   editTransactionInfo.isIncome = false
   editTransactionInfo.tagDTO = ''
   editTransactionInfo.accountId = 0
@@ -132,7 +136,6 @@ function onEditPage(event: any) {
     editTransactionInfo.id = transaction.id
     editTransactionInfo.date = transaction.date
     editTransactionInfo.amount = transaction.value
-    editTransactionInfo.accountAmount = transaction.accountAmount
     editTransactionInfo.isIncome = transaction.isIncome
     const [integerPart, decimalPart] = transaction.value.toString().split('.')
     editTransactionInfo.integerPart = integerPart
@@ -157,7 +160,6 @@ const uDate = useDate()
 const values = reactive({
   accountId: data.currentAccountId,
   accountLabel: data.labelAccount,
-  accountAmount: data.accountAmount,
   amount: 0.0,
   selectedMode: 'expenses',
   sheetLabel: '',
@@ -176,15 +178,15 @@ async function onConfirm() {
     id: 0,
     label: values.sheetLabel,
     value: amount,
-    isIncome: values.selectedMode === 'income',
+    isIncome: values.isIncome,
     currency: '€',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
-    accountAmount: `${data.accountAmount}`,
     tagDTO: data.tagDTO,
-  }).then((sheet: SheetDTO) => {
-    // actualSheets.value.push(asDisplayableTransaction(sheet))
+  }).then(() => {
     initAccount()
-  }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => isNewTransactionDialogOpen.value = false)
+  }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => {
+    isNewTransactionDialogOpen.value = false
+  })
 }
 async function onEditTransaction() {
   if ((editTransactionInfo.integerPart === '0' && editTransactionInfo.decimalPart === '0') || editTransactionInfo.label === '') {
@@ -196,7 +198,6 @@ async function onEditTransaction() {
     value: `${editTransactionInfo.integerPart}.${editTransactionInfo.decimalPart}`,
     isIncome: (editTransactionInfo.selectedMode === 'income'),
     date: editTransactionInfo.date,
-    accountAmount: `${editTransactionInfo.accountAmount}`,
     tagDTO: editTransactionInfo.tagDTO,
   }, Number.parseInt(data.currentAccountId))
     .then((_: SheetDTO) => {
@@ -227,7 +228,7 @@ function test(row): any | undefined {
           </h2>
         </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="450px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="500px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
@@ -251,7 +252,6 @@ function test(row): any | undefined {
         <Column field="label" header="Libellé" :header-style="{ textAlign: 'center' }" />
         <Column field="expensesRepresentation" header="Dépenses" :header-style="{ textAlign: 'center' }" />
         <Column field="incomeRepresenttation" header="Recettes" :header-style="{ textAlign: 'center' }" />
-        <Column field="accountAmount" header="Solde" />
         <Column field="tagDTO" header="Tag">
           <template #body="{ data }">
             <div class="flex flex-row align-center flex-gap-2">
@@ -281,11 +281,11 @@ function test(row): any | undefined {
         <label for="selectionType">Selectionner le type de transaction</label>
         <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
           <div>
-            <RadioButton v-model="values.selectedMode" input-id="selection1" value="expenses" />
+            <RadioButton v-model="values.isIncome" input-id="selection1" value="false" />
             <label for="selection1">Dépense</label>
           </div>
           <div>
-            <RadioButton v-model="values.selectedMode" input-id="selection2" value="income" />
+            <RadioButton v-model="values.isIncome" input-id="selection2" value="true" />
             <label for="selection2">Recette</label>
           </div>
         </div>
@@ -337,7 +337,7 @@ function test(row): any | undefined {
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
-        <Calendar id="calendar" v-model="editTransactionInfo.date" placeholder="Date" date-format="dd-mm-yy" />
+        <Calendar id="calendar" v-model="editTransactionInfo.date" placeholder="Date" date-format="dd-mm-yy" @date-select="translateChange()" />
       </div>
       <Dropdown v-model="editTransactionInfo.tagDTO" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
         <template #option="slotTag">

@@ -3,8 +3,8 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.TransactionRegister
-import fr.sacane.jmanager.infrastructure.spi.entity.SheetResource
+import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.*
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
@@ -14,80 +14,37 @@ import org.springframework.stereotype.Service
 @Adapter(Side.INFRASTRUCTURE)
 class SqlTransactionAdapter(
     private val sheetRepository: SheetRepository,
-    private val userPostgresRepository: UserPostgresRepository,
     private val accountJpaRepository: AccountJpaRepository,
-    private val accountMapper: AccountMapper,
     private val tagRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
-) : TransactionRegister{
-
-    @Transactional
-    override fun persist(userId: UserId, account: Account): User? {
-        val id = userId.id ?: return null
-        val user = userPostgresRepository.findByIdWithAccount(id) ?: return null
-        user.addAccount(accountMapper.asResource(account))
-        return userPostgresRepository.save(user).toModelWithSimpleAccounts()
-    }
-    @Transactional
-    override fun findAccountByLabel(userId: UserId, labelAccount: String): Account? {
-        val id = userId.id ?: return null
-        return accountJpaRepository.findByOwnerAndLabelWithSheets(id, labelAccount)
-            ?.toModel()
-    }
+) : TransactionRepositoryPort{
 
     @Transactional
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
         val id = userId.id ?: return null
         val account = accountJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
-        val sheetResource: SheetResource
+        val transactionResource: TransactionResource
         if(transaction.tag.label == "Aucune"){
             val noneTag = tagRepository.findUnknownTag()
-            sheetResource = transaction.asResource(noneTag)
+            transactionResource = transaction.asResource(noneTag)
         } else {
-            sheetResource = transaction.mapToRightTag()
+            transactionResource = transaction.mapToRightTag()
         }
         return try{
-            val saved = sheetRepository.save(sheetResource)
+            val saved = sheetRepository.save(transactionResource)
             account.sheets.add(saved)
-            account.amount = transaction.accountAmount.applyOnValue { it }
+            account.amount = if(transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
             transaction
         }catch(e: Exception){
             null
         }
     }
-    @Transactional
-    override fun persist(account: Account) :Account?{
-        val accountGet = accountMapper.asResource(account)
-        val registered = accountJpaRepository.save(accountGet)
-        return registered.toModel()
-    }
-    @Transactional
-    override fun persist(userId: UserId, tag: Tag): Tag? {
-        val id = userId.id ?: return null
-        val user = userPostgresRepository.findById(id).orElseThrow()
-        user.tags.add(tag.toPersonalTag())
-        userPostgresRepository.save(user)
-        return tag
-    }
 
-    @Transactional
-    override fun remove(targetCategory: Tag) {
-        tagRepository.deleteByName(targetCategory.label)
-    }
-    @Transactional
-    override fun findAccountById(accountId: Long): Account? {
-        val accountResponse = accountJpaRepository.findByIdWithSheets(accountId)
-        return accountResponse?.toModel()
-    }
-    @Transactional
-    override fun deleteAccountByID(accountID: Long) {
-        accountJpaRepository.deleteById(accountID)
-    }
     @Transactional
     override fun saveAllSheets(transactions: List<Transaction>) {
         sheetRepository.saveAll(transactions.map { it.mapToRightTag() })
     }
-    private fun Transaction.mapToRightTag(): SheetResource {
+    private fun Transaction.mapToRightTag(): TransactionResource {
         val tag = this.tag.id?.let {
             if(this.tag.isDefault) {
                 tagRepository.findByIdNullable(it)
@@ -102,17 +59,14 @@ class SqlTransactionAdapter(
         sheetRepository.deleteAllById(sheetIds)
     }
     @Transactional
-    override fun findSheetByID(sheetID: Long): Transaction? {
-        return sheetRepository.findSheetResourceByIdSheet(sheetID)?.toModel()
+    override fun findTransactionById(transactionId: Long): Transaction? {
+        return sheetRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
     }
     @Transactional
     override fun save(transaction: Transaction): Transaction? {
-        return sheetRepository.save(transaction.asResource()).toModel()
+        return sheetRepository.save(transaction.asResource(transaction.tag.asResource())).toModel()
     }
-    @Transactional
-    override fun save(account: Account): Account? {
-        return accountJpaRepository.save(account.asResource()).toModel()
-    }
+
     @Transactional
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
         if(userId.id == null) return null

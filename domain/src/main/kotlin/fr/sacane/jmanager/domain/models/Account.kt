@@ -7,7 +7,8 @@ class Account(
     private var amount: Amount,
     private var labelAccount: String,
     val transactions: MutableList<Transaction> = mutableListOf(),
-    val owner : User? = null
+    val owner : User? = null,
+    val initialSold: Amount = amount
 ){
 
     val label: String
@@ -16,10 +17,6 @@ class Account(
     val sold: Amount
         get() = amount
 
-    fun updateSoldByLastSheet(): Boolean {
-        this.amount = transactions.maxByOrNull { it.position }?.accountAmount ?: return false
-        return true
-    }
 
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
     fun sheets(): List<Transaction>{
@@ -29,12 +26,17 @@ class Account(
     fun updateFrom(account: Account) {
         amount = account.sold
         labelAccount = account.label
-        var addition = account.sold
         transactions.replaceAll {
-            addition = if(it.isIncome) addition + it.amount else addition - it.amount
-            Transaction(it.id, it.label, it.date, it.amount, it.isIncome, addition, it.tag, it.position)
+            Transaction(it.id, it.label, it.date, it.amount, it.isIncome, it.tag, it.position)
         }
+    }
 
+    fun transactionsByMonthSortedByDate(month: Month): List<Transaction> {
+        return transactions.filter { it.date.month == month }.sortedBy { it.date }
+    }
+
+    fun transactionsFilterAndSortedByPositionBefore(position: Int): List<Transaction> {
+        return transactions.filter { it.position <= position }.sortedBy { position }
     }
 
     override fun hashCode(): Int {
@@ -56,9 +58,10 @@ class Account(
             otherAccount += delta
         }
     }
-    fun retrieveSheetSurroundByDate(month: Month, year: Int): List<Transaction>{
+    fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
         return transactions
             .filter { it.date.month == month && it.date.year == year }
+            .sortedWith(compareBy<Transaction>{it.date}.thenBy { it.lastModified })
     }
 
     override fun toString(): String {
@@ -66,9 +69,11 @@ class Account(
             id: $id
             amount: $amount
             label: $labelAccount
+            initialSold: $initialSold
         """.trimIndent()
     }
     fun cancelSheetsAmount(transactions: List<Transaction>) {
+        this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
         transactions.forEach {
             this.amount = if(it.isIncome) this.amount - it.amount else it.amount + this.amount
         }
@@ -78,5 +83,17 @@ class Account(
         this.amount = if(oldTransaction.isIncome) amount - oldTransaction.amount else amount + oldTransaction.amount
         // Second modification
         this.amount = if(newTransaction.isIncome) amount + newTransaction.amount else amount - newTransaction.amount
+    }
+
+    fun addTransaction(transaction: Transaction) {
+        this.transactions.add(transaction)
+        this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+    }
+    fun addAllTransaction(transactions: List<Transaction>) {
+        this.amount = 0.toAmount()
+        this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
+        transactions.forEach {
+            addTransaction(it)
+        }
     }
 }

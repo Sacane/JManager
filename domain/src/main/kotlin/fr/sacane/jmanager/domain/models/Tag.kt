@@ -6,8 +6,7 @@ class Tag(val label: String, val id: Long? = null, val color: Color = Color(0f, 
     override fun toString(): String {
         return """
             name: $label
-            id: $id
-            color: $color
+            color: (${color.red}, ${color.green}, ${color.blue}, ${color.alpha})
         """.trimIndent()
     }
 }
