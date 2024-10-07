@@ -21,7 +21,6 @@ data class SheetDTO(
     val isIncome: Boolean,
     @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
-    val position: Int,
     val tagDTO: TagDTO? = null
 )
 data class SheetsAndAverageDTO(

@@ -35,7 +35,6 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
         resource.isIncome = isIncome
     }
     resource.idSheet = this.id
-    resource.position = this.position
     resource.lastModified = this.lastModified
     if(tagResource != null) {
         when(tagResource) {
@@ -73,7 +72,6 @@ internal fun TransactionResource.toModel(): Transaction
     this.date,
     this.value.toAmount(),
     this.isIncome!!,
-    position=this.position,
     tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
     lastModified = this.lastModified ?: LocalDateTime.now(),
 )

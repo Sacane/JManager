@@ -27,7 +27,7 @@ open class FeatureTest {
     }
     fun createAccount(userId: UserId, label: String, amount: Amount): Account {
         val id = Random.nextLong()
-        val account = Account(id = id, amount = amount, labelAccount = label)
+        val account = Account(id = id, sold = amount, labelAccount = label)
         accountState.init(
             AccountByOwner(account.asSingleton(), userId).asSingleton()
         )

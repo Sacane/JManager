@@ -19,8 +19,8 @@ class TransactionFeatureTest: FeatureTest() {
         private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
         private val transactionFeature = FakeFactory.transactionFeature
-        private fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), position: Int = 0): Transaction{
-            return Transaction(Random.nextLong(), label, localDate, amount, isIncome, position = position)
+        private fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now()): Transaction{
+            return Transaction(Random.nextLong(), label, localDate, amount, isIncome)
         }
     }
 
@@ -55,10 +55,10 @@ class TransactionFeatureTest: FeatureTest() {
         fun `When I add a transaction in an account that already have some, its position should be coherent regarding the date`() {
             launchWithConnectedUserInstance {
                 initTransactions(listOf(
-                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
-                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
-                    generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate(), 2),
-                    generateTransaction("test4", 100.toAmount(), true, "04/01/2024".toDate(), 3)
+                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
+                    generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate()),
+                    generateTransaction("test4", 100.toAmount(), true, "04/01/2024".toDate())
                 ))
 
                 val toInsertAtFirst = generateTransaction("test0", 100.toAmount(), true, "31/12/2023".toDate())
@@ -131,16 +131,15 @@ class TransactionFeatureTest: FeatureTest() {
 
             ) {
                 initTransactions( mutableListOf(
-                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
-                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
-                    generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2),
-                    generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
+                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
+                    generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate()),
+                    generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
                 ))
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "23/12/2023".toDate())
 
                 transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave)
-                    .map { it.position }
-                    .assertEquals(0)
+                    .assertSuccess()
             }
         }
     }
@@ -149,16 +148,16 @@ class TransactionFeatureTest: FeatureTest() {
     inner class RetrieveTransactionsByMonthAndYearFeature {
         @Test
         fun `As a user with existing transactions, I should retrieve them ordering by date and position`() {
-            val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0)
-            val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1)
-            val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2)
-            val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
-            val t5 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 4)
+            val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
+            val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
+            val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate())
+            val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
+            val t5 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
             launchWithConnectedUserInstance {
                 initTransactions(listOf(
                     t1, t2, t4, t3, t5,
-                    generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate(), 5),
-                    generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate(), 6),
+                    generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate()),
+                    generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate()),
                 ))
                 val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId, session.tokenValue, Month.JANUARY, 2024, account.label)
                 response.assertTrue {
@@ -173,7 +172,7 @@ class TransactionFeatureTest: FeatureTest() {
 
         @Test
         fun `Giving an existing transaction, I should correctly edit label, amount and date from it`() {
-            val elements = generateTransaction("test1", 100.toAmount(), true, "01/02/2024".toDate(), 0)
+            val elements = generateTransaction("test1", 100.toAmount(), true, "01/02/2024".toDate())
             launchWithConnectedUserInstance {
                 initTransactions(elements.asSingleton())
                 val expectedLabel = "test1.0"
