@@ -3,7 +3,6 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.*
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -26,14 +25,6 @@ class TransactionFeatureTest: FeatureTest() {
         private fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), position: Int = 0): Transaction{
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, position = position)
         }
-    }
-
-
-    @AfterEach
-    fun cleanUp() {
-        userState.clear()
-        transactionState.clear()
-        accountState.clear()
     }
 
     @Nested
@@ -65,24 +56,43 @@ class TransactionFeatureTest: FeatureTest() {
 
         @Test
         fun `When I add a transaction in an account that already have some, its position should be coherent regarding the date`() {
-            withConnectedUserGivingTransactions(listOf(
-                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
-                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
-                generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate(), 2),
-                generateTransaction("test4", 100.toAmount(), true, "04/01/2024".toDate(), 3)
-            )){
+            launchWithConnectedUserInstance {
+                initTransactions(listOf(
+                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
+                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
+                    generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate(), 2),
+                    generateTransaction("test4", 100.toAmount(), true, "04/01/2024".toDate(), 3)
+                ))
 
+                val toInsertAtFirst = generateTransaction("test0", 100.toAmount(), true, "31/12/2023".toDate())
+                val toInsertAtLast = generateTransaction("test100", 100.toAmount(), true, "31/01/2024".toDate())
+                val toInsertAtMiddle = generateTransaction("test50", 100.toAmount(), true, "28/01/2024".toDate())
+
+                transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtFirst).assertSuccess()
+                transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtLast).assertSuccess()
+                transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtMiddle).assertSuccess()
+
+                val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions
+
+                transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+                    .asResponse()
+                    .assertContainsAtPosition(0, toInsertAtFirst)
+                    .assertContainsAtPosition(6, toInsertAtLast)
+                    .assertContainsAtPosition(5, toInsertAtMiddle)
             }
         }
 
         @Test
         fun `When I add a transaction in the middle of an account that already have some, its position should be coherent regarding the date`() {
-            withConnectedUserGivingTransactions(listOf(
-                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
-                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
-                generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate()),
-                generateTransaction("test4", 100.toAmount(), true, "05/01/2024".toDate())
-            )) {
+            launchWithConnectedUserInstance {
+                initTransactions(listOf(
+                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
+                    generateTransaction("tes3", 100.toAmount(), true, "03/01/2024".toDate()),
+                    generateTransaction("test4", 100.toAmount(), true, "05/01/2024".toDate())
+                ))
+
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "04/01/2024".toDate())
 
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, transactionToSave)
@@ -99,13 +109,14 @@ class TransactionFeatureTest: FeatureTest() {
 
         @Test
         fun `When I add a transaction with a same date as existing some, it should be in the last position of them`() {
-            withConnectedUserGivingTransactions(mutableListOf(
-                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
-                generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
-                generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate()),
-                generateTransaction("tes10", 100.toAmount(), true, "02/01/2024".toDate()),
-                generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
-            )) {
+            launchWithConnectedUserInstance() {
+                initTransactions(mutableListOf(
+                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+                    generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate()),
+                    generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate()),
+                    generateTransaction("tes10", 100.toAmount(), true, "02/01/2024".toDate()),
+                    generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
+                ))
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "02/01/2024".toDate())
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, transactionToSave)
                     .assertSuccess()
@@ -119,14 +130,15 @@ class TransactionFeatureTest: FeatureTest() {
         }
         @Test
         fun `Giving a user with a transaction, when booking a transaction that is older that the others, it should have its position to 0`() {
-            withConnectedUserGivingTransactions(
-                mutableListOf(
+            launchWithConnectedUserInstance(
+
+            ) {
+                initTransactions( mutableListOf(
                     generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate(), 0),
                     generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate(), 1),
                     generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2),
                     generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
-                )
-            ) {
+                ))
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "23/12/2023".toDate())
 
                 transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave)
@@ -145,13 +157,12 @@ class TransactionFeatureTest: FeatureTest() {
             val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate(), 2)
             val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 3)
             val t5 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate(), 4)
-            withConnectedUserGivingTransactions(
-                listOf(
+            launchWithConnectedUserInstance {
+                initTransactions(listOf(
                     t1, t2, t4, t3, t5,
                     generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate(), 5),
                     generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate(), 6),
-                )
-            ) {
+                ))
                 val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId, session.tokenValue, Month.JANUARY, 2024, account.label)
                 response.assertTrue {
                     size == 5 && all { it.date.month == Month.JANUARY }
@@ -166,9 +177,8 @@ class TransactionFeatureTest: FeatureTest() {
         @Test
         fun `Giving an existing transaction, I should correctly edit label, amount and date from it`() {
             val elements = generateTransaction("test1", 100.toAmount(), true, "01/02/2024".toDate(), 0)
-            withConnectedUserGivingTransactions(
-                elements.asSingleton()
-            ) {
+            launchWithConnectedUserInstance {
+                initTransactions(elements.asSingleton())
                 val expectedLabel = "test1.0"
                 val expectedAmount = 105.toAmount()
                 val expectedDate = "02/02/2024".toDate()
@@ -192,15 +202,15 @@ class TransactionFeatureTest: FeatureTest() {
             val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate())
             val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
             val t5 = generateTransaction("test5", 100.toAmount(), true, "03/01/2024".toDate())
-            withConnectedUserGivingTransactions(
-                listOf(t1, t2, t3, t4, t5)
-            ) {
+            launchWithConnectedUserInstance {
+                initTransactions(listOf(t1, t2, t3, t4, t5))
+
                 transactionFeature.editTransaction(userId.id!!, account.id!!, t5.copy(date = "31/12/2023".toDate()), session.tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
-
+                println(transactions)
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
                     .asResponse()
                     .assertContainsAtPosition(0, t5)
@@ -217,17 +227,17 @@ class TransactionFeatureTest: FeatureTest() {
             val t3 = generateTransaction("test3", 100.toAmount(), true, "02/01/2024".toDate())
             val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
             val t5 = generateTransaction("test5", 100.toAmount(), true, "04/01/2024".toDate())
-            withConnectedUserGivingTransactions(
-                listOf(t1, t2, t3, t4, t5)
+            launchWithConnectedUserInstance(
+
             ) {
+                initTransactions(listOf(t1, t2, t3, t4, t5))
                 transactionFeature.editTransaction(userId.id!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
 
-                transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                transactions.sortedByDate()
                     .assertContainsAtPosition(0, t2)
                     .assertContainsAtPosition(1, t3)
                     .assertContainsAtPosition(2, t1)
@@ -236,9 +246,10 @@ class TransactionFeatureTest: FeatureTest() {
 
         @Test
         fun `Giving a user that save a transaction, when we edit it, the new amount of the account should take in count`() {
-            withConnectedUserGivingTransactions(listOf(
-                generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
-            )) {
+            launchWithConnectedUserInstance() {
+                initTransactions(listOf(
+                    generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
+                ))
                 val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
                 transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transaction)
                     .assertSuccess()
@@ -253,3 +264,8 @@ class TransactionFeatureTest: FeatureTest() {
 }
 
 fun String.toDate(): LocalDate = LocalDate.parse(this, DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+
+fun MutableList<Transaction>?.sortedByDate(): Response<List<Transaction>> {
+    return this?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+        .asResponse()
+}
