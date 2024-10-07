@@ -9,7 +9,8 @@ class Account(
     val transactions: MutableList<Transaction> = mutableListOf(),
     val owner : User? = null,
     val initialSold: Amount = amount,
-    var previewAmount: Amount = amount
+    var previewAmount: Amount = amount,
+    val periodicalTransactions: MutableList<PeriodicalTransaction> = mutableListOf()
 ){
 
     val label: String

@@ -44,8 +44,7 @@ class AccountController (
     fun createAccount(
         @RequestBody userAccount: UserAccountDTO,
         @RequestHeader("Authorization") token: String
-    )
-    : ResponseEntity<AccountInfoDTO> = feature.save(
+    ): ResponseEntity<AccountInfoDTO> = feature.save(
     userAccount.id.id(),
     token.asTokenUUID(),
     Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount))
@@ -100,4 +99,4 @@ class AccountController (
     ): ResponseEntity<AccountDTO> =
         feature.findAccountById(userID.id(), accountID, token.asTokenUUID())
             .map { it.toDTO() }.toResponseEntity()
-    }
+}
