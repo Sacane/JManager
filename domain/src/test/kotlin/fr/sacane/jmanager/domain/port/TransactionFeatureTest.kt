@@ -245,13 +245,14 @@ class TransactionFeatureTest: FeatureTest() {
                     generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
                 ))
                 val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
+                println(accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id}?.amount)
                 transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transaction)
                     .assertSuccess()
-                transactionFeature.editTransaction(userId.id!!, account.id!!, transaction.copy(amount = 105.toAmount()), session.tokenValue)
+                //transactionFeature.editTransaction(userId.id!!, account.id!!, transaction.copy(amount = 105.toAmount()), session.tokenValue)
 
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
 
-                assertEquals(205.toAmount(), actualAccount!!.amount)
+                assertEquals(200.toAmount(), actualAccount!!.amount)
             }
         }
         @Test

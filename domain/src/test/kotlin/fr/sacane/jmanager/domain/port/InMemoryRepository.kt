@@ -243,8 +243,9 @@ class InMemoryDatabase {
     }
     fun addMassiveTransaction(collection: Collection<IdUserAccountByTransaction>){
         collection.forEach { idByTr ->
-            println(collection)
-            accounts.computeIfAbsent(idByTr.id.userId) { mutableListOf() }.find { it.id == idByTr.id.accountId }?.addAllTransaction(idByTr.transactions)
+            idByTr.transactions.forEach { tr ->
+                accounts.computeIfAbsent(idByTr.id.userId) { mutableListOf() }.find { it.id == idByTr.id.accountId }?.addTransaction(tr)
+            }
             transactions.computeIfAbsent(idByTr.id) { IdUserAccountByTransaction(idByTr.id, idByTr.transactions) }
         }
     }
@@ -284,10 +285,13 @@ class InMemoryDatabase {
     fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account? {
         accounts.entries.filter{it.key == userId}.forEach { accByOwn ->
             val acc = accByOwn.value.find { acc -> acc.label == accountLabel } ?: return null
-            val copyAcc = Account(acc.id, acc.amount, acc.label, acc.transactions, acc.owner, acc.initialSold)
+            val copyAcc = Account(acc.id, acc.amount, acc.label, mutableListOf(), acc.owner, acc.initialSold)
             transactions.forEach {
                 if(it.key.accountId == acc.id) {
                     copyAcc.addAllTransaction(it.value.transactions)
+                    println("value.transactions => ${it.value.transactions}")
+                    copyAcc.addAllTransaction(acc.transactions)
+                    println("acc.transactions => ${acc.transactions}")
                 }
             }
             return copyAcc

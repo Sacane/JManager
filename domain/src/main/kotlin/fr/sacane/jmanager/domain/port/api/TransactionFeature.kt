@@ -64,6 +64,7 @@ class TransactionFeatureImpl(
         val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         account.addTransaction(transaction)
         accountRepository.upsert(account)
+        println("after booking : ${account.transactions}\n => ${account.amount}")
         Response.ok(transaction)
     }
 
