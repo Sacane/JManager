@@ -49,7 +49,7 @@ class AccountController (
     userAccount.id.id(),
     token.asTokenUUID(),
     Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount))
-    .map { AccountInfoDTO(it.sold.toString(), it.label) }
+    .map { AccountInfoDTO(it.amount.toString(), it.label) }
     .toResponseEntity()
 
 
@@ -67,7 +67,7 @@ class AccountController (
             accounts.map {
                 AccountDTO(
                     it.id,
-                    it.sold.toString(),
+                    it.amount.toString(),
                     it.label,
                     it.sheets().map { sheet -> sheet.toDTO() }
                 )

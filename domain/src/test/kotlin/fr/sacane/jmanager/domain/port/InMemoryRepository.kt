@@ -210,14 +210,14 @@ class InMemoryDatabase {
     fun findAccountById(accountId: Long): Account? {
         for(accountList in accounts.values) {
             val result = accountList.find { it.id == accountId }
-            val accountCopy = Account(result!!.id, result.sold, result.label, result.transactions, result.owner, result.initialSold)
+            val accountCopy = Account(result!!.id, result.amount, result.label, result.transactions, result.owner, result.initialSold)
             for(transaction in transactions) {
                 if(transaction.key.accountId == accountId) {
                     accountCopy.addAllTransaction(transaction.value.transactions)
                     break
                 }
             }
-            return accountCopy.also { println("#0 ${it.sold}") }
+            return accountCopy.also { println("#0 ${it.amount}") }
         }
         return null
     }
@@ -284,7 +284,7 @@ class InMemoryDatabase {
     fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account? {
         accounts.entries.filter{it.key == userId}.forEach { accByOwn ->
             val acc = accByOwn.value.find { acc -> acc.label == accountLabel } ?: return null
-            val copyAcc = Account(acc.id, acc.sold, acc.label, acc.transactions, acc.owner, acc.initialSold)
+            val copyAcc = Account(acc.id, acc.amount, acc.label, acc.transactions, acc.owner, acc.initialSold)
             transactions.forEach {
                 if(it.key.accountId == acc.id) {
                     copyAcc.addAllTransaction(it.value.transactions)

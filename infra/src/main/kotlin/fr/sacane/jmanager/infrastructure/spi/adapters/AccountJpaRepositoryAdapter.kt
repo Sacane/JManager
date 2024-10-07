@@ -17,7 +17,7 @@ class AccountJpaRepositoryAdapter(
     @Transactional
     override fun editFromAnother(account: Account): Account? {
         val accountFromDatabase = accountRepository.findByIdWithSheets(account.id!!) ?: return null
-        accountFromDatabase.amount = account.sold.amount
+        accountFromDatabase.amount = account.amount.amount
         return accountFromDatabase.toModel()
     }
 
