@@ -9,7 +9,7 @@ class Account(
     val transactions: MutableList<Transaction> = mutableListOf(),
     val owner : User? = null,
     val initialSold: Amount = amount,
-    val previewAmount: Amount = amount
+    var previewAmount: Amount = amount
 ){
 
     val label: String
@@ -31,22 +31,7 @@ class Account(
     override fun hashCode(): Int {
         return labelAccount.hashCode()
     }
-    operator fun plusAssign(earned: Amount){
-        this.amount = this.amount + earned
-    }
-    operator fun minusAssign(loss: Amount){
-        this.amount = this.amount - loss
-    }
 
-    fun transaction(delta: Amount, otherAccount: Account, isEntry: Boolean){
-        if(isEntry){
-            this += delta
-            otherAccount -= delta
-        } else {
-            this -= delta
-            otherAccount += delta
-        }
-    }
     fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
         return transactions
             .filter { it.date.month == month && it.date.year == year }
@@ -75,12 +60,31 @@ class Account(
     }
 
     fun addTransaction(transaction: Transaction) {
-        this.transactions.add(transaction)
-        this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+        if(transactions.find { it.id == transaction.id } == null) {
+            transactions.add(transaction)
+            if(transaction.isPreview) {
+                this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+            } else {
+                this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+            }
+        }
     }
+    fun removeTransaction(transaction: Transaction) {
+        transactions.removeIf { transaction.id == it.id }
+        if(transaction.isPreview) {
+            this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+        } else {
+            this.amount = this.amount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+        }
+    }
+    fun removeAllTransactions(transactions: List<Transaction>) {
+        for(transaction in transactions){
+            removeTransaction(transaction)
+        }
+    }
+
     fun addAllTransaction(transactions: List<Transaction>) {
-        this.amount = 0.toAmount()
-        this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
+        removeAllTransactions(transactions)
         transactions.forEach {
             addTransaction(it)
         }

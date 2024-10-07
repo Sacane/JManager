@@ -10,25 +10,6 @@ import java.time.Month
 class AccountTest {
 
     @Test
-    fun `account should be capable to earn and loss amount correctly`(){
-        val account = Account(null, Amount(BigDecimal(100)), "courant")
-        account += 20.toAmount()
-        account -= 10.toAmount()
-        account += 50.toAmount()
-        account -= 15.toAmount()
-        assertEquals(account.amount, 145.toAmount())
-    }
-
-    @Test
-    fun `transaction should give and take amount between two account transaction`(){
-        val account = Account(null, 100.toAmount(), "courant")
-        val account2 = Account(null, 100.toAmount(), "secondaire")
-        account.transaction(10.toAmount(), account2, true)
-        assertEquals(account.amount, 110.toAmount())
-        assertEquals(account2.amount, 90.toAmount())
-    }
-
-    @Test
     fun `the user's accounts should not contains the same value more than once`(){
         val constantValue = 102.toAmount()
         val accounts = mutableListOf(
