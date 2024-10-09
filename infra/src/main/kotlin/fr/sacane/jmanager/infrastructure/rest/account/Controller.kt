@@ -28,8 +28,7 @@ class AccountController (
         @PathVariable id: Long,
         @PathVariable label: String,
         @RequestHeader("Authorization") token: String
-    )
-            : ResponseEntity<AccountDTO> {
+    ): ResponseEntity<AccountDTO> {
         val accounts = feature.findAllRegisteredAccounts(
             id.id(),
             token.asTokenUUID()
@@ -68,6 +67,7 @@ class AccountController (
                     it.id,
                     it.amount.toString(),
                     it.label,
+                    it.previewAmount.amount,
                     it.sheets().map { sheet -> sheet.toDTO() }
                 )
             }

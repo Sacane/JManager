@@ -33,9 +33,9 @@ class Account(
         return labelAccount.hashCode()
     }
 
-    fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int, searchIsPreview: Boolean = false): List<Transaction>{
+    fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
         return transactions
-            .filter { it.date.month == month && it.date.year == year && it.isPreview == searchIsPreview }
+            .filter { it.date.month == month && it.date.year == year }
             .sortedWith(compareBy<Transaction>{it.date}.thenBy { it.lastModified })
     }
 
@@ -50,7 +50,10 @@ class Account(
     fun cancelSheetsAmount(transactions: List<Transaction>) {
         this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
         transactions.forEach {
-            this.amount = if(it.isIncome) this.amount - it.amount else it.amount + this.amount
+            if(!it.isPreview) {
+                this.amount = if(it.isIncome) this.amount - it.amount else it.amount + this.amount
+            }
+            this.previewAmount = if(it.isIncome) this.previewAmount - it.amount else it.amount + this.previewAmount
         }
     }
     fun updateSoldFromTransactions(oldTransaction: Transaction, newTransaction: Transaction) {
@@ -63,14 +66,13 @@ class Account(
     fun addTransaction(transaction: Transaction) {
         if(transactions.find { it.id == transaction.id } == null) {
             transactions.add(transaction)
-            if(transaction.isPreview) {
-                this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
-            } else {
+            if(!transaction.isPreview) {
                 this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
             }
+            this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
     }
-    fun removeTransaction(transaction: Transaction) {
+    private fun removeTransaction(transaction: Transaction) {
         transactions.removeIf { transaction.id == it.id }
         if(transaction.isPreview) {
             this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
@@ -78,7 +80,7 @@ class Account(
             this.amount = this.amount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
     }
-    fun removeAllTransactions(transactions: List<Transaction>) {
+    private fun removeAllTransactions(transactions: List<Transaction>) {
         for(transaction in transactions){
             removeTransaction(transaction)
         }

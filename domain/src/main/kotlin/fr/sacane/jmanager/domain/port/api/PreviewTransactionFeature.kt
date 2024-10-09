@@ -53,7 +53,7 @@ class PreviewTransactionFeatureImpl(
         year: Int
     ): Response<List<Transaction>> = sessionManager.authenticate(userAccountID.userId, userAccountID.token.tokenValue) {
         val account = accountRepository.findAccountByIdWithTransactions(accountId = userAccountID.accountID) ?: return@authenticate Response.notFound<List<Transaction>>("Le compte ${userAccountID.accountID} n'existe pas")
-        val result = account.retrieveSheetSurroundAndSortedByDate(month, year, true)
+        val result = account.retrieveSheetSurroundAndSortedByDate(month, year)
         return@authenticate Response.ok(result)
     }
 }
