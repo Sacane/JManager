@@ -30,7 +30,8 @@ class TransactionResource(
     var personalTag:TagPersonalResource? = null,
     var currency: String = "€",
     @Column(name="last_modified")
-    var lastModified: LocalDateTime? = null
+    var lastModified: LocalDateTime? = null,
+    var isPreview: Boolean = false
     ){
     override fun toString(): String {
         return """

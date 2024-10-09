@@ -14,17 +14,18 @@ internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
     this.amount.toStringValue(),
     this.label,
+    this.previewAmount.amount,
     this.sheets().map { sheet -> sheet.toDTO() }
 )
 
 internal fun SheetDTO.toModel(): Transaction
-= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault))
+= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault), isPreview = isPreview)
 
 internal fun AccountDTO.toModel(user: User? = null): Account
-= Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user)
+= Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = previewAmount.toAmount())
 
 internal fun Transaction.toDTO(): SheetDTO {
-    return SheetDTO(this.id, this.label, this.amount.toStringValue(), this.amount.currency, this.isIncome, this.date, tagDTO = this.tag.toDTO())
+    return SheetDTO(id, label, amount.toStringValue(), amount.currency, isIncome, date, tagDTO = tag.toDTO(), isPreview)
 }
 
 

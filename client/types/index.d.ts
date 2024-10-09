@@ -8,6 +8,7 @@ declare global {
     date: string
     color: ColorDTO
     tagDTO: TagDTO
+    isPreview: boolean
   }
 
   interface AccountDTO {
@@ -15,6 +16,7 @@ declare global {
     amount: string
     labelAccount: string
     sheets: Array<SheetDTO>
+    previewAmount: number
   }
 
   interface UserAccountDTO {

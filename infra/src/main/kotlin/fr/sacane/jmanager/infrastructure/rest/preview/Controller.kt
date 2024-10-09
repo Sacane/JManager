@@ -40,7 +40,7 @@ class Controller(
             previewTransactionDTO.value.toAmount(previewTransactionDTO.currency),
             previewTransactionDTO.isIncome,
             if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault)
-        ).map { PreviewTransactionOutDTO(it.id!!, it.label, it.amount.amount.toDouble(), it.amount.currency, it.isIncome) }
+        ).map { PreviewTransactionOutDTO(it.id!!, it.label, it.amount.amount.toDouble(), it.amount.currency, it.isIncome, it.date) }
             .toResponseEntity()
 
     }
