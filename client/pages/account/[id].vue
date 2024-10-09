@@ -213,13 +213,17 @@ async function onEditTransaction() {
     }).catch(err => toastr.errorAxios(err))
 }
 
-function test(row): any | undefined {
+function rowStyle(row): any | undefined {
   const style = {}
-  if (selectedSheets.value.includes(row)) {
-    style.background = '#D3D3D3'
-  }
   if (row.isPreview) {
-    style.border = '2px solid'
+    style.backgroundColor = '#eab686'
+  }
+  if (selectedSheets.value.includes(row)) {
+    if (row.isPreview) {
+      style.background = '#d4935c'
+    } else {
+      style.background = '#D3D3D3'
+    }
   }
   return style
 }
@@ -252,7 +256,7 @@ function onOpenPreviewTransactionDialog() {
           </h2>
         </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="500px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="500px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
