@@ -34,9 +34,11 @@ class Account(
     }
 
     fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
-        return transactions
+        val (standardTransaction, previewTransaction) = transactions
             .filter { it.date.month == month && it.date.year == year }
             .sortedWith(compareBy<Transaction>{it.date}.thenBy { it.lastModified })
+            .partition { !it.isPreview }
+        return standardTransaction + previewTransaction
     }
 
     override fun toString(): String {

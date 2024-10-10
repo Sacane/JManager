@@ -408,7 +408,7 @@ function onOpenPreviewTransactionDialog() {
   text-align: center;
   color: #555;
   font-weight: 900;
-  font-size: 3em;
+  font-size: 2.5em;
   line-height: 0.9;
   font-family: aktiv, sans-serif;
 }
