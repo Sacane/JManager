@@ -41,7 +41,7 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
     ...transaction,
     id: transaction.id,
     expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '/',
-    incomeRepresenttation: transaction.isIncome ? `${transaction.value} €` : '/',
+    incomeRepresentation: transaction.isIncome ? `${transaction.value} €` : '/',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
@@ -248,10 +248,10 @@ function onOpenPreviewTransactionDialog() {
         </h2>
         <div class="flex flex-row gap-3 justify-between">
           <Button class="w-2% h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
-          <h2 class="text-2xl">
+          <h2 class="text-2xl sold-text">
             Solde : {{ data.accountAmount }} €
           </h2>
-          <h2 class="text-2xl">
+          <h2 class="text-2xl sold-text preview-text">
             Solde prévisionnel : {{ data.previewAccountAmount }} €
           </h2>
         </div>
@@ -279,7 +279,7 @@ function onOpenPreviewTransactionDialog() {
         <Column sortable field="date" header="Date" :header-style="{ textAlign: 'center' }" />
         <Column field="label" header="Libellé" :header-style="{ textAlign: 'center' }" />
         <Column field="expensesRepresentation" header="Dépenses" :header-style="{ textAlign: 'center' }" />
-        <Column field="incomeRepresenttation" header="Recettes" :header-style="{ textAlign: 'center' }" />
+        <Column field="incomeRepresentation" header="Recettes" :header-style="{ textAlign: 'center' }" />
         <Column field="tagDTO" header="Tag">
           <template #body="{ data }">
             <div class="flex flex-row align-center flex-gap-2">
@@ -407,6 +407,10 @@ function onOpenPreviewTransactionDialog() {
 .info-text{
   text-align: center;
   color: #555;
+  font-weight: 900;
+  font-size: 3em;
+  line-height: 0.9;
+  font-family: aktiv, sans-serif;
 }
 
 .selected-row{
@@ -429,5 +433,12 @@ function onOpenPreviewTransactionDialog() {
 }
 .preview-button:hover {
   opacity: 0.9;
+}
+.sold-text {
+  font-family: 'aktiv', sans-serif;
+  font-weight: 900;
+}
+.preview-text{
+  color: #bc691b;
 }
 </style>
