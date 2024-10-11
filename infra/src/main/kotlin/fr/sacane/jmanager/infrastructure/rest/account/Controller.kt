@@ -28,8 +28,7 @@ class AccountController (
         @PathVariable id: Long,
         @PathVariable label: String,
         @RequestHeader("Authorization") token: String
-    )
-            : ResponseEntity<AccountDTO> {
+    ): ResponseEntity<AccountDTO> {
         val accounts = feature.findAllRegisteredAccounts(
             id.id(),
             token.asTokenUUID()
@@ -44,12 +43,11 @@ class AccountController (
     fun createAccount(
         @RequestBody userAccount: UserAccountDTO,
         @RequestHeader("Authorization") token: String
-    )
-    : ResponseEntity<AccountInfoDTO> = feature.save(
+    ): ResponseEntity<AccountInfoDTO> = feature.save(
     userAccount.id.id(),
     token.asTokenUUID(),
     Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount))
-    .map { AccountInfoDTO(it.sold.toString(), it.label) }
+    .map { AccountInfoDTO(it.amount.toString(), it.label) }
     .toResponseEntity()
 
 
@@ -67,8 +65,9 @@ class AccountController (
             accounts.map {
                 AccountDTO(
                     it.id,
-                    it.sold.toString(),
+                    it.amount.toString(),
                     it.label,
+                    it.previewAmount.amount,
                     it.sheets().map { sheet -> sheet.toDTO() }
                 )
             }
@@ -100,4 +99,4 @@ class AccountController (
     ): ResponseEntity<AccountDTO> =
         feature.findAccountById(userID.id(), accountID, token.asTokenUUID())
             .map { it.toDTO() }.toResponseEntity()
-    }
+}

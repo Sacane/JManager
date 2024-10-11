@@ -11,11 +11,9 @@ data class Transaction(
     var amount: Amount,
     var isIncome: Boolean,
     var tag: Tag = Tag("Aucune", isDefault = true),
-    var position: Int = 0,
-    var lastModified: LocalDateTime = LocalDateTime.now()
+    var lastModified: LocalDateTime = LocalDateTime.now(),
+    var isPreview: Boolean = false
 ) {
-
-
     fun updateFromOther(other: Transaction): Boolean {
         if(other.id != this.id) return false
         this.label = other.label
@@ -23,7 +21,7 @@ data class Transaction(
         this.amount = other.amount
         this.isIncome = other.isIncome
         this.tag = other.tag
-        this.position = other.position
+        this.isPreview = other.isPreview
         return true
     }
 
@@ -33,7 +31,6 @@ data class Transaction(
             date: $date
             value: $amount
             isIncome: $isIncome
-            position: $position
             tag: $tag
             lastModified: $lastModified
         """.trimIndent()

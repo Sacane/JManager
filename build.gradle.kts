@@ -5,6 +5,7 @@ plugins {
 	kotlin("jvm") version "1.6.21"
 	id("com.github.johnrengelman.shadow") version "7.0.0"
 	id("org.sonarqube") version "5.0.0.4638"
+	jacoco
 }
 
 sonar {
@@ -32,6 +33,13 @@ allprojects{
 	tasks.withType<Test> {
 		useJUnitPlatform()
 	}
+}
+
+tasks.test {
+	finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+}
+tasks.jacocoTestReport {
+	dependsOn(tasks.test) // tests are required to run before generating the report
 }
 
 tasks {
