@@ -19,7 +19,6 @@ class AccountTest {
             Account(null, constantValue, "Secondaire", mutableListOf())
         )
 
-        val pwdUser = Password("D5301012000MAMacita")
         val user = User(UserId(1), "johan", "johan.test@test.fr", accounts)
         assertTrue{
             user.accounts.contains(Account(null, constantValue, "test", mutableListOf()))

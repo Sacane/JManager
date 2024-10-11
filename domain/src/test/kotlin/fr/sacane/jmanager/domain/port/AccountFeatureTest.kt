@@ -15,7 +15,7 @@ class AccountFeatureTest {
     companion object{
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
         private var accountFeature: AccountFeature = FakeFactory.accountFeature
-        private val user = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
+        private val user = userRepository.register("jojo", "test") as User
         private val tokenValue = UUID.randomUUID()
         private val session: AccessToken = AccessToken(tokenValue)
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
@@ -68,7 +68,7 @@ class AccountFeatureTest {
 
     @Test
     fun `As an owner of an account, I can delete it`() {
-        val otherUser = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
+        val otherUser = userRepository.register("jojo",  "test") as User
         connectUser(otherUser)
         val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
         accountState.init(listOf(
@@ -91,7 +91,7 @@ class AccountFeatureTest {
 
     @Test
     fun `As an account's owner, I can retrieve it by its label`() {
-        val otherUser = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
+        val otherUser = userRepository.register("jojo","test") as User
         connectUser(otherUser)
         val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
         accountState.init(listOf(
@@ -106,7 +106,7 @@ class AccountFeatureTest {
 
     @Test
     fun `As an account's owner,  I can retrieve All of my Registered Accounts`() {
-        val otherUser = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
+        val otherUser = userRepository.register("jojo", "test") as User
         connectUser(otherUser)
         val account = Account(50L, Amount.fromString("100 €"), "test1", owner = user)
         val account2 = Account(51L, Amount.fromString("100 €"), "test2", owner = user)
@@ -128,7 +128,7 @@ class AccountFeatureTest {
 
     @Test
     fun `As a Jmanager user, I can create new account`() {
-        val otherUser = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
+        val otherUser = userRepository.register("jojo", "test") as User
         connectUser(otherUser)
 
         val accountToSave = Account(50L, Amount.fromString("100 €"), "test1", owner = otherUser)
@@ -143,7 +143,7 @@ class AccountFeatureTest {
 
     @Test
     fun `As an account's owner, I cannot register an existing account with the same label`() {
-        val otherUser = userRepository.register("jojo", "jojo.gmail.com", Password("test")) as User
+        val otherUser = userRepository.register("jojo","test") as User
         connectUser(otherUser)
 
         accountState.init(listOf(

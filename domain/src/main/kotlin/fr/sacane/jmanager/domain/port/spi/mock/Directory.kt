@@ -56,9 +56,6 @@ class Directory {
             TODO("Not yet implemented")
         }
 
-        fun checkUser(pseudonym: String, pwd: Password): UserToken? {
-            TODO("Not yet implemented")
-        }
         fun findByPseudonym(pseudonym: String): User? {
             return userInventory.find { it.username == pseudonym }
         }

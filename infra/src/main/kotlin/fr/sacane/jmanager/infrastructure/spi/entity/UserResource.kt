@@ -8,7 +8,7 @@ class UserResource(
     @Column(unique = true, nullable = false)
     var username: String = "",
     @Column
-    var password: ByteArray = ByteArray(0),
+    var password: String = "",
     @Column(unique = true, nullable = true)
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
