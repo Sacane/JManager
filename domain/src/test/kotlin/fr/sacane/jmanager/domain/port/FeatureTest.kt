@@ -38,7 +38,7 @@ open class FeatureTest {
     }
     fun createAndConnect(username: String): UserId {
         val userId = UserId(Random.nextLong())
-        userState.init(listOf(UserWithPassword(User(userId, username, "$username@test.fr"), Password("test"))))
+        userState.init(listOf(UserWithPassword(User(userId, username, "$username@test.fr"),"test")))
         sessionManager.addSession(userId, session)
         return userId
     }
