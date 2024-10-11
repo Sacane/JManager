@@ -17,7 +17,6 @@ import java.time.LocalDate
 import java.time.Month
 import java.util.logging.Logger
 
-
 @RestController
 @RequestMapping("api/sheet")
 @Adapter(Side.APPLICATION)

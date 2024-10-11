@@ -17,9 +17,9 @@ class AccountMapper(
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(), initialSold = account.initialSold.amount, idAccount = account.id)
+            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(), initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         } else {
-            AccountResource(amount = account.sold.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = account.initialSold.amount, idAccount = account.id)
+            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         }
     }
 }
@@ -35,7 +35,6 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
         resource.isIncome = isIncome
     }
     resource.idSheet = this.id
-    resource.position = this.position
     resource.lastModified = this.lastModified
     if(tagResource != null) {
         when(tagResource) {
@@ -43,6 +42,7 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
             is TagPersonalResource -> resource.personalTag = tagResource
         }
     }
+    resource.isPreview = isPreview
     return resource
 }
 internal fun Account.asResource(): AccountResource {
@@ -51,7 +51,7 @@ internal fun Account.asResource(): AccountResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return AccountResource(idAccount = id, amount = sold.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.amount)
+    return AccountResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.amount, previewAmount = this.previewAmount.amount)
 }
 
 internal fun User.asResource(password: Password): UserResource {
@@ -73,9 +73,9 @@ internal fun TransactionResource.toModel(): Transaction
     this.date,
     this.value.toAmount(),
     this.isIncome!!,
-    position=this.position,
     tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
     lastModified = this.lastModified ?: LocalDateTime.now(),
+    isPreview = isPreview
 )
 
 internal fun AccountResource.toModel(): Account
@@ -85,6 +85,7 @@ internal fun AccountResource.toModel(): Account
     this.label,
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
     this.owner?.toModel(),
+    previewAmount = this.previewAmount.toAmount(),
     initialSold = Amount(this.initialSold)
 )
 
@@ -103,7 +104,7 @@ internal fun UserResource.toModelWithSimpleAccounts()
     accounts_ = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
 )
 
-internal fun AccountResource.toSimpleModel(): Account = Account(this.idAccount, this.amount.toAmount(), this.label)
+internal fun AccountResource.toSimpleModel(): Account = Account(this.idAccount, this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount())
 
 internal fun UserResource.toMinimalUserRepresentation()
 : MinimalUserRepresentation = MinimalUserRepresentation(

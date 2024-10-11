@@ -63,7 +63,7 @@ class AccountFeatureTest {
 
         val expectedAnswer = Amount(BigDecimal(102))
 
-        response.map { it.sold }.assertEquals(expectedAnswer)
+        response.map { it.amount }.assertEquals(expectedAnswer)
     }
 
     @Test
@@ -100,7 +100,7 @@ class AccountFeatureTest {
 
         accountFeature.findByLabelAndUserId(otherUser.id, session.tokenValue, element.label)
             .assertTrue {
-            this.label == "test" && this.sold == Amount(100)
+            this.label == "test" && this.amount == Amount(100)
         }
     }
 
@@ -137,7 +137,7 @@ class AccountFeatureTest {
             .assertTrue {
                 val expectedAmount = Amount(100)
                 val expectedLabelAccount = "test1"
-                this.sold == expectedAmount && this.label == expectedLabelAccount
+                this.amount == expectedAmount && this.label == expectedLabelAccount
             }
     }
 

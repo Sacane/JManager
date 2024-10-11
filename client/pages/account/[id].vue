@@ -26,16 +26,11 @@ const data = reactive({
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
   accountAmount: '',
+  previewAccountAmount: 0.0,
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
   tagDTO: undefined,
 })
-
-function translateChange(): void {
-  console.log('TEST')
-  console.log(editTransactionInfo.date)
-  editTransactionInfo.date = editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-')
-}
 
 const actualSheets = ref()
 
@@ -46,7 +41,7 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
     ...transaction,
     id: transaction.id,
     expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '/',
-    incomeRepresenttation: transaction.isIncome ? `${transaction.value} €` : '/',
+    incomeRepresentation: transaction.isIncome ? `${transaction.value} €` : '/',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
@@ -69,6 +64,7 @@ function initAccount() {
       data.labelAccount = account.labelAccount as string
       data.currentAccountId = route.params?.id as string
       data.accountAmount = account.amount
+      data.previewAccountAmount = account.previewAmount
       retrieveSheets()
     })
 }
@@ -85,6 +81,7 @@ async function confirmDelete() {
     .finally(() => {
       findById(Number.parseInt(data.currentAccountId)).then((account) => {
         data.accountAmount = account.amount
+        data.previewAccountAmount = account.previewAmount
       })
       selectedSheets.value = []
     })
@@ -117,6 +114,7 @@ const editTransactionInfo = reactive({
   decimalPart: '0',
   tagDTO: '',
   isIncome: false,
+  isPreview: false,
 })
 
 function resetEditTransaction(): void {
@@ -128,6 +126,7 @@ function resetEditTransaction(): void {
   editTransactionInfo.tagDTO = ''
   editTransactionInfo.accountId = 0
   editTransactionInfo.selectedMode = 'expenses'
+  editTransactionInfo.isPreview = false
 }
 
 function onEditPage(event: any) {
@@ -141,6 +140,7 @@ function onEditPage(event: any) {
     editTransactionInfo.integerPart = integerPart
     editTransactionInfo.decimalPart = decimalPart
     editTransactionInfo.tagDTO = transaction.tagDTO
+    editTransactionInfo.isPreview = transaction.isPreview
     isEditTransactionDialogOpen.value = true
   }).catch(err => toastr.errorAxios(err))
 }
@@ -167,8 +167,12 @@ const values = reactive({
   integerPart: '0',
   decimalPart: '0',
   isIncome: false,
+  isPreview: false,
 })
 
+function translateChange(): void {
+  editTransactionInfo.date = editTransactionInfo.date.toLocaleDateString('fr-FR').replace(/\//g, '-')
+}
 async function onConfirm() {
   if ((values.integerPart === '0' && values.decimalPart === '0') || values.sheetLabel === '') {
     return
@@ -182,6 +186,7 @@ async function onConfirm() {
     currency: '€',
     date: values.date.toLocaleDateString('fr-FR').replace(/\//g, '-'),
     tagDTO: data.tagDTO,
+    isPreview: values.isPreview,
   }).then(() => {
     initAccount()
   }).catch((e: AxiosError) => toastr.errorAxios(e)).finally(() => {
@@ -208,8 +213,28 @@ async function onEditTransaction() {
     }).catch(err => toastr.errorAxios(err))
 }
 
-function test(row): any | undefined {
-  return selectedSheets.value.includes(row) ? 'background-color: #D3D3D3 ' : undefined
+function rowStyle(row): any | undefined {
+  const style = {}
+  if (row.isPreview) {
+    style.backgroundColor = '#eab686'
+  }
+  if (selectedSheets.value.includes(row)) {
+    if (row.isPreview) {
+      style.background = '#d4935c'
+    } else {
+      style.background = '#D3D3D3'
+    }
+  }
+  return style
+}
+
+function onOpenTransactionDialog() {
+  values.isPreview = false
+  isNewTransactionDialogOpen.value = true
+}
+function onOpenPreviewTransactionDialog() {
+  values.isPreview = true
+  isNewTransactionDialogOpen.value = true
 }
 </script>
 
@@ -218,17 +243,20 @@ function test(row): any | undefined {
   <div class="w-full h-full flex flex-row container-all">
     <div class="mr10px form-container p-8  bg-white mt2px">
       <div class="flex-row justify-between">
-        <h2 class="text-2xl font-bold mb-4 info-text">
+        <h2 class="text-2xl font-bold info-text">
           Les transactions sur le compte {{ data.labelAccount }}
         </h2>
-        <div class="flex flex-row gap-3">
+        <div class="flex flex-row gap-3 justify-between">
           <Button class="w-2% h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
-          <h2 class="text-2xl mb-4">
-            Solde du compte : {{ data.accountAmount }} €
+          <h2 class="text-2xl sold-text">
+            Solde : {{ data.accountAmount }} €
+          </h2>
+          <h2 class="text-2xl sold-text preview-text">
+            Solde prévisionnel : {{ data.previewAccountAmount }} €
           </h2>
         </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :row-style="test" :value="actualSheets" scrollable scroll-height="500px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="500px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
@@ -251,7 +279,7 @@ function test(row): any | undefined {
         <Column sortable field="date" header="Date" :header-style="{ textAlign: 'center' }" />
         <Column field="label" header="Libellé" :header-style="{ textAlign: 'center' }" />
         <Column field="expensesRepresentation" header="Dépenses" :header-style="{ textAlign: 'center' }" />
-        <Column field="incomeRepresenttation" header="Recettes" :header-style="{ textAlign: 'center' }" />
+        <Column field="incomeRepresentation" header="Recettes" :header-style="{ textAlign: 'center' }" />
         <Column field="tagDTO" header="Tag">
           <template #body="{ data }">
             <div class="flex flex-row align-center flex-gap-2">
@@ -267,7 +295,8 @@ function test(row): any | undefined {
       </DataTable>
     </div>
     <div class="pt10px flex flex-col gap-3 mr2 ">
-      <Button icon="pi pi-plus" @click="isNewTransactionDialogOpen = true" />
+      <Button icon="pi pi-plus" @click="onOpenTransactionDialog()" />
+      <Button class="preview-button" icon="pi pi-plus" @click="onOpenPreviewTransactionDialog()" />
       <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
   </div>
@@ -378,7 +407,10 @@ function test(row): any | undefined {
 .info-text{
   text-align: center;
   color: #555;
-  margin-bottom: 20px;
+  font-weight: 900;
+  font-size: 2.5em;
+  line-height: 0.9;
+  font-family: aktiv, sans-serif;
 }
 
 .selected-row{
@@ -393,5 +425,20 @@ function test(row): any | undefined {
 }
 .test{
   background-color: blue;
+}
+
+.preview-button {
+  background-color: #bc691b;
+  border-color: #bc691b;
+}
+.preview-button:hover {
+  opacity: 0.9;
+}
+.sold-text {
+  font-family: 'aktiv', sans-serif;
+  font-weight: 900;
+}
+.preview-text{
+  color: #bc691b;
 }
 </style>

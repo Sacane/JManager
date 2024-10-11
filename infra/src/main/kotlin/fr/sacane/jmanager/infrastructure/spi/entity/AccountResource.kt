@@ -21,6 +21,7 @@ class AccountResource(
     @ManyToOne
     var owner: UserResource? = null,
     var initialSold: BigDecimal = BigDecimal.ZERO,
+    var previewAmount: BigDecimal = BigDecimal.ZERO,
     @Id
     @GeneratedValue
     @Column(name = "id_account")

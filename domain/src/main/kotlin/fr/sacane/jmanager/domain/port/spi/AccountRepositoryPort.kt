@@ -1,9 +1,12 @@
 package fr.sacane.jmanager.domain.port.spi
 
+import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.UserId
 
-interface AccountRepository {
+@Port(Side.INFRASTRUCTURE)
+interface AccountRepositoryPort {
     fun editFromAnother(account: Account): Account?
     fun getLastSheetPosition(accountId: Long): Int?
     fun save(ownerId: UserId, account: Account): Account?
