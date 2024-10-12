@@ -45,14 +45,14 @@ jobs:
           ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
 
       - name: Remove old JAR from VPS
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "rm -f /home/${{ secrets.VPS_USER }}/jmanager/*.jar"
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "rm -f /home/${{ secrets.SERVER_USER }}/jmanager/*.jar"
 
       - name: Copy JAR to VPS
-        run: scp -o StrictHostKeyChecking=no -r ./executables/Jmanager.jar ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/${{ secrets.VPS_USER }}/jmanager/
+        run: scp -o StrictHostKeyChecking=no -r ./executables/Jmanager.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/jmanager/
 
       # Étape 8 : Exécuter les commandes sur le VPS
       - name: Restart docker container Jmanager
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_SSH_USER }}@${{ secrets.VPS_SSH_HOST }} <<EOF
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<EOF
           serv stop jmanager-app
           serv start jmanager-app
 
