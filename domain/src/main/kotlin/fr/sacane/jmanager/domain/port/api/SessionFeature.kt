@@ -4,15 +4,16 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.util.*
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface SessionFeature {
-    fun login(pseudonym: String, userPassword: Password): Response<UserToken>
+    fun login(pseudonym: String, userPassword: String): Response<UserToken>
     fun logout(userId: UserId, token: UUID): Response<Nothing>
-    fun register(username: String, email: String, password: String, confirmPassword: String): Response<User>
+    fun register(username: String, password: String, confirmPassword: String): Response<User>
     fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>>
 }
 
@@ -20,17 +21,18 @@ sealed interface SessionFeature {
 @DomainService
 class SessionFeatureImpl(
     private val userRepository: UserRepository,
-    private val session: InMemorySessionManager
+    private val session: InMemorySessionManager,
+    private val hasher: Hasher
 ): SessionFeature{
 
     companion object{
         private val LOGGER = Logger.getLogger(SessionFeatureImpl::class.java.name)
     }
-    override fun login(pseudonym: String, userPassword: Password): Response<UserToken> {
+    override fun login(pseudonym: String, userPassword: String): Response<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")
         val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym) ?: return Response.notFound("L'utilisateur $pseudonym n'existe pas")
         val user = userWithPassword.user
-        if(userPassword.matchWith(userWithPassword.password)) {
+        if(hasher.verify(userPassword, userWithPassword.password)) {
             LOGGER.info("User $pseudonym logged")
             val accessToken = generateToken(Role.USER)
             session.addSession(user.id, accessToken)
@@ -46,9 +48,10 @@ class SessionFeatureImpl(
         Response.ok()
     }
 
-    override fun register(username: String, email: String, password: String, confirmPassword: String): Response<User> {
+    override fun register(username: String, password: String, confirmPassword: String): Response<User> {
         if(password != confirmPassword) return Response.invalid("Les mots de passes ne correspondent pas")
-        val userResponse = userRepository.register(username, email, Password(password)) ?: return Response.invalid("Une erreur est survenue")
+        val hashedPassword = hasher.hash(password)
+        val userResponse = userRepository.register(username, hashedPassword) ?: return Response.invalid("Une erreur est survenue")
         return Response.ok(userResponse)
     }
 

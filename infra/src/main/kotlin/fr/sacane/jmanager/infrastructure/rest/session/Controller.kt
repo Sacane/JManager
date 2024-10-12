@@ -3,7 +3,6 @@ package fr.sacane.jmanager.infrastructure.rest.session
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.rest.InvalidRequestException
 import fr.sacane.jmanager.infrastructure.rest.id
@@ -25,7 +24,7 @@ class SessionController(
 
     @PostMapping(path= ["/auth"])
     fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO> {
-        val response = loginFeature.login(userDTO.username, Password(userDTO.password))
+        val response = loginFeature.login(userDTO.username, userDTO.password)
         LOGGER.info("Trying to login user ${userDTO.username}")
         return response.map {
             UserStorageDTO(
@@ -47,7 +46,7 @@ class SessionController(
     }
     @PostMapping(path= ["/create"])
     fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-        val response = loginFeature.register(userDTO.username, userDTO.email, userDTO.password, userDTO.confirmPassword)
+        val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
         return response.map { u -> u.toDTO() }.toResponseEntity()
     }
 
