@@ -56,14 +56,13 @@ const isAddAccountDialogOpen = ref<boolean>(false)
 const newAccount = reactive({
   label: '',
   amount: {
-    integerPart: '',
-    decimalPart: '',
+    integerPart: '0',
+    decimalPart: '0',
   },
 })
 
-async function toAccount() {
-  const { label, amount } = newAccount
-  createAccount(label, `${amount.integerPart}.${amount.decimalPart} €`)
+function handleAccountCreation(account) {
+  createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
     .then(() => {
       fetch().then((accountArray) => {
         format(accountArray)
@@ -72,6 +71,9 @@ async function toAccount() {
         isAddAccountDialogOpen.value = false
       })
     })
+}
+function cancel() {
+  isAddAccountDialogOpen.value = false
 }
 </script>
 
@@ -105,36 +107,28 @@ async function toAccount() {
     </div>
   </div>
   <Button label="Ajouter un nouveau compte" class="w-250px h-50px" @click="isAddAccountDialogOpen = true" />
-  <Dialog v-model:visible="isAddAccountDialogOpen" class="bg-grey" modal header="Ajouter un nouveau compte">
-    <div class="mt-6">
-      <div class="flex flex-col gap-3">
-        <label for="label" class="block text-sm font-medium text-gray-700">Libellé du compte</label>
-        <InputText id="label" v-model="newAccount.label" type="text" autocomplete="off" />
-      </div>
-
-      <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
-      <div id="labelAmount" class="flex-row">
-        <InputText v-model="newAccount.amount.integerPart" type="number" placeholder="Partie entière" class="" />
-        <InputText v-model="newAccount.amount.decimalPart" type="number" placeholder="Partie décimale" maxlength="2" class="" />
-      </div>
-      <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="toAccount" />
-      <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isAddAccountDialogOpen = false" />
-    </div>
-  </Dialog>
+  <AccountBookingDialog
+    v-model:isVisible="isAddAccountDialogOpen"
+    :label="newAccount.label"
+    :integerpart="newAccount.amount.integerPart"
+    :decimalpart="newAccount.amount.decimalPart"
+    @create-account="handleAccountCreation"
+    @cancel="cancel"
+  />
 </template>
 
 <style scoped lang="scss">
-.container{
+  .container{
   background-color: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   .info-text{
-    text-align: center;
-    color: #555;
-    margin-bottom: 20px;
-    font-weight: 900;
-    font-size: 2rem;
+  text-align: center;
+  color: #555;
+  margin-bottom: 20px;
+  font-weight: 900;
+  font-size: 2rem;
   }
-}
+  }
 </style>
