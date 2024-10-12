@@ -99,7 +99,7 @@ function delTag(row: DataDisplay): void {
   <ConfirmDialog />
   <div class="mt-5">
     <div class="flex flex-row justify-between">
-      <div class="text-xl font-semibold text-gray-600">
+      <div class="text-xl font-semibold text-gray-600 align-center">
         <p v-if="showDefault">
           Les tags par défaut
         </p>
@@ -107,11 +107,10 @@ function delTag(row: DataDisplay): void {
           Mes tags personnels
         </p>
       </div>
-
-      <Button class="text-white hover:bg-purple-700" @click="switchDisplay">
+      <Button class="text-white hover:bg-purple-700 h-60% " @click="switchDisplay">
         {{ tagStatutLabel }}
       </Button>
-      <Button @click="addTagDialog = true">
+      <Button class="h-60%" @click="addTagDialog = true">
         Ajouter un nouveau tag personnel
       </Button>
     </div>
