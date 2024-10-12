@@ -24,9 +24,9 @@ function createAccount() {
   emit('createAccount', accountData.value)
   closeDialog()
 }
-// Fonction pour fermer le dialog
+
 function closeDialog() {
-  emit('update:isVisible', false) // Met à jour la visibilité du dialog
+  emit('update:isVisible', false)
   emit('cancel')
   isVisibleData.value = false
 }
@@ -35,7 +35,8 @@ function closeDialog() {
 <template>
   <Dialog
     v-model:visible="isVisibleData"
-    :reject="closeDialog" class="bg-grey" modal header="Ajouter un nouveau compte"
+    class="bg-grey"
+    modal header="Ajouter un nouveau compte" @update:visible="closeDialog"
   >
     <div class="mt-6">
       <div class="flex flex-col gap-3">

@@ -78,57 +78,58 @@ function cancel() {
 </script>
 
 <template>
-  <div v-if="isAccountFilled" class="p20px container">
-    <h2 class="info-text">
-      Double cliquez sur un compte pour visualiser ses transactions
-    </h2>
-    <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
-      <template #header>
-        <div class="flex flex-row h-auto pl10px">
-          <!-- <Button class="b mr2 w-350px h-50px" label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit" /> -->
-          <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
-        </div>
-      </template>
-      <Column v-model="actionSelection" selection-mode="single" :exportable="false" />
-      <Column field="labelAccount" header="Libellé du compte" />
-      <Column field="amount" header="Montant actuel" />
-    </DataTable>
-  </div>
-  <div v-else class="text-center justify-center align-center">
-    <div class="mb-4">
-      <p class="text-xl font-semibold text-gray-600">
-        Vous n'avez pas encore de compte enregistré.
-      </p>
+  <div class="w-full h-full flex flex-col gap-5 items-center">
+    <div v-if="isAccountFilled" class="p20px container">
+      <h2 class="info-text">
+        Double cliquez sur un compte pour visualiser ses transactions
+      </h2>
+      <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
+        <template #header>
+          <div class="flex flex-row h-auto pl10px">
+            <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
+          </div>
+        </template>
+        <Column v-model="actionSelection" selection-mode="single" :exportable="false" />
+        <Column field="labelAccount" header="Libellé du compte" />
+        <Column field="amount" header="Montant actuel" />
+      </DataTable>
     </div>
-    <div class="mb-4">
-      <p class="text-lg text-gray-500">
-        Commencez par ajouter un compte pour gérer vos finances.
-      </p>
+    <div v-else class="text-center justify-center align-center">
+      <div class="mb-4">
+        <p class="text-xl font-semibold text-gray-600">
+          Vous n'avez pas encore de compte enregistré.
+        </p>
+      </div>
+      <div class="mb-4">
+        <p class="text-lg text-gray-500">
+          Commencez par ajouter un compte pour gérer vos finances.
+        </p>
+      </div>
     </div>
+    <Button label="Ajouter un nouveau compte" class="w-250px h-50px align-self-center" @click="isAddAccountDialogOpen = true" />
+    <AccountBookingDialog
+      v-model:isVisible="isAddAccountDialogOpen"
+      :label="newAccount.label"
+      :integerpart="newAccount.amount.integerPart"
+      :decimalpart="newAccount.amount.decimalPart"
+      @create-account="handleAccountCreation"
+      @cancel="cancel"
+    />
   </div>
-  <Button label="Ajouter un nouveau compte" class="w-250px h-50px" @click="isAddAccountDialogOpen = true" />
-  <AccountBookingDialog
-    v-model:isVisible="isAddAccountDialogOpen"
-    :label="newAccount.label"
-    :integerpart="newAccount.amount.integerPart"
-    :decimalpart="newAccount.amount.decimalPart"
-    @create-account="handleAccountCreation"
-    @cancel="cancel"
-  />
 </template>
 
 <style scoped lang="scss">
-  .container{
+.container{
   background-color: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   .info-text{
-  text-align: center;
-  color: #555;
-  margin-bottom: 20px;
-  font-weight: 900;
-  font-size: 2rem;
+    text-align: center;
+    color: #555;
+    margin-bottom: 20px;
+    font-weight: 900;
+    font-size: 2rem;
   }
-  }
+}
 </style>
