@@ -203,7 +203,6 @@ class TransactionFeatureTest: FeatureTest() {
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
-                println(transactions)
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
                     .asResponse()
                     .assertContainsAtPosition(0, t5)
@@ -242,7 +241,6 @@ class TransactionFeatureTest: FeatureTest() {
                     generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
                 ))
                 val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
-                println(accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id}?.amount)
                 transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transaction)
                     .assertSuccess()
                 //transactionFeature.editTransaction(userId.id!!, account.id!!, transaction.copy(amount = 105.toAmount()), session.tokenValue)
