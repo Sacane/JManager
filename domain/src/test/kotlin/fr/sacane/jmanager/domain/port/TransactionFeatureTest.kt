@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
+import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
 
@@ -257,6 +258,25 @@ class TransactionFeatureTest: FeatureTest() {
                 initTransactions(toInsert.asSingleton())
                 transactionFeature.findById(userId.id!!, toInsert.id!!, tokenValue)
                     .assertTrue { this.label == toInsert.label && this.amount == toInsert.amount }
+            }
+        }
+    }
+    @Nested
+    inner class BookingPreviewTransaction {
+        @Test
+        fun `booking a preview transaction should not change the real amount of an account`() {
+            launchWithConnectedUserInstance {
+                val transactionPreviewTest = Transaction(Random.nextLong(), "test#0", "01/01/2024".toDate(), 100.toAmount(), true, isPreview = true)
+                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionPreviewTest)
+                    .assertSuccess()
+                val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
+                val actualAmount = actualAccount?.amount ?: 10.toAmount().negate()
+                val actualPreviewAmount = actualAccount?.previewAmount ?: 0.toAmount()
+
+                org.junit.jupiter.api.assertAll(
+                    { assertEquals(0.toAmount(), actualAmount) },
+                    { assertEquals(100.toAmount(), actualPreviewAmount) }
+                )
             }
         }
     }
