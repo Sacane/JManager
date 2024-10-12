@@ -244,16 +244,18 @@ function onOpenPreviewTransactionDialog() {
     <div class="mr10px form-container p-8  bg-white mt2px">
       <div class="flex-row justify-between">
         <h2 class="text-2xl font-bold info-text">
-          Les transactions sur le compte {{ data.labelAccount }}
+          Compte {{ data.labelAccount }}
         </h2>
         <div class="flex flex-row gap-3 justify-between">
           <Button class="w-2% h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
-          <h2 class="text-2xl sold-text">
-            Solde : {{ data.accountAmount }} €
-          </h2>
-          <h2 class="text-2xl sold-text preview-text">
-            Solde prévisionnel : {{ data.previewAccountAmount }} €
-          </h2>
+          <div class="flex flex-row gap-10">
+            <h2 class="text-2xl sold-text">
+              Solde : {{ data.accountAmount }} €
+            </h2>
+            <h2 class="text-2xl sold-text preview-text">
+              Solde prévisionnel : {{ data.previewAccountAmount }} €
+            </h2>
+          </div>
         </div>
       </div>
       <DataTable v-model:selection="selectedSheets" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="500px" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
