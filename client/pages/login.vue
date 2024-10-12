@@ -41,8 +41,8 @@ function registerUser() {
 <template>
   <div class="flex flex-col items-center justify-center w-screen h-full container">
     <img alt="keyboard background" src="@/assets/background/keyboard.jpg">
-    <div class="p-8 rounded-lg shadow-md w-full max-w-md">
-      <h1 class="text-3xl font-bold text-white mb-4">
+    <div class="p-8 shadow-md w-full max-w-md bg-white login-container">
+      <h1 class="text-3xl text-black-600">
         JManager Application
       </h1>
       <div v-if="mode">
@@ -98,14 +98,18 @@ function registerUser() {
 
 <style scoped>
 .container{
-
   img {
     position: absolute;
     z-index: -1;
-    width: 1100px;
-    height: 900px;
+    width: 70%;
+    height: 90%;
     object-fit: cover;
     border-radius: 10%;
+  }
+  .login-container{
+    border: 1px solid #ccc;
+    box-shadow: 5px 5px 15px black;
+    border-radius: 30px;
   }
 }
 </style>
