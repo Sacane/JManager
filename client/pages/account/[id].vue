@@ -240,7 +240,7 @@ function onOpenPreviewTransactionDialog() {
 
 <template>
   <ConfirmDialog />
-  <div class="w-full h-full flex flex-row container-all">
+  <div class="w-full h-full flex flex-col container-all gap-5">
     <div class="mr10px form-container p-8  bg-white mt2px">
       <div class="flex-row justify-between">
         <h2 class="text-2xl font-bold info-text">
@@ -294,7 +294,7 @@ function onOpenPreviewTransactionDialog() {
         </Column>
       </DataTable>
     </div>
-    <div class="pt10px flex flex-col gap-3 mr2 ">
+    <div class="flex flex-row gap-3 mr2 w-full justify-center">
       <Button icon="pi pi-plus" @click="onOpenTransactionDialog()" />
       <Button class="preview-button" icon="pi pi-plus" @click="onOpenPreviewTransactionDialog()" />
       <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
