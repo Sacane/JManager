@@ -40,7 +40,7 @@ function registerUser() {
 
 <template>
   <div class="flex flex-col items-center justify-center w-screen h-full container">
-    <img alt="keyboard background" src="assets/background/keyboard.jpg">
+    <img alt="keyboard background" src="/assets/background/keyboard.jpg">
     <div class="p-8 rounded-lg shadow-md w-full max-w-md">
       <h1 class="text-3xl font-bold text-white mb-4">
         JManager Application
