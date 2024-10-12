@@ -13,15 +13,15 @@ const { isAuthenticated, logout, user } = useAuth()
       </NuxtLink>
       <div class="mt5 flex flex-col">
         <NuxtLink
-          to="/" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white"
+          to="/" class="hover:bg-gray-200 px-4 py-2 decoration-none section" active-class="bg-primary-color-white"
         >
           <i class="pi pi-home text-20px" />
           Accueil
         </NuxtLink>
-        <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white">
+        <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-white px-4 py-2 decoration-none section" active-class="bg-primary-color-white">
           <i class="pi pi-user text-20px" /> Mes comptes
         </NuxtLink>
-        <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2 decoration-none" active-class="bg-primary-color-white">
+        <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2 decoration-none section" active-class="bg-primary-color-white">
           <i class="pi pi-user text-20px" /> Mes tags
         </NuxtLink>
       </div>
@@ -47,12 +47,22 @@ const { isAuthenticated, logout, user } = useAuth()
 
 <style scoped lang="scss">
 .content{
-  color: var(--primary);
-  border-right: 1px solid black;
+  background-color: var(--primary);
+  border-right: 1px solid #fff;
 }
 .title {
-  color: var(--primary);
+  color: #fff;
   text-align: center;
+  margin-top: 10px;
+}
+
+.section {
+  color: black;
+  font-size: 20px;
+
+  &:hover{
+    color: var(--primary);
+  }
 }
 
 @media screen and (min-width: 1201px) {
@@ -73,7 +83,8 @@ const { isAuthenticated, logout, user } = useAuth()
   }
 }
 .bg-primary-color-white{
-  background-color: var(--primary);
-  color: white;
+  background-color: white;
+  color: var(--primary);
+  font-weight: bold;
 }
 </style>
