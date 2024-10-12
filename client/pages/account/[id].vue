@@ -297,8 +297,12 @@ function onOpenPreviewTransactionDialog() {
       </DataTable>
     </div>
     <div class="flex flex-row gap-3 mr2 w-full justify-center">
-      <Button icon="pi pi-plus" @click="onOpenTransactionDialog()" />
-      <Button class="preview-button" icon="pi pi-plus" @click="onOpenPreviewTransactionDialog()" />
+      <Button @click="onOpenTransactionDialog()">
+        Ajouter une transaction
+      </Button>
+      <Button class="preview-button" @click="onOpenPreviewTransactionDialog()">
+        Ajouter une transaction prévisionnel
+      </Button>
       <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
   </div>
