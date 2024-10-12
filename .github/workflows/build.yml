@@ -50,12 +50,6 @@ jobs:
       - name: Copy JAR to VPS
         run: scp -P ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=no -r ./executables/Jmanager-1.0.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/jmanager/
 
-      # Étape 8 : Exécuter les commandes sur le VPS
-      - name: Restart docker container Jmanager
-        run: ssh -p ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<EOF
-          serv stop jmanager-app
-          serv start jmanager-app
-
   test-analysis:
     name: Test and analyze on all non-master branches
     runs-on: ubuntu-latest
