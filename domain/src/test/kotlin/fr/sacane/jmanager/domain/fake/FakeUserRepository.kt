@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.State
-import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -33,17 +32,18 @@ class FakeUserRepository: UserRepository, State<User> {
         return user.user
     }
 
-    override fun register(username: String, email: String, password: Password): User? {
+    override fun register(username: String, password: String): User {
         val user = User(id = UserId(Random(15).nextLong()), username = username, email="")
         users.add(UserWithPassword(user, password))
         return user
     }
 
     override fun upsert(user: User): User {
-        if(findUserById(user.id) != null) {
+        val userFind = findByPseudonymWithEncodedPassword(user.username)
+        if(userFind != null) {
             users.removeIf { it.user.id == user.id }
         }
-        users.add(UserWithPassword(user, Password("")))
+        users.add(UserWithPassword(user, userFind!!.password))
         return user
     }
 
@@ -56,6 +56,6 @@ class FakeUserRepository: UserRepository, State<User> {
     }
 
     override fun init(initialState: Collection<User>) {
-        users.addAll(initialState.map { UserWithPassword(it, Password("")) })
+        users.addAll(initialState.map { UserWithPassword(it, "") })
     }
 }

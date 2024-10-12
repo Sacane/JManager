@@ -39,11 +39,12 @@ function registerUser() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-    <h1 class="text-3xl font-bold text-purple-600 mb-4">
-      JManager Application
-    </h1>
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+  <div class="flex flex-col items-center justify-center w-screen h-full container">
+    <img alt="keyboard background" src="/assets/background/keyboard.jpg">
+    <div class="p-8 rounded-lg shadow-md w-full max-w-md">
+      <h1 class="text-3xl font-bold text-white mb-4">
+        JManager Application
+      </h1>
       <div v-if="mode">
         <form @submit.prevent="log">
           <div class="mb-4">
@@ -84,7 +85,7 @@ function registerUser() {
       </div>
 
       <div class="mt-4">
-        <p class="text-gray-600">
+        <p class="text-black-600">
           {{ mode ? "Vous n'avez pas de compte ?" : 'Vous avez déjà un compte ?' }}
         </p>
         <Button class="" @click="switchMode">
@@ -96,5 +97,15 @@ function registerUser() {
 </template>
 
 <style scoped>
-/* You can keep your scoped styles here, they don't need to be changed */
+.container{
+
+  img {
+    position: absolute;
+    z-index: -1;
+    width: 1100px;
+    height: 900px;
+    object-fit: cover;
+    border-radius: 10%;
+  }
+}
 </style>

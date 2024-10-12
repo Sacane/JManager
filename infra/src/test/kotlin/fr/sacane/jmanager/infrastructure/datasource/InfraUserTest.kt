@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.datasource
 
-import fr.sacane.jmanager.domain.models.Password
 import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
@@ -28,7 +27,7 @@ class InfraUserTest {
     lateinit var accountJpaRepository: AccountJpaRepository
 
     fun basicUserTest(): UserResource {
-        return UserResource("johan_test", Password("0101012000").get(),"johan.ramaroson@test.com")
+        return UserResource("johan_test", "0101012000","johan.ramaroson@test.com")
     }
     @AfterEach
     fun clear(){
@@ -38,14 +37,14 @@ class InfraUserTest {
     @Test
     @Order(1)
     fun `users should correctly be implement into database`(){
-        val passwordUser = Password("01012000")
-        val user = UserResource("johan_test", passwordUser.get(),"johan.ramaroson@test.com",  mutableListOf(), mutableListOf())
+        val passwordUser = "01012000"
+        val user = UserResource("johan_test", passwordUser,"johan.ramaroson@test.com",  mutableListOf(), mutableListOf())
         userPostgresRepository.save(user)
         val byName = userPostgresRepository.findByUsername("johan_test")
         assertThat(byName).isNotNull
         assertThat(byName!!.username).isEqualTo(user.username)
-        val password = Password.fromBytes(byName.password)
-        assertThat(passwordUser.matchWith(password))
+        val password = byName.password
+        assertThat(passwordUser).isEqualTo(password)
 
     }
 

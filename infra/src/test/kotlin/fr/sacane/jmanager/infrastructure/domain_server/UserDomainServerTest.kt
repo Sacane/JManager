@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.infrastructure.domain_server
 
-import fr.sacane.jmanager.domain.Hash
-import fr.sacane.jmanager.domain.models.Password
+import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -20,6 +19,9 @@ class UserDomainServerTest {
     @Autowired
     private lateinit var userPostgresRepository: UserPostgresRepository
 
+    @Autowired
+    private lateinit var hasher: Hasher
+
     @AfterEach
     fun deleteUserTest(){
         userPostgresRepository.deleteByUsername("Sacane_test")
@@ -27,15 +29,13 @@ class UserDomainServerTest {
 
     @Test
     fun `User registered has its password check correctly`(){
-        val pwd1 = Password("01012000")
+        val pwd1 = "01012000"
         userPostgresRepository.deleteByUsername("Sacane_test")
-        val userEntity = UserResource("Sacane_test", pwd1.get(), "sacane.test@grostest.fr")
+        val userEntity = UserResource("Sacane_test", hasher.hash(pwd1), "sacane.test@grostest.fr")
         userPostgresRepository.save(userEntity)
         val getUser = userPostgresRepository.findByUsername("Sacane_test")
         assertThat(getUser).isNotNull
         assertThat(getUser?.username).isEqualTo("Sacane_test")
-        assertThat(Hash.contentEquals(getUser?.password!!, "01012000")).isTrue
+        assertThat(hasher.verify("01012000", getUser?.password!!)).isTrue
     }
-
-
 }

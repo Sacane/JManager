@@ -2,7 +2,7 @@ package fr.sacane.jmanager.domain.port.spi
 
 import at.favre.lib.crypto.bcrypt.BCrypt
 import at.favre.lib.crypto.bcrypt.LongPasswordStrategies
-import fr.sacane.jmanager.domain.port.spi.DefaultHasher.STRENGTH
+import fr.sacane.jmanager.domain.hexadoc.DomainService
 import java.security.SecureRandom
 
 interface Hasher {
@@ -10,6 +10,7 @@ interface Hasher {
     fun verify(password: String, hash: String): Boolean
 }
 
+@DomainService
 object DefaultHasher: Hasher {
 
     private val version = BCrypt.Version.VERSION_2B

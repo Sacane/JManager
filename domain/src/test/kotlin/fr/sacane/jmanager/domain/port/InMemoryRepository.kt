@@ -92,8 +92,8 @@ class InMemoryUserRepository (
         return user.user
     }
 
-    override fun register(username: String, email: String, password: Password): User {
-        val element = User(id = UserId(random.nextLong()), username = username, email = email)
+    override fun register(username: String, password: String): User {
+        val element = User(id = UserId(random.nextLong()), username = username, null)
         inMemoryDatabase.users[element.id] = UserWithPassword(element, password)
         return element
     }
@@ -140,7 +140,7 @@ class InMemoryAccountRepository(
         return 0
     }
 
-    override fun save(ownerId: UserId, account: Account): Account? {
+    override fun save(ownerId: UserId, account: Account): Account {
         inMemoryDatabase.addAccount(ownerId, account)
         return account
     }
