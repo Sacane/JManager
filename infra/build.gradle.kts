@@ -8,6 +8,7 @@ plugins {
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
     kotlin("plugin.noarg") version "1.6.21"
+    jacoco
 }
 
 repositories{
@@ -36,6 +37,17 @@ dependencies {
     testImplementation("com.h2database:h2")
 }
 
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)  // Important pour SonarQube
+        html.required.set(false)
+        csv.required.set(false)
+    }
+}
 
 tasks {
     compileJava{
