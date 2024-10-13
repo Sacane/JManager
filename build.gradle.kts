@@ -12,6 +12,12 @@ sonar {
 	properties {
 		property("sonar.projectKey", "Sacane_JManager_aa4d0a52-73c4-4b64-a0e2-6f5565902347")
 		property("sonar.projectName", "JManager")
+		property("sonar.coverage.jacoco.xmlReportPaths",
+			listOf(
+				"$projectDir/domain/build/reports/jacoco/test/jacocoTestReport.xml",
+				"$projectDir/infra/build/reports/jacoco/test/jacocoTestReport.xml"
+			).joinToString(",")
+		)
 	}
 }
 
@@ -41,7 +47,23 @@ tasks.test {
 tasks.jacocoTestReport {
 	dependsOn(tasks.test) // tests are required to run before generating the report
 }
+tasks.register("jacocoRootReport", JacocoReport::class) {
+	dependsOn(subprojects.map { it.tasks.named("test") })
 
+	val jacocoTestReportFiles = subprojects.map {
+		it.tasks.named("jacocoTestReport").get().outputs.files.singleFile
+	}
+
+	executionData.setFrom(jacocoTestReportFiles)
+
+	sourceDirectories.setFrom(files(subprojects.flatMap { it.sourceSets["main"].allSource.srcDirs }))
+	classDirectories.setFrom(files(subprojects.flatMap { it.sourceSets["main"].output }))
+
+	reports {
+		xml.required.set(true)
+		html.required.set(true)
+	}
+}
 tasks {
 	compileJava{
 		sourceCompatibility= "17"
