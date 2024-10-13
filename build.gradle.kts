@@ -8,18 +8,6 @@ plugins {
 	jacoco
 }
 
-sonar {
-	properties {
-		property("sonar.projectKey", "Sacane_JManager_aa4d0a52-73c4-4b64-a0e2-6f5565902347")
-		property("sonar.projectName", "JManager")
-		property("sonar.coverage.jacoco.xmlReportPaths",
-			listOf(
-				"$projectDir/domain/build/reports/jacoco/test/jacocoTestReport.xml",
-				"$projectDir/infra/build/reports/jacoco/test/jacocoTestReport.xml"
-			).joinToString(",")
-		)
-	}
-}
 
 group = "fr.sacane"
 java.sourceCompatibility = JavaVersion.VERSION_17
@@ -41,6 +29,20 @@ allprojects{
 	}
 }
 
+sonar {
+	properties {
+		property("sonar.projectKey", "Sacane_JManager_aa4d0a52-73c4-4b64-a0e2-6f5565902347")
+		property("sonar.projectName", "JManager")
+		property("sonar.coverage.jacoco.xmlReportPaths",
+			listOf(
+				"$rootDir/domain/build/reports/jacoco/test/jacocoTestReport.xml",
+				"$rootDir/infra/build/reports/jacoco/test/jacocoTestReport.xml"
+			).joinToString(",")
+		)
+	}
+}
+
+
 tasks.test {
 	finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
 }
@@ -48,16 +50,21 @@ tasks.jacocoTestReport {
 	dependsOn(tasks.test) // tests are required to run before generating the report
 }
 tasks.register("jacocoRootReport", JacocoReport::class) {
-	dependsOn(subprojects.map { it.tasks.named("test") })
+	dependsOn(subprojects.mapNotNull { it.tasks.findByName("test") }) // Utilisation de mapNotNull pour éviter les erreurs
 
-	val jacocoTestReportFiles = subprojects.map {
-		it.tasks.named("jacocoTestReport").get().outputs.files.singleFile
-	}
+	executionData.setFrom(
+		fileTree(project.rootDir).apply {
+			include("**/build/jacoco/test.exec")  // Chemin où sont générés les fichiers exec de JaCoCo
+		}
+	)
 
-	executionData.setFrom(jacocoTestReportFiles)
-
-	sourceDirectories.setFrom(files(subprojects.flatMap { it.sourceSets["main"].allSource.srcDirs }))
-	classDirectories.setFrom(files(subprojects.flatMap { it.sourceSets["main"].output }))
+	// Récupération des sources et des classes à partir des sous-projets
+	sourceDirectories.setFrom(
+		files(subprojects.mapNotNull { it.extensions.findByType<SourceSetContainer>()?.getByName("main")?.allSource?.srcDirs })
+	)
+	classDirectories.setFrom(
+		files(subprojects.mapNotNull { it.extensions.findByType<SourceSetContainer>()?.getByName("main")?.output })
+	)
 
 	reports {
 		xml.required.set(true)
