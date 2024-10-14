@@ -62,4 +62,8 @@ class TagRepositoryAdapter(
         defaultTagPostgresRepository.deleteById(tagId)
     }
 
+    override fun defaultTag(): Tag? {
+        return defaultTagPostgresRepository.findUnknownTag()?.toDomain()
+    }
+
 }
