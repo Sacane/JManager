@@ -6,7 +6,7 @@ export interface TransactionCreationProps {
   transactionPlaceholder: TransactionCreationDTO
 }
 const { title, integerpart, decimalpart, transactionPlaceholder } = defineProps<TransactionCreationProps>()
-const emit = defineEmits(['visible', 'createTransaction', 'cancel'])
+const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
 const digits = reactive({
   integerpart,
@@ -40,7 +40,7 @@ function emitTransaction() {
 }
 function closeDialog() {
   emit('visible', false)
-  emit('cancel')
+  emit('cancelCreation')
   isVisibleData.value = false
 }
 </script>
@@ -61,11 +61,11 @@ function closeDialog() {
         <label for="selectionType">Selectionner le type de transaction</label>
         <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
           <div>
-            <RadioButton v-model="transactionResult.isIncome" input-id="selection1" value="false" />
+            <RadioButton v-model="transactionResult.isIncome" input-id="selection1" :value="false" />
             <label for="selection1">Dépense</label>
           </div>
           <div>
-            <RadioButton v-model="transactionResult.isIncome" input-id="selection2" value="true" />
+            <RadioButton v-model="transactionResult.isIncome" input-id="selection2" :value="true" />
             <label for="selection2">Recette</label>
           </div>
         </div>

@@ -40,8 +40,8 @@ function asDisplayableTransaction(transaction: SheetDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '/',
-    incomeRepresentation: transaction.isIncome ? `${transaction.value} €` : '/',
+    expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '',
+    incomeRepresentation: transaction.isIncome ? `${transaction.value} €` : '',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
@@ -261,6 +261,14 @@ function cancelCreationDialog() {
 function openCreationDialog() {
   isCreationDialogVisible.value = true
 }
+function bookTransaction(transaction: TransactionCreationDTO) {
+  saveSheet(data.labelAccount, transaction)
+    .then((result) => {
+      console.log(result.tagDTO)
+      actualSheets.value.push(asDisplayableTransaction(result))
+      isCreationDialogVisible.value = false
+    })
+}
 // =============================================
 onMounted(() => {
   data.month = monthFromNumber(new Date().getMonth() + 1) as string
@@ -333,16 +341,25 @@ onMounted(() => {
       </DataTable>
     </div>
     <div class="flex flex-row gap-3 mr2 w-full justify-center">
-      <Button @click="onOpenTransactionDialog()">
+      <Button @click="openCreationDialog">
         Ajouter une transaction
       </Button>
-      <Button class="preview-button" @click="onOpenPreviewTransactionDialog()">
+      <Button class="preview-button" @click="openCreationDialog">
         Ajouter une transaction prévisionnel
       </Button>
       <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
   </div>
-  <Dialog v-model:visible="isNewTransactionDialogOpen" modal header="Ajouter une nouvelle transaction">
+  <TransactionCreationDialog
+    :visible="isCreationDialogVisible"
+    title="Creer une nouvelle transaction"
+    :integerpart="digits.integerpart"
+    :decimalpart="digits.decimalpart"
+    :transaction-placeholder="transactionPlaceholder"
+    @cancel-creation="cancelCreationDialog"
+    @create-transaction="bookTransaction"
+  />
+  <!-- <Dialog v-model:visible="isNewTransactionDialogOpen" modal header="Ajouter une nouvelle transaction">
     <div class="mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libelle</label>
@@ -381,7 +398,7 @@ onMounted(() => {
       <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onConfirm" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isNewTransactionDialogOpen = false" />
     </div>
-  </Dialog>
+  </Dialog> -->
   <Dialog v-model:visible="isEditTransactionDialogOpen" modal header="Mettre à jour la transaction">
     <div class="mt-6">
       <div class="flex flex-col gap-3">

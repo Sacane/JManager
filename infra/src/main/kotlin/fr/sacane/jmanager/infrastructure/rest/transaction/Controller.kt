@@ -38,11 +38,12 @@ class SheetController(private val transactionFeature: TransactionFeature) {
                     it.label,
                     it.date,
                     expense.toAmount().toString(),
-                    income
+                    income,
+                    it.tag.toDTO()
                 )
             }
         }.toResponseEntity().apply {
-            logger.info("Creating new transaction => ${userAccountSheetDTO.sheetDTO}")
+            logger.info("Creating new transaction => ${userAccountSheetDTO.sheetDTO} TO => ${this.body?.tagDTO}")
         }
     }
 
