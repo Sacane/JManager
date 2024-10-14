@@ -1,24 +1,19 @@
 <script setup lang="ts">
 export interface AccountBookingProps {
-  isVisible: boolean
   label: string
   integerpart: string
   decimalpart: string
 }
 
-const { isVisible, label, integerpart, decimalpart } = defineProps<AccountBookingProps>()
-const emit = defineEmits(['update:isVisible', 'createAccount', 'cancel'])
+const { label, integerpart, decimalpart } = defineProps<AccountBookingProps>()
+const emit = defineEmits(['visible', 'createAccount', 'cancel'])
 
 const accountData = ref({
   label,
   integerpart,
   decimalpart,
 })
-const isVisibleData = ref(isVisible)
-
-watch(() => isVisible, (newValue) => {
-  isVisibleData.value = newValue
-})
+const isVisibleData = ref(false)
 
 function createAccount() {
   emit('createAccount', accountData.value)
@@ -26,7 +21,7 @@ function createAccount() {
 }
 
 function closeDialog() {
-  emit('update:isVisible', false)
+  emit('visible', false)
   emit('cancel')
   isVisibleData.value = false
 }
