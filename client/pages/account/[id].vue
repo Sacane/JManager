@@ -26,7 +26,7 @@ const data = reactive({
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
   accountAmount: '',
-  previewAccountAmount: 0.0,
+  previewAccountAmount: '',
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
   tagDTO: undefined,
