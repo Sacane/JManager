@@ -12,4 +12,5 @@ interface TagRepository {
     fun saveAll(defaultTags: List<Tag>)
     fun existsDefault(): Boolean
     fun deleteById(tagId: Long)
+    fun defaultTag(): Tag?
 }
