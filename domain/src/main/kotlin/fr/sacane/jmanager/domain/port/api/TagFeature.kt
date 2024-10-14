@@ -17,6 +17,7 @@ sealed interface TagFeature {
     fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>>
     fun addDefaultTags()
     fun deleteTag(userId: UserId, token: UUID, tagId: Long): Response<Nothing>
+    fun defaultTag(userId: UserId, token: UUID): Response<Tag>
 }
 
 @DomainService
@@ -47,5 +48,10 @@ class TagFeatureImpl(
     override fun deleteTag(userId: UserId, token: UUID, tagId: Long): Response<Nothing> = session.authenticate(userId, token){
         tagRepository.deleteById(tagId)
         Response.ok()
+    }
+
+    override fun defaultTag(userId: UserId, token: UUID): Response<Tag> = session.authenticate(userId, token) {
+        val tagResult = tagRepository.defaultTag() ?: return@authenticate Response.notFound("Il n'y a pas de tag par défaut d'enregistré")
+        return@authenticate Response.ok(tagResult)
     }
 }

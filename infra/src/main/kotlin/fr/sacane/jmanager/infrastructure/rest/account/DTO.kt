@@ -1,14 +1,13 @@
 package fr.sacane.jmanager.infrastructure.rest.account
 
 import fr.sacane.jmanager.infrastructure.rest.transaction.SheetDTO
-import java.math.BigDecimal
 
 
 data class AccountDTO(
     val id: Long?,
     val amount: String,
     val labelAccount: String,
-    val previewAmount: BigDecimal,
+    val previewAmount: String,
     val sheets: List<SheetDTO>?
 )
 

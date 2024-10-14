@@ -45,4 +45,11 @@ class TagController(
        = tagFeature.deleteTag(userId.id(), token.asTokenUUID(), tagId)
            .toResponseEntity()
 
+    @GetMapping("/user/{userId}/default")
+    fun defaultTag(
+        @RequestHeader("Authorization") token: String,
+        @PathVariable("userId") userId: Long,
+    ): ResponseEntity<TagDTO> = tagFeature.defaultTag(userId.id(), token.asTokenUUID())
+        .map { it.toDTO() }.toResponseEntity()
+
 }

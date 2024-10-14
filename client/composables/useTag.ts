@@ -16,5 +16,8 @@ export default function useTag() {
     return deleteQuery(`tag/${id}/user/${user.value?.id}`, {})
       .catch(err => console.error(err))
   }
-  return { addPersonalTag, getAllTags, deleteTag }
+  async function getDefaultTag(): Promise<TagDTO> {
+    return get(`tag/user/${user.value?.id}/default`)
+  }
+  return { addPersonalTag, getAllTags, deleteTag, getDefaultTag }
 }
