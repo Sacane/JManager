@@ -217,7 +217,7 @@ class InMemoryDatabase {
                     break
                 }
             }
-            return accountCopy.also { println("#0 ${it.amount}") }
+            return accountCopy
         }
         return null
     }
@@ -289,9 +289,7 @@ class InMemoryDatabase {
             transactions.forEach {
                 if(it.key.accountId == acc.id) {
                     copyAcc.addAllTransaction(it.value.transactions)
-                    println("value.transactions => ${it.value.transactions}")
                     copyAcc.addAllTransaction(acc.transactions)
-                    println("acc.transactions => ${acc.transactions}")
                 }
             }
             return copyAcc
