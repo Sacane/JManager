@@ -55,6 +55,7 @@ class TransactionFeatureImpl(
             Response.ok(sheetFromResource)
         }
     }
+    // TODO return the account amount and preview amount after the operation
     override fun bookTransaction(
         userId: UserId,
         token: UUID,
@@ -64,6 +65,7 @@ class TransactionFeatureImpl(
         val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         account.addTransaction(transaction)
         accountRepository.upsert(account)
+        logger.info("real transaction : ${transaction.tag}")
         Response.ok(transaction)
     }
 

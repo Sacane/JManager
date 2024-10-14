@@ -19,7 +19,7 @@ internal fun Account.toDTO(): AccountDTO = AccountDTO(
 )
 
 internal fun SheetDTO.toModel(): Transaction
-= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault), isPreview = isPreview)
+= Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
 internal fun AccountDTO.toModel(user: User? = null): Account
 = Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = Amount.fromString(this.amount))
@@ -49,4 +49,4 @@ internal fun ColorDTO.asAwtColor(): Color = Color(this.red, this.green, this.blu
 
 internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 
-internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO()).also { print(it) }
+internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())

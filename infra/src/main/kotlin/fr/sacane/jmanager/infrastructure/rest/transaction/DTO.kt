@@ -33,7 +33,8 @@ data class SheetSendDTO(
     val label: String,
     val date: LocalDate,
     val value: String,
-    val isIncome: Boolean
+    val isIncome: Boolean,
+    val tagDTO: TagDTO
 )
 
 data class UserSheetDTO(
