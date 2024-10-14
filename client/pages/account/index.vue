@@ -75,6 +75,11 @@ function handleAccountCreation(account) {
 function cancel() {
   isAddAccountDialogOpen.value = false
 }
+function openAccountDialog() {
+  console.log(`openAccountDialog ${isAddAccountDialogOpen.value}`)
+  isAddAccountDialogOpen.value = true
+  console.log(`openAccountDialog ${isAddAccountDialogOpen.value}`)
+}
 </script>
 
 <template>
@@ -106,12 +111,12 @@ function cancel() {
         </p>
       </div>
     </div>
-    <Button label="Ajouter un nouveau compte" class="w-250px h-50px align-self-center" @click="isAddAccountDialogOpen = true" />
+    <Button label="Ajouter un nouveau compte" class="w-250px h-50px align-self-center" @click="openAccountDialog" />
     <AccountBookingDialog
-      v-model:isVisible="isAddAccountDialogOpen"
       :label="newAccount.label"
       :integerpart="newAccount.amount.integerPart"
       :decimalpart="newAccount.amount.decimalPart"
+      :visible="isAddAccountDialogOpen"
       @create-account="handleAccountCreation"
       @cancel="cancel"
     />
