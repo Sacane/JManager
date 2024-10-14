@@ -16,7 +16,7 @@ declare global {
     amount: string
     labelAccount: string
     sheets: Array<SheetDTO>
-    previewAmount: number
+    previewAmount: string
   }
 
   interface UserAccountDTO {
