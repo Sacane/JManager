@@ -70,7 +70,7 @@ class Amount(var amount: BigDecimal, val currency: String = "€") {
 
 class InvalidMoneyFormatException(s: String): RuntimeException(s)
 
-fun BigDecimal.toAmount(    currency: String = "€"): Amount {
+fun BigDecimal.toAmount(currency: String = "€"): Amount {
     return Amount(this, currency)
 }
 
