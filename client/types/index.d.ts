@@ -40,4 +40,13 @@ declare global {
     colorDTO: ColorDTO
     isDefault: boolean
   }
+
+  interface TransactionCreationDTO {
+    label: string
+    value: string
+    isIncome: boolean
+    date: string
+    tagDTO: TagDTO
+    isPreview: boolean
+  }
 }

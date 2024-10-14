@@ -231,6 +231,37 @@ function onOpenPreviewTransactionDialog() {
   isNewTransactionDialogOpen.value = true
 }
 
+// =================== REFACTO ================
+
+const isCreationDialogVisible = ref(false)
+const isEditDialogVisible = ref(false)
+const digits = ref({
+  integerpart: '0',
+  decimalpart: '0',
+})
+
+const transactionPlaceholder: TransactionCreationDTO = reactive({
+  label: '',
+  value: '0.0',
+  isIncome: false,
+  date: new Date().toLocaleDateString('fr-FR').replace(/\//g, '-'),
+  tagDTO: {},
+  isPreview: false,
+})
+
+function cancelEditDialog() {
+  isEditDialogVisible.value = false
+}
+function openEditDialog() {
+  isEditDialogVisible.value = true
+}
+function cancelCreationDialog() {
+  isCreationDialogVisible.value = false
+}
+function openCreationDialog() {
+  isCreationDialogVisible.value = true
+}
+// =============================================
 onMounted(() => {
   data.month = monthFromNumber(new Date().getMonth() + 1) as string
   initAccount()
@@ -238,6 +269,7 @@ onMounted(() => {
   tag.getDefaultTag().then((tagDTO) => {
     data.tagDTO = tagDTO
     editTransactionInfo.tagDTO = tagDTO
+    transactionPlaceholder.tagDTO = tagDTO
   })
 })
 </script>

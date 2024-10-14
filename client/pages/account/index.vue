@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import useAccounts from '../../composables/useAccounts'
+import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -76,9 +77,7 @@ function cancel() {
   isAddAccountDialogOpen.value = false
 }
 function openAccountDialog() {
-  console.log(`openAccountDialog ${isAddAccountDialogOpen.value}`)
   isAddAccountDialogOpen.value = true
-  console.log(`openAccountDialog ${isAddAccountDialogOpen.value}`)
 }
 </script>
 
