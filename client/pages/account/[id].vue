@@ -26,7 +26,7 @@ const data = reactive({
   currentSheets: [] as SheetDTO[],
   currentAccountId: '',
   accountAmount: '',
-  previewAccountAmount: 0.0,
+  previewAccountAmount: '',
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
   tagDTO: undefined,
@@ -69,12 +69,6 @@ function initAccount() {
     })
 }
 
-onMounted(() => {
-  data.month = monthFromNumber(new Date().getMonth() + 1) as string
-  initAccount()
-  retrieveTags()
-})
-
 async function confirmDelete() {
   deleteSheet(Number.parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
     .then(() => initAccount())
@@ -112,7 +106,7 @@ const editTransactionInfo = reactive({
   accountId: 0,
   integerPart: '0',
   decimalPart: '0',
-  tagDTO: '',
+  tagDTO: undefined,
   isIncome: false,
   isPreview: false,
 })
@@ -236,6 +230,16 @@ function onOpenPreviewTransactionDialog() {
   values.isPreview = true
   isNewTransactionDialogOpen.value = true
 }
+
+onMounted(() => {
+  data.month = monthFromNumber(new Date().getMonth() + 1) as string
+  initAccount()
+  retrieveTags()
+  tag.getDefaultTag().then((tagDTO) => {
+    data.tagDTO = tagDTO
+    editTransactionInfo.tagDTO = tagDTO
+  })
+})
 </script>
 
 <template>

@@ -8,8 +8,8 @@ class Account(
     private var labelAccount: String,
     val transactions: MutableList<Transaction> = mutableListOf(),
     val owner : User? = null,
-    val initialSold: Amount = amount,
-    var previewAmount: Amount = amount,
+    val initialSold: Amount = amount.copy(),
+    var previewAmount: Amount = amount.copy(),
     val periodicalTransactions: MutableList<PeriodicalTransaction> = mutableListOf()
 ){
 

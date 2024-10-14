@@ -67,7 +67,7 @@ class AccountController (
                     it.id,
                     it.amount.toString(),
                     it.label,
-                    it.previewAmount.amount,
+                    it.previewAmount.toString(),
                     it.sheets().map { sheet -> sheet.toDTO() }
                 )
             }
