@@ -34,7 +34,9 @@ data class SheetSendDTO(
     val date: LocalDate,
     val value: String,
     val isIncome: Boolean,
-    val tagDTO: TagDTO
+    val tagDTO: TagDTO,
+    val accountAmount: String,
+    val accountPreviewAmount: String
 )
 
 data class UserSheetDTO(
