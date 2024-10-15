@@ -37,7 +37,7 @@ class InMemoryTransactionRepository(
         return inMemoryDatabase.findTransactionById(transactionId)
     }
 
-    override fun save(transaction: Transaction): Transaction {
+    override fun save(accountId: Long, transaction: Transaction): Transaction {
         saveAllSheets(listOf(transaction))
         return transaction
     }
@@ -163,6 +163,10 @@ class InMemoryAccountRepository(
             inMemoryDatabase.upsertTransactions(account.transactions)
         }
         return account
+    }
+
+    override fun update(account: Account) {
+        upsert(account)
     }
 
     override fun getStates(): Collection<AccountByOwner> {

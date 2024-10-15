@@ -63,8 +63,9 @@ class TransactionFeatureImpl(
         transaction: Transaction
     ): Response<TransactionCreationResult> = session.authenticate(userId, token) {
         val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
-        account.addTransaction(transaction)
         val newTr =  transactionRepository.save(account.id!!, transaction) ?: return@authenticate Response.invalid("Erreur est survenu lors de la transaction")
+        account.addTransaction(newTr)
+        accountRepository.update(account)
         Response.ok(TransactionCreationResult(newTr, account.amount, account.previewAmount))
     }
 
