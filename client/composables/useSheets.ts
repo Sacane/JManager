@@ -17,7 +17,7 @@ export default function useSheet() {
     })
   }
 
-  function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<SheetDTO> {
+  function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<TransactionResultDTO> {
     return post('sheet', {
       userId: user.value?.id,
       accountLabel,

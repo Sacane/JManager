@@ -14,7 +14,7 @@ import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
-    fun bookTransaction(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<Transaction>
+    fun bookTransaction(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<TransactionCreationResult>
     fun retrieveTransactionsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
     fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
     fun findById(userID: Long, id: Long, token: UUID): Response<Transaction>
@@ -61,12 +61,11 @@ class TransactionFeatureImpl(
         token: UUID,
         accountLabel: String,
         transaction: Transaction
-    ): Response<Transaction> = session.authenticate(userId, token) {
+    ): Response<TransactionCreationResult> = session.authenticate(userId, token) {
         val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         account.addTransaction(transaction)
         accountRepository.upsert(account)
-        logger.info("real transaction : ${transaction.tag}")
-        Response.ok(transaction)
+        Response.ok(TransactionCreationResult(transaction, account.amount, account.previewAmount))
     }
 
     override fun retrieveTransactionsByMonthAndYear(

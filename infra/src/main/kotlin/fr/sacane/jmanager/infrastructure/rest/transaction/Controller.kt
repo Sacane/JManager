@@ -33,13 +33,15 @@ class SheetController(private val transactionFeature: TransactionFeature) {
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO.toModel()
         ).map {
-            it.exportAmountValues { expense, income ->
+            it.transaction.exportAmountValues { expense, income ->
                 SheetSendDTO(
-                    it.label,
-                    it.date,
+                    it.transaction.label,
+                    it.transaction.date,
                     expense.toAmount().toString(),
                     income,
-                    it.tag.toDTO()
+                    it.transaction.tag.toDTO(),
+                    it.accountAmount.toStringValue(),
+                    it.accountPreviewAmount.toStringValue(),
                 )
             }
         }.toResponseEntity().apply {
