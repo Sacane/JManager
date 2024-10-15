@@ -32,11 +32,11 @@ class TransactionFeatureTest: FeatureTest() {
 
             transactionFeature.bookTransaction(johnId, session.tokenValue, account.label, transactionToSave)
                 .assertTrue {
-                    this.amount == transactionToSave.amount && this.label == transactionToSave.label
+                    this.transaction.amount == transactionToSave.amount && this.transaction.label == transactionToSave.label
                 }
             transactionFeature.bookTransaction(johnId, session.tokenValue, account.label, transactionToSave2)
                 .assertTrue {
-                    this.amount == transactionToSave2.amount && this.label == transactionToSave2.label
+                    this.transaction.amount == transactionToSave2.amount && this.transaction.label == transactionToSave2.label
                 }
 
             val accountStates = accountState.getStates()
