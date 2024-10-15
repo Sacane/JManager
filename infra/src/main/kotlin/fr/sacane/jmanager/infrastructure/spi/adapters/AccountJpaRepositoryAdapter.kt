@@ -53,4 +53,10 @@ class AccountJpaRepositoryAdapter(
     override fun upsert(account: Account): Account {
         return accountRepository.save(accountMapper.asResource(account)).toModel()
     }
+    
+    @Transactional
+    override fun update(account: Account) {
+        val asResource = accountMapper.asResource(account)
+        accountRepository.update(asResource.label, asResource.amount, asResource.previewAmount, asResource.idAccount!!)
+    }
 }
