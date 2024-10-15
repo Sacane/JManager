@@ -42,7 +42,7 @@ class PreviewTransactionFeatureImpl(
         val account = accountRepository.findAccountByIdWithTransactions(accountId = userAccountID.accountID) ?: return@authenticate Response.notFound<Transaction>("Le compte ${userAccountID.accountID} n'existe pas")
         val transaction = Transaction(transactionId, label, date, amount, isIncome, isPreview = true)
         account.addTransaction(transaction)
-        val savedTransaction = transactionRepositoryPort.save(transaction) ?: return@authenticate Response.invalid("Une erreur a été détecté lors de la création de la preview transaction ${transaction.label}")
+        val savedTransaction = transactionRepositoryPort.save(accountId = account.id!!, transaction) ?: return@authenticate Response.invalid("Une erreur a été détecté lors de la création de la preview transaction ${transaction.label}")
         accountRepository.upsert(account)
         return@authenticate Response.ok(savedTransaction)
     }

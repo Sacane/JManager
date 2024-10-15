@@ -32,7 +32,7 @@ const data = reactive({
   tagDTO: undefined,
 })
 
-const actualSheets = ref()
+const actualSheets = ref<SheetDTO[]>([])
 
 const { saveSheet, editSheet, findTransactionById } = useSheet()
 
@@ -121,22 +121,6 @@ function resetEditTransaction(): void {
   editTransactionInfo.accountId = 0
   editTransactionInfo.selectedMode = 'expenses'
   editTransactionInfo.isPreview = false
-}
-
-function onEditPage(event: any) {
-  findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
-    editTransactionInfo.label = transaction.label
-    editTransactionInfo.id = transaction.id
-    editTransactionInfo.date = transaction.date
-    editTransactionInfo.amount = transaction.value
-    editTransactionInfo.isIncome = transaction.isIncome
-    const [integerPart, decimalPart] = transaction.value.toString().split('.')
-    editTransactionInfo.integerPart = integerPart
-    editTransactionInfo.decimalPart = decimalPart
-    editTransactionInfo.tagDTO = transaction.tagDTO
-    editTransactionInfo.isPreview = transaction.isPreview
-    isEditTransactionDialogOpen.value = true
-  }).catch(err => toastr.errorAxios(err))
 }
 
 function onYearChange() {
@@ -239,8 +223,8 @@ const digits = ref({
   integerpart: '0',
   decimalpart: '0',
 })
-
 const transactionPlaceholder: TransactionCreationDTO = reactive({
+  id: null,
   label: '',
   value: '0.0',
   isIncome: false,
@@ -248,17 +232,48 @@ const transactionPlaceholder: TransactionCreationDTO = reactive({
   tagDTO: {},
   isPreview: false,
 })
-
+function onEditPage(event: any) {
+  console.log('editPage', event)
+  findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
+    console.table(transaction)
+    const [integerPart, decimalPart] = transaction.value.toString().split('.')
+    digits.value.integerpart = integerPart
+    digits.value.decimalpart = decimalPart
+    transactionPlaceholder.label = transaction.label
+    transactionPlaceholder.date = transaction.date
+    transactionPlaceholder.value = transaction.value
+    transactionPlaceholder.tagDTO = transaction.tagDTO
+    transactionPlaceholder.isPreview = transaction.isPreview
+    transactionPlaceholder.isIncome = transaction.isIncome
+    transactionPlaceholder.id = event.data.id
+    isEditDialogVisible.value = true
+  }).catch(err => toastr.errorAxios(err))
+}
+function resetPlaceholder() {
+  tag.getDefaultTag().then((tagDTO) => {
+    transactionPlaceholder.tagDTO = tagDTO
+  })
+  digits.value.integerpart = '0'
+  digits.value.decimalpart = '0'
+  transactionPlaceholder.label = '0'
+  transactionPlaceholder.date = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')
+  transactionPlaceholder.value = '0'
+  transactionPlaceholder.isPreview = false
+  transactionPlaceholder.isIncome = false
+}
 function cancelEditDialog() {
   isEditDialogVisible.value = false
-}
-function openEditDialog() {
-  isEditDialogVisible.value = true
+  resetPlaceholder()
 }
 function cancelCreationDialog() {
   isCreationDialogVisible.value = false
 }
 function openCreationDialog() {
+  transactionPlaceholder.isPreview = false
+  isCreationDialogVisible.value = true
+}
+function openPreviewCreationDialog() {
+  transactionPlaceholder.isPreview = true
   isCreationDialogVisible.value = true
 }
 function bookTransaction(transaction: TransactionCreationDTO) {
@@ -266,9 +281,22 @@ function bookTransaction(transaction: TransactionCreationDTO) {
     .then((result) => {
       data.accountAmount = result.accountAmount
       data.previewAccountAmount = result.accountPreviewAmount
-      actualSheets.value.push(asDisplayableTransaction(result))
+      const newTransaction = asDisplayableTransaction(result)
+      actualSheets.value.push(newTransaction)
+      console.table(newTransaction)
       isCreationDialogVisible.value = false
     })
+}
+function editTransaction(transaction: TransactionCreationDTO) {
+  editSheet(transaction, Number.parseInt(data.currentAccountId))
+    .then((transaction: SheetDTO) => {
+      toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
+      resetPlaceholder()
+      const index = actualSheets.value.findIndex(item => item.id === transaction.id)
+      if (index !== -1) {
+        actualSheets.value[index] = asDisplayableTransaction(transaction)
+      }
+    }).catch(err => toastr.errorAxios(err))
 }
 // =============================================
 onMounted(() => {
@@ -344,7 +372,7 @@ onMounted(() => {
         <Button @click="openCreationDialog">
           Ajouter une transaction
         </Button>
-        <Button class="preview-button" @click="openCreationDialog">
+        <Button class="preview-button" @click="openPreviewCreationDialog">
           Ajouter une transaction prévisionnel
         </Button>
         <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
@@ -360,7 +388,16 @@ onMounted(() => {
     @cancel-creation="cancelCreationDialog"
     @create-transaction="bookTransaction"
   />
-  <Dialog v-model:visible="isEditTransactionDialogOpen" modal header="Mettre à jour la transaction">
+  <TransactionCreationDialog
+    :visible="isEditDialogVisible"
+    title="Mettre à jour la transaction"
+    :integerpart="digits.integerpart"
+    :decimalpart="digits.decimalpart"
+    :transaction-placeholder="transactionPlaceholder"
+    @cancel-creation="cancelEditDialog"
+    @create-transaction="editTransaction"
+  />
+  <!-- <Dialog v-model:visible="isEditTransactionDialogOpen" modal header="Mettre à jour la transaction">
     <div class="mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libelle</label>
@@ -399,7 +436,7 @@ onMounted(() => {
       <Button label="Modifier la transaction" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="onEditTransaction" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isEditTransactionDialogOpen = false" />
     </div>
-  </Dialog>
+  </Dialog> -->
 </template>
 
 <style scoped lang="scss">
