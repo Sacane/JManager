@@ -35,6 +35,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
         ).map {
             it.transaction.exportAmountValues { expense, income ->
                 SheetSendDTO(
+                    it.transaction.id.toString(),
                     it.transaction.label,
                     it.transaction.date,
                     expense.toAmount().toString(),

@@ -14,4 +14,6 @@ interface DefaultTagPostgresRepository : CrudRepository<DefaultTagResource, Long
 
     @Query("SELECT tag FROM DefaultTagResource tag WHERE tag.idTag = :id")
     fun findByIdNullable(id: Long): DefaultTagResource?
+
+    fun findByName(name: String): DefaultTagResource?
 }

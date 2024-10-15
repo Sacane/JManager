@@ -9,6 +9,6 @@ interface TransactionRepositoryPort {
     fun saveAllSheets(transactions: List<Transaction>)
     fun deleteAllSheetsById(sheetIds: List<Long>)
     fun findTransactionById(transactionId: Long): Transaction?
-    fun save(transaction: Transaction): Transaction?
+    fun save(accountId: Long, transaction: Transaction): Transaction?
     fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account?
 }

@@ -48,14 +48,14 @@ class TransactionFeatureImpl(
         }
         sheetFromResource.updateFromOther(transaction)
         sheetFromResource.lastModified = LocalDateTime.now()
-        transactionRepository.save(sheetFromResource)
+        transactionRepository.save(acc.id!!, sheetFromResource)
 
         return@authenticate accountRepository.editFromAnother(acc).run {
             this ?: return@authenticate Response.invalid("Une erreur est survenu lors de la sauvegarde de la transaction")
             Response.ok(sheetFromResource)
         }
     }
-    // TODO return the account amount and preview amount after the operation
+
     override fun bookTransaction(
         userId: UserId,
         token: UUID,
@@ -64,8 +64,8 @@ class TransactionFeatureImpl(
     ): Response<TransactionCreationResult> = session.authenticate(userId, token) {
         val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@authenticate Response.notFound("Le compte $accountLabel n'existe pas")
         account.addTransaction(transaction)
-        accountRepository.upsert(account)
-        Response.ok(TransactionCreationResult(transaction, account.amount, account.previewAmount))
+        val newTr =  transactionRepository.save(account.id!!, transaction) ?: return@authenticate Response.invalid("Erreur est survenu lors de la transaction")
+        Response.ok(TransactionCreationResult(newTr, account.amount, account.previewAmount))
     }
 
     override fun retrieveTransactionsByMonthAndYear(

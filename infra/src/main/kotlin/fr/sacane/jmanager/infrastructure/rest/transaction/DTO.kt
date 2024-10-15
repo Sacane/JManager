@@ -30,6 +30,7 @@ data class SheetsAndAverageDTO(
 )
 
 data class SheetSendDTO(
+    val id: String,
     val label: String,
     val date: LocalDate,
     val value: String,

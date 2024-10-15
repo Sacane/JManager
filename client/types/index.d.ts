@@ -11,7 +11,7 @@ declare global {
     isPreview: boolean
   }
   interface TransactionResultDTO {
-    id: number
+    id: string
     label: string
     value: string
     isIncome: boolean
@@ -54,6 +54,7 @@ declare global {
   }
 
   interface TransactionCreationDTO {
+    id?: string
     label: string
     value: string
     isIncome: boolean
