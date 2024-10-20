@@ -58,12 +58,12 @@ class SqlTransactionAdapter(
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         sheetRepository.deleteAllById(sheetIds)
     }
-    @Transactional
+
     override fun findTransactionById(transactionId: Long): Transaction? {
         return sheetRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
     }
 
-    @Transactional
+
     override fun save(accountId: Long, transaction: Transaction): Transaction? {
         val tag = if(transaction.tag.isDefault){
             tagRepository.findByName(transaction.tag.label)

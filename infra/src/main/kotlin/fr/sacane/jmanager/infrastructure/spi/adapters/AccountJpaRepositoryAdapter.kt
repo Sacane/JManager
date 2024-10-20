@@ -35,7 +35,6 @@ class AccountJpaRepositoryAdapter(
         return accountResource.toModel()
     }
 
-    @Transactional
     override fun findAccountByIdWithTransactions(accountId: Long): Account? {
         val accountResponse = accountRepository.findByIdWithSheets(accountId)
         return accountResponse?.toModel()
@@ -51,10 +50,13 @@ class AccountJpaRepositoryAdapter(
     }
 
     override fun upsert(account: Account): Account {
-        return accountRepository.save(accountMapper.asResource(account)).toModel()
+        return accountRepository.save(accountMapper.asResource(account)).also {
+            for(transaction in it.sheets) {
+                transaction.account = it
+            }
+        }.toModel()
     }
-    
-    @Transactional
+
     override fun update(account: Account) {
         val asResource = accountMapper.asResource(account)
         accountRepository.update(asResource.label, asResource.amount, asResource.previewAmount, asResource.idAccount!!)

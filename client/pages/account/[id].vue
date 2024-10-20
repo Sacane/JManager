@@ -233,9 +233,7 @@ const transactionPlaceholder: TransactionCreationDTO = reactive({
   isPreview: false,
 })
 function onEditPage(event: any) {
-  console.log('editPage', event)
   findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
-    console.table(transaction)
     const [integerPart, decimalPart] = transaction.value.toString().split('.')
     digits.value.integerpart = integerPart
     digits.value.decimalpart = decimalPart
@@ -283,11 +281,11 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       data.previewAccountAmount = result.accountPreviewAmount
       const newTransaction = asDisplayableTransaction(result)
       actualSheets.value.push(newTransaction)
-      console.table(newTransaction)
       isCreationDialogVisible.value = false
     })
 }
 function editTransaction(transaction: TransactionCreationDTO) {
+  console.table(transaction)
   editSheet(transaction, Number.parseInt(data.currentAccountId))
     .then((transaction: SheetDTO) => {
       toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
@@ -296,6 +294,7 @@ function editTransaction(transaction: TransactionCreationDTO) {
       if (index !== -1) {
         actualSheets.value[index] = asDisplayableTransaction(transaction)
       }
+      isEditDialogVisible.value = false
     }).catch(err => toastr.errorAxios(err))
 }
 // =============================================
@@ -373,7 +372,7 @@ onMounted(() => {
           Ajouter une transaction
         </Button>
         <Button class="preview-button" @click="openPreviewCreationDialog">
-          Ajouter une transaction prévisionnel
+          Ajouter une transaction prévisionnelle
         </Button>
         <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
       </div>

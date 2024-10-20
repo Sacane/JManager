@@ -83,10 +83,8 @@ class SheetController(private val transactionFeature: TransactionFeature) {
     ): ResponseEntity<SheetDTO> {
         logger.info("transaction => ${dto.sheet}")
         return transactionFeature.editTransaction(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
-            .mapBoth(
-                { s -> ResponseEntity.ok(s!!.toDTO()) },
-                { ResponseEntity.badRequest().build() }
-            ) ?: ResponseEntity.badRequest().build<SheetDTO>()
+            .map { s -> s.toDTO() }
+            .toResponseEntity()
             .also { LOGGER.info("edit : ${dto.sheet}") }
     }
 

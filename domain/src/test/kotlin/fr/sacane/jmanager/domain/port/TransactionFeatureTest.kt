@@ -205,11 +205,11 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
                     .asResponse()
-                    .assertContainsAtPosition(0, t5)
-                    .assertContainsAtPosition(1, t1)
-                    .assertContainsAtPosition(2, t2)
-                    .assertContainsAtPosition(3, t3)
-                    .assertContainsAtPosition(4, t4)
+                    .assertEqualsAtPosition(0, t5.label) {label}
+                    .assertEqualsAtPosition(1, t1.label) {label}
+                    .assertEqualsAtPosition(2, t2.label) {label}
+                    .assertEqualsAtPosition(3, t3.label) {label}
+                    .assertEqualsAtPosition(4, t4.label) {label}
             }
         }
         @Test
@@ -226,11 +226,12 @@ class TransactionFeatureTest: FeatureTest() {
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
+                assertEquals(5, transactions?.size)
 
                 transactions.sortedByDate()
-                    .assertContainsAtPosition(0, t2)
-                    .assertContainsAtPosition(1, t3)
-                    .assertContainsAtPosition(2, t1)
+                    .assertEqualsAtPosition(0, t2.label) { label }
+                    .assertEqualsAtPosition(1, t3.label) { label }
+                    .assertEqualsAtPosition(2, t1.label) { label }
             }
         }
 
