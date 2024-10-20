@@ -29,6 +29,7 @@ function emitTransaction() {
   }
   const amount = `${digits.integerpart}.${digits.decimalpart}`
   const transaction: TransactionCreationDTO = {
+    id: transactionResult.id,
     label: transactionResult.label,
     value: amount,
     isIncome: transactionResult.isIncome,

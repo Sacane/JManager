@@ -32,6 +32,12 @@ fun <T> Response<List<T>>.assertContainsAtPosition(position: Int, expectedData: 
     return this
 }
 
+fun <T, R> Response<List<T>>.assertEqualsAtPosition(position: Int, expectedResult: R, expectedDataResult: T.() -> R): Response<List<T>> {
+    assertSuccess()
+    onSuccess { data -> assertEquals(expectedResult, expectedDataResult(data[position])) }
+    return this
+}
+
 fun <T> T?.asResponse(): Response<T>{
     return if(this == null) Response.invalid() else ok(this)
 }
