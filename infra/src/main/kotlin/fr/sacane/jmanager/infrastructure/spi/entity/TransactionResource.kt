@@ -31,7 +31,9 @@ class TransactionResource(
     var currency: String = "€",
     @Column(name="last_modified")
     var lastModified: LocalDateTime? = null,
-    var isPreview: Boolean = false
+    var isPreview: Boolean = false,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var account: AccountResource? = null,
     ){
     override fun toString(): String {
         return """

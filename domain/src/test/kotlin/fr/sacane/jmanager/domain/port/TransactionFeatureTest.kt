@@ -32,11 +32,11 @@ class TransactionFeatureTest: FeatureTest() {
 
             transactionFeature.bookTransaction(johnId, session.tokenValue, account.label, transactionToSave)
                 .assertTrue {
-                    this.amount == transactionToSave.amount && this.label == transactionToSave.label
+                    this.transaction.amount == transactionToSave.amount && this.transaction.label == transactionToSave.label
                 }
             transactionFeature.bookTransaction(johnId, session.tokenValue, account.label, transactionToSave2)
                 .assertTrue {
-                    this.amount == transactionToSave2.amount && this.label == transactionToSave2.label
+                    this.transaction.amount == transactionToSave2.amount && this.transaction.label == transactionToSave2.label
                 }
 
             val accountStates = accountState.getStates()
@@ -177,7 +177,7 @@ class TransactionFeatureTest: FeatureTest() {
                 val expectedDate = "02/02/2024".toDate()
                 transactionFeature.editTransaction(
                     userId.id!!, account.id!!, elements.copy(label = "test1.0", amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
-                ).assertTrue { label == expectedLabel && amount == expectedAmount && date == expectedDate}
+                ).assertTrue { transaction.label == expectedLabel && transaction.amount == expectedAmount && transaction.date == expectedDate}
 
                 val actualTransaction = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions?.find { tr -> tr.id == elements.id }
@@ -205,11 +205,11 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
                     .asResponse()
-                    .assertContainsAtPosition(0, t5)
-                    .assertContainsAtPosition(1, t1)
-                    .assertContainsAtPosition(2, t2)
-                    .assertContainsAtPosition(3, t3)
-                    .assertContainsAtPosition(4, t4)
+                    .assertEqualsAtPosition(0, t5.label) {label}
+                    .assertEqualsAtPosition(1, t1.label) {label}
+                    .assertEqualsAtPosition(2, t2.label) {label}
+                    .assertEqualsAtPosition(3, t3.label) {label}
+                    .assertEqualsAtPosition(4, t4.label) {label}
             }
         }
         @Test
@@ -226,11 +226,12 @@ class TransactionFeatureTest: FeatureTest() {
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
+                assertEquals(5, transactions?.size)
 
                 transactions.sortedByDate()
-                    .assertContainsAtPosition(0, t2)
-                    .assertContainsAtPosition(1, t3)
-                    .assertContainsAtPosition(2, t1)
+                    .assertEqualsAtPosition(0, t2.label) { label }
+                    .assertEqualsAtPosition(1, t3.label) { label }
+                    .assertEqualsAtPosition(2, t1.label) { label }
             }
         }
 

@@ -66,21 +66,30 @@ class Account(
     }
 
     fun addTransaction(transaction: Transaction) {
-        if(transactions.find { it.id == transaction.id } == null) {
-            transactions.add(transaction)
-            if(!transaction.isPreview) {
-                this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
-            }
-            this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+        transactions.add(transaction)
+        if(!transaction.isPreview) {
+            this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
+        this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
     private fun removeTransaction(transaction: Transaction) {
         transactions.removeIf { transaction.id == it.id }
-        if(transaction.isPreview) {
-            this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
-        } else {
+        this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+        if(transaction.isNotPreview) {
             this.amount = this.amount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
+    }
+    fun removeTransactionById(transactionId: Long) {
+        transactions.find { it.id == transactionId }?.let {
+            transactions.removeIf { transactionId == it.id }
+            if(it.isPreview) {
+                this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
+            } else {
+                this.amount = this.amount - if(it.isIncome) it.amount else it.amount.negate()
+            }
+        }
+
+
     }
     private fun removeAllTransactions(transactions: List<Transaction>) {
         for(transaction in transactions){
@@ -92,6 +101,12 @@ class Account(
         removeAllTransactions(transactions)
         transactions.forEach {
             addTransaction(it)
+        }
+    }
+
+    fun removeTransactionIf(sheetOnList: (s: Transaction) -> Boolean) {
+        transactions.filter(sheetOnList).forEach {
+            removeTransaction(it)
         }
     }
 }

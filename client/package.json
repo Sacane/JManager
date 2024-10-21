@@ -18,24 +18,24 @@
     "@nuxtjs/color-mode": "^3.3.3",
     "@nuxtjs/critters": "^0.7.1",
     "@nuxtjs/i18n": "^8.3.0",
-    "@pinia/nuxt": "^0.5.1",
+    "@pinia/nuxt": "^0.5.5",
     "@unocss/nuxt": "^0.59.0",
     "@unocss/reset": "^0.59.0",
     "@vueuse/core": "^10.9.0",
     "@vueuse/nuxt": "^10.9.0",
-    "axios": "^1.6.8",
+    "axios": "^1.7.4",
     "class-variance-authority": "^0.7.0",
     "consola": "^3.2.3",
     "eslint": "^8.57.0",
     "nuxt": "^3.12.4",
     "nuxt-primevue": "^0.3.1",
-    "pinia": "^2.1.7",
+    "pinia": "^2.2.4",
     "sass": "^1.74.1",
     "taze": "^0.13.3"
   },
   "dependencies": {
     "date-fns": "^3.6.0",
     "primeicons": "^7.0.0",
-    "primevue": "^3.51.0"
+    "primevue": "^3.53.0"
   }
 }
