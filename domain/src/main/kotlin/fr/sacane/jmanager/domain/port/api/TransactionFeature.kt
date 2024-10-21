@@ -17,7 +17,7 @@ import java.util.logging.Logger
 sealed interface TransactionFeature {
     fun bookTransaction(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<TransactionCreationResult>
     fun retrieveTransactionsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
-    fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<Transaction>
+    fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<TransactionCreationResult>
     fun findById(userID: Long, id: Long, token: UUID): Response<Transaction>
     fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID)
 }
@@ -39,7 +39,7 @@ class TransactionFeatureImpl(
         accountID: Long,
         transaction: Transaction,
         token: UUID
-    ): Response<Transaction> = session.authenticate(UserId(userID), token, roleUser){
+    ): Response<TransactionCreationResult> = session.authenticate(UserId(userID), token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction Response.invalid("L'ID de la transaction est null")
 
@@ -55,7 +55,7 @@ class TransactionFeatureImpl(
             acc.removeTransactionById(transaction.id)
             acc.addTransaction(transaction)
             accountRepository.upsert(acc)
-            Response.ok(transaction)
+            Response.ok(TransactionCreationResult(transaction, acc.amount, acc.previewAmount))
         }
     }
 
@@ -98,12 +98,13 @@ class TransactionFeatureImpl(
     }
 
     override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID) {
-        val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return
-        val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
-        account.cancelSheetsAmount(account.transactions.filter(isSheetOnList))
-        account.transactions.removeIf(isSheetOnList)
-        accountRepository.upsert(account)
-        transactionRepository.deleteAllSheetsById(sheetIds)
+        infraTransactionManager.executeInTransaction(transactionRepository) {
+            val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction
+            val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
+            account.removeTransactionIf(isSheetOnList)
+            accountRepository.upsert(account)
+            transactionRepository.deleteAllSheetsById(sheetIds)
+        }
     }
 
 }
