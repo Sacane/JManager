@@ -1,18 +1,17 @@
 <script setup lang="ts">
 export interface TransactionCreationProps {
   title: string
-  integerpart: string
-  decimalpart: string
+  digitPlaceholder: {
+    integer: string
+    decimal: string
+  }
   transactionPlaceholder: TransactionCreationDTO
   buttonTitle?: string
 }
-const { title, integerpart, decimalpart, transactionPlaceholder, buttonTitle } = defineProps<TransactionCreationProps>()
+const { title, digitPlaceholder, transactionPlaceholder, buttonTitle } = defineProps<TransactionCreationProps>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
-const digits = reactive({
-  integerpart,
-  decimalpart,
-})
+const digits = reactive(digitPlaceholder)
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 
@@ -22,18 +21,13 @@ onMounted(() => {
   tag.getAllTags().then((tagsResult) => {
     tags.value = tagsResult
   })
-  if (transactionPlaceholder.value) {
-    const [integerPart, decimalPart] = transactionPlaceholder.value.toString().split('.')
-    digits.integerpart = integerPart
-    digits.decimalpart = decimalPart
-  }
 })
 
 function emitTransaction() {
-  if ((digits.integerpart === '0' && digits.decimalpart === '0') || transactionResult.label === '') {
+  if ((digits.integer === '0' && digits.decimal === '0') || transactionResult.label === '') {
     return
   }
-  const amount = `${digits.integerpart}.${digits.decimalpart}`
+  const amount = `${digits.integer}.${digits.decimal}`
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
@@ -79,8 +73,8 @@ function closeDialog() {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputText v-model="digits.integerpart" type="number" placeholder="Partie entière" class="" />
-        <InputText v-model="digits.decimalpart" type="number" placeholder="Partie décimale" maxlength="2" class="" />
+        <InputText v-model="digits.integer" type="number" placeholder="Partie entière" class="" />
+        <InputText v-model="digits.decimal" type="number" placeholder="Partie décimale" maxlength="2" class="" />
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>

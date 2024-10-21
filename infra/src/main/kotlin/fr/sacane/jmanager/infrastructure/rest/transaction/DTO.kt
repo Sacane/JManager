@@ -29,7 +29,7 @@ data class SheetsAndAverageDTO(
     val sum: Double
 )
 
-data class SheetSendDTO(
+data class TransactionResultDTO(
     val id: String,
     val label: String,
     val date: LocalDate,
@@ -37,7 +37,8 @@ data class SheetSendDTO(
     val isIncome: Boolean,
     val tagDTO: TagDTO,
     val accountAmount: String,
-    val accountPreviewAmount: String
+    val accountPreviewAmount: String,
+    val isPreview: Boolean
 )
 
 data class UserSheetDTO(

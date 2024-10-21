@@ -14,6 +14,9 @@ data class Transaction(
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false
 ) {
+    val isNotPreview: Boolean
+    get() = !isPreview
+
     fun updateFromOther(other: Transaction): Boolean {
         if(other.id != this.id) return false
         this.label = other.label

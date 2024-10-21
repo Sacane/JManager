@@ -54,7 +54,7 @@ class SqlTransactionAdapter(
         }
         return this.asResource(tag)
     }
-    @Transactional
+
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         sheetRepository.deleteAllById(sheetIds)
     }

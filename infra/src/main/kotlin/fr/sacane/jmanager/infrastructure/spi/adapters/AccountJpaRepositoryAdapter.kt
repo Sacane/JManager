@@ -48,7 +48,7 @@ class AccountJpaRepositoryAdapter(
     override fun deleteAccountById(accountId: Long) {
         accountRepository.deleteById(accountId)
     }
-
+    @Transactional
     override fun upsert(account: Account): Account {
         return accountRepository.save(accountMapper.asResource(account)).also {
             for(transaction in it.sheets) {

@@ -72,11 +72,10 @@ class Account(
         }
         this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
-    fun removeTransaction(transaction: Transaction) {
+    private fun removeTransaction(transaction: Transaction) {
         transactions.removeIf { transaction.id == it.id }
-        if(transaction.isPreview) {
-            this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
-        } else {
+        this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+        if(transaction.isNotPreview) {
             this.amount = this.amount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
     }
@@ -102,6 +101,12 @@ class Account(
         removeAllTransactions(transactions)
         transactions.forEach {
             addTransaction(it)
+        }
+    }
+
+    fun removeTransactionIf(sheetOnList: (s: Transaction) -> Boolean) {
+        transactions.filter(sheetOnList).forEach {
+            removeTransaction(it)
         }
     }
 }

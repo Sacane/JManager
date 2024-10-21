@@ -23,10 +23,10 @@ import java.util.logging.Logger
 class SheetController(private val transactionFeature: TransactionFeature) {
     private val logger = Logger.getLogger(SheetController::class.java.name)
     @PostMapping
-    suspend fun createSheet(
+    suspend fun createTransaction(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<SheetSendDTO> {
+    ): ResponseEntity<TransactionResultDTO> {
         return transactionFeature.bookTransaction(
             userAccountSheetDTO.userId.id(),
             token.asTokenUUID(),
@@ -34,7 +34,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
             userAccountSheetDTO.sheetDTO.toModel()
         ).map {
             it.transaction.exportAmountValues { expense, income ->
-                SheetSendDTO(
+                TransactionResultDTO(
                     it.transaction.id.toString(),
                     it.transaction.label,
                     it.transaction.date,
@@ -43,6 +43,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
                     it.transaction.tag.toDTO(),
                     it.accountAmount.toStringValue(),
                     it.accountPreviewAmount.toStringValue(),
+                    it.transaction.isPreview
                 )
             }
         }.toResponseEntity().apply {
@@ -63,7 +64,7 @@ class SheetController(private val transactionFeature: TransactionFeature) {
 
 
     @GetMapping
-    fun getSheets(
+    fun getTransactionsByMonthAndYearAndAccountLabel(
         @RequestParam("userId") userId: Long,
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
@@ -77,15 +78,27 @@ class SheetController(private val transactionFeature: TransactionFeature) {
     }
 
     @PostMapping("edit")
-    fun editSheet(
+    fun editTransaction(
         @RequestBody dto: UserIDSheetDTO,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<SheetDTO> {
-        logger.info("transaction => ${dto.sheet}")
+    ): ResponseEntity<TransactionResultDTO> {
+        logger.info("Start editing transaction => ${dto.sheet}")
         return transactionFeature.editTransaction(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
-            .map { s -> s.toDTO() }
-            .toResponseEntity()
-            .also { LOGGER.info("edit : ${dto.sheet}") }
+            .map { it.transaction.exportAmountValues { expense, income ->
+                    TransactionResultDTO(
+                        it.transaction.id.toString(),
+                        it.transaction.label,
+                        it.transaction.date,
+                        expense.toAmount().toString(),
+                        income,
+                        it.transaction.tag.toDTO(),
+                        it.accountAmount.toStringValue(),
+                        it.accountPreviewAmount.toStringValue(),
+                        it.transaction.isIncome
+                    )
+                }
+            }.toResponseEntity()
+            .also { LOGGER.info("Transaction edited successfully : ${dto.sheet}") }
     }
 
 
