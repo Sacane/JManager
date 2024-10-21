@@ -4,8 +4,9 @@ export interface TransactionCreationProps {
   integerpart: string
   decimalpart: string
   transactionPlaceholder: TransactionCreationDTO
+  buttonTitle?: string
 }
-const { title, integerpart, decimalpart, transactionPlaceholder } = defineProps<TransactionCreationProps>()
+const { title, integerpart, decimalpart, transactionPlaceholder, buttonTitle } = defineProps<TransactionCreationProps>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
 const digits = reactive({
@@ -21,6 +22,11 @@ onMounted(() => {
   tag.getAllTags().then((tagsResult) => {
     tags.value = tagsResult
   })
+  if (transactionPlaceholder.value) {
+    const [integerPart, decimalPart] = transactionPlaceholder.value.toString().split('.')
+    digits.integerpart = integerPart
+    digits.decimalpart = decimalPart
+  }
 })
 
 function emitTransaction() {
@@ -88,7 +94,7 @@ function closeDialog() {
           </div>
         </template>
       </Dropdown>
-      <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
+      <Button :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
     </div>
   </Dialog>
 </template>
