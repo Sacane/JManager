@@ -244,6 +244,7 @@ function onEditPage(event: any) {
     transactionPlaceholder.isPreview = transaction.isPreview
     transactionPlaceholder.isIncome = transaction.isIncome
     transactionPlaceholder.id = event.data.id
+    console.table(transactionPlaceholder)
     isEditDialogVisible.value = true
   }).catch(err => toastr.errorAxios(err))
 }
@@ -285,7 +286,6 @@ function bookTransaction(transaction: TransactionCreationDTO) {
     })
 }
 function editTransaction(transaction: TransactionCreationDTO) {
-  console.table(transaction)
   editSheet(transaction, Number.parseInt(data.currentAccountId))
     .then((transaction: SheetDTO) => {
       toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
@@ -393,6 +393,7 @@ onMounted(() => {
     :integerpart="digits.integerpart"
     :decimalpart="digits.decimalpart"
     :transaction-placeholder="transactionPlaceholder"
+    button-title="Mettre à jour"
     @cancel-creation="cancelEditDialog"
     @create-transaction="editTransaction"
   />
