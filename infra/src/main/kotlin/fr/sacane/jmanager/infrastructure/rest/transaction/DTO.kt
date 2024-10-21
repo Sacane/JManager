@@ -24,16 +24,20 @@ data class SheetDTO(
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean
 )
-data class SheetsAndAverageDTO(
-    val sheets: List<SheetDTO>,
-    val sum: Double
+data class TransactionList(
+    val sheets: List<SheetDTO>
 )
 
-data class SheetSendDTO(
+data class TransactionResultDTO(
+    val id: String,
     val label: String,
     val date: LocalDate,
     val value: String,
-    val isIncome: Boolean
+    val isIncome: Boolean,
+    val tagDTO: TagDTO,
+    val accountAmount: String,
+    val accountPreviewAmount: String,
+    val isPreview: Boolean
 )
 
 data class UserSheetDTO(

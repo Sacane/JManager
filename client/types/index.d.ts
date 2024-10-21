@@ -10,6 +10,18 @@ declare global {
     tagDTO: TagDTO
     isPreview: boolean
   }
+  interface TransactionResultDTO {
+    id: string
+    label: string
+    value: string
+    isIncome: boolean
+    date: string
+    color: ColorDTO
+    tagDTO: TagDTO
+    isPreview: boolean
+    accountAmount: string
+    accountPreviewAmount: string
+  }
 
   interface AccountDTO {
     id: number | undefined
@@ -39,5 +51,15 @@ declare global {
     label: string | undefined
     colorDTO: ColorDTO
     isDefault: boolean
+  }
+
+  interface TransactionCreationDTO {
+    id?: string
+    label: string
+    value: string
+    isIncome: boolean
+    date: string
+    tagDTO: TagDTO
+    isPreview: boolean
   }
 }

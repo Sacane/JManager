@@ -54,17 +54,26 @@ class SqlTransactionAdapter(
         }
         return this.asResource(tag)
     }
-    @Transactional
+
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         sheetRepository.deleteAllById(sheetIds)
     }
-    @Transactional
+
     override fun findTransactionById(transactionId: Long): Transaction? {
         return sheetRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
     }
-    @Transactional
-    override fun save(transaction: Transaction): Transaction? {
-        return sheetRepository.save(transaction.asResource(transaction.tag.asResource())).toModel()
+
+
+    override fun save(accountId: Long, transaction: Transaction): Transaction? {
+        val tag = if(transaction.tag.isDefault){
+            tagRepository.findByName(transaction.tag.label)
+        } else {
+            tagPersonalPostgresRepository.findByIdNullable(transaction.tag.id!!)
+        }
+        val account = accountJpaRepository.findByIdWithSheets(accountId)
+        val transactionResource = transaction.asResource(tag)
+        account?.addTransaction(transactionResource) ?: return null
+        return sheetRepository.save(transactionResource).toModel()
     }
 
     @Transactional

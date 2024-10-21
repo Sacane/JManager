@@ -14,4 +14,5 @@ interface AccountRepositoryPort {
     fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Account?
     fun deleteAccountById(accountId: Long)
     fun upsert(account: Account): Account
+    fun update(account: Account)
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import useAccounts from '../../composables/useAccounts'
+import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -56,14 +57,13 @@ const isAddAccountDialogOpen = ref<boolean>(false)
 const newAccount = reactive({
   label: '',
   amount: {
-    integerPart: '',
-    decimalPart: '',
+    integerPart: '0',
+    decimalPart: '0',
   },
 })
 
-async function toAccount() {
-  const { label, amount } = newAccount
-  createAccount(label, `${amount.integerPart}.${amount.decimalPart} €`)
+function handleAccountCreation(account) {
+  createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
     .then(() => {
       fetch().then((accountArray) => {
         format(accountArray)
@@ -73,54 +73,53 @@ async function toAccount() {
       })
     })
 }
+function cancel() {
+  isAddAccountDialogOpen.value = false
+}
+function openAccountDialog() {
+  isAddAccountDialogOpen.value = true
+}
 </script>
 
 <template>
-  <div v-if="isAccountFilled" class="p20px container">
-    <h2 class="info-text">
-      Double cliquez sur un compte pour visualiser ses transactions
-    </h2>
-    <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
-      <template #header>
-        <div class="flex flex-row h-auto pl10px">
-          <!-- <Button class="b mr2 w-350px h-50px" label="Modifier le compte" icon="pi pi-file-edit" @click="applyEdit" /> -->
-          <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
-        </div>
-      </template>
-      <Column v-model="actionSelection" selection-mode="single" :exportable="false" />
-      <Column field="labelAccount" header="Libellé du compte" />
-      <Column field="amount" header="Montant actuel" />
-    </DataTable>
-  </div>
-  <div v-else class="text-center justify-center align-center">
-    <div class="mb-4">
-      <p class="text-xl font-semibold text-gray-600">
-        Vous n'avez pas encore de compte enregistré.
-      </p>
+  <div class="w-full h-full flex flex-col gap-5 items-center">
+    <div v-if="isAccountFilled" class="p20px container">
+      <h2 class="info-text">
+        Double cliquez sur un compte pour visualiser ses transactions
+      </h2>
+      <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
+        <template #header>
+          <div class="flex flex-row h-auto pl10px">
+            <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
+          </div>
+        </template>
+        <Column v-model="actionSelection" selection-mode="single" :exportable="false" />
+        <Column field="labelAccount" header="Libellé du compte" />
+        <Column field="amount" header="Montant actuel" />
+      </DataTable>
     </div>
-    <div class="mb-4">
-      <p class="text-lg text-gray-500">
-        Commencez par ajouter un compte pour gérer vos finances.
-      </p>
-    </div>
-  </div>
-  <Button label="Ajouter un nouveau compte" class="w-250px h-50px" @click="isAddAccountDialogOpen = true" />
-  <Dialog v-model:visible="isAddAccountDialogOpen" class="bg-grey" modal header="Ajouter un nouveau compte">
-    <div class="mt-6">
-      <div class="flex flex-col gap-3">
-        <label for="label" class="block text-sm font-medium text-gray-700">Libellé du compte</label>
-        <InputText id="label" v-model="newAccount.label" type="text" autocomplete="off" />
+    <div v-else class="text-center justify-center align-center">
+      <div class="mb-4">
+        <p class="text-xl font-semibold text-gray-600">
+          Vous n'avez pas encore de compte enregistré.
+        </p>
       </div>
-
-      <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
-      <div id="labelAmount" class="flex-row">
-        <InputText v-model="newAccount.amount.integerPart" type="number" placeholder="Partie entière" class="" />
-        <InputText v-model="newAccount.amount.decimalPart" type="number" placeholder="Partie décimale" maxlength="2" class="" />
+      <div class="mb-4">
+        <p class="text-lg text-gray-500">
+          Commencez par ajouter un compte pour gérer vos finances.
+        </p>
       </div>
-      <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="toAccount" />
-      <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="isAddAccountDialogOpen = false" />
     </div>
-  </Dialog>
+    <Button label="Ajouter un nouveau compte" class="w-250px h-50px align-self-center" @click="openAccountDialog" />
+    <AccountBookingDialog
+      :label="newAccount.label"
+      :integerpart="newAccount.amount.integerPart"
+      :decimalpart="newAccount.amount.decimalPart"
+      :visible="isAddAccountDialogOpen"
+      @create-account="handleAccountCreation"
+      @cancel="cancel"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">

@@ -11,12 +11,7 @@ class AccountResource(
     var amount: BigDecimal = BigDecimal(0.0),
     @Column(name = "label")
     var label: String = "undefined",
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "account_sheet",
-        joinColumns = [JoinColumn(name = "id_account")],
-        inverseJoinColumns = [JoinColumn(name = "id_sheet")]
-    )
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "account")
     var sheets: MutableList<TransactionResource> = mutableListOf(),
     @ManyToOne
     var owner: UserResource? = null,
@@ -26,4 +21,9 @@ class AccountResource(
     @GeneratedValue
     @Column(name = "id_account")
     var idAccount: Long? = null
-)
+) {
+    fun addTransaction(transaction: TransactionResource) {
+        sheets.add(transaction)
+        transaction.account = this
+    }
+}

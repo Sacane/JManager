@@ -17,7 +17,7 @@ export default function useSheet() {
     })
   }
 
-  function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<SheetDTO> {
+  function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<TransactionResultDTO> {
     return post('sheet', {
       userId: user.value?.id,
       accountLabel,
@@ -32,7 +32,7 @@ export default function useSheet() {
     })
   }
 
-  function editSheet(sheet: SheetDTO, accountId: number): Promise<SheetDTO> {
+  function editSheet(sheet: SheetDTO, accountId: number): Promise<TransactionResultDTO> {
     return post('sheet/edit', {
       userId: user.value?.id,
       accountId,

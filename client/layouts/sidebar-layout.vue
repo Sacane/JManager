@@ -6,7 +6,7 @@
   <div class="flex flex-row">
     <!-- ------------------------------ -->
     <Sidebar class="sidebar" />
-    <div class="w-full h-full flex flex-col justify-center items-center">
+    <div class="w-full flex flex-col">
       <slot />
     </div>
   </div>
