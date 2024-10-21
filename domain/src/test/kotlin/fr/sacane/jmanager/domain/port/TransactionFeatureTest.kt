@@ -177,7 +177,7 @@ class TransactionFeatureTest: FeatureTest() {
                 val expectedDate = "02/02/2024".toDate()
                 transactionFeature.editTransaction(
                     userId.id!!, account.id!!, elements.copy(label = "test1.0", amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
-                ).assertTrue { label == expectedLabel && amount == expectedAmount && date == expectedDate}
+                ).assertTrue { transaction.label == expectedLabel && transaction.amount == expectedAmount && transaction.date == expectedDate}
 
                 val actualTransaction = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions?.find { tr -> tr.id == elements.id }
