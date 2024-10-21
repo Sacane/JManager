@@ -24,9 +24,8 @@ data class SheetDTO(
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean
 )
-data class SheetsAndAverageDTO(
-    val sheets: List<SheetDTO>,
-    val sum: Double
+data class TransactionList(
+    val sheets: List<SheetDTO>
 )
 
 data class TransactionResultDTO(

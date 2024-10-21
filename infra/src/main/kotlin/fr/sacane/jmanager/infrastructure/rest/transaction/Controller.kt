@@ -20,8 +20,8 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("api/sheet")
 @Adapter(Side.APPLICATION)
-class SheetController(private val transactionFeature: TransactionFeature) {
-    private val logger = Logger.getLogger(SheetController::class.java.name)
+class TransactionController(private val transactionFeature: TransactionFeature) {
+    private val logger = Logger.getLogger(TransactionController::class.java.name)
     @PostMapping
     suspend fun createTransaction(
         @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
@@ -70,11 +70,11 @@ class SheetController(private val transactionFeature: TransactionFeature) {
         @RequestParam("year") year: Int,
         @RequestParam("accountLabel") accountLabel: String,
         @RequestHeader("Authorization") token: String
-        ): ResponseEntity<SheetsAndAverageDTO> {
-        LOGGER.info("Start getting sheets for account $accountLabel")
+        ): ResponseEntity<TransactionList> {
+        LOGGER.info("Start getting transactions for account $accountLabel")
         val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(SheetsAndAverageDTO(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }, 0.0))
+        return ResponseEntity.ok(TransactionList(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))
     }
 
     @PostMapping("edit")
@@ -117,6 +117,6 @@ class SheetController(private val transactionFeature: TransactionFeature) {
             }.toResponseEntity()
 
     companion object {
-        private val LOGGER: Logger = Logger.getLogger(SheetController::javaClass.name)
+        private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)
     }
 }
