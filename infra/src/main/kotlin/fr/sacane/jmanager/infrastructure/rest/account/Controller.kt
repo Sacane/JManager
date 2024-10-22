@@ -43,12 +43,14 @@ class AccountController (
     fun createAccount(
         @RequestBody userAccount: UserAccountDTO,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountInfoDTO> = feature.save(
-    userAccount.id.id(),
-    token.asTokenUUID(),
-    Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount))
-    .map { AccountInfoDTO(it.amount.toString(), it.label) }
-    .toResponseEntity()
+    ): ResponseEntity<AccountInfoDTO> {
+        LOGGER.info("Booking a new Account...")
+        return feature.save(
+            userAccount.id.id(),
+            token.asTokenUUID(),
+            Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount)
+        ).map { AccountInfoDTO(it.amount.toString(), it.label, it.id.toString()) }.toResponseEntity()
+    }
 
 
     @GetMapping(path = ["{id}"])
