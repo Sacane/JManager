@@ -13,7 +13,8 @@ data class AccountDTO(
 
 data class AccountInfoDTO(
     val amount: String,
-    val label: String
+    val label: String,
+    val id: String
 )
 
 data class UserAccountDTO(

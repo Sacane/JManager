@@ -112,7 +112,6 @@ function openAccountDialog() {
     </div>
     <Button label="Ajouter un nouveau compte" class="w-250px h-50px align-self-center" @click="openAccountDialog" />
     <AccountBookingDialog
-      :label="newAccount.label"
       :integerpart="newAccount.amount.integerPart"
       :decimalpart="newAccount.amount.decimalPart"
       :visible="isAddAccountDialogOpen"

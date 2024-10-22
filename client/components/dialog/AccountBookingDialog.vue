@@ -1,15 +1,14 @@
 <script setup lang="ts">
 export interface AccountBookingProps {
-  label: string
   integerpart: string
   decimalpart: string
 }
 
-const { label, integerpart, decimalpart } = defineProps<AccountBookingProps>()
+const { integerpart, decimalpart } = defineProps<AccountBookingProps>()
 const emit = defineEmits(['visible', 'createAccount', 'cancel'])
 
 const accountData = ref({
-  label,
+  label: '',
   integerpart,
   decimalpart,
 })
