@@ -1,11 +1,10 @@
 package fr.sacane.jmanager.domain.port.spi.mock
 
-import fr.sacane.jmanager.domain.hexadoc.DefaultSource
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.Transaction
+import fr.sacane.jmanager.domain.models.toAmount
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.Month
-import java.util.*
 
 class Directory {
 
@@ -19,61 +18,5 @@ class Directory {
             Transaction(5, "", LocalDate.now(), 450.toAmount(), true,Tag("Fun")),
             Transaction(6, "Money From testX", LocalDate.now(), 450.toAmount(), true,Tag("Transaction"))
         )
-    }
-
-    private val accountInventory = mutableListOf(
-        Account(1, 0.toAmount(), "Principal", transactionInventories, initialSold = 0.toAmount())
-    )
-
-    private val tokenInventory = mutableMapOf(
-        "test1" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test2" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test3" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test4" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test5" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test6" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test7" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test8" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID()),
-        "test9" to AccessToken(UUID.randomUUID(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
-    )
-
-    private val userInventory = mutableListOf(
-        User(UserId(1L), "test1", "test1.test@test.fr",  accountInventory),
-        User(UserId(2L), "test2", "test2.test@test.fr",  accountInventory),
-        User(UserId(3L), "test3", "test3.test@test.fr",  accountInventory),
-    )
-
-
-
-    @DefaultSource
-    inner class UserTransactionMock {
-
-        fun findById(userId: UserId): UserToken? {
-            TODO("Not yet implemented")
-        }
-
-        fun findUserById(userId: UserId): User? {
-            TODO("Not yet implemented")
-        }
-
-        fun findByPseudonym(pseudonym: String): User? {
-            return userInventory.find { it.username == pseudonym }
-        }
-        fun create(user: User): User? {
-            return register(user)
-        }
-        fun register(user: User): User? {
-            if(userInventory.find { it.username == user.username || it.id.id == user.id.id } != null) return null
-            userInventory.add(user)
-            return user
-        }
-        fun getUserToken(userId: UserId): AccessToken? {
-            val user = findById(userId) ?: return null
-            return tokenInventory[user.user.username]
-        }
-
-        fun upsert(user: User): User? {
-            TODO("Not yet implemented")
-        }
     }
 }

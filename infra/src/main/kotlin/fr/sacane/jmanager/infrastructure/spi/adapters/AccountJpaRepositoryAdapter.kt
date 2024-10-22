@@ -31,8 +31,9 @@ class AccountJpaRepositoryAdapter(
         val id = ownerId.id ?: return null
         val user = userRepository.findByIdWithAccount(id) ?: return null
         val accountResource = accountMapper.asResource(account)
-        user.addAccount(accountResource)
-        return accountResource.toModel()
+        val accountSaved = accountRepository.save(accountResource)
+        user.addAccount(accountSaved)
+        return accountSaved.toModel()
     }
 
     override fun findAccountByIdWithTransactions(accountId: Long): Account? {
