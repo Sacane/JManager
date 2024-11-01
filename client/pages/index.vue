@@ -49,7 +49,7 @@ function createAccountIfAuthenticated() {
         Vous pouvez ainsi gérer les dépenses de plusieurs personnes, entités, projets, et autres avec un seul profil.
       </p>
     </div>
-    <div class="card rounded-lg shadow-lg bg-white p-6 text-center" @click="createAccountIfAuthenticated()">
+    <div class="card rounded-lg shadow-lg bg-white p-6 text-center">
       <h2 class="text-2xl italic mb-4">
         Ajouter une transaction
       </h2>

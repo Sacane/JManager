@@ -22,8 +22,10 @@ tryOnBeforeMount(() => {
 </template>
 
 <style lang="scss">
-:root{
+:root {
   --primary: #7F52FF;
+  --text-color: #a3a1a7;
+  --primary-background: #8863eb;
 }
 body, html {
   margin: 0;

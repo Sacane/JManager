@@ -257,7 +257,6 @@ function rowStyle(row): any | undefined {
                   <label
                     for="yearPicker"
                     class="block text-sm font-medium text-gray-700"
-                    style="font-family: Arial, sans-serif;"
                   >
                     Sélectionnez une année :
                   </label>
