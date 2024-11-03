@@ -7,7 +7,7 @@ definePageMeta({
 })
 
 const { user, isAuthenticated } = useAuth()
-const toastr = useJToast()
+const toast = useJToast()
 onMounted(() => {
   const currentDate = new Date()
   if (user.value == null || user.value.refreshExpirationDate > currentDate) {
@@ -21,9 +21,9 @@ const { createAccount } = useAccounts()
 function handleAccountCreation(account) {
   createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
     .then((acc) => {
-      toastr.success(`La création du compte ${acc.label} a été un succès !`)
+      toast.success(`La création du compte ${acc.label} a été un succès !`)
       navigateTo(`/account/${acc.id}`)
-    }).catch(err => toastr.errorAxios(err)).finally(() => isAccountDialogOpen.value = false)
+    }).catch(err => toast.errorAxios(err)).finally(() => isAccountDialogOpen.value = false)
 }
 function cancel() {
   isAccountDialogOpen.value = false
