@@ -97,8 +97,8 @@ function delTag(row: DataDisplay): void {
 
 <template>
   <ConfirmDialog />
-  <div class="mt-5">
-    <div class="flex flex-row justify-between">
+  <div class="mt-5 w-full">
+    <div class="flex flex-col lg:(flex flex-row justify-between)">
       <div class="text-xl font-semibold text-gray-600 align-center">
         <p v-if="showDefault">
           Les tags par défaut
@@ -114,7 +114,7 @@ function delTag(row: DataDisplay): void {
         Ajouter un nouveau tag personnel
       </Button>
     </div>
-    <DataTable data-key="id" table-style="min-width: 50rem" :value="displayData">
+    <DataTable :responsive-layout="scroll" :resizable-columns="true" data-key="id" table-style="min-width: 50rem" :value="displayData">
       <Column field="label" header="Libellé du tag" />
       <Column field="isDefault" header="Statut" />
       <Column header-style="width: 5rem; text-align: center" body-style="text-align: center; overflow: visible">

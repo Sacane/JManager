@@ -4,22 +4,22 @@ import useAuth from '@/composables/useAuth'
 definePageMeta({
   layout: 'sidebar-layout',
 })
-const auth = useAuth()
+const { user } = useAuth()
 </script>
 
 <template>
-  <div class="self-center h-full w-full flex flex-row mt-50px">
-    <div class="flex flex-col division w-full max-w[80%] gap-15px ">
-      <div class="line w-full flex flex-row gap-20px">
-        <div class="content w-[15%]">
+  <div class="lg:self-center h-full w-full flex flex-row mt-50px justify-center">
+    <div class="flex flex-col division w-full max-w[70%] gap-15px ">
+      <div class="flex flex-col gap-20px lg:(line w-full flex flex-row)">
+        <div class="content lg:( w-[15%])">
           <div class="user-icon-container">
             <i class="pi pi-user user-icon" />
           </div>
-          <h2 class="ml-6">
-            {{ auth.user.username }}
+          <h2 class="ml-7">
+            {{ user?.username }}
           </h2>
         </div>
-        <div class="content w-[85%] card">
+        <div class="content lg:( w-[85%] card)">
           <div class="card-header">
             <div class="title-container">
               <h1>Livrets</h1>
@@ -31,11 +31,11 @@ const auth = useAuth()
           </div>
         </div>
       </div>
-      <div class="line w-full flex flex-row gap-20px">
-        <div class="content w-[67%]">
+      <div class="flex flex-col gap-20px line lg:(w-full flex flex-row)">
+        <div class="content title-container lg:w-[67%]">
           <h1>Transactions</h1>
         </div>
-        <div class="content w-[33%]">
+        <div class="content lg:w-[33%]">
           <div class="card-header">
             <div class="title-container">
               <h1>Tags</h1>
@@ -78,7 +78,7 @@ const auth = useAuth()
 }
 
 .user-icon {
-  color: rgba(206, 20, 20, 0.35);
+  color: black;
   font-size: 50px;
 }
 
@@ -99,9 +99,8 @@ const auth = useAuth()
   align-items: center;
 }
 
-.title-container h3 {
-  margin: 0;
-  font-size: 16px;
+.title-container h1 {
+  margin-left: 10px;
 }
 
 .title-container p {
