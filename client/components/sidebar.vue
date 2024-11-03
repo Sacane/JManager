@@ -6,7 +6,7 @@ const { isAuthenticated, logout, user } = useAuth()
 </script>
 
 <template>
-  <div class="flex flex-col border-r w-10% h-screen text-center justify-between content position-fixed">
+  <div class="hidden lg:flex flex-col border-r w-10% h-screen text-center justify-between content position-fixed">
     <div class="flex flex-col">
       <NuxtLink to="/" class="title decoration-none">
         <img src="@/public/favicon.ico" alt="icon" class="w-35px"> JManager
@@ -22,7 +22,7 @@ const { isAuthenticated, logout, user } = useAuth()
           <i class="pi pi-tag text-25px" /> Tableau de bord
         </NuxtLink>
         <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
-          <i class="pi pi-wallet text-25px" /> Mes comptes
+          <i class="pi pi-wallet text-25px" /> Mes livrets
         </NuxtLink>
         <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
           <i class="pi pi-tag text-25px" /> Mes tags
