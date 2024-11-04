@@ -10,7 +10,6 @@ class Account(
     val owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
-    val periodicalTransactions: MutableList<PeriodicalTransaction> = mutableListOf()
 ){
 
     val label: String
@@ -49,15 +48,7 @@ class Account(
             initialSold: $initialSold
         """.trimIndent()
     }
-    fun cancelSheetsAmount(transactions: List<Transaction>) {
-        this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
-        transactions.forEach {
-            if(!it.isPreview) {
-                this.amount = if(it.isIncome) this.amount - it.amount else it.amount + this.amount
-            }
-            this.previewAmount = if(it.isIncome) this.previewAmount - it.amount else it.amount + this.previewAmount
-        }
-    }
+
     fun updateSoldFromTransactions(oldTransaction: Transaction, newTransaction: Transaction) {
          // First modification
         this.amount = if(oldTransaction.isIncome) amount - oldTransaction.amount else amount + oldTransaction.amount
