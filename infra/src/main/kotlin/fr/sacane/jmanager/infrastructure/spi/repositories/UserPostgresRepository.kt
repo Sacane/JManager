@@ -18,4 +18,7 @@ interface UserPostgresRepository: CrudRepository<UserResource, Long> {
 
     @Query("SELECT user FROM UserResource user LEFT JOIN FETCH user.tags WHERE user.idUser = :id")
     fun findByIdWithTags(id: Long?): UserResource?
+
+    @Query("SELECT user FROM UserResource user LEFT JOIN FETCH user.subscriptions WHERE user.idUser = :id")
+    fun findByIdWithSubscription(id: Long): UserResource?
 }
