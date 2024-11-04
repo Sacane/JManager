@@ -10,7 +10,6 @@ class Account(
     val owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
-    val periodicalTransactions: MutableList<PeriodicalTransaction> = mutableListOf()
 ){
 
     val label: String
