@@ -4,7 +4,10 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.infrastructure.rest.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
+import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.SubscriptionJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import java.awt.Color
 import java.time.LocalDateTime
@@ -58,13 +61,7 @@ internal fun User.asResource(password: String): UserResource {
     return UserResource(username = username, password = password, email = email, mutableListOf(), tags = tags.map { it.toPersonalTag() }.toMutableList())
 }
 
-internal fun User.asExistingResource(): UserResource
-    = UserResource(idUser = this.id.id,
-        username = username,
-        email = email,
-        accounts = this.accounts.map {it.asResource()}.toMutableList(),
-        tags = this.tags.map { it.toPersonalTag() }.toMutableList()
-    )
+
 
 internal fun TransactionResource.toModel(): Transaction
 = Transaction(
@@ -132,3 +129,39 @@ fun AbstractTagResource.toDomain(): Tag {
 fun Tag.toPersonalTag(userResource: UserResource? = null): TagPersonalResource{
     return TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(color.red, color.green, color.blue), userResource)
 }
+
+internal fun User.asExistingResource(subscriptionMapper: SubscriptionMapper): UserResource
+        = UserResource(idUser = this.id.id,
+    username = username,
+    email = email,
+    accounts = this.accounts.map {it.asResource()}.toMutableList(),
+    subscriptions = this.subscriptionList.map { subscriptionMapper.asSubscriptionResource(it, this.asExistingResource(subscriptionMapper)) }.toMutableList(),
+    tags = this.tags.map { it.toPersonalTag() }.toMutableList()
+)
+
+@Component
+class SubscriptionMapper(
+    private val accountJpaRepository: AccountJpaRepository
+) {
+    internal fun asSubscriptionResource(subscription: SubscriptionComplete, userResource: UserResource?): SubscriptionEntity {
+        val accounts = subscription.linkedAccountIds.map { accountJpaRepository.findByIdOrNull(it)!! }
+        return SubscriptionEntity(
+            subscription.subscription.label,
+            subscription.subscription.startDate,
+            subscription.subscription.amount.amount,
+                accounts.toMutableList(),
+                userResource
+            )
+    }
+
+    internal fun toDomain(subscriptionEntity: SubscriptionEntity): SubscriptionComplete {
+        return SubscriptionComplete(
+            subscription = Subscription(subscriptionEntity.amount.toAmount(), subscriptionEntity.label, subscriptionEntity.beginDate),
+            linkedAccountIds = subscriptionEntity.accounts.map { it.idAccount!! }
+        )
+    }
+
+
+
+}
+
