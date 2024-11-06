@@ -35,7 +35,7 @@ const actualSheets = ref<SheetDTO[]>([])
 
 const { saveSheet, editSheet, findTransactionById } = useSheet()
 
-function asDisplayableTransaction(transaction: transactionResultDTO): any {
+function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
     ...transaction,
     id: transaction.id,
