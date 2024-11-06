@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import useDate from '~/composables/useDate'
+
 export interface TransactionCreationProps {
   title: string
   digitPlaceholder: {
@@ -15,6 +17,8 @@ const digits = reactive(digitPlaceholder)
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 
+const { formattedDateString } = useDate()
+
 const tags = ref([])
 
 onMounted(() => {
@@ -28,12 +32,13 @@ function emitTransaction() {
     return
   }
   const amount = `${digits.integer}.${digits.decimal}`
+  const formattedDate = formattedDateString(transactionResult.date)
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
     value: amount,
     isIncome: transactionResult.isIncome,
-    date: transactionResult.date,
+    date: formattedDate,
     tagDTO: transactionResult.tagDTO,
     isPreview: transactionResult.isPreview,
   }
