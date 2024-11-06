@@ -10,6 +10,8 @@ class SubscriptionEntity(
     val label: String,
     val beginDate: LocalDate,
     val amount: BigDecimal,
+    val isIncome: Boolean,
+
     @OneToMany(cascade = [(CascadeType.DETACH)])
     val accounts: MutableList<AccountResource>,
     @ManyToOne(cascade = [(CascadeType.DETACH)])

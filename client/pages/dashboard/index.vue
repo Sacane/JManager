@@ -83,12 +83,12 @@ onMounted(() => {
         <div class="content title-container lg:w-[67%]">
           <div class="card-header">
             <div class="title-container">
-              <h1>Projections</h1>
+              <h1>Mensualités</h1>
             </div>
           </div>
           <div class="card-body">
             <i class="pi pi-plus icon-large" />
-            <p>Créer votre première projection</p>
+            <p>Enregistrer votre première mensualité</p>
           </div>
         </div>
         <div class="content lg:w-[33%]">
