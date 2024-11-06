@@ -5,7 +5,6 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.rest.id
 import fr.sacane.jmanager.infrastructure.rest.toDTO
@@ -38,11 +37,11 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
                     it.transaction.id.toString(),
                     it.transaction.label,
                     it.transaction.date,
-                    expense.toAmount().toString(),
+                    expense.toString(),
                     income,
                     it.transaction.tag.toDTO(),
-                    it.accountAmount.toStringValue(),
-                    it.accountPreviewAmount.toStringValue(),
+                    it.accountAmount.amount.toString(),
+                    it.accountPreviewAmount.amount.toString(),
                     it.transaction.isPreview
                 )
             }
@@ -89,12 +88,12 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
                         it.transaction.id.toString(),
                         it.transaction.label,
                         it.transaction.date,
-                        expense.toAmount().toString(),
+                        expense.toString(),
                         income,
                         it.transaction.tag.toDTO(),
-                        it.accountAmount.toStringValue(),
-                        it.accountPreviewAmount.toStringValue(),
-                        it.transaction.isIncome
+                        it.accountAmount.amount.toString(),
+                        it.accountPreviewAmount.amount.toString(),
+                        it.transaction.isPreview
                     )
                 }
             }.toResponseEntity()

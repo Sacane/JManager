@@ -49,7 +49,7 @@ class AccountJpaRepositoryAdapter(
     override fun deleteAccountById(accountId: Long) {
         accountRepository.deleteById(accountId)
     }
-    @Transactional
+
     override fun upsert(account: Account): Account {
         return accountRepository.save(accountMapper.asResource(account)).also {
             for(transaction in it.sheets) {
@@ -57,9 +57,7 @@ class AccountJpaRepositoryAdapter(
             }
         }.toModel()
     }
-
     override fun update(account: Account) {
-        val asResource = accountMapper.asResource(account)
-        accountRepository.update(asResource.label, asResource.amount, asResource.previewAmount, asResource.idAccount!!)
+        accountRepository.update(account.label, account.amount.amount, account.previewAmount.amount, account.id!!)
     }
 }
