@@ -122,8 +122,8 @@ const uDate = useDate()
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
 const digits = reactive({
-  integer: '0',
-  decimal: '0',
+  integer: '',
+  decimal: '',
 })
 const transactionPlaceholder: TransactionCreationDTO = reactive({
   id: null,
@@ -157,7 +157,7 @@ function resetPlaceholder() {
   digits.decimal = ''
   transactionPlaceholder.label = ''
   transactionPlaceholder.date = new Date()
-  transactionPlaceholder.value = '0'
+  transactionPlaceholder.value = ''
   transactionPlaceholder.isPreview = false
   transactionPlaceholder.isIncome = false
   transactionPlaceholder.id = null

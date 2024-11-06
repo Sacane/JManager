@@ -27,8 +27,11 @@ onMounted(() => {
   })
 })
 
+const jToast = useJToast()
+
 function emitTransaction() {
   if ((digits.integer === '0' && digits.decimal === '0') || transactionResult.label === '') {
+    jToast.warn('Veuillez saisir un montant supérieur à 0')
     return
   }
   const amount = `${digits.integer}.${digits.decimal}`
@@ -60,8 +63,8 @@ function closeDialog() {
   >
     <div class="mt-6">
       <div class="flex flex-col gap-3">
-        <label for="label" class="block text-sm font-medium text-gray-700">Libelle</label>
-        <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" />
+        <label for="label" class="block text-sm font-medium text-gray-700">Libellé</label>
+        <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" />
       </div>
       <div class="mt5 flex flex-col gap-3">
         <label for="selectionType">Selectionner le type de transaction</label>
@@ -78,8 +81,8 @@ function closeDialog() {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputText v-model="digits.integer" type="number" placeholder="Partie entière" class="" />
-        <InputText v-model="digits.decimal" type="number" placeholder="Partie décimale" maxlength="2" class="" />
+        <InputText v-model="digits.integer" type="number" placeholder="0" class="" />
+        <InputText v-model="digits.decimal" type="number" placeholder="00" maxlength="2" class="" />
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
