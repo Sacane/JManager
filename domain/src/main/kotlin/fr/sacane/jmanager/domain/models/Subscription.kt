@@ -20,7 +20,8 @@ class CreatedFromSubscription(override val subscriptionId: Long): SubscriptionFr
 data class Subscription(
     val amount: Amount,
     val label: String,
-    val startDate: LocalDate
+    val startDate: LocalDate,
+    val isIncome: Boolean
 )
 
 data class SubscriptionComplete(
