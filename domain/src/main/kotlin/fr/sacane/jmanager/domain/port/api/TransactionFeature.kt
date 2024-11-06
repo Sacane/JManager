@@ -45,10 +45,6 @@ class TransactionFeatureImpl(
 
             val acc = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction Response.notFound()
             val transactionFromDatabase = transactionRepository.findTransactionById(transaction.id) ?: return@executeInTransaction Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
-            if(transactionFromDatabase.amount != transaction.amount) {
-                acc.updateSoldFromTransactions(transactionFromDatabase, transaction)
-            }
-
             transactionFromDatabase.updateFromOther(transaction)
             transaction.lastModified = LocalDateTime.now()
             transactionRepository.save(acc.id!!, transaction) ?: return@executeInTransaction Response.invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")

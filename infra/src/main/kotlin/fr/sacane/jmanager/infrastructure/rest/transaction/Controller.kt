@@ -38,11 +38,11 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
                     it.transaction.id.toString(),
                     it.transaction.label,
                     it.transaction.date,
-                    expense.toAmount().toString(),
+                    expense.toString(),
                     income,
                     it.transaction.tag.toDTO(),
-                    it.accountAmount.toStringValue(),
-                    it.accountPreviewAmount.toStringValue(),
+                    it.accountAmount.amount.toString(),
+                    it.accountPreviewAmount.amount.toString(),
                     it.transaction.isPreview
                 )
             }
@@ -92,7 +92,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
                         expense.toAmount().toString(),
                         income,
                         it.transaction.tag.toDTO(),
-                        it.accountAmount.toStringValue(),
+                        it.accountAmount.amount.toString(),
                         it.accountPreviewAmount.toStringValue(),
                         it.transaction.isIncome
                     )
