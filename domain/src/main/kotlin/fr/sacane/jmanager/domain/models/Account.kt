@@ -49,25 +49,10 @@ class Account(
             initialSold: $initialSold
         """.trimIndent()
     }
-    fun cancelSheetsAmount(transactions: List<Transaction>) {
-        this.transactions.removeAll { it.id in transactions.map { tr -> tr.id } }
-        transactions.forEach {
-            if(!it.isPreview) {
-                this.amount = if(it.isIncome) this.amount - it.amount else it.amount + this.amount
-            }
-            this.previewAmount = if(it.isIncome) this.previewAmount - it.amount else it.amount + this.previewAmount
-        }
-    }
-    fun updateSoldFromTransactions(oldTransaction: Transaction, newTransaction: Transaction) {
-         // First modification
-        this.amount = if(oldTransaction.isIncome) amount - oldTransaction.amount else amount + oldTransaction.amount
-        // Second modification
-        this.amount = if(newTransaction.isIncome) amount + newTransaction.amount else amount - newTransaction.amount
-    }
 
     fun addTransaction(transaction: Transaction) {
         transactions.add(transaction)
-        if(!transaction.isPreview) {
+        if(transaction.isNotPreview) {
             this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
         this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
@@ -81,15 +66,12 @@ class Account(
     }
     fun removeTransactionById(transactionId: Long) {
         transactions.find { it.id == transactionId }?.let {
-            transactions.removeIf { transactionId == it.id }
-            if(it.isPreview) {
-                this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
-            } else {
+            if(it.isNotPreview) {
                 this.amount = this.amount - if(it.isIncome) it.amount else it.amount.negate()
             }
+            this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
         }
-
-
+        transactions.removeIf { tr -> transactionId == tr.id }
     }
     private fun removeAllTransactions(transactions: List<Transaction>) {
         for(transaction in transactions){

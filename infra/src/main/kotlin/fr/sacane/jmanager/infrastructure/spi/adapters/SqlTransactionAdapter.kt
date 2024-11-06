@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.*
 import jakarta.transaction.Transactional
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
 
@@ -70,9 +71,8 @@ class SqlTransactionAdapter(
         } else {
             tagPersonalPostgresRepository.findByIdNullable(transaction.tag.id!!)
         }
-        val account = accountJpaRepository.findByIdWithSheets(accountId)
         val transactionResource = transaction.asResource(tag)
-        account?.addTransaction(transactionResource) ?: return null
+        transactionResource.account = accountJpaRepository.findByIdOrNull(accountId)
         return sheetRepository.save(transactionResource).toModel()
     }
 

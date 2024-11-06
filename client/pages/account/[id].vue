@@ -35,11 +35,11 @@ const actualSheets = ref<SheetDTO[]>([])
 
 const { saveSheet, editSheet, findTransactionById } = useSheet()
 
-function asDisplayableTransaction(transaction: transactionResultDTO): any {
+function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !(transaction.isIncome) ? `${transaction.value} €` : '',
+    expensesRepresentation: !transaction.isIncome ? `${transaction.value} €` : '',
     incomeRepresentation: transaction.isIncome ? `${transaction.value} €` : '',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
@@ -160,6 +160,7 @@ function resetPlaceholder() {
   transactionPlaceholder.value = '0'
   transactionPlaceholder.isPreview = false
   transactionPlaceholder.isIncome = false
+  transactionPlaceholder.id = null
 }
 function cancelEditDialog() {
   isEditDialogVisible.value = false
@@ -192,7 +193,7 @@ function editTransaction(transaction: TransactionCreationDTO) {
     .then((result: TransactionResultDTO) => {
       toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
       resetPlaceholder()
-      const index = actualSheets.value.findIndex(item => item.id === result.id)
+      const index = actualSheets.value.findIndex(item => +item.id === +result.id)
       if (index !== -1) {
         actualSheets.value[index] = asDisplayableTransaction(result)
       }
@@ -215,11 +216,11 @@ onMounted(() => {
 function rowStyle(row): any | undefined {
   const style = {}
   if (row.isPreview) {
-    style.backgroundColor = '#eab686'
+    style.backgroundColor = '#a6a4a4'
   }
   if (selectedSheets.value.includes(row)) {
     if (row.isPreview) {
-      style.background = '#d4935c'
+      style.background = '#a6a4a4'
     } else {
       style.background = '#D3D3D3'
     }
@@ -239,8 +240,8 @@ function rowStyle(row): any | undefined {
         <div class="flex flex-row gap-3 justify-between">
           <Button class="w-2% h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
           <div class="flex flex-row gap-5 mr-5">
-            <h2 class="text-2xl sold-text">
-              Solde : {{ data.accountAmount }} €
+            <h2 class="text-2xl sold-text color-primary">
+              Solde réel : {{ data.accountAmount }} €
             </h2>
             <h2 class="text-2xl sold-text preview-text">
               Solde prévisionnel : {{ data.previewAccountAmount }} €
@@ -355,8 +356,8 @@ function rowStyle(row): any | undefined {
 }
 
 .preview-button {
-  background-color: #bc691b;
-  border-color: #bc691b;
+  background-color: #a6a4a4;
+  border-color: #a6a4a4;
 }
 .preview-button:hover {
   opacity: 0.9;
@@ -366,6 +367,9 @@ function rowStyle(row): any | undefined {
   font-weight: 900;
 }
 .preview-text{
-  color: #bc691b;
+  color: #a6a4a4;
+}
+.color-primary {
+  color: var(--primary)
 }
 </style>
