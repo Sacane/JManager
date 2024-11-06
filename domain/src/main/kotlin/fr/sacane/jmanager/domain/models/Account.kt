@@ -52,7 +52,7 @@ class Account(
 
     fun addTransaction(transaction: Transaction) {
         transactions.add(transaction)
-        if(!transaction.isPreview) {
+        if(transaction.isNotPreview) {
             this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
         this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
@@ -66,15 +66,12 @@ class Account(
     }
     fun removeTransactionById(transactionId: Long) {
         transactions.find { it.id == transactionId }?.let {
-            transactions.removeIf { transactionId == it.id }
-            if(it.isPreview) {
-                this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
-            } else {
+            if(it.isNotPreview) {
                 this.amount = this.amount - if(it.isIncome) it.amount else it.amount.negate()
             }
+            this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
         }
-
-
+        transactions.removeIf { tr -> transactionId == tr.id }
     }
     private fun removeAllTransactions(transactions: List<Transaction>) {
         for(transaction in transactions){

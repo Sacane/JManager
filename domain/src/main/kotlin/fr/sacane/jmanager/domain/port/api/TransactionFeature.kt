@@ -40,6 +40,7 @@ class TransactionFeatureImpl(
         transaction: Transaction,
         token: UUID
     ): Response<TransactionCreationResult> = session.authenticate(UserId(userID), token, roleUser){
+        println(transaction)
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction Response.invalid("L'ID de la transaction est null")
 
@@ -50,7 +51,7 @@ class TransactionFeatureImpl(
             transactionRepository.save(acc.id!!, transaction) ?: return@executeInTransaction Response.invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
             acc.removeTransactionById(transaction.id)
             acc.addTransaction(transaction)
-            accountRepository.upsert(acc)
+            accountRepository.update(acc)
             Response.ok(TransactionCreationResult(transaction, acc.amount, acc.previewAmount))
         }
     }
