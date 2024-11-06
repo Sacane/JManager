@@ -130,7 +130,7 @@ const transactionPlaceholder: TransactionCreationDTO = reactive({
   label: '',
   value: '0.0',
   isIncome: false,
-  date: new Date().toLocaleDateString('fr-FR').replace(/\//g, '-'),
+  date: new Date(),
   tagDTO: {},
   isPreview: false,
 })
