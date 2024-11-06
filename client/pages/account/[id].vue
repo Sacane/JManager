@@ -140,7 +140,7 @@ function onEditPage(event: any) {
     digits.integer = integerPart
     digits.decimal = decimalPart
     transactionPlaceholder.label = transaction.label
-    transactionPlaceholder.date = transaction.date
+    transactionPlaceholder.date = uDate.dateFromString(transaction.date)
     transactionPlaceholder.value = transaction.value
     transactionPlaceholder.tagDTO = transaction.tagDTO
     transactionPlaceholder.isPreview = transaction.isPreview
@@ -153,10 +153,10 @@ function resetPlaceholder() {
   tag.getDefaultTag().then((tagDTO) => {
     transactionPlaceholder.tagDTO = tagDTO
   })
-  digits.integer = '0'
-  digits.decimal = '0'
-  transactionPlaceholder.label = '0'
-  transactionPlaceholder.date = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')
+  digits.integer = ''
+  digits.decimal = ''
+  transactionPlaceholder.label = ''
+  transactionPlaceholder.date = new Date()
   transactionPlaceholder.value = '0'
   transactionPlaceholder.isPreview = false
   transactionPlaceholder.isIncome = false
@@ -184,6 +184,7 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       const newTransaction = asDisplayableTransaction(result)
       actualSheets.value.push(newTransaction)
       isCreationDialogVisible.value = false
+      resetPlaceholder()
     })
 }
 function editTransaction(transaction: TransactionCreationDTO) {
