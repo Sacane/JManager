@@ -11,7 +11,7 @@ class UserResource(
     var password: String = "",
     @Column(unique = true, nullable = true)
     var email: String? = null,
-    @OneToMany(cascade = [(CascadeType.REMOVE)])
+    @OneToMany(cascade = [(CascadeType.DETACH)])
     val subscriptions: MutableList<SubscriptionEntity> = mutableListOf(),
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var accounts: MutableList<AccountResource> = mutableListOf(),
