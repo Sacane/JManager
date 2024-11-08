@@ -49,6 +49,13 @@ class Account(
         """.trimIndent()
     }
 
+    fun updateSoldFromTransactions(oldTransaction: Transaction, newTransaction: Transaction) {
+         // First modification
+        this.amount = if(oldTransaction.isIncome) amount - oldTransaction.amount else amount + oldTransaction.amount
+        // Second modification
+        this.amount = if(newTransaction.isIncome) amount + newTransaction.amount else amount - newTransaction.amount
+    }
+
     fun addTransaction(transaction: Transaction) {
         transactions.add(transaction)
         if(transaction.isNotPreview) {

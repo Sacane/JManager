@@ -149,7 +149,6 @@ class SubscriptionMapper(
             subscription.subscription.label,
             subscription.subscription.startDate,
             subscription.subscription.amount.amount,
-            subscription.subscription.isIncome,
                 accounts.toMutableList(),
                 userResource
             )
@@ -157,7 +156,7 @@ class SubscriptionMapper(
 
     internal fun toDomain(subscriptionEntity: SubscriptionEntity): SubscriptionComplete {
         return SubscriptionComplete(
-            subscription = Subscription(subscriptionEntity.amount.toAmount(), subscriptionEntity.label, subscriptionEntity.beginDate, subscriptionEntity.isIncome),
+            subscription = Subscription(subscriptionEntity.amount.toAmount(), subscriptionEntity.label, subscriptionEntity.beginDate),
             linkedAccountIds = subscriptionEntity.accounts.map { it.idAccount!! }
         )
     }
