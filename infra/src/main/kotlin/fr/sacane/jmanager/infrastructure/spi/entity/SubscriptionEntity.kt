@@ -12,11 +12,16 @@ class SubscriptionEntity(
     val amount: BigDecimal,
     val isIncome: Boolean,
 
-    @OneToMany(cascade = [(CascadeType.DETACH)])
+    @ManyToMany(cascade = [(CascadeType.DETACH)], mappedBy = "subscriptions")
     val accounts: MutableList<AccountResource>,
     @ManyToOne(cascade = [(CascadeType.DETACH)])
     var owner: UserResource? = null,
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-)
+) {
+    fun linkAccount(account: AccountResource) {
+        accounts.add(account)
+        account.subscriptions.add(this)
+    }
+}

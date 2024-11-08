@@ -83,6 +83,7 @@ onMounted(() => {
         <div class="content title-container lg:w-[67%]">
           <div class="card-header">
             <div class="title-container">
+              <h1>Mensualités</h1>
             </div>
           </div>
           <div class="card-body">
