@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build and deploy
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/master'
 
     steps:
@@ -52,7 +52,7 @@ jobs:
 
   test-analysis:
     name: Test and analyze on all non-master branches
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref != 'refs/heads/master'
 
     steps:
