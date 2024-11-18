@@ -22,11 +22,6 @@ class AccountJpaRepositoryAdapter(
     }
 
     @Transactional
-    override fun getLastSheetPosition(accountId: Long): Int? {
-        return accountRepository.findLastSheetPosition(accountId)
-    }
-
-    @Transactional
     override fun save(ownerId: UserId, account: Account): Account? {
         val id = ownerId.id ?: return null
         val user = userRepository.findByIdWithAccount(id) ?: return null

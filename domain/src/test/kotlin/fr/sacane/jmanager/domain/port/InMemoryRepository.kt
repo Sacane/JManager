@@ -135,11 +135,6 @@ class InMemoryAccountRepository(
         inMemoryDatabase.upsert(account)
         return account
     }
-
-    override fun getLastSheetPosition(accountId: Long): Int {
-        return 0
-    }
-
     override fun save(ownerId: UserId, account: Account): Account {
         inMemoryDatabase.addAccount(ownerId, account)
         return account

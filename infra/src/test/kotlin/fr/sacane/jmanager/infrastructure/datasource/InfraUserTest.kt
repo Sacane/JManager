@@ -56,9 +56,8 @@ class InfraUserTest {
         userPostgresRepository.save(user)
 
         val byName = userPostgresRepository.findByUsername(user.username)
-        val account = AccountResource()
+        val account = AccountResource(label = "test account")
         account.amount = BigDecimal(102)
-        account.label = "test account"
 
         byName?.accounts!!.add(account)
 

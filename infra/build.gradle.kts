@@ -4,11 +4,15 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.0.0"
     id("org.springframework.boot") version "3.1.3"
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
-    id("org.jetbrains.kotlin.plugin.jpa") version "1.6.21"
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.spring") version "1.6.21"
     kotlin("plugin.noarg") version "1.6.21"
+    kotlin("plugin.jpa") version "1.6.21"
     jacoco
+}
+
+noArg {
+    annotation("jakarta.persistence.Entity")
 }
 
 repositories{
