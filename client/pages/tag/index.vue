@@ -97,7 +97,7 @@ function delTag(row: DataDisplay): void {
 
 <template>
   <ConfirmDialog />
-  <div class="mt-5 w-full">
+  <div class="mt-5 w-[50%] self-center">
     <div class="flex flex-col lg:(flex flex-row justify-between)">
       <div class="text-xl font-semibold text-gray-600 align-center">
         <p v-if="showDefault">
