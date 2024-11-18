@@ -20,7 +20,7 @@ class AccountMapper(
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(), initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
+            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), subscriptions = mutableListOf(), userResource.get(),  initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         } else {
             AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         }
