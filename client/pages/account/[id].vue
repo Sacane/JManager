@@ -231,14 +231,14 @@ function rowStyle(row): any | undefined {
 
 <template>
   <ConfirmDialog />
-  <div class="w-full h-full flex flex-col items-center container-all">
+  <div class="w-[70%] h-full flex flex-col items-center container-all self-center">
     <div class="w-full h-70% mt2px">
       <div>
         <h2 class="text-2xl font-bold info-text">
           Compte {{ data.labelAccount }}
         </h2>
         <div class="flex flex-row gap-3 justify-between">
-          <Button class="w-2% h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
+          <Button class="h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
           <div class="flex flex-row gap-5 mr-5">
             <h2 class="text-2xl sold-text color-primary">
               Solde réel : {{ data.accountAmount }} €

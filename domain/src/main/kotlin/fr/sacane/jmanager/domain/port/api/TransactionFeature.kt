@@ -40,7 +40,6 @@ class TransactionFeatureImpl(
         transaction: Transaction,
         token: UUID
     ): Response<TransactionCreationResult> = session.authenticate(UserId(userID), token, roleUser){
-        println(transaction)
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction Response.invalid("L'ID de la transaction est null")
 
