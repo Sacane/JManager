@@ -14,7 +14,7 @@ class TransactionResource(
     @Column(unique = true, name = "id_sheet", nullable = false)
     var idSheet: Long? = null,
     @Column(name = "label_sheet")
-    var label: String = "undefined",
+    var label: String,
     @Column(name="date")
     var date: LocalDate = LocalDate.now(),
     @Column(name="expenses", scale = 2)
@@ -22,8 +22,6 @@ class TransactionResource(
     var isIncome: Boolean? = false,
     @Column(name="account_amount", scale = 2)
     var accountAmount: BigDecimal = BigDecimal(0.0),
-    @Column
-    var position: Int = 0,
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     var tag: DefaultTagResource? = null,
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])

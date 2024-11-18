@@ -20,9 +20,6 @@ interface AccountJpaRepository: CrudRepository<AccountResource, Long>{
     @Query("SELECT account FROM AccountResource account LEFT JOIN FETCH account.sheets WHERE account.owner.idUser = :userId AND account.label = :labelAccount")
     fun findByOwnerAndLabelWithSheets(userId: Long, labelAccount: String): AccountResource?
 
-    @Query("SELECT sheet.position FROM AccountResource account LEFT JOIN account.sheets sheet WHERE account.idAccount = :accountId ORDER BY sheet.position DESC LIMIT 1")
-    fun findLastSheetPosition(accountId: Long): Int?
-
     @Modifying
     @Query("UPDATE AccountResource account SET account.label = :labelAccount, account.amount = :amount, account.previewAmount = :previewAmount WHERE account.idAccount = :id")
     fun update(@Param("labelAccount") labelAccount: String, @Param("amount") amount: BigDecimal, @Param("previewAmount") previewAmount: BigDecimal, @Param("id") id: Long)

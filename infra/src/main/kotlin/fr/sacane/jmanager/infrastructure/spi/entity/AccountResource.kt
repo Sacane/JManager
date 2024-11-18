@@ -9,7 +9,7 @@ import java.math.BigDecimal
 class AccountResource(
     @Column(name = "amount")
     var amount: BigDecimal = BigDecimal(0.0),
-    @Column(name = "label", length = 30)
+    @Column(name = "label", length = 30, nullable = false)
     var label: String,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "account")
     var sheets: MutableList<TransactionResource> = mutableListOf(),
