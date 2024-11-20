@@ -6,23 +6,26 @@ const { isAuthenticated, logout, user } = useAuth()
 </script>
 
 <template>
-  <div class="flex flex-col border-r decoration-none w-15% h-screen text-center justify-between content">
+  <div class="hidden lg:flex flex-col border-r w-10% h-screen text-center justify-between content position-fixed">
     <div class="flex flex-col">
-      <NuxtLink to="/" class="title h-40px decoration-none">
-        JManager
+      <NuxtLink to="/" class="title decoration-none">
+        <img src="@/public/favicon.ico" alt="icon" class="w-35px"> JManager
       </NuxtLink>
-      <div class="mt5 flex flex-col">
+      <div class="mt5 flex flex-col flex-gap-4">
         <NuxtLink
-          to="/" class="hover:bg-gray-200 px-4 py-2 decoration-none section" active-class="bg-primary-color-white"
+          to="/" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white"
         >
-          <i class="pi pi-home text-20px" />
+          <i class="pi pi-home text-25px" />
           Accueil
         </NuxtLink>
-        <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-white px-4 py-2 decoration-none section" active-class="bg-primary-color-white">
-          <i class="pi pi-user text-20px" /> Mes comptes
+        <NuxtLink v-if="isAuthenticated" to="/dashboard" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
+          <i class="pi pi-tag text-25px" /> Tableau de bord
         </NuxtLink>
-        <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 px-4 py-2 decoration-none section" active-class="bg-primary-color-white">
-          <i class="pi pi-user text-20px" /> Mes tags
+        <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
+          <i class="pi pi-wallet text-25px" /> Mes livrets
+        </NuxtLink>
+        <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
+          <i class="pi pi-tag text-25px" /> Mes tags
         </NuxtLink>
       </div>
     </div>
@@ -49,6 +52,9 @@ const { isAuthenticated, logout, user } = useAuth()
 .content{
   background-color: var(--primary);
   border-right: 1px solid #fff;
+  @media (max-width: 770px) {
+    width: 20%;
+  }
 }
 .title {
   color: #fff;
@@ -57,11 +63,18 @@ const { isAuthenticated, logout, user } = useAuth()
 }
 
 .section {
-  color: black;
-  font-size: 20px;
+  color: #fff;
+  font-size: 23px;
+  background-color: var(--primary-background);
 
   &:hover{
-    color: var(--primary);
+    opacity: 0.6;
+  }
+  @media (min-width: 1201px) {
+    i {
+      align-self: flex-start;
+      justify-self: flex-start;
+    }
   }
 }
 
@@ -85,6 +98,5 @@ const { isAuthenticated, logout, user } = useAuth()
 .bg-primary-color-white{
   background-color: white;
   color: var(--primary);
-  font-weight: bold;
 }
 </style>

@@ -10,7 +10,6 @@ class Account(
     val owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
-    val periodicalTransactions: MutableList<PeriodicalTransaction> = mutableListOf()
 ){
 
     val label: String
@@ -48,6 +47,13 @@ class Account(
             label: $labelAccount
             initialSold: $initialSold
         """.trimIndent()
+    }
+
+    fun updateSoldFromTransactions(oldTransaction: Transaction, newTransaction: Transaction) {
+         // First modification
+        this.amount = if(oldTransaction.isIncome) amount - oldTransaction.amount else amount + oldTransaction.amount
+        // Second modification
+        this.amount = if(newTransaction.isIncome) amount + newTransaction.amount else amount - newTransaction.amount
     }
 
     fun addTransaction(transaction: Transaction) {

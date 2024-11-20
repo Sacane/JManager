@@ -87,7 +87,7 @@ function openAccountDialog() {
       <h2 class="info-text">
         Double cliquez sur un compte pour visualiser ses transactions
       </h2>
-      <DataTable v-model:selection="row" :value="data" selection-mode="single" data-key="id" table-style="min-width: 50rem" @row-dblclick="onRowClick">
+      <DataTable v-model:selection="row" responsive-layout="scroll" :value="data" selection-mode="single" data-key="id" table-style="min-width: 10rem" @row-dblclick="onRowClick">
         <template #header>
           <div class="flex flex-row h-auto pl10px">
             <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />

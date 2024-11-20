@@ -28,11 +28,6 @@ export default defineConfig({
     presetTypography(),
     presetWebFonts({
       provider: 'google',
-      fonts: {
-        display: 'Red Hat Display',
-        text: 'Red Hat Text',
-        mono: 'JetBrains Mono',
-      },
     }),
   ],
   transformers: [

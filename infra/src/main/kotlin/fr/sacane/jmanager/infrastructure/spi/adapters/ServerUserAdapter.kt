@@ -15,7 +15,8 @@ import java.util.logging.Logger
 @Service
 @Adapter(Side.INFRASTRUCTURE)
 class ServerUserAdapter (
-    private val userPostgresRepository: UserPostgresRepository
+    private val userPostgresRepository: UserPostgresRepository,
+    private val subscriptionMapper: SubscriptionMapper
 ) : UserRepository{
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
@@ -63,7 +64,7 @@ class ServerUserAdapter (
     }
     @Transactional
     override fun upsert(user: User): User? {
-        val userResource = user.asExistingResource()
+        val userResource = user.asExistingResource(subscriptionMapper = subscriptionMapper)
         val userResponse = userPostgresRepository.save(userResource)
         return userResponse.toModel()
     }
