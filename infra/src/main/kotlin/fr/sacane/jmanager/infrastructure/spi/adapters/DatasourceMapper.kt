@@ -144,19 +144,25 @@ class SubscriptionMapper(
 ) {
     internal fun asSubscriptionResource(subscription: SubscriptionComplete, userResource: UserResource?): SubscriptionEntity {
         val accounts = subscription.linkedAccountIds.map { accountJpaRepository.findByIdOrNull(it)!! }
-        return SubscriptionEntity(
+        val asResource = subscription.subscription.tag.asResource()
+        val subscriptionEntity = SubscriptionEntity(
             subscription.subscription.label,
             subscription.subscription.startDate,
             subscription.subscription.amount.amount,
             subscription.subscription.isIncome,
-                accounts.toMutableList(),
-                userResource
-            )
+            accounts = accounts.toMutableList(),
+            owner = userResource
+        )
+        when(asResource) {
+            is DefaultTagResource -> subscriptionEntity.tag = asResource
+            is TagPersonalResource -> subscriptionEntity.personalTag = asResource
+        }
+        return subscriptionEntity
     }
 
     internal fun toDomain(subscriptionEntity: SubscriptionEntity): SubscriptionComplete {
         return SubscriptionComplete(
-            subscription = Subscription(subscriptionEntity.amount.toAmount(), subscriptionEntity.label, subscriptionEntity.beginDate, subscriptionEntity.isIncome),
+            subscription = Subscription(subscriptionEntity.amount.toAmount(), subscriptionEntity.label, subscriptionEntity.beginDate, subscriptionEntity.isIncome, linkedAccount = emptyList(), tag = subscriptionEntity.tag?.toDomain()!!),
             linkedAccountIds = subscriptionEntity.accounts.map { it.idAccount!! }
         )
     }

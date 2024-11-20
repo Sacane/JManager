@@ -11,7 +11,10 @@ class SubscriptionEntity(
     val beginDate: LocalDate,
     val amount: BigDecimal,
     val isIncome: Boolean,
-
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
+    var tag: DefaultTagResource? = null,
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
+    var personalTag:TagPersonalResource? = null,
     @ManyToMany(cascade = [(CascadeType.DETACH)], mappedBy = "subscriptions")
     val accounts: MutableList<AccountResource>,
     @ManyToOne(cascade = [(CascadeType.DETACH)])
