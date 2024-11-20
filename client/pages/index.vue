@@ -7,7 +7,7 @@ definePageMeta({
 })
 
 const { user, isAuthenticated } = useAuth()
-const toastr = useJToast()
+const toast = useJToast()
 onMounted(() => {
   const currentDate = new Date()
   if (user.value == null || user.value.refreshExpirationDate > currentDate) {
@@ -21,9 +21,9 @@ const { createAccount } = useAccounts()
 function handleAccountCreation(account) {
   createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
     .then((acc) => {
-      toastr.success(`La création du compte ${acc.label} a été un succès !`)
+      toast.success(`La création du compte ${acc.label} a été un succès !`)
       navigateTo(`/account/${acc.id}`)
-    }).catch(err => toastr.errorAxios(err)).finally(() => isAccountDialogOpen.value = false)
+    }).catch(err => toast.errorAxios(err)).finally(() => isAccountDialogOpen.value = false)
 }
 function cancel() {
   isAccountDialogOpen.value = false
@@ -40,24 +40,27 @@ function createAccountIfAuthenticated() {
     <h1 class="text-3xl font-bold text-center mb-8 ">
       Un sommaire rapide et pratique pour gérer votre budget et vos dépenses
     </h1>
-    <div class="card rounded-lg shadow-lg bg-white p-6 mb-8 text-center create-container" @click="createAccountIfAuthenticated()">
-      <h2 class="text-2xl italic mb-4">
-        Ajouter un compte
-      </h2>
-      <p class="text-center">
-        JManager vous permet de gérer de manière indépendante vos dépenses en créant un ou plusieurs comptes.<br>
-        Vous pouvez ainsi gérer les dépenses de plusieurs personnes, entités, projets, et autres avec un seul profil.
-      </p>
-    </div>
-    <div class="card rounded-lg shadow-lg bg-white p-6 text-center" @click="createAccountIfAuthenticated()">
-      <h2 class="text-2xl italic mb-4">
-        Ajouter une transaction
-      </h2>
-      <p class="text-center">
-        Une transaction permet de mettre à jour la vue du budget d'un compte.<br>
-        Elle contient la date à laquelle la dépense a été effectuée, le montant, le compte concerné, et son label.
-      </p>
-    </div>
+    <TitleCard
+      class="create-container"
+      title="Créer vos livrets" description="JManager vous permet de gérer de manière indépendante vos dépenses en créant un ou plusieurs comptes.
+        Vous pouvez ainsi gérer les dépenses de plusieurs personnes, entités, projets, et autres avec un seul profil."
+      :on-click="createAccountIfAuthenticated"
+    />
+    <TitleCard
+      title="Créer vos transactions"
+      description="Une transaction permet de mettre à jour la vue du budget d'un compte.
+        Elle contient la date à laquelle la dépense a été effectuée, le montant, le compte concerné, et son label."
+    />
+    <TitleCard
+      title="Créer vos transactions prévisionnelles"
+      description="Une transaction prévisionnelle (TP) vous permettent de prévoir des potentielles transaction, afin d'avoir une visibilité plus concrète sur vos futures dépenses.
+        En un seul clique passer ces TP en transactions afin de les confirmer dans vos dépenses réels !"
+    />
+    <TitleCard
+      title="Créer vos mensualités"
+      description="Une mensualité est une transaction que vous considérez appliquable tous les mois comme la dépense d'un loyer ou bien le gain d'un salaire.
+        Elles vous permettront chaque mois avec votre confirmation de pouvoir les transformer en transaction"
+    />
     <AccountBookingDialog
       integerpart="0"
       decimalpart="0"
@@ -70,24 +73,16 @@ function createAccountIfAuthenticated() {
 
 <style scoped>
 .container {
-  max-width: 800px;
+  max-width: 40%;
 }
 .container h1{
   font-family: 'aktiv', sans-serif;
   font-weight: 800;
   color: var(--primary);
 }
-
-.card {
-  transition: transform 0.3s ease;
-}
 .create-container{
   &:hover{
     cursor: pointer;
   }
-}
-
-.card:hover {
-  transform: translateY(-5px);
 }
 </style>

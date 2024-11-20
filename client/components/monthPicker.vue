@@ -33,11 +33,6 @@ function onMonthChange() {
 </template>
 
 <style scoped>
-.month-picker {
-  font-family: Arial, sans-serif;
-
-}
-
 option {
   padding: 0.5rem 1rem;
   background-color: #ffffff;

@@ -8,7 +8,6 @@ import fr.sacane.jmanager.domain.models.UserId
 @Port(Side.INFRASTRUCTURE)
 interface AccountRepositoryPort {
     fun editFromAnother(account: Account): Account?
-    fun getLastSheetPosition(accountId: Long): Int?
     fun save(ownerId: UserId, account: Account): Account?
     fun findAccountByIdWithTransactions(accountId: Long): Account?
     fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Account?
