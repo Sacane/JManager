@@ -21,7 +21,9 @@ data class Subscription(
     val amount: Amount,
     val label: String,
     val startDate: LocalDate,
-    val isIncome: Boolean
+    val isIncome: Boolean,
+    val linkedAccount: List<Account>,
+    val tag: Tag
 )
 
 data class SubscriptionComplete(
