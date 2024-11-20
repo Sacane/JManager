@@ -40,5 +40,13 @@ export default function useSheet() {
     })
   }
 
-  return { findByDate, saveSheet, deleteSheet, editSheet, findTransactionById }
+  function confirmPreviewTransaction(accountId, transactionId): Promise<TransactionResultDTO> {
+    return post(`sheet/transaction/confirm`, {
+      userID: user.value?.id,
+      transactionID: transactionId,
+      accountID: accountId,
+    })
+  }
+
+  return { findByDate, saveSheet, deleteSheet, editSheet, findTransactionById, confirmPreviewTransaction }
 }

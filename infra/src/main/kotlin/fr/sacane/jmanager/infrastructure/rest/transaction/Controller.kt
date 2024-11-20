@@ -115,7 +115,40 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
                 it!!.toDTO()
             }.toResponseEntity()
 
+    @PostMapping("transaction/confirm")
+    fun confirmPreviewTransaction(
+        @RequestBody command: ConfirmPreviewCommand,
+        @RequestHeader("Authorization") token: String
+    ): ResponseEntity<TransactionResultDTO> {
+        logger.info("Confirming preview Transaction...")
+        return transactionFeature.confirmPreviewTransaction(
+            userId = command.userID.id(),
+            transactionId = command.transactionID,
+            accountID = command.accountID,
+            token = token.asTokenUUID()
+        ).map { it.transaction.exportAmountValues { expense, income ->
+                TransactionResultDTO(
+                    it.transaction.id.toString(),
+                    it.transaction.label,
+                    it.transaction.date,
+                    expense.toString(),
+                    income,
+                    it.transaction.tag.toDTO(),
+                    it.accountAmount.amount.toString(),
+                    it.accountPreviewAmount.amount.toString(),
+                    it.transaction.isPreview
+                )
+            }
+        }.toResponseEntity()
+    }
+
     companion object {
         private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)
     }
 }
+
+data class ConfirmPreviewCommand(
+    val userID: Long,
+    val accountID: Long,
+    val transactionID: Long
+)

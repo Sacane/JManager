@@ -15,11 +15,12 @@ import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
-    fun bookTransaction(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<TransactionCreationResult>
+    fun bookTransaction(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Response<TransactionResumeResult>
     fun retrieveTransactionsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Response<List<Transaction>>
-    fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<TransactionCreationResult>
+    fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Response<TransactionResumeResult>
     fun findById(userID: Long, id: Long, token: UUID): Response<Transaction>
     fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID)
+    fun confirmPreviewTransaction(userId: UserId, token: UUID, accountID: Long, transactionId: Long): Response<TransactionResumeResult>
 }
 
 @DomainService
@@ -39,7 +40,7 @@ class TransactionFeatureImpl(
         accountID: Long,
         transaction: Transaction,
         token: UUID
-    ): Response<TransactionCreationResult> = session.authenticate(UserId(userID), token, roleUser){
+    ): Response<TransactionResumeResult> = session.authenticate(UserId(userID), token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction Response.invalid("L'ID de la transaction est null")
 
@@ -51,7 +52,7 @@ class TransactionFeatureImpl(
             acc.removeTransactionById(transaction.id)
             acc.addTransaction(transaction)
             accountRepository.update(acc)
-            Response.ok(TransactionCreationResult(transaction, acc.amount, acc.previewAmount))
+            Response.ok(TransactionResumeResult(transaction, acc.amount, acc.previewAmount))
         }
     }
 
@@ -60,13 +61,13 @@ class TransactionFeatureImpl(
         token: UUID,
         accountLabel: String,
         transaction: Transaction
-    ): Response<TransactionCreationResult> = session.authenticate(userId, token) {
+    ): Response<TransactionResumeResult> = session.authenticate(userId, token) {
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel) ?: return@executeInTransaction Response.notFound("Le compte $accountLabel n'existe pas")
             val newTr =  transactionRepository.save(account.id!!, transaction) ?: return@executeInTransaction Response.invalid("Erreur est survenu lors de la transaction")
             account.addTransaction(newTr)
             accountRepository.update(account)
-            Response.ok(TransactionCreationResult(newTr, account.amount, account.previewAmount))
+            Response.ok(TransactionResumeResult(newTr, account.amount, account.previewAmount))
         }
     }
 
@@ -100,6 +101,23 @@ class TransactionFeatureImpl(
             account.removeTransactionIf(isSheetOnList)
             accountRepository.upsert(account)
             transactionRepository.deleteAllSheetsById(sheetIds)
+        }
+    }
+
+    override fun confirmPreviewTransaction(
+        userId: UserId,
+        token: UUID,
+        accountID: Long,
+        transactionId: Long
+    ): Response<TransactionResumeResult> = session.authenticate(userId, token) {
+        return@authenticate infraTransactionManager.executeInTransaction(Any()) {
+            val account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction Response.notFound()
+            val transaction = transactionRepository.findTransactionById(transactionId) ?: return@executeInTransaction Response.notFound()
+            transaction.isPreview = false
+            account.removeTransactionById(transactionId)
+            account.addTransaction(transaction)
+            accountRepository.upsert(account)
+            return@executeInTransaction Response.ok(TransactionResumeResult(transaction, account.amount, account.previewAmount))
         }
     }
 
