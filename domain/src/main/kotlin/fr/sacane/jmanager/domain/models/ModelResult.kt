@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
-data class TransactionCreationResult (
+data class TransactionResumeResult (
     val transaction: Transaction,
     val accountAmount: Amount,
     val accountPreviewAmount: Amount

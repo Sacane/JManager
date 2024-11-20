@@ -14,7 +14,7 @@ const { translate, monthFromNumber } = useDate()
 const tag = useTag()
 
 const { findById } = useAccounts()
-const { findByDate, deleteSheet } = useSheets()
+const { findByDate, deleteSheet, confirmPreviewTransaction } = useSheets()
 const date = new Date()
 const tags = ref<TagDTO[]>([])
 const data = reactive({
@@ -227,6 +227,30 @@ function rowStyle(row): any | undefined {
   }
   return style
 }
+
+function confirmPreview(transaction) {
+  confirmPreviewTransaction(data.currentAccountId, transaction.id)
+    .then((result) => {
+      data.accountAmount = result.accountAmount
+      data.previewAccountAmount = result.accountPreviewAmount
+      const index = actualSheets.value.findIndex(v => v.id === transaction.id)
+      actualSheets.value.splice(index, 1)
+      actualSheets.value.push(asDisplayableTransaction(result))
+      actualSheets.value = actualSheets.value.sort((a, b) => b.date < a.date)
+      toastr.success('La validation de la transaction s\'est bien déroulé !')
+    })
+}
+
+function onConfirmPreview(transaction) {
+  confirm.require({
+    message: 'Confirmez-vous vouloir valider cette transaction prévisionnelle ?',
+    header: 'Valider la transaction',
+    icon: 'pi pi-check',
+    acceptLabel: 'Oui',
+    rejectLabel: 'Non',
+    accept: () => confirmPreview(transaction),
+  })
+}
 </script>
 
 <template>
@@ -282,6 +306,13 @@ function rowStyle(row): any | undefined {
                 <div class="color-square" :style="{ backgroundColor: `rgb(${data.tagDTO.colorDTO.red}, ${data.tagDTO.colorDTO.green}, ${data.tagDTO.colorDTO.blue})` }" />
               </div>
             </div>
+          </template>
+        </Column>
+        <Column :style="{ width: '10rem', textAlign: 'center' }">
+          <template #body="{ data }">
+            <button v-if="data.isPreview" class="bg-white border-white color-black button-validate" @click="onConfirmPreview(data)">
+              <i class="pi pi-check icon-validate" style="color: green; font-size: 1rem;" />
+            </button>
           </template>
         </Column>
       </DataTable>
@@ -353,7 +384,12 @@ function rowStyle(row): any | undefined {
 .test{
   background-color: blue;
 }
-
+.button-validate {
+  border-radius: 2px;
+}
+.icon-validate {
+  margin: 2px;
+}
 .preview-button {
   background-color: #a6a4a4;
   border-color: #a6a4a4;
