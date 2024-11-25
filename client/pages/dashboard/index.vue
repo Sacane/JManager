@@ -47,15 +47,15 @@ onMounted(() => {
   <div class="lg:self-center h-full w-full flex flex-row mt-50px justify-center">
     <div class="flex flex-col division max-w[90%] gap-5 lg:(w-full max-w[50%] gap-15px)">
       <div class="flex flex-col gap-20px lg:(line w-full flex flex-row)">
-        <div class="content lg:( w-[15%])">
+        <div class="content profile lg:( w-[25%] flex flex-col justify-center align-center )">
           <div class="user-icon-container">
             <i class="pi pi-user user-icon" />
           </div>
-          <h2 class="ml-7">
+          <h2>
             {{ user?.username }}
           </h2>
         </div>
-        <div class="content lg:(w-[85%] card)" @click="onDialogOpen">
+        <div class="content lg:(w-[75%] card)" @click="onDialogOpen">
           <div class="card-header">
             <div class="title-container">
               <h1>Livrets</h1>
@@ -132,6 +132,17 @@ onMounted(() => {
     transform: scale(1.05);
   }
 }
+.profile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  @media (max-width: 780px) {
+    justify-content: space-evenly;
+    .user-icon-container {
+      height: 110px;
+    }
+  }
+}
 .user-icon-container {
   margin-top: 10px;
   margin-left: 10px;
@@ -164,10 +175,7 @@ onMounted(() => {
 .card-header {
   display: flex;
   align-items: center;
-}
-
-.title-container h1 {
-  margin-left: 10px;
+  justify-content: center;
 }
 
 .title-container p {
