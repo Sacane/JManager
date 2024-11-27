@@ -6,7 +6,7 @@ const { isAuthenticated, logout, user } = useAuth()
 </script>
 
 <template>
-  <div class="hidden lg:flex flex-col border-r w-15% h-screen text-center justify-between content position-fixed">
+  <div class="hidden lg:flex flex-col border-r w-12% h-screen text-center justify-between content position-fixed">
     <div class="flex flex-col">
       <NuxtLink to="/" class="title decoration-none">
         <img src="@/public/favicon.ico" alt="icon" class="w-35px"> JManager
