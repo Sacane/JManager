@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.account
+package fr.sacane.jmanager.infrastructure.api.account
 
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.ResponseState
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.infrastructure.rest.*
+import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger

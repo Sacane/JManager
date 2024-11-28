@@ -1,7 +1,7 @@
-package fr.sacane.jmanager.infrastructure.rest.transaction
+package fr.sacane.jmanager.infrastructure.api.transaction
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import fr.sacane.jmanager.infrastructure.rest.tag.TagDTO
+import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import java.time.LocalDate
 import java.time.Month
 

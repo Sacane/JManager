@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.preview
+package fr.sacane.jmanager.infrastructure.api.preview
 
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
@@ -8,10 +8,10 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserAccountID
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.PreviewTransactionFeature
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.preview.dto.PreviewTransactionDTO
-import fr.sacane.jmanager.infrastructure.rest.preview.dto.PreviewTransactionOutDTO
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
+import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.preview.dto.PreviewTransactionDTO
+import fr.sacane.jmanager.infrastructure.api.preview.dto.PreviewTransactionOutDTO
+import fr.sacane.jmanager.infrastructure.api.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 

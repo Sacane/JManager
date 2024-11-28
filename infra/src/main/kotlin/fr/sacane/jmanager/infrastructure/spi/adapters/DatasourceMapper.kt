@@ -2,10 +2,9 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.TagRepository
-import fr.sacane.jmanager.infrastructure.rest.asAwtColor
+import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.SubscriptionJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component

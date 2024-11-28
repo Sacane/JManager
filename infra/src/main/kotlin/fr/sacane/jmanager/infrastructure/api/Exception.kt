@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest
+package fr.sacane.jmanager.infrastructure.api
 
 data class ErrorMessage(
     var status: Int,
