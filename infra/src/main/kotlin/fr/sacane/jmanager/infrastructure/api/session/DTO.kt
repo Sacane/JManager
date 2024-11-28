@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.session
+package fr.sacane.jmanager.infrastructure.api.session
 
 import java.time.LocalDateTime
 

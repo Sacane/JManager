@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.tag
+package fr.sacane.jmanager.infrastructure.api.tag
 
 data class TagDTO(
     val tagId: Long,

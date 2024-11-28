@@ -1,7 +1,7 @@
-package fr.sacane.jmanager.infrastructure.rest.preview.dto
+package fr.sacane.jmanager.infrastructure.api.preview.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import fr.sacane.jmanager.infrastructure.rest.tag.TagDTO
+import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import java.time.LocalDate
 
 data class PreviewTransactionOutDTO(

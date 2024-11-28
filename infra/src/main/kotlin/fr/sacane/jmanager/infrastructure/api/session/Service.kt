@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.session
+package fr.sacane.jmanager.infrastructure.api.session
 
 import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
 import fr.sacane.jmanager.domain.port.api.SessionManager

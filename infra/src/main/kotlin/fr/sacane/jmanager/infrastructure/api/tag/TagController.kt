@@ -1,14 +1,14 @@
-package fr.sacane.jmanager.infrastructure.rest.tag
+package fr.sacane.jmanager.infrastructure.api.tag
 
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
-import fr.sacane.jmanager.infrastructure.rest.asAwtColor
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.toDTO
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
+import fr.sacane.jmanager.infrastructure.api.asAwtColor
+import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.toDTO
+import fr.sacane.jmanager.infrastructure.api.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 

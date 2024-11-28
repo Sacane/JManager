@@ -1,11 +1,11 @@
-package fr.sacane.jmanager.infrastructure.rest
+package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.infrastructure.rest.account.AccountDTO
-import fr.sacane.jmanager.infrastructure.rest.session.UserDTO
-import fr.sacane.jmanager.infrastructure.rest.transaction.SheetDTO
-import fr.sacane.jmanager.infrastructure.rest.tag.ColorDTO
-import fr.sacane.jmanager.infrastructure.rest.tag.TagDTO
+import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
+import fr.sacane.jmanager.infrastructure.api.session.UserDTO
+import fr.sacane.jmanager.infrastructure.api.transaction.SheetDTO
+import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
+import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import org.springframework.http.ResponseEntity
 import java.awt.Color
 import java.math.BigDecimal

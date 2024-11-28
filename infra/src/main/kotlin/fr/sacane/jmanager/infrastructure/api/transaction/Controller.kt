@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest.transaction
+package fr.sacane.jmanager.infrastructure.api.transaction
 
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
@@ -6,10 +6,10 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Response
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
-import fr.sacane.jmanager.infrastructure.rest.id
-import fr.sacane.jmanager.infrastructure.rest.toDTO
-import fr.sacane.jmanager.infrastructure.rest.toModel
-import fr.sacane.jmanager.infrastructure.rest.toResponseEntity
+import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.toDTO
+import fr.sacane.jmanager.infrastructure.api.toModel
+import fr.sacane.jmanager.infrastructure.api.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate

@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.rest
+package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.infrastructure.JmanagerApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
