@@ -1,8 +1,5 @@
 name: Build
 
-variables:
-  GRADLE_USER_HOME: "/home/sacane/.gradle"
-
 on:
   push:
     branches:
@@ -13,7 +10,8 @@ jobs:
     name: Build and deploy
     runs-on: self-hosted
     if: github.ref == 'refs/heads/master'
-
+    env:
+      GRADLE_USER_HOME: "/home/runner/.gradle"
     steps:
       - uses: actions/checkout@v4
         with:
