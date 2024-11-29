@@ -1,39 +1,45 @@
-# JManager
+# 💰 JManager - Simplify Your Personal Finance Management 🏦
 
-A Web App that allow you to manage your personal budget and increase the global visual over it.
+Welcome to **JManager**, a modern and intuitive application designed to help you manage your daily finances. Whether you want to track your transactions, plan future expenses, or analyze your financial habits with advanced metrics, **JManager** is the tool for you! 🚀
 
-## Build
+---
 
-Run the following task to generate the complete JAR using the shadow plugin.
-```shell
-#On linux
-gradle assemble
+## 🌟 Key Features
 
-#On windows
-.\gradlew assemble
-```
+✔️ **Transaction Management**: Add, edit, and track all your financial transactions.  
+✔️ **Forecasted Transactions**: Plan your future expenses or revenues with distinct **current** and **forecasted** balances.  
+✔️ **Multi-Booklets**: Organize your finances across multiple booklets.  
+✔️ **Custom Tags**: Assign tags to your transactions for intelligent categorization and detailed tracking.  
+✔️ **Data Analysis**: Generate metrics and charts to visualize your financial habits. 📊
+---
 
+## ⚙️ Tech Stack
 
-## Features
+Here's the technology stack used to build **JManager**:
 
-- You can register and login, so you can manipulate your own data
-- You can add an "account" which be containers of your actual budget
-- You can add sheets associated by an account, sheet is defined by a name, an amount a date and binary input of if this corresponds to an income or an outcome.
-- You can easily visualize feedback to your budget state by months.
-- You can easily visualize feedback to all of your registered accounts.
+### Backend 🛠️
+- **Language**: [Kotlin](https://kotlinlang.org/)
+- **Framework**: [Spring](https://spring.io/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/)
+- **Architecture**: Hexagonal 🛑, with complete separation of business logic and infrastructure.
 
-## Dependencies
+### Frontend 🎨
+- **Framework**: [Nuxt.js (Vue 3)](https://nuxt.com/)
+- **CSS Library**: [UnoCSS](https://unocss.dev/)
 
-* [Kotlin](https://kotlinlang.org/), modern programming language based on the JVM.
-* [Spring](https://spring.io/) 
-* [PostgreSQL](https://www.postgresql.org/) for the data persistence.
+### Code Quality ✅
+- **Static Analysis**: [SonarQube](https://www.sonarsource.com/) for monitoring code quality, detecting potential issues, and ensuring the code remains clean and maintainable.
 
-## More
+### Architecture
+✔️ **Hexagonal Architecture**: A robust and maintainable application thanks to a clear separation of business logic and infrastructure.
 
-This project is my first attempt to build a **business-based application**. More precisely, an app centered by the customer business expectation.
-I also wanted it to be as flexible as possible.
-To do this, I tried to implement the concept of **Hexagonal architecture**, at least my version of this architecture.
+---
 
-Here you can find a good topic about this architecture [In french](https://blog.octo.com/architecture-hexagonale-trois-principes-et-un-exemple-dimplementation/) or another topic in [english](https://medium.com/ssense-tech/hexagonal-architecture-there-are-always-two-sides-to-every-story-bc0780ed7d9c).
+## 🚀 Installation and Startup
 
-
+### Prerequisites
+Before starting, ensure you have the following installed on your machine:
+- **JDK 21** (or higher)
+- **Gradle (v8.5 or higher)**
+- **Node.js** and **pnpm**
+- **Docker** (optional for PostgreSQL and SonarQube)

@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
 plugins {
-	kotlin("jvm") version "1.6.21"
+	kotlin("jvm") version "2.0.0"
 	id("com.github.johnrengelman.shadow") version "7.0.0"
 	id("org.sonarqube") version "5.0.0.4638"
 	jacoco
@@ -10,19 +10,13 @@ plugins {
 
 
 group = "fr.sacane"
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
 dependencies{
 	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
 }
 allprojects{
 	repositories {
 		mavenCentral()
-	}
-	tasks.withType<KotlinCompile> {
-		kotlinOptions {
-			freeCompilerArgs = listOf("-Xjsr305=strict")
-			jvmTarget = "17"
-		}
 	}
 	tasks.withType<Test> {
 		useJUnitPlatform()
@@ -72,15 +66,6 @@ tasks.register("jacocoRootReport", JacocoReport::class) {
 	}
 }
 tasks {
-	compileJava{
-		sourceCompatibility= "17"
-		targetCompatibility = "17"
-	}
-	compileKotlin {
-		kotlinOptions {
-			jvmTarget = "17"
-		}
-	}
 	clean {
 		dependsOn(":client:clean")
 		delete(file("${project.projectDir}/executables"))

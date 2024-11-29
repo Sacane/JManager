@@ -2,12 +2,12 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTra
 
 plugins {
     id("com.github.johnrengelman.shadow") version "7.0.0"
-    id("org.springframework.boot") version "3.1.3"
+    id("org.springframework.boot") version "3.4.0"
     id("io.spring.dependency-management") version "1.0.13.RELEASE"
-    kotlin("jvm") version "1.6.21"
-    kotlin("plugin.spring") version "1.6.21"
-    kotlin("plugin.noarg") version "1.6.21"
-    kotlin("plugin.jpa") version "1.6.21"
+    kotlin("jvm") version "2.0.0"
+    kotlin("plugin.spring") version "2.0.0"
+    kotlin("plugin.noarg") version "2.0.0"
+    kotlin("plugin.jpa") version "2.0.0"
     jacoco
 }
 
@@ -21,24 +21,26 @@ repositories{
 
 group = "fr.sacane.jmanager"
 version = "1.0"
-val springVersion = "3.1.3"
+val springBootVersion = "3.4.0"
 dependencies {
 
-    implementation("org.springframework.boot:spring-boot-starter-web:${springVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa:${springVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
     implementation("com.ToxicBakery.library.bcrypt:bcrypt:1.0.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
     implementation("org.postgresql:postgresql")
-    implementation("org.springframework.boot:spring-boot-starter-security:${springVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
     implementation(project(mapOf("path" to ":domain")))
-    testImplementation("org.springframework.boot:spring-boot-starter-test:${springVersion}")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
     testImplementation("org.hamcrest:hamcrest:2.2")
     testImplementation("com.h2database:h2")
+    testImplementation("io.rest-assured:rest-assured:5.5.0")
+    testImplementation("io.rest-assured:kotlin-extensions:5.5.0")
 }
 
 jacoco {
@@ -54,15 +56,6 @@ tasks.jacocoTestReport {
 }
 
 tasks {
-    compileJava{
-        sourceCompatibility= "17"
-        targetCompatibility = "17"
-    }
-    compileKotlin {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
     shadowJar {
         mergeServiceFiles()
         archiveBaseName.set("Jmanager")
