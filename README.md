@@ -6,11 +6,11 @@ Welcome to **JManager**, a modern and intuitive application designed to help you
 
 ## 🌟 Key Features
 
-✔️ **Transaction Management**: Add, edit, and track all your financial transactions.  
-✔️ **Forecasted Transactions**: Plan your future expenses or revenues with distinct **current** and **forecasted** balances.  
-✔️ **Multi-Booklets**: Organize your finances across multiple booklets.  
-✔️ **Custom Tags**: Assign tags to your transactions for intelligent categorization and detailed tracking.  
-✔️ **Data Analysis**: Generate metrics and charts to visualize your financial habits. 📊
+✔️ Transaction Management**: Add, edit, and track all your financial transactions.  
+✔️ Forecasted Transactions**: Plan your future expenses or revenues with distinct **current** and **forecasted** balances.  
+✔️ Multi-Booklets**: Organize your finances across multiple booklets.  
+✔️ Custom Tags**: Assign tags to your transactions for intelligent categorization and detailed tracking.  
+✔️ Data Analysis**: Generate metrics and charts to visualize your financial habits. 📊
 ---
 
 ## ⚙️ Tech Stack
