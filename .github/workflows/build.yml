@@ -37,7 +37,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: ./gradlew build sonar --info
+        run: ./gradlew clean build sonar --info
       # Ajouter la clé SSH
       - name: Add SSH key
         uses: webfactory/ssh-agent@v0.5.3
