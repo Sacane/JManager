@@ -1,5 +1,8 @@
 name: Build
 
+variables:
+  GRADLE_USER_HOME: "/home/sacane/.gradle"
+
 on:
   push:
     branches:
