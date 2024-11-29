@@ -75,6 +75,7 @@ tasks {
         from("infra/src/main/resources/application.properties") {
             into("executables")
         }
+        setProperty("zip64", true)
     }
     jar{
         manifest {
