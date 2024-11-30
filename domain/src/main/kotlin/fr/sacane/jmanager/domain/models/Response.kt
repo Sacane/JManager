@@ -16,7 +16,7 @@ enum class ResponseState{
     }
 }
 
-class Response <S> private constructor(
+class Response <S> internal constructor(
     val status: ResponseState,
     private var data: S? = null,
     private var error: String = "This response is not an error"
@@ -85,3 +85,15 @@ class Response <S> private constructor(
         return mapper.invoke(this.data)
     }
 }
+fun <S> ok(entity: S): Response<S> = Response(ResponseState.OK, entity)
+fun ok(): Response<Nothing> = Response(ResponseState.OK)
+fun <S> invalid(): Response<S> = Response(ResponseState.INVALID)
+fun <S> timeout(): Response<S> = Response(ResponseState.TIMEOUT)
+fun <S> notFound(): Response<S> = Response(ResponseState.NOT_FOUND)
+fun <S> forbidden(): Response<S> = Response(ResponseState.FORBIDDEN)
+
+fun <S> notFound(message: String): Response<S> = Response(ResponseState.NOT_FOUND, error=message)
+fun <S> invalid(message: String): Response<S> = Response(ResponseState.INVALID, error=message)
+fun <S> timeout(message: String): Response<S> = Response(ResponseState.TIMEOUT, error=message)
+fun <S> forbidden(message:String): Response<S> = Response(ResponseState.FORBIDDEN, error=message)
+fun <S> unauthorized(message: String): Response<S> = Response(ResponseState.UNAUTHORIZED, error=message)

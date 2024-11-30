@@ -44,15 +44,15 @@ class TransactionFeatureImpl(
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction Response.invalid("L'ID de la transaction est null")
 
-            val acc = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction Response.notFound()
-            val transactionFromDatabase = transactionRepository.findTransactionById(transaction.id) ?: return@executeInTransaction Response.notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
+            val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction Response.notFound()
+            val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy() ?: return@executeInTransaction notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
             transactionFromDatabase.updateFromOther(transaction)
             transaction.lastModified = LocalDateTime.now()
-            transactionRepository.save(acc.id!!, transaction) ?: return@executeInTransaction Response.invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
-            acc.removeTransactionById(transaction.id)
-            acc.addTransaction(transaction)
-            accountRepository.update(acc)
-            Response.ok(TransactionResumeResult(transaction, acc.amount, acc.previewAmount))
+            transactionRepository.save(registeredAccount.id!!, transaction) ?: return@executeInTransaction Response.invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
+            registeredAccount.removeTransactionById(transaction.id)
+            registeredAccount.addTransaction(transaction)
+            accountRepository.update(registeredAccount)
+            Response.ok(TransactionResumeResult(transaction, registeredAccount.amount, registeredAccount.previewAmount))
         }
     }
 
