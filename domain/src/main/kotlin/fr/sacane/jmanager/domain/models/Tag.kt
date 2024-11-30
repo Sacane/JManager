@@ -2,7 +2,9 @@ package fr.sacane.jmanager.domain.models
 
 import java.awt.Color
 
-class Tag(val label: String, val id: Long? = null, val color: Color = Color(0f, 0f, 0f, 0f), val isDefault: Boolean = false){
+class Tag(val label: String, val id: Long? = null, val color: Color = Color(0f, 0f, 0f, 0f), val isDefault: Boolean = false, private val _subTags: MutableList<Subtag> = mutableListOf()){
+    private val subTags: List<Subtag>
+        get() = _subTags.toList()
     override fun toString(): String {
         return """
             name: $label
