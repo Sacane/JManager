@@ -157,9 +157,15 @@ class TransactionFeatureTest: FeatureTest() {
                     generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate()),
                     generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate()),
                 ))
+                transactionState.getStates().forEach {
+                    it.transactions.forEach {  tr ->
+                        println("label: ${tr.label} => ${tr.date.month}")
+                    }
+                }
                 val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId, session.tokenValue, Month.JANUARY, 2024, account.label)
+                response.map { it.size } shouldBe 5
                 response.assertTrue {
-                    size == 5 && all { it.date.month == Month.JANUARY }
+                     all { it.date.month == Month.JANUARY }
                 }
                 response.assertEquals(listOf(t1, t2, t3, t4, t5))
             }
