@@ -9,6 +9,10 @@ fun <T> Response<T>.assertEquals(expectedData: T) {
     assertEquals(ResponseState.OK, this.status) { "Expected status SUCCESS but got ${this.status} with message: ${this.message}" }
     this.onSuccess{data -> assertEquals(expectedData, data)}
 }
+infix fun <T> Response<T>.shouldBe(expectedData: T) {
+    assertEquals(ResponseState.OK, this.status)
+    this.onSuccess{data -> assertEquals(expectedData, data)}
+}
 
 fun <T> Response<T>.assertTrue(predicate: T.() -> Boolean){
     assertEquals(ResponseState.OK, this.status) { "Expected status SUCCESS but got ${this.status} with message: ${this.message}" }

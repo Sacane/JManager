@@ -209,7 +209,7 @@ class InMemoryDatabase {
     fun findAccountById(accountId: Long): Account? {
         for(accountList in accounts.values) {
             val result = accountList.find { it.id == accountId }
-            val accountCopy = Account(result!!.id, result.amount, result.label, result.transactions, result.owner, result.initialSold)
+            val accountCopy = Account(result!!.id, result.amount, result.label, result.transactions.toMutableList(), result.owner, result.initialSold)
             for(transaction in transactions) {
                 if(transaction.key.accountId == accountId) {
                     accountCopy.addAllTransaction(transaction.value.transactions)
