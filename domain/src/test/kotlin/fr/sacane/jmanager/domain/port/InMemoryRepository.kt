@@ -43,7 +43,7 @@ class InMemoryTransactionRepository(
     }
 
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
-        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
+        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label).also { println(it?.transactions) }
     }
 
     override fun getStates(): Collection<IdUserAccountByTransaction> {
@@ -251,8 +251,8 @@ class InMemoryDatabase {
 
     fun upsertTransactions(transactionList: List<Transaction>) {
         transactions.forEach { (key, trs) ->
-            trs.transactions.removeAll { transaction -> transaction.id in transactionList.map { it.id } }
-            trs.transactions.addAll(transactionList)
+            println(trs.transactions.removeAll { transaction -> transaction.id in transactionList.map { it.id } })
+            println(trs.transactions.addAll(transactionList))
 
         }
     }
@@ -287,8 +287,8 @@ class InMemoryDatabase {
             val copyAcc = Account(acc.id, acc.amount, acc.label, mutableListOf(), acc.owner, acc.initialSold)
             transactions.forEach {
                 if(it.key.accountId == acc.id) {
-                    copyAcc.addAllTransaction(it.value.transactions)
-                    copyAcc.addAllTransaction(acc.transactions)
+                    copyAcc.addTransactions(it.value.transactions)
+                    //copyAcc.addTransactions(acc.transactions)
                 }
             }
             return copyAcc

@@ -43,7 +43,6 @@ class TransactionFeatureImpl(
     ): Response<TransactionResumeResult> = session.authenticate(UserId(userID), token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction Response.invalid("L'ID de la transaction est null")
-
             val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction Response.notFound()
             val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy() ?: return@executeInTransaction notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
             transactionFromDatabase.updateFromOther(transaction)
@@ -78,9 +77,8 @@ class TransactionFeatureImpl(
         year: Int,
         account: String
     ): Response<List<Transaction>> = session.authenticate(userId, token) {
-        val user = userRepository.findUserById(userId) ?: return@authenticate Response.notFound("L'utilisateur n'existe pas")
-        Response.ok(transactionRepository.findAccountWithSheetByLabelAndUser(account, user.id)
-            ?.retrieveSheetSurroundAndSortedByDate(month, year)
+        println("userId: $userId")
+        Response.ok(transactionRepository.findAccountWithSheetByLabelAndUser(account, userId)?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate Response.notFound("Aucun compte ne correspond au label indiqué")
         )
     }
