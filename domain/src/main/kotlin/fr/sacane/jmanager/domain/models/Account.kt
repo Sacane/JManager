@@ -85,9 +85,15 @@ class Account(
         }
     }
 
+    fun addTransactions(transactions: List<Transaction>) {
+        transactions.forEach {
+            addTransaction(it)
+        }
+    }
+
     fun addAllTransaction(transactions: List<Transaction>) {
         removeAllTransactions(transactions)
-        _transactions.forEach {
+        transactions.forEach {
             addTransaction(it)
         }
     }

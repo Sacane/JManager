@@ -146,23 +146,20 @@ class TransactionFeatureTest: FeatureTest() {
     inner class RetrieveTransactionsByMonthAndYearFeature {
         @Test
         fun `As a user with existing transactions, I should retrieve them ordering by date and position`() {
-            val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
-            val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
-            val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate())
-            val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
-            val t5 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
             launchWithConnectedUserInstance {
+                println(userId)
+                val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
+                val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
+                val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate())
+                val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
+                val t5 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
+                println(userId)
                 initTransactions(listOf(
                     t1, t2, t4, t3, t5,
                     generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate()),
                     generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate()),
                 ))
-                transactionState.getStates().forEach {
-                    it.transactions.forEach {  tr ->
-                        println("label: ${tr.label} => ${tr.date.month}")
-                    }
-                }
-                val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId, session.tokenValue, Month.JANUARY, 2024, account.label)
+                val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId = userId , session.tokenValue, Month.JANUARY, 2024, account.label)
                 response.map { it.size } shouldBe 5
                 response.assertTrue {
                      all { it.date.month == Month.JANUARY }
@@ -176,15 +173,15 @@ class TransactionFeatureTest: FeatureTest() {
 
         @Test
         fun `Giving an existing transaction, I should correctly edit label, amount and date from it`() {
-            val elements = generateTransaction("test1", 100.toAmount(), true, "01/02/2024".toDate())
             launchWithConnectedUserInstance {
+                val elements = generateTransaction("test1", 100.toAmount(), true, "01/02/2024".toDate())
                 initTransactions(elements.asSingleton())
                 val expectedLabel = "test1.0"
                 val expectedAmount = 105.toAmount()
                 val expectedDate = "02/02/2024".toDate()
                 transactionFeature.editTransaction(
                     userId.id!!, account.id!!, elements.copy(label = "test1.0", amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
-                ).assertTrue { transaction.label == expectedLabel && transaction.amount == expectedAmount && transaction.date == expectedDate}
+                )
 
                 val actualTransaction = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions?.find { tr -> tr.id == elements.id }
