@@ -284,7 +284,7 @@ class InMemoryDatabase {
     fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account? {
         accounts.entries.filter{it.key == userId}.forEach { accByOwn ->
             val acc = accByOwn.value.find { acc -> acc.label == accountLabel } ?: return null
-            val copyAcc = Account(acc.id, acc.amount, acc.label, mutableListOf(), acc.owner, acc.initialSold)
+            val copyAcc = Account(acc.id, Amount(0), acc.label, mutableListOf(), acc.owner, acc.initialSold)
             transactions.forEach {
                 if(it.key.accountId == acc.id) {
                     copyAcc.addTransactions(it.value.transactions)
