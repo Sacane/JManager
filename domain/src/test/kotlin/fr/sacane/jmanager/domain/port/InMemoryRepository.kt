@@ -38,7 +38,7 @@ class InMemoryTransactionRepository(
     }
 
     override fun save(accountId: Long, transaction: Transaction): Transaction {
-        saveAllSheets(listOf(transaction))
+        inMemoryDatabase.saveTransaction(accountId, transaction)
         return transaction
     }
 
@@ -155,7 +155,6 @@ class InMemoryAccountRepository(
     override fun upsert(account: Account): Account {
         account.id?.let {
             inMemoryDatabase.upsert(account)
-            inMemoryDatabase.upsertTransactions(account.transactions)
         }
         return account
     }
@@ -187,46 +186,65 @@ class InMemoryDatabase {
     private val accounts = mutableMapOf<UserId, MutableList<Account>>()
     private val transactions = mutableMapOf<IdUserAccount, IdUserAccountByTransaction>()
 
+    // REFACTO
+
+    private val userByAccount = mutableMapOf<UserId, MutableList<Account>>()
+    private val accountByTransaction = mutableMapOf<Long, MutableList<Transaction>>()
+    private val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
+    private val accountList = mutableListOf<Account>()
+
     fun addAccount(ownerId: UserId, account: Account) {
-        accounts.computeIfAbsent(ownerId) { mutableListOf() }.add(account)
+        if(userByAccount[ownerId] == null) {
+            userByAccount[ownerId] = mutableListOf()
+        }
+        userByAccount[ownerId]?.add(account)
+        accountByTransaction[account.id!!] = mutableListOf()
     }
     fun removeAccountById(accountId: Long) {
-        accounts.forEach { (key, value) ->
-            value.removeIf { it.id == accountId }
+        userByAccount.forEach {
+            it.value.removeIf { account -> account.id == accountId }
         }
+        accountByTransaction.remove(accountId)
     }
 
     fun upsert(account: Account) {
         val accountId = account.id
-        var ownerId = UserId(0)
-        accounts.forEach { (key, value) ->
-            value.removeAll { it.id == accountId }
-            ownerId = key
-        }
-        accounts.computeIfAbsent(ownerId) { mutableListOf() }.add(account)
+        userByAccount[account.owner?.id]?.find { it.id == accountId }?.updateFrom(account)
+        accountByTransaction.computeIfAbsent(accountId!!) { mutableListOf() }
     }
 
     fun findAccountById(accountId: Long): Account? {
-        for(accountList in accounts.values) {
-            val result = accountList.find { it.id == accountId }
-            val accountCopy = Account(result!!.id, result.amount, result.label, result.transactions.toMutableList(), result.owner, result.initialSold)
-            for(transaction in transactions) {
-                if(transaction.key.accountId == accountId) {
-                    accountCopy.addAllTransaction(transaction.value.transactions)
-                    break
-                }
+
+        var targetAccount: Account? = null
+        userByAccount.forEach {
+            val account = it.value.find { acc -> acc.id == accountId }
+            if(account != null) {
+                targetAccount = Account(accountId, account.amount, account.label, accountByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner)
             }
-            return accountCopy
         }
-        return null
+        return targetAccount
     }
 
     fun clearAccounts() {
-        accounts.clear()
+        userByAccount.clear()
+        accountByTransaction.clear()
+    }
+
+    private fun accountsWithTransactions(): List<Account> {
+        val accountList = mutableSetOf<Account>()
+        val result = mutableListOf<Account>()
+        userByAccount.forEach { (_, value) -> accountList.addAll(value) }
+
+        accountList.forEach {
+            result.add(
+                Account(it.id, it.amount, it.label, accountByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner)
+            )
+        }
+        return result
     }
 
     fun accountsByOwner(): Collection<AccountByOwner> {
-        return accounts.map { AccountByOwner(it.value, it.key) }
+        return userByAccount.map { AccountByOwner(it.value, it.key) }
     }
 
     fun initAccounts(initialState: Collection<AccountByOwner>) {
@@ -238,22 +256,22 @@ class InMemoryDatabase {
     }
 
     fun addTransaction(userAccountId: IdUserAccount, transaction: Transaction) {
-        transactions.computeIfAbsent(userAccountId) { IdUserAccountByTransaction(userAccountId, mutableListOf(transaction)) }.transactions.add(transaction)
+        val account = userByAccount[userAccountId.userId]?.find { it.id == userAccountId.accountId }
+        account?.addTransaction(transaction)
+        accountByTransaction[account!!.id]?.add(transaction)
     }
     fun addMassiveTransaction(collection: Collection<IdUserAccountByTransaction>){
         collection.forEach { idByTr ->
-            idByTr.transactions.forEach { tr ->
-                accounts.computeIfAbsent(idByTr.id.userId) { mutableListOf() }.find { it.id == idByTr.id.accountId }?.addTransaction(tr)
+            idByTr.transactions.forEach {
+                addTransaction(idByTr.id, it)
             }
-            transactions.computeIfAbsent(idByTr.id) { IdUserAccountByTransaction(idByTr.id, idByTr.transactions) }
         }
     }
 
     fun upsertTransactions(transactionList: List<Transaction>) {
         transactions.forEach { (key, trs) ->
-            println(trs.transactions.removeAll { transaction -> transaction.id in transactionList.map { it.id } })
-            println(trs.transactions.addAll(transactionList))
-
+            trs.transactions.removeAll { transaction -> transaction.id in transactionList.map { it.id } }
+            trs.transactions.addAll(transactionList)
         }
     }
     fun removeAllTransactionsById(transactionIds: List<Long>) {
@@ -263,10 +281,8 @@ class InMemoryDatabase {
     }
 
     fun findTransactionById(transactionId: Long): Transaction? {
-        transactions.forEach {
-            return it.value.transactions.find { tr -> tr.id == transactionId }
-        }
-        return null
+        return accountsWithTransactions().flatMap { it.transactions }
+            .find { it.id == transactionId }
     }
 
     fun clearUsers() {
@@ -278,25 +294,36 @@ class InMemoryDatabase {
     }
 
     fun findTransactions(): Collection<IdUserAccountByTransaction> {
-        return transactions.values
+        val transactionsResult = mutableMapOf<Pair<IdUserAccount, Long>, Transaction>()
+        userByAccount.forEach { (key, value) ->
+            value.forEach {
+                val id = IdUserAccount(key, it.id!!)
+                accountByTransaction[it.id]!!.forEach { transaction ->
+                    transactionsResult[id to transaction.id!!] = transaction
+                }
+
+            }
+        }
+        val result = mutableMapOf<IdUserAccount, MutableList<Transaction>>()
+        transactionsResult.forEach {
+            if(result[it.key.first] == null) {
+                result[it.key.first] = mutableListOf()
+            }
+            result[it.key.first]?.add(it.value)
+        }
+        return result.map { IdUserAccountByTransaction(it.key, it.value) }
     }
 
-    fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account? {
-        accounts.entries.filter{it.key == userId}.forEach { accByOwn ->
-            val acc = accByOwn.value.find { acc -> acc.label == accountLabel } ?: return null
-            val copyAcc = Account(acc.id, Amount(0), acc.label, mutableListOf(), acc.owner, acc.initialSold)
-            transactions.forEach {
-                if(it.key.accountId == acc.id) {
-                    copyAcc.addTransactions(it.value.transactions)
-                    //copyAcc.addTransactions(acc.transactions)
-                }
-            }
-            return copyAcc
-        }
-        return null
-    }
+    fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Account?
+        = accountsWithTransactions().find { it.owner?.id == userId && it.label == accountLabel }
+
 
     fun clearTransactions() {
         transactions.clear()
+        accountByTransaction.clear()
+    }
+
+    fun saveTransaction(accountId: Long, transaction: Transaction) {
+        accountByTransaction[accountId]?.add(transaction)
     }
 }

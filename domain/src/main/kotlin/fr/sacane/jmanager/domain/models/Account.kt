@@ -33,6 +33,7 @@ class Account(
         _transactions.replaceAll {
             Transaction(it.id, it.label, it.date, it.amount, it.isIncome, it.tag)
         }
+        previewAmount = account.previewAmount
     }
 
     override fun hashCode(): Int {
