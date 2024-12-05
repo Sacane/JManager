@@ -28,26 +28,27 @@ open class FeatureTest {
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
         }
     }
-    fun createAccount(userId: UserId, label: String, amount: Amount): Account {
+    fun createAccount(userId: User, label: String, amount: Amount): Account {
         val id = Random.nextLong()
-        val account = Account(id = id, amount = amount, labelAccount = label)
+        val account = Account(id = id, amount = amount, labelAccount = label, owner = userId)
         accountState.init(
-            AccountByOwner(account.asSingleton(), userId).asSingleton()
+            AccountByOwner(account.asSingleton(), userId.id).asSingleton()
         )
         return account
     }
-    fun createAndConnect(username: String): UserId {
+    fun createAndConnect(username: String): User {
         val userId = UserId(Random.nextLong())
-        userState.init(listOf(UserWithPassword(User(userId, username, "$username@test.fr"),"test")))
+        val user = User(userId, username, "$username@test.fr")
+        userState.init(listOf(UserWithPassword(user,"test")))
         sessionManager.addSession(userId, session)
-        return userId
+        return user
     }
     fun launchWithConnectedUserInstance(action: AccountTokenUserId.() -> Unit){
         val johnId = createAndConnect("John")
         val account = createAccount(johnId, "test", Amount(0))
 
-        action(AccountTokenUserId(johnId, session.tokenValue, account))
-        sessionManager.removeSession(johnId, session.tokenValue)
+        action(AccountTokenUserId(johnId.id, session.tokenValue, account))
+        sessionManager.removeSession(johnId.id, session.tokenValue)
     }
 
     inner class AccountTokenUserId(

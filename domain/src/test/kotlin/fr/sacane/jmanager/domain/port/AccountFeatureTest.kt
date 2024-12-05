@@ -59,7 +59,14 @@ class AccountFeatureTest {
         accountState.init(listOf(
             AccountByOwner(listOf(element), user.id)
         ))
-        val response = accountFeature.editAccount(userID = user.id.id!!, account = Account(element.id, Amount(BigDecimal(102)), labelAccount = element.label, initialSold = element.initialSold), session.tokenValue)
+        val account = Account(
+            element.id,
+            Amount(BigDecimal(102)),
+            labelAccount = element.label,
+            initialSold = element.initialSold,
+            owner = user
+        )
+        val response = accountFeature.editAccount(userID = user.id.id!!, account = account, session.tokenValue)
 
         val expectedAnswer = Amount(BigDecimal(102))
 
