@@ -6,7 +6,7 @@ class Account(
     val id: Long? = null,
     var amount: Amount,
     private var labelAccount: String,
-    val transactions: MutableList<Transaction> = mutableListOf(),
+    private val _transactions: MutableList<Transaction> = mutableListOf(),
     val owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
@@ -15,17 +15,25 @@ class Account(
     val label: String
         get() = labelAccount
 
+    val transactions: List<Transaction>
+        get() = _transactions
+
     override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
     fun sheets(): List<Transaction>{
         return transactions.toList()
     }
 
+    fun findTransactionById(id : Long) : Transaction? {
+        return transactions.firstOrNull { it.id == id }
+    }
+
     fun updateFrom(account: Account) {
         amount = account.amount
         labelAccount = account.label
-        transactions.replaceAll {
+        _transactions.replaceAll {
             Transaction(it.id, it.label, it.date, it.amount, it.isIncome, it.tag)
         }
+        previewAmount = account.previewAmount
     }
 
     override fun hashCode(): Int {
@@ -49,22 +57,15 @@ class Account(
         """.trimIndent()
     }
 
-    fun updateSoldFromTransactions(oldTransaction: Transaction, newTransaction: Transaction) {
-         // First modification
-        this.amount = if(oldTransaction.isIncome) amount - oldTransaction.amount else amount + oldTransaction.amount
-        // Second modification
-        this.amount = if(newTransaction.isIncome) amount + newTransaction.amount else amount - newTransaction.amount
-    }
-
     fun addTransaction(transaction: Transaction) {
-        transactions.add(transaction)
+        _transactions.add(transaction)
         if(transaction.isNotPreview) {
             this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
         this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
     private fun removeTransaction(transaction: Transaction) {
-        transactions.removeIf { transaction.id == it.id }
+        _transactions.removeIf { transaction.id == it.id }
         this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         if(transaction.isNotPreview) {
             this.amount = this.amount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
@@ -77,11 +78,17 @@ class Account(
             }
             this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
         }
-        transactions.removeIf { tr -> transactionId == tr.id }
+        _transactions.removeIf { tr -> transactionId == tr.id }
     }
     private fun removeAllTransactions(transactions: List<Transaction>) {
         for(transaction in transactions){
             removeTransaction(transaction)
+        }
+    }
+
+    fun addTransactions(transactions: List<Transaction>) {
+        transactions.forEach {
+            addTransaction(it)
         }
     }
 
@@ -93,7 +100,7 @@ class Account(
     }
 
     fun removeTransactionIf(sheetOnList: (s: Transaction) -> Boolean) {
-        transactions.filter(sheetOnList).forEach {
+        _transactions.filter(sheetOnList).forEach {
             removeTransaction(it)
         }
     }
