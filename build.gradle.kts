@@ -45,7 +45,8 @@ tasks.jacocoTestReport {
 }
 tasks.register("jacocoRootReport", JacocoReport::class) {
 	dependsOn(subprojects.mapNotNull { it.tasks.findByName("test") }) // Utilisation de mapNotNull pour éviter les erreurs
-
+	description = "Generates an aggregate report from all subprojects"
+	group = "verification"
 	executionData.setFrom(
 		fileTree(project.rootDir).apply {
 			include("**/build/jacoco/test.exec")  // Chemin où sont générés les fichiers exec de JaCoCo
