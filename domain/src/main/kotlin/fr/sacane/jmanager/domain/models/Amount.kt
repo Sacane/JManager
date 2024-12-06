@@ -50,15 +50,6 @@ data class Amount(var amount: BigDecimal, val currency: String = "€") {
         }
     }
 
-    override fun equals(other: Any?)
-    : Boolean = other is Amount && amount == other.amount && currency == other.currency
-
-    override fun hashCode(): Int {
-        var result = amount.hashCode()
-        result = 31 * result + currency.hashCode()
-        return result
-
-    }
     fun <T> applyOnValue(function: (BigDecimal) -> T): T{
         return function(amount)
     }

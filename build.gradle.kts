@@ -25,8 +25,8 @@ allprojects{
 
 sonar {
 	properties {
-		property("sonar.projectKey", "Sacane_JManager_aa4d0a52-73c4-4b64-a0e2-6f5565902347")
-		property("sonar.projectName", "JManager")
+		property("sonar.projectKey", "Jmanager")
+		property("sonar.projectName", "Jmanager")
 		property("sonar.coverage.jacoco.xmlReportPaths",
 			listOf(
 				"$rootDir/domain/build/reports/jacoco/test/jacocoTestReport.xml",
@@ -45,7 +45,8 @@ tasks.jacocoTestReport {
 }
 tasks.register("jacocoRootReport", JacocoReport::class) {
 	dependsOn(subprojects.mapNotNull { it.tasks.findByName("test") }) // Utilisation de mapNotNull pour éviter les erreurs
-
+	description = "Generates an aggregate report from all subprojects"
+	group = "verification"
 	executionData.setFrom(
 		fileTree(project.rootDir).apply {
 			include("**/build/jacoco/test.exec")  // Chemin où sont générés les fichiers exec de JaCoCo
