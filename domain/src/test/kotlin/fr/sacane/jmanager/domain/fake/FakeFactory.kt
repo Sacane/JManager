@@ -15,7 +15,6 @@ object FakeFactory {
     val sessionManager: SessionManager = InMemorySessionManager()
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, userRepository, sessionManager, fakeAccountRepository, manager)
-    val previewTransactionFeature = PreviewTransactionFeatureImpl(fakeAccountRepository, transactionRepository, sessionManager)
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository
     }
