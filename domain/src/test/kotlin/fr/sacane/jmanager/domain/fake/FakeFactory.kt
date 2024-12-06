@@ -11,16 +11,10 @@ object FakeFactory {
     private val fakeAccountRepository: InMemoryAccountRepository = InMemoryAccountRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
-    private val manager: InfraTransactionProviderPort = object : InfraTransactionProviderPort {
-        override fun <T, R> executeInTransaction(input: T, executable: (T) -> R): R {
-            return executable(input)
-        }
-
-    }
+    private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
     val sessionManager: SessionManager = InMemorySessionManager()
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, userRepository, sessionManager, fakeAccountRepository, manager)
-    val previewTransactionFeature = PreviewTransactionFeatureImpl(fakeAccountRepository, transactionRepository, sessionManager)
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository
     }

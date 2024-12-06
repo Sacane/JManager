@@ -16,11 +16,9 @@ interface DataDisplay {
 
 const { addPersonalTag, getAllTags, deleteTag } = useTag()
 
-const displayData = ref<DataDisplay[]>([])
 const dataByDefault = ref<DataDisplay[]>([])
 const dataPersonal = ref<DataDisplay[]>([])
-const showDefault = ref<boolean>(true)
-const tagStatutLabel = ref<string>('')
+const tagStatusLabel = ref<string>('')
 const addTagDialog = ref<boolean>(false)
 const personalTagForm = reactive({
   tagLabel: '',
@@ -34,22 +32,12 @@ const personalTagForm = reactive({
 const confirm = useConfirm()
 
 const tagToDelete = ref<DataDisplay | undefined>(undefined)
-function switchDisplay() {
-  showDefault.value = !showDefault.value
-  if (showDefault.value) {
-    tagStatutLabel.value = 'Afficher mes tags personnels'
-    displayData.value = dataByDefault.value
-  } else {
-    tagStatutLabel.value = 'Afficher les tags par défaut'
-    displayData.value = dataPersonal.value
-  }
-}
+
 onMounted(() => {
-  // displayData.value = data.map(e => formattedData(e))
   getAllTags().then((tags) => {
-    dataByDefault.value = displayData.value = tags.filter(e => e.isDefault).map(e => formattedData(e))
+    dataByDefault.value = tags.filter(e => e.isDefault).map(e => formattedData(e))
     dataPersonal.value = tags.filter(e => !e.isDefault).map(e => formattedData(e))
-    tagStatutLabel.value = 'Afficher mes tags personnels'
+    tagStatusLabel.value = 'Afficher mes tags personnels'
   })
 })
 
@@ -97,37 +85,45 @@ function delTag(row: DataDisplay): void {
 
 <template>
   <ConfirmDialog />
-  <div class="mt-5 w-[50%] self-center">
-    <div class="flex flex-col lg:(flex flex-row justify-between)">
-      <div class="text-xl font-semibold text-gray-600 align-center">
-        <p v-if="showDefault">
+  <div class="mt-5 w-[50%] self-center flex flex-col gap-5">
+    <div class="flex flex-col lg:(flex flex-row justify-center)">
+      <div class="text-xl font-bold text-gray-600">
+        <p>
           Les tags par défaut
         </p>
-        <p v-else>
-          Mes tags personnels
-        </p>
       </div>
-      <Button class="text-white hover:bg-purple-700 h-60% " @click="switchDisplay">
-        {{ tagStatutLabel }}
-      </Button>
-      <Button class="h-60%" @click="addTagDialog = true">
-        Ajouter un nouveau tag personnel
-      </Button>
     </div>
-    <DataTable :responsive-layout="scroll" :resizable-columns="true" data-key="id" table-style="min-width: 50rem" :value="displayData">
+    <DataTable :responsive-layout="scroll" :resizable-columns="true" data-key="id" table-style="min-width: 50rem" :value="dataByDefault">
       <Column field="label" header="Libellé du tag" />
-      <Column field="isDefault" header="Statut" />
-      <Column header-style="width: 5rem; text-align: center" body-style="text-align: center; overflow: visible">
+      <Column body-style="overflow: visible" header="couleur">
         <template #body="slotTag">
           <div :style="`width: 20px; height: 20px; background-color: ${slotTag.data.color}; border-radius: 50%;`" />
         </template>
       </Column>
-      <Column v-if="!showDefault" header-style="width: 5rem; text-align: center" body-style="text-align: center; overflow: visible">
+    </DataTable>
+    <div class="flex flex-col lg:(flex flex-row justify-center)">
+      <div class="text-xl font-bold text-gray-600 align-center">
+        <p>
+          Mes tags personnels
+        </p>
+      </div>
+    </div>
+    <DataTable :responsive-layout="scroll" :resizable-columns="true" data-key="id" table-style="min-width: 50rem" :value="dataPersonal">
+      <Column field="label" header="Libellé du tag" />
+      <Column header-style="width: 5rem; text-align: center" body-style="text-align: center; overflow: visible" header="couleur">
+        <template #body="slotTag">
+          <div :style="`width: 20px; height: 20px; background-color: ${slotTag.data.color}; border-radius: 50%;`" />
+        </template>
+      </Column>
+      <Column body-style="text-align: center; overflow: visible">
         <template #body="slotTag">
           <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(slotTag.data)" />
         </template>
       </Column>
     </DataTable>
+    <Button class="w50" @click="addTagDialog = true">
+      Ajouter un nouveau tag personnel
+    </Button>
     <Dialog v-model:visible="addTagDialog" modal header="Ajouter un nouveau tag personnalisé">
       <div class="mt-6">
         <div class="flex flex-col gap-3">
