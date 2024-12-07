@@ -22,6 +22,7 @@ repositories{
 group = "fr.sacane.jmanager"
 version = "1.0"
 val springBootVersion = "3.4.0"
+val restAssuredVersion = "5.5.0"
 dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
@@ -39,8 +40,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
     testImplementation("org.hamcrest:hamcrest:2.2")
     testImplementation("com.h2database:h2")
-    testImplementation("io.rest-assured:rest-assured:5.5.0")
-    testImplementation("io.rest-assured:kotlin-extensions:5.5.0")
+    testImplementation("io.rest-assured:rest-assured:${restAssuredVersion}")
+    testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
 }
 
 jacoco {
