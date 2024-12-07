@@ -37,30 +37,33 @@ function createAccountIfAuthenticated() {
 
 <template>
   <div class="container mx-auto px-4 mt-10">
-    <h1 class="text-3xl font-bold text-center mb-8 ">
+    <h1 class="text-3xl font-bold text-center mb-8 max-w-[40%]">
       Un sommaire rapide et pratique pour gérer votre budget et vos dépenses
     </h1>
-    <TitleCard
-      class="create-container"
-      title="Créer vos livrets" description="JManager vous permet de gérer de manière indépendante vos dépenses en créant un ou plusieurs comptes.
+    <div class="flex flex-row justify-between w-full gap-10">
+      <TitleCard
+        class="create-container"
+        title="Créer vos livrets" description="JManager vous permet de gérer de manière indépendante vos dépenses en créant un ou plusieurs comptes.
         Vous pouvez ainsi gérer les dépenses de plusieurs personnes, entités, projets, et autres avec un seul profil."
-      :on-click="createAccountIfAuthenticated"
-    />
-    <TitleCard
-      title="Créer vos transactions"
-      description="Une transaction permet de mettre à jour la vue du budget d'un compte.
+        :on-click="createAccountIfAuthenticated"
+      />
+      <TitleCard
+        title="Créer vos transactions"
+        description="Une transaction permet de mettre à jour la vue du budget d'un compte.
         Elle contient la date à laquelle la dépense a été effectuée, le montant, le compte concerné, et son label."
-    />
-    <TitleCard
-      title="Créer vos transactions prévisionnelles"
-      description="Une transaction prévisionnelle (TP) vous permettent de prévoir des potentielles transaction, afin d'avoir une visibilité plus concrète sur vos futures dépenses.
+      />
+      <TitleCard
+        title="Créer vos transactions prévisionnelles"
+        description="Une transaction prévisionnelle (TP) vous permettent de prévoir des potentielles transaction, afin d'avoir une visibilité plus concrète sur vos futures dépenses.
         En un seul clique passer ces TP en transactions afin de les confirmer dans vos dépenses réels !"
-    />
-    <TitleCard
-      title="Créer vos mensualités"
-      description="Une mensualité est une transaction que vous considérez appliquable tous les mois comme la dépense d'un loyer ou bien le gain d'un salaire.
+      />
+      <TitleCard
+        title="Créer vos mensualités"
+        description="Une mensualité est une transaction que vous considérez appliquable tous les mois comme la dépense d'un loyer ou bien le gain d'un salaire.
         Elles vous permettront chaque mois avec votre confirmation de pouvoir les transformer en transaction"
-    />
+      />
+    </div>
+
     <AccountBookingDialog
       integerpart="0"
       decimalpart="0"
@@ -73,7 +76,11 @@ function createAccountIfAuthenticated() {
 
 <style scoped>
 .container {
-  max-width: 40%;
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 .container h1{
   font-family: 'aktiv', sans-serif;
