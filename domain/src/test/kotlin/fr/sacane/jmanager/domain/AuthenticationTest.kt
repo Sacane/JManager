@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.domain
 
-import fr.sacane.jmanager.domain.models.Response
-import fr.sacane.jmanager.domain.models.ResponseState
+import fr.sacane.jmanager.domain.utils.Response
+import fr.sacane.jmanager.domain.utils.ResponseState
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

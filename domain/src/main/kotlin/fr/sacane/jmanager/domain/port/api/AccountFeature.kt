@@ -4,10 +4,10 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.Response
-import fr.sacane.jmanager.domain.models.Response.Companion.invalid
-import fr.sacane.jmanager.domain.models.Response.Companion.notFound
-import fr.sacane.jmanager.domain.models.Response.Companion.ok
+import fr.sacane.jmanager.domain.utils.Response
+import fr.sacane.jmanager.domain.utils.Response.Companion.invalid
+import fr.sacane.jmanager.domain.utils.Response.Companion.notFound
+import fr.sacane.jmanager.domain.utils.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository

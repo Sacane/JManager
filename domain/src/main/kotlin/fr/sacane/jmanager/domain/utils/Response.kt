@@ -1,19 +1,28 @@
-package fr.sacane.jmanager.domain.models
+package fr.sacane.jmanager.domain.utils
 
-enum class ResponseState{
-    OK,
-    TIMEOUT,
-    INVALID,
-    FORBIDDEN,
-    NOT_FOUND,
-    UNAUTHORIZED;
+enum class ResponseState (code: Int){
+    OK(0), TIMEOUT(1), INVALID(2), FORBIDDEN(3), NOT_FOUND(4), UNAUTHORIZED(5),
+    INTERNAL_SERVER_ERROR(6), BAD_REQUEST(7),
+    // DOMAIN ERROR
+    BOOKLET_NOT_FOUND(1001),
+    TRANSACTION_NOT_FOUND(1002),
+    TAG_NOT_FOUND(1003),
+    USER_NOT_FOUND(1004),
+    BOOKLET_LABEL_NOT_EXIST(1005),
+    TAG_PLACEHOLDER_UNDEFINED(1006),
 
-    fun isSuccess(): Boolean{
-        return this == OK
-    }
-    fun isFailure(): Boolean{
-        return this != OK
-    }
+    BOOKLET_LABEL_EXIST(2001),
+    TAG_LABEL_ALREADY_TAKEN(2002),
+
+    USER_NOT_AUTHENTICATED(3001),
+    USER_UNAUTHORIZED(3002),
+
+    TRANSACTION_ENTRY_ERROR(3003),
+    REGISTRATION_ERROR(5001)
+    ;
+
+    fun isSuccess(): Boolean = this == OK
+    fun isFailure(): Boolean = !isSuccess()
 }
 
 class Response <S> internal constructor(
