@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port.api
 
+import fr.sacane.jmanager.domain.utils.Response
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
@@ -43,7 +44,7 @@ class SessionFeatureImpl(
     }
 
     override fun logout(userId: UserId, token: UUID)
-    : Response<Nothing>  = session.authenticate(userId, token) {
+    : Response<Nothing> = session.authenticate(userId, token) {
         session.removeSession(userId, token)
         Response.ok()
     }
