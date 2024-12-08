@@ -31,10 +31,10 @@ class AccountMapper(
 internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): TransactionResource {
     val resource = TransactionResource(label=this.label)
     resource.date = this.date
-    this.exportAmountValues { expense, isIncome ->
-        resource.value = expense
-        resource.isIncome = isIncome
-    }
+
+    resource.value = amount.amount
+    resource.isIncome = isIncome
+
     resource.idSheet = this.id
     resource.lastModified = this.lastModified
     if(tagResource != null) {

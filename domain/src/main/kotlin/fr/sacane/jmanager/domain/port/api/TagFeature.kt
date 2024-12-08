@@ -53,6 +53,6 @@ class TagFeatureImpl(
 
     override fun defaultTag(userId: UserId, token: UUID): Result<Tag> = session.authenticate(userId, token) {
         val tagResult = tagRepository.defaultTag() ?: return@authenticate Result.notFound("Il n'y a pas de tag par défaut d'enregistré")
-        return@authenticate Result.ok(tagResult)
+        return@authenticate success(tagResult)
     }
 }

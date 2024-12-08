@@ -34,8 +34,6 @@ class Result <S> internal constructor(
         get() = error
 
     companion object{
-        fun <S> ok(entity: S): Result<S> =
-            Result(ResultState.OK, entity)
         fun <S> invalid(): Result<S> = Result(ResultState.INVALID)
         fun <S> notFound(): Result<S> = Result(ResultState.NOT_FOUND)
 

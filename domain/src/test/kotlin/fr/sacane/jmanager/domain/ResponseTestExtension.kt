@@ -1,8 +1,8 @@
 package fr.sacane.jmanager.domain
 
 import fr.sacane.jmanager.domain.utils.Result
-import fr.sacane.jmanager.domain.utils.Result.Companion.ok
 import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.success
 import org.junit.jupiter.api.Assertions.*
 
 fun <T> Result<T>.assertEquals(expectedData: T) {
@@ -43,5 +43,5 @@ fun <T, R> Result<List<T>>.assertEqualsAtPosition(position: Int, expectedResult:
 }
 
 fun <T> T?.asResponse(): Result<T> {
-    return if(this == null) Result.invalid() else ok(this)
+    return if(this == null) Result.invalid() else success(this)
 }

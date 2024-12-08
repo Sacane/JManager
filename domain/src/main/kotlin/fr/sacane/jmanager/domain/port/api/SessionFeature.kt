@@ -63,7 +63,7 @@ class SessionFeatureImpl(
     override fun tryRefresh(userId: UserId, refreshToken: UUID): Result<Pair<User, AccessToken>> {
         val user = userRepository.findUserById(userId) ?: return failure(ResultState.USER_NOT_FOUND,"L'utilisateur $userId n'est pas enregistré en base")
         return session.tryRefresh(userId, refreshToken)
-            .mapBoth({value -> Result.ok(Pair(user, value ?: AccessToken(UUID.randomUUID())))}) {
+            .mapBoth({value -> success(Pair(user, value ?: AccessToken(UUID.randomUUID())))}) {
                 failure(ResultState.UNAUTHORIZED, it.first)
             } ?: throw IllegalStateException("Invalid empty response has been given through this operation")
     }
