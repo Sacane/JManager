@@ -18,8 +18,7 @@ enum class ResponseState (code: Int){
     USER_UNAUTHORIZED(3002),
 
     TRANSACTION_ENTRY_ERROR(3003),
-    REGISTRATION_ERROR(5001)
-    ;
+    REGISTRATION_ERROR(5001);
 
     fun isSuccess(): Boolean = this == OK
     fun isFailure(): Boolean = !isSuccess()
@@ -94,15 +93,12 @@ class Response <S> internal constructor(
         return mapper.invoke(this.data)
     }
 }
-fun <S> ok(entity: S): Response<S> = Response(ResponseState.OK, entity)
-fun ok(): Response<Nothing> = Response(ResponseState.OK)
+fun <S> success(entity: S): Response<S> = Response(ResponseState.OK, entity)
+fun success(): Response<Nothing> = Response(ResponseState.OK)
 fun <S> invalid(): Response<S> = Response(ResponseState.INVALID)
-fun <S> timeout(): Response<S> = Response(ResponseState.TIMEOUT)
-fun <S> notFound(): Response<S> = Response(ResponseState.NOT_FOUND)
-fun <S> forbidden(): Response<S> = Response(ResponseState.FORBIDDEN)
+
 
 fun <S> notFound(message: String): Response<S> = Response(ResponseState.NOT_FOUND, error=message)
 fun <S> invalid(message: String): Response<S> = Response(ResponseState.INVALID, error=message)
-fun <S> timeout(message: String): Response<S> = Response(ResponseState.TIMEOUT, error=message)
-fun <S> forbidden(message:String): Response<S> = Response(ResponseState.FORBIDDEN, error=message)
-fun <S> unauthorized(message: String): Response<S> = Response(ResponseState.UNAUTHORIZED, error=message)
+
+fun <S> error(state: ResponseState, message: (Unit) -> String) = Response(state, message)
