@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.utils.ResponseState
+import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.http.ResponseEntity
@@ -33,7 +33,7 @@ class AccountController (
             id.id(),
             token.asTokenUUID()
         )
-        if (accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
+        if (accounts.status == ResultState.NOT_FOUND) return ResponseEntity.notFound().build()
         return accounts.map { list ->
             list.find { it.label == label }?.toDTO()!!
         }.toResponseEntity()

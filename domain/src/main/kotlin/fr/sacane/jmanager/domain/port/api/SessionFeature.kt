@@ -1,21 +1,24 @@
 package fr.sacane.jmanager.domain.port.api
 
-import fr.sacane.jmanager.domain.utils.Response
+import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
+import fr.sacane.jmanager.domain.utils.success
 import java.util.*
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface SessionFeature {
-    fun login(pseudonym: String, userPassword: String): Response<UserToken>
-    fun logout(userId: UserId, token: UUID): Response<Nothing>
-    fun register(username: String, password: String, confirmPassword: String): Response<User>
-    fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>>
+    fun login(pseudonym: String, userPassword: String): Result<UserToken>
+    fun logout(userId: UserId, token: UUID): Result<Nothing>
+    fun register(username: String, password: String, confirmPassword: String): Result<User>
+    fun tryRefresh(userId: UserId, refreshToken: UUID): Result<Pair<User, AccessToken>>
 }
 
 
@@ -29,38 +32,39 @@ class SessionFeatureImpl(
     companion object{
         private val LOGGER = Logger.getLogger(SessionFeatureImpl::class.java.name)
     }
-    override fun login(pseudonym: String, userPassword: String): Response<UserToken> {
+    override fun login(pseudonym: String, userPassword: String): Result<UserToken> {
         LOGGER.info("Trying to login user : $pseudonym")
-        val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym) ?: return Response.notFound("L'utilisateur $pseudonym n'existe pas")
+        val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym)
+            ?: return failure(ResultState.NOT_FOUND, "L'utilisateur $pseudonym n'existe pas")
         val user = userWithPassword.user
         if(hasher.verify(userPassword, userWithPassword.password)) {
             LOGGER.info("User $pseudonym logged")
             val accessToken = generateToken(Role.USER)
             session.addSession(user.id, accessToken)
-            return Response.ok(user.withToken(accessToken))
+            return success(user.withToken(accessToken))
         }
         LOGGER.warning("Failed to log user $pseudonym")
-        return Response.forbidden("Le pseudonyme ou le mot de passe est incorrect")
+        return failure(ResultState.USER_UNAUTHORIZED, "Le pseudonyme ou le mot de passe est incorrect")
     }
 
     override fun logout(userId: UserId, token: UUID)
-    : Response<Nothing> = session.authenticate(userId, token) {
+    : Result<Nothing> = session.authenticate(userId, token) {
         session.removeSession(userId, token)
-        Response.ok()
+        success()
     }
 
-    override fun register(username: String, password: String, confirmPassword: String): Response<User> {
-        if(password != confirmPassword) return Response.invalid("Les mots de passes ne correspondent pas")
+    override fun register(username: String, password: String, confirmPassword: String): Result<User> {
+        if(password != confirmPassword) return failure(ResultState.PASSWORD_NOT_MATCH, "Les mots de passes ne correspondent pas")
         val hashedPassword = hasher.hash(password)
-        val userResponse = userRepository.register(username, hashedPassword) ?: return Response.invalid("Une erreur est survenue")
-        return Response.ok(userResponse)
+        val userResult = userRepository.register(username, hashedPassword) ?: return Result.invalid("Une erreur est survenue")
+        return success(userResult)
     }
 
-    override fun tryRefresh(userId: UserId, refreshToken: UUID): Response<Pair<User, AccessToken>> {
-        val user = userRepository.findUserById(userId) ?: return Response.notFound("L'utilisateur n'est pas enregistré en base")
+    override fun tryRefresh(userId: UserId, refreshToken: UUID): Result<Pair<User, AccessToken>> {
+        val user = userRepository.findUserById(userId) ?: return failure(ResultState.USER_NOT_FOUND,"L'utilisateur $userId n'est pas enregistré en base")
         return session.tryRefresh(userId, refreshToken)
-            .mapBoth({value -> Response.ok(Pair(user, value ?: AccessToken(UUID.randomUUID())))}) {
-                Response.invalid(it.first)
+            .mapBoth({value -> Result.ok(Pair(user, value ?: AccessToken(UUID.randomUUID())))}) {
+                failure(ResultState.UNAUTHORIZED, it.first)
             } ?: throw IllegalStateException("Invalid empty response has been given through this operation")
     }
 

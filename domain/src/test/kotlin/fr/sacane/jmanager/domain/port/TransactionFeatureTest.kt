@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.*
-import fr.sacane.jmanager.domain.utils.Response
+import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
 import org.junit.jupiter.api.Assertions.*
@@ -288,7 +288,7 @@ class TransactionFeatureTest: FeatureTest() {
 
 fun String.toDate(): LocalDate = LocalDate.parse(this, DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
-fun MutableList<Transaction>?.sortedByDate(): Response<List<Transaction>> {
+fun MutableList<Transaction>?.sortedByDate(): Result<List<Transaction>> {
     return this?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
         .asResponse()
 }
