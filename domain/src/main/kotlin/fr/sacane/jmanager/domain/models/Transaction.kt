@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.domain.models
 
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
