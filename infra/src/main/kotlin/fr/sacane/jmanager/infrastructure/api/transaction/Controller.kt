@@ -3,7 +3,6 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Transaction
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
