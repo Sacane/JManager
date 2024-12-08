@@ -3,7 +3,8 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.models.Transaction
+import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.id
@@ -32,19 +33,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             userAccountSheetDTO.accountLabel,
             userAccountSheetDTO.sheetDTO.toModel()
         ).map {
-            it.transaction.exportAmountValues { expense, income ->
-                TransactionResultDTO(
-                    it.transaction.id.toString(),
-                    it.transaction.label,
-                    it.transaction.date,
-                    expense.toString(),
-                    income,
-                    it.transaction.tag.toDTO(),
-                    it.accountAmount.amount.toString(),
-                    it.accountPreviewAmount.amount.toString(),
-                    it.transaction.isPreview
-                )
-            }
+            it.toDTO()
         }.toResponseEntity().apply {
             logger.info("Creating new transaction => ${userAccountSheetDTO.sheetDTO} TO => ${this.body?.tagDTO}")
         }
@@ -83,19 +72,8 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     ): ResponseEntity<TransactionResultDTO> {
         logger.info("Start editing transaction => ${dto.sheet}")
         return transactionFeature.editTransaction(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
-            .map { it.transaction.exportAmountValues { expense, income ->
-                    TransactionResultDTO(
-                        it.transaction.id.toString(),
-                        it.transaction.label,
-                        it.transaction.date,
-                        expense.toString(),
-                        income,
-                        it.transaction.tag.toDTO(),
-                        it.accountAmount.amount.toString(),
-                        it.accountPreviewAmount.amount.toString(),
-                        it.transaction.isPreview
-                    )
-                }
+            .map {
+                it.toDTO()
             }.toResponseEntity()
             .also { LOGGER.info("Transaction edited successfully : ${dto.sheet}") }
     }
@@ -108,11 +86,8 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<SheetDTO>
         = transactionFeature.findById(userID, sheetID, token.asTokenUUID())
-            .mapTo {
-                it ?: Result.invalid<SheetDTO>()
-                Result.ok(it)
-            }.map {
-                it!!.toDTO()
+            .map {
+                it.toDTO()
             }.toResponseEntity()
 
     @PostMapping("transaction/confirm")
@@ -126,25 +101,28 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             transactionId = command.transactionID,
             accountID = command.accountID,
             token = token.asTokenUUID()
-        ).map { it.transaction.exportAmountValues { expense, income ->
-                TransactionResultDTO(
-                    it.transaction.id.toString(),
-                    it.transaction.label,
-                    it.transaction.date,
-                    expense.toString(),
-                    income,
-                    it.transaction.tag.toDTO(),
-                    it.accountAmount.amount.toString(),
-                    it.accountPreviewAmount.amount.toString(),
-                    it.transaction.isPreview
-                )
-            }
+        ).map {
+            it.toDTO()
         }.toResponseEntity()
     }
 
     companion object {
         private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)
     }
+}
+
+fun TransactionResumeResult.toDTO(): TransactionResultDTO {
+    return TransactionResultDTO(
+        this.transaction.id.toString(),
+        this.transaction.label,
+        this.transaction.date,
+        this.transaction.amount.toString(),
+        this.transaction.isIncome,
+        this.transaction.tag.toDTO(),
+        this.accountAmount.amount.toString(),
+        this.accountPreviewAmount.amount.toString(),
+        this.transaction.isPreview
+    )
 }
 
 data class ConfirmPreviewCommand(
