@@ -39,11 +39,20 @@ internal fun Long.id(): UserId = UserId(this)
 internal fun <T> Response<T>.toResponseEntity()
 : ResponseEntity<T> = when(this.status){
     ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
-    ResponseState.NOT_FOUND -> throw NotFoundException(this.message)
-    ResponseState.INVALID -> throw InvalidRequestException(this.message)
-    ResponseState.FORBIDDEN -> throw ForbiddenException(this.message)
+    ResponseState.NOT_FOUND,
+    ResponseState.TAG_NOT_FOUND,
+    ResponseState.USER_NOT_FOUND,
+    ResponseState.BOOKLET_NOT_FOUND, ResponseState.TRANSACTION_NOT_FOUND,
+    ResponseState.TAG_PLACEHOLDER_UNDEFINED,
+    ResponseState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(this.message)
+    ResponseState.INVALID, ResponseState.REGISTRATION_ERROR,
+    ResponseState.BOOKLET_LABEL_EXIST,
+    ResponseState.TAG_LABEL_ALREADY_TAKEN, ResponseState.TRANSACTION_ENTRY_ERROR,
+    ResponseState.BAD_REQUEST -> throw InvalidRequestException(this.message)
+    ResponseState.FORBIDDEN, ResponseState.USER_UNAUTHORIZED -> throw ForbiddenException(this.message)
     ResponseState.TIMEOUT  -> throw TimeOutException(this.message)
-    ResponseState.UNAUTHORIZED -> throw UnauthorizedRequestException(this.message)
+    ResponseState.UNAUTHORIZED, ResponseState.USER_NOT_AUTHENTICATED -> throw UnauthorizedRequestException(this.message)
+    ResponseState.INTERNAL_SERVER_ERROR -> throw InternalServerErrorException(this.message)
 }
 
 internal fun fr.sacane.jmanager.infrastructure.spi.entity.Color.asAwtColor(): Color = Color(this.red, this.green, this.blue)
