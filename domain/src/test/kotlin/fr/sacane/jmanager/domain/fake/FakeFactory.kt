@@ -14,7 +14,7 @@ object FakeFactory {
     private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
     val sessionManager: SessionManager = InMemorySessionManager()
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
-    val transactionFeature = TransactionFeatureImpl(transactionRepository, userRepository, sessionManager, fakeAccountRepository, manager)
+    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager)
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository
     }

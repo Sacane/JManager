@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.utils.Response
+import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.id
@@ -109,8 +109,8 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     ): ResponseEntity<SheetDTO>
         = transactionFeature.findById(userID, sheetID, token.asTokenUUID())
             .mapTo {
-                it ?: Response.invalid<SheetDTO>()
-                Response.ok(it)
+                it ?: Result.invalid<SheetDTO>()
+                Result.ok(it)
             }.map {
                 it!!.toDTO()
             }.toResponseEntity()

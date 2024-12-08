@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.*
-import fr.sacane.jmanager.domain.utils.Response
+import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.AccountFeature
@@ -33,7 +33,7 @@ class AccountFeatureTest {
     @Nested
     inner class AccountFeatureAuthTest: AuthenticationTest {
         private val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
-        override val action: List<Response<out Any>>
+        override val action: List<Result<out Any>>
             get() = listOf(
                 accountFeature.findAccountById(user.id, 50L, UUID.randomUUID()),
                 accountFeature.save(user.id, UUID.randomUUID(), element)

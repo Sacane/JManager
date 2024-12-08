@@ -4,23 +4,23 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.utils.Response
-import fr.sacane.jmanager.domain.utils.Response.Companion.invalid
-import fr.sacane.jmanager.domain.utils.Response.Companion.notFound
-import fr.sacane.jmanager.domain.utils.Response.Companion.ok
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
+import fr.sacane.jmanager.domain.utils.success
 import java.util.*
 
 @Port(Side.APPLICATION)
 sealed interface AccountFeature {
-    fun findAccountById(userId: UserId, accountID: Long, token: UUID): Response<Account>
-    fun editAccount(userID: Long, account: Account, token: UUID): Response<Account>
-    fun deleteAccountById(profileID: UserId, accountID: Long, token: UUID): Response<Nothing>
-    fun findByLabelAndUserId(userId: UserId, token: UUID, label: String): Response<Account>
-    fun findAllRegisteredAccounts(userId: UserId, token: UUID): Response<List<Account>>
-    fun save(userId: UserId, token: UUID, account: Account): Response<Account>
+    fun findAccountById(userId: UserId, accountID: Long, token: UUID): Result<Account>
+    fun editAccount(userID: Long, account: Account, token: UUID): Result<Account>
+    fun deleteAccountById(profileID: UserId, accountID: Long, token: UUID): Result<Nothing>
+    fun findByLabelAndUserId(userId: UserId, token: UUID, label: String): Result<Account>
+    fun findAllRegisteredAccounts(userId: UserId, token: UUID): Result<List<Account>>
+    fun save(userId: UserId, token: UUID, account: Account): Result<Account>
 }
 
 @DomainService
@@ -33,10 +33,10 @@ class AccountFeatureImpl(
         userId: UserId,
         accountID: Long,
         token: UUID
-    ): Response<Account> = session.authenticate(userId, token) {
+    ): Result<Account> = session.authenticate(userId, token) {
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
-            return@authenticate ok(this)
-        }?: return@authenticate notFound("Le compte est introuvable")
+            return@authenticate success(this)
+        }?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le compte est introuvable")
     }
 
 
@@ -44,15 +44,15 @@ class AccountFeatureImpl(
         userID: Long,
         account: Account,
         token: UUID
-    ): Response<Account> = session.authenticate(UserId(userID), token) {
-        val accountID = account.id ?: return@authenticate notFound("Le compte est introuvable en base")
-        val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@authenticate notFound()
+    ): Result<Account> = session.authenticate(UserId(userID), token) {
+        val accountID = account.id ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.label} est introuvable en base")
+        val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.id} est introuvable")
         if(oldAccount.id != account.id && oldAccount.label == account.label){
-            return@authenticate invalid("Le libellé du compte existe déjà")
+            return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le libellé du livret existe déjà")
         }
         oldAccount.updateFrom(account)
         val registered = accountRepository.upsert(oldAccount)
-        ok(registered)
+        success(registered)
     }
 
 
@@ -60,9 +60,9 @@ class AccountFeatureImpl(
         profileID: UserId,
         accountID: Long,
         token: UUID
-    ): Response<Nothing> = session.authenticate(profileID, token) {
+    ): Result<Nothing> = session.authenticate(profileID, token) {
         accountRepository.deleteAccountById(accountID)
-        ok()
+        success()
     }
 
 
@@ -70,12 +70,13 @@ class AccountFeatureImpl(
         userId: UserId,
         token: UUID,
         label: String
-    ): Response<Account> = session.authenticate(userId, token) {
-        val user = userRepository.findUserByIdWithAccounts(userId) ?: return@authenticate notFound("L'utilisateur recherché n'existe pas")
-        ok(
+    ): Result<Account> = session.authenticate(userId, token) {
+        val user = userRepository.findUserByIdWithAccounts(userId)
+            ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur recherché n'existe pas")
+        success(
             user.accounts
             .find { acc -> acc.label == label }
-            ?: return@authenticate notFound("Le compte $label n'est pas enregistré en base")
+            ?: return@authenticate failure(ResultState.BOOKLET_LABEL_NOT_EXIST, "Le compte $label n'est pas enregistré en base")
         )
     }
 
@@ -83,21 +84,24 @@ class AccountFeatureImpl(
     override fun findAllRegisteredAccounts(
         userId: UserId,
         token: UUID
-    ): Response<List<Account>> = session.authenticate(userId, token) {
-        val user = userRepository.findUserByIdWithAccounts(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
-        return@authenticate ok(user.accounts)
+    ): Result<List<Account>> = session.authenticate(userId, token) {
+        val user = userRepository.findUserByIdWithAccounts(userId)
+            ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "L'utilisateur n'existe pas en base")
+        return@authenticate success(user.accounts)
     }
 
     override fun save(
         userId: UserId,
         token: UUID,
         account: Account
-    ): Response<Account> = session.authenticate(userId, token) {
-        val user = userRepository.findUserByIdWithAccounts(userId) ?: return@authenticate notFound("L'utilisateur n'existe pas en base")
+    ): Result<Account> = session.authenticate(userId, token) {
+        val user = userRepository.findUserByIdWithAccounts(userId)
+            ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur n'existe pas en base")
         if(user.hasAccount(account.label)) {
-            return@authenticate invalid("Le profil contient déjà un compte avec ce label")
+            return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le profil contient déjà un compte avec le label ${account.label}")
         }
-        val accountSaved = accountRepository.save(userId, account) ?: return@authenticate notFound("Erreur lors de la sauvegarde du compte")
-        ok(accountSaved)
+        val accountSaved = accountRepository.save(userId, account)
+            ?: return@authenticate failure(ResultState.INFRASTRUCTURE_ERROR,"Erreur lors de la sauvegarde du compte")
+        success(accountSaved)
     }
 }

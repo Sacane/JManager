@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
-import fr.sacane.jmanager.domain.utils.Response
-import fr.sacane.jmanager.domain.utils.ResponseState
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
@@ -36,23 +36,24 @@ internal fun User.toDTO(): UserDTO
 
 internal fun Long.id(): UserId = UserId(this)
 
-internal fun <T> Response<T>.toResponseEntity()
+internal fun <T> Result<T>.toResponseEntity()
 : ResponseEntity<T> = when(this.status){
-    ResponseState.OK -> mapTo { ResponseEntity.ok(it) }
-    ResponseState.NOT_FOUND,
-    ResponseState.TAG_NOT_FOUND,
-    ResponseState.USER_NOT_FOUND,
-    ResponseState.BOOKLET_NOT_FOUND, ResponseState.TRANSACTION_NOT_FOUND,
-    ResponseState.TAG_PLACEHOLDER_UNDEFINED,
-    ResponseState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(this.message)
-    ResponseState.INVALID, ResponseState.REGISTRATION_ERROR,
-    ResponseState.BOOKLET_LABEL_EXIST,
-    ResponseState.TAG_LABEL_ALREADY_TAKEN, ResponseState.TRANSACTION_ENTRY_ERROR,
-    ResponseState.BAD_REQUEST -> throw InvalidRequestException(this.message)
-    ResponseState.FORBIDDEN, ResponseState.USER_UNAUTHORIZED -> throw ForbiddenException(this.message)
-    ResponseState.TIMEOUT  -> throw TimeOutException(this.message)
-    ResponseState.UNAUTHORIZED, ResponseState.USER_NOT_AUTHENTICATED -> throw UnauthorizedRequestException(this.message)
-    ResponseState.INTERNAL_SERVER_ERROR -> throw InternalServerErrorException(this.message)
+    ResultState.OK -> mapTo { ResponseEntity.ok(it) }
+    ResultState.NOT_FOUND,
+    ResultState.TAG_NOT_FOUND,
+    ResultState.USER_NOT_FOUND,
+    ResultState.BOOKLET_NOT_FOUND, ResultState.TRANSACTION_NOT_FOUND,
+    ResultState.TAG_PLACEHOLDER_UNDEFINED,
+    ResultState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(this.message)
+    ResultState.INVALID, ResultState.REGISTRATION_ERROR,
+    ResultState.BOOKLET_LABEL_EXIST,
+    ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.TRANSACTION_ENTRY_ERROR,
+    ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR -> throw InvalidRequestException(this.message)
+    ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.message)
+    ResultState.TIMEOUT  -> throw TimeOutException(this.message)
+    ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED,
+         ResultState.PASSWORD_NOT_MATCH -> throw UnauthorizedRequestException(this.message)
+    ResultState.INTERNAL_SERVER_ERROR -> throw InternalServerErrorException(this.message)
 }
 
 internal fun fr.sacane.jmanager.infrastructure.spi.entity.Color.asAwtColor(): Color = Color(this.red, this.green, this.blue)

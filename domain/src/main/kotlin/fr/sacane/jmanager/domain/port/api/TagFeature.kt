@@ -3,39 +3,40 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.utils.Response
+import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.spi.TagRepository
-import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
+import fr.sacane.jmanager.domain.utils.success
 import java.util.*
 
 @Port(Side.APPLICATION)
 sealed interface TagFeature {
-    fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag>
-    fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>>
+    fun addTag(userId: UserId, token: UUID, tag: Tag): Result<Tag>
+    fun getAllTags(userId: UserId, token: UUID): Result<List<Tag>>
     fun addDefaultTags()
-    fun deleteTag(userId: UserId, token: UUID, tagId: Long): Response<Nothing>
-    fun defaultTag(userId: UserId, token: UUID): Response<Tag>
+    fun deleteTag(userId: UserId, token: UUID, tagId: Long): Result<Nothing>
+    fun defaultTag(userId: UserId, token: UUID): Result<Tag>
 }
 
 @DomainService
 class TagFeatureImpl(
-    private val register: TransactionRepositoryPort,
     private val tagRepository: TagRepository,
     private val session: InMemorySessionManager
 ): TagFeature {
-    override fun addTag(userId: UserId, token: UUID, tag: Tag): Response<Tag> = session.authenticate(userId, token){
+    override fun addTag(userId: UserId, token: UUID, tag: Tag): Result<Tag> = session.authenticate(userId, token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
-            return@authenticate Response.invalid("Le label '${tag.label}' est déjà pris")
+            return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Le label '${tag.label}' est déjà pris")
         }
-        val save = tagRepository.save(it, tag) ?: return@authenticate Response.notFound("User has not been found")
-        Response.ok(save)
+        val save = tagRepository.save(it, tag) ?: return@authenticate Result.notFound("User has not been found")
+        success(save)
     }
 
-    override fun getAllTags(userId: UserId, token: UUID): Response<List<Tag>> = session.authenticate(userId, token) {
-        Response.ok(tagRepository.getAllDefault(userId))
+    override fun getAllTags(userId: UserId, token: UUID): Result<List<Tag>> = session.authenticate(userId, token) {
+        success(tagRepository.getAllDefault(userId))
     }
 
     override fun addDefaultTags() {
@@ -45,13 +46,13 @@ class TagFeatureImpl(
         tagRepository.saveAll(defaultTags)
     }
 
-    override fun deleteTag(userId: UserId, token: UUID, tagId: Long): Response<Nothing> = session.authenticate(userId, token){
+    override fun deleteTag(userId: UserId, token: UUID, tagId: Long): Result<Nothing> = session.authenticate(userId, token){
         tagRepository.deleteById(tagId)
-        Response.ok()
+        success()
     }
 
-    override fun defaultTag(userId: UserId, token: UUID): Response<Tag> = session.authenticate(userId, token) {
-        val tagResult = tagRepository.defaultTag() ?: return@authenticate Response.notFound("Il n'y a pas de tag par défaut d'enregistré")
-        return@authenticate Response.ok(tagResult)
+    override fun defaultTag(userId: UserId, token: UUID): Result<Tag> = session.authenticate(userId, token) {
+        val tagResult = tagRepository.defaultTag() ?: return@authenticate Result.notFound("Il n'y a pas de tag par défaut d'enregistré")
+        return@authenticate Result.ok(tagResult)
     }
 }

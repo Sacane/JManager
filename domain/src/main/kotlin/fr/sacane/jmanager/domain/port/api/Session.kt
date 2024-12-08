@@ -2,13 +2,13 @@ package fr.sacane.jmanager.domain.port.api
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.AccessToken
-import fr.sacane.jmanager.domain.utils.Response
-import fr.sacane.jmanager.domain.utils.Response.Companion.forbidden
-import fr.sacane.jmanager.domain.utils.Response.Companion.ok
-import fr.sacane.jmanager.domain.utils.Response.Companion.timeout
-import fr.sacane.jmanager.domain.utils.Response.Companion.unauthorized
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.Result.Companion.forbidden
+import fr.sacane.jmanager.domain.utils.Result.Companion.timeout
+import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.utils.success
 import java.util.*
 import java.util.logging.Logger
 
@@ -18,9 +18,9 @@ interface SessionManager{
         userId: UserId,
         token: UUID,
         requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
-        block: (UserId) -> Response<T>
-    ): Response<T>
-    fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken>
+        block: (UserId) -> Result<T>
+    ): Result<T>
+    fun tryRefresh(id: UserId, refreshToken: UUID): Result<AccessToken>
     fun removeSession(userId: UserId, token: UUID)
     fun purgeExpiredToken()
 }
@@ -50,8 +50,8 @@ class InMemorySessionManager : SessionManager {
         userId: UserId,
         token: UUID,
         requiredRoles: Array<Role>,
-        block: (UserId) -> Response<T>
-    ): Response<T> {
+        block: (UserId) -> Result<T>
+    ): Result<T> {
         synchronized(lock) {
             val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
 
@@ -63,7 +63,7 @@ class InMemorySessionManager : SessionManager {
         }
         return block(userId)
     }
-    override fun tryRefresh(id: UserId, refreshToken: UUID): Response<AccessToken> = synchronized(lock) {
+    override fun tryRefresh(id: UserId, refreshToken: UUID): Result<AccessToken> = synchronized(lock) {
         logger.info("Trying to refresh session user $id")
         val session = getSession(id, refreshToken) ?: return unauthorized("L'utilisateur n'est pas connecté")
         if (session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
@@ -71,7 +71,7 @@ class InMemorySessionManager : SessionManager {
         }
         session.updateLifetime()
         session.updateTokenLifetime()
-        return ok(session)
+        return success(session)
     }
     infix fun removeSession(userId: UserId) = synchronized(lock) {
         userSession[userId]?.clear()
