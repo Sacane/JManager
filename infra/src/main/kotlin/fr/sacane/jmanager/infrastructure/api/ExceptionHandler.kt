@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController
 @ControllerAdvice(annotations = [RestController::class])
 class ExceptionHandler {
 
-    @ExceptionHandler(ForbiddenException::class)
+/*    @ExceptionHandler(ForbiddenException::class)
     fun handleForbiddenException(ex: ForbiddenException): ResponseEntity<ErrorMessage> {
         val errorMessage = ErrorMessage(
             HttpStatus.FORBIDDEN.value(),
@@ -50,5 +50,5 @@ class ExceptionHandler {
             ex.message
         )
         return ResponseEntity(errorMessage, HttpStatus.UNAUTHORIZED)
-    }
+    }*/
 }

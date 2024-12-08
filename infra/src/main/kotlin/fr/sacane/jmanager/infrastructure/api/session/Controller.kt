@@ -4,10 +4,13 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.SessionFeature
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.infrastructure.api.InvalidRequestException
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toResponseEntity
+import kotlinx.coroutines.yield
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
@@ -25,10 +28,10 @@ class SessionController(
     @PostMapping(path= ["/auth"])
     fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO> {
         val response = loginFeature.login(userDTO.username, userDTO.password)
-        LOGGER.info("Trying to login user ${userDTO.username}")
+        LOGGER.info("Start authenticate user ${userDTO.username}...")
         return response.map {
             UserStorageDTO(
-                it.user.id.id ?: throw InvalidRequestException("Invalid response, something went wrong"),
+                it.user.id.id,
                 username = it.user.username,
                 email = it.user.email,
                 token = it.token.tokenValue.toString(),

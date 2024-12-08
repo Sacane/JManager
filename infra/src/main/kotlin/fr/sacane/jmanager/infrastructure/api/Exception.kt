@@ -5,9 +5,9 @@ data class ErrorMessage(
     var message: String
 )
 
-class ForbiddenException(override val message: String) : RuntimeException(message)
-class TimeOutException(override val message: String) : RuntimeException(message)
-class NotFoundException(override val message: String) : RuntimeException(message)
-class InvalidRequestException(override val message: String) : RuntimeException(message)
-class UnauthorizedRequestException(override val message: String): RuntimeException(message)
-class InternalServerErrorException(override val message: String) : RuntimeException(message)
+class ForbiddenException(val errCode: Int, override val message: String) : RuntimeException(message)
+class TimeOutException(val errCode: Int, override val message: String) : RuntimeException(message)
+class NotFoundException(val errCode: Int, override val message: String) : RuntimeException(message)
+class InvalidRequestException(val errCode: Int, override val message: String) : RuntimeException(message)
+class UnauthorizedRequestException(val errCode: Int, override val message: String): RuntimeException(message)
+class InternalServerErrorException(val errCode: Int, override val message: String) : RuntimeException(message)

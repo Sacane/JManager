@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain.utils
 
-enum class ResultState (code: Int){
+enum class ResultState (val code: Int){
     OK(0), TIMEOUT(1), INVALID(2), FORBIDDEN(3), NOT_FOUND(4), UNAUTHORIZED(5),
     INTERNAL_SERVER_ERROR(6), BAD_REQUEST(7), INFRASTRUCTURE_ERROR(8),
     // DOMAIN ERROR

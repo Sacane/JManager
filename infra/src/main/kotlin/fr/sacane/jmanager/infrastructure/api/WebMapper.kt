@@ -13,7 +13,7 @@ import java.awt.Color
 import java.math.BigDecimal
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
-    this.id ?: throw InvalidRequestException("Impossible d'envoyer null au client"),
+    this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
     this.amount.toStringValue(),
     this.label,
     this.previewAmount.toStringValue(),
@@ -44,16 +44,16 @@ internal fun <T> Result<T>.toResponseEntity()
     ResultState.USER_NOT_FOUND,
     ResultState.BOOKLET_NOT_FOUND, ResultState.TRANSACTION_NOT_FOUND,
     ResultState.TAG_PLACEHOLDER_UNDEFINED,
-    ResultState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(this.message)
+    ResultState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(this.status.code, this.message)
     ResultState.INVALID, ResultState.REGISTRATION_ERROR,
     ResultState.BOOKLET_LABEL_EXIST,
     ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.TRANSACTION_ENTRY_ERROR,
-    ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR -> throw InvalidRequestException(this.message)
-    ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.message)
-    ResultState.TIMEOUT  -> throw TimeOutException(this.message)
+    ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR -> throw InvalidRequestException(this.status.code, this.message)
+    ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.status.code, this.message)
+    ResultState.TIMEOUT  -> throw TimeOutException(this.status.code, this.message)
     ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED,
-         ResultState.PASSWORD_NOT_MATCH -> throw UnauthorizedRequestException(this.message)
-    ResultState.INTERNAL_SERVER_ERROR -> throw InternalServerErrorException(this.message)
+         ResultState.PASSWORD_NOT_MATCH -> throw UnauthorizedRequestException(this.status.code, this.message)
+    ResultState.INTERNAL_SERVER_ERROR -> throw InternalServerErrorException(this.status.code, this.message)
 }
 
 internal fun fr.sacane.jmanager.infrastructure.spi.entity.Color.asAwtColor(): Color = Color(this.red, this.green, this.blue)
