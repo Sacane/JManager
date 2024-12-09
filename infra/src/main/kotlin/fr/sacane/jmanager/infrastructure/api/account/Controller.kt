@@ -4,10 +4,13 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.infrastructure.api.*
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.toDTO
+import fr.sacane.jmanager.infrastructure.api.toModel
+import fr.sacane.jmanager.infrastructure.api.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
@@ -48,8 +51,8 @@ class AccountController (
         return feature.save(
             userAccount.id.id(),
             token.asTokenUUID(),
-            Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount)
-        ).map { AccountInfoDTO(it.amount.toString(), it.label, it.id.toString()) }.toResponseEntity()
+            Account(amount = userAccount.amount.toAmount(), labelAccount = userAccount.labelAccount)
+        ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toResponseEntity()
     }
 
 

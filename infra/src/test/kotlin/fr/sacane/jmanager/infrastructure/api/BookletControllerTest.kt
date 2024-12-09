@@ -2,7 +2,6 @@ package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.asTokenUUID
-import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.api.account.UserAccountDTO
@@ -12,7 +11,6 @@ import io.restassured.RestAssured
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
-import net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -59,7 +57,7 @@ class BookletControllerTest(
 
     @Test
     fun `Should create an account with its label and amount`() {
-        val body = UserAccountDTO(userId?.id!!, "test", "1000 €")
+        val body = UserAccountDTO(userId?.id!!, "test", 1000.toDouble(), "€")
         Given {
             port(port)
             header("Authorization", token)
@@ -69,7 +67,11 @@ class BookletControllerTest(
             post("/api/account")
         } Then {
             statusCode(200)
-            body("label", equalTo("test"), "amount", equalTo("1000.00 €"))
+            body("label", equalTo("test"), "amount", equalTo("1000.00"), "currency", equalTo("€"))
         }
+    }
+
+    fun `Should `() {
+
     }
 }

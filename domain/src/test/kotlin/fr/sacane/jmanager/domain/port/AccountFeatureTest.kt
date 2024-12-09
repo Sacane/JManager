@@ -32,7 +32,7 @@ class AccountFeatureTest {
 
     @Nested
     inner class AccountFeatureAuthTest: AuthenticationTest {
-        private val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
+        private val element = Account(50L, Amount.fromString("100", "€".asCurrency()), "test", owner = user)
         override val action: List<Result<out Any>>
             get() = listOf(
                 accountFeature.findAccountById(user.id, 50L, UUID.randomUUID()),
@@ -43,7 +43,7 @@ class AccountFeatureTest {
     @Test
     fun `Should find account by its Id`() {
         connectUser(user)
-        val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
+        val element = Account(50L, Amount.fromString("100", "€".asCurrency()), "test", owner = user)
         accountState.init(listOf(
             AccountByOwner(listOf(element), user.id)
         ))
@@ -56,7 +56,7 @@ class AccountFeatureTest {
     @Test
     fun `Given an existing account it could be edit`() {
         connectUser(user)
-        val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
+        val element = Account(50L, Amount.fromString("100", "€".asCurrency()), "test", owner = user)
         accountState.init(listOf(
             AccountByOwner(listOf(element), user.id)
         ))
@@ -78,7 +78,7 @@ class AccountFeatureTest {
     fun `As an owner of an account, I can delete it`() {
         val otherUser = userRepository.register("jojo",  "test") as User
         connectUser(otherUser)
-        val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
+        val element = Account(50L, Amount.fromString("100", "€".asCurrency()), "test", owner = user)
         accountState.init(listOf(
             AccountByOwner(listOf(element), otherUser.id)
         ))
@@ -101,7 +101,7 @@ class AccountFeatureTest {
     fun `As an account's owner, I can retrieve it by its label`() {
         val otherUser = userRepository.register("jojo","test") as User
         connectUser(otherUser)
-        val element = Account(50L, Amount.fromString("100 €"), "test", owner = user)
+        val element = Account(50L, Amount.fromString("100", "€".asCurrency()), "test", owner = user)
         accountState.init(listOf(
             AccountByOwner(listOf(element), otherUser.id)
         ))
@@ -116,10 +116,10 @@ class AccountFeatureTest {
     fun `As an account's owner,  I can retrieve All of my Registered Accounts`() {
         val otherUser = userRepository.register("jojo", "test") as User
         connectUser(otherUser)
-        val account = Account(50L, Amount.fromString("100 €"), "test1", owner = user)
-        val account2 = Account(51L, Amount.fromString("100 €"), "test2", owner = user)
-        val account3 = Account(52L, Amount.fromString("100 €"), "test3", owner = user)
-        val account4 = Account(53L, Amount.fromString("100 €"), "test4", owner = user)
+        val account = Account(50L, Amount.fromString("100", "€".asCurrency()), "test1", owner = user)
+        val account2 = Account(51L, Amount.fromString("100", "€".asCurrency()), "test2", owner = user)
+        val account3 = Account(52L, Amount.fromString("100", "€".asCurrency()), "test3", owner = user)
+        val account4 = Account(53L, Amount.fromString("100", "€".asCurrency()), "test4", owner = user)
         val expectedAccount = listOf(
             account,
             account2,
@@ -139,7 +139,7 @@ class AccountFeatureTest {
         val otherUser = userRepository.register("jojo", "test") as User
         connectUser(otherUser)
 
-        val accountToSave = Account(50L, Amount.fromString("100 €"), "test1", owner = otherUser)
+        val accountToSave = Account(50L, Amount.fromString("100", "€".asCurrency()), "test1", owner = otherUser)
 
         accountFeature.save(otherUser.id, session.tokenValue, accountToSave)
             .assertTrue {
@@ -155,10 +155,10 @@ class AccountFeatureTest {
         connectUser(otherUser)
 
         accountState.init(listOf(
-            AccountByOwner(listOf(Account(50L, Amount.fromString("100 €"), "test1", owner = otherUser)), otherUser.id)
+            AccountByOwner(listOf(Account(50L, Amount.fromString("100", "€".asCurrency()), "test1", owner = otherUser)), otherUser.id)
         ))
 
-        val accountToSave = Account(51L, Amount.fromString("150 €"), "test1", owner = otherUser)
+        val accountToSave = Account(51L, Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser)
         accountFeature.save(otherUser.id, session.tokenValue, accountToSave)
             .assertFailure()
     }
