@@ -27,7 +27,7 @@ internal fun AccountDTO.toModel(user: User? = null): Account
 = Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = Amount.fromString(this.amount))
 
 internal fun Transaction.toDTO(): SheetDTO {
-    return SheetDTO(id, label, amount.toStringValue(), amount.currency, isIncome, date, tagDTO = tag.toDTO(), isPreview)
+    return SheetDTO(id, label, amount.toStringValue(), amount.currency.symbol, isIncome, date, tagDTO = tag.toDTO(), isPreview)
 }
 
 
