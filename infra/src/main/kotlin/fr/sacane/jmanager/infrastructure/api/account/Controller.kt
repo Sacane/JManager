@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -44,14 +45,14 @@ class AccountController (
 
     @PostMapping
     fun createAccount(
-        @RequestBody userAccount: UserAccountDTO,
+        @RequestBody userAccount: UserAccountRequest,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountInfoDTO> {
         LOGGER.info("Booking a new Account...")
         return feature.save(
             userAccount.id.id(),
             token.asTokenUUID(),
-            Account(amount = userAccount.amount.toAmount(), labelAccount = userAccount.labelAccount)
+            Account(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
         ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toResponseEntity()
     }
 

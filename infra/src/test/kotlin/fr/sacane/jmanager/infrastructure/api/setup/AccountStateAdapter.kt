@@ -8,7 +8,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import org.springframework.stereotype.Component
 
 @Component
-class AccountFakeTestAdapter(
+class AccountStateAdapter(
     private val accountJpaRepository: AccountJpaRepository
 ): State<Account> {
     override fun get(): Collection<Account> {
