@@ -13,6 +13,7 @@ import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody
+import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -65,9 +66,10 @@ class BookletControllerTest(
             header("Content-Type", "application/json")
             body(objectMapper.writeValueAsString(body))
         } When {
-            post("/api/account/create")
+            post("/api/account")
         } Then {
             statusCode(200)
+            body("label", equalTo("test"), "amount", equalTo("1000.00 €"))
         }
     }
 }

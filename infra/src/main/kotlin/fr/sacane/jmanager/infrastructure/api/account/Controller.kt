@@ -39,7 +39,7 @@ class AccountController (
         }.toResponseEntity()
     }
 
-    @PostMapping("create")
+    @PostMapping
     fun createAccount(
         @RequestBody userAccount: UserAccountDTO,
         @RequestHeader("Authorization") token: String

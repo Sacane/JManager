@@ -40,7 +40,6 @@ data class Amount(var amount: BigDecimal, val currency: String = "€") {
             val regex = """([\d.]+) ([^\d.]+)""".toRegex()
             val matchResult = regex.find(representation) ?: throw InvalidMoneyFormatException("The amount format is not valid : $representation")
             val (amount, foundCurrency) = matchResult.destructured
-            if(foundCurrency.length > 1) throw InvalidMoneyFormatException("The length of the currency should exactly be equals to 1")
             return try {
                 val amountAsBigDecimal = BigDecimal(amount)
                 Amount(amountAsBigDecimal, foundCurrency)
