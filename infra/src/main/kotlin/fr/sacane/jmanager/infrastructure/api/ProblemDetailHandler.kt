@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.api
 
+import fr.sacane.jmanager.domain.models.InvalidCurrencyException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -17,6 +18,16 @@ class ProblemDetailHandler {
         problemDetail.setProperty("code", 111)
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail)
     }
+
+    @ExceptionHandler(InvalidCurrencyException::class)
+    fun onIrregularException(ex: InvalidCurrencyException): ResponseEntity<ProblemDetail> {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Invalid given currency"
+        problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"
+        problemDetail.setProperty("code", 144)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+    }
+
 
     @ExceptionHandler(ForbiddenException::class)
     fun handleForbiddenException(ex: ForbiddenException): ResponseEntity<ProblemDetail> {

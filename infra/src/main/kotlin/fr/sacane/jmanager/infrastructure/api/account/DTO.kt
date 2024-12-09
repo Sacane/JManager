@@ -18,7 +18,7 @@ data class AccountInfoDTO(
     val currency: String
 )
 
-data class UserAccountDTO(
+data class UserAccountRequest(
     val id: Long,
     val labelAccount: String,
     val amount: Double,
