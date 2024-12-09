@@ -39,7 +39,6 @@ class AccountFeatureImpl(
         }?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le compte est introuvable")
     }
 
-
     override fun editAccount(
         userID: Long,
         account: Account,
@@ -55,7 +54,6 @@ class AccountFeatureImpl(
         success(registered)
     }
 
-
     override fun deleteAccountById(
         profileID: UserId,
         accountID: Long,
@@ -64,7 +62,6 @@ class AccountFeatureImpl(
         accountRepository.deleteAccountById(accountID)
         success()
     }
-
 
     override fun findByLabelAndUserId(
         userId: UserId,
@@ -79,7 +76,6 @@ class AccountFeatureImpl(
             ?: return@authenticate failure(ResultState.BOOKLET_LABEL_NOT_EXIST, "Le compte $label n'est pas enregistré en base")
         )
     }
-
 
     override fun findAllRegisteredAccounts(
         userId: UserId,

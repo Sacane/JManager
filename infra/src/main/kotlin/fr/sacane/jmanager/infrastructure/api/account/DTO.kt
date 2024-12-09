@@ -14,11 +14,13 @@ data class AccountDTO(
 data class AccountInfoDTO(
     val amount: String,
     val label: String,
-    val id: String
+    val id: String,
+    val currency: String
 )
 
 data class UserAccountDTO(
     val id: Long,
     val labelAccount: String,
-    val amount: String
+    val amount: Double,
+    val currency: String
 )
