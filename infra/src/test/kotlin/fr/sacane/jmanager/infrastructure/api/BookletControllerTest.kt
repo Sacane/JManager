@@ -2,9 +2,8 @@ package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.asTokenUUID
-import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.api.account.UserAccountRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateAdapter
@@ -14,6 +13,7 @@ import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.not
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -25,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.MessageSource
 import org.springframework.test.context.TestPropertySource
+import java.math.BigDecimal
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -33,7 +34,8 @@ class BookletControllerTest(
     @Autowired val accountStateAdapter: AccountStateAdapter,
     @Autowired val sessionFeature: SessionFeature,
     @Autowired val objectMapper: ObjectMapper,
-    @Autowired val userPostgresRepository: UserPostgresRepository
+    @Autowired val userPostgresRepository: UserPostgresRepository,
+    @Autowired val accountFeature: AccountFeature,
 ) {
 
     @Qualifier("messageSource")
@@ -97,7 +99,7 @@ class BookletControllerTest(
     }
 
     @Nested
-    inner class FindAccountByIdTest {
+    inner class FindAccountByUserIdTest {
         @Test
         fun `Request for an account with its id should send 200 with the account in the body`() {
             accountStateAdapter.init(listOf(Account(id = null, amount = 100.toAmount(), labelAccount = "test", owner = user)))
@@ -122,6 +124,46 @@ class BookletControllerTest(
                 get("/api/account/${100219}")
             } Then {
                 statusCode(401)
+            }
+        }
+
+        @Test
+        fun `Request for an account that does not exists must send 404`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/account/${user!!.id.id!!}/unknown")
+            } Then {
+                statusCode(404)
+            }
+        }
+        @Test
+        fun `Request for an existing account should return it and send 200`() {
+           accountStateAdapter.init(
+               listOf(
+                   Account(
+                       id = null,
+                       amount = Amount.fromString("100.00"),
+                       labelAccount = "test",
+                       owner = user,
+                   )
+               )
+           )
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/account/${user!!.id.id!!}/test")
+            } Then {
+                statusCode(200)
+                body(
+                    "amount", equalTo(100.0F),
+                    "labelAccount", equalTo("test"),
+                    "id", not(equalTo(null)),
+                )
             }
         }
     }

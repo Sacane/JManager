@@ -101,13 +101,6 @@ internal fun UserResource.toModelWithSimpleAccounts()
 
 internal fun AccountResource.toSimpleModel(): Account = Account(this.idAccount, this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount())
 
-internal fun UserResource.toMinimalUserRepresentation()
-: MinimalUserRepresentation = MinimalUserRepresentation(
-    UserId(this.idUser),
-    this.username,
-    this.email
-)
-
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
     UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password)
 

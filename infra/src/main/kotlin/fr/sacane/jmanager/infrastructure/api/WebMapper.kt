@@ -14,17 +14,18 @@ import java.math.BigDecimal
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
-    this.amount.toStringValue(),
+    this.amount.amount,
     this.label,
     this.previewAmount.toStringValue(),
-    this.sheets().map { sheet -> sheet.toDTO() }
+    this.sheets().map { sheet -> sheet.toDTO() },
+    this.amount.currency.symbol
 )
 
 internal fun SheetDTO.toModel(): Transaction
 = Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
 internal fun AccountDTO.toModel(user: User? = null): Account
-= Account(this.id, Amount.fromString(this.amount), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = Amount.fromString(this.amount))
+= Account(this.id, this.amount.toAmount(), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = this.amount.toAmount())
 
 internal fun Transaction.toDTO(): SheetDTO {
     return SheetDTO(id, label, amount.toStringValue(), amount.currency.symbol, isIncome, date, tagDTO = tag.toDTO(), isPreview)

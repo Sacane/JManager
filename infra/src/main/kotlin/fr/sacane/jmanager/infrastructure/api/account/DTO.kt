@@ -1,14 +1,16 @@
 package fr.sacane.jmanager.infrastructure.api.account
 
 import fr.sacane.jmanager.infrastructure.api.transaction.SheetDTO
+import java.math.BigDecimal
 
 
 data class AccountDTO(
     val id: Long?,
-    val amount: String,
+    val amount: BigDecimal,
     val labelAccount: String,
     val previewAmount: String,
-    val sheets: List<SheetDTO>?
+    val sheets: List<SheetDTO>?,
+    val currency: String
 )
 
 data class AccountInfoDTO(
