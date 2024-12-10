@@ -17,7 +17,7 @@ class AccountMapper(
     val tagRepository: TagRepository
 ){
     fun asResource(account: Account): AccountResource {
-        val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
+        val userResource = account.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
             AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), subscriptions = mutableListOf(), userResource.get(),  initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         } else {
@@ -122,7 +122,7 @@ fun Tag.toPersonalTag(userResource: UserResource? = null): TagPersonalResource{
 }
 
 internal fun User.asExistingResource(subscriptionMapper: SubscriptionMapper): UserResource
-        = UserResource(idUser = this.id.id,
+        = UserResource(idUser = this.id.value,
     username = username,
     email = email,
     accounts = this.accounts.map {it.asResource()}.toMutableList(),

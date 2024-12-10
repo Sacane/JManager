@@ -179,7 +179,7 @@ class TransactionFeatureTest: FeatureTest() {
                 val expectedAmount = 105.toAmount()
                 val expectedDate = "02/02/2024".toDate()
                 transactionFeature.editTransaction(
-                    userId.id!!, account.id!!, elements.copy(label = "test1.0", _amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
+                    userId.value!!, account.id!!, elements.copy(label = "test1.0", _amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
                 )
 
                 val actualTransaction = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -201,7 +201,7 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 initTransactions(listOf(t1, t2, t3, t4, t5))
 
-                transactionFeature.editTransaction(userId.id!!, account.id!!, t5.copy(date = "31/12/2023".toDate()), session.tokenValue)
+                transactionFeature.editTransaction(userId.value!!, account.id!!, t5.copy(date = "31/12/2023".toDate()), session.tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -224,7 +224,7 @@ class TransactionFeatureTest: FeatureTest() {
             val t5 = generateTransaction("test5", 100.toAmount(), true, "04/01/2024".toDate())
             launchWithConnectedUserInstance {
                 initTransactions(listOf(t1, t2, t3, t4, t5))
-                transactionFeature.editTransaction(userId.id!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
+                transactionFeature.editTransaction(userId.value!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -247,7 +247,7 @@ class TransactionFeatureTest: FeatureTest() {
                 ))
                 val transaction2 = generateTransaction("test1", 100.toAmount(), true, "02/01/2024".toDate())
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, transaction2)
-                transactionFeature.editTransaction(userId.id!!, account.id!!, transaction2.copy(_amount = 105.toAmount()), session.tokenValue)
+                transactionFeature.editTransaction(userId.value!!, account.id!!, transaction2.copy(_amount = 105.toAmount()), session.tokenValue)
                     .assertSuccess()
 
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
@@ -260,7 +260,7 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val toInsert = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
                 initTransactions(toInsert.asSingleton())
-                transactionFeature.findById(userId.id!!, toInsert.id!!, tokenValue)
+                transactionFeature.findById(userId.value!!, toInsert.id!!, tokenValue)
                     .assertTrue { this.label == toInsert.label && this.amount == toInsert.amount }
             }
         }

@@ -33,7 +33,7 @@ internal fun Transaction.toDTO(): SheetDTO {
 
 
 internal fun User.toDTO(): UserDTO
-= UserDTO(this.id.id ?: 0, this.username, this.email)
+= UserDTO(this.id.value ?: 0, this.username, this.email)
 
 internal fun Long.id(): UserId = UserId(this)
 

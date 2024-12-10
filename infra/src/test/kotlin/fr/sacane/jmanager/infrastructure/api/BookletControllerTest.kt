@@ -19,11 +19,10 @@ import org.hamcrest.CoreMatchers.not
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
-import org.springframework.context.MessageSource
 import org.springframework.test.context.TestPropertySource
+import java.math.BigDecimal
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -35,9 +34,6 @@ class BookletControllerTest(
     @Autowired val userPostgresRepository: UserPostgresRepository,
 ) {
 
-    @Qualifier("messageSource")
-    @Autowired
-    private lateinit var messageSource: MessageSource
     private lateinit var token: String
     private var user: User? = null
 
@@ -65,7 +61,7 @@ class BookletControllerTest(
     inner class BookingBookletTest {
         @Test
         fun `Should create an account with its label and amount then send 200`() {
-            val body = UserAccountRequest(user?.id!!.id!!, "test", 1000.toDouble(), "€")
+            val body = UserAccountRequest(user?.id!!.value!!, "test", 1000.toDouble(), "€")
             Given {
                 port(port)
                 header("Authorization", token)
@@ -81,7 +77,7 @@ class BookletControllerTest(
 
         @Test
         fun `Should send 400 with bad currency request`() {
-            val body = UserAccountRequest(user?.id!!.id!!, "test", 1000.toDouble(), "ERR")
+            val body = UserAccountRequest(user?.id!!.value!!, "test", 1000.toDouble(), "ERR")
             Given {
                 port(port)
                 header("Authorization", token)
@@ -105,7 +101,7 @@ class BookletControllerTest(
                 header("Authorization", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/account/${user!!.id.id}")
+                get("/api/account/${user!!.id.value}")
             } Then {
                 statusCode(200)
             }
@@ -131,7 +127,7 @@ class BookletControllerTest(
                 header("Authorization", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/account/${user!!.id.id!!}/unknown")
+                get("/api/account/${user!!.id.value!!}/unknown")
             } Then {
                 statusCode(404)
             }
@@ -153,7 +149,7 @@ class BookletControllerTest(
                 header("Authorization", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/account/${user!!.id.id!!}/test")
+                get("/api/account/${user!!.id.value!!}/test")
             } Then {
                 statusCode(200)
                 body(
@@ -186,7 +182,7 @@ class BookletControllerTest(
                 header("Authorization", token)
                 header("Content-Type", "application/json")
             } When {
-                delete("/api/account/${user!!.id.id!!}/$accountID")
+                delete("/api/account/${user!!.id.value!!}/$accountID")
             } Then {
                 statusCode(200)
             }
@@ -200,7 +196,7 @@ class BookletControllerTest(
                 header("Authorization", token)
                 header("Content-Type", "application/json")
             } When {
-                delete("/api/account/${user!!.id.id!!}/100")
+                delete("/api/account/${user!!.id.value!!}/100")
             } Then {
                 statusCode(404)
             }
@@ -215,6 +211,40 @@ class BookletControllerTest(
                 delete("/api/account/203/100")
             } Then {
                 statusCode(401)
+            }
+        }
+    }
+
+    @Nested
+    inner class UpdateBookletEndpointTest {
+        @Test
+        fun `Request for a valid booklet update should return 200`() {
+            accountStateAdapter.init(
+                listOf(
+                    Account(
+                        id = null,
+                        amount = Amount.fromString("100.00"),
+                        labelAccount = "test",
+                        owner = user,
+                    )
+                )
+            )
+            val account = accountStateAdapter.get().first()
+            val body = account.toDTO()
+                .copy(
+                    amount = BigDecimal.valueOf(150.00),
+                )
+
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(body)
+            } When {
+                patch("/api/account/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+                body("amount", equalTo(150.0F))
             }
         }
     }

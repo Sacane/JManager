@@ -67,7 +67,7 @@ class AccountFeatureTest {
             initialSold = element.initialSold,
             owner = user
         )
-        val response = accountFeature.editAccount(userID = user.id.id!!, account = account, session.tokenValue)
+        val response = accountFeature.editAccount(userID = user.id.value!!, account = account, session.tokenValue)
 
         val expectedAnswer = Amount(BigDecimal(102))
 
