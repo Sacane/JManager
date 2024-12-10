@@ -2,8 +2,10 @@ package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.asTokenUUID
-import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.api.AccountFeature
+import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.api.account.UserAccountRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateAdapter
@@ -14,18 +16,14 @@ import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.MessageSource
 import org.springframework.test.context.TestPropertySource
-import java.math.BigDecimal
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -35,7 +33,6 @@ class BookletControllerTest(
     @Autowired val sessionFeature: SessionFeature,
     @Autowired val objectMapper: ObjectMapper,
     @Autowired val userPostgresRepository: UserPostgresRepository,
-    @Autowired val accountFeature: AccountFeature,
 ) {
 
     @Qualifier("messageSource")
@@ -164,6 +161,60 @@ class BookletControllerTest(
                     "labelAccount", equalTo("test"),
                     "id", not(equalTo(null)),
                 )
+            }
+        }
+    }
+
+    @Nested
+    inner class DeleteBookletTest {
+        @Test
+        fun `Request delete account from its ID should return 200`() {
+            accountStateAdapter.init(
+                listOf(
+                    Account(
+                        id = null,
+                        amount = Amount.fromString("100.00"),
+                        labelAccount = "test",
+                        owner = user,
+                    )
+                )
+            )
+            val accountID = accountStateAdapter.get().first().id!!
+
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                delete("/api/account/${user!!.id.id!!}/$accountID")
+            } Then {
+                statusCode(200)
+            }
+            assertTrue(accountStateAdapter.get().isEmpty())
+        }
+
+        @Test
+        fun `Delete account from an ID of an account that does not exists should return 404`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                delete("/api/account/${user!!.id.id!!}/100")
+            } Then {
+                statusCode(404)
+            }
+        }
+        @Test
+        fun `Delete account from an ID of an account by a user that does not exists should return 401`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                delete("/api/account/203/100")
+            } Then {
+                statusCode(401)
             }
         }
     }
