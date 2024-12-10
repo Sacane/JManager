@@ -7,7 +7,7 @@ class Account(
     var amount: Amount,
     private var labelAccount: String,
     private val _transactions: MutableList<Transaction> = mutableListOf(),
-    val owner : User? = null,
+    var owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
 ){
@@ -54,6 +54,7 @@ class Account(
             amount: $amount
             label: $labelAccount
             initialSold: $initialSold
+            owner: ${owner?.id}
         """.trimIndent()
     }
 

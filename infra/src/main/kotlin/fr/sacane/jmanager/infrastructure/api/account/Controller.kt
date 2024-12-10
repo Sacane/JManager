@@ -33,14 +33,11 @@ class AccountController (
         @PathVariable label: String,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> {
-        val accounts = feature.findAllRegisteredAccounts(
-            id.id(),
-            token.asTokenUUID()
-        )
-        if (accounts.status == ResultState.NOT_FOUND) return ResponseEntity.notFound().build()
-        return accounts.map { list ->
-            list.find { it.label == label }?.toDTO()!!
-        }.toResponseEntity()
+        LOGGER.info("Search for the account $label of $id")
+        return feature.findByLabelAndUserId(userId = id.id(), token = token.asTokenUUID(), label = label)
+            .map {
+                it.toDTO()
+            }.toResponseEntity()
     }
 
     @PostMapping
@@ -69,13 +66,7 @@ class AccountController (
         )
         return response.map { accounts ->
             accounts.map {
-                AccountDTO(
-                    it.id,
-                    it.amount.toString(),
-                    it.label,
-                    it.previewAmount.toString(),
-                    it.sheets().map { sheet -> sheet.toDTO() }
-                )
+                it.toDTO()
             }
         }.toResponseEntity()
     }

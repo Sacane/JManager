@@ -88,6 +88,10 @@ class Result <S> internal constructor(
         val value = this.data ?: return Result(status, null, error = error)
         return Result(status, mapper.invoke(value))
     }
+    fun <T: Any> resolveNullable(state: ResultState, mapping: (S) -> T) : Result<T> {
+        if(data == null) return failure(state, "Unresolvable data")
+        return success(mapping(data!!))
+    }
 
     fun <T> mapTo (
             mapper: (S?) -> T
