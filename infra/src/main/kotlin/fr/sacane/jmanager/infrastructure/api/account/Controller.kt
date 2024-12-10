@@ -7,7 +7,6 @@ import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toModel
@@ -59,7 +58,7 @@ class AccountController (
         @PathVariable id: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<List<AccountDTO>> {
-        LOGGER.info("Trying to get accounts")
+        LOGGER.info("Request for accounts of user $id")
         val response = feature.findAllRegisteredAccounts(
             id.id(),
             token.asTokenUUID()
@@ -81,7 +80,7 @@ class AccountController (
             .map { it.toDTO() }.toResponseEntity()
 
 
-    @DeleteMapping(path = ["{userId}/delete/{accountId}"])
+    @DeleteMapping(path = ["{userId}/{accountId}"])
     fun deleteAccount(
         @PathVariable userId: Long,
         @PathVariable accountId: Long,
