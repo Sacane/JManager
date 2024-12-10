@@ -22,7 +22,7 @@ class SqlTransactionAdapter(
 
     @Transactional
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
-        val id = userId.id ?: return null
+        val id = userId.value ?: return null
         val account = accountJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
         val transactionResource: TransactionResource
         if(transaction.tag.label == "Aucune"){
@@ -78,8 +78,8 @@ class SqlTransactionAdapter(
 
     @Transactional
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
-        if(userId.id == null) return null
-        return accountJpaRepository.findSheetsByLabelAndAccountOf(label, userId.id!!)
+        if(userId.value == null) return null
+        return accountJpaRepository.findSheetsByLabelAndAccountOf(label, userId.value!!)
             ?.toModel()
     }
 }

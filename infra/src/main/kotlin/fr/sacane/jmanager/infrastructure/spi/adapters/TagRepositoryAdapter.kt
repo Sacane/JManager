@@ -18,7 +18,7 @@ class TagRepositoryAdapter(
 ): TagRepository {
     @Transactional
     override fun save(userId: UserId, tag: Tag): Tag? {
-        val user = userPostgresRepository.findByIdWithTags(userId.id) ?: return null
+        val user = userPostgresRepository.findByIdWithTags(userId.value) ?: return null
         val tag1 = tag.toPersonalTag()
         val saved = tagPersonalPostgresRepository.save(tag1)
         user.addTag(tag1)
@@ -27,8 +27,8 @@ class TagRepositoryAdapter(
     @Transactional
     override fun getAll(userId: UserId)
     : List<Tag> {
-        if(userId.id == null) return emptyList()
-        return userId.id?.let {id ->
+        if(userId.value == null) return emptyList()
+        return userId.value?.let { id ->
             tagPersonalPostgresRepository.findAllByOwnerId(id)
                 .map { it.toDomain() }.plus(
                     defaultTagPostgresRepository.findAll().map { it.toDomain() }
@@ -42,12 +42,12 @@ class TagRepositoryAdapter(
     @Transactional
     override fun getAllDefault(userId: UserId): List<Tag> {
         val defaults = defaultTagPostgresRepository.findAll()
-        val personal = userId.id?.let { tagPersonalPostgresRepository.findAllByOwnerId(it) } ?: emptyList()
+        val personal = userId.value?.let { tagPersonalPostgresRepository.findAllByOwnerId(it) } ?: emptyList()
         return defaults.map { it.toDomain() }.plus(personal.map { it.toDomain() })
     }
     @Transactional
     override fun existsByLabelAndUserId(userId: UserId, tag: Tag): Boolean
-    = userId.id?.let { tagPersonalPostgresRepository.existsTagByNameAndOwnerId(tag.label, it) } ?: false
+    = userId.value?.let { tagPersonalPostgresRepository.existsTagByNameAndOwnerId(tag.label, it) } ?: false
 
     @Transactional
     override fun saveAll(defaultTags: List<Tag>) {

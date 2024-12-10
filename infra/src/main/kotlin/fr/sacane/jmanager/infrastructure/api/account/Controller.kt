@@ -70,7 +70,7 @@ class AccountController (
         }.toResponseEntity()
     }
 
-    @PostMapping(path = ["update/{userID}"])
+    @PatchMapping(path = ["{userID}"])
     fun updateAccount(
         @PathVariable userID: Long,
         @RequestBody account: AccountDTO,

@@ -2,7 +2,7 @@ package fr.sacane.jmanager.domain.models
 
 
 @JvmInline
-value class UserId(val id: Long?)
+value class UserId(val value: Long?)
 
 data class MinimalUserRepresentation(
     val id: UserId = UserId(null),

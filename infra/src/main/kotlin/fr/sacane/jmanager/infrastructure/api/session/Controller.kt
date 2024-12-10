@@ -27,7 +27,7 @@ class SessionController(
         LOGGER.info("Start authenticate user ${userDTO.username}...")
         return response.map {
             UserStorageDTO(
-                it.user.id.id,
+                it.user.id.value,
                 username = it.user.username,
                 email = it.user.email,
                 token = it.token.tokenValue.toString(),
@@ -54,7 +54,7 @@ class SessionController(
     : ResponseEntity<UserStorageDTO> = loginFeature.tryRefresh(id.id(), refreshToken.asTokenUUID())
             .map {
                 UserStorageDTO(
-                    it.first.id.id,
+                    it.first.id.value,
                     it.first.username,
                     it.first.email,
                     it.second.tokenValue.toString(),

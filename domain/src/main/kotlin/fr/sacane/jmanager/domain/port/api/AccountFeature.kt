@@ -60,7 +60,7 @@ class AccountFeatureImpl(
         token: UUID
     ): Result<Nothing> = session.authenticate(profileID, token) {
         if(accountRepository.findAccountByIdWithTransactions(accountID) == null){
-            return@authenticate failure(ResultState.NOT_FOUND, "Le livret ${accountID} n'existe pas")
+            return@authenticate failure(ResultState.NOT_FOUND, "Le livret $accountID n'existe pas")
         }
         accountRepository.deleteAccountById(accountID)
         success()
