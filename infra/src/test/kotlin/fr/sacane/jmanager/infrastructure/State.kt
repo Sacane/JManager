@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure
 
-interface State<T> {
-    fun get(): Collection<T>
-    fun init(initialState: Collection<T>)
+interface State<I, O> {
+    fun get(): Collection<O>
+    fun init(initialState: Collection<I>)
     fun clear()
 }
