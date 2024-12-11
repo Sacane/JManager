@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
-import useAccounts from '~/composables/useAccounts'
+import useBooklet from '~/composables/useBooklet'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -17,9 +17,9 @@ onMounted(() => {
 })
 
 const isAccountDialogOpen = ref(false)
-const { createAccount } = useAccounts()
+const { createAccount } = useBooklet()
 function handleAccountCreation(account) {
-  createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
+  createAccount(account.label, Number(`${account.integerpart}.${account.decimalpart}`), '€')
     .then((acc) => {
       toast.success(`La création du compte ${acc.label} a été un succès !`)
       navigateTo(`/account/${acc.id}`)
