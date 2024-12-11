@@ -5,9 +5,8 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.SessionFeature
-import fr.sacane.jmanager.infrastructure.api.account.UserAccountRequest
+import fr.sacane.jmanager.infrastructure.api.account.UserBookletRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateAdapter
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.RestAssured
@@ -15,7 +14,6 @@ import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.not
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.springframework.beans.factory.annotation.Autowired
@@ -61,7 +59,7 @@ class BookletControllerTest(
     inner class BookingBookletTest {
         @Test
         fun `Should create an account with its label and amount then send 200`() {
-            val body = UserAccountRequest(user?.id!!.value!!, "test", 1000.toDouble(), "€")
+            val body = UserBookletRequest(user?.id!!.value!!, "test", 1000.toDouble(), "€")
             Given {
                 port(port)
                 header("Authorization", token)
@@ -77,7 +75,7 @@ class BookletControllerTest(
 
         @Test
         fun `Should send 400 with bad currency request`() {
-            val body = UserAccountRequest(user?.id!!.value!!, "test", 1000.toDouble(), "ERR")
+            val body = UserBookletRequest(user?.id!!.value!!, "test", 1000.toDouble(), "ERR")
             Given {
                 port(port)
                 header("Authorization", token)
@@ -91,7 +89,7 @@ class BookletControllerTest(
         }
     }
 
-    @Nested
+    /*@Nested
     inner class FindAccountByUserIdTest {
         @Test
         fun `Request for an account with its id should send 200 with the account in the body`() {
@@ -159,7 +157,7 @@ class BookletControllerTest(
                 )
             }
         }
-    }
+    }*/
 
     @Nested
     inner class DeleteBookletTest {
@@ -245,6 +243,92 @@ class BookletControllerTest(
             } Then {
                 statusCode(200)
                 body("amount", equalTo(150.0F))
+            }
+        }
+
+        @Test
+        fun `Request for an unknown booklet must send 404`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(
+                    Account(
+                        id = 23,
+                        amount = Amount.fromString("100.00"),
+                        labelAccount = "test",
+                        owner = user,
+                    ).toDTO()
+                )
+            } When {
+                patch("/api/account/${user!!.id.value}")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Request from an unknown user must send 401`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(
+                    Account(
+                        id = 23,
+                        amount = Amount.fromString("100.00"),
+                        labelAccount = "test",
+                        owner = user,
+                    ).toDTO()
+                )
+            } When {
+                patch("/api/account/20")
+            } Then {
+                statusCode(401)
+            }
+        }
+    }
+    @Nested
+    inner class FindByIdBookletEndpointTest {
+        @Test
+        fun `Request a Booklet from an existing ID must return 200 with the asking booklet`() {
+            accountStateAdapter.init(
+                listOf(
+                    Account(
+                        id = null,
+                        amount = Amount.fromString("100.00"),
+                        labelAccount = "test",
+                        owner = user,
+                    )
+                )
+            )
+            val account = accountStateAdapter.get().first()
+
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/account/${account.id}/user/${user?.id?.value}")
+            } Then {
+                statusCode(200)
+                body(
+                    "amount", equalTo(100.0F),
+                    "labelAccount", equalTo("test"),
+                )
+            }
+        }
+
+        @Test
+        fun `Request for an non registered booklet ID must send 404`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/account/user/${user?.id?.value}/find/0")
+            } Then {
+                statusCode(404)
             }
         }
     }

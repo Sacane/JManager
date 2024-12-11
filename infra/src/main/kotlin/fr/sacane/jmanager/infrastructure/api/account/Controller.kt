@@ -26,7 +26,7 @@ class AccountController (
         private val LOGGER: Logger = Logger.getLogger("AccountController")
     }
 
-    @GetMapping(path = ["{id}/{label}"])
+    /*@GetMapping(path = ["{id}/{label}"])
     fun findAccount(
         @PathVariable id: Long,
         @PathVariable label: String,
@@ -37,11 +37,11 @@ class AccountController (
             .map {
                 it.toDTO()
             }.toResponseEntity()
-    }
+    }*/
 
     @PostMapping
     fun createAccount(
-        @RequestBody userAccount: UserAccountRequest,
+        @RequestBody userAccount: UserBookletRequest,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountInfoDTO> {
         LOGGER.info("Booking a new Account...")
@@ -87,7 +87,7 @@ class AccountController (
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.asTokenUUID()).toResponseEntity()
 
-    @GetMapping("/user/{userID}/find/{accountID}")
+    @GetMapping("{accountID}/user/{userID}")
     fun findAccountById(
         @PathVariable("userID") userID: Long,
         @PathVariable("accountID") accountID: Long,
