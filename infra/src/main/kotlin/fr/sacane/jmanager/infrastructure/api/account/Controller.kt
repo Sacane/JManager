@@ -9,7 +9,6 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toDTO
-import fr.sacane.jmanager.infrastructure.api.toModel
 import fr.sacane.jmanager.infrastructure.api.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -25,19 +24,6 @@ class AccountController (
     companion object {
         private val LOGGER: Logger = Logger.getLogger("AccountController")
     }
-
-    /*@GetMapping(path = ["{id}/{label}"])
-    fun findAccount(
-        @PathVariable id: Long,
-        @PathVariable label: String,
-        @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountDTO> {
-        LOGGER.info("Search for the account $label of $id")
-        return feature.findByLabelAndUserId(userId = id.id(), token = token.asTokenUUID(), label = label)
-            .map {
-                it.toDTO()
-            }.toResponseEntity()
-    }*/
 
     @PostMapping
     fun createAccount(
@@ -69,16 +55,6 @@ class AccountController (
             }
         }.toResponseEntity()
     }
-
-    @PatchMapping(path = ["{userID}"])
-    fun updateAccount(
-        @PathVariable userID: Long,
-        @RequestBody account: AccountDTO,
-        @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountDTO> =
-        feature.editAccount(userID, account.toModel(), token.asTokenUUID())
-            .map { it.toDTO() }.toResponseEntity()
-
 
     @DeleteMapping(path = ["{userId}/{accountId}"])
     fun deleteAccount(

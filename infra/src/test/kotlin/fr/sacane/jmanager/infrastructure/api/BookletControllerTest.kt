@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
-import java.math.BigDecimal
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -89,76 +88,6 @@ class BookletControllerTest(
         }
     }
 
-    /*@Nested
-    inner class FindAccountByUserIdTest {
-        @Test
-        fun `Request for an account with its id should send 200 with the account in the body`() {
-            accountStateAdapter.init(listOf(Account(id = null, amount = 100.toAmount(), labelAccount = "test", owner = user)))
-            Given {
-                port(port)
-                header("Authorization", token)
-                header("Content-Type", "application/json")
-            } When {
-                get("/api/account/${user!!.id.value}")
-            } Then {
-                statusCode(200)
-            }
-        }
-
-        @Test
-        fun `user that does not exists asking for an account should send 401`() {
-            Given {
-                port(port)
-                header("Authorization", token)
-                header("Content-Type", "application/json")
-            } When {
-                get("/api/account/${100219}")
-            } Then {
-                statusCode(401)
-            }
-        }
-
-        @Test
-        fun `Request for an account that does not exists must send 404`() {
-            Given {
-                port(port)
-                header("Authorization", token)
-                header("Content-Type", "application/json")
-            } When {
-                get("/api/account/${user!!.id.value!!}/unknown")
-            } Then {
-                statusCode(404)
-            }
-        }
-        @Test
-        fun `Request for an existing account should return it and send 200`() {
-           accountStateAdapter.init(
-               listOf(
-                   Account(
-                       id = null,
-                       amount = Amount.fromString("100.00"),
-                       labelAccount = "test",
-                       owner = user,
-                   )
-               )
-           )
-            Given {
-                port(port)
-                header("Authorization", token)
-                header("Content-Type", "application/json")
-            } When {
-                get("/api/account/${user!!.id.value!!}/test")
-            } Then {
-                statusCode(200)
-                body(
-                    "amount", equalTo(100.0F),
-                    "labelAccount", equalTo("test"),
-                    "id", not(equalTo(null)),
-                )
-            }
-        }
-    }*/
-
     @Nested
     inner class DeleteBookletTest {
         @Test
@@ -213,81 +142,6 @@ class BookletControllerTest(
         }
     }
 
-    @Nested
-    inner class UpdateBookletEndpointTest {
-        @Test
-        fun `Request for a valid booklet update should return 200`() {
-            accountStateAdapter.init(
-                listOf(
-                    Account(
-                        id = null,
-                        amount = Amount.fromString("100.00"),
-                        labelAccount = "test",
-                        owner = user,
-                    )
-                )
-            )
-            val account = accountStateAdapter.get().first()
-            val body = account.toDTO()
-                .copy(
-                    amount = BigDecimal.valueOf(150.00),
-                )
-
-            Given {
-                port(port)
-                header("Authorization", token)
-                header("Content-Type", "application/json")
-                body(body)
-            } When {
-                patch("/api/account/${user!!.id.value}")
-            } Then {
-                statusCode(200)
-                body("amount", equalTo(150.0F))
-            }
-        }
-
-        @Test
-        fun `Request for an unknown booklet must send 404`() {
-            Given {
-                port(port)
-                header("Authorization", token)
-                header("Content-Type", "application/json")
-                body(
-                    Account(
-                        id = 23,
-                        amount = Amount.fromString("100.00"),
-                        labelAccount = "test",
-                        owner = user,
-                    ).toDTO()
-                )
-            } When {
-                patch("/api/account/${user!!.id.value}")
-            } Then {
-                statusCode(404)
-            }
-        }
-
-        @Test
-        fun `Request from an unknown user must send 401`() {
-            Given {
-                port(port)
-                header("Authorization", token)
-                header("Content-Type", "application/json")
-                body(
-                    Account(
-                        id = 23,
-                        amount = Amount.fromString("100.00"),
-                        labelAccount = "test",
-                        owner = user,
-                    ).toDTO()
-                )
-            } When {
-                patch("/api/account/20")
-            } Then {
-                statusCode(401)
-            }
-        }
-    }
     @Nested
     inner class FindByIdBookletEndpointTest {
         @Test
