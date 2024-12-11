@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.api.account.UserBookletRequest
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.RestAssured
 import io.restassured.module.kotlin.extensions.Given
@@ -25,7 +25,7 @@ import org.springframework.test.context.TestPropertySource
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class BookletControllerTest(
     @LocalServerPort val port: Int,
-    @Autowired val accountStateAdapter: AccountStateAdapter,
+    @Autowired val accountStateAdapter: AccountStateTestAdapter,
     @Autowired val sessionFeature: SessionFeature,
     @Autowired val objectMapper: ObjectMapper,
     @Autowired val userPostgresRepository: UserPostgresRepository,

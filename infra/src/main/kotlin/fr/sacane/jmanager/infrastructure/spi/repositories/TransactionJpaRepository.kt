@@ -5,6 +5,6 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface SheetRepository : CrudRepository<TransactionResource, Long> {
+interface TransactionJpaRepository : CrudRepository<TransactionResource, Long> {
     fun findSheetResourceByIdSheet(id: Long): TransactionResource?
 }

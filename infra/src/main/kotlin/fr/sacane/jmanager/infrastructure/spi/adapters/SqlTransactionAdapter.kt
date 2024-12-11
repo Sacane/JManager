@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 @Adapter(Side.INFRASTRUCTURE)
 class SqlTransactionAdapter(
-    private val sheetRepository: SheetRepository,
+    private val transactionJpaRepository: TransactionJpaRepository,
     private val accountJpaRepository: AccountJpaRepository,
     private val tagRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
@@ -32,7 +32,7 @@ class SqlTransactionAdapter(
             transactionResource = transaction.mapToRightTag()
         }
         return try{
-            val saved = sheetRepository.save(transactionResource)
+            val saved = transactionJpaRepository.save(transactionResource)
             account.sheets.add(saved)
             account.amount = if(transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
             transaction
@@ -43,9 +43,9 @@ class SqlTransactionAdapter(
 
     @Transactional
     override fun saveAllSheets(transactions: List<Transaction>) {
-        sheetRepository.saveAll(transactions.map { it.mapToRightTag() })
+        transactionJpaRepository.saveAll(transactions.map { it.mapToRightTag() })
     }
-    private fun Transaction.mapToRightTag(): TransactionResource {
+    fun Transaction.mapToRightTag(): TransactionResource {
         val tag = this.tag.id?.let {
             if(this.tag.isDefault) {
                 tagRepository.findByIdNullable(it)
@@ -57,11 +57,11 @@ class SqlTransactionAdapter(
     }
 
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
-        sheetRepository.deleteAllById(sheetIds)
+        transactionJpaRepository.deleteAllById(sheetIds)
     }
 
     override fun findTransactionById(transactionId: Long): Transaction? {
-        return sheetRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
+        return transactionJpaRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
     }
 
 
@@ -73,7 +73,7 @@ class SqlTransactionAdapter(
         }
         val transactionResource = transaction.asResource(tag)
         transactionResource.account = accountJpaRepository.findByIdOrNull(accountId)
-        return sheetRepository.save(transactionResource).toModel()
+        return transactionJpaRepository.save(transactionResource).toModel()
     }
 
     @Transactional
