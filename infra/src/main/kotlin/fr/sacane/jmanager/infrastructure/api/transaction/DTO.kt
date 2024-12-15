@@ -40,13 +40,6 @@ data class TransactionResultDTO(
     val isPreview: Boolean
 )
 
-data class UserSheetDTO(
-    val userId: Long,
-    val month: Month,
-    val year: Int,
-    val accountLabel: String
-)
-
 data class UserAccountSheetDTO(
     val userId: Long,
     val accountLabel: String,
