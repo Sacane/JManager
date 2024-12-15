@@ -13,22 +13,22 @@ class AccountTest {
     fun `the user's accounts should not contains the same value more than once`(){
         val constantValue = 102.toAmount()
         val accounts = mutableListOf(
-            Account(null, constantValue, "test", mutableListOf()),
-            Account(null, constantValue, "Courant", mutableListOf()),
-            Account(null, constantValue, "test", mutableListOf()),
-            Account(null, constantValue, "Secondaire", mutableListOf())
+            Account(constantValue, "test", mutableListOf()),
+            Account(constantValue, "Courant", mutableListOf()),
+            Account(constantValue, "test", mutableListOf()),
+            Account(constantValue, "Secondaire", mutableListOf())
         )
 
         val user = User(UserId(1), "johan", "johan.test@test.fr", accounts)
         assertTrue{
-            user.accounts.contains(Account(null, constantValue, "test", mutableListOf()))
+            user.accounts.contains(Account(constantValue, "test", mutableListOf()))
         }
     }
 
     @Test
     fun `by giving a year and a month, accounts should retrieve its corresponding sheets`(){
         val sheets = Directory.transactionInventories
-        val account = Account(2.toLong(), 1050.toAmount(), "Primary", sheets)
+        val account = Account(1050.toAmount(), "Primary", sheets, id = 2.toLong())
         val sheetsOfDecember = account.retrieveSheetSurroundAndSortedByDate(Month.DECEMBER, 2022)
         assertTrue {
             sheetsOfDecember.all { it.date.month == Month.DECEMBER && it.date.year == 2022 } && sheetsOfDecember.size == 3

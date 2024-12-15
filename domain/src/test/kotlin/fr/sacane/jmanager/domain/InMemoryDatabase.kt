@@ -39,7 +39,7 @@ class InMemoryDatabase {
         userByAccount.forEach {
             val account = it.value.find { acc -> acc.id == accountId }
             if(account != null) {
-                targetAccount = Account(accountId, account.amount, account.label, accountByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner)
+                targetAccount = Account(account.amount, account.label, accountByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner, id = accountId)
             }
         }
         return targetAccount
@@ -57,7 +57,7 @@ class InMemoryDatabase {
 
         accountList.forEach {
             result.add(
-                Account(it.id, it.amount, it.label, accountByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner)
+                Account(it.amount, it.label, accountByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner, id = it.id)
             )
         }
         return result
