@@ -17,7 +17,7 @@ import java.time.Month
 import java.util.logging.Logger
 
 @RestController
-@RequestMapping("api/sheet")
+@RequestMapping("api/transaction")
 @Adapter(Side.APPLICATION)
 class TransactionController(private val transactionFeature: TransactionFeature) {
     private val logger = Logger.getLogger(TransactionController::class.java.name)

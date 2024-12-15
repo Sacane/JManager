@@ -4,10 +4,7 @@ import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Transaction
 import fr.sacane.jmanager.infrastructure.State
 import fr.sacane.jmanager.infrastructure.spi.adapters.SqlTransactionAdapter
-import fr.sacane.jmanager.infrastructure.spi.adapters.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.toModel
-import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component

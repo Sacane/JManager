@@ -1,21 +1,18 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.api.account.UserBookletRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
-import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
-import io.restassured.RestAssured
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -26,33 +23,12 @@ import org.springframework.test.context.TestPropertySource
 class BookletControllerTest(
     @LocalServerPort val port: Int,
     @Autowired val accountStateAdapter: AccountStateTestAdapter,
-    @Autowired val sessionFeature: SessionFeature,
-    @Autowired val objectMapper: ObjectMapper,
-    @Autowired val userPostgresRepository: UserPostgresRepository,
-) {
-
-    private lateinit var token: String
-    private var user: User? = null
-
-    companion object {
-        @BeforeAll
-        @JvmStatic
-        fun setup() {
-            RestAssured.enableLoggingOfRequestAndResponseIfValidationFails()
-        }
-    }
-
-    @BeforeEach
-    fun beforeEach() {
-        sessionFeature.register("test", "test", "test").onSuccess { user = it }
-        sessionFeature.login("test", "test").onSuccess { token = it.token.tokenValue.toString() }
-    }
+    @Autowired val objectMapper: ObjectMapper
+): AsAuthenticatedUserTest() {
 
     @AfterEach
-    fun tearDown() {
+    fun clear() {
         accountStateAdapter.clear()
-        sessionFeature.logout(user?.id!!, token.asTokenUUID())
-        userPostgresRepository.deleteAll()
     }
     @Nested
     inner class BookingBookletTest {
