@@ -12,6 +12,7 @@ import java.time.LocalDateTime
 import java.time.Month
 import java.util.*
 import java.util.logging.Logger
+import kotlin.math.log
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
@@ -88,6 +89,7 @@ class TransactionFeatureImpl(
         id: Long,
         token: UUID
     ): Result<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
+        logger.info("Request for a transaction with id $id")
         val sheet = transactionRepository.findTransactionById(id) ?: return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $id n'existe pas")
         success(sheet)
     }
