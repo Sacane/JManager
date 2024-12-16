@@ -111,6 +111,7 @@ class TransactionControllerTest(
             transactionStateTestAdapter.init(listOf(
                 AccountTransaction(justInputAccount, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount.fromString("200"), false, )))
             ))
+            val justInputTransaction = transactionStateTestAdapter.get().find { it.label == "testTransaction" }!!
 
             // When
 
@@ -120,7 +121,7 @@ class TransactionControllerTest(
                 header("Content-Type", "application/json")
                 param("userID", user!!.id.value)
             } When {
-                get("/api/transaction/{id}", mapOf("id" to justInputAccount.id))
+                get("/api/transaction/{id}", mapOf("id" to justInputTransaction.id))
             } Then {
                 statusCode(200)
                 body(
