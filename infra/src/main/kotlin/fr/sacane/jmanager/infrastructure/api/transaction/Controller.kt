@@ -39,7 +39,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     }
 
 
-    @DeleteMapping("delete/{userId}")
+    @DeleteMapping("{userId}")
     fun deleteByIds(
         @PathVariable("userId") userId: Long,
         @RequestBody sheetIds: AccountSheetIdsDTO,
@@ -78,7 +78,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     }
 
 
-    @GetMapping("transaction/{id}")
+    @GetMapping("{id}")
     fun findById(
         @RequestParam("userID") userID: Long,
         @PathVariable("id") sheetID: Long,
