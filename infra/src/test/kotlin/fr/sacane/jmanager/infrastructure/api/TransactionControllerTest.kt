@@ -8,13 +8,13 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.SheetDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.UserAccountSheetDTO
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,6 +31,12 @@ class TransactionControllerTest(
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
     @Autowired val objectMapper: ObjectMapper
 ): AsAuthenticatedUserTest() {
+
+    @AfterEach
+    fun clear() {
+        accountStateTestAdapter.clear()
+        transactionStateTestAdapter.clear()
+    }
 
     @Nested
     inner class CreateTransactionEndpointTest {
@@ -90,6 +96,7 @@ class TransactionControllerTest(
             }
         }
     }
+
     @Nested
     inner class FindTransactionByIdEndpointTest {
 
@@ -121,6 +128,34 @@ class TransactionControllerTest(
                     "value", equalTo("200.00"),
                     "isIncome", equalTo(false)
                 )
+            }
+        }
+
+        @Test
+        fun `Request for an unknown transaction must send 404`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                param("userID", user!!.id.value)
+            } When {
+                get("/api/transaction/{id}", mapOf("id" to "12"))
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Request for an unauthenticated user must send 401`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                param("userID", "2")
+            } When {
+                get("/api/transaction/{id}", mapOf("id" to "12"))
+            } Then {
+                statusCode(401)
             }
         }
     }
