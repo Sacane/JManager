@@ -58,7 +58,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         @RequestParam("accountLabel") accountLabel: String,
         @RequestHeader("Authorization") token: String
         ): ResponseEntity<TransactionList> {
-        LOGGER.info("Start getting transactions for account $accountLabel")
+        LOGGER.info("Request transactions from booklet $accountLabel for month $month and year $year")
         val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(TransactionList(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))

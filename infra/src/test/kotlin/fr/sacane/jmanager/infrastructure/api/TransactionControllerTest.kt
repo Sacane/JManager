@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Transaction
@@ -13,7 +14,7 @@ import fr.sacane.jmanager.infrastructure.api.transaction.UserAccountSheetDTO
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
-import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -22,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.time.LocalDate
+import java.time.Month
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -30,7 +32,7 @@ class TransactionControllerTest(
     @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
     @Autowired val objectMapper: ObjectMapper
-): AsAuthenticatedUserTest() {
+): AuthenticatedUserTest() {
 
     @AfterEach
     fun clear() {
@@ -109,7 +111,7 @@ class TransactionControllerTest(
             )
             val justInputAccount = accountStateTestAdapter.get().find { it.label == "test" }!!
             transactionStateTestAdapter.init(listOf(
-                AccountTransaction(justInputAccount, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount.fromString("200"), false, )))
+                AccountTransaction(user!!.id, justInputAccount.label, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount.fromString("200"), false)), token.asTokenUUID())
             ))
             val justInputTransaction = transactionStateTestAdapter.get().find { it.label == "testTransaction" }!!
 
@@ -157,6 +159,55 @@ class TransactionControllerTest(
                 get("/api/transaction/{id}", mapOf("id" to "12"))
             } Then {
                 statusCode(401)
+            }
+        }
+    }
+    @Nested
+    inner class RequestForTransactionsByDate {
+        @Test
+        fun `Request for transactions for a certain month and year must return 200 with all the requested ones and only those`() {
+            accountStateTestAdapter.init(
+                listOf(Account(200.toAmount(), "test", owner = user))
+            )
+            val transactions = listOf(
+                Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
+                Transaction(null, "test2", LocalDate.of(2024, Month.JUNE, 2), Amount.fromString("50.00"), true),
+                Transaction(null, "test3", LocalDate.of(2024, Month.JUNE, 5), Amount.fromString("300.00"), false),
+                Transaction(null, "test4", LocalDate.of(2024, Month.JUNE, 4), Amount.fromString("10050.00"), true),
+                Transaction(null, "test5", LocalDate.of(2024, Month.JUNE, 20), Amount.fromString("100.00"), false),
+                Transaction(null, "test6", LocalDate.of(2024, Month.MAY, 20), Amount.fromString("100.00"), false),
+            )
+            transactionStateTestAdapter.init(
+                listOf(
+                    AccountTransaction(
+                        user!!.id,
+                        "test",
+                        transactions,
+                        token.asTokenUUID()
+                    )
+                )
+            )
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+
+                param("userId", user!!.id.value)
+                param("month", Month.JUNE)
+                param("year", 2024)
+                param("accountLabel", "test")
+            } When {
+                get("/api/transaction")
+            } Then {
+                statusCode(200)
+                body(
+                    "sheets.label", hasItem("test1"),
+                    "sheets.label", hasItem("test2"),
+                    "sheets.label", hasItem("test3"),
+                    "sheets.label", hasItem("test4"),
+                    "sheets.label", hasItem("test5"),
+                    "sheets.label", not(hasItem("test6"))
+                )
             }
         }
     }

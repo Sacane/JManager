@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
-abstract class AsAuthenticatedUserTest {
+abstract class AuthenticatedUserTest {
     lateinit var token: String
     var user: User? = null
 
