@@ -12,7 +12,6 @@ import java.time.LocalDateTime
 import java.time.Month
 import java.util.*
 import java.util.logging.Logger
-import kotlin.math.log
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
@@ -20,7 +19,7 @@ sealed interface TransactionFeature {
     fun retrieveTransactionsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Result<List<Transaction>>
     fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Result<TransactionResumeResult>
     fun findById(userID: Long, id: Long, token: UUID): Result<Transaction>
-    fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID)
+    fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID): Result<Nothing>
     fun confirmPreviewTransaction(userId: UserId, token: UUID, accountID: Long, transactionId: Long): Result<TransactionResumeResult>
 }
 
@@ -94,13 +93,14 @@ class TransactionFeatureImpl(
         success(sheet)
     }
 
-    override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID) {
-        infraTransactionManager.executeInTransaction(transactionRepository) {
-            val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction
+    override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID): Result<Nothing> {
+        return infraTransactionManager.executeInTransaction(transactionRepository) {
+            val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction notFound<Nothing>("Account $accountID n'existe pas")
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
             account.removeTransactionIf(isSheetOnList)
             accountRepository.upsert(account)
             transactionRepository.deleteAllSheetsById(sheetIds)
+            return@executeInTransaction success()
         }
     }
 

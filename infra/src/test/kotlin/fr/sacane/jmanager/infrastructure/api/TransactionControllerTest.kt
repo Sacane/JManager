@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.transaction.AccountSheetIdsDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.SheetDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.UserAccountSheetDTO
 import io.restassured.module.kotlin.extensions.Given
@@ -16,6 +17,7 @@ import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.*
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -211,4 +213,68 @@ class TransactionControllerTest(
             }
         }
     }
+
+    @Nested
+    inner class DeleteTransactionEndpointTest {
+        @Test
+        fun `delete an existing transaction should return 200`() {
+            accountStateTestAdapter.init(
+                listOf(Account(200.toAmount(), "test", owner = user))
+            )
+            val transactions = listOf(
+                Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
+                Transaction(null, "test2", LocalDate.of(2024, Month.JUNE, 2), Amount.fromString("50.00"), true),
+                Transaction(null, "test3", LocalDate.of(2024, Month.JUNE, 5), Amount.fromString("300.00"), false),
+                Transaction(null, "test4", LocalDate.of(2024, Month.JUNE, 4), Amount.fromString("10050.00"), true),
+                Transaction(null, "test5", LocalDate.of(2024, Month.JUNE, 20), Amount.fromString("100.00"), false),
+                Transaction(null, "test6", LocalDate.of(2024, Month.MAY, 20), Amount.fromString("100.00"), false),
+            )
+            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            transactionStateTestAdapter.init(
+                listOf(
+                    AccountTransaction(
+                        user!!.id,
+                        "test",
+                        transactions,
+                        token.asTokenUUID()
+                    )
+                )
+            )
+            val ids = transactionStateTestAdapter.get().mapNotNull { it.id }
+            val request = AccountSheetIdsDTO(
+                account.id!!,
+                ids
+            )
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(request))
+            } When {
+                delete("/api/transaction/{userId}", mapOf("userId" to user!!.id.value))
+            } Then {
+                statusCode(200)
+            }
+
+            assertEquals(0, transactionStateTestAdapter.get().size)
+        }
+        @Test
+        fun `Request deletion for an non-existing account must send 404`() {
+            val request = AccountSheetIdsDTO(
+                1029,
+                listOf()
+            )
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(request))
+            } When {
+                delete("/api/transaction/{userId}", mapOf("userId" to user!!.id.value))
+            } Then {
+                statusCode(404)
+            }
+        }
+    }
+
 }
