@@ -3,17 +3,16 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 import com.fasterxml.jackson.annotation.JsonFormat
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import java.time.LocalDate
-import java.time.Month
 
-data class UserIDSheetDTO(
+data class UserAccountIdsTransactionRequest(
     val userId: Long,
     val accountId: Long,
-    val sheet: SheetDTO
+    val sheet: TransactionResult
 )
 
 
 
-data class SheetDTO(
+data class TransactionResult(
     val id: Long?,
     val label: String,
     val value: String,
@@ -24,11 +23,11 @@ data class SheetDTO(
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean
 )
-data class TransactionList(
-    val sheets: List<SheetDTO>
+data class TransactionListResponse(
+    val sheets: List<TransactionResult>
 )
 
-data class TransactionResultDTO(
+data class TransactionResponse(
     val id: String,
     val label: String,
     val date: LocalDate,
@@ -40,13 +39,13 @@ data class TransactionResultDTO(
     val isPreview: Boolean
 )
 
-data class UserAccountSheetDTO(
+data class UserBookletResponse(
     val userId: Long,
     val accountLabel: String,
-    val sheetDTO: SheetDTO
+    val transactionResult: TransactionResult
 )
 
-data class AccountSheetIdsDTO(
+data class AccountTransactionsIdRequest(
     val accountId: Long,
     val sheetIds: List<Long>
 )
