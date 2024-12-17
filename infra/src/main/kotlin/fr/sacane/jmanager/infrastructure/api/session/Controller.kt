@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.SessionFeature
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toDTO
-import fr.sacane.jmanager.infrastructure.api.toResponseEntity
+import fr.sacane.jmanager.infrastructure.api.sendAsHttpResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
@@ -35,18 +35,18 @@ class SessionController(
                 tokenExpirationDate = it.token.tokenExpirationDate,
                 refreshExpirationDate = it.token.refreshTokenLifetime
             )
-        }.toResponseEntity()
+        }.sendAsHttpResponse()
     }
 
     @PostMapping(path = ["/logout/{id}"])
     fun logout(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
         return loginFeature.logout(id.id(), token.asTokenUUID())
-            .toResponseEntity()
+            .sendAsHttpResponse()
     }
     @PostMapping(path= ["/create"])
     fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
         val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
-        return response.map { u -> u.toDTO() }.toResponseEntity()
+        return response.map { u -> u.toDTO() }.sendAsHttpResponse()
     }
 
     @PostMapping("/auth/refresh/{id}")
@@ -62,5 +62,5 @@ class SessionController(
                     it.second.tokenExpirationDate,
                     it.second.refreshTokenLifetime
                 )
-            }.toResponseEntity()
+            }.sendAsHttpResponse()
 }
