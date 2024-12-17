@@ -24,7 +24,7 @@ class BookletControllerTest(
     @LocalServerPort val port: Int,
     @Autowired val accountStateAdapter: AccountStateTestAdapter,
     @Autowired val objectMapper: ObjectMapper
-): AsAuthenticatedUserTest() {
+): AuthenticatedUserTest() {
 
     @AfterEach
     fun clear() {

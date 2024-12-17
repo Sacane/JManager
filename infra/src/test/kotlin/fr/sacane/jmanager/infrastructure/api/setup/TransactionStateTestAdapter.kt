@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.setup
 
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Transaction
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.State
 import fr.sacane.jmanager.infrastructure.spi.adapters.SqlTransactionAdapter
@@ -12,9 +13,10 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 data class AccountTransaction(
-    val account: Account,
+    val accountOwnerId: UserId,
+    val accountName: String,
     val transactions: List<Transaction>,
-    val token: UUID = UUID.randomUUID(),
+    val token: UUID,
 )
 
 @Component
@@ -37,11 +39,11 @@ class TransactionStateTestAdapter(
         initialState.forEach {
             it.transactions.forEach { tr ->
                 sqlTransactionAdapter.persist(
-                    it.account.owner!!.id,
-                    accountLabel = it.account.label,
+                    it.accountOwnerId,
+                    accountLabel = it.accountName,
                     transaction = tr
                 )
-                transactionFeature.bookTransaction(it.account.owner!!.id, it.token, it.account.label, tr)
+                transactionFeature.bookTransaction(it.accountOwnerId, it.token, it.accountName, tr)
             }
         }
     }
