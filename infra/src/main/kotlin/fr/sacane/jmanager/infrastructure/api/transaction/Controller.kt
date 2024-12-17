@@ -23,18 +23,18 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     private val logger = Logger.getLogger(TransactionController::class.java.name)
     @PostMapping
     suspend fun createTransaction(
-        @RequestBody userAccountSheetDTO: UserAccountSheetDTO,
+        @RequestBody userBookletResponse: UserBookletResponse,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<TransactionResultDTO> {
+    ): ResponseEntity<TransactionResponse> {
         return transactionFeature.bookTransaction(
-            userAccountSheetDTO.userId.id(),
+            userBookletResponse.userId.id(),
             token.asTokenUUID(),
-            userAccountSheetDTO.accountLabel,
-            userAccountSheetDTO.sheetDTO.toModel()
+            userBookletResponse.accountLabel,
+            userBookletResponse.transactionResult.toModel()
         ).map {
             it.toDTO()
         }.sendAsHttpResponse().apply {
-            logger.info("Creating new transaction => ${userAccountSheetDTO.sheetDTO} TO => ${this.body?.tagDTO}")
+            logger.info("Creating new transaction => ${userBookletResponse.transactionResult} TO => ${this.body?.tagDTO}")
         }
     }
 
@@ -42,7 +42,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     @DeleteMapping("{userId}")
     fun deleteByIds(
         @PathVariable("userId") userId: Long,
-        @RequestBody sheetIds: AccountSheetIdsDTO,
+        @RequestBody sheetIds: AccountTransactionsIdRequest,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
         = transactionFeature.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID())
@@ -56,18 +56,18 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         @RequestParam("year") year: Int,
         @RequestParam("accountLabel") accountLabel: String,
         @RequestHeader("Authorization") token: String
-        ): ResponseEntity<TransactionList> {
+        ): ResponseEntity<TransactionListResponse> {
         LOGGER.info("Request transactions from booklet $accountLabel for month $month and year $year")
         val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(TransactionList(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))
+        return ResponseEntity.ok(TransactionListResponse(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))
     }
 
-    @PostMapping("edit")
+    @PatchMapping
     fun editTransaction(
-        @RequestBody dto: UserIDSheetDTO,
+        @RequestBody dto: UserAccountIdsTransactionRequest,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<TransactionResultDTO> {
+    ): ResponseEntity<TransactionResponse> {
         logger.info("Start editing transaction => ${dto.sheet}")
         return transactionFeature.editTransaction(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .map {
@@ -80,10 +80,10 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     @GetMapping("{id}")
     fun findById(
         @RequestParam("userID") userID: Long,
-        @PathVariable("id") sheetID: Long,
+        @PathVariable("id") transactionID: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<SheetDTO>
-        = transactionFeature.findById(userID, sheetID, token.asTokenUUID())
+    ): ResponseEntity<TransactionResult>
+        = transactionFeature.findById(userID, transactionID, token.asTokenUUID())
             .map {
                 it.toDTO()
             }.sendAsHttpResponse()
@@ -92,7 +92,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     fun confirmPreviewTransaction(
         @RequestBody command: ConfirmPreviewCommand,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<TransactionResultDTO> {
+    ): ResponseEntity<TransactionResponse> {
         logger.info("Confirming preview Transaction...")
         return transactionFeature.confirmPreviewTransaction(
             userId = command.userID.id(),
@@ -109,8 +109,8 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     }
 }
 
-fun TransactionResumeResult.toDTO(): TransactionResultDTO {
-    return TransactionResultDTO(
+fun TransactionResumeResult.toDTO(): TransactionResponse {
+    return TransactionResponse(
         this.transaction.id.toString(),
         this.transaction.label,
         this.transaction.date,

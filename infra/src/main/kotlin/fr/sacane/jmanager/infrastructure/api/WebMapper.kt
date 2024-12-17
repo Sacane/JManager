@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
-import fr.sacane.jmanager.infrastructure.api.transaction.SheetDTO
+import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import org.springframework.http.ResponseEntity
@@ -21,14 +21,14 @@ internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.amount.currency.symbol
 )
 
-internal fun SheetDTO.toModel(): Transaction
+internal fun TransactionResult.toModel(): Transaction
 = Transaction(this.id, this.label, this.date, Amount(BigDecimal(this.value)), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
 internal fun AccountDTO.toModel(user: User? = null): Account
 = Account(this.amount.toAmount(), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = this.amount.toAmount(), id = this.id)
 
-internal fun Transaction.toDTO(): SheetDTO {
-    return SheetDTO(id, label, amount.toStringValue(), amount.currency.symbol, isIncome, date, tagDTO = tag.toDTO(), isPreview)
+internal fun Transaction.toDTO(): TransactionResult {
+    return TransactionResult(id, label, amount.toStringValue(), amount.currency.symbol, isIncome, date, tagDTO = tag.toDTO(), isPreview)
 }
 
 
