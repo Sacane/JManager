@@ -64,7 +64,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     }
 
     @PatchMapping
-    fun editTransaction(
+    fun patchTransaction(
         @RequestBody dto: UserAccountIdsTransactionRequest,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<TransactionResponse> {
