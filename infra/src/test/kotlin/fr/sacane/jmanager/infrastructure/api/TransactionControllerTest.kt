@@ -11,7 +11,9 @@ import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.AccountTransactionsIdRequest
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
+import fr.sacane.jmanager.infrastructure.api.transaction.UserAccountIdsTransactionRequest
 import fr.sacane.jmanager.infrastructure.api.transaction.UserBookletResponse
+import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -33,7 +35,8 @@ class TransactionControllerTest(
     @LocalServerPort val port: Int,
     @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
-    @Autowired val objectMapper: ObjectMapper
+    @Autowired val objectMapper: ObjectMapper,
+    @Autowired val accountJpaRepository: AccountJpaRepository
 ): AuthenticatedUserTest() {
 
     @AfterEach
@@ -278,39 +281,51 @@ class TransactionControllerTest(
     }
     @Nested
     inner class PatchTransactionEndpointTest {
-//        @Test
-//        fun `Update an existing transaction should return 200 and the updated one`() {
-//            accountStateTestAdapter.init(
-//                listOf(Account(200.toAmount(), "test", owner = user))
-//            )
-//            val transactions = listOf(
-//                Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
-//                Transaction(null, "test2", LocalDate.of(2024, Month.JUNE, 2), Amount.fromString("50.00"), true),
-//                Transaction(null, "test3", LocalDate.of(2024, Month.JUNE, 5), Amount.fromString("300.00"), false),
-//                Transaction(null, "test4", LocalDate.of(2024, Month.JUNE, 4), Amount.fromString("10050.00"), true),
-//                Transaction(null, "test5", LocalDate.of(2024, Month.JUNE, 20), Amount.fromString("100.00"), false),
-//                Transaction(null, "test6", LocalDate.of(2024, Month.MAY, 20), Amount.fromString("100.00"), false),
-//            )
-//            transactionStateTestAdapter.init(
-//                listOf(
-//                    AccountTransaction(user!!.id, "test", transactions, token.asTokenUUID())
-//                )
-//            )
-//
-//            Given {
-//                port(port)
-//                header("Authorization", token)
-//                header("Content-Type", "application/json")
-//            } When {
-//                post("/api/transaction")
-//            } Then {
-//                statusCode(200)
-//                body(
-//                    "label", equalTo("transactionTest"),
-//                    "value", equalTo("100.00 €")
-//                )
-//            }
-//        }
+        @Test
+        fun `Update an existing transaction should return 200 and the updated one`() {
+            accountStateTestAdapter.init(
+                listOf(Account(200.toAmount(), "test", owner = user))
+            )
+            val transactions = listOf(
+                Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
+                Transaction(null, "test2", LocalDate.of(2024, Month.JUNE, 2), Amount.fromString("50.00"), true),
+                Transaction(null, "test3", LocalDate.of(2024, Month.JUNE, 5), Amount.fromString("300.00"), false),
+                Transaction(null, "test4", LocalDate.of(2024, Month.JUNE, 4), Amount.fromString("10050.00"), true),
+                Transaction(null, "test5", LocalDate.of(2024, Month.JUNE, 20), Amount.fromString("100.00"), false),
+                Transaction(null, "test6", LocalDate.of(2024, Month.MAY, 20), Amount.fromString("100.00"), false),
+            )
+            transactionStateTestAdapter.init(
+                listOf(
+                    AccountTransaction(user!!.id, "test", transactions, token.asTokenUUID())
+                )
+            )
+
+            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val accountId = account.id
+            val transactionToPatch = transactionStateTestAdapter.get()
+                .find { it.label == "test2" }!!
+            val body = UserAccountIdsTransactionRequest(
+                user!!.id.value!!,
+                accountId = accountId!!,
+                sheet = transactionToPatch.toDTO()
+                    .copy(
+                        label = "test4",
+                        value = "150"
+                    )
+            )
+            accountJpaRepository.findByIdWithSheets(accountId)
+                ?.sheets?.forEach { println(it) }
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/transaction")
+            } Then {
+                statusCode(200)
+            }
+        }
     }
 
 }

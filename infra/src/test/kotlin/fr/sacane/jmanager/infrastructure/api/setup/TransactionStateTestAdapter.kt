@@ -38,11 +38,11 @@ class TransactionStateTestAdapter(
     override fun init(initialState: Collection<AccountTransaction>) {
         initialState.forEach {
             it.transactions.forEach { tr ->
-                sqlTransactionAdapter.persist(
-                    it.accountOwnerId,
-                    accountLabel = it.accountName,
-                    transaction = tr
-                )
+//                sqlTransactionAdapter.persist(
+//                    it.accountOwnerId,
+//                    accountLabel = it.accountName,
+//                    transaction = tr
+//                )
                 transactionFeature.bookTransaction(it.accountOwnerId, it.token, it.accountName, tr)
             }
         }
