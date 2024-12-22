@@ -197,6 +197,7 @@ class BookletControllerTest(
                 get("/api/account/${user!!.id.value}")
             } Then {
                 statusCode(200)
+                body("size()", equalTo(3))
             }
         }
     }
