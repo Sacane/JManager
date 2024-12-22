@@ -162,4 +162,42 @@ class BookletControllerTest(
             }
         }
     }
+    @Nested
+    inner class RequestBookletEndpointTest {
+
+        @Test
+        fun `Request for all booklets of a user must return 200 with the asking booklets`() {
+            accountStateAdapter.init(
+                listOf(
+                    Account(
+                        id = null,
+                        amount = Amount.fromString("50.00"),
+                        labelAccount = "test2",
+                        owner = user,
+                    ),
+                    Account(
+                        id = null,
+                        amount = Amount.fromString("60.00"),
+                        labelAccount = "test3",
+                        owner = user,
+                    ),
+                    Account(
+                        id = null,
+                        amount = Amount.fromString("0.00"),
+                        labelAccount = "test",
+                        owner = user,
+                    )
+                )
+            )
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/account/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+            }
+        }
+    }
 }

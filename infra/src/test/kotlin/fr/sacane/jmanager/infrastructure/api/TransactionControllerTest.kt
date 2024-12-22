@@ -13,7 +13,6 @@ import fr.sacane.jmanager.infrastructure.api.transaction.AccountTransactionsIdRe
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import fr.sacane.jmanager.infrastructure.api.transaction.UserAccountIdsTransactionRequest
 import fr.sacane.jmanager.infrastructure.api.transaction.UserBookletResponse
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -35,8 +34,7 @@ class TransactionControllerTest(
     @LocalServerPort val port: Int,
     @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
-    @Autowired val objectMapper: ObjectMapper,
-    @Autowired val accountJpaRepository: AccountJpaRepository
+    @Autowired val objectMapper: ObjectMapper
 ): AuthenticatedUserTest() {
 
     @AfterEach
@@ -313,8 +311,7 @@ class TransactionControllerTest(
                         value = "150"
                     )
             )
-            accountJpaRepository.findByIdWithSheets(accountId)
-                ?.sheets?.forEach { println(it) }
+
             Given {
                 port(port)
                 header("Authorization", token)
@@ -327,5 +324,4 @@ class TransactionControllerTest(
             }
         }
     }
-
 }

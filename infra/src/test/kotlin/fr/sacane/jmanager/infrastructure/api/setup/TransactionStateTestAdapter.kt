@@ -1,16 +1,14 @@
 package fr.sacane.jmanager.infrastructure.api.setup
 
-import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Transaction
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.State
-import fr.sacane.jmanager.infrastructure.spi.adapters.SqlTransactionAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
-import java.util.UUID
+import java.util.*
 
 data class AccountTransaction(
     val accountOwnerId: UserId,
@@ -22,7 +20,6 @@ data class AccountTransaction(
 @Component
 class TransactionStateTestAdapter(
     private val transactionJpaRepository: TransactionJpaRepository,
-    private val sqlTransactionAdapter: SqlTransactionAdapter,
     private val transactionFeature: TransactionFeature
 ): State<AccountTransaction, Transaction> {
     @Transactional
@@ -38,11 +35,6 @@ class TransactionStateTestAdapter(
     override fun init(initialState: Collection<AccountTransaction>) {
         initialState.forEach {
             it.transactions.forEach { tr ->
-//                sqlTransactionAdapter.persist(
-//                    it.accountOwnerId,
-//                    accountLabel = it.accountName,
-//                    transaction = tr
-//                )
                 transactionFeature.bookTransaction(it.accountOwnerId, it.token, it.accountName, tr)
             }
         }

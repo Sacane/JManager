@@ -60,11 +60,9 @@ class TransactionFeatureTest: FeatureTest() {
                 val toInsertAtFirst = generateTransaction("test0", 100.toAmount(), true, "31/12/2023".toDate())
                 val toInsertAtLast = generateTransaction("test100", 100.toAmount(), true, "31/01/2024".toDate())
                 val toInsertAtMiddle = generateTransaction("test50", 100.toAmount(), true, "28/01/2024".toDate())
-                println("1")
+
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtFirst).assertSuccess()
-                println("2")
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtMiddle).assertSuccess()
-                println("3")
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtLast).assertSuccess()
 
                 val state = transactionState.getStates()
