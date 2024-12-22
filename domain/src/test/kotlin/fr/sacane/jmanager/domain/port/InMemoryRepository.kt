@@ -44,7 +44,7 @@ class InMemoryTransactionRepository(
     }
 
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
-        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label).also { println(it?.transactions) }
+        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
     }
 
     override fun getStates(): Collection<IdUserAccountByTransaction> {

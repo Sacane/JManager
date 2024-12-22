@@ -24,7 +24,6 @@ class Account(
     }
 
     fun findTransactionById(id : Long) : Transaction? {
-        transactions.forEach { println("transaction avec id ${it.id}") }
         return transactions.firstOrNull { it.id == id }
     }
 
