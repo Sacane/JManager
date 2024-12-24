@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import fr.sacane.jmanager.infrastructure.api.setup.TagStateTestAdapter
 
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.UserTagRequest
