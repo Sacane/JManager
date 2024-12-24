@@ -9,7 +9,7 @@ import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toModel
-import fr.sacane.jmanager.infrastructure.api.sendAsHttpResponse
+import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
@@ -33,7 +33,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             userBookletResponse.transactionResult.toModel()
         ).map {
             it.toDTO()
-        }.sendAsHttpResponse().apply {
+        }.toHttpResponse().apply {
             logger.info("Creating new transaction => ${userBookletResponse.transactionResult} TO => ${this.body?.tagDTO}")
         }
     }
@@ -46,7 +46,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<Nothing>
         = transactionFeature.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID())
-        .sendAsHttpResponse()
+        .toHttpResponse()
 
 
     @GetMapping
@@ -72,7 +72,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         return transactionFeature.editTransaction(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
             .map {
                 it.toDTO()
-            }.sendAsHttpResponse()
+            }.toHttpResponse()
             .also { LOGGER.info("Transaction edited successfully : ${dto.sheet}") }
     }
 
@@ -86,7 +86,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         = transactionFeature.findById(userID, transactionID, token.asTokenUUID())
             .map {
                 it.toDTO()
-            }.sendAsHttpResponse()
+            }.toHttpResponse()
 
     @PostMapping("transaction/confirm")
     fun confirmPreviewTransaction(
@@ -101,7 +101,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             token = token.asTokenUUID()
         ).map {
             it.toDTO()
-        }.sendAsHttpResponse()
+        }.toHttpResponse()
     }
 
     companion object {

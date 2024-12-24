@@ -13,7 +13,7 @@ data class ColorDTO(
     val blue: Int
 )
 
-data class UserTagDTO(
+data class UserTagRequest(
     val userId: Long,
     val tagLabel: String,
     val colorDTO: ColorDTO
