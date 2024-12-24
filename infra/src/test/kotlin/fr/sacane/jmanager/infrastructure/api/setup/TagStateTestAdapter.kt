@@ -15,27 +15,27 @@ data class UserTagsRequest(
     val tags: List<Tag>
 )
 
-@Component
-class TagStateTestAdapter(
-    private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
-    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
-    private val userPostgresRepository: UserPostgresRepository
-): State<UserTagsRequest, Tag> {
-    override fun get(): Collection<Tag> {
-        return defaultTagPostgresRepository.findAll().map { it.toDomain() } + tagPersonalPostgresRepository.findAll().map { it.toDomain() }
-    }
-
-    override fun clear() {
-        defaultTagPostgresRepository.deleteAll()
-        tagPersonalPostgresRepository.deleteAll()
-    }
-
-    override fun init(initialState: Collection<UserTagsRequest>) {
-        initialState.forEach { request ->
-            val user = userPostgresRepository.findByIdWithTags(request.userId.value)
-            tagPersonalPostgresRepository.saveAll(
-                request.tags.map { it.toPersonalTag(user) }
-            )
-        }
-    }
-}
+//@Component
+//class TagStateTestAdapter(
+//    private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
+//    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
+//    private val userPostgresRepository: UserPostgresRepository
+//): State<UserTagsRequest, Tag> {
+//    override fun get(): Collection<Tag> {
+//        return defaultTagPostgresRepository.findAll().map { it.toDomain() } + tagPersonalPostgresRepository.findAll().map { it.toDomain() }
+//    }
+//
+//    override fun clear() {
+//        defaultTagPostgresRepository.deleteAll()
+//        tagPersonalPostgresRepository.deleteAll()
+//    }
+//
+//    override fun init(initialState: Collection<UserTagsRequest>) {
+//        initialState.forEach { request ->
+//            val user = userPostgresRepository.findByIdWithTags(request.userId.value)
+//            tagPersonalPostgresRepository.saveAll(
+//                request.tags.map { it.toPersonalTag(user) }
+//            )
+//        }
+//    }
+//}
