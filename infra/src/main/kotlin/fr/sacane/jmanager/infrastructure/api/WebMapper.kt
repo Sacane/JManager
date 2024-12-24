@@ -37,7 +37,7 @@ internal fun User.toDTO(): UserDTO
 
 internal fun Long.id(): UserId = UserId(this)
 
-internal fun <T> Result<T>.sendAsHttpResponse()
+internal fun <T> Result<T>.toHttpResponse()
 : ResponseEntity<T> = when(this.status){
     ResultState.OK -> mapTo { ResponseEntity.ok(it) }
     ResultState.NOT_FOUND,

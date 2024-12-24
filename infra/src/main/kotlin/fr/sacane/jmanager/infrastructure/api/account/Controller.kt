@@ -9,7 +9,7 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.AccountFeature
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toDTO
-import fr.sacane.jmanager.infrastructure.api.sendAsHttpResponse
+import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
@@ -35,7 +35,7 @@ class AccountController (
             userAccount.id.id(),
             token.asTokenUUID(),
             Account(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
-        ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.sendAsHttpResponse()
+        ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
 
 
@@ -53,7 +53,7 @@ class AccountController (
             accounts.map {
                 it.toDTO()
             }
-        }.sendAsHttpResponse()
+        }.toHttpResponse()
     }
 
     @DeleteMapping(path = ["{userId}/{accountId}"])
@@ -61,7 +61,7 @@ class AccountController (
         @PathVariable userId: Long,
         @PathVariable accountId: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.asTokenUUID()).sendAsHttpResponse()
+    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.asTokenUUID()).toHttpResponse()
 
     @GetMapping("{accountID}/user/{userID}")
     fun findAccountById(
@@ -70,5 +70,5 @@ class AccountController (
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> =
         feature.findAccountById(userID.id(), accountID, token.asTokenUUID())
-            .map { it.toDTO() }.sendAsHttpResponse()
+            .map { it.toDTO() }.toHttpResponse()
 }
