@@ -29,7 +29,7 @@ class TagFeatureImpl(
 ): TagFeature {
     override fun addTag(userId: UserId, token: UUID, tag: Tag): Result<Tag> = session.authenticate(userId, token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
-            return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Le label '${tag.label}' est déjà pris")
+            return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Label '${tag.label}' is already taken by the user ${it.value}")
         }
         val save = tagRepository.save(it, tag) ?: return@authenticate Result.notFound("User has not been found")
         success(save)

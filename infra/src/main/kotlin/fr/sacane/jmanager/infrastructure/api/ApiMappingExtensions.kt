@@ -48,9 +48,9 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(this.status.code, this.message)
     ResultState.INVALID, ResultState.REGISTRATION_ERROR,
     ResultState.BOOKLET_LABEL_EXIST,
-    ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.TRANSACTION_ENTRY_ERROR,
+    ResultState.TRANSACTION_ENTRY_ERROR,
     ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR -> throw InvalidRequestException(this.status.code, this.message)
-    ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.status.code, this.message)
+    ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.status.code, this.message)
     ResultState.TIMEOUT  -> throw TimeOutException(this.status.code, this.message)
     ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED,
          ResultState.PASSWORD_NOT_MATCH -> throw UnauthorizedRequestException(this.status.code, this.message)
