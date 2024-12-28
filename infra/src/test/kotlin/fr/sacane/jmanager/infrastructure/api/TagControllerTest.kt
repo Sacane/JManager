@@ -1,7 +1,9 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.infrastructure.api.setup.TagStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.UserTagsRequest
 
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.UserTagRequest
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
+import java.awt.Color
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -26,6 +29,9 @@ class TagControllerTest (
     @Autowired val state: TagStateTestAdapter,
     @Autowired val objectMapper: ObjectMapper
 ): AuthenticatedUserTest() {
+
+    @Autowired
+    private lateinit var tagStateTestAdapter: TagStateTestAdapter
 
     @AfterEach
     fun clear() {
@@ -57,6 +63,31 @@ class TagControllerTest (
                 )
             }
             state.get().find { it.label == "Test" }.apply { assertNotNull(this) }
+        }
+        @Test
+        fun `Add personal tag with existing label for the same profile should return 403`() {
+            tagStateTestAdapter.init(
+                listOf(
+                    UserTagsRequest(
+                        user!!.id, listOf(Tag("test", color = Color(10, 10, 10)))
+                    )
+                )
+            )
+            val body = UserTagRequest(
+                user!!.id.value!!,
+                "test",
+                ColorDTO(10, 20, 30)
+            )
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/tag")
+            } Then {
+                statusCode(403)
+            }
         }
     }
 
