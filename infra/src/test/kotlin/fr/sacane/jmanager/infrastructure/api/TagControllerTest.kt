@@ -14,8 +14,10 @@ import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -136,6 +138,42 @@ class TagControllerTest (
                     "any { it.label == 'test' }", equalTo(true),
                     "any { it.label == 'test2' }", equalTo(true),
                 )
+            }
+        }
+    }
+    @Nested
+    inner class DeleteTagEndpointTest {
+        @Test
+        fun `Delete tag endpoint successfully must return 200`() {
+            val initialState = listOf(
+                UserTagsRequest(
+                    user!!.id, listOf(Tag("test", color = Color(10, 10, 10)))
+                )
+            )
+            tagStateTestAdapter.init(
+                initialState
+            )
+            val targetTag = state.get().find { it.label == "test" } ?: fail("Tag not found")
+            Given {
+                port(port)
+                header("Authorization", token)
+            } When {
+                delete("/api/tag/${targetTag.id}/user/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+            }
+            println(state.get())
+            state.get().find { it.label == "test" }.apply { assertNull(this) }
+        }
+        @Test
+        fun `Delete tag endpoint with non existing tag should return 404`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+            } When {
+                delete("/api/tag/1/user/${user!!.id.value}")
+            } Then {
+                statusCode(404)
             }
         }
     }

@@ -47,7 +47,9 @@ class TagFeatureImpl(
     }
 
     override fun deleteTag(userId: UserId, token: UUID, tagId: Long): Result<Nothing> = session.authenticate(userId, token){
-        tagRepository.deleteById(tagId)
+        if(!tagRepository.deleteById(tagId)) {
+            return@authenticate Result.notFound("Tag with id $tagId has not been found")
+        }
         success()
     }
 
