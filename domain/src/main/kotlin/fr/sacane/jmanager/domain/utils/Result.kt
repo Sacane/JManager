@@ -25,7 +25,7 @@ enum class ResultState (val code: Int){
     fun isFailure(): Boolean = !isSuccess()
 }
 
-class Result <S> internal constructor(
+class Result <S>(
     val status: ResultState,
     private var data: S? = null,
     private var error: String = "This response is not an error"
@@ -34,25 +34,11 @@ class Result <S> internal constructor(
         get() = error
 
     companion object{
-        fun <S> invalid(): Result<S> = Result(ResultState.INVALID)
-        fun <S> notFound(): Result<S> = Result(ResultState.NOT_FOUND)
-
-        fun <S> notFound(message: String): Result<S> =
-            Result(ResultState.NOT_FOUND, error=message)
-        fun <S> invalid(message: String): Result<S> =
-            Result(ResultState.INVALID, error=message)
-        fun <S> timeout(message: String): Result<S> =
-            Result(ResultState.TIMEOUT, error=message)
-        fun <S> forbidden(message:String): Result<S> =
-            Result(ResultState.FORBIDDEN, error=message)
         fun <S> unauthorized(message: String): Result<S> =
             Result(ResultState.UNAUTHORIZED, error=message)
     }
 
     fun onSuccess(consumer: (S) -> Unit): Result<S> {
-        if(!this.status.isSuccess()) {
-            return this
-        }
         if(data == null) {
             return this
         } else {
@@ -88,10 +74,6 @@ class Result <S> internal constructor(
         val value = this.data ?: return Result(status, null, error = error)
         return Result(status, mapper.invoke(value))
     }
-    fun <T: Any> resolveNullable(state: ResultState, mapping: (S) -> T) : Result<T> {
-        if(data == null) return failure(state, "Unresolvable data")
-        return success(mapping(data!!))
-    }
 
     fun <T> mapTo (
             mapper: (S?) -> T
@@ -112,3 +94,9 @@ fun <S> invalid(message: String): Result<S> =
 
 fun <S> failure(state: ResultState, message: String): Result<S> =
     Result(state, error = message)
+
+fun <S> forbidden(message: String): Result<S> =
+    Result(ResultState.FORBIDDEN, error=message)
+
+fun <S> timeout(message: String): Result<S> =
+    Result(ResultState.TIMEOUT, error=message)

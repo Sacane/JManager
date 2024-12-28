@@ -42,6 +42,6 @@ fun <T, R> Result<List<T>>.assertEqualsAtPosition(position: Int, expectedResult:
     return this
 }
 
-fun <T> T?.asResponse(): Result<T> {
-    return if(this == null) Result.invalid() else success(this)
+fun <T> T?.asNullableDomainResult(state: ResultState = ResultState.INVALID): Result<T> {
+    return if(this == null) Result(state) else success(this)
 }

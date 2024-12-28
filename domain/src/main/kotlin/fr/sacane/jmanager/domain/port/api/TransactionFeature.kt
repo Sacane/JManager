@@ -42,11 +42,11 @@ class TransactionFeatureImpl(
     ): Result<TransactionResumeResult> = session.authenticate(UserId(userID), token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "L'ID de la transaction est null")
-            val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction Result.notFound()
+            val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction notFound("Le compte $accountID n'existe pas")
             val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy() ?: return@executeInTransaction notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
             transactionFromDatabase.updateFromOther(transaction)
             transaction.lastModified = LocalDateTime.now()
-            transactionRepository.save(registeredAccount.id!!, transaction) ?: return@executeInTransaction Result.invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
+            transactionRepository.save(registeredAccount.id!!, transaction) ?: return@executeInTransaction invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
             registeredAccount.removeTransactionById(transaction.id)
             registeredAccount.addTransaction(transaction)
             accountRepository.update(registeredAccount)
@@ -79,7 +79,7 @@ class TransactionFeatureImpl(
         account: String
     ): Result<List<Transaction>> = session.authenticate(userId, token) {
         success(transactionRepository.findAccountWithSheetByLabelAndUser(account, userId)?.retrieveSheetSurroundAndSortedByDate(month, year)
-            ?: return@authenticate Result.notFound("Aucun compte ne correspond au label indiqué")
+            ?: return@authenticate notFound("Aucun compte ne correspond au label indiqué")
         )
     }
 
