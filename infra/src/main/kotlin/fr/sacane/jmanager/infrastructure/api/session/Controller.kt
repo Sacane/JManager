@@ -18,7 +18,7 @@ class SessionController(
     private val loginFeature: SessionFeature
 ){
     companion object {
-        val LOGGER: Logger = Logger.getLogger("ProfileController")
+        val LOGGER: Logger = Logger.getLogger(SessionController::class.java.name)
     }
 
     @PostMapping(path= ["/auth"])
