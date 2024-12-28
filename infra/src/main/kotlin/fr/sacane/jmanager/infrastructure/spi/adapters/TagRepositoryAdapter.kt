@@ -66,7 +66,7 @@ class TagRepositoryAdapter(
     }
 
     override fun defaultTag(): Tag? {
-        return defaultTagPostgresRepository.findUnknownTag()?.toDomain()
+        return defaultTagPostgresRepository.findByName(Tag.noneTag().label)?.toDomain()
     }
 
 }

@@ -9,6 +9,9 @@ class Tag(val label: String, val id: Long? = null, val color: Color = Color(0f, 
             color: (${color.red}, ${color.green}, ${color.blue}, ${color.alpha})
         """.trimIndent()
     }
+    companion object {
+        fun noneTag(): Tag = Tag("Aucune", color = Color.WHITE, isDefault = true)
+    }
 }
 
 val defaultTags: List<Tag> = listOf(
