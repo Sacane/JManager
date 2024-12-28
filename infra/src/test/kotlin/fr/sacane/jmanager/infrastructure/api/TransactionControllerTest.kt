@@ -9,10 +9,8 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.transaction.AccountTransactionsIdRequest
-import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
-import fr.sacane.jmanager.infrastructure.api.transaction.UserAccountIdsTransactionRequest
-import fr.sacane.jmanager.infrastructure.api.transaction.UserBookletResponse
+import fr.sacane.jmanager.infrastructure.api.toDTO
+import fr.sacane.jmanager.infrastructure.api.transaction.*
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -319,6 +317,52 @@ class TransactionControllerTest(
                 body(objectMapper.writeValueAsString(body))
             } When {
                 patch("/api/transaction")
+            } Then {
+                statusCode(200)
+            }
+        }
+    }
+    @Nested
+    inner class ConfirmPreviewTransactionEndpointTest {
+        @Test
+        fun `Request to confirm a preview transaction`() {
+            accountStateTestAdapter.init(
+                listOf(Account(200.toAmount(), "test", owner = user))
+            )
+            val transactions = listOf(
+                Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false, isPreview = true),
+                Transaction(null, "test2", LocalDate.of(2024, Month.JUNE, 2), Amount.fromString("50.00"), true, isPreview = true),
+                Transaction(null, "test3", LocalDate.of(2024, Month.JUNE, 5), Amount.fromString("300.00"), false, isPreview = true),
+                Transaction(null, "test4", LocalDate.of(2024, Month.JUNE, 4), Amount.fromString("10050.00"), true),
+                Transaction(null, "test5", LocalDate.of(2024, Month.JUNE, 20), Amount.fromString("100.00"), false),
+                Transaction(null, "test6", LocalDate.of(2024, Month.MAY, 20), Amount.fromString("100.00"), false),
+            )
+            transactionStateTestAdapter.init(
+                listOf(
+                    AccountTransaction(
+                        user!!.id,
+                        "test",
+                        transactions,
+                        token.asTokenUUID()
+                    )
+                )
+            )
+            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
+
+            val body = ConfirmPreviewCommand(
+                user!!.id.value!!,
+                account.id!!,
+                transaction.id!!,
+            )
+
+            Given {
+                port(port)
+                header("Authorization", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/transaction/confirm")
             } Then {
                 statusCode(200)
             }

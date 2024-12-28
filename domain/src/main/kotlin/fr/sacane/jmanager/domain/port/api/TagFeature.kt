@@ -3,14 +3,11 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.spi.TagRepository
-import fr.sacane.jmanager.domain.utils.ResultState
-import fr.sacane.jmanager.domain.utils.failure
-import fr.sacane.jmanager.domain.utils.success
+import fr.sacane.jmanager.domain.utils.*
 import java.util.*
 
 @Port(Side.APPLICATION)
@@ -31,7 +28,7 @@ class TagFeatureImpl(
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
             return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Label '${tag.label}' is already taken by the user ${it.value}")
         }
-        val save = tagRepository.save(it, tag) ?: return@authenticate Result.notFound("User has not been found")
+        val save = tagRepository.save(it, tag) ?: return@authenticate notFound("User has not been found")
         success(save)
     }
 
@@ -48,13 +45,13 @@ class TagFeatureImpl(
 
     override fun deleteTag(userId: UserId, token: UUID, tagId: Long): Result<Nothing> = session.authenticate(userId, token){
         if(!tagRepository.deleteById(tagId)) {
-            return@authenticate Result.notFound("Tag with id $tagId has not been found")
+            return@authenticate notFound("Tag with id $tagId has not been found")
         }
         success()
     }
 
     override fun defaultTag(userId: UserId, token: UUID): Result<Tag> = session.authenticate(userId, token) {
-        val tagResult = tagRepository.defaultTag() ?: return@authenticate Result.notFound("Il n'y a pas de tag par défaut d'enregistré")
+        val tagResult = tagRepository.defaultTag() ?: return@authenticate notFound("Il n'y a pas de tag par défaut d'enregistré")
         return@authenticate success(tagResult)
     }
 }

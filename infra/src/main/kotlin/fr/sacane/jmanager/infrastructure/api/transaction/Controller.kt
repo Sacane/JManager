@@ -88,7 +88,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
                 it.toDTO()
             }.toHttpResponse()
 
-    @PostMapping("transaction/confirm")
+    @PostMapping("/confirm")
     fun confirmPreviewTransaction(
         @RequestBody command: ConfirmPreviewCommand,
         @RequestHeader("Authorization") token: String
@@ -101,7 +101,9 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             token = token.asTokenUUID()
         ).map {
             it.toDTO()
-        }.toHttpResponse()
+        }.toHttpResponse().also {
+            logger.info("Preview Transaction confirmed successfully")
+        }
     }
 
     companion object {

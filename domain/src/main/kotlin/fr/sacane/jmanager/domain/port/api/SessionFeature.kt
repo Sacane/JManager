@@ -1,15 +1,12 @@
 package fr.sacane.jmanager.domain.port.api
 
-import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import fr.sacane.jmanager.domain.utils.ResultState
-import fr.sacane.jmanager.domain.utils.failure
-import fr.sacane.jmanager.domain.utils.success
+import fr.sacane.jmanager.domain.utils.*
 import java.util.*
 import java.util.logging.Logger
 
@@ -56,7 +53,7 @@ class SessionFeatureImpl(
     override fun register(username: String, password: String, confirmPassword: String): Result<User> {
         if(password != confirmPassword) return failure(ResultState.PASSWORD_NOT_MATCH, "Les mots de passes ne correspondent pas")
         val hashedPassword = hasher.hash(password)
-        val userResult = userRepository.register(username, hashedPassword) ?: return Result.invalid("Une erreur est survenue")
+        val userResult = userRepository.register(username, hashedPassword) ?: return invalid("Une erreur est survenue")
         return success(userResult)
     }
 

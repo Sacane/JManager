@@ -70,7 +70,7 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
 
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertContainsAtPosition(0, toInsertAtFirst)
                     .assertContainsAtPosition(6, toInsertAtLast)
                     .assertContainsAtPosition(5, toInsertAtMiddle)
@@ -96,7 +96,7 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
 
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertContainsAtPosition(3, transactionToSave)
             }
         }
@@ -118,7 +118,7 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
 
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertContainsAtPosition(4, transactionToSave)
             }
         }
@@ -205,7 +205,7 @@ class TransactionFeatureTest: FeatureTest() {
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertEqualsAtPosition(0, t5.label) {label}
                     .assertEqualsAtPosition(1, t1.label) {label}
                     .assertEqualsAtPosition(2, t2.label) {label}
@@ -288,5 +288,5 @@ fun String.toDate(): LocalDate = LocalDate.parse(this, DateTimeFormatter.ofPatte
 
 fun MutableList<Transaction>?.sortedByDate(): Result<List<Transaction>> {
     return this?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-        .asResponse()
+        .asNullableDomainResult()
 }
