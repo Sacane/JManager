@@ -140,6 +140,20 @@ class TagControllerTest (
                 )
             }
         }
+        @Test
+        fun `GET only default tags must return them with status 200`() {
+            Given {
+                port(port)
+                header("Authorization", token)
+            } When {
+                get("/api/tag/user/${user!!.id.value}/default")
+            } Then {
+                statusCode(200)
+                body(
+                    "label", equalTo("Aucune"),
+                )
+            }
+        }
     }
     @Nested
     inner class DeleteTagEndpointTest {
