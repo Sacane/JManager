@@ -58,8 +58,11 @@ class TagRepositoryAdapter(
         return defaultTagPostgresRepository.findAll().count() > 0
     }
     @Transactional
-    override fun deleteById(tagId: Long) {
-        defaultTagPostgresRepository.deleteById(tagId)
+    override fun deleteById(tagId: Long): Boolean {
+        // defaultTagPostgresRepository.deleteById(tagId)
+        return tagPersonalPostgresRepository.existsById(tagId).also {
+            if(it) tagPersonalPostgresRepository.deleteById(tagId)
+        }
     }
 
     override fun defaultTag(): Tag? {
