@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.infrastructure.api.setup.TagStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.UserTagsRequest
 
@@ -90,6 +91,53 @@ class TagControllerTest (
             }
         }
     }
+    @Nested
+    inner class GetAllRegisteredTags {
 
+        @Test
+        fun `Request for tags with no registered personal tags must return at least the default ones`(){
+            Given {
+                port(port)
+                header("Authorization", token)
+            } When {
+                get("/api/tag/user/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+                body(
+                    "size()", equalTo(defaultTags.size),
+                    "any { it.label == 'Aucune' }", equalTo(true),
+                    "any { it.label == 'Loisir' }", equalTo(true),
+                )
+            }
+        }
+
+        @Test
+        fun `Get all registered tags should return 200 and body should contain default and personal tags`() {
+            val initialState = listOf(
+                UserTagsRequest(
+                    user!!.id, listOf(Tag("test", color = Color(10, 10, 10)))
+                ),
+                UserTagsRequest(
+                    user!!.id, listOf(Tag("test2", color = Color(20, 20, 20)))
+                )
+            )
+            tagStateTestAdapter.init(
+                initialState
+            )
+            Given {
+                port(port)
+                header("Authorization", token)
+            } When {
+                get("/api/tag/user/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+                body(
+                    "size()", equalTo(defaultTags.size + initialState.size),
+                    "any { it.label == 'test' }", equalTo(true),
+                    "any { it.label == 'test2' }", equalTo(true),
+                )
+            }
+        }
+    }
 
 }
