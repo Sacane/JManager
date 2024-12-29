@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port
+package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State

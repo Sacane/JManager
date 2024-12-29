@@ -1,36 +1,41 @@
-package fr.sacane.jmanager.domain.port.api
+package fr.sacane.jmanager.domain.fake
 
-import fr.sacane.jmanager.domain.hexadoc.DomainService
+import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.models.AccessToken
-import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
 import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.utils.*
+import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
+import fr.sacane.jmanager.domain.port.api.SessionManager
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
+import fr.sacane.jmanager.domain.utils.forbidden
+import fr.sacane.jmanager.domain.utils.success
+import fr.sacane.jmanager.domain.utils.timeout
 import java.util.*
-import java.util.logging.Logger
 
-interface SessionManager{
-    fun addSession(userId: UserId, session: AccessToken)
-    fun <T> authenticate(
-        userId: UserId,
-        token: UUID,
-        requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
-        block: (UserId) -> Result<T>
-    ): Result<T>
-    fun tryRefresh(id: UserId, refreshToken: UUID): Result<AccessToken>
-    fun removeSession(userId: UserId, token: UUID)
-    fun purgeExpiredToken()
-}
+data class UserSessionEntry (
+    val userId: UserId,
+    val accessToken: AccessToken
+)
 
-@DomainService
-class InMemorySessionManager : SessionManager {
-    private val logger: Logger = Logger.getLogger(InMemorySessionManager::class.java.name)
-    companion object {
-        const val PURGE_DELAY = 1_800_000L // 30 minutes in milliseconds
-    }
-
+class SessionFakeState: BiState<List<UserSessionEntry>, List<AccessToken>>, SessionManager {
     private val lock: Any = Any()
     private val userSession: MutableMap<UserId, MutableSet<AccessToken>> = mutableMapOf()
+
+    override fun getStates(): List<AccessToken> {
+        return userSession.values.flatten()
+    }
+
+    override fun clear() {
+        userSession.clear()
+    }
+
+    override fun init(initialState: List<UserSessionEntry>) {
+        initialState.forEach {
+            userSession[it.userId] = mutableSetOf(it.accessToken)
+        }
+    }
 
     override fun addSession(userId: UserId, session: AccessToken): Unit = synchronized(lock){
         val sessions = userSession.computeIfAbsent(userId) { mutableSetOf() }
@@ -61,7 +66,6 @@ class InMemorySessionManager : SessionManager {
         return block(userId)
     }
     override fun tryRefresh(id: UserId, refreshToken: UUID): Result<AccessToken> = synchronized(lock) {
-        logger.info("Trying to refresh session user $id")
         val session = getSession(id, refreshToken) ?: return unauthorized("L'utilisateur n'est pas connecté")
         if (session.refreshToken != refreshToken || session.isRefreshTokenExpired()) {
             return forbidden("Le refresh token est incorrect, impossible de renvoyer de token valide")
@@ -74,9 +78,8 @@ class InMemorySessionManager : SessionManager {
     override fun removeSession(userId: UserId, token: UUID): Unit = synchronized(lock){
         userSession[userId]?.removeIf{it.tokenValue == token}
     }
-    override fun purgeExpiredToken() = synchronized(lock) {
+    override fun purgeExpiredToken(): Unit = synchronized(lock) {
         var counter = 0
-        logger.info("Start purge expired tokens of => ${userSession.count()}")
         userSession.values.forEach {
             val result = it.removeIf { token ->
                 token.isExpired()
@@ -84,6 +87,5 @@ class InMemorySessionManager : SessionManager {
             if(result) counter++
         }
         userSession.entries.removeIf { (_, set) -> set.isEmpty() }
-        logger.info("Purge done, erased $counter tokens")
     }
 }

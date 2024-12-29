@@ -1,7 +1,10 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.State
+import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.fake.IdUserAccount
+import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.api.SessionManager
 import org.junit.jupiter.api.AfterEach
