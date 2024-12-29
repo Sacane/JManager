@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.*
+import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
@@ -21,7 +22,7 @@ class AccountFeatureTest {
         private val session: AccessToken = AccessToken(tokenValue)
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
         private fun connectUser(user: User) {
-            FakeFactory.sessionManager.addSession(user.id, session)
+            FakeFactory.sessionManager().addSession(user.id, session)
         }
     }
 

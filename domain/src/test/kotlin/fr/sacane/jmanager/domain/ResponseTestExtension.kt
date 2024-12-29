@@ -27,7 +27,7 @@ fun <T> Result<T>.assertFailure(resultState: ResultState? = null) {
 }
 
 fun <T> Result<T>.assertSuccess() {
-    assertTrue(this.isSuccess())
+    assertTrue(this.isSuccess(), "Expected status SUCCESS but got ${this.status} with message: ${this.message}")
 }
 
 fun <T> Result<List<T>>.assertContainsAtPosition(position: Int, expectedData: T): Result<List<T>> {

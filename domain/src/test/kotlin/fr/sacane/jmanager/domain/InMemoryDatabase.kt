@@ -1,9 +1,9 @@
 package fr.sacane.jmanager.domain
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.AccountByOwner
-import fr.sacane.jmanager.domain.port.IdUserAccount
-import fr.sacane.jmanager.domain.port.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.fake.AccountByOwner
+import fr.sacane.jmanager.domain.fake.IdUserAccount
+import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 
 class InMemoryDatabase {
     val users = mutableMapOf<UserId, UserWithPassword>()

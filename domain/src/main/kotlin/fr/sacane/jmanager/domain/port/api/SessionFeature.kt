@@ -22,7 +22,7 @@ sealed interface SessionFeature {
 @DomainService
 class SessionFeatureImpl(
     private val userRepository: UserRepository,
-    private val session: InMemorySessionManager,
+    private val session: SessionManager,
     private val hasher: Hasher
 ): SessionFeature{
 
@@ -30,9 +30,9 @@ class SessionFeatureImpl(
         private val LOGGER = Logger.getLogger(SessionFeatureImpl::class.java.name)
     }
     override fun login(pseudonym: String, userPassword: String): Result<UserToken> {
-        LOGGER.info("Trying to login user : $pseudonym")
         val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym)
             ?: return failure(ResultState.NOT_FOUND, "L'utilisateur $pseudonym n'existe pas")
+        LOGGER.info("LOGIN request for user ${userWithPassword.user.id}")
         val user = userWithPassword.user
         if(hasher.verify(userPassword, userWithPassword.password)) {
             LOGGER.info("User $pseudonym logged")
