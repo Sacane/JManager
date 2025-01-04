@@ -68,4 +68,18 @@ class SessionFeatureTest: FeatureTest() {
                 .assertSuccess()
         }
     }
+
+    @Nested
+    inner class RegisterFeatureTest {
+        @Test
+        fun `Register a user must return success`() {
+            sessionFeature.register("John", "test", "test")
+                .assertSuccess()
+        }
+        @Test
+        fun `Register a user with different password must return password not match`() {
+            sessionFeature.register("John", "test", "wrong")
+                .assertFailure(ResultState.PASSWORD_NOT_MATCH)
+        }
+    }
 }
