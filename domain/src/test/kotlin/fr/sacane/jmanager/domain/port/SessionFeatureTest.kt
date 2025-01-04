@@ -82,4 +82,20 @@ class SessionFeatureTest: FeatureTest() {
                 .assertFailure(ResultState.PASSWORD_NOT_MATCH)
         }
     }
+
+    @Nested
+    inner class TryRefreshFeatureTest {
+        @Test
+        fun `Try refresh a user must return success`() {
+            val user = User(UserId(1), "John", "")
+            userState.init(
+                listOf(
+                    UserWithPassword(user, DefaultHasher.hash("test"))
+                )
+            )
+            sessionFakeState.init(listOf(UserSessionEntry(user.id, session)))
+            sessionFeature.tryRefresh(user.id, session.refreshToken!!)
+                .assertSuccess()
+        }
+    }
 }
