@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.AccessToken
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.DefaultHasher
 import fr.sacane.jmanager.domain.port.spi.Hasher
@@ -19,6 +20,8 @@ object FakeFactory {
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager)
     val sessionFeature = SessionFeatureImpl(userRepository, sessionManager, DefaultHasher)
+    private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
+    private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository
     }
@@ -41,5 +44,11 @@ object FakeFactory {
 
     fun sessionManager(): SessionManager {
         return sessionManager
+    }
+    fun fakeTagRepository(): BiState<List<Tag>, List<Tag>> {
+        return inMemoryTagRepository
+    }
+    fun tagFeature(): TagFeature {
+        return tagFeature
     }
 }
