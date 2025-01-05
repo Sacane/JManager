@@ -22,7 +22,7 @@ sealed interface TagFeature {
 @DomainService
 class TagFeatureImpl(
     private val tagRepository: TagRepository,
-    private val session: InMemorySessionManager
+    private val session: SessionManager
 ): TagFeature {
     override fun addTag(userId: UserId, token: UUID, tag: Tag): Result<Tag> = session.authenticate(userId, token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {

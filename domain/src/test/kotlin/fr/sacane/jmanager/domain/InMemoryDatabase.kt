@@ -10,8 +10,10 @@ class InMemoryDatabase {
 
     private val userByAccount = mutableMapOf<UserId, MutableList<Account>>()
     private val accountByTransaction = mutableMapOf<Long, MutableList<Transaction>>()
-    private val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
+    private val tags = mutableMapOf<UserId, MutableList<Tag>>()
+    val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
     private val accountList = mutableListOf<Account>()
+    val defaultTags = mutableListOf<Tag>()
 
     fun addAccount(ownerId: UserId, account: Account) {
         if(userByAccount[ownerId] == null) {
@@ -139,5 +141,12 @@ class InMemoryDatabase {
 
     fun saveTransaction(accountId: Long, transaction: Transaction) {
         accountByTransaction[accountId]?.add(transaction)
+    }
+
+    fun addTag(userId: UserId, tag: Tag) {
+        if(tags[userId] == null) {
+            tags[userId] = mutableListOf()
+        }
+        tags[userId]?.add(tag)
     }
 }

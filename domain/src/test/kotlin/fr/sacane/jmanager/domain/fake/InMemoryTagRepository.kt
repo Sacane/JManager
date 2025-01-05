@@ -1,0 +1,62 @@
+package fr.sacane.jmanager.domain.fake
+
+import fr.sacane.jmanager.domain.BiState
+import fr.sacane.jmanager.domain.InMemoryDatabase
+import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.spi.TagRepository
+
+class InMemoryTagRepository(
+    private val inMemoryDatabase: InMemoryDatabase
+): TagRepository, BiState<List<Tag>, List<Tag>> {
+    override fun save(userId: UserId, tag: Tag): Tag? {
+        inMemoryDatabase.userByTag.computeIfAbsent(userId) { mutableListOf() }.add(tag)
+        return tag
+    }
+
+    override fun getAll(userId: UserId): List<Tag> {
+        return inMemoryDatabase.userByTag[userId] ?: emptyList()
+    }
+
+    override fun deleteByLabel(label: String) {
+        inMemoryDatabase.userByTag.forEach { (_, tags) -> tags.removeIf { it.label == label } }
+    }
+
+    override fun getAllDefault(userId: UserId): List<Tag> {
+        return inMemoryDatabase.userByTag[userId]?.plus(inMemoryDatabase.defaultTags) ?: emptyList()
+    }
+
+    override fun existsByLabelAndUserId(userId: UserId, tag: Tag): Boolean {
+        return inMemoryDatabase.userByTag[userId]?.any { it.label == tag.label } ?: false
+    }
+
+    override fun saveAll(defaultTags: List<Tag>) {
+        inMemoryDatabase.defaultTags.addAll(defaultTags)
+    }
+
+    override fun existsDefault(): Boolean {
+        return inMemoryDatabase.defaultTags.isNotEmpty()
+    }
+
+    override fun deleteById(tagId: Long): Boolean {
+        inMemoryDatabase.userByTag.forEach { (_, tags) -> tags.removeIf { it.id == tagId } }
+        return true
+    }
+
+    override fun defaultTag(): Tag? {
+        return inMemoryDatabase.defaultTags.find { it.label == "Aucune" }
+    }
+
+    override fun getStates(): List<Tag> {
+        return inMemoryDatabase.defaultTags + inMemoryDatabase.userByTag.values.flatten()
+    }
+
+    override fun clear() {
+        inMemoryDatabase.defaultTags.clear()
+        inMemoryDatabase.userByTag.clear()
+    }
+
+    override fun init(initialState: List<Tag>) {
+        inMemoryDatabase.defaultTags.addAll(initialState)
+    }
+}
