@@ -6,9 +6,13 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 
+data class UserTag(
+    val userId: UserId,
+    val tags: MutableList<Tag>
+)
 class InMemoryTagRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): TagRepository, BiState<List<Tag>, List<Tag>> {
+): TagRepository, BiState<UserTag, List<Tag>> {
     override fun save(userId: UserId, tag: Tag): Tag? {
         inMemoryDatabase.userByTag.computeIfAbsent(userId) { mutableListOf() }.add(tag)
         return tag
@@ -39,8 +43,9 @@ class InMemoryTagRepository(
     }
 
     override fun deleteById(tagId: Long): Boolean {
-        inMemoryDatabase.userByTag.forEach { (_, tags) -> tags.removeIf { it.id == tagId } }
-        return true
+        var result = false
+        inMemoryDatabase.userByTag.forEach { (_, tags) -> result = tags.removeIf { it.id == tagId } }
+        return result
     }
 
     override fun defaultTag(): Tag? {
@@ -56,7 +61,7 @@ class InMemoryTagRepository(
         inMemoryDatabase.userByTag.clear()
     }
 
-    override fun init(initialState: List<Tag>) {
-        inMemoryDatabase.defaultTags.addAll(initialState)
+    override fun init(initialState: UserTag) {
+        inMemoryDatabase.userByTag[initialState.userId] = initialState.tags
     }
 }
