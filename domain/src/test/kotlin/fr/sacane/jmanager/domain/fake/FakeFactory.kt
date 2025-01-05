@@ -45,7 +45,7 @@ object FakeFactory {
     fun sessionManager(): SessionManager {
         return sessionManager
     }
-    fun fakeTagRepository(): BiState<List<Tag>, List<Tag>> {
+    fun fakeTagRepository(): BiState<UserTag, List<Tag>> {
         return inMemoryTagRepository
     }
     fun tagFeature(): TagFeature {
