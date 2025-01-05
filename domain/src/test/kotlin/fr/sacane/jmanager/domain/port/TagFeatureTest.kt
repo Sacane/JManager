@@ -75,5 +75,13 @@ class TagFeatureTest: FeatureTest() {
 
             assertEquals(defaultTags.size, tagState.getStates().size)
         }
+
+        @Test
+        fun `Add default tags must return success and should not add duplicated tags`() {
+            tagFeature.addDefaultTags()
+            tagFeature.addDefaultTags()
+
+            assertEquals(defaultTags.size, tagState.getStates().size)
+        }
     }
 }
