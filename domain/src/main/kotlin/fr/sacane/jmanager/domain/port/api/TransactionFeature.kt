@@ -95,7 +95,7 @@ class TransactionFeatureImpl(
 
     override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID): Result<Nothing> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
-            val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction notFound<Nothing>("Account $accountID n'existe pas")
+            val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
             account.removeTransactionIf(isSheetOnList)
             accountRepository.upsert(account)

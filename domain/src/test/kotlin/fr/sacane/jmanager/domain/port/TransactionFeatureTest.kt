@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -309,6 +310,17 @@ class TransactionFeatureTest: FeatureTest() {
                 assertNull(transactions.find { it.label == "test2" })
             }
         }
+
+        @Test
+        fun `delete transaction with invalid account must return not found`() {
+            launchWithConnectedUserInstance {
+                transactionFeature.deleteSheetsByIds(userId, 188, listOf(
+                    1029, 10291
+                ), session.tokenValue)
+                    .assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            }
+
+        }
     }
 
     @Nested
@@ -334,6 +346,39 @@ class TransactionFeatureTest: FeatureTest() {
                     transactionPreviewTest.id!!
                 )
                     .assertSuccess()
+            }
+        }
+        @Test
+        fun `Confirm preview transaction with invalid booklet id must resolve booklet not found`() {
+            launchWithConnectedUserInstance {
+                val transactionPreviewTest =
+                    generateTransaction("test#0", 100.toAmount(), true, "01/01/2024".toDate(), isPreview = true)
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(userId, account.id!!),
+                            mutableListOf(transactionPreviewTest)
+                        )
+                    )
+                )
+
+                transactionFeature.confirmPreviewTransaction(
+                    userId,
+                    tokenValue,
+                    188,
+                    transactionPreviewTest.id!!
+                ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            }
+        }
+        @Test
+        fun `confirm preview transaction with a transaction that is not found must return to not found`() {
+            launchWithConnectedUserInstance {
+                transactionFeature.confirmPreviewTransaction(
+                    userId,
+                    tokenValue,
+                    account.id!!,
+                    188
+                ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
         }
     }
