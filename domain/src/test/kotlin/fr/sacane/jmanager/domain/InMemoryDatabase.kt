@@ -94,7 +94,9 @@ class InMemoryDatabase {
 
     }
     fun removeAllTransactionsById(transactionIds: List<Long>) {
-
+        accountByTransaction.forEach { (_, transactions) ->
+            println(transactions.removeAll { transactionIds.contains(it.id) })
+        }
     }
 
     fun findTransactionById(transactionId: Long): Transaction? {

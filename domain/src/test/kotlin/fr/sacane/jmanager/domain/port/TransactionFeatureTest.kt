@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.*
 import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
 import org.junit.jupiter.api.Assertions.*
@@ -281,6 +282,58 @@ class TransactionFeatureTest: FeatureTest() {
                     { assertEquals(0.toAmount(), actualAmount) },
                     { assertEquals(100.toAmount(), actualPreviewAmount) }
                 )
+            }
+        }
+    }
+    @Nested
+    inner class DeleteByIdFeature {
+        @Test
+        fun `Giving a user with existing transaction, when we delete it, the new amount of the account should take in count`() {
+            launchWithConnectedUserInstance {
+                val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
+                val transaction2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
+                val transaction3 = generateTransaction("test3", 100.toAmount(), true, "02/01/2024".toDate())
+                val transaction4 = generateTransaction("test4", 100.toAmount(), true, "02/01/2024".toDate())
+                initTransactions(listOf(
+                    transaction, transaction2, transaction3, transaction4
+                ))
+                transactionFeature.deleteSheetsByIds(userId, account.id!!, listOf(
+                    transaction.id!!, transaction2.id!!
+                ), session.tokenValue)
+                    .assertSuccess()
+
+                val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions
+
+                assertNull(transactions!!.find { it.label == "test0" })
+                assertNull(transactions.find { it.label == "test2" })
+            }
+        }
+    }
+
+    @Nested
+    inner class ConfirmPreviewTransactionTest {
+        @Test
+        fun `confirm preview conversion should be success`() {
+            launchWithConnectedUserInstance {
+                val transactionPreviewTest =
+                    generateTransaction("test#0", 100.toAmount(), true, "01/01/2024".toDate(), isPreview = true)
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(userId, account.id!!),
+                            mutableListOf(transactionPreviewTest)
+                        )
+                    )
+                )
+
+                transactionFeature.confirmPreviewTransaction(
+                    userId,
+                    tokenValue,
+                    account.id!!,
+                    transactionPreviewTest.id!!
+                )
+                    .assertSuccess()
             }
         }
     }
