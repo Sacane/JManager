@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.api
+package fr.sacane.jmanager.domain.port.spi
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.AccessToken

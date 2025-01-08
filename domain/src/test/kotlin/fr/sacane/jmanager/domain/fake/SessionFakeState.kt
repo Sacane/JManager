@@ -3,10 +3,8 @@ package fr.sacane.jmanager.domain.fake
 import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
-import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
-import fr.sacane.jmanager.domain.port.api.SessionManager
+import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
 import fr.sacane.jmanager.domain.utils.forbidden

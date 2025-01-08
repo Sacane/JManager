@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.api.SessionManager
+import fr.sacane.jmanager.domain.port.spi.SessionManager
 import org.junit.jupiter.api.AfterEach
 import java.time.LocalDate
 import java.util.*
