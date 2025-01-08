@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.port.api.SessionFeature
+import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.RestAssured
 import org.junit.jupiter.api.AfterEach
@@ -20,7 +20,7 @@ abstract class AuthenticatedUserTest {
     private lateinit var userPostgresRepository: UserPostgresRepository
 
     @Autowired
-    private lateinit var session: SessionFeature
+    private lateinit var session: UserFeature
 
     companion object {
         @BeforeAll

@@ -11,7 +11,7 @@ import java.util.*
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
-sealed interface SessionFeature {
+sealed interface UserFeature {
     fun login(pseudonym: String, userPassword: String): Result<UserToken>
     fun logout(userId: UserId, token: UUID): Result<Nothing>
     fun register(username: String, password: String, confirmPassword: String): Result<User>
@@ -20,14 +20,14 @@ sealed interface SessionFeature {
 
 
 @DomainService
-class SessionFeatureImpl(
+class UserFeatureImpl(
     private val userRepository: UserRepository,
     private val session: SessionManager,
     private val hasher: Hasher
-): SessionFeature{
+): UserFeature{
 
     companion object{
-        private val LOGGER = Logger.getLogger(SessionFeatureImpl::class.java.name)
+        private val LOGGER = Logger.getLogger(UserFeatureImpl::class.java.name)
     }
     override fun login(pseudonym: String, userPassword: String): Result<UserToken> {
         val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym)

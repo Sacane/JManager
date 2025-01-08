@@ -7,7 +7,6 @@ import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.DefaultHasher
-import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.InfraTransactionProviderPort
 
 object FakeFactory {
@@ -19,7 +18,7 @@ object FakeFactory {
     private val sessionManager: SessionFakeState = SessionFakeState()
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager)
-    val sessionFeature = SessionFeatureImpl(userRepository, sessionManager, DefaultHasher)
+    val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher)
     private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
     fun accountState(): State<AccountByOwner>{
