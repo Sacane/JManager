@@ -1,14 +1,14 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.fake.UserSessionEntry
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
-import fr.sacane.jmanager.domain.port.api.SessionManager
+import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.utils.success
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -42,5 +42,36 @@ class SessionManagerTest {
                 assertTrue(it.any { at -> at.tokenValue == accessToken.tokenValue })
             }
         }
+    }
+    @Test
+    fun `Remove a session must return success`() {
+        val id = UserId(10)
+        userState.init(listOf(
+            UserWithPassword(User(id, "test", email = "test"), "test")
+        ))
+        val accessToken = AccessToken(UUID.randomUUID())
+        sessionManager.addSession(id, accessToken)
+        sessionManager.removeSession(id, accessToken.tokenValue)
+        assertTrue(sessionState.getStates().isEmpty())
+    }
+
+    @Nested
+    inner class AuthenticateTest {
+
+        @Test
+        fun `Authenticate a session must return success`() {
+            val id = UserId(10)
+            userState.init(listOf(
+                UserWithPassword(User(id, "test", email = "test"), "test")
+            ))
+            val accessToken = AccessToken(UUID.randomUUID())
+            sessionManager.addSession(id, accessToken)
+            sessionManager.authenticate(id, accessToken.tokenValue) {
+                return@authenticate success("success")
+            }.assertSuccess()
+        }
+
+
+
     }
 }

@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.DefaultHasher
 import fr.sacane.jmanager.domain.port.spi.InfraTransactionProviderPort
+import fr.sacane.jmanager.domain.port.spi.SessionManager
 
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
