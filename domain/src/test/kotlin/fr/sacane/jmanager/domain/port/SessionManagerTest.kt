@@ -1,0 +1,46 @@
+package fr.sacane.jmanager.domain.port
+
+import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.fake.UserSessionEntry
+import fr.sacane.jmanager.domain.models.AccessToken
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.UserWithPassword
+import fr.sacane.jmanager.domain.port.api.SessionManager
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import java.util.*
+
+class SessionManagerTest {
+
+    val sessionManager: SessionManager = FakeFactory.sessionManager()
+    val sessionState = FakeFactory.sessionState()
+    val userState = FakeFactory.fakeUserRepository()
+
+    @AfterEach
+    fun after() {
+        userState.clear()
+        sessionState.clear()
+    }
+
+    @Nested
+    inner class AddSessionTest {
+
+        @Test
+        fun `Add a session must return success`() {
+            val id = UserId(10)
+            userState.init(listOf(
+                UserWithPassword(User(id, "test", email = "test"), "test")
+            ))
+            val accessToken = AccessToken(UUID.randomUUID())
+            sessionManager.addSession(id, accessToken)
+            sessionState.getStates().let {
+                assertTrue(it.isNotEmpty())
+                assertTrue(it.any { at -> at.tokenValue == accessToken.tokenValue })
+            }
+        }
+    }
+}

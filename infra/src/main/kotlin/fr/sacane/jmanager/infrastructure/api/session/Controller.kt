@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.api.session
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.api.SessionFeature
+import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
@@ -15,7 +15,7 @@ import java.util.logging.Logger
 @RequestMapping("api/user")
 @Adapter(Side.APPLICATION)
 class SessionController(
-    private val loginFeature: SessionFeature
+    private val loginFeature: UserFeature
 ){
     companion object {
         val LOGGER: Logger = Logger.getLogger(SessionController::class.java.name)
