@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.AccessToken
@@ -52,7 +53,9 @@ class SessionManagerTest {
         val accessToken = AccessToken(UUID.randomUUID())
         sessionManager.addSession(id, accessToken)
         sessionManager.removeSession(id, accessToken.tokenValue)
-        assertTrue(sessionState.getStates().isEmpty())
+        sessionManager.authenticate(id, accessToken.tokenValue) {
+            return@authenticate success("success")
+        }.assertFailure()
     }
 
     @Nested
