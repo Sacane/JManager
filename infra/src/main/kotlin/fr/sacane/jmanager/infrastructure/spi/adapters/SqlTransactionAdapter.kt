@@ -35,7 +35,7 @@ class SqlTransactionAdapter(
             val saved = transactionJpaRepository.save(transactionResource)
             account.sheets.add(saved)
             account.amount = if(transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
-            transaction
+            saved.toModel()
         }catch(e: Exception){
             null
         }
