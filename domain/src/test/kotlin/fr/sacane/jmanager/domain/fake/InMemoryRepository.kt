@@ -26,10 +26,6 @@ class InMemoryTransactionRepository(
         return transaction
     }
 
-    override fun saveAllSheets(transactions: List<Transaction>) {
-        inMemoryDatabase.upsertTransactions(transactions)
-    }
-
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         inMemoryDatabase.removeAllTransactionsById(sheetIds)
     }

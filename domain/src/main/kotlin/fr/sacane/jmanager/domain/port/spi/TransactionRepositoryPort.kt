@@ -6,7 +6,6 @@ import fr.sacane.jmanager.domain.models.*
 @Port(Side.INFRASTRUCTURE)
 interface TransactionRepositoryPort {
     fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?
-    fun saveAllSheets(transactions: List<Transaction>)
     fun deleteAllSheetsById(sheetIds: List<Long>)
     fun findTransactionById(transactionId: Long): Transaction?
     fun save(accountId: Long, transaction: Transaction): Transaction?
