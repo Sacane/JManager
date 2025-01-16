@@ -41,10 +41,6 @@ class SqlTransactionAdapter(
         }
     }
 
-    @Transactional
-    override fun saveAllSheets(transactions: List<Transaction>) {
-        transactionJpaRepository.saveAll(transactions.map { it.mapToRightTag() })
-    }
     fun Transaction.mapToRightTag(): TransactionResource {
         val tag = this.tag.id?.let {
             if(this.tag.isDefault) {
