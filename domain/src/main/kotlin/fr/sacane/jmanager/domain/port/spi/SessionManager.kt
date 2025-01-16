@@ -2,10 +2,13 @@ package fr.sacane.jmanager.domain.port.spi
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.AccessToken
-import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.utils.*
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
+import fr.sacane.jmanager.domain.utils.forbidden
+import fr.sacane.jmanager.domain.utils.success
+import fr.sacane.jmanager.domain.utils.timeout
 import java.util.*
 import java.util.logging.Logger
 

@@ -4,18 +4,13 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.SqlTransactionAdapter
-import fr.sacane.jmanager.infrastructure.spi.adapters.asResource
-import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
-import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
-import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
-import java.math.BigDecimal
 import java.time.LocalDate
 
 

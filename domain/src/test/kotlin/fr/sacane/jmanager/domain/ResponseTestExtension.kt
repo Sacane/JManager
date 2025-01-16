@@ -3,7 +3,8 @@ package fr.sacane.jmanager.domain
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 
 fun <T> Result<T>.assertEquals(expectedData: T) {
     assertEquals(ResultState.OK, this.status) { "Expected status SUCCESS but got ${this.status} with message: ${this.message}" }
