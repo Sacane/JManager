@@ -6,7 +6,7 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 const { user } = useAuth()
-const { createAccount, fetch } = useAccounts()
+const { createAccount, fetch } = useBooklet()
 const isAccountDialogOpen = ref(false)
 const toast = useJToast()
 

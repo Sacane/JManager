@@ -41,7 +41,7 @@ export default function useQuery() {
   }
   async function patch(url: string, body: any | undefined) {
     try {
-      const response = await axios.post(`${host}${url}`, body, {
+      const response = await axios.patch(`${host}${url}`, body, {
         headers: defaultHeaders.value,
       })
       return response.data
