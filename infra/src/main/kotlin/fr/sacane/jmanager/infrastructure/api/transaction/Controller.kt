@@ -88,7 +88,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
                 it.toDTO()
             }.toHttpResponse()
 
-    @PostMapping("/confirm")
+    @PatchMapping("/confirm")
     fun confirmPreviewTransaction(
         @RequestBody command: ConfirmPreviewCommand,
         @RequestHeader("Authorization") token: String
@@ -116,7 +116,7 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
         this.transaction.id.toString(),
         this.transaction.label,
         this.transaction.date,
-        this.transaction.amount.toString(),
+        this.transaction.amount.amount.toString(),
         this.transaction.isIncome,
         this.transaction.tag.toDTO(),
         this.accountAmount.amount.toString(),
