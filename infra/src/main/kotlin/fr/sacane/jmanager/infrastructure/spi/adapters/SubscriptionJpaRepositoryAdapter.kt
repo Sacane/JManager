@@ -16,7 +16,7 @@ class SubscriptionJpaRepositoryAdapter(
 ): SubscriptionRepository {
     @Transactional
     override fun addSubscription(userId: UserId, subscription: SubscriptionComplete): SubscriptionComplete? {
-        val user = userJpaRepository.findByIdWithSubscription(userId.id!!) ?: return null
+        val user = userJpaRepository.findByIdWithSubscription(userId.value!!) ?: return null
         val subscription1 = subscriptionMapper.asSubscriptionResource(subscription, user)
         user.addSubscription(subscription1)
         userJpaRepository.save(user)

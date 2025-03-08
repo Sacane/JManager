@@ -3,8 +3,8 @@ package fr.sacane.jmanager.domain.models
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-data class Amount(var amount: BigDecimal, val currency: String = "€") {
-    constructor(longAmount: Long) : this(BigDecimal(longAmount), currency = "€")
+data class Amount(var amount: BigDecimal, val currency: Currency = Currency.EUR) {
+    constructor(longAmount: Long) : this(BigDecimal(longAmount), currency =  Currency.EUR)
 
     init{
         if(amount.scale() <= 2){
@@ -30,20 +30,16 @@ data class Amount(var amount: BigDecimal, val currency: String = "€") {
         amount /= other.amount
     }
     override fun toString(): String {
-        return "$amount $currency"
+        return "$amount ${currency.symbol}"
     }
     fun negate(): Amount {
         return Amount(amount.negate(), currency)
     }
     companion object {
-        fun fromString(representation: String): Amount {
-            val regex = """([\d.]+) ([^\d.]+)""".toRegex()
-            val matchResult = regex.find(representation) ?: throw InvalidMoneyFormatException("The amount format is not valid : $representation")
-            val (amount, foundCurrency) = matchResult.destructured
-            if(foundCurrency.length > 1) throw InvalidMoneyFormatException("The length of the currency should exactly be equals to 1")
+        fun fromString(representation: String, currency: Currency = Currency.EUR): Amount {
             return try {
-                val amountAsBigDecimal = BigDecimal(amount)
-                Amount(amountAsBigDecimal, foundCurrency)
+                val amountAsBigDecimal = BigDecimal(representation)
+                Amount(amountAsBigDecimal, currency)
             }catch(e: NumberFormatException) {
                 throw InvalidMoneyFormatException(e.message!!)
             }
@@ -61,13 +57,13 @@ data class Amount(var amount: BigDecimal, val currency: String = "€") {
 
 class InvalidMoneyFormatException(s: String): RuntimeException(s)
 
-fun BigDecimal.toAmount(currency: String = "€"): Amount {
+fun BigDecimal.toAmount(currency: Currency = Currency.EUR): Amount {
     return Amount(this, currency)
 }
 
-fun Int.toAmount(currency: String = "€"): Amount {
+fun Int.toAmount(currency: Currency = Currency.EUR): Amount {
     return Amount(BigDecimal(this), currency)
 }
-fun Double.toAmount(currency: String = "€"): Amount {
+fun Double.toAmount(currency: Currency = Currency.EUR): Amount {
     return Amount(BigDecimal(this), currency)
 }

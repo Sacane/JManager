@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.domain.models
 
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -8,13 +7,16 @@ data class Transaction(
     val id: Long?,
     var label: String,
     var date: LocalDate,
-    var amount: Amount,
+    private var _amount: Amount,
     var isIncome: Boolean,
     var tag: Tag = Tag("Aucune", isDefault = true),
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false,
     val fromSubscriptionFrom: SubscriptionFrom = NotFromSubscription()
 ) {
+    val amount: Amount
+        get() = _amount
+
     val isNotPreview: Boolean
     get() = !isPreview
 
@@ -22,7 +24,7 @@ data class Transaction(
         if(other.id != this.id) return false
         this.label = other.label
         this.date = other.date
-        this.amount = other.amount
+        this._amount = other._amount
         this.isIncome = other.isIncome
         this.tag = other.tag
         this.isPreview = other.isPreview
@@ -33,14 +35,10 @@ data class Transaction(
         return """
             label: $label
             date: $date
-            value: $amount
+            value: $_amount
             isIncome: $isIncome
             tag: $tag
             lastModified: $lastModified
         """.trimIndent()
-    }
-
-    fun <T> exportAmountValues(function: (BigDecimal, Boolean) -> T): T{
-        return function(amount.amount, isIncome)
     }
 }
