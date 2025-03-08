@@ -24,12 +24,12 @@ class ServerUserAdapter (
 
     @Transactional
     override fun findUserById(userId: UserId): User? {
-        val id = userId.id ?: return null
+        val id = userId.value ?: return null
         return userPostgresRepository.findById(id).orElse(null).toModel()
     }
     @Transactional
     override fun findUserByIdWithAccounts(userId: UserId): User? {
-        val id = userId.id ?: return null
+        val id = userId.value ?: return null
         return userPostgresRepository.findByIdWithAccount(id)?.toModelWithSimpleAccounts()
     }
 

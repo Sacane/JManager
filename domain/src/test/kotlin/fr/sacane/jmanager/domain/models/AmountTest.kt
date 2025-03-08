@@ -18,7 +18,7 @@ class AmountTest {
 
     @Test
     fun `A representation of an Amount should be its value and its currency`() {
-        val tenEuros = 10.toAmount("€")
+        val tenEuros = 10.toAmount(Currency.EUR)
         assertEquals("10.00 €", tenEuros.toString())
     }
 
@@ -32,13 +32,13 @@ class AmountTest {
 
     @Test
     fun `An Amount can be build from its string representation`() {
-        val tenEurosAsString = "10.00 €"
-        val tenEurosDotFiveAsString = "10.05 €"
-        val oneHundredDollarsAsString = "100.00 $"
+        val tenEurosAsString = "10.00"
+        val tenEurosDotFiveAsString = "10.05"
+        val oneHundredDollarsAsString = "100.00"
 
         val amountTenEuros = Amount.fromString(tenEurosAsString)
         val tenEurosDotFiveAmount = Amount.fromString(tenEurosDotFiveAsString)
-        val oneHundredDollarsAmount = Amount.fromString(oneHundredDollarsAsString)
+        val oneHundredDollarsAmount = Amount.fromString(oneHundredDollarsAsString, Currency.USD)
 
         assertEquals("10.00 €", amountTenEuros.toString())
         assertEquals("10.05 €", tenEurosDotFiveAmount.toString())

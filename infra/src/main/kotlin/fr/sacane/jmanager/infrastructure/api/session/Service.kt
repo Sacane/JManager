@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api.session
 
-import fr.sacane.jmanager.domain.port.api.InMemorySessionManager
-import fr.sacane.jmanager.domain.port.api.SessionManager
+import fr.sacane.jmanager.domain.port.spi.InMemorySessionManager
+import fr.sacane.jmanager.domain.port.spi.SessionManager
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service

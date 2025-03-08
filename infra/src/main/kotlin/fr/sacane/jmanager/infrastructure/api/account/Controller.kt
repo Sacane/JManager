@@ -4,10 +4,12 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.ResponseState
+import fr.sacane.jmanager.domain.models.asCurrency
+import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.infrastructure.api.*
+import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.toDTO
+import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
@@ -23,33 +25,17 @@ class AccountController (
         private val LOGGER: Logger = Logger.getLogger("AccountController")
     }
 
-    @GetMapping(path = ["{id}/{label}"])
-    fun findAccount(
-        @PathVariable id: Long,
-        @PathVariable label: String,
-        @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountDTO> {
-        val accounts = feature.findAllRegisteredAccounts(
-            id.id(),
-            token.asTokenUUID()
-        )
-        if (accounts.status == ResponseState.NOT_FOUND) return ResponseEntity.notFound().build()
-        return accounts.map { list ->
-            list.find { it.label == label }?.toDTO()!!
-        }.toResponseEntity()
-    }
-
-    @PostMapping("create")
+    @PostMapping
     fun createAccount(
-        @RequestBody userAccount: UserAccountDTO,
+        @RequestBody userAccount: UserBookletRequest,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountInfoDTO> {
         LOGGER.info("Booking a new Account...")
         return feature.save(
             userAccount.id.id(),
             token.asTokenUUID(),
-            Account(amount = Amount.fromString(userAccount.amount), labelAccount = userAccount.labelAccount)
-        ).map { AccountInfoDTO(it.amount.toString(), it.label, it.id.toString()) }.toResponseEntity()
+            Account(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
+        ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
 
 
@@ -58,47 +44,31 @@ class AccountController (
         @PathVariable id: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<List<AccountDTO>> {
-        LOGGER.info("Trying to get accounts")
+        LOGGER.info("Request for accounts of user $id")
         val response = feature.findAllRegisteredAccounts(
             id.id(),
             token.asTokenUUID()
         )
         return response.map { accounts ->
             accounts.map {
-                AccountDTO(
-                    it.id,
-                    it.amount.toString(),
-                    it.label,
-                    it.previewAmount.toString(),
-                    it.sheets().map { sheet -> sheet.toDTO() }
-                )
+                it.toDTO()
             }
-        }.toResponseEntity()
+        }.toHttpResponse()
     }
 
-    @PostMapping(path = ["update/{userID}"])
-    fun updateAccount(
-        @PathVariable userID: Long,
-        @RequestBody account: AccountDTO,
-        @RequestHeader("Authorization") token: String
-    ): ResponseEntity<AccountDTO> =
-        feature.editAccount(userID, account.toModel(), token.asTokenUUID())
-            .map { it.toDTO() }.toResponseEntity()
-
-
-    @DeleteMapping(path = ["{userId}/delete/{accountId}"])
+    @DeleteMapping(path = ["{userId}/{accountId}"])
     fun deleteAccount(
         @PathVariable userId: Long,
         @PathVariable accountId: Long,
         @RequestHeader("Authorization") token: String
-    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.asTokenUUID()).toResponseEntity()
+    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.asTokenUUID()).toHttpResponse()
 
-    @GetMapping("/user/{userID}/find/{accountID}")
+    @GetMapping("{accountID}/user/{userID}")
     fun findAccountById(
         @PathVariable("userID") userID: Long,
         @PathVariable("accountID") accountID: Long,
         @RequestHeader("Authorization") token: String
     ): ResponseEntity<AccountDTO> =
         feature.findAccountById(userID.id(), accountID, token.asTokenUUID())
-            .map { it.toDTO() }.toResponseEntity()
+            .map { it.toDTO() }.toHttpResponse()
 }

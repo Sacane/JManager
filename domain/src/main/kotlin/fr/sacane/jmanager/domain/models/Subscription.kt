@@ -12,11 +12,6 @@ class NotFromSubscription: SubscriptionFrom {
     override val subscriptionId: Long? = null
 }
 
-class CreatedFromSubscription(override val subscriptionId: Long): SubscriptionFrom {
-    override val fromSubscription: Boolean = false
-}
-
-
 data class Subscription(
     val amount: Amount,
     val label: String,

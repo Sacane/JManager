@@ -23,7 +23,7 @@ class AccountJpaRepositoryAdapter(
 
     @Transactional
     override fun save(ownerId: UserId, account: Account): Account? {
-        val id = ownerId.id ?: return null
+        val id = ownerId.value ?: return null
         val user = userRepository.findByIdWithAccount(id) ?: return null
         val accountResource = accountMapper.asResource(account)
         val accountSaved = accountRepository.save(accountResource)
@@ -37,8 +37,8 @@ class AccountJpaRepositoryAdapter(
     }
 
     override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Account? {
-        if(userId.id == null) return null
-        return accountRepository.findByOwnerAndLabelWithSheets(userId.id!!, accountLabel)?.toModel() ?: return null
+        if(userId.value == null) return null
+        return accountRepository.findByOwnerAndLabelWithSheets(userId.value!!, accountLabel)?.toModel() ?: return null
     }
 
     override fun deleteAccountById(accountId: Long) {

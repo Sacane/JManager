@@ -13,7 +13,7 @@ const selectedSheets = ref([])
 const { translate, monthFromNumber } = useDate()
 const tag = useTag()
 
-const { findById } = useAccounts()
+const { findById } = useBooklet()
 const { findByDate, deleteSheet, confirmPreviewTransaction } = useSheets()
 const date = new Date()
 const tags = ref<TagDTO[]>([])
