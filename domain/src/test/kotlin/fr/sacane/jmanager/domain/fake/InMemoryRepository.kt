@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port
+package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import java.util.Random
+import java.util.*
 
 data class IdUserAccountByTransaction(
     val id: IdUserAccount,
@@ -26,10 +26,6 @@ class InMemoryTransactionRepository(
         return transaction
     }
 
-    override fun saveAllSheets(transactions: List<Transaction>) {
-        inMemoryDatabase.upsertTransactions(transactions)
-    }
-
     override fun deleteAllSheetsById(sheetIds: List<Long>) {
         inMemoryDatabase.removeAllTransactionsById(sheetIds)
     }
@@ -44,7 +40,7 @@ class InMemoryTransactionRepository(
     }
 
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
-        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label).also { println(it?.transactions) }
+        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
     }
 
     override fun getStates(): Collection<IdUserAccountByTransaction> {

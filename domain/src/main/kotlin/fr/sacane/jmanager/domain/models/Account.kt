@@ -3,13 +3,13 @@ package fr.sacane.jmanager.domain.models
 import java.time.Month
 
 class Account(
-    val id: Long? = null,
     var amount: Amount,
     private var labelAccount: String,
     private val _transactions: MutableList<Transaction> = mutableListOf(),
-    val owner : User? = null,
+    var owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
+    val id: Long? = null
 ){
 
     val label: String
@@ -54,6 +54,7 @@ class Account(
             amount: $amount
             label: $labelAccount
             initialSold: $initialSold
+            owner: ${owner?.id}
         """.trimIndent()
     }
 

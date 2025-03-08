@@ -35,6 +35,7 @@ class TransactionResource(
     ){
     override fun toString(): String {
         return """
+            id: $idSheet
             label : $label
             date: $date
             value: $value

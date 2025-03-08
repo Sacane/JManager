@@ -1,17 +1,19 @@
 package fr.sacane.jmanager.domain
 
+import fr.sacane.jmanager.domain.fake.AccountByOwner
+import fr.sacane.jmanager.domain.fake.IdUserAccount
+import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.AccountByOwner
-import fr.sacane.jmanager.domain.port.IdUserAccount
-import fr.sacane.jmanager.domain.port.IdUserAccountByTransaction
 
 class InMemoryDatabase {
     val users = mutableMapOf<UserId, UserWithPassword>()
 
     private val userByAccount = mutableMapOf<UserId, MutableList<Account>>()
     private val accountByTransaction = mutableMapOf<Long, MutableList<Transaction>>()
-    private val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
+    private val tags = mutableMapOf<UserId, MutableList<Tag>>()
+    val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
     private val accountList = mutableListOf<Account>()
+    val defaultTags = mutableListOf<Tag>()
 
     fun addAccount(ownerId: UserId, account: Account) {
         if(userByAccount[ownerId] == null) {
@@ -39,7 +41,7 @@ class InMemoryDatabase {
         userByAccount.forEach {
             val account = it.value.find { acc -> acc.id == accountId }
             if(account != null) {
-                targetAccount = Account(accountId, account.amount, account.label, accountByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner)
+                targetAccount = Account(account.amount, account.label, accountByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner, id = accountId)
             }
         }
         return targetAccount
@@ -57,7 +59,7 @@ class InMemoryDatabase {
 
         accountList.forEach {
             result.add(
-                Account(it.id, it.amount, it.label, accountByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner)
+                Account(it.amount, it.label, accountByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner, id = it.id)
             )
         }
         return result
@@ -92,7 +94,9 @@ class InMemoryDatabase {
 
     }
     fun removeAllTransactionsById(transactionIds: List<Long>) {
-
+        accountByTransaction.forEach { (_, transactions) ->
+            println(transactions.removeAll { transactionIds.contains(it.id) })
+        }
     }
 
     fun findTransactionById(transactionId: Long): Transaction? {
@@ -139,5 +143,12 @@ class InMemoryDatabase {
 
     fun saveTransaction(accountId: Long, transaction: Transaction) {
         accountByTransaction[accountId]?.add(transaction)
+    }
+
+    fun addTag(userId: UserId, tag: Tag) {
+        if(tags[userId] == null) {
+            tags[userId] = mutableListOf()
+        }
+        tags[userId]?.add(tag)
     }
 }

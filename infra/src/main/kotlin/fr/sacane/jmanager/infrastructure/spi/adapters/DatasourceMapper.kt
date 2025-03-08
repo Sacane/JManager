@@ -17,7 +17,7 @@ class AccountMapper(
     val tagRepository: TagRepository
 ){
     fun asResource(account: Account): AccountResource {
-        val userResource = account.owner?.id?.id?.let { userRepository.findById(it) }
+        val userResource = account.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
             AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), subscriptions = mutableListOf(), userResource.get(),  initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         } else {
@@ -31,10 +31,10 @@ class AccountMapper(
 internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): TransactionResource {
     val resource = TransactionResource(label=this.label)
     resource.date = this.date
-    this.exportAmountValues { expense, isIncome ->
-        resource.value = expense
-        resource.isIncome = isIncome
-    }
+
+    resource.value = amount.amount
+    resource.isIncome = isIncome
+
     resource.idSheet = this.id
     resource.lastModified = this.lastModified
     if(tagResource != null) {
@@ -75,13 +75,13 @@ internal fun TransactionResource.toModel(): Transaction
 
 internal fun AccountResource.toModel(): Account
 = Account(
-    this.idAccount,
     this.amount.toAmount(),
     this.label,
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
     this.owner?.toModel(),
     previewAmount = this.previewAmount.toAmount(),
-    initialSold = Amount(this.initialSold)
+    initialSold = Amount(this.initialSold),
+    id = this.idAccount
 )
 
 
@@ -99,14 +99,7 @@ internal fun UserResource.toModelWithSimpleAccounts()
     accounts = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
 )
 
-internal fun AccountResource.toSimpleModel(): Account = Account(this.idAccount, this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount())
-
-internal fun UserResource.toMinimalUserRepresentation()
-: MinimalUserRepresentation = MinimalUserRepresentation(
-    UserId(this.idUser),
-    this.username,
-    this.email
-)
+internal fun AccountResource.toSimpleModel(): Account = Account(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
 
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
     UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password)
@@ -129,7 +122,7 @@ fun Tag.toPersonalTag(userResource: UserResource? = null): TagPersonalResource{
 }
 
 internal fun User.asExistingResource(subscriptionMapper: SubscriptionMapper): UserResource
-        = UserResource(idUser = this.id.id,
+        = UserResource(idUser = this.id.value,
     username = username,
     email = email,
     accounts = this.accounts.map {it.asResource()}.toMutableList(),

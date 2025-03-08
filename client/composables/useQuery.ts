@@ -39,6 +39,16 @@ export default function useQuery() {
       handleError(error)
     }
   }
+  async function patch(url: string, body: any | undefined) {
+    try {
+      const response = await axios.patch(`${host}${url}`, body, {
+        headers: defaultHeaders.value,
+      })
+      return response.data
+    } catch (error: any) {
+      handleError(error)
+    }
+  }
 
   function handleError(error: Error) {
     if (axios.isAxiosError(error)) {
@@ -60,5 +70,5 @@ export default function useQuery() {
     throw error
   }
 
-  return { get, post, deleteQuery }
+  return { get, post, deleteQuery, patch }
 }

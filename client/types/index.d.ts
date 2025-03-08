@@ -31,12 +31,6 @@ declare global {
     previewAmount: string
   }
 
-  interface UserAccountDTO {
-    id: number
-    amount: string
-    labelAccount: string
-  }
-
   interface SheetAverageDTO {
     sheets: SheetDTO[]
     sum: number
@@ -61,5 +55,12 @@ declare global {
     date: string
     tagDTO: TagDTO
     isPreview: boolean
+  }
+
+  interface BookletCreationRequest {
+    id: number
+    labelAccount: string
+    amount: number
+    currency: string
   }
 }
