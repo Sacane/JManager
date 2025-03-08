@@ -361,7 +361,7 @@ class TransactionControllerTest(
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
-                post("/api/transaction/confirm")
+                patch("/api/transaction/confirm")
             } Then {
                 statusCode(200)
             }
