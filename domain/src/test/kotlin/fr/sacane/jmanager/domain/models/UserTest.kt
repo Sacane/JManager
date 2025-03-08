@@ -1,9 +1,8 @@
 package fr.sacane.jmanager.domain.models
 
 import fr.sacane.jmanager.domain.port.spi.DefaultHasher
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class UserTest {
 

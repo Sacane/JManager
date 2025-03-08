@@ -16,8 +16,7 @@ data class RegisteredUserDTO(
 
 data class UserPasswordDTO(
     val username: String,
-    val password: String,
-    val id: Long
+    val password: String
 )
 
 data class UserStorageDTO(

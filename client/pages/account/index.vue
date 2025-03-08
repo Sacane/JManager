@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import useAccounts from '../../composables/useAccounts'
+import useBooklet from '../../composables/useBooklet'
 import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
 
 definePageMeta({
@@ -8,7 +8,7 @@ definePageMeta({
 const row = ref<AccountDTO | undefined>(undefined)
 // toast
 //
-const { fetch, deleteAccount, createAccount } = useAccounts()
+const { fetch, deleteAccount, createAccount } = useBooklet()
 const isAccountFilled = ref<boolean>(false)
 
 const data = ref()
@@ -26,6 +26,7 @@ function format(accounts: Array<AccountDTO>) {
       id: account.id,
       labelAccount: account.labelAccount,
       amount: `${account.amount}`,
+      currency: account.currency,
     }
   })
 }
@@ -63,7 +64,7 @@ const newAccount = reactive({
 })
 
 function handleAccountCreation(account) {
-  createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
+  createAccount(account.label, Number(`${account.integerpart}.${account.decimalpart}`), '€')
     .then(() => {
       fetch().then((accountArray) => {
         format(accountArray)
@@ -95,7 +96,11 @@ function openAccountDialog() {
         </template>
         <Column v-model="actionSelection" selection-mode="single" :exportable="false" />
         <Column field="labelAccount" header="Libellé du compte" />
-        <Column field="amount" header="Montant actuel" />
+        <Column field="amount" header="Montant actuel">
+          <template #body="book">
+            <p>{{ book.data.amount }} {{ book.data.currency }}</p>
+          </template>
+        </Column>
       </DataTable>
     </div>
     <div v-else class="text-center justify-center align-center">

@@ -1,8 +1,15 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.*
+import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.fake.IdUserAccount
+import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Transaction
+import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -59,11 +66,9 @@ class TransactionFeatureTest: FeatureTest() {
                 val toInsertAtFirst = generateTransaction("test0", 100.toAmount(), true, "31/12/2023".toDate())
                 val toInsertAtLast = generateTransaction("test100", 100.toAmount(), true, "31/01/2024".toDate())
                 val toInsertAtMiddle = generateTransaction("test50", 100.toAmount(), true, "28/01/2024".toDate())
-                println("1")
+
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtFirst).assertSuccess()
-                println("2")
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtMiddle).assertSuccess()
-                println("3")
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtLast).assertSuccess()
 
                 val state = transactionState.getStates()
@@ -71,7 +76,7 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
 
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertContainsAtPosition(0, toInsertAtFirst)
                     .assertContainsAtPosition(6, toInsertAtLast)
                     .assertContainsAtPosition(5, toInsertAtMiddle)
@@ -97,7 +102,7 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
 
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertContainsAtPosition(3, transactionToSave)
             }
         }
@@ -119,7 +124,7 @@ class TransactionFeatureTest: FeatureTest() {
                     ?.transactions
 
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertContainsAtPosition(4, transactionToSave)
             }
         }
@@ -178,7 +183,7 @@ class TransactionFeatureTest: FeatureTest() {
                 val expectedAmount = 105.toAmount()
                 val expectedDate = "02/02/2024".toDate()
                 transactionFeature.editTransaction(
-                    userId.id!!, account.id!!, elements.copy(label = "test1.0", amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
+                    userId.value!!, account.id!!, elements.copy(label = "test1.0", _amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
                 )
 
                 val actualTransaction = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -200,13 +205,13 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 initTransactions(listOf(t1, t2, t3, t4, t5))
 
-                transactionFeature.editTransaction(userId.id!!, account.id!!, t5.copy(date = "31/12/2023".toDate()), session.tokenValue)
+                transactionFeature.editTransaction(userId.value!!, account.id!!, t5.copy(date = "31/12/2023".toDate()), session.tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
                 transactions?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-                    .asResponse()
+                    .asNullableDomainResult()
                     .assertEqualsAtPosition(0, t5.label) {label}
                     .assertEqualsAtPosition(1, t1.label) {label}
                     .assertEqualsAtPosition(2, t2.label) {label}
@@ -223,7 +228,7 @@ class TransactionFeatureTest: FeatureTest() {
             val t5 = generateTransaction("test5", 100.toAmount(), true, "04/01/2024".toDate())
             launchWithConnectedUserInstance {
                 initTransactions(listOf(t1, t2, t3, t4, t5))
-                transactionFeature.editTransaction(userId.id!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
+                transactionFeature.editTransaction(userId.value!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -246,7 +251,7 @@ class TransactionFeatureTest: FeatureTest() {
                 ))
                 val transaction2 = generateTransaction("test1", 100.toAmount(), true, "02/01/2024".toDate())
                 transactionFeature.bookTransaction(userId, tokenValue, account.label, transaction2)
-                transactionFeature.editTransaction(userId.id!!, account.id!!, transaction2.copy(amount = 105.toAmount()), session.tokenValue)
+                transactionFeature.editTransaction(userId.value!!, account.id!!, transaction2.copy(_amount = 105.toAmount()), session.tokenValue)
                     .assertSuccess()
 
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
@@ -259,7 +264,7 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val toInsert = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
                 initTransactions(toInsert.asSingleton())
-                transactionFeature.findById(userId.id!!, toInsert.id!!, tokenValue)
+                transactionFeature.findById(userId.value!!, toInsert.id!!, tokenValue)
                     .assertTrue { this.label == toInsert.label && this.amount == toInsert.amount }
             }
         }
@@ -283,11 +288,107 @@ class TransactionFeatureTest: FeatureTest() {
             }
         }
     }
+    @Nested
+    inner class DeleteByIdFeature {
+        @Test
+        fun `Giving a user with existing transaction, when we delete it, the new amount of the account should take in count`() {
+            launchWithConnectedUserInstance {
+                val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
+                val transaction2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
+                val transaction3 = generateTransaction("test3", 100.toAmount(), true, "02/01/2024".toDate())
+                val transaction4 = generateTransaction("test4", 100.toAmount(), true, "02/01/2024".toDate())
+                initTransactions(listOf(
+                    transaction, transaction2, transaction3, transaction4
+                ))
+                transactionFeature.deleteSheetsByIds(userId, account.id!!, listOf(
+                    transaction.id!!, transaction2.id!!
+                ), session.tokenValue)
+                    .assertSuccess()
+
+                val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
+                    ?.transactions
+
+                assertNull(transactions!!.find { it.label == "test0" })
+                assertNull(transactions.find { it.label == "test2" })
+            }
+        }
+
+        @Test
+        fun `delete transaction with invalid account must return not found`() {
+            launchWithConnectedUserInstance {
+                transactionFeature.deleteSheetsByIds(userId, 188, listOf(
+                    1029, 10291
+                ), session.tokenValue)
+                    .assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            }
+
+        }
+    }
+
+    @Nested
+    inner class ConfirmPreviewTransactionTest {
+        @Test
+        fun `confirm preview conversion should be success`() {
+            launchWithConnectedUserInstance {
+                val transactionPreviewTest =
+                    generateTransaction("test#0", 100.toAmount(), true, "01/01/2024".toDate(), isPreview = true)
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(userId, account.id!!),
+                            mutableListOf(transactionPreviewTest)
+                        )
+                    )
+                )
+
+                transactionFeature.confirmPreviewTransaction(
+                    userId,
+                    tokenValue,
+                    account.id!!,
+                    transactionPreviewTest.id!!
+                )
+                    .assertSuccess()
+            }
+        }
+        @Test
+        fun `Confirm preview transaction with invalid booklet id must resolve booklet not found`() {
+            launchWithConnectedUserInstance {
+                val transactionPreviewTest =
+                    generateTransaction("test#0", 100.toAmount(), true, "01/01/2024".toDate(), isPreview = true)
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(userId, account.id!!),
+                            mutableListOf(transactionPreviewTest)
+                        )
+                    )
+                )
+
+                transactionFeature.confirmPreviewTransaction(
+                    userId,
+                    tokenValue,
+                    188,
+                    transactionPreviewTest.id!!
+                ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            }
+        }
+        @Test
+        fun `confirm preview transaction with a transaction that is not found must return to not found`() {
+            launchWithConnectedUserInstance {
+                transactionFeature.confirmPreviewTransaction(
+                    userId,
+                    tokenValue,
+                    account.id!!,
+                    188
+                ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            }
+        }
+    }
 }
 
 fun String.toDate(): LocalDate = LocalDate.parse(this, DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
-fun MutableList<Transaction>?.sortedByDate(): Response<List<Transaction>> {
+fun MutableList<Transaction>?.sortedByDate(): Result<List<Transaction>> {
     return this?.sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
-        .asResponse()
+        .asNullableDomainResult()
 }

@@ -1,10 +1,10 @@
 export default function useSheet() {
-  const { deleteQuery, post, get } = useQuery()
+  const { deleteQuery, post, get, patch } = useQuery()
   const { user } = useAuth()
   const dateUse = useDate()
 
   async function findByDate(month: string | undefined, year: number, accountLabel: string) {
-    return get('sheet', {
+    return get('transaction', {
       userId: user.value?.id,
       month: month ?? dateUse.monthFromNumber(new Date().getMonth() + 1),
       year,
@@ -12,28 +12,28 @@ export default function useSheet() {
     })
   }
   async function findTransactionById(id: number) {
-    return get(`sheet/transaction/${id}`, {
+    return get(`transaction/${id}`, {
       userID: user.value?.id,
     })
   }
 
   function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<TransactionResultDTO> {
-    return post('sheet', {
+    return post('transaction', {
       userId: user.value?.id,
       accountLabel,
-      sheetDTO,
+      transactionResult: sheetDTO,
     })
   }
 
   function deleteSheet(accountId: number, ids: Array<number>): Promise<any> {
-    return deleteQuery(`sheet/delete/${user.value?.id}`, {
+    return deleteQuery(`transaction/${user.value?.id}`, {
       accountId,
       sheetIds: ids,
     })
   }
 
   function editSheet(sheet: SheetDTO, accountId: number): Promise<TransactionResultDTO> {
-    return post('sheet/edit', {
+    return patch('transaction', {
       userId: user.value?.id,
       accountId,
       sheet,
@@ -41,7 +41,7 @@ export default function useSheet() {
   }
 
   function confirmPreviewTransaction(accountId, transactionId): Promise<TransactionResultDTO> {
-    return post(`sheet/transaction/confirm`, {
+    return patch(`transaction/confirm`, {
       userID: user.value?.id,
       transactionID: transactionId,
       accountID: accountId,
