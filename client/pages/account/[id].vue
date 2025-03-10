@@ -255,7 +255,7 @@ function onConfirmPreview(transaction) {
 
 <template>
   <ConfirmDialog />
-  <div class="w-[70%] h-full flex flex-col items-center container-all self-center">
+  <div class="w-[100%] h-full flex flex-col items-center container-all self-center">
     <div class="w-full h-70% mt2px">
       <div>
         <h2 class="text-2xl font-bold info-text">
@@ -273,11 +273,11 @@ function onConfirmPreview(transaction) {
           </div>
         </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" table-style="min-width: 60rem" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" table-style="min-width: 30rem" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
-              <Dropdown v-model="data.month" :options="uDate.months" placeholder="Selectionner un mois" class="w-full md:w-14rem" @change="retrieveSheets()" />
+              <Dropdown v-model="data.month" :options="uDate.months" placeholder="Selectionner un mois" class="w-30 md:w-14rem" @change="retrieveSheets()" />
               <div class="w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
                   <label
