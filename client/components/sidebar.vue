@@ -9,10 +9,10 @@ const isSidebarOpen = ref(true)
 
 <template>
   <div>
+    <button v-if="!isSidebarOpen" class="lg:hidden p-2 fixed top-2 left-2" @click="isSidebarOpen = !isSidebarOpen">
+      <i class="pi pi-bars text-2xl" />
+    </button>
     <div :class="{ 'sidebar-open': isSidebarOpen, 'sidebar-closed': !isSidebarOpen }" class="sidebar lg:flex flex-col border-r w-full lg:w-80 h-screen text-center justify-between content fixed lg:relative">
-      <button v-if="isSidebarOpen" :class="{ open: isSidebarOpen }" class="lg:hidden p-2" @click="isSidebarOpen = !isSidebarOpen">
-        <i :class="isSidebarOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-2xl" />
-      </button>
       <div class="flex flex-col">
         <NuxtLink to="/" class="title decoration-none">
           <img src="@/public/favicon.ico" alt="icon" class="w-15 lg:w-10"> Jmanager
@@ -20,17 +20,18 @@ const isSidebarOpen = ref(true)
         <div class="mt-5 flex flex-col gap-4">
           <NuxtLink
             to="/" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white"
+            @click="isSidebarOpen = false"
           >
             <i class="pi pi-home text-2xl lg:text-3xl" />
             Accueil
           </NuxtLink>
-          <NuxtLink v-if="isAuthenticated" to="/dashboard" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
+          <NuxtLink v-if="isAuthenticated" to="/dashboard" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="isSidebarOpen = false">
             <i class="pi pi-tag text-2xl lg:text-3xl" /> Tableau de bord
           </NuxtLink>
-          <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
+          <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="isSidebarOpen = false">
             <i class="pi pi-wallet text-2xl lg:text-3xl" /> Mes livrets
           </NuxtLink>
-          <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white">
+          <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="isSidebarOpen = false">
             <i class="pi pi-tag text-2xl lg:text-3xl" /> Mes tags
           </NuxtLink>
         </div>
@@ -52,9 +53,6 @@ const isSidebarOpen = ref(true)
         </div>
       </div>
     </div>
-    <button v-if="!isSidebarOpen" class="lg:hidden p-2" @click="isSidebarOpen = !isSidebarOpen">
-      <i :class="isSidebarOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-2xl" />
-    </button>
   </div>
 </template>
 
@@ -66,8 +64,8 @@ const isSidebarOpen = ref(true)
 .open {
   z-index: 2000;
 }
-.closed {
-  width: 0;
+.close {
+  visibility: hidden;
 }
 .title {
   color: #fff;
@@ -97,6 +95,8 @@ const isSidebarOpen = ref(true)
 
 .sidebar-closed {
   transform: translateX(-200%);
+  visibility: hidden;
+  width: 0 !important;
 }
 
 .bg-primary-color-white {
