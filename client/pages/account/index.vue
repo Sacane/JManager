@@ -1,17 +1,16 @@
 <script setup lang="ts">
+import { onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import useBooklet from '../../composables/useBooklet'
 import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
 
 definePageMeta({
   layout: 'sidebar-layout',
 })
-const row = ref<AccountDTO | undefined>(undefined)
-// toast
-//
+
 const { fetch, deleteAccount, createAccount } = useBooklet()
 const isAccountFilled = ref<boolean>(false)
-
-const data = ref()
+const data = ref<Array<AccountDTO>>([])
 
 onMounted(async () => {
   await fetch().then((accountArray) => {
@@ -31,28 +30,20 @@ function format(accounts: Array<AccountDTO>) {
   })
 }
 
-function onRowClick(event: any) {
-  navigateTo({
-    path: `/account/${event.data.id}`,
+const router = useRouter()
+
+function onCardClick(accountId: number) {
+  router.push(`/account/${accountId}`)
+}
+
+function applyDelete(accountId: number) {
+  deleteAccount(accountId).finally(() => {
+    fetch().then((accountArray) => {
+      format(accountArray)
+      isAccountFilled.value = accountArray.length > 0
+    })
   })
 }
-
-function applyDelete() {
-  if (row.value === undefined) {
-    return
-  }
-  deleteAccount(row.value?.id as number)
-    .finally(() => {
-      fetch().then((accountArray) => {
-        format(accountArray)
-        isAccountFilled.value = accountArray.length > 0
-      })
-    })
-}
-
-const actionSelection = ref<AccountDTO | undefined>(undefined)
-
-// ==================== Dialog management ==================== //
 
 const isAddAccountDialogOpen = ref<boolean>(false)
 const newAccount = reactive({
@@ -74,9 +65,11 @@ function handleAccountCreation(account) {
       })
     })
 }
+
 function cancel() {
   isAddAccountDialogOpen.value = false
 }
+
 function openAccountDialog() {
   isAddAccountDialogOpen.value = true
 }
@@ -84,38 +77,23 @@ function openAccountDialog() {
 
 <template>
   <div class="w-full h-full flex flex-col gap-5 items-center">
-    <div v-if="isAccountFilled" class="p20px container">
+    <div class="p20px container">
       <h2 class="info-text">
-        Double cliquez sur un compte pour visualiser ses transactions
+        Mes livrets
       </h2>
-      <DataTable v-model:selection="row" responsive-layout="scroll" :value="data" selection-mode="single" data-key="id" table-style="min-width: 10rem" @row-dblclick="onRowClick">
-        <template #header>
-          <div class="flex flex-row h-auto pl10px">
-            <Button class="b mr2 w-350px h-50px" label="Supprimer le compte" icon="pi pi-trash" severity="danger" @click="applyDelete" />
+      <div class="account-cards">
+        <div v-for="account in data" :key="account.id" class="card" @click="onCardClick(account.id)">
+          <div class="card-header">
+            <h3>{{ account.labelAccount }}</h3>
+            <Button icon="pi pi-trash" class="delete-button" severity="danger" @click.stop="applyDelete(account.id)" />
           </div>
-        </template>
-        <Column v-model="actionSelection" selection-mode="single" :exportable="false" />
-        <Column field="labelAccount" header="Libellé du compte" />
-        <Column field="amount" header="Montant actuel">
-          <template #body="book">
-            <p>{{ book.data.amount }} {{ book.data.currency }}</p>
-          </template>
-        </Column>
-      </DataTable>
-    </div>
-    <div v-else class="text-center justify-center align-center">
-      <div class="mb-4">
-        <p class="text-xl font-semibold text-gray-600">
-          Vous n'avez pas encore de compte enregistré.
-        </p>
-      </div>
-      <div class="mb-4">
-        <p class="text-lg text-gray-500">
-          Commencez par ajouter un compte pour gérer vos finances.
-        </p>
+          <div class="card-body">
+            <p>{{ account.amount }} {{ account.currency }}</p>
+          </div>
+        </div>
+        <Button icon="pi pi-plus" class="add-button" @click="openAccountDialog" />
       </div>
     </div>
-    <Button label="Ajouter un nouveau compte" class="w-250px h-50px align-self-center" @click="openAccountDialog" />
     <AccountBookingDialog
       :integerpart="newAccount.amount.integerPart"
       :decimalpart="newAccount.amount.decimalPart"
@@ -127,17 +105,68 @@ function openAccountDialog() {
 </template>
 
 <style scoped lang="scss">
-.container{
+.container {
   background-color: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  .info-text{
-    text-align: center;
-    color: #555;
-    margin-bottom: 20px;
-    font-weight: 900;
-    font-size: 2rem;
-  }
+}
+
+.info-text {
+  text-align: center;
+  color: #555;
+  margin-bottom: 20px;
+  font-weight: 900;
+  font-size: 2rem;
+}
+
+.account-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+
+.card {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 300px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-body {
+  margin-top: 10px;
+}
+
+.delete-button {
+  background-color: transparent;
+  border: none;
+  color: red;
+  cursor: pointer;
+}
+
+.add-button {
+  font-size: 2rem;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
