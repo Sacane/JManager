@@ -30,11 +30,11 @@ function closeDialog() {
   <Dialog
     v-model:visible="isVisibleData"
     class="bg-grey"
-    modal header="Ajouter un nouveau compte" @update:visible="closeDialog"
+    modal header="Ajouter un nouveau livret" @update:visible="closeDialog"
   >
     <div class="mt-6">
       <div class="flex flex-col gap-3">
-        <label for="label" class="block text-sm font-medium text-gray-700">Libellé du compte</label>
+        <label for="label" class="block text-sm font-medium text-gray-700">Libellé du livret</label>
         <InputText id="label" v-model="accountData.label" type="text" autocomplete="off" />
       </div>
 

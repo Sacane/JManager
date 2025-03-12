@@ -37,10 +37,10 @@ function createAccountIfAuthenticated() {
 
 <template>
   <div class="container mx-auto px-4 mt-10">
-    <h1 class="text-3xl font-bold text-center mb-8 max-w-[40%]">
+    <h1 class="text-3xl md:text-4xl font-bold text-center mb-8 max-w-full md:max-w-[40%]">
       Un sommaire rapide et pratique pour gérer votre budget et vos dépenses
     </h1>
-    <div class="flex flex-row justify-between w-full gap-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 w-full">
       <TitleCard
         class="create-container"
         title="Créer vos livrets" description="JManager vous permet de gérer de manière indépendante vos dépenses en créant un ou plusieurs comptes.
@@ -76,19 +76,19 @@ function createAccountIfAuthenticated() {
 
 <style scoped>
 .container {
-  max-width: 80%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
-.container h1{
+.container h1 {
   font-family: 'aktiv', sans-serif;
   font-weight: 800;
   color: var(--primary);
 }
-.create-container{
-  &:hover{
+.create-container {
+  &:hover {
     cursor: pointer;
   }
 }
