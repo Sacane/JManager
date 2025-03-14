@@ -44,22 +44,6 @@ function closeOnNavigateIfMobile() {
           </NuxtLink>
         </div>
       </div>
-
-      <div class="m-2">
-        <p class="mb-5">
-          Connecté en tant que <b>{{ user?.username }}</b>
-        </p>
-        <div class="flex-row text-lg flex justify-center">
-          <NuxtLink v-if="isAuthenticated" class="icon-btn mb-2" @click="logout()">
-            <i class="pi pi-sign-out" />
-            Se deconnecter
-          </NuxtLink>
-          <NuxtLink v-else to="/login" class="icon-btn">
-            <div i="tabler-login" />
-            Se connecter
-          </NuxtLink>
-        </div>
-      </div>
     </div>
   </div>
 </template>
