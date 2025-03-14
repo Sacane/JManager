@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { AxiosError } from 'axios'
+import { onMounted, reactive, ref } from 'vue'
+import { useConfirm } from 'primevue/useconfirm'
 import useTag from '~/composables/useTag'
 import { hexToRgb } from '~/utils/util'
 
@@ -16,9 +17,7 @@ interface DataDisplay {
 
 const { addPersonalTag, getAllTags, deleteTag } = useTag()
 
-const dataByDefault = ref<DataDisplay[]>([])
-const dataPersonal = ref<DataDisplay[]>([])
-const tagStatusLabel = ref<string>('')
+const tags = ref<DataDisplay[]>([])
 const addTagDialog = ref<boolean>(false)
 const personalTagForm = reactive({
   tagLabel: '',
@@ -30,14 +29,13 @@ const personalTagForm = reactive({
   test: '',
 })
 const confirm = useConfirm()
+const activeTabIndex = ref<number>(0)
 
 const tagToDelete = ref<DataDisplay | undefined>(undefined)
 
 onMounted(() => {
-  getAllTags().then((tags) => {
-    dataByDefault.value = tags.filter(e => e.isDefault).map(e => formattedData(e))
-    dataPersonal.value = tags.filter(e => !e.isDefault).map(e => formattedData(e))
-    tagStatusLabel.value = 'Afficher mes tags personnels'
+  getAllTags().then((tagsData) => {
+    tags.value = tagsData.map(e => formattedData(e))
   })
 })
 
@@ -51,7 +49,6 @@ function formattedData(tagDTO: TagDTO): DataDisplay {
   }
 }
 
-const jToast = useJToast()
 function add() {
   const rgb = hexToRgb(personalTagForm.test)
   addPersonalTag(
@@ -62,11 +59,11 @@ function add() {
       blue: rgb.b,
     },
   ).then((tag) => {
-    dataPersonal.value.push(formattedData(tag))
+    tags.value.push(formattedData(tag))
     addTagDialog.value = false
   })
-    .catch((err: AxiosError) => jToast.errorAxios(err))
 }
+
 function delTag(row: DataDisplay): void {
   tagToDelete.value = row
   confirm.require({
@@ -74,9 +71,9 @@ function delTag(row: DataDisplay): void {
     header: 'Confirmer la suppression du tag',
     icon: 'pi pi-exclamation-triangle',
     accept: () => deleteTag(row.id).then(() => {
-      const indexDelTag = dataPersonal.value.findIndex(e => e.id === row.id)
+      const indexDelTag = tags.value.findIndex(e => e.id === row.id)
       if (indexDelTag !== -1) {
-        dataPersonal.value.splice(indexDelTag, 1)
+        tags.value.splice(indexDelTag, 1)
       }
     }),
   })
@@ -85,43 +82,54 @@ function delTag(row: DataDisplay): void {
 
 <template>
   <ConfirmDialog />
-  <div class="mt-5 w-[50%] self-center flex flex-col gap-5">
-    <div class="flex flex-col lg:(flex flex-row justify-center)">
-      <div class="text-xl font-bold text-gray-600">
-        <p>
-          Les tags par défaut
-        </p>
+  <div class="w-full mt-20 flex flex-col justify-center align-center gap-5">
+    <div class="flex flex-wrap gap-4 w-full justify-center desktop-view">
+      <div class="tag-section">
+        <h2>Tags par défaut</h2>
+        <div v-for="tag in tags.filter(tag => tag.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+          <div class="tag-header">
+            <h3>{{ tag.label }}</h3>
+          </div>
+          <p>{{ tag.isDefault }}</p>
+        </div>
+      </div>
+      <div class="tag-section">
+        <h2>Tags personnels</h2>
+        <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+          <div class="tag-header">
+            <h3>{{ tag.label }}</h3>
+            <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(tag)" />
+          </div>
+          <p>{{ tag.isDefault }}</p>
+        </div>
       </div>
     </div>
-    <DataTable :responsive-layout="scroll" :resizable-columns="true" data-key="id" table-style="min-width: 50rem" :value="dataByDefault">
-      <Column field="label" header="Libellé du tag" />
-      <Column body-style="overflow: visible" header="couleur">
-        <template #body="slotTag">
-          <div :style="`width: 20px; height: 20px; background-color: ${slotTag.data.color}; border-radius: 50%;`" />
-        </template>
-      </Column>
-    </DataTable>
-    <div class="flex flex-col lg:(flex flex-row justify-center)">
-      <div class="text-xl font-bold text-gray-600 align-center">
-        <p>
-          Mes tags personnels
-        </p>
-      </div>
+    <div class="mobile-view">
+      <TabView v-model:active-index="activeTabIndex">
+        <TabPanel header="Tags par défaut">
+          <div class="flex flex-col gap-4 w-full justify-center">
+            <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+              <div class="tag-header">
+                <h3>{{ tag.label }}</h3>
+              </div>
+              <p>{{ tag.isDefault }}</p>
+            </div>
+          </div>
+        </TabPanel>
+        <TabPanel header="Tags personnels">
+          <div class="flex flex-col gap-4 w-full justify-center">
+            <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+              <div class="tag-header">
+                <h3>{{ tag.label }}</h3>
+                <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(tag)" />
+              </div>
+              <p>{{ tag.isDefault }}</p>
+            </div>
+          </div>
+        </TabPanel>
+      </TabView>
     </div>
-    <DataTable :responsive-layout="scroll" :resizable-columns="true" data-key="id" table-style="min-width: 50rem" :value="dataPersonal">
-      <Column field="label" header="Libellé du tag" />
-      <Column header-style="width: 5rem; text-align: center" body-style="text-align: center; overflow: visible" header="couleur">
-        <template #body="slotTag">
-          <div :style="`width: 20px; height: 20px; background-color: ${slotTag.data.color}; border-radius: 50%;`" />
-        </template>
-      </Column>
-      <Column body-style="text-align: center; overflow: visible">
-        <template #body="slotTag">
-          <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(slotTag.data)" />
-        </template>
-      </Column>
-    </DataTable>
-    <Button class="w50" @click="addTagDialog = true">
+    <Button v-if="activeTabIndex === 1" class="w50 self-center mb-10" @click="addTagDialog = true">
       Ajouter un nouveau tag personnel
     </Button>
     <Dialog v-model:visible="addTagDialog" modal header="Ajouter un nouveau tag personnalisé">
@@ -141,4 +149,57 @@ function delTag(row: DataDisplay): void {
 </template>
 
 <style lang="scss" scoped>
+.tag-card {
+  padding: 12px;
+  border-radius: 8px;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid;
+}
+
+.tag-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tag-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.desktop-view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.mobile-view {
+  display: none;
+}
+
+.tag-section {
+  width: 50%;
+}
+
+.tag-section h2 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: var(--primary);
+}
+
+@media (max-width: 780px) {
+  .desktop-view {
+    display: none;
+  }
+  .mobile-view {
+    display: block;
+  }
+}
 </style>
