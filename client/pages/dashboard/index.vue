@@ -186,14 +186,16 @@ p {
   text-align: center;
 }
 
-/* Icône de cloud (PrimeIcons ou FontAwesome par exemple) */
 .icon-large {
   font-size: 36px;
   color: var(--primary);
 }
 
 .card-body p {
-  font-size: 18px;
+  @media (max-width: 780px) {
+    font-size: 18px;
+  }
+  font-size: 25px;
   margin: 15px;
 }
 
