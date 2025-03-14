@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // switch to preferred locale on load
 import 'primeicons/primeicons.css'
+
 /*
 const router = useRouter()
 const switchLocalePath = useSwitchLocalePath()
