@@ -35,7 +35,7 @@
   }
 }
 .header {
-  height: 10%;
+  height: 100px;
   width: 100%;
   padding: 20px;
 }
