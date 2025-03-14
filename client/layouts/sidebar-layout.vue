@@ -3,11 +3,14 @@
 </script>
 
 <template>
-  <div class="flex flex-row w-screen h-screen">
-    <!-- ------------------------------ -->
+  <div class="flex flex-row w-screen-h-screen">
     <Sidebar class="sidebar" />
-    <div class="content lg:(w-full h-screen flex flex-col)">
-      <slot />
+    <div class="flex flex-col w-screen h-screen">
+      <!-- ------------------------------ -->
+      <JmanagerHeader class="header" />
+      <div class="content lg:(w-full h-screen flex flex-col)">
+        <slot />
+      </div>
     </div>
   </div>
 </template>
@@ -30,5 +33,10 @@
   .sidebar {
     width: 0;
   }
+}
+.header {
+  height: 10%;
+  width: 100%;
+  padding: 20px;
 }
 </style>
