@@ -11,6 +11,7 @@ const isAccountDialogOpen = ref(false)
 const toast = useJToast()
 
 const accounts = ref<AccountDTO[]>([])
+const sum = computed(() => accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount), 0))
 
 function handleAccountCreation(account: Account) {
   createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
@@ -34,9 +35,6 @@ function onDialogOpen() {
 onMounted(() => {
   fetch().then((result) => {
     for (let i = 0; i < result.length; i++) {
-      if (i === 3) {
-        break
-      }
       accounts.value.push(result[i])
     }
   })
@@ -67,13 +65,8 @@ onMounted(() => {
           </div>
           <div v-else class="card-body">
             <div class="w-full flex flex-row justify-evenly">
-              <div class="num w-[50%]">
-                <h2>Vous avez {{ accounts.length }} livret(s)</h2>
-              </div>
-              <div class="flex flex-col w-[50%]">
-                <div v-for="account in accounts" :key="account.id">
-                  <p>{{ account.labelAccount }} contient {{ account.amount }}</p>
-                </div>
+              <div>
+                <p>Totalité des revenus : {{ sum }} €</p>
               </div>
             </div>
           </div>
@@ -88,7 +81,7 @@ onMounted(() => {
           </div>
           <div class="card-body">
             <i class="pi pi-plus icon-large" />
-            <p>Enregistrer votre première mensualité</p>
+            <p>Créer votre première mensualité</p>
           </div>
         </div>
         <div class="content lg:w-[33%]">
@@ -115,17 +108,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.num {
-  border-right: 2px solid black;
-}
 .division {
   transition: ease 1s;
 }
 .content {
-  background: linear-gradient(135deg, #2C3E50, #1F2D3A);
-  box-shadow: 5px 5px 15px black;
+  background: linear-gradient(135deg, var(--primary), #651e9e);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 20px;
-  transition: ease 0.5s;
+  transition: transform 0.3s ease;
   color: #fff;
   cursor: pointer;
   &:hover {
@@ -144,8 +134,7 @@ onMounted(() => {
   }
 }
 .user-icon-container {
-  margin-top: 10px;
-  margin-left: 10px;
+  margin: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,22 +142,27 @@ onMounted(() => {
   border-radius: 50%;
   width: 100px;
   height: 100px;
+  @media (max-width: 780px) {
+    height: 70px;
+
+  }
 }
 
 .user-icon {
-  color: black;
+  color: var(--primary);
   font-size: 50px;
 }
 
 .card {
-  background: linear-gradient(135deg, #2C3E50, #1F2D3A);
+  background: #fff;
   border-radius: 12px;
-  color: white;
+  color: #333;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 16px;
   font-family: Arial, sans-serif;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Header de la carte */
@@ -178,10 +172,9 @@ onMounted(() => {
   justify-content: center;
 }
 
-.title-container p {
+p {
   margin: 0;
-  font-size: 12px;
-  color: #b0b0b0;
+  font-size: 20px;
 }
 
 /* Corps de la carte */
@@ -191,20 +184,22 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   text-align: center;
-  p {
-    font-size: 16px;
-  }
 }
 
-/* Icône de cloud (PrimeIcons ou FontAwesome par exemple) */
 .icon-large {
   font-size: 36px;
-  color: #4EA8DE;
+  color: var(--primary);
 }
 
 .card-body p {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #d0d0d0;
+  @media (max-width: 780px) {
+    font-size: 18px;
+  }
+  font-size: 25px;
+  margin: 15px;
+}
+
+h3 {
+  margin: 15px;
 }
 </style>
