@@ -93,6 +93,7 @@ function closeOnNavigateIfMobile() {
   transition: transform 0.3s ease-in-out;
   z-index: 1000;
   width: 100%;
+  height: 100%;
 }
 
 .sidebar-open {
