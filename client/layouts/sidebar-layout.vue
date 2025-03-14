@@ -15,18 +15,20 @@
 <style scoped>
 .sidebar {
   width: 15%;
+  position: fixed;
 }
-@media (max-width: 768px) {
-  .sidebar {
-    width: 0;
-  }
-}
+
 .content {
   width: 85%;
+  margin-left: 15%;
 }
 @media (max-width: 768px) {
   .content {
     width: 100%;
+    margin-left: 0;
+  }
+  .sidebar {
+    width: 0;
   }
 }
 </style>
