@@ -17,13 +17,13 @@
 
 <style scoped>
 .sidebar {
-  width: 15%;
+  width: 230px;
   position: fixed;
 }
 
 .content {
   width: 85%;
-  margin-left: 15%;
+  margin-left: 230px;
 }
 @media (max-width: 768px) {
   .content {
