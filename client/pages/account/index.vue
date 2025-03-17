@@ -49,8 +49,8 @@ const isAddAccountDialogOpen = ref<boolean>(false)
 const newAccount = reactive({
   label: '',
   amount: {
-    integerPart: '0',
-    decimalPart: '0',
+    integerPart: '',
+    decimalPart: '',
   },
 })
 
