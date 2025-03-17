@@ -26,21 +26,14 @@ function closeOnNavigateIfMobile() {
           <img src="@/public/favicon.ico" alt="icon" class="w-10 lg:w-10">
         </NuxtLink>
         <div class="mt-5 flex flex-col gap-4">
-          <NuxtLink
-            to="/" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white"
-            @click="closeOnNavigateIfMobile()"
-          >
-            <i class="pi pi-home text-2xl lg:text-3xl" />
-            Accueil
-          </NuxtLink>
           <NuxtLink v-if="isAuthenticated" to="/dashboard" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
-            <i class="pi pi-tag text-2xl lg:text-3xl" /> Tableau de bord
+            <i class="pi pi-tag text-2xl" /> Tableau de bord
           </NuxtLink>
           <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
-            <i class="pi pi-wallet text-2xl lg:text-3xl" /> Mes livrets
+            <i class="pi pi-wallet text-2xl" /> Mes livrets
           </NuxtLink>
           <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
-            <i class="pi pi-tag text-2xl lg:text-3xl" /> Mes tags
+            <i class="pi pi-tag text-2xl" /> Mes tags
           </NuxtLink>
         </div>
       </div>
@@ -65,7 +58,7 @@ function closeOnNavigateIfMobile() {
 
 .section {
   color: #fff;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   background-color: var(--primary-background);
 
   &:hover {
