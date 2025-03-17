@@ -26,13 +26,6 @@ function closeOnNavigateIfMobile() {
           <img src="@/public/favicon.ico" alt="icon" class="w-10 lg:w-10">
         </NuxtLink>
         <div class="mt-5 flex flex-col gap-4">
-          <NuxtLink
-            to="/" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white"
-            @click="closeOnNavigateIfMobile()"
-          >
-            <i class="pi pi-home text-2xl" />
-            Accueil
-          </NuxtLink>
           <NuxtLink v-if="isAuthenticated" to="/dashboard" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
             <i class="pi pi-tag text-2xl" /> Tableau de bord
           </NuxtLink>
