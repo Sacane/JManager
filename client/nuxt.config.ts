@@ -1,13 +1,7 @@
 import process from 'node:process'
-import fs from 'node:fs'
 import runtimeConfig from './env.config.json'
 import devRuntimeConfig from './env.dev.config.json'
 
-const locales = fs.readdirSync('locales')
-  .map(file => ({
-    code: file.replace(/\.(yml|yaml|json)$/, ''),
-    file,
-  }))
 const isDev = process.env.NODE_ENV === 'development'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
