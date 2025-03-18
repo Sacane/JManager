@@ -73,9 +73,7 @@ export default defineNuxtConfig({
   ],
 
   i18n: {
-    langDir: 'locales',
-    defaultLocale: 'en',
-    locales,
+
   },
 
   colorMode: {
