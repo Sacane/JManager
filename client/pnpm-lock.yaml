@@ -15,8 +15,8 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       primevue:
-        specifier: ^3.53.0
-        version: 3.53.0(vue@3.5.13(typescript@5.7.2))
+        specifier: ^3.53.1
+        version: 3.53.1(vue@3.5.13(typescript@5.7.2))
     devDependencies:
       '@antfu/eslint-config':
         specifier: ^2.17.3
@@ -31,7 +31,7 @@ importers:
         specifier: ^0.7.1
         version: 0.7.2(magicast@0.3.5)(rollup@4.27.4)
       '@nuxtjs/i18n':
-        specifier: ^8.3.0
+        specifier: ^8.5.6
         version: 8.5.6(magicast@0.3.5)(rollup@4.27.4)(vue@3.5.13(typescript@5.7.2))
       '@pinia/nuxt':
         specifier: ^0.5.5
@@ -43,10 +43,10 @@ importers:
         specifier: ^0.59.0
         version: 0.59.4
       '@vueuse/core':
-        specifier: ^10.9.0
+        specifier: ^10.11.1
         version: 10.11.1(vue@3.5.13(typescript@5.7.2))
       '@vueuse/nuxt':
-        specifier: ^10.9.0
+        specifier: ^10.11.1
         version: 10.11.1(magicast@0.3.5)(nuxt@3.14.1592(@parcel/watcher@2.5.0)(@types/node@22.10.1)(eslint@8.57.1)(ioredis@5.4.1)(magicast@0.3.5)(optionator@0.9.4)(rollup@4.27.4)(sass@1.81.0)(terser@5.36.0)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.1)(sass@1.81.0)(terser@5.36.0)))(rollup@4.27.4)(vue@3.5.13(typescript@5.7.2))
       axios:
         specifier: ^1.8.2
@@ -3872,8 +3872,8 @@ packages:
     peerDependencies:
       vue: ^3.0.0
 
-  primevue@3.53.0:
-    resolution: {integrity: sha512-mRqTPGGZX+3AQokaCCjxLVSNEjGEA7LaPdBT4qSpGEdMstK6vhUBCxgLH7IPjHudbaSi4Xo3CIO62pXQxbz8dQ==}
+  primevue@3.53.1:
+    resolution: {integrity: sha512-Bp4peZPdhfKYXwvtsOGGh5dfgmTelm+LZEZKGs/c5mOHhsUJ6xi3EcOZoQVI6oklS946ayMQvgD5L0S7itGO0g==}
     peerDependencies:
       vue: ^3.0.0
 
@@ -9160,7 +9160,7 @@ snapshots:
     dependencies:
       vue: 3.5.13(typescript@5.7.2)
 
-  primevue@3.53.0(vue@3.5.13(typescript@5.7.2)):
+  primevue@3.53.1(vue@3.5.13(typescript@5.7.2)):
     dependencies:
       vue: 3.5.13(typescript@5.7.2)
 
