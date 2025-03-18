@@ -52,13 +52,13 @@ importers:
         specifier: ^1.8.2
         version: 1.8.3
       class-variance-authority:
-        specifier: ^0.7.0
+        specifier: ^0.7.1
         version: 0.7.1
       consola:
         specifier: ^3.2.3
         version: 3.2.3
       eslint:
-        specifier: ^8.57.0
+        specifier: ^8.57.1
         version: 8.57.1
       nuxt:
         specifier: ^3.12.4
@@ -73,7 +73,7 @@ importers:
         specifier: ^1.74.1
         version: 1.81.0
       taze:
-        specifier: ^0.13.3
+        specifier: ^0.13.9
         version: 0.13.9
 
 packages:
