@@ -255,25 +255,25 @@ function onConfirmPreview(transaction) {
 
 <template>
   <ConfirmDialog />
-  <div class="w-[100%] h-full flex flex-col items-center container-all self-center">
-    <div class="w-full h-70% mt2px">
-      <div>
-        <h2 class="text-2xl font-bold info-text">
-          Compte {{ data.labelAccount }}
-        </h2>
-        <div class="flex flex-row gap-3 justify-between">
-          <Button class="h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
-          <div class="flex flex-row gap-5 mr-5">
-            <h2 class="text-2xl sold-text color-primary">
-              Solde réel : {{ data.accountAmount }} €
-            </h2>
-            <h2 class="text-2xl sold-text preview-text">
-              Solde prévisionnel : {{ data.previewAccountAmount }} €
-            </h2>
-          </div>
+  <div class="container-all">
+    <div class="header">
+      <h2 class="text-2xl font-bold info-text">
+        Compte {{ data.labelAccount }}
+      </h2>
+      <div class="flex flex-row gap-3 justify-between">
+        <Button class="h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
+        <div class="flex flex-row gap-5 mr-5">
+          <h2 class="text-2xl sold-text color-primary">
+            Solde réel : {{ data.accountAmount }} €
+          </h2>
+          <h2 class="text-2xl sold-text preview-text">
+            Solde prévisionnel : {{ data.previewAccountAmount }} €
+          </h2>
         </div>
       </div>
-      <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" table-style="min-width: 30rem" @row-dblclick="onEditPage">
+    </div>
+    <div class="table-container">
+      <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-row hauto justify-between">
@@ -298,8 +298,8 @@ function onConfirmPreview(transaction) {
         <Column field="incomeRepresentation" header="Recettes" :header-style="{ textAlign: 'center' }" />
         <Column field="tagDTO" header="Tag">
           <template #body="{ data }">
-            <div class="flex flex-row align-center flex-gap-2">
-              <p>
+            <div class="flex flex-row align-center flex-gap-2 tag-container">
+              <p class="tag-label">
                 {{ data.tagDTO.label }}
               </p>
               <div class="flex flex-col align-center justify-center">
@@ -316,15 +316,15 @@ function onConfirmPreview(transaction) {
           </template>
         </Column>
       </DataTable>
-      <div class="flex flex-row gap-3 mr2 w-full justify-center">
-        <Button @click="openCreationDialog">
-          Ajouter une transaction
-        </Button>
-        <Button class="preview-button" @click="openPreviewCreationDialog">
-          Ajouter une transaction prévisionnelle
-        </Button>
-        <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
-      </div>
+    </div>
+    <div class="buttons-container">
+      <Button @click="openCreationDialog">
+        Ajouter une transaction
+      </Button>
+      <Button class="preview-button" @click="openPreviewCreationDialog">
+        Ajouter une transaction prévisionnelle
+      </Button>
+      <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
   </div>
   <TransactionCreationDialog
@@ -347,64 +347,82 @@ function onConfirmPreview(transaction) {
 </template>
 
 <style scoped lang="scss">
-.container-all{
-  .year-btn {
-    width: auto;
-    height: 5%;
-  }
-  .buttons {
-    margin-top: 15px;
-    .btn-small{
-      padding: 6px 12px;
-      margin-right: 10px;
-    }
-  }
-
+.container-all {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem;
 }
 
-.info-text{
+.header {
+  flex: 0 0 auto;
+}
+
+.table-container {
+  flex: 1 1 auto;
+  max-height: calc(100vh - 400px); /* Adjust this value as needed */
+  overflow-y: auto;
+}
+
+.buttons-container {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.info-text {
   text-align: center;
   color: #555;
   font-weight: 900;
   font-size: 2.5em;
-  line-height: 0.9;
   font-family: aktiv, sans-serif;
 }
 
-.selected-row{
-  color: blue;
+.tag-container {
+  height: 20px;
+  align-items: center;
+}
+
+.tag-label {
+  line-height: 20px;
 }
 
 .color-square {
-  width: 20px; /* Largeur du carré de couleur */
-  height: 20px; /* Hauteur du carré de couleur */
-  border-radius: 4px; /* Pour rendre le carré de couleur légèrement arrondi */
-  border: 1px solid #000; /* Bordure du carré de couleur */
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #000;
 }
-.test{
-  background-color: blue;
-}
+
 .button-validate {
   border-radius: 2px;
 }
+
 .icon-validate {
   margin: 2px;
 }
+
 .preview-button {
   background-color: #a6a4a4;
   border-color: #a6a4a4;
 }
+
 .preview-button:hover {
   opacity: 0.9;
 }
+
 .sold-text {
   font-family: 'aktiv', sans-serif;
   font-weight: 900;
 }
-.preview-text{
+
+.preview-text {
   color: #a6a4a4;
 }
+
 .color-primary {
-  color: var(--primary)
+  color: var(--primary);
 }
 </style>
