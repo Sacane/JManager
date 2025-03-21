@@ -86,50 +86,49 @@ function delTag(row: DataDisplay): void {
     <div class="flex flex-wrap gap-4 w-full justify-center desktop-view">
       <div class="tag-section">
         <h2>Tags par défaut</h2>
-        <div v-for="tag in tags.filter(tag => tag.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+        <div v-for="tag in tags.filter(tag => tag.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
           <div class="tag-header">
             <h3>{{ tag.label }}</h3>
           </div>
-          <p>{{ tag.isDefault }}</p>
         </div>
       </div>
       <div class="tag-section">
         <h2>Tags personnels</h2>
-        <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+        <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
           <div class="tag-header">
             <h3>{{ tag.label }}</h3>
             <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(tag)" />
           </div>
-          <p>{{ tag.isDefault }}</p>
         </div>
       </div>
+      <Button v-if="activeTabIndex === 1" class="w50 self-center mb-10" @click="addTagDialog = true">
+        Ajouter un nouveau tag personnel
+      </Button>
     </div>
     <div class="mobile-view">
       <TabView v-model:active-index="activeTabIndex">
         <TabPanel header="Tags par défaut">
           <div class="flex flex-col gap-4 w-full justify-center">
-            <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+            <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h3>{{ tag.label }}</h3>
               </div>
-              <p>{{ tag.isDefault }}</p>
             </div>
           </div>
         </TabPanel>
         <TabPanel header="Tags personnels">
           <div class="flex flex-col gap-4 w-full justify-center">
-            <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ borderColor: tag.color }">
+            <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h3>{{ tag.label }}</h3>
                 <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(tag)" />
               </div>
-              <p>{{ tag.isDefault }}</p>
             </div>
           </div>
         </TabPanel>
       </TabView>
     </div>
-    <Button v-if="activeTabIndex === 1" class="w50 self-center mb-10" @click="addTagDialog = true">
+    <Button class="w50 self-center mb-10" @click="addTagDialog = true">
       Ajouter un nouveau tag personnel
     </Button>
     <Dialog v-model:visible="addTagDialog" modal header="Ajouter un nouveau tag personnalisé">
@@ -158,17 +157,23 @@ function delTag(row: DataDisplay): void {
   justify-content: space-between;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border: 2px solid;
+  background-color: var(--tag-color); /* Utilisez une variable CSS pour la couleur du tag */
 }
 
 .tag-header {
+  width: 30%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: #fff; /* Fond blanc pour le libellé */
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .tag-header h3 {
   margin: 0;
   font-size: 16px;
+  color: #000; /* Libellé en noir */
 }
 
 .desktop-view {
@@ -186,6 +191,9 @@ function delTag(row: DataDisplay): void {
 
 .tag-section {
   width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .tag-section h2 {
