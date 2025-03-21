@@ -184,7 +184,9 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       data.previewAccountAmount = result.accountPreviewAmount
       const newTransaction = asDisplayableTransaction(result)
       actualSheets.value.push(newTransaction)
+      actualSheets.value = [...actualSheets.value].sort((a, b) => b.date < a.date)
       isCreationDialogVisible.value = false
+      console.warn('actualSheets', actualSheets.value)
       resetPlaceholder()
     })
 }
@@ -237,6 +239,7 @@ function confirmPreview(transaction) {
       actualSheets.value.splice(index, 1)
       actualSheets.value.push(asDisplayableTransaction(result))
       actualSheets.value = actualSheets.value.sort((a, b) => b.date < a.date)
+      console.warn('actualSheets', actualSheets.value)
       toastr.success('La validation de la transaction s\'est bien déroulé !')
     })
 }
