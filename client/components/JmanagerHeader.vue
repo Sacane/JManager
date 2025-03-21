@@ -40,9 +40,6 @@ onBeforeUnmount(() => {
     </div>
     <div>
       <p>{{ username }}</p>
-      <p class="role">
-        Utilisateur
-      </p>
     </div>
     <transition name="dropdown">
       <div v-if="showDropdown" class="dropdown-menu">
