@@ -30,6 +30,7 @@ data class TransactionListResponse(
 data class TransactionResponse(
     val id: String,
     val label: String,
+    @JsonFormat(pattern = "dd-MM-yyyy")
     val date: LocalDate,
     val value: String,
     val isIncome: Boolean,
