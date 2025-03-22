@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
 import useSheet from '~/composables/useSheets'
+import { getTagStyle } from '~/utils/util'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -301,14 +302,7 @@ function onConfirmPreview(transaction) {
         <Column field="incomeRepresentation" header="Recettes" :header-style="{ textAlign: 'center' }" />
         <Column field="tagDTO" header="Tag">
           <template #body="{ data }">
-            <div class="flex flex-row align-center flex-gap-2 tag-container">
-              <p class="tag-label">
-                {{ data.tagDTO.label }}
-              </p>
-              <div class="flex flex-col align-center justify-center">
-                <div class="color-square" :style="{ backgroundColor: `rgb(${data.tagDTO.colorDTO.red}, ${data.tagDTO.colorDTO.green}, ${data.tagDTO.colorDTO.blue})` }" />
-              </div>
-            </div>
+            <Tag :value="data.tagDTO.label" :style="getTagStyle(data.tagDTO.colorDTO)" />
           </template>
         </Column>
         <Column :style="{ width: '10rem', textAlign: 'center' }">
