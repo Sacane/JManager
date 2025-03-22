@@ -307,7 +307,7 @@ function onConfirmPreview(transaction) {
         </Column>
         <Column :style="{ width: '10rem', textAlign: 'center' }">
           <template #body="{ data }">
-            <Button v-if="data.isPreview" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
+            <Button v-if="data.isPreview" v-tooltip="'Valider la transaction prévisionnel'" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
           </template>
         </Column>
       </DataTable>
