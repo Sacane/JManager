@@ -26,7 +26,7 @@ const personalTagForm = reactive({
     green: 0,
     blue: 0,
   },
-  test: '',
+  hex: '',
 })
 const confirm = useConfirm()
 const activeTabIndex = ref<number>(0)
@@ -50,7 +50,7 @@ function formattedData(tagDTO: TagDTO): DataDisplay {
 }
 
 function add() {
-  const rgb = hexToRgb(personalTagForm.test)
+  const rgb = hexToRgb(personalTagForm.hex)
   addPersonalTag(
     personalTagForm.tagLabel,
     {
@@ -97,7 +97,7 @@ function delTag(row: DataDisplay): void {
         <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
           <div class="tag-header">
             <h3>{{ tag.label }}</h3>
-            <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(tag)" />
+            <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded outlined raised severity="danger" @click="delTag(tag)" />
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@ function delTag(row: DataDisplay): void {
       <TabView v-model:active-index="activeTabIndex">
         <TabPanel header="Tags par défaut">
           <div class="flex flex-col gap-4 w-full justify-center">
-            <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" :style="{ '--tag-color': tag.color }">
+            <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h3>{{ tag.label }}</h3>
               </div>
@@ -121,7 +121,7 @@ function delTag(row: DataDisplay): void {
             <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h3>{{ tag.label }}</h3>
-                <Button type="button" icon="pi pi-trash" rounded outlined severity="danger" @click="delTag(tag)" />
+                <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded outlined raised @click="delTag(tag)" />
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ function delTag(row: DataDisplay): void {
         </div>
         <div class="flex flex-col gap-3">
           <label for="colorPicker" class="block text-sm font-medium text-gray-700">Couleur</label>
-          <input id="colorPicker" v-model="personalTagForm.test" type="color">
+          <input id="colorPicker" v-model="personalTagForm.hex" type="color">
         </div>
         <Button label="Ajouter le tag" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="add()" />
       </div>
@@ -157,11 +157,13 @@ function delTag(row: DataDisplay): void {
   justify-content: space-between;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border: 2px solid;
-  background-color: var(--tag-color); /* Utilisez une variable CSS pour la couleur du tag */
+  background-color: var(--tag-color);
+  height: 100px;
 }
 
 .tag-header {
-  width: 30%;
+  width: 200px;
+  height: 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
