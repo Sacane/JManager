@@ -90,10 +90,7 @@ function closeDialog() {
       </div>
       <Dropdown v-model="transactionResult.tagDTO" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
         <template #option="slotTag">
-          <div class="flex flex-row gap-2">
-            <div />
-            {{ slotTag.option.label }}
-          </div>
+          <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
         </template>
       </Dropdown>
       <Button :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
