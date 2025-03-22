@@ -4,7 +4,7 @@ import useAuth from '@/composables/useAuth'
 
 const { user, logout } = useAuth()
 
-const username = computed(() => user.value?.username.charAt(0).toUpperCase().concat(user.value?.username.slice(1)))
+const username = computed(() => user.value?.username.charAt(0).toUpperCase().concat(user.value?.username.slice(1)) ?? '')
 const showDropdown = ref(false)
 
 function toggleDropdown() {
@@ -26,6 +26,9 @@ function handleClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  if (username.value === '') {
+    navigateTo('/login')
+  }
 })
 
 onBeforeUnmount(() => {
