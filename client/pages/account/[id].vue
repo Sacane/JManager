@@ -307,9 +307,7 @@ function onConfirmPreview(transaction) {
         </Column>
         <Column :style="{ width: '10rem', textAlign: 'center' }">
           <template #body="{ data }">
-            <button v-if="data.isPreview" class="bg-white border-white color-black button-validate" @click="onConfirmPreview(data)">
-              <i class="pi pi-check icon-validate" style="color: green; font-size: 1rem;" />
-            </button>
+            <Button v-if="data.isPreview" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
           </template>
         </Column>
       </DataTable>
@@ -368,7 +366,15 @@ function onConfirmPreview(transaction) {
   gap: 1rem;
   padding: 1rem 0;
 }
+.custom-button {
+  background-color: green;
+  border-color: green;
+  color: white;
+}
 
+.custom-button .pi-check {
+  color: white;
+}
 .info-text {
   text-align: center;
   color: #555;
