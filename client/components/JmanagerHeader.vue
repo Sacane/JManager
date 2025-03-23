@@ -43,6 +43,9 @@ onBeforeUnmount(() => {
     </div>
     <div>
       <p>{{ username }}</p>
+      <p class="role">
+        Utilisateur
+      </p>
     </div>
     <transition name="dropdown">
       <div v-if="showDropdown" class="dropdown-menu">
@@ -81,9 +84,10 @@ onBeforeUnmount(() => {
 }
 
 .role {
-  font-size: 15px;
+  font-size: 12px;
   color: var(--text-color);
   font-family: 'Roboto', sans-serif;
+  margin-top: 20px;
 }
 
 .dropdown-menu {

@@ -264,8 +264,8 @@ function onConfirmPreview(transaction) {
       <h2 class="text-2xl font-bold info-text">
         Compte {{ data.labelAccount }}
       </h2>
-      <div class="flex flex-row gap-3 justify-between">
-        <Button class="h-50% min-w-30px" icon="pi pi-arrow-left" @click="back()" />
+      <div class="flex flex-col justify-between lg:(flex-row gap-5)">
+        <Button class="self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
         <div class="flex flex-row gap-5 mr-5">
           <h2 class="text-2xl sold-text color-primary">
             Solde réel : {{ data.accountAmount }} €
@@ -280,9 +280,9 @@ function onConfirmPreview(transaction) {
       <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
-            <div class="flex flex-row hauto justify-between">
-              <Dropdown v-model="data.month" :options="uDate.months" placeholder="Selectionner un mois" class="w-30 md:w-14rem" @change="retrieveSheets()" />
-              <div class="w26% flex flex-row items-center">
+            <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between)">
+              <Dropdown v-model="data.month" :options="uDate.months" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+              <div class="lg:w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
                   <label
                     for="yearPicker"
@@ -291,11 +291,12 @@ function onConfirmPreview(transaction) {
                     Sélectionnez une année :
                   </label>
                 </div>
-                <Calendar id="yearPicker" v-model="data.dateYear" class="h10 text-center" view="year" date-format="yy" @date-select="onYearChange" />
+                <Calendar id="yearPicker" v-model="data.dateYear" class="w-full h10 text-center" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
             </div>
           </div>
         </template>
+        <Column selection-mode="multiple" />
         <Column sortable field="date" header="Date" :header-style="{ textAlign: 'center' }" />
         <Column field="label" header="Libellé" :header-style="{ textAlign: 'center' }" />
         <Column field="expensesRepresentation" header="Dépenses" :header-style="{ textAlign: 'center' }" />
@@ -312,14 +313,16 @@ function onConfirmPreview(transaction) {
         </Column>
       </DataTable>
     </div>
-    <div class="buttons-container">
-      <Button @click="openCreationDialog">
-        Ajouter une transaction
-      </Button>
-      <Button class="preview-button" @click="openPreviewCreationDialog">
-        Ajouter une transaction prévisionnelle
-      </Button>
-      <Button icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
+    <div class="flex flex-col gap-5 lg:(flex-row justify-center items-center)">
+      <div class="buttons-container">
+        <Button @click="openCreationDialog">
+          Ajouter une transaction
+        </Button>
+        <Button class="preview-button" @click="openPreviewCreationDialog">
+          Ajouter une transaction prévisionnelle
+        </Button>
+      </div>
+      <Button class="trash" icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
     </div>
   </div>
   <TransactionCreationDialog
@@ -347,6 +350,10 @@ function onConfirmPreview(transaction) {
   flex-direction: column;
   height: 100%;
   padding: 1rem;
+  margin-left: 50px;
+  @media (max-width: 780px) {
+    margin-left: 0;
+  }
 }
 
 .header {
@@ -365,6 +372,9 @@ function onConfirmPreview(transaction) {
   justify-content: center;
   gap: 1rem;
   padding: 1rem 0;
+  @media (max-width: 780px) {
+    gap: 10px;
+  }
 }
 .custom-button {
   background-color: green;
