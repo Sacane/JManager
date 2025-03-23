@@ -82,7 +82,7 @@ function delTag(row: DataDisplay): void {
 
 <template>
   <ConfirmDialog />
-  <div class="w-full mt-20 flex flex-col justify-center align-center gap-5">
+  <div class="w-full flex flex-col justify-center align-center gap-5">
     <div class="flex flex-wrap gap-4 w-full justify-center desktop-view">
       <div class="tag-section">
         <h2>Tags par défaut</h2>
@@ -97,7 +97,7 @@ function delTag(row: DataDisplay): void {
         <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
           <div class="tag-header">
             <h3>{{ tag.label }}</h3>
-            <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded outlined raised severity="danger" @click="delTag(tag)" />
+            <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised severity="danger" @click="delTag(tag)" />
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@ function delTag(row: DataDisplay): void {
             <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h3>{{ tag.label }}</h3>
-                <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded outlined raised @click="delTag(tag)" />
+                <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised @click="delTag(tag)" />
               </div>
             </div>
           </div>
