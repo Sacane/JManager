@@ -11,7 +11,7 @@ const route = useRoute()
 const toastr = useJToast()
 const selectedSheets = ref([])
 
-const { translate, monthFromNumber } = useDate()
+const { translate, monthFromNumber, englishMonth } = useDate()
 const tag = useTag()
 
 const { findById } = useBooklet()
@@ -47,7 +47,7 @@ function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   }
 }
 function retrieveSheets() {
-  findByDate(data.month, data.year, data.labelAccount)
+  findByDate(englishMonth(data.month), data.year, data.labelAccount)
     .then((value: SheetAverageDTO) => {
       actualSheets.value = value.sheets.map((sheet: SheetDTO) => {
         return asDisplayableTransaction(sheet)
@@ -214,6 +214,7 @@ onMounted(() => {
     data.tagDTO = tagDTO
     editTransactionInfo.tagDTO = tagDTO
     transactionPlaceholder.tagDTO = tagDTO
+    data.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
   })
 })
 function rowStyle(row): any | undefined {
@@ -281,7 +282,7 @@ function onConfirmPreview(transaction) {
         <template #header>
           <div style="text-align: left" class="w-full">
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between)">
-              <Dropdown v-model="data.month" :options="uDate.months" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+              <Dropdown v-model="data.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
               <div class="lg:w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
                   <label
@@ -364,6 +365,9 @@ function onConfirmPreview(transaction) {
   flex: 1 1 auto;
   max-height: calc(100vh - 400px); /* Adjust this value as needed */
   overflow-y: auto;
+  @media (max-width: 780px) {
+    max-height: 100%;
+  }
 }
 
 .buttons-container {

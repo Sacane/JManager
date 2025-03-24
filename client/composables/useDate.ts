@@ -19,6 +19,24 @@ export default function useDate() {
     return ''
   }
 
+  function englishMonth(month: string): string {
+    switch (month) {
+      case 'JANVIER': return 'JANUARY'
+      case 'FEVRIER': return 'FEBRUARY'
+      case 'MARS': return 'MARCH'
+      case 'AVRIL': return 'APRIL'
+      case 'MAI': return 'MAY'
+      case 'JUIN': return 'JUNE'
+      case 'JUILLET': return 'JULY'
+      case 'AOUT': return 'AUGUST'
+      case 'SEPTEMBRE': return 'SEPTEMBER'
+      case 'OCTOBRE': return 'OCTOBER'
+      case 'NOVEMBRE': return 'NOVEMBER'
+      case 'DECEMBRE': return 'DECEMBER'
+    }
+    return ''
+  }
+
   function monthFromNumber(num: number): string | undefined {
     switch (num) {
       case 1: return 'JANUARY'
@@ -64,5 +82,5 @@ export default function useDate() {
     return `${day}-${month}-${year}`
   }
 
-  return { months, translate, monthFromNumber, dateFromString, formattedDateString }
+  return { months, translate, monthFromNumber, dateFromString, formattedDateString, englishMonth }
 }
