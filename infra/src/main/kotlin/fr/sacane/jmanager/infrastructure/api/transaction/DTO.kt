@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
+import java.math.BigDecimal
 import java.time.LocalDate
 
 data class UserAccountIdsTransactionRequest(
@@ -15,7 +16,7 @@ data class UserAccountIdsTransactionRequest(
 data class TransactionResult(
     val id: Long?,
     val label: String,
-    val value: String,
+    val value: BigDecimal,
     val currency: String = "€",
     val isIncome: Boolean,
     @JsonFormat(pattern = "dd-MM-yyyy")
