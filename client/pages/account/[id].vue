@@ -101,8 +101,7 @@ const editTransactionInfo = reactive({
   amount: 0,
   selectedMode: 'expenses',
   accountId: 0,
-  integerPart: '0',
-  decimalPart: '0',
+  value: 0.00,
   tagDTO: undefined,
   isIncome: false,
   isPreview: false,
@@ -123,13 +122,12 @@ const uDate = useDate()
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
 const digits = reactive({
-  integer: '',
-  decimal: '',
+  digit: 0.00,
 })
 const transactionPlaceholder: TransactionCreationDTO = reactive({
   id: null,
   label: '',
-  value: '0.0',
+  value: 0.0,
   isIncome: false,
   date: new Date(),
   tagDTO: {},
@@ -137,28 +135,26 @@ const transactionPlaceholder: TransactionCreationDTO = reactive({
 })
 function onEditPage(event: any) {
   findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
-    const [integerPart, decimalPart] = transaction.value.toString().split('.')
-    digits.integer = integerPart
-    digits.decimal = decimalPart
+    digits.digit = transaction.value
+    transactionPlaceholder.value = transaction.value
     transactionPlaceholder.label = transaction.label
     transactionPlaceholder.date = uDate.dateFromString(transaction.date)
-    transactionPlaceholder.value = transaction.value
     transactionPlaceholder.tagDTO = transaction.tagDTO
     transactionPlaceholder.isPreview = transaction.isPreview
     transactionPlaceholder.isIncome = transaction.isIncome
     transactionPlaceholder.id = event.data.id
+    console.log(digits.digit)
     isEditDialogVisible.value = true
   }).catch(err => toastr.errorAxios(err))
 }
 function resetPlaceholder() {
+  digits.digit = 0.00
   tag.getDefaultTag().then((tagDTO) => {
     transactionPlaceholder.tagDTO = tagDTO
   })
-  digits.integer = ''
-  digits.decimal = ''
   transactionPlaceholder.label = ''
   transactionPlaceholder.date = new Date()
-  transactionPlaceholder.value = ''
+  transactionPlaceholder.value = 0.00
   transactionPlaceholder.isPreview = false
   transactionPlaceholder.isIncome = false
   transactionPlaceholder.id = null
@@ -169,6 +165,7 @@ function cancelEditDialog() {
 }
 function cancelCreationDialog() {
   isCreationDialogVisible.value = false
+  resetPlaceholder()
 }
 function openCreationDialog() {
   transactionPlaceholder.isPreview = false
@@ -187,7 +184,6 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       actualSheets.value.push(newTransaction)
       actualSheets.value = [...actualSheets.value].sort((a, b) => b.date < a.date)
       isCreationDialogVisible.value = false
-      console.warn('actualSheets', actualSheets.value)
       resetPlaceholder()
     })
 }
@@ -329,7 +325,7 @@ function onConfirmPreview(transaction) {
   <TransactionCreationDialog
     :visible="isCreationDialogVisible"
     title="Creer une nouvelle transaction"
-    :digit-placeholder="digits"
+    :digit-placeholder="digits.digit"
     :transaction-placeholder="transactionPlaceholder"
     @cancel-creation="cancelCreationDialog"
     @create-transaction="bookTransaction"
@@ -337,7 +333,7 @@ function onConfirmPreview(transaction) {
   <TransactionCreationDialog
     :visible="isEditDialogVisible"
     title="Mettre à jour la transaction"
-    :digit-placeholder="digits"
+    :digit-placeholder="digits.digit"
     :transaction-placeholder="transactionPlaceholder"
     button-title="Mettre à jour"
     @cancel-creation="cancelEditDialog"

@@ -1,16 +1,14 @@
 <script setup lang="ts">
 export interface AccountBookingProps {
-  integerpart: string
-  decimalpart: string
+  digit: number
 }
 
-const { integerpart, decimalpart } = defineProps<AccountBookingProps>()
+const value = defineProps<AccountBookingProps>()
 const emit = defineEmits(['visible', 'createAccount', 'cancel'])
 
 const accountData = ref({
   label: '',
-  integerpart,
-  decimalpart,
+  digit: value.digit,
 })
 const isVisibleData = ref(false)
 
@@ -40,8 +38,7 @@ function closeDialog() {
 
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputText v-model="accountData.integerpart" type="string" placeholder="Partie entière" class="" />
-        <InputText v-model="accountData.decimalpart" type="string" placeholder="Partie décimale" maxlength="2" class="" />
+        <InputNumber v-model="accountData.digit" class="w-full" mode="currency" currency="EUR" :min-fraction-digits="2" />
       </div>
       <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="createAccount" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="closeDialog" />

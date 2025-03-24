@@ -3,17 +3,20 @@ import useDate from '~/composables/useDate'
 
 export interface TransactionCreationProps {
   title: string
-  digitPlaceholder: {
-    integer: string
-    decimal: string
-  }
+  digitPlaceholder: number
   transactionPlaceholder: TransactionCreationDTO
   buttonTitle?: string
 }
+
 const { title, digitPlaceholder, transactionPlaceholder, buttonTitle } = defineProps<TransactionCreationProps>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
-const digits = reactive(digitPlaceholder)
+const digits = reactive({
+  placeholder: digitPlaceholder,
+})
+onMounted(() => {
+  digits.placeholder = digitPlaceholder
+})
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 
@@ -30,16 +33,15 @@ onMounted(() => {
 const jToast = useJToast()
 
 function emitTransaction() {
-  if ((digits.integer === '0' && digits.decimal === '0') || transactionResult.label === '') {
+  if ((digits.placeholder <= 0) || transactionResult.label === '') {
     jToast.warn('Veuillez saisir un montant supérieur à 0')
     return
   }
-  const amount = `${digits.integer}.${digits.decimal}`
   const formattedDate = formattedDateString(transactionResult.date)
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
-    value: amount,
+    value: digits.placeholder,
     isIncome: transactionResult.isIncome,
     date: formattedDate,
     tagDTO: transactionResult.tagDTO,
@@ -81,14 +83,14 @@ function closeDialog() {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputText v-model="digits.integer" type="number" placeholder="0" class="" />
-        <InputText v-model="digits.decimal" type="number" placeholder="00" maxlength="2" class="" />
+        <InputNumber v-model="transactionResult.value" class="w-full" mode="currency" currency="EUR" :min-fraction-digits="2" />
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
         <Calendar id="calendar" v-model="transactionResult.date" placeholder="Date" date-format="dd-mm-yy" />
       </div>
-      <Dropdown v-model="transactionResult.tagDTO" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
+      <p>Tag</p>
+      <Dropdown v-model="transactionResult.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
         <template #option="slotTag">
           <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
         </template>
