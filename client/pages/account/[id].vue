@@ -143,7 +143,6 @@ function onEditPage(event: any) {
     transactionPlaceholder.isPreview = transaction.isPreview
     transactionPlaceholder.isIncome = transaction.isIncome
     transactionPlaceholder.id = event.data.id
-    console.log(digits.digit)
     isEditDialogVisible.value = true
   }).catch(err => toastr.errorAxios(err))
 }
@@ -185,6 +184,7 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       actualSheets.value = [...actualSheets.value].sort((a, b) => b.date < a.date)
       isCreationDialogVisible.value = false
       resetPlaceholder()
+      toastr.success('La transaction a bien été enregistrée')
     })
 }
 function editTransaction(transaction: TransactionCreationDTO) {

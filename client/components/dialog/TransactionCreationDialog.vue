@@ -14,9 +14,7 @@ const tag = useTag()
 const digits = reactive({
   placeholder: digitPlaceholder,
 })
-onMounted(() => {
-  digits.placeholder = digitPlaceholder
-})
+
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 
@@ -28,12 +26,13 @@ onMounted(() => {
   tag.getAllTags().then((tagsResult) => {
     tags.value = tagsResult
   })
+  digits.placeholder = digitPlaceholder
 })
 
 const jToast = useJToast()
 
 function emitTransaction() {
-  if ((digits.placeholder <= 0) || transactionResult.label === '') {
+  if ((transactionResult.value <= 0) || transactionResult.label === '') {
     jToast.warn('Veuillez saisir un montant supérieur à 0')
     return
   }
@@ -41,7 +40,7 @@ function emitTransaction() {
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
-    value: digits.placeholder,
+    value: transactionResult.value,
     isIncome: transactionResult.isIncome,
     date: formattedDate,
     tagDTO: transactionResult.tagDTO,
