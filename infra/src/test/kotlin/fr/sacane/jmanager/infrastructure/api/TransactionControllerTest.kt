@@ -1,6 +1,10 @@
 package fr.sacane.jmanager.infrastructure.api
 
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.module.SimpleModule
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
@@ -16,14 +20,29 @@ import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Month
+
+class BigDecimalSerializer : JsonSerializer<BigDecimal>() {
+    override fun serialize(value: BigDecimal, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeString(value.setScale(2, BigDecimal.ROUND_HALF_UP).toString())
+    }
+}
+
+fun configureObjectMapper(objectMapper: ObjectMapper): ObjectMapper {
+    val module = SimpleModule()
+    module.addSerializer(BigDecimal::class.java, BigDecimalSerializer())
+    objectMapper.registerModule(module)
+    return objectMapper
+}
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -31,8 +50,14 @@ class TransactionControllerTest(
     @LocalServerPort val port: Int,
     @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
-    @Autowired val objectMapper: ObjectMapper
+    @Autowired var objectMapper: ObjectMapper
 ): AuthenticatedUserTest() {
+
+
+    @BeforeEach
+    fun setup() {
+        configureObjectMapper(objectMapper)
+    }
 
     @AfterEach
     fun clear() {
@@ -48,7 +73,7 @@ class TransactionControllerTest(
             accountStateTestAdapter.init(
                 listOf(Account(200.toAmount(), "test", owner = user))
             )
-            val body = UserBookletResponse(user!!.id.value!!, "test", TransactionResult(null, "transactionTest", "100.00", "€", true, LocalDate.now(), null, false))
+            val body = UserBookletResponse(user!!.id.value!!, "test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
                 port(port)
@@ -68,7 +93,7 @@ class TransactionControllerTest(
 
         @Test
         fun `Create a transaction with an unknown account must send 404`() {
-            val body = UserBookletResponse(user!!.id.value!!, "test", TransactionResult(null, "transactionTest", "100.00", "€", true, LocalDate.now(), null, false))
+            val body = UserBookletResponse(user!!.id.value!!, "test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
                 port(port)
@@ -84,7 +109,7 @@ class TransactionControllerTest(
 
         @Test
         fun `Create a transaction with an unauthenticated user must send 401`() {
-            val body = UserBookletResponse(101, "test", TransactionResult(null, "transactionTest", "100.00", "€", true, LocalDate.now(), null, false))
+            val body = UserBookletResponse(101, "test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
                 port(port)
@@ -105,13 +130,13 @@ class TransactionControllerTest(
         @Test
         fun `Find a transaction with its id must send 200 and the asked transaction`() {
             // When
-            val element = Account(200.toAmount(), "test", owner = user)
+            val element = Account(200.00.toAmount(), "test", owner = user)
             accountStateTestAdapter.init(
                 listOf(element)
             )
             val justInputAccount = accountStateTestAdapter.get().find { it.label == "test" }!!
             transactionStateTestAdapter.init(listOf(
-                AccountTransaction(user!!.id, justInputAccount.label, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount.fromString("200"), false)), token.asTokenUUID())
+                AccountTransaction(user!!.id, justInputAccount.label, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount(200.00.toBigDecimal()), false)), token.asTokenUUID())
             ))
             val justInputTransaction = transactionStateTestAdapter.get().find { it.label == "testTransaction" }!!
 
@@ -305,7 +330,7 @@ class TransactionControllerTest(
                 sheet = transactionToPatch.toDTO()
                     .copy(
                         label = "test4",
-                        value = "150"
+                        value = BigDecimal(150)
                     )
             )
 
