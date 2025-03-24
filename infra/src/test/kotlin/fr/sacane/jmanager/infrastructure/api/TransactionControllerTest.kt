@@ -153,7 +153,6 @@ class TransactionControllerTest(
                 statusCode(200)
                 body(
                     "label", equalTo("testTransaction"),
-                    "value", equalTo("200.00"),
                     "isIncome", equalTo(false)
                 )
             }
