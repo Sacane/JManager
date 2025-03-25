@@ -48,14 +48,11 @@ function applyDelete(accountId: number) {
 const isAddAccountDialogOpen = ref<boolean>(false)
 const newAccount = reactive({
   label: '',
-  amount: {
-    integerPart: '',
-    decimalPart: '',
-  },
+  amount: 0.00,
 })
 
 function handleAccountCreation(account) {
-  createAccount(account.label, Number(`${account.integerpart}.${account.decimalpart}`), '€')
+  createAccount(account.label, account.digit, '€')
     .then(() => {
       fetch().then((accountArray) => {
         format(accountArray)
@@ -95,8 +92,7 @@ function openAccountDialog() {
       </div>
     </div>
     <AccountBookingDialog
-      :integerpart="newAccount.amount.integerPart"
-      :decimalpart="newAccount.amount.decimalPart"
+      :digit="newAccount.amount"
       :visible="isAddAccountDialogOpen"
       @create-account="handleAccountCreation"
       @cancel="cancel"
