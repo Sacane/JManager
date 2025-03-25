@@ -197,8 +197,7 @@ onMounted(() => {
     </div>
   </div>
   <AccountBookingDialog
-    integerpart="0"
-    decimalpart="0"
+    :digit="0.00"
     :visible="isAccountDialogOpen"
     @create-account="handleAccountCreation"
     @cancel="cancel"
