@@ -86,7 +86,7 @@ function closeDialog() {
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
-        <Calendar id="calendar" v-model="transactionResult.date" placeholder="Date" date-format="dd-mm-yy" />
+        <Calendar id="calendar" v-model="transactionResult.date" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
       </div>
       <p>Tag</p>
       <Dropdown v-model="transactionResult.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
