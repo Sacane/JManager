@@ -14,7 +14,7 @@ const accounts = ref<AccountDTO[]>([])
 const sum = computed(() => accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount), 0))
 
 function handleAccountCreation(account: Account) {
-  createAccount(account.label, `${account.integerpart}.${account.decimalpart} €`)
+  createAccount(account.label, account.digit, '€')
     .then((acc) => {
       if (accounts.value.length < 3) {
         accounts.value.push(acc)
@@ -99,8 +99,7 @@ onMounted(() => {
     </div>
   </div>
   <AccountBookingDialog
-    integerpart="0"
-    decimalpart="0"
+    :digit="0.00"
     :visible="isAccountDialogOpen"
     @create-account="handleAccountCreation"
     @cancel="cancel"
