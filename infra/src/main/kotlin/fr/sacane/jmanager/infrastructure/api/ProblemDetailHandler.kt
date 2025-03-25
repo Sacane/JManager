@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -10,12 +11,18 @@ import org.springframework.web.bind.annotation.RestController
 
 @ControllerAdvice(annotations = [RestController::class])
 class ProblemDetailHandler {
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger(ProblemDetailHandler::class.java)
+    }
+
     @ExceptionHandler(Exception::class, InternalServerErrorException::class)
     fun onIrregularException(ex: Exception): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR)
         problemDetail.title = "Internal server error"
         problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"
         problemDetail.setProperty("code", 111)
+        LOGGER.error("Internal server error : {}", ex.message)
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail)
     }
 
@@ -25,6 +32,7 @@ class ProblemDetailHandler {
         problemDetail.title = "Invalid given currency"
         problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"
         problemDetail.setProperty("code", 144)
+        LOGGER.error("InvalidCurrencyException : {}", ex.message)
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
     }
 
