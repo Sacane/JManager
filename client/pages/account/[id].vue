@@ -153,7 +153,7 @@ function resetPlaceholder() {
   })
   transactionPlaceholder.label = ''
   transactionPlaceholder.date = new Date()
-  transactionPlaceholder.value = 0.00
+  transactionPlaceholder.value = null
   transactionPlaceholder.isPreview = false
   transactionPlaceholder.isIncome = false
   transactionPlaceholder.id = null

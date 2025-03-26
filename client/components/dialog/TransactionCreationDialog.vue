@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { debounce } from '@antfu/utils'
 import useDate from '~/composables/useDate'
 
 export interface TransactionCreationProps {
@@ -19,6 +18,7 @@ const digits = reactive({
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 const validerButtonRef = ref(null)
+const inputNumberRef = ref(null)
 
 const { formattedDateString } = useDate()
 
@@ -29,23 +29,12 @@ onMounted(() => {
     tags.value = tagsResult
   })
   digits.placeholder = digitPlaceholder
-  const handleEnterKey = debounce((event) => {
-    if (event.key === 'Enter') {
-      emitTransaction()
-    }
-  }, 300)
-
-  document.addEventListener('keydown', handleEnterKey)
-
-  return () => {
-    document.removeEventListener('keydown', handleEnterKey)
-  }
 })
 
 const jToast = useJToast()
 
 function emitTransaction() {
-  if ((transactionResult.value <= 0) || transactionResult.label === '') {
+  if (transactionResult.value === null || (transactionResult.value <= 0) || transactionResult.label === '') {
     jToast.warn('Veuillez saisir un montant supérieur à 0')
     return
   }
@@ -66,6 +55,15 @@ function closeDialog() {
   emit('cancelCreation')
   isVisibleData.value = false
 }
+function handleTabKey(event: KeyboardEvent) {
+  if (event.key === 'Tab') {
+    event.preventDefault()
+    const input = inputNumberRef.value.$el.querySelector('input')
+    if (input && !input.value.includes(',')) {
+      input.value += ','
+    }
+  }
+}
 </script>
 
 <template>
@@ -75,6 +73,7 @@ function closeDialog() {
     :header="title"
     :style="{ width: '30rem' }"
     @update:visible="closeDialog"
+    @keydown.enter="emitTransaction"
   >
     <div class="h-full mt-6">
       <div class="flex flex-col gap-3">
@@ -96,7 +95,7 @@ function closeDialog() {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber v-model="transactionResult.value" placeholder="0,00" class="w-full" :min-fraction-digits="2" />
+        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" placeholder="0,00" class="w-full" :max-fraction-digits="2" @keydown="handleTabKey" />
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>

@@ -50,7 +50,7 @@ declare global {
   interface TransactionCreationDTO {
     id?: string
     label: string
-    value: number
+    value?: number
     isIncome: boolean
     date: string
     tagDTO: TagDTO
