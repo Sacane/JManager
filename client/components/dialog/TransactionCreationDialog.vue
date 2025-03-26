@@ -60,9 +60,10 @@ function closeDialog() {
     v-model:visible="isVisibleData"
     modal
     :header="title"
+    :style="{ width: '30rem' }"
     @update:visible="closeDialog"
   >
-    <div class="mt-6">
+    <div class="h-full mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libellé</label>
         <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" />

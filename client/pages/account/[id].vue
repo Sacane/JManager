@@ -258,27 +258,27 @@ function onConfirmPreview(transaction) {
   <ConfirmDialog />
   <div class="container-all">
     <div class="header">
-      <h2 class="text-2xl font-bold info-text">
+      <h2 class="font-bold info-text">
         Compte {{ data.labelAccount }}
       </h2>
-      <div class="flex flex-col justify-between lg:(flex-row gap-5)">
-        <Button class="self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
-        <div class="flex flex-row gap-5 mr-5">
-          <h2 class="text-2xl sold-text color-primary">
-            Solde réel : {{ data.accountAmount }} €
-          </h2>
-          <h2 class="text-2xl sold-text preview-text">
-            Solde prévisionnel : {{ data.previewAccountAmount }} €
-          </h2>
-        </div>
-      </div>
     </div>
     <div class="table-container">
       <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left" class="w-full">
-            <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between)">
+            <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
+              <Button class="self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
               <Dropdown v-model="data.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+              <div class="flex flex-col justify-between lg:(flex-row gap-5)">
+                <div class="flex flex-row gap-5">
+                  <h2 class="sold-text color-primary">
+                    Solde réel : {{ data.accountAmount }} €
+                  </h2>
+                  <h2 class="sold-text preview-text">
+                    Solde prévisionnel : {{ data.previewAccountAmount }} €
+                  </h2>
+                </div>
+              </div>
               <div class="lg:w26% flex flex-row items-center">
                 <div class="flex justify-center mr2">
                   <label
@@ -347,9 +347,9 @@ function onConfirmPreview(transaction) {
   flex-direction: column;
   height: 100%;
   padding: 1rem;
-  margin-left: 50px;
   @media (max-width: 780px) {
     margin-left: 0;
+    height: auto;
   }
 }
 
@@ -359,11 +359,8 @@ function onConfirmPreview(transaction) {
 
 .table-container {
   flex: 1 1 auto;
-  max-height: calc(100vh - 400px); /* Adjust this value as needed */
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
-  @media (max-width: 780px) {
-    max-height: 100%;
-  }
 }
 
 .buttons-container {
@@ -389,7 +386,7 @@ function onConfirmPreview(transaction) {
   text-align: center;
   color: #555;
   font-weight: 900;
-  font-size: 2.5em;
+  font-size: 1.6rem;
   font-family: aktiv, sans-serif;
 }
 
@@ -429,6 +426,7 @@ function onConfirmPreview(transaction) {
 .sold-text {
   font-family: 'aktiv', sans-serif;
   font-weight: 900;
+  font-size: 1.2rem;
 }
 
 .preview-text {
