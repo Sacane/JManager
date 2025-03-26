@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import useBooklet from '../../composables/useBooklet'
 import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
@@ -46,10 +46,6 @@ function applyDelete(accountId: number) {
 }
 
 const isAddAccountDialogOpen = ref<boolean>(false)
-const newAccount = reactive({
-  label: '',
-  amount: 0.00,
-})
 
 function handleAccountCreation(account) {
   createAccount(account.label, account.digit, '€')
@@ -92,7 +88,6 @@ function openAccountDialog() {
       </div>
     </div>
     <AccountBookingDialog
-      :digit="newAccount.amount"
       :visible="isAddAccountDialogOpen"
       @create-account="handleAccountCreation"
       @cancel="cancel"

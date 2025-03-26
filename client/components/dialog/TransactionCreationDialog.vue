@@ -82,7 +82,7 @@ function closeDialog() {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber v-model="transactionResult.value" class="w-full" mode="currency" currency="EUR" :min-fraction-digits="2" />
+        <InputNumber v-model="transactionResult.value" placeholder="0,00" class="w-full" :min-fraction-digits="2" />
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
