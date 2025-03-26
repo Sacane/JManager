@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { debounce } from '@antfu/utils'
-
 const emit = defineEmits(['visible', 'createAccount', 'cancel'])
 
 const accountData = ref({
@@ -23,27 +21,14 @@ function closeDialog() {
   emit('cancel')
   isVisibleData.value = false
 }
-
-onMounted(() => {
-  const handleEnterKey = debounce((event) => {
-    if (validerButtonRef.value && event.key === 'Enter') {
-      validerButtonRef.value.$el.click()
-    }
-  }, 300)
-
-  document.addEventListener('keydown', handleEnterKey)
-
-  return () => {
-    document.removeEventListener('keydown', handleEnterKey)
-  }
-})
 </script>
 
 <template>
   <Dialog
     v-model:visible="isVisibleData"
     class="bg-grey"
-    modal header="Ajouter un nouveau livret" @update:visible="closeDialog"
+    modal header="Ajouter un nouveau livret" $@update:visible="closeDialog"
+    @keydown.enter="createAccount"
   >
     <div class="mt-6">
       <div class="flex flex-col gap-3">
