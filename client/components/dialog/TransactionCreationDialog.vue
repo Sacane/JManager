@@ -95,7 +95,7 @@ function handleTabKey(event: KeyboardEvent) {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" placeholder="0,00" class="w-full" :max-fraction-digits="2" @keydown="handleTabKey" />
+        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" @keydown="handleTabKey" />
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
@@ -113,5 +113,8 @@ function handleTabKey(event: KeyboardEvent) {
 </template>
 
 <style scoped>
-
+.inputNumber ::placeholder {
+  color: grey;
+  opacity: 0.8;
+}
 </style>
