@@ -87,7 +87,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--text-color);
   font-family: 'Roboto', sans-serif;
-  margin-top: 20px;
+  margin-top: -12px;
 }
 
 .dropdown-menu {
