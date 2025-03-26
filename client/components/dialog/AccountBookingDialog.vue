@@ -1,18 +1,16 @@
 <script setup lang="ts">
-export interface AccountBookingProps {
-  digit: number
-}
-
-const value = defineProps<AccountBookingProps>()
 const emit = defineEmits(['visible', 'createAccount', 'cancel'])
 
 const accountData = ref({
   label: '',
-  digit: value.digit,
+  digit: null,
 })
 const isVisibleData = ref(false)
 
 function createAccount() {
+  if (accountData.value.digit === null) {
+    return
+  }
   emit('createAccount', accountData.value)
   closeDialog()
 }
@@ -38,7 +36,7 @@ function closeDialog() {
 
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber v-model="accountData.digit" class="w-full" mode="currency" currency="EUR" :min-fraction-digits="2" />
+        <InputNumber v-model="accountData.digit" placeholder="0,00" class="w-full" :max-fraction-digits="2" />
       </div>
       <Button label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="createAccount" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="closeDialog" />
@@ -47,5 +45,4 @@ function closeDialog() {
 </template>
 
 <style scoped>
-
 </style>

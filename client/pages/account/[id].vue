@@ -127,7 +127,7 @@ const digits = reactive({
 const transactionPlaceholder: TransactionCreationDTO = reactive({
   id: null,
   label: '',
-  value: 0.0,
+  value: null,
   isIncome: false,
   date: new Date(),
   tagDTO: {},
