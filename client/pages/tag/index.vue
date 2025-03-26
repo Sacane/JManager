@@ -85,7 +85,7 @@ function delTag(row: DataDisplay): void {
   <div class="w-full flex flex-col justify-center align-center gap-5">
     <TabView v-model:active-index="activeTabIndex">
       <TabPanel header="Tags par défaut">
-        <div class="flex flex-col gap-4 w-full justify-center align-center">
+        <div class="flex flex-col gap-4 justify-center align-center">
           <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
             <div class="tag-header">
               <h3>{{ tag.label }}</h3>
@@ -99,8 +99,8 @@ function delTag(row: DataDisplay): void {
             <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h3>{{ tag.label }}</h3>
-                <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised @click="delTag(tag)" />
               </div>
+              <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised @click="delTag(tag)" />
             </div>
           </div>
           <Button class="w50 self-center mb-10" @click="addTagDialog = true">
@@ -131,25 +131,20 @@ function delTag(row: DataDisplay): void {
   width: 60%;
   padding: 12px;
   border-radius: 8px;
-  color: #000;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px;
   border: 2px solid;
   background-color: var(--tag-color);
   height: 100px;
 }
 
 .tag-header {
-  width: 200px;
-  height: 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff; /* Fond blanc pour le libellé */
-  padding: 4px 8px;
-  border-radius: 4px;
+
+  width: min-content;
+  background-color: #fff;
+  height: min-content;
 }
 
 .tag-header h3 {
