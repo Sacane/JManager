@@ -257,11 +257,9 @@ function onConfirmPreview(transaction) {
 <template>
   <ConfirmDialog />
   <div class="container-all">
-    <div class="header">
-      <h2 class="font-bold info-text">
-        Compte {{ data.labelAccount }}
-      </h2>
-    </div>
+    <h2 class="font-bold info-text">
+      Compte {{ data.labelAccount }}
+    </h2>
     <div class="table-container">
       <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
         <template #header>
@@ -346,15 +344,11 @@ function onConfirmPreview(transaction) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 1rem;
+  margin-left: 15px;
   @media (max-width: 780px) {
     margin-left: 0;
     height: auto;
   }
-}
-
-.header {
-  flex: 0 0 auto;
 }
 
 .table-container {
