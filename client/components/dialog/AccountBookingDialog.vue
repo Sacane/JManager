@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { debounce } from '@antfu/utils'
+
 const emit = defineEmits(['visible', 'createAccount', 'cancel'])
 
 const accountData = ref({
@@ -23,11 +25,11 @@ function closeDialog() {
 }
 
 onMounted(() => {
-  const handleEnterKey = (event) => {
+  const handleEnterKey = debounce((event) => {
     if (validerButtonRef.value && event.key === 'Enter') {
       validerButtonRef.value.$el.click()
     }
-  }
+  }, 300)
 
   document.addEventListener('keydown', handleEnterKey)
 
