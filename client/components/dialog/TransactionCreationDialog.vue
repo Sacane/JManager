@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { debounce } from '@antfu/utils'
 import useDate from '~/composables/useDate'
 
 export interface TransactionCreationProps {
@@ -28,11 +29,11 @@ onMounted(() => {
     tags.value = tagsResult
   })
   digits.placeholder = digitPlaceholder
-  const handleEnterKey = (event) => {
+  const handleEnterKey = debounce((event) => {
     if (event.key === 'Enter') {
       emitTransaction()
     }
-  }
+  }, 300)
 
   document.addEventListener('keydown', handleEnterKey)
 
