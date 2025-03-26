@@ -17,6 +17,7 @@ const digits = reactive({
 
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
+const validerButtonRef = ref(null)
 
 const { formattedDateString } = useDate()
 
@@ -27,6 +28,17 @@ onMounted(() => {
     tags.value = tagsResult
   })
   digits.placeholder = digitPlaceholder
+  const handleEnterKey = (event) => {
+    if (event.key === 'Enter') {
+      emitTransaction()
+    }
+  }
+
+  document.addEventListener('keydown', handleEnterKey)
+
+  return () => {
+    document.removeEventListener('keydown', handleEnterKey)
+  }
 })
 
 const jToast = useJToast()
@@ -95,7 +107,7 @@ function closeDialog() {
           <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
         </template>
       </Dropdown>
-      <Button :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
+      <Button ref="validerButtonRef" :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
     </div>
   </Dialog>
 </template>
