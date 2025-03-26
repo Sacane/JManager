@@ -83,41 +83,19 @@ function delTag(row: DataDisplay): void {
 <template>
   <ConfirmDialog />
   <div class="w-full flex flex-col justify-center align-center gap-5">
-    <div class="flex flex-wrap gap-4 w-full justify-center desktop-view">
-      <div class="tag-section">
-        <h2>Tags par défaut</h2>
-        <div v-for="tag in tags.filter(tag => tag.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
-          <div class="tag-header">
-            <h3>{{ tag.label }}</h3>
-          </div>
-        </div>
-      </div>
-      <div class="tag-section">
-        <h2>Tags personnels</h2>
-        <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
-          <div class="tag-header">
-            <h3>{{ tag.label }}</h3>
-            <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised severity="danger" @click="delTag(tag)" />
-          </div>
-        </div>
-      </div>
-      <Button v-if="activeTabIndex === 1" class="w50 self-center mb-10" @click="addTagDialog = true">
-        Ajouter un nouveau tag personnel
-      </Button>
-    </div>
-    <div class="mobile-view">
-      <TabView v-model:active-index="activeTabIndex">
-        <TabPanel header="Tags par défaut">
-          <div class="flex flex-col gap-4 w-full justify-center">
-            <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
-              <div class="tag-header">
-                <h3>{{ tag.label }}</h3>
-              </div>
+    <TabView v-model:active-index="activeTabIndex">
+      <TabPanel header="Tags par défaut">
+        <div class="flex flex-col gap-4 w-full justify-center align-center">
+          <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
+            <div class="tag-header">
+              <h3>{{ tag.label }}</h3>
             </div>
           </div>
-        </TabPanel>
-        <TabPanel header="Tags personnels">
-          <div class="flex flex-col gap-4 w-full justify-center">
+        </div>
+      </TabPanel>
+      <TabPanel header="Tags personnels">
+        <div class="flex flex-col gap-10 w-full justify-center">
+          <div class="flex flex-col gap-4 w-full justify-center align-center">
             <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h3>{{ tag.label }}</h3>
@@ -125,12 +103,13 @@ function delTag(row: DataDisplay): void {
               </div>
             </div>
           </div>
-        </TabPanel>
-      </TabView>
-    </div>
-    <Button class="w50 self-center mb-10" @click="addTagDialog = true">
-      Ajouter un nouveau tag personnel
-    </Button>
+          <Button class="w50 self-center mb-10" @click="addTagDialog = true">
+            Ajouter un nouveau tag personnel
+          </Button>
+        </div>
+      </TabPanel>
+    </TabView>
+
     <Dialog v-model:visible="addTagDialog" modal header="Ajouter un nouveau tag personnalisé">
       <div class="mt-6">
         <div class="flex flex-col gap-3">
@@ -149,6 +128,7 @@ function delTag(row: DataDisplay): void {
 
 <style lang="scss" scoped>
 .tag-card {
+  width: 60%;
   padding: 12px;
   border-radius: 8px;
   color: #000;
@@ -178,38 +158,9 @@ function delTag(row: DataDisplay): void {
   color: #000; /* Libellé en noir */
 }
 
-.desktop-view {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  width: 100%;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-.mobile-view {
-  display: none;
-}
-
-.tag-section {
-  width: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 .tag-section h2 {
   margin-bottom: 10px;
   font-size: 20px;
   color: var(--primary);
-}
-
-@media (max-width: 780px) {
-  .desktop-view {
-    display: none;
-  }
-  .mobile-view {
-    display: block;
-  }
 }
 </style>
