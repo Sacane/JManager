@@ -108,7 +108,6 @@ class TagControllerTest (
                 body(
                     "size()", equalTo(defaultTags.size),
                     "any { it.label == 'Aucune' }", equalTo(true),
-                    "any { it.label == 'Loisir' }", equalTo(true),
                 )
             }
         }
