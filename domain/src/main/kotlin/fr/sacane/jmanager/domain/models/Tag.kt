@@ -15,11 +15,12 @@ class Tag(val label: String, val id: Long? = null, val color: Color = Color(0f, 
 }
 
 val defaultTags: List<Tag> = listOf(
-    Tag("Loisir", color = Color.BLUE, isDefault = true),
-    Tag("Esthetique", color = Color.ORANGE, isDefault = true),
-    Tag("Courses", color = Color.YELLOW, isDefault = true),
-    Tag("Sport", color = Color.RED, isDefault = true),
-    Tag("Bien-etre", color = Color.GREEN, isDefault = true),
-    Tag("Aucune", color = Color.WHITE, isDefault = true),
+    Tag("Achat & Shopping", color = Color(1f, 0f, 0f, 1f), isDefault = true),
+    Tag("Alimentation & Restaurant", color = Color(1f, 0.5f, 0f, 1f), isDefault = true),
+    Tag("Logement & Charges", color = Color(0f, 1f, 0f, 1f), isDefault = true),
+    Tag("Santé", color = Color(0.4f, 0.2f, 0.8f, 1f), isDefault = true),
+    Tag("Transport", color = Color(1f, 0f, 1f, 1f), isDefault = true),
+    Tag("Epargne & Placement", color = Color(1f, 1f, 0f, 1f), isDefault = true),
+    Tag("Aucune", color = Color.WHITE, isDefault = true) // Blanc
 )
 fun String.asPersonalTag(color: Color = Color(0f, 0f, 0f, 0f)): Tag = Tag(this, color = color, isDefault = false)
