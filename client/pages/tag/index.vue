@@ -85,20 +85,20 @@ function delTag(row: DataDisplay): void {
   <div class="w-full flex flex-col justify-center align-center gap-5">
     <TabView v-model:active-index="activeTabIndex">
       <TabPanel header="Tags par défaut">
-        <div class="flex flex-col gap-4 justify-center align-center">
+        <div class="flex flex-col gap-10 justify-center align-center">
           <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
             <div class="tag-header">
-              <h3>{{ tag.label }}</h3>
+              <h4>{{ tag.label }}</h4>
             </div>
           </div>
         </div>
       </TabPanel>
       <TabPanel header="Tags personnels">
         <div class="flex flex-col gap-10 w-full justify-center">
-          <div class="flex flex-col gap-4 w-full justify-center align-center">
+          <div class="flex flex-col gap-10 w-full justify-center align-center">
             <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
-                <h3>{{ tag.label }}</h3>
+                <h4>{{ tag.label }}</h4>
               </div>
               <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised @click="delTag(tag)" />
             </div>
@@ -128,29 +128,24 @@ function delTag(row: DataDisplay): void {
 
 <style lang="scss" scoped>
 .tag-card {
-  width: 60%;
+  width: 300px;
   padding: 12px;
   border-radius: 8px;
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
   box-shadow: 0 4px 8px;
-  border: 2px solid;
   background-color: var(--tag-color);
-  height: 100px;
+  text-transform: uppercase;
 }
 
 .tag-header {
-
-  width: min-content;
-  background-color: #fff;
-  height: min-content;
-}
-
-.tag-header h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #000; /* Libellé en noir */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 10px;
+  height: 100%;
+  color: #000;
 }
 
 .tag-section h2 {
