@@ -11,7 +11,7 @@ const isAccountDialogOpen = ref(false)
 const toast = useJToast()
 
 const accounts = ref<AccountDTO[]>([])
-const sum = computed(() => accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount), 0))
+const sum = computed(() => accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount), 0.00))
 
 function handleAccountCreation(account: Account) {
   createAccount(account.label, account.digit, '€')
@@ -66,7 +66,7 @@ onMounted(() => {
           <div v-else class="card-body">
             <div class="w-full flex flex-row justify-evenly">
               <div>
-                <p>Totalité des revenus : {{ sum }} €</p>
+                <p>Totalité des revenus : {{ sum.toFixed(2) }} €</p>
               </div>
             </div>
           </div>

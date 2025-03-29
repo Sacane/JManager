@@ -3,7 +3,7 @@ declare global {
   interface SheetDTO {
     id: number
     label: string
-    value: string
+    value: number
     isIncome: boolean
     date: string
     color: ColorDTO
@@ -13,22 +13,22 @@ declare global {
   interface TransactionResultDTO {
     id: string
     label: string
-    value: string
+    value: number
     isIncome: boolean
     date: string
     color: ColorDTO
     tagDTO: TagDTO
     isPreview: boolean
-    accountAmount: string
-    accountPreviewAmount: string
+    accountAmount: number
+    accountPreviewAmount: number
   }
 
   interface AccountDTO {
     id: number | undefined
-    amount: string
+    amount: number
     labelAccount: string
     sheets: Array<SheetDTO>
-    previewAmount: string
+    previewAmount: number
   }
 
   interface SheetAverageDTO {
