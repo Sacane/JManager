@@ -59,8 +59,17 @@ function handleTabKey(event: KeyboardEvent) {
   if (event.key === 'Tab') {
     event.preventDefault()
     const input = inputNumberRef.value.$el.querySelector('input')
-    if (input && !input.value.includes(',')) {
-      input.value += ','
+    if (input && input.value.includes(',')) {
+      const cursorPosition = input.selectionStart
+      const decimalPosition = input.value.indexOf(',')
+      if (cursorPosition <= decimalPosition) {
+        input.setSelectionRange(decimalPosition + 1, decimalPosition + 1)
+      } else {
+        const nextInput = input.nextElementSibling
+        if (nextInput) {
+          nextInput.focus()
+        }
+      }
     }
   }
 }
@@ -95,7 +104,7 @@ function handleTabKey(event: KeyboardEvent) {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" @keydown="handleTabKey" />
+        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="value => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
       </div>
       <div mt5px class="flex flex-col gap-3">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
