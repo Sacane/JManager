@@ -7,7 +7,6 @@
     <Sidebar class="sidebar" />
     <div class="flex flex-col w-screen h-screen">
       <!-- ------------------------------ -->
-      <JmanagerHeader class="header" />
       <div class="content lg:(w-full h-screen flex flex-col)">
         <slot />
       </div>

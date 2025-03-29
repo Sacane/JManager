@@ -38,22 +38,20 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="header-content">
-    <div class="circle" @click="toggleDropdown">
-      {{ username.charAt(0) }}
-    </div>
-    <div>
-      <p>{{ username }}</p>
-      <p class="role">
-        Utilisateur
-      </p>
-    </div>
-    <transition name="dropdown">
-      <div v-if="showDropdown" class="dropdown-menu">
-        <button @click="handleLogout">
-          Se déconnecter
-        </button>
+    <div class="flex flex-row gap-2 items-center">
+      <div class="circle" @click="toggleDropdown">
+        {{ username.charAt(0) }}
       </div>
-    </transition>
+      <div>
+        <p>{{ username }}</p>
+        <p class="role">
+          Utilisateur
+        </p>
+      </div>
+    </div>
+    <Button @click="handleLogout">
+      Se déconnecter
+    </Button>
   </div>
 </template>
 
@@ -63,8 +61,8 @@ onBeforeUnmount(() => {
 .header-content {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  height: 100%;
+  justify-content: center;
+  flex-direction: column;
   gap: 10px;
   position: relative;
 }
@@ -73,11 +71,11 @@ onBeforeUnmount(() => {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background-color: var(--primary);
+  background-color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--primary);
   font-size: 30px;
   font-weight: bold;
   cursor: pointer;
