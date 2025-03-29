@@ -339,13 +339,14 @@ function onConfirmPreview(transaction) {
 
 .account-label {
   width: 300px;
-  background-color: var(--secondary);
+  background-color: #f0f0f0;
   padding: 10px 15px;
   text-align: center;
   font-size: 1.5rem;
   font-weight: 900;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: inline-block;
+  color: #555;
 }
 
 .table-container {
