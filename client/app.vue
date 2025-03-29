@@ -26,6 +26,9 @@ tryOnBeforeMount(() => {
   --primary: #7F52FF;
   --text-color: #a3a1a7;
   --primary-background: #8863eb;
+  --primary-dark: #003366; /* Exemple de couleur sombre */
+  --primary-light: #66ccff;
+  --secondary: #FFD700;
 }
 body, html {
   margin: 0;
