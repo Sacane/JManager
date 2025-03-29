@@ -266,7 +266,10 @@ function onConfirmPreview(transaction) {
           <div style="text-align: left" class="w-full">
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
               <Button class="self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
-              <Dropdown v-model="data.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+              <div class="lg:w26% flex flex-row items-center">
+                <Dropdown v-model="data.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+                <Calendar id="yearPicker" v-model="data.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
+              </div>
               <div class="flex flex-col justify-between lg:(flex-row gap-5)">
                 <div class="flex flex-row gap-5">
                   <h2 class="sold-text color-primary">
@@ -276,17 +279,6 @@ function onConfirmPreview(transaction) {
                     Solde prévisionnel : {{ data.previewAccountAmount }} €
                   </h2>
                 </div>
-              </div>
-              <div class="lg:w26% flex flex-row items-center">
-                <div class="flex justify-center mr2">
-                  <label
-                    for="yearPicker"
-                    class="block text-sm font-medium text-gray-700"
-                  >
-                    Sélectionnez une année :
-                  </label>
-                </div>
-                <Calendar id="yearPicker" v-model="data.dateYear" class="w-full h10 text-center" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
             </div>
           </div>
