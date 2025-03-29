@@ -270,15 +270,9 @@ function onConfirmPreview(transaction) {
                 <Dropdown v-model="data.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
                 <Calendar id="yearPicker" v-model="data.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
-              <div class="flex flex-col justify-between lg:(flex-row gap-5)">
-                <div class="flex flex-row gap-5">
-                  <h2 class="sold-text color-primary">
-                    Solde réel : {{ data.accountAmount }} €
-                  </h2>
-                  <h2 class="sold-text preview-text">
-                    Solde prévisionnel : {{ data.previewAccountAmount }} €
-                  </h2>
-                </div>
+              <div class="flex flex-col justify-between lg:(flex-row gap-3)">
+                <BalanceCard title="Solde réel" :amount="data.accountAmount" is-preview />
+                <BalanceCard title="Solde prévisionnel" :amount="data.previewAccountAmount" is-preview />
               </div>
             </div>
           </div>
