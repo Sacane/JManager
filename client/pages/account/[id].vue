@@ -257,9 +257,9 @@ function onConfirmPreview(transaction) {
 <template>
   <ConfirmDialog />
   <div class="container-all">
-    <h2 class="font-bold info-text">
-      Compte {{ data.labelAccount }}
-    </h2>
+    <div class="account-label">
+      <span>Livret {{ data.labelAccount }}</span>
+    </div>
     <div class="table-container">
       <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
         <template #header>
@@ -335,6 +335,17 @@ function onConfirmPreview(transaction) {
     margin-left: 0;
     height: auto;
   }
+}
+
+.account-label {
+  width: 300px;
+  background-color: var(--secondary);
+  padding: 10px 15px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: inline-block;
 }
 
 .table-container {
