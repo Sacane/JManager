@@ -82,10 +82,10 @@ function delTag(row: DataDisplay): void {
 
 <template>
   <ConfirmDialog />
-  <div class="w-full flex flex-col justify-center align-center gap-5">
+  <div class="mt-15 lg:mt-0 w-full flex flex-col justify-center align-center gap-5">
     <TabView v-model:active-index="activeTabIndex">
       <TabPanel header="Tags par défaut">
-        <div class="flex flex-col gap-10 justify-center align-center">
+        <div class="flex flex-col lg:flex-row gap-10 justify-center align-center">
           <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
             <div class="tag-header">
               <h4>{{ tag.label }}</h4>
@@ -95,7 +95,7 @@ function delTag(row: DataDisplay): void {
       </TabPanel>
       <TabPanel header="Tags personnels">
         <div class="flex flex-col gap-10 w-full justify-center">
-          <div class="flex flex-col gap-10 w-full justify-center align-center">
+          <div class="flex flex-col lg:flex-row gap-10 justify-center align-center">
             <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
               <div class="tag-header">
                 <h4>{{ tag.label }}</h4>
