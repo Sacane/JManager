@@ -331,6 +331,7 @@ function onConfirmPreview(transaction) {
   flex-direction: column;
   height: 100%;
   margin-left: 15px;
+  max-width: 1950px;
   @media (max-width: 780px) {
     margin-left: 0;
     height: auto;
