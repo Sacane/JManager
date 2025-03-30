@@ -1,11 +1,14 @@
 package fr.sacane.jmanager.infrastructure.api.account
 
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 
-
+@Serializable
 data class AccountDTO(
     val id: Long?,
+    @Contextual
     val amount: BigDecimal,
     val labelAccount: String,
     val previewAmount: String,
@@ -13,6 +16,7 @@ data class AccountDTO(
     val currency: String
 )
 
+@Serializable
 data class AccountInfoDTO(
     val amount: String,
     val label: String,
@@ -20,6 +24,7 @@ data class AccountInfoDTO(
     val currency: String
 )
 
+@Serializable
 data class UserBookletRequest(
     val id: Long,
     val labelAccount: String,
