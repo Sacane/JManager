@@ -1,5 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api.session
 
+import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
+import fr.sacane.jmanager.infrastructure.configuration.LocalDateTimeSerializer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
@@ -31,8 +33,8 @@ data class UserStorageDTO(
     val email: String? = null,
     val token: String,
     val refreshToken: String,
-    @Contextual
+    @Serializable(with = LocalDateTimeSerializer::class)
     val tokenExpirationDate: LocalDateTime,
-    @Contextual
+    @Serializable(with = LocalDateTimeSerializer::class)
     val refreshExpirationDate: LocalDateTime
 )

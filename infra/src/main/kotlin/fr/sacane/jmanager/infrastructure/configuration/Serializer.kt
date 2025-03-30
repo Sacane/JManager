@@ -3,7 +3,9 @@ package fr.sacane.jmanager.infrastructure.configuration
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -28,6 +30,7 @@ object BigDecimalSerializer : KSerializer<BigDecimal> {
         return BigDecimal(decoder.decodeString()).setScale(2, BigDecimal.ROUND_HALF_UP)
     }
 }
+
 object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
