@@ -72,4 +72,13 @@ class ProblemDetailHandler {
         problemDetail.setProperty("code", ex.errCode)
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail)
     }
+    @ExceptionHandler(TimeOutException::class)
+    fun handleForbiddenException(ex: TimeOutException): ResponseEntity<ProblemDetail> {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED)
+        problemDetail.title = "Unauthorized error"
+        problemDetail.detail = ex.message
+        problemDetail.setProperty("code", ex.errCode)
+        LOGGER.error("TimeOutException : {} with code {}", ex.message, ex.errCode)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail)
+    }
 }
