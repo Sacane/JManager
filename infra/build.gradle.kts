@@ -8,6 +8,7 @@ plugins {
     kotlin("plugin.spring") version "2.0.0"
     kotlin("plugin.noarg") version "2.0.0"
     kotlin("plugin.jpa") version "2.0.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
     jacoco
 }
 
@@ -42,6 +43,8 @@ dependencies {
     testImplementation("com.h2database:h2")
     testImplementation("io.rest-assured:rest-assured:${restAssuredVersion}")
     testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 }
 
 jacoco {

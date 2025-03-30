@@ -10,7 +10,6 @@ import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import org.springframework.http.ResponseEntity
 import java.awt.Color
-import java.math.BigDecimal
 
 internal fun Account.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
