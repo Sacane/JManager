@@ -92,11 +92,11 @@ function handleTabKey(event: KeyboardEvent) {
       <div class="mt5 flex flex-col gap-3">
         <label for="selectionType">Selectionner le type de transaction</label>
         <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
-          <div>
+          <div class="flex gap-1">
             <RadioButton v-model="transactionResult.isIncome" input-id="selection1" :value="false" />
             <label for="selection1">Dépense</label>
           </div>
-          <div>
+          <div class="flex gap-1">
             <RadioButton v-model="transactionResult.isIncome" input-id="selection2" :value="true" />
             <label for="selection2">Recette</label>
           </div>
@@ -106,9 +106,9 @@ function handleTabKey(event: KeyboardEvent) {
       <div id="labelAmount" class="flex-row">
         <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="value => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
       </div>
-      <div mt5px class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3 w-50%">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
-        <Calendar id="calendar" v-model="transactionResult.date" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
+        <Calendar id="calendar" v-model="transactionResult.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
       </div>
       <p>Tag</p>
       <Dropdown v-model="transactionResult.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
@@ -116,12 +116,27 @@ function handleTabKey(event: KeyboardEvent) {
           <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
         </template>
       </Dropdown>
-      <Button ref="validerButtonRef" :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
+      <div class="flex flex-row gap-5">
+        <Button severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
+        <Button ref="validerButtonRef" :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
+      </div>
     </div>
   </Dialog>
 </template>
 
 <style scoped>
+$secondary-color: #000;
+.custom-dialog {
+  width: 50rem;
+}
+.custom-calendar {
+  width: 100%;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: medium;
+}
+
 .inputNumber ::placeholder {
   color: grey;
   opacity: 0.8;

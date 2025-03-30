@@ -34,9 +34,7 @@ function onDialogOpen() {
 
 onMounted(() => {
   fetch().then((result) => {
-    for (let i = 0; i < result.length; i++) {
-      accounts.value.push(result[i])
-    }
+    accounts.value = result
   })
 })
 </script>
