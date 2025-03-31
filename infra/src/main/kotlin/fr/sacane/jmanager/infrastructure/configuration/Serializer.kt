@@ -23,7 +23,7 @@ object BigDecimalSerializer : KSerializer<BigDecimal> {
     }
 
     override fun deserialize(decoder: Decoder): BigDecimal {
-        return BigDecimal(decoder.decodeString()).setScale(2, BigDecimal.ROUND_HALF_UP)
+        return BigDecimal(decoder.decodeDouble()).setScale(2, BigDecimal.ROUND_HALF_UP)
     }
 }
 
@@ -42,7 +42,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
 }
 
 object LocalDateSerializer : KSerializer<LocalDate> {
-    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE
+    private val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalDate", PrimitiveKind.STRING)
 
