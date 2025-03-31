@@ -2,6 +2,8 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
+import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
+import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
@@ -19,12 +21,11 @@ data class UserAccountIdsTransactionRequest(
 data class TransactionResult(
     val id: Long?,
     val label: String,
-    @Contextual
+    @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
     val currency: String = "€",
     val isIncome: Boolean,
-    @JsonFormat(pattern = "dd-MM-yyyy")
-    @Contextual
+    @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean
@@ -37,8 +38,7 @@ data class TransactionListResponse(
 data class TransactionResponse(
     val id: String,
     val label: String,
-    @JsonFormat(pattern = "dd-MM-yyyy")
-    @Contextual
+    @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
     val value: String,
     val isIncome: Boolean,

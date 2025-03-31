@@ -143,7 +143,7 @@ class BookletControllerTest(
             } Then {
                 statusCode(200)
                 body(
-                    "amount", equalTo(100.0F),
+                    "amount", equalTo("100.00"),
                     "labelAccount", equalTo("test"),
                 )
             }
