@@ -64,25 +64,25 @@ function registerUser() {
         </form>
       </div>
 
-      <div v-else>
-        <form @submit.prevent="registerUser">
-          <div class="mb-4">
-            <label for="username" class="">Nom d'utilisateur *</label>
-            <InputText id="username" v-model="userRegistered.username" type="text" class="mt-1 p-2 w-full border rounded-md" />
-          </div>
-          <div class="mb-4">
-            <label for="password">Mot de passe *</label>
-            <InputText v-model="userRegistered.password" type="password" class="mt-1 p-2 w-full border rounded-md" />
-          </div>
-          <div class="mb-4">
-            <label for="confirm">Confirmer le mot de passe *</label>
-            <InputText id="confirm" v-model="userRegistered.confirmPassword" type="password" class="mt-1 p-2 w-full border rounded-md" />
-          </div>
-          <Button type="submit" class="">
-            S'enregistrer
-          </Button>
-        </form>
-      </div>
+      <!--      <div v-else> -->
+      <!--        <form @submit.prevent="registerUser"> -->
+      <!--          <div class="mb-4"> -->
+      <!--            <label for="username" class="">Nom d'utilisateur *</label> -->
+      <!--            <InputText id="username" v-model="userRegistered.username" type="text" class="mt-1 p-2 w-full border rounded-md" /> -->
+      <!--          </div> -->
+      <!--          <div class="mb-4"> -->
+      <!--            <label for="password">Mot de passe *</label> -->
+      <!--            <InputText v-model="userRegistered.password" type="password" class="mt-1 p-2 w-full border rounded-md" /> -->
+      <!--          </div> -->
+      <!--          <div class="mb-4"> -->
+      <!--            <label for="confirm">Confirmer le mot de passe *</label> -->
+      <!--            <InputText id="confirm" v-model="userRegistered.confirmPassword" type="password" class="mt-1 p-2 w-full border rounded-md" /> -->
+      <!--          </div> -->
+      <!--          <Button type="submit" class=""> -->
+      <!--            S'enregistrer -->
+      <!--          </Button> -->
+      <!--        </form> -->
+      <!--      </div> -->
 
       <div class="mt-4">
         <p class="text-black-600">

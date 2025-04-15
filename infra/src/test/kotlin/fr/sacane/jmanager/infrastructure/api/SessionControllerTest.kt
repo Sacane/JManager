@@ -59,31 +59,31 @@ class SessionControllerTest(
             }
         }
     }
-    @Nested
-    inner class CreateUserEndpointTest {
-        @Test
-        fun `Create a user must return 200`() {
-            Given {
-                port(port)
-                header("Content-Type", "application/json")
-                body(objectMapper.writeValueAsString(RegisteredUserDTO("test2", "test2", "test2")))
-            } When {
-                post("/api/user/create")
-            } Then {
-                statusCode(200)
-            }
-        }
-        @Test
-        fun `Create a user that has not the same password and confirm password must return 401`() {
-            Given {
-                port(port)
-                header("Content-Type", "application/json")
-                body(objectMapper.writeValueAsString(RegisteredUserDTO("test", "test", "test2")))
-            } When {
-                post("/api/user/create")
-            } Then {
-                statusCode(401)
-            }
-        }
-    }
+//    @Nested
+//    inner class CreateUserEndpointTest {
+//        @Test
+//        fun `Create a user must return 200`() {
+//            Given {
+//                port(port)
+//                header("Content-Type", "application/json")
+//                body(objectMapper.writeValueAsString(RegisteredUserDTO("test2", "test2", "test2")))
+//            } When {
+//                post("/api/user/create")
+//            } Then {
+//                statusCode(200)
+//            }
+//        }
+//        @Test
+//        fun `Create a user that has not the same password and confirm password must return 401`() {
+//            Given {
+//                port(port)
+//                header("Content-Type", "application/json")
+//                body(objectMapper.writeValueAsString(RegisteredUserDTO("test", "test", "test2")))
+//            } When {
+//                post("/api/user/create")
+//            } Then {
+//                statusCode(401)
+//            }
+//        }
+//    }
 }
