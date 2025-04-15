@@ -43,11 +43,11 @@ class SessionController(
         return loginFeature.logout(id.id(), token.asTokenUUID())
             .toHttpResponse()
     }
-    @PostMapping(path= ["/create"])
-    fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-        val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
-        return response.map { u -> u.toDTO() }.toHttpResponse()
-    }
+//    @PostMapping(path= ["/create"])
+//    fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
+//        val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
+//        return response.map { u -> u.toDTO() }.toHttpResponse()
+//    }
 
     @PostMapping("/auth/refresh/{id}")
     fun tryRefresh(@PathVariable id: Long, @RequestHeader("Authorization") refreshToken: String)
