@@ -66,6 +66,9 @@ class TransactionFeatureImpl(
                 ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Le compte $accountLabel n'existe pas")
             val newTr =  transactionRepository.save(account.id!!, transaction)
                 ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Erreur est survenu lors de la transaction")
+            if(transaction.amount.isNegative()) {
+                return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Le montant de la transaction ne peut pas être négatif")
+            }
             account.addTransaction(newTr)
             accountRepository.update(account)
             success(TransactionResumeResult(newTr, account.amount, account.previewAmount))

@@ -35,6 +35,9 @@ data class Amount(var amount: BigDecimal, val currency: Currency = Currency.EUR)
     fun negate(): Amount {
         return Amount(amount.negate(), currency)
     }
+    fun isNegative(): Boolean {
+        return amount < BigDecimal.ZERO
+    }
     companion object {
         fun fromString(representation: String, currency: Currency = Currency.EUR): Amount {
             return try {
