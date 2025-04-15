@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
+import type { Account, AccountDTO } from '@/types'
 import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
 
 definePageMeta({
@@ -11,7 +12,7 @@ const isAccountDialogOpen = ref(false)
 const toast = useJToast()
 
 const accounts = ref<AccountDTO[]>([])
-const sum = computed(() => accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount), 0.00))
+const sum = computed(() => accounts.value.reduce((acc: number, curr: AccountDTO) => acc + Number.parseFloat(curr.amount), 0.00))
 
 function handleAccountCreation(account: Account) {
   createAccount(account.label, account.digit, '€')
