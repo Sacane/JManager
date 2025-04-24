@@ -40,8 +40,8 @@ function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${transaction.value} €` : '',
-    incomeRepresentation: transaction.isIncome ? `${transaction.value} €` : '',
+    expensesRepresentation: !transaction.isIncome ? `${transaction.value.toFixed(2)} €` : '',
+    incomeRepresentation: transaction.isIncome ? `${transaction.value.toFixed(2)} €` : '',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
