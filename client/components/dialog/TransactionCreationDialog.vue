@@ -78,6 +78,7 @@ function handleTabKey(event: KeyboardEvent) {
 <template>
   <Dialog
     v-model:visible="isVisibleData"
+    dismissable-mask
     modal
     :header="title"
     :style="{ width: '30rem' }"
