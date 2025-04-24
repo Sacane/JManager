@@ -45,6 +45,7 @@ function handleTabKey(event: KeyboardEvent) {
 <template>
   <Dialog
     v-model:visible="isVisibleData"
+    dismissable-mask
     class="bg-grey"
     modal header="Ajouter un nouveau livret" @update:visible="closeDialog"
     @keydown.enter="createAccount"
