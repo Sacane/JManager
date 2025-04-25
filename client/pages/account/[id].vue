@@ -40,8 +40,8 @@ function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${transaction.value.toFixed(2)} €` : '',
-    incomeRepresentation: transaction.isIncome ? `${transaction.value.toFixed(2)} €` : '',
+    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction.value).toFixed(2)} €` : '',
+    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction.value).toFixed(2)} €` : '',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
@@ -177,6 +177,7 @@ function openPreviewCreationDialog() {
 function bookTransaction(transaction: TransactionCreationDTO) {
   saveSheet(data.labelAccount, transaction)
     .then((result) => {
+      console.log('result', result)
       data.accountAmount = result.accountAmount
       data.previewAccountAmount = result.accountPreviewAmount
       const newTransaction = asDisplayableTransaction(result)

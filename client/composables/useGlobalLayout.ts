@@ -1,14 +1,14 @@
-import type {LayoutKey} from '../.nuxt/types/layouts'
+import type { LayoutKey } from '#build/types/layouts'
 
 export default function useGlobalLayout() {
   const globalLayout = ref('default')
   const { isAuthenticated } = useAuth()
   watch(isAuthenticated, () => {
-    if (isAuthenticated.value)
+    if (isAuthenticated.value) {
       globalLayout.value = 'sidebar-layout'
-
-    else
+    } else {
       globalLayout.value = 'default'
+    }
   })
   return globalLayout as Ref<LayoutKey>
 }
