@@ -25,8 +25,7 @@ data class TransactionResult(
     val value: BigDecimal,
     val currency: String = "€",
     val isIncome: Boolean,
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
+    val date: String,
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean
 )
