@@ -32,6 +32,13 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle
       - name: allow permission
         run: chmod +x ./gradlew
+      - name: Run tests
+        run: ./gradlew test jacocoTestReport --info
+      - name: Run SonarQube analysis
+        env:
+         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: ./gradlew sonar --info
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
