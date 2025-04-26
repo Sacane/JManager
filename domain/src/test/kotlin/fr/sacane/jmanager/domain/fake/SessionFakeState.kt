@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.spi.InMemorySessionManager
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
@@ -17,23 +18,10 @@ data class UserSessionEntry (
     val accessToken: AccessToken
 )
 
-class SessionFakeState: BiState<List<UserSessionEntry>, List<AccessToken>>, SessionManager {
+class SessionFakeState: SessionManager {
     private val lock: Any = Any()
     private val userSession: MutableMap<UserId, MutableSet<AccessToken>> = mutableMapOf()
-
-    override fun getStates(): List<AccessToken> {
-        return userSession.values.flatten()
-    }
-
-    override fun clear() {
-        userSession.clear()
-    }
-
-    override fun init(initialState: List<UserSessionEntry>) {
-        initialState.forEach {
-            userSession[it.userId] = mutableSetOf(it.accessToken)
-        }
-    }
+    private val inMemorySessionManager: InMemorySessionManager = InMemorySessionManager()
 
     override fun addSession(userId: UserId, session: AccessToken): Unit = synchronized(lock){
         val sessions = userSession.computeIfAbsent(userId) { mutableSetOf() }

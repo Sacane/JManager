@@ -20,14 +20,13 @@ class UserFeatureTest: FeatureTest() {
 
     companion object {
         private val userFeature: UserFeature = FakeFactory.sessionFeature
-        private val sessionFakeState: BiState<List<UserSessionEntry>, List<AccessToken>> = FakeFactory.sessionState()
+        private val sessionFakeState = FakeFactory.sessionState()
         private val userState = FakeFactory.fakeUserRepository()
     }
 
     @AfterEach
     fun afterEach() {
        userState.clear()
-       sessionFakeState.clear()
     }
     @Nested
     inner class LoginFeatureTest {
@@ -61,7 +60,7 @@ class UserFeatureTest: FeatureTest() {
                     UserWithPassword(user, DefaultHasher.hash("test"))
                 )
             )
-            sessionFakeState.init(listOf(UserSessionEntry(user.id, session)))
+            sessionFakeState.addSession(user.id, session)
             userFeature.logout(user.id, session.tokenValue)
                 .assertSuccess()
         }
@@ -91,7 +90,7 @@ class UserFeatureTest: FeatureTest() {
                     UserWithPassword(user, DefaultHasher.hash("test"))
                 )
             )
-            sessionFakeState.init(listOf(UserSessionEntry(user.id, session)))
+            sessionFakeState.addSession(user.id, session)
             userFeature.tryRefresh(user.id, session.refreshToken!!)
                 .assertSuccess()
         }

@@ -24,7 +24,6 @@ class SessionManagerTest {
     @AfterEach
     fun after() {
         userState.clear()
-        sessionState.clear()
     }
 
     @Nested
@@ -38,10 +37,9 @@ class SessionManagerTest {
             ))
             val accessToken = AccessToken(UUID.randomUUID())
             sessionManager.addSession(id, accessToken)
-            sessionState.getStates().let {
-                assertTrue(it.isNotEmpty())
-                assertTrue(it.any { at -> at.tokenValue == accessToken.tokenValue })
-            }
+            sessionState.authenticate(id, accessToken.tokenValue) {
+                return@authenticate success("success")
+            }.assertSuccess()
         }
     }
     @Test
