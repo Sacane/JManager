@@ -75,7 +75,6 @@ tasks {
                 mergeStrategy = "append"
             }
         )
-        from("salt.txt")
         from("infra/src/main/resources/application.properties") {
             into("executables")
         }
