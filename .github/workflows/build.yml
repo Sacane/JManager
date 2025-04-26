@@ -32,7 +32,7 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle
       - name: allow permission
         run: chmod +x ./gradlew
-      - name: Build and analyze
+      - name: Test build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
