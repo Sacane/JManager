@@ -26,7 +26,7 @@ object FakeFactory {
         return fakeAccountRepository
     }
 
-    fun sessionState(): BiState<List<UserSessionEntry>, List<AccessToken>> = sessionManager
+    fun sessionState(): SessionFakeState = sessionManager
 
     fun clearAll() {
         fakeAccountRepository.clear()
