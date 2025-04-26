@@ -42,7 +42,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
 }
 
 object LocalDateSerializer : KSerializer<LocalDate> {
-    private val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalDate", PrimitiveKind.STRING)
 

@@ -127,16 +127,6 @@ function handleTabKey(event: KeyboardEvent) {
 
 <style scoped>
 $secondary-color: #000;
-.custom-dialog {
-  width: 50rem;
-}
-.custom-calendar {
-  width: 100%;
-  background-color: #fff;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  font-size: medium;
-}
 
 .inputNumber ::placeholder {
   color: grey;
