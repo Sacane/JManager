@@ -71,7 +71,7 @@ export default function useDate() {
   ]
 
   function dateFromString(dateString: string): Date {
-    return parse(dateString, 'dd-MM-yyyy', new Date())
+    return parse(dateString, 'yyyy-MM-dd', new Date())
   }
 
   function formattedDateString(date: Date): string {
