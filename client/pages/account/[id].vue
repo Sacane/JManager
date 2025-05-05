@@ -264,7 +264,7 @@ function onConfirmPreview(transaction) {
     <div class="table-container">
       <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
         <template #header>
-          <div style="text-align: left" class="w-full">
+          <div style="text-align: left; z-index: 2000; position: sticky; top: 0" class="w-full">
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
               <Button class="self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
               <div class="lg:w26% flex flex-row items-center">
@@ -337,6 +337,12 @@ function onConfirmPreview(transaction) {
     margin-left: 0;
     height: auto;
   }
+}
+
+.table-container ::v-deep .p-datatable-thead {
+  position: sticky;
+  top: 0;
+  z-index: 2000;
 }
 
 .account-label {
