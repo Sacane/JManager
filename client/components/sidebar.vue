@@ -26,15 +26,15 @@ function closeOnNavigateIfMobile() {
         <NuxtLink to="/" class="title">
           <img src="@/public/favicon.ico" alt="icon" class="w-10 lg:w-10">
         </NuxtLink>
-        <div class="mt-5 flex flex-col gap-4">
+        <div class="mt-4 flex flex-col gap-2">
           <NuxtLink v-if="isAuthenticated" to="/dashboard" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
-            <i class="pi pi-home text-2xl" /> Tableau de bord
+            <i class="pi pi-home text-20px" /> Tableau de bord
           </NuxtLink>
           <NuxtLink v-if="isAuthenticated" to="/account" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
-            <i class="pi pi-wallet text-2xl" /> Mes livrets
+            <i class="pi pi-wallet text-20px" /> Mes livrets
           </NuxtLink>
           <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
-            <i class="pi pi-tag text-2xl" /> Mes tags
+            <i class="pi pi-tag text-20px" /> Mes tags
           </NuxtLink>
         </div>
         <div class="h-full flex flex-col justify-end mb-20">
@@ -62,7 +62,7 @@ function closeOnNavigateIfMobile() {
 
 .section {
   color: #fff;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   background-color: var(--primary-background);
 
   &:hover {
