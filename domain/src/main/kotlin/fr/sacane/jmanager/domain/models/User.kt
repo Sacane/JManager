@@ -21,7 +21,7 @@ class User(
     val subscriptionList: List<SubscriptionComplete>
         get() = subscriptions
 
-    fun withToken(token: AccessToken): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
+    fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
     fun hasAccount(labelAccount: String): Boolean = accounts.any { labelAccount == it.label }
     override fun toString(): String = "username: $username"
 

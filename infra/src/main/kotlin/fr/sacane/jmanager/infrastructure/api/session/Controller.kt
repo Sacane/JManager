@@ -5,7 +5,6 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.infrastructure.api.id
-import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -30,10 +29,7 @@ class SessionController(
                 it.user.id.value,
                 username = it.user.username,
                 email = it.user.email,
-                token = it.token.tokenValue.toString(),
-                refreshToken = it.token.refreshToken.toString(),
-                tokenExpirationDate = it.token.tokenExpirationDate,
-                refreshExpirationDate = it.token.refreshTokenLifetime
+                token = it.token
             )
         }.toHttpResponse()
     }
@@ -48,19 +44,4 @@ class SessionController(
 //        val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
 //        return response.map { u -> u.toDTO() }.toHttpResponse()
 //    }
-
-    @PostMapping("/auth/refresh/{id}")
-    fun tryRefresh(@PathVariable id: Long, @RequestHeader("Authorization") refreshToken: String)
-    : ResponseEntity<UserStorageDTO> = loginFeature.tryRefresh(id.id(), refreshToken.asTokenUUID())
-            .map {
-                UserStorageDTO(
-                    it.first.id.value,
-                    it.first.username,
-                    it.first.email,
-                    it.second.tokenValue.toString(),
-                    it.second.refreshToken.toString(),
-                    it.second.tokenExpirationDate,
-                    it.second.refreshTokenLifetime
-                )
-            }.toHttpResponse()
 }

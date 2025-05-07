@@ -20,8 +20,8 @@ class AccountFeatureTest {
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
         private var accountFeature: AccountFeature = FakeFactory.accountFeature
         private val user = userRepository.register("jojo", "test") as User
-        private val tokenValue = UUID.randomUUID()
-        private val session: AccessToken = AccessToken(tokenValue)
+        private val tokenValue = UUID.randomUUID().toString()
+        private val session: AccessToken = AccessToken(userId = user.id, tokenValue)
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
         private fun connectUser(user: User) {
             FakeFactory.sessionManager().addSession(user.id, session)
@@ -38,8 +38,8 @@ class AccountFeatureTest {
         private val element = Account(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = 50L)
         override val action: List<Result<out Any>>
             get() = listOf(
-                accountFeature.findAccountById(user.id, 50L, UUID.randomUUID()),
-                accountFeature.save(user.id, UUID.randomUUID(), element)
+                accountFeature.findAccountById(user.id, 50L, UUID.randomUUID().toString()),
+                accountFeature.save(user.id, UUID.randomUUID().toString(), element)
             )
     }
 

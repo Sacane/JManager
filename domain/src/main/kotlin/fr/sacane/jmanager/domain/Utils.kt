@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain
 import fr.sacane.jmanager.domain.models.Amount
 import java.util.*
 
-fun String.asTokenUUID(): UUID = UUID.fromString(this.replace("Bearer ", ""))
+fun String.asTokenUUID(): String = this.replace("Bearer ", "")
 
 object Env {
     const val TOKEN_LIFETIME_IN_MINUTES = 30L

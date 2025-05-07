@@ -12,16 +12,15 @@ import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
-import java.util.*
 
 @Port(Side.APPLICATION)
 sealed interface AccountFeature {
-    fun findAccountById(userId: UserId, accountID: Long, token: UUID): Result<Account>
-    fun editAccount(userID: Long, account: Account, token: UUID): Result<Account>
-    fun deleteAccountById(profileID: UserId, accountID: Long, token: UUID): Result<Nothing>
-    fun findByLabelAndUserId(userId: UserId, token: UUID, label: String): Result<Account>
-    fun findAllRegisteredAccounts(userId: UserId, token: UUID): Result<List<Account>>
-    fun save(userId: UserId, token: UUID, account: Account): Result<Account>
+    fun findAccountById(userId: UserId, accountID: Long, token: String): Result<Account>
+    fun editAccount(userID: Long, account: Account, token: String): Result<Account>
+    fun deleteAccountById(profileID: UserId, accountID: Long, token: String): Result<Nothing>
+    fun findByLabelAndUserId(userId: UserId, token: String, label: String): Result<Account>
+    fun findAllRegisteredAccounts(userId: UserId, token: String): Result<List<Account>>
+    fun save(userId: UserId, token: String, account: Account): Result<Account>
 }
 
 @DomainService
@@ -33,7 +32,7 @@ class AccountFeatureImpl(
     override fun findAccountById(
         userId: UserId,
         accountID: Long,
-        token: UUID
+        token: String
     ): Result<Account> = session.authenticate(userId, token) {
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
             return@authenticate success(this)
@@ -43,7 +42,7 @@ class AccountFeatureImpl(
     override fun editAccount(
         userID: Long,
         account: Account,
-        token: UUID
+        token: String
     ): Result<Account> = session.authenticate(UserId(userID), token) {
         val accountID = account.id ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.label} est introuvable en base")
         val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.id} est introuvable")
@@ -58,7 +57,7 @@ class AccountFeatureImpl(
     override fun deleteAccountById(
         profileID: UserId,
         accountID: Long,
-        token: UUID
+        token: String
     ): Result<Nothing> = session.authenticate(profileID, token) {
         if(accountRepository.findAccountByIdWithTransactions(accountID) == null){
             return@authenticate failure(ResultState.NOT_FOUND, "Le livret $accountID n'existe pas")
@@ -69,7 +68,7 @@ class AccountFeatureImpl(
 
     override fun findByLabelAndUserId(
         userId: UserId,
-        token: UUID,
+        token: String,
         label: String
     ): Result<Account> = session.authenticate(userId, token) {
         val user = userRepository.findUserByIdWithAccounts(userId)
@@ -83,7 +82,7 @@ class AccountFeatureImpl(
 
     override fun findAllRegisteredAccounts(
         userId: UserId,
-        token: UUID
+        token: String
     ): Result<List<Account>> = session.authenticate(userId, token) {
         val user = userRepository.findUserByIdWithAccounts(userId)
             ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "L'utilisateur n'existe pas en base")
@@ -92,7 +91,7 @@ class AccountFeatureImpl(
 
     override fun save(
         userId: UserId,
-        token: UUID,
+        token: String,
         account: Account
     ): Result<Account> = session.authenticate(userId, token) {
         val user = userRepository.findUserByIdWithAccounts(userId)
