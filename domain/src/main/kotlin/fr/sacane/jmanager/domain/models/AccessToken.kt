@@ -13,7 +13,8 @@ val roleAdmin = arrayOf(Role.ADMIN)
 
 
 data class AccessToken(
-    val tokenValue: UUID,
+    val userId: UserId,
+    val tokenValue: String,
     var tokenExpirationDate: LocalDateTime = now().plusHours(1),
     val refreshToken: UUID? = UUID.randomUUID(),
     var refreshTokenLifetime: LocalDateTime = now().plusDays(1),
@@ -43,13 +44,5 @@ data class AccessToken(
 }
 data class UserToken(
     val user: MinimalUserRepresentation,
-    val token: AccessToken
-)
-
-fun generateToken(role: Role = Role.USER)
-: AccessToken = AccessToken(
-    UUID.randomUUID(),
-    now().plusMinutes(Env.TOKEN_LIFETIME_IN_MINUTES),
-    UUID.randomUUID(),
-    now().plusDays(Env.REFRESH_TOKEN_LIFETIME_IN_DAYS), role
+    val token: String
 )

@@ -12,7 +12,6 @@ import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import fr.sacane.jmanager.infrastructure.api.toModel
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.text.DateFormat
 import java.time.LocalDate
 import java.time.Month
 import java.util.logging.Logger
@@ -59,7 +58,8 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         @RequestHeader("Authorization") token: String
         ): ResponseEntity<TransactionListResponse> {
         LOGGER.info("Request transactions from booklet $accountLabel for month $month and year $year")
-        val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
+        val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId.id(),
+            token.asTokenUUID().toString(), month ?: LocalDate.now().month, year, accountLabel)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(TransactionListResponse(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))
     }

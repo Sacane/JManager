@@ -32,9 +32,4 @@ data class UserStorageDTO(
     val username: String,
     val email: String? = null,
     val token: String,
-    val refreshToken: String,
-    @Serializable(with = LocalDateTimeSerializer::class)
-    val tokenExpirationDate: LocalDateTime,
-    @Serializable(with = LocalDateTimeSerializer::class)
-    val refreshExpirationDate: LocalDateTime
 )
