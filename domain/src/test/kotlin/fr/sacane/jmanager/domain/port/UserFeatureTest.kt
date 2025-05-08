@@ -20,6 +20,7 @@ class UserFeatureTest: FeatureTest() {
         private val userFeature: UserFeature = FakeFactory.sessionFeature
         private val sessionFakeState = FakeFactory.sessionState()
         private val userState = FakeFactory.fakeUserRepository()
+        private val tokenGenerator = FakeFactory.tokenGenerator
     }
 
     @AfterEach
@@ -58,8 +59,9 @@ class UserFeatureTest: FeatureTest() {
                     UserWithPassword(user, DefaultHasher.hash("test"))
                 )
             )
-            sessionFakeState.addSession(user.id, AccessToken(user.id, session))
-            userFeature.logout(user.id, session)
+            val token = tokenGenerator.generateToken(user.id)
+            sessionFakeState.addSession(user.id, token)
+            userFeature.logout(user.id, token.tokenValue)
                 .assertSuccess()
         }
     }

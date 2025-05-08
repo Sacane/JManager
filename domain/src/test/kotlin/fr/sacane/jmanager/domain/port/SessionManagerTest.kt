@@ -37,7 +37,7 @@ class SessionManagerTest {
             ))
             val accessToken = AccessToken(id, UUID.randomUUID().toString())
             sessionManager.addSession(id, accessToken)
-            sessionState.authenticate(id, accessToken.tokenValue) {
+            sessionState.authenticate(accessToken.tokenValue) {
                 return@authenticate success("success")
             }.assertSuccess()
         }
@@ -51,7 +51,7 @@ class SessionManagerTest {
         val accessToken = AccessToken(id, UUID.randomUUID().toString())
         sessionManager.addSession(id, accessToken)
         sessionManager.removeSession(id, accessToken.tokenValue)
-        sessionManager.authenticate(id, accessToken.tokenValue) {
+        sessionManager.authenticate(accessToken.tokenValue) {
             return@authenticate success("success")
         }.assertFailure()
     }
@@ -67,7 +67,7 @@ class SessionManagerTest {
             ))
             val accessToken = AccessToken(id, UUID.randomUUID().toString())
             sessionManager.addSession(id, accessToken)
-            sessionManager.authenticate(id, accessToken.tokenValue) {
+            sessionManager.authenticate(accessToken.tokenValue) {
                 return@authenticate success("success")
             }.assertSuccess()
         }

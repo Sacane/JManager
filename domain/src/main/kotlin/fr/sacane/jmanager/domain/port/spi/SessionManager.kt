@@ -13,7 +13,6 @@ import java.util.logging.Logger
 interface SessionManager{
     fun addSession(userId: UserId, session: AccessToken)
     fun <T> authenticate(
-        userId: UserId,
         token: String,
         requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
         block: (UserId) -> Result<T>
@@ -23,7 +22,7 @@ interface SessionManager{
 }
 
 @DomainService
-class InMemorySessionManager : SessionManager {
+class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : SessionManager {
     private val logger: Logger = Logger.getLogger(InMemorySessionManager::class.java.name)
     companion object {
         const val PURGE_DELAY = 1_800_000L // 30 minutes in milliseconds
@@ -44,20 +43,21 @@ class InMemorySessionManager : SessionManager {
         }
     }
     override fun <T> authenticate(
-        userId: UserId,
         token: String,
         requiredRoles: Array<Role>,
         block: (UserId) -> Result<T>
     ): Result<T> {
-        synchronized(lock) {
-            val session = getSession(userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
+        val accessToken = synchronized(lock) {
+            val decodedToken = tokenGenerator.readToken(token) ?: return unauthorized("Le token est invalide")
+            val session = getSession(decodedToken.userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
             if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
             if (session.isExpired()) return timeout("La session a expiré")
             if (session.tokenValue != token) return unauthorized("Le token est invalide")
             session.updateLifetime()
             session.updateTokenLifetime()
+            decodedToken
         }
-        return block(userId)
+        return block(accessToken.userId)
     }
 
     override fun removeSession(userId: UserId, token: String): Unit = synchronized(lock){

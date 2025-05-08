@@ -33,7 +33,7 @@ class AccountFeatureImpl(
         userId: UserId,
         accountID: Long,
         token: String
-    ): Result<Account> = session.authenticate(userId, token) {
+    ): Result<Account> = session.authenticate(token) {
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
             return@authenticate success(this)
         }?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le compte est introuvable")
@@ -43,7 +43,7 @@ class AccountFeatureImpl(
         userID: Long,
         account: Account,
         token: String
-    ): Result<Account> = session.authenticate(UserId(userID), token) {
+    ): Result<Account> = session.authenticate(token) {
         val accountID = account.id ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.label} est introuvable en base")
         val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.id} est introuvable")
         if(oldAccount.id != account.id && oldAccount.label == account.label){
@@ -58,7 +58,7 @@ class AccountFeatureImpl(
         profileID: UserId,
         accountID: Long,
         token: String
-    ): Result<Nothing> = session.authenticate(profileID, token) {
+    ): Result<Nothing> = session.authenticate(token) {
         if(accountRepository.findAccountByIdWithTransactions(accountID) == null){
             return@authenticate failure(ResultState.NOT_FOUND, "Le livret $accountID n'existe pas")
         }
@@ -70,7 +70,7 @@ class AccountFeatureImpl(
         userId: UserId,
         token: String,
         label: String
-    ): Result<Account> = session.authenticate(userId, token) {
+    ): Result<Account> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(userId)
             ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur recherché n'existe pas")
         success(
@@ -83,7 +83,7 @@ class AccountFeatureImpl(
     override fun findAllRegisteredAccounts(
         userId: UserId,
         token: String
-    ): Result<List<Account>> = session.authenticate(userId, token) {
+    ): Result<List<Account>> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(userId)
             ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "L'utilisateur n'existe pas en base")
         return@authenticate success(user.accounts)
@@ -93,7 +93,7 @@ class AccountFeatureImpl(
         userId: UserId,
         token: String,
         account: Account
-    ): Result<Account> = session.authenticate(userId, token) {
+    ): Result<Account> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(userId)
             ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur n'existe pas en base")
         if(user.hasAccount(account.label)) {

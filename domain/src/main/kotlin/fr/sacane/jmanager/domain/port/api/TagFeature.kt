@@ -24,7 +24,7 @@ class TagFeatureImpl(
     private val tagRepository: TagRepository,
     private val session: SessionManager
 ): TagFeature {
-    override fun addTag(userId: UserId, token: String, tag: Tag): Result<Tag> = session.authenticate(userId, token){
+    override fun addTag(userId: UserId, token: String, tag: Tag): Result<Tag> = session.authenticate(token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
             return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Label '${tag.label}' is already taken by the user ${it.value}")
         }
@@ -32,7 +32,7 @@ class TagFeatureImpl(
         success(save)
     }
 
-    override fun getAllTags(userId: UserId, token: String): Result<List<Tag>> = session.authenticate(userId, token) {
+    override fun getAllTags(userId: UserId, token: String): Result<List<Tag>> = session.authenticate(token) {
         success(tagRepository.getAllDefault(userId))
     }
 
@@ -43,14 +43,14 @@ class TagFeatureImpl(
         tagRepository.saveAll(defaultTags)
     }
 
-    override fun deleteTag(userId: UserId, token: String, tagId: Long): Result<Nothing> = session.authenticate(userId, token){
+    override fun deleteTag(userId: UserId, token: String, tagId: Long): Result<Nothing> = session.authenticate(token){
         if(!tagRepository.deleteById(tagId)) {
             return@authenticate notFound("Tag with id $tagId has not been found")
         }
         success()
     }
 
-    override fun defaultTag(userId: UserId, token: String): Result<Tag> = session.authenticate(userId, token) {
+    override fun defaultTag(userId: UserId, token: String): Result<Tag> = session.authenticate(token) {
         val tagResult = tagRepository.defaultTag() ?: return@authenticate notFound("Il n'y a pas de tag par défaut d'enregistré")
         return@authenticate success(tagResult)
     }
