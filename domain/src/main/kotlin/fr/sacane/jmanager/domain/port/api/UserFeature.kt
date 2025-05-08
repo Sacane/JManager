@@ -37,7 +37,7 @@ class UserFeatureImpl(
         LOGGER.info("LOGIN request for user ${userWithPassword.user.id}")
         val user = userWithPassword.user
         if(hasher.verify(userPassword, userWithPassword.password)) {
-            LOGGER.info("User $pseudonym logged")
+            LOGGER.info("User ${userWithPassword.user.username} logged")
             val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, Role.USER)
             session.addSession(user.id, accessToken)
             return success(user.withToken(accessToken.tokenValue))

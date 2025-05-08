@@ -18,7 +18,6 @@ class WebConfig: WebMvcConfigurer{
         registry.addMapping("/**")
             .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
             .allowedHeaders("Authorization", "X-Requested-With", "content-type")
-            .exposedHeaders("Authorization")
             .allowedOrigins("http://localhost:3000")
             .allowCredentials(true)
     }

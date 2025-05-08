@@ -62,6 +62,7 @@ class JwtTokenGenerator(
                 role = role
             )
         } catch (e: Exception) {
+            println("Error reading token $token: ${e.message}")
             null
         }
     }

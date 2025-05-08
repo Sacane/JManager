@@ -25,7 +25,9 @@ const hasFailedlogin = ref(false)
 const hasFailedRegister = ref(false)
 
 function log() {
+  console.log('LOGIN')
   login(userAuth, (e) => {
+    console.warn('ERROR ???')
     hasFailedlogin.value = true
     toastr.errorAxios(e)
   })

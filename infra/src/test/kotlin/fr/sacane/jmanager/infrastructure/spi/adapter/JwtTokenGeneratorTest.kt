@@ -36,6 +36,7 @@ class JwtTokenGeneratorTest {
         assertThat(readToken).isNotNull
         assertThat(readToken?.userId).isEqualTo(userId)
         assertThat(readToken?.role).isEqualTo(role)
+        assertThat(readToken?.userName).isEqualTo("test")
         assertThat(readToken?.tokenValue).isEqualTo(token.tokenValue)
     }
 

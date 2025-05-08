@@ -4,11 +4,12 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.UserFeature
-import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
 
@@ -48,10 +49,9 @@ class SessionController(
 
     @PostMapping(path = ["/logout"])
     fun logout(
-        @RequestHeader("Authorization") token: String,
         httpResponse: HttpServletResponse
     ): ResponseEntity<Nothing> {
-        return loginFeature.logout(token.asTokenUUID())
+        return loginFeature.logout(currentUser.token)
             .also {
                 val cookie = Cookie("token", null).apply {
                     isHttpOnly = true
@@ -60,6 +60,8 @@ class SessionController(
                     secure = false
                 }
                 httpResponse.addCookie(cookie)
+                SecurityContextHolder.getContext().authentication = null
+                SecurityContextHolder.clearContext()
             }.toHttpResponse()
     }
 //    @PostMapping(path= ["/create"])

@@ -10,7 +10,7 @@ export default function useBooklet() {
   const accountFormatted = ref<AccountFormatted[]>([])
 
   async function findAllBooklet(): Promise<Array<AccountDTO>> {
-    return get(`account`)
+    return get(`account`).then()
   }
 
   async function createBooklet(labelAccount: string, amount: number, currency: string): Promise<any> {
