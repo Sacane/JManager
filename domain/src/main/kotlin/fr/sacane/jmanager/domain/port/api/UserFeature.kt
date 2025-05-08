@@ -15,7 +15,7 @@ import java.util.logging.Logger
 @Port(Side.APPLICATION)
 sealed interface UserFeature {
     fun login(pseudonym: String, userPassword: String): Result<UserToken>
-    fun logout(userId: UserId, token: String): Result<Nothing>
+    fun logout(token: String): Result<Nothing>
     fun register(username: String, password: String, confirmPassword: String): Result<User>
 }
 
@@ -46,9 +46,9 @@ class UserFeatureImpl(
         return failure(ResultState.USER_UNAUTHORIZED, "Le pseudonyme ou le mot de passe est incorrect")
     }
 
-    override fun logout(userId: UserId, token: String)
+    override fun logout(token: String)
     : Result<Nothing> = session.authenticate(token) {
-        session.removeSession(userId, token)
+        session.removeSession(it, token)
         success()
     }
 

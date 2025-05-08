@@ -49,7 +49,6 @@ data class TransactionResponse(
 
 @Serializable
 data class UserBookletResponse(
-    val userId: Long,
     val accountLabel: String,
     val transactionResult: TransactionResult
 )

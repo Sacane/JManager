@@ -34,9 +34,9 @@ class SessionController(
         }.toHttpResponse()
     }
 
-    @PostMapping(path = ["/logout/{id}"])
-    fun logout(@PathVariable id: Long, @RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
-        return loginFeature.logout(id.id(), token.asTokenUUID())
+    @PostMapping(path = ["/logout"])
+    fun logout(@RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
+        return loginFeature.logout(token.asTokenUUID())
             .toHttpResponse()
     }
 //    @PostMapping(path= ["/create"])

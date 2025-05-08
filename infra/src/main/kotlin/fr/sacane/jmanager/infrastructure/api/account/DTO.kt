@@ -2,7 +2,6 @@ package fr.sacane.jmanager.infrastructure.api.account
 
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 
@@ -26,8 +25,7 @@ data class AccountInfoDTO(
 )
 
 @Serializable
-data class UserBookletRequest(
-    val id: Long,
+data class BookletBookingRequest(
     val labelAccount: String,
     val amount: Double,
     val currency: String
