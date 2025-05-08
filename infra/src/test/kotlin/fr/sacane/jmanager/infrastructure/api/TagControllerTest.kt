@@ -45,7 +45,6 @@ class TagControllerTest (
         @Test
         fun `Add personal tag endpoint successfully must return 200`() {
             val body = UserTagRequest(
-                user!!.id.value!!,
                 "Test",
                 ColorDTO(10, 20, 30)
             )
@@ -77,7 +76,6 @@ class TagControllerTest (
                 )
             )
             val body = UserTagRequest(
-                user!!.id.value!!,
                 "test",
                 ColorDTO(10, 20, 30)
             )
@@ -102,7 +100,7 @@ class TagControllerTest (
                 port(port)
                 header("Authorization", token)
             } When {
-                get("/api/tag/user/${user!!.id.value}")
+                get("/api/tag")
             } Then {
                 statusCode(200)
                 body(
@@ -129,7 +127,7 @@ class TagControllerTest (
                 port(port)
                 header("Authorization", token)
             } When {
-                get("/api/tag/user/${user!!.id.value}")
+                get("/api/tag")
             } Then {
                 statusCode(200)
                 body(
@@ -145,7 +143,7 @@ class TagControllerTest (
                 port(port)
                 header("Authorization", token)
             } When {
-                get("/api/tag/user/${user!!.id.value}/default")
+                get("/api/tag/default")
             } Then {
                 statusCode(200)
                 body(
@@ -171,7 +169,7 @@ class TagControllerTest (
                 port(port)
                 header("Authorization", token)
             } When {
-                delete("/api/tag/${targetTag.id}/user/${user!!.id.value}")
+                delete("/api/tag/${targetTag.id}")
             } Then {
                 statusCode(200)
             }
@@ -184,7 +182,7 @@ class TagControllerTest (
                 port(port)
                 header("Authorization", token)
             } When {
-                delete("/api/tag/1/user/${user!!.id.value}")
+                delete("/api/tag/1")
             } Then {
                 statusCode(404)
             }

@@ -37,7 +37,7 @@ abstract class AuthenticatedUserTest {
 
     @AfterEach
     fun tearDown() {
-        session.logout(user?.id!!, token.asTokenUUID())
+        session.logout(token.asTokenUUID())
         userPostgresRepository.deleteAll()
     }
 }

@@ -53,7 +53,7 @@ class SessionControllerTest(
                 port(port)
                 header("Authorization", token)
             } When {
-                post("/api/user/logout/${user!!.id.value}")
+                post("/api/user/logout")
             } Then {
                 statusCode(200)
             }
