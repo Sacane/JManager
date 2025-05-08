@@ -1,6 +1,7 @@
 import type { AxiosError } from 'axios'
 import axios from 'axios'
 import type { Ref } from 'vue'
+import { jwtDecode } from 'jwt-decode'
 
 export interface UserAuth {
   username: string
@@ -10,10 +11,7 @@ interface User {
   id: string
   username: string
   email: string
-  token: string
-  refreshToken: string
-  tokenExpirationDate: Date
-  refreshExpirationDate: Date
+  role: string
 }
 interface UserRegister {
   username: string
@@ -38,11 +36,18 @@ export default function useAuth() {
 
   async function login(userAuth: UserAuth, onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
-      const response = await axios.post(`${host}user/auth`, userAuth)
-      user.value = response.data
+      const response = await axios.post(`${host}user/auth`, userAuth, { withCredentials: true })
+      // user.value = response.data
       isAuthenticated.value = true
       navigateTo('/')
-      localStorage.setItem('user', JSON.stringify(user.value))
+      const token = response.data.token
+      const decoded = jwtDecode<{ id: string, username: string, role: string }>(token)
+      user.value = {
+        id: decoded.id,
+        username: decoded.username,
+        email: null,
+        role: decoded.role,
+      }
     } catch (e: any) {
       onError(e)
     }
@@ -54,9 +59,10 @@ export default function useAuth() {
   async function logout() {
     const config = {
       headers: defaultHeaders.value,
+      withCredentials: true,
     }
     try {
-      await axios.post(`${host}user/logout/${user?.value?.id}`, null, config)
+      await axios.post(`${host}user/logout`, null, config)
       user.value = null
       isAuthenticated.value = false
       navigateTo('/login')

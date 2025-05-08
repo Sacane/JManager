@@ -19,17 +19,17 @@ object FakeFactory {
     private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
 
     val tokenGenerator: TokenGenerator = object : TokenGenerator {
-        override fun generateToken(userId: UserId, role: Role): AccessToken {
-            return AccessToken(userId, "${userId.value}||${UUID.randomUUID()}||${role.name}", role = role)
+        override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {
+            return AccessToken(userId, username, "${userId.value}||${UUID.randomUUID()}||${role.name}||$username", role = role)
         }
 
         override fun readToken(token: String): AccessToken? {
             val parts = token.split("||")
-            println("parts: $parts")
-            if (parts.size != 3) return null
+            if (parts.size != 4) return null
             val userId = UserId(parts[0].toLong())
             val role = Role.valueOf(parts[2])
-            return AccessToken(userId, token, role = role)
+            val username = parts[3]
+            return AccessToken(userId, username, token, role = role)
         }
     }
 

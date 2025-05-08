@@ -32,7 +32,7 @@ class SessionManagerTest {
             userState.init(listOf(
                 UserWithPassword(User(id, "test", email = "test"), "test")
             ))
-            val accessToken = AccessToken(id, "10||${UUID.randomUUID()}||${Role.USER.name}")
+            val accessToken = AccessToken(id, "test","10||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
             sessionState.authenticate(accessToken.tokenValue) {
                 return@authenticate success("success")
@@ -45,7 +45,7 @@ class SessionManagerTest {
         userState.init(listOf(
             UserWithPassword(User(id, "test", email = "test"), "test")
         ))
-        val accessToken = AccessToken(id, "10||${UUID.randomUUID()}||${Role.USER.name}")
+        val accessToken = AccessToken(id, "test","10||${UUID.randomUUID()}||${Role.USER.name}||test")
         sessionManager.addSession(id, accessToken)
         sessionManager.removeSession(id, accessToken.tokenValue)
         sessionManager.authenticate(accessToken.tokenValue) {
@@ -62,7 +62,7 @@ class SessionManagerTest {
             userState.init(listOf(
                 UserWithPassword(User(id, "test", email = "test"), "test")
             ))
-            val accessToken = AccessToken(id, "10||${UUID.randomUUID()}||${Role.USER.name}")
+            val accessToken = AccessToken(id, "test","10||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
             sessionManager.authenticate(accessToken.tokenValue) {
                 return@authenticate success("success")

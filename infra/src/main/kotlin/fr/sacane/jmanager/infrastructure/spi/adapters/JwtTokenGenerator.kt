@@ -21,17 +21,19 @@ class JwtTokenGenerator(
             return SecretKeySpec(keyBytes, 0, keyBytes.size, "HmacSHA256")
         }
 
-    override fun generateToken(userId: UserId, role: Role): AccessToken {
+    override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {
         val expirationDate = Date(System.currentTimeMillis() + 60 * 60 * 1000) // 1 hour
         return Jwts.builder()
             .subject(userId.value.toString())
             .expiration(expirationDate)
             .claim("role", role.name)
+            .claim("username", username)
             .signWith(signingKey)
             .compact()
             .let { tokenValue ->
                 AccessToken(
                     userId = userId,
+                    userName = username,
                     tokenValue = tokenValue,
                     tokenExpirationDate = expirationDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
                     role = role
@@ -54,6 +56,7 @@ class JwtTokenGenerator(
 
             AccessToken(
                 userId = userId,
+                userName = claims["username"].toString(),
                 tokenValue = token,
                 tokenExpirationDate = expirationDate,
                 role = role

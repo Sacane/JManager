@@ -32,8 +32,9 @@ class SessionController(
         return domainResult.map {
             val cookie = Cookie("token", it.token).apply {
                 isHttpOnly = true
-                path = "/api/user"
+                path = "/"
                 maxAge = 60 * 60 * 24 // 1 day
+                secure = false
             }
             httpResponse.addCookie(cookie)
             UserStorageDTO(
@@ -46,9 +47,20 @@ class SessionController(
     }
 
     @PostMapping(path = ["/logout"])
-    fun logout(@RequestHeader("Authorization") token: String): ResponseEntity<Nothing> {
+    fun logout(
+        @RequestHeader("Authorization") token: String,
+        httpResponse: HttpServletResponse
+    ): ResponseEntity<Nothing> {
         return loginFeature.logout(token.asTokenUUID())
-            .toHttpResponse()
+            .also {
+                val cookie = Cookie("token", null).apply {
+                    isHttpOnly = true
+                    path = "/"
+                    maxAge = 0
+                    secure = false
+                }
+                httpResponse.addCookie(cookie)
+            }.toHttpResponse()
     }
 //    @PostMapping(path= ["/create"])
 //    fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {

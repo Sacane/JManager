@@ -14,6 +14,7 @@ val roleAdmin = arrayOf(Role.ADMIN)
 
 data class AccessToken(
     val userId: UserId,
+    val userName: String,
     val tokenValue: String,
     var tokenExpirationDate: LocalDateTime = now().plusHours(1),
     val refreshToken: UUID? = UUID.randomUUID(),

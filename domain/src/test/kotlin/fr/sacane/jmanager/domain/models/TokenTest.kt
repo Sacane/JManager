@@ -10,7 +10,7 @@ import java.util.*
 class TokenTest {
     @Test
     fun `Token knows when it's expired or not`(){
-        val token = AccessToken(UserId(1), UUID.randomUUID().toString(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
+        val token = AccessToken(UserId(1), "test", UUID.randomUUID().toString(), LocalDateTime.now().plusSeconds(5), UUID.randomUUID())
         assertFalse(token.isExpired())
         Thread.sleep(5000)
         assertTrue(token.isExpired())

@@ -19,6 +19,8 @@ class WebConfig: WebMvcConfigurer{
             .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
             .allowedHeaders("Authorization", "X-Requested-With", "content-type")
             .exposedHeaders("Authorization")
+            .allowedOrigins("http://localhost:3000")
+            .allowCredentials(true)
     }
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         registry.addResourceHandler("/resources/**", "/static/**")
