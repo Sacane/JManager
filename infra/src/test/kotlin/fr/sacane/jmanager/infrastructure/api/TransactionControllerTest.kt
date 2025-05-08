@@ -113,7 +113,7 @@ class TransactionControllerTest(
 
             Given {
                 port(port)
-                header("Authorization", token)
+                header("Authorization", "rzarrazrezafaz")
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -176,7 +176,7 @@ class TransactionControllerTest(
         fun `Request for an unauthenticated user must send 401`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                header("Authorization", "rajzerojezaoifazefaz")
                 header("Content-Type", "application/json")
                 param("userID", "2")
             } When {

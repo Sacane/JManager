@@ -49,7 +49,7 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
     ): Result<T> {
         val accessToken = synchronized(lock) {
             val decodedToken = tokenGenerator.readToken(token) ?: return unauthorized("Le token est invalide")
-            val session = getSession(decodedToken.userId, token) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
+            val session = getSession(decodedToken.userId, decodedToken.tokenValue) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
             if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
             if (session.isExpired()) return timeout("La session a expiré")
             if (session.tokenValue != token) return unauthorized("Le token est invalide")
