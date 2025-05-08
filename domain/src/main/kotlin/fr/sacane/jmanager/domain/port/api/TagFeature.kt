@@ -12,11 +12,11 @@ import fr.sacane.jmanager.domain.utils.*
 
 @Port(Side.APPLICATION)
 sealed interface TagFeature {
-    fun addTag(userId: UserId, token: String, tag: Tag): Result<Tag>
-    fun getAllTags(userId: UserId, token: String): Result<List<Tag>>
+    fun addTag(token: String, tag: Tag): Result<Tag>
+    fun getAllTags(token: String): Result<List<Tag>>
     fun addDefaultTags()
-    fun deleteTag(userId: UserId, token: String, tagId: Long): Result<Nothing>
-    fun defaultTag(userId: UserId, token: String): Result<Tag>
+    fun deleteTag(token: String, tagId: Long): Result<Nothing>
+    fun defaultTag(token: String): Result<Tag>
 }
 
 @DomainService
@@ -24,7 +24,7 @@ class TagFeatureImpl(
     private val tagRepository: TagRepository,
     private val session: SessionManager
 ): TagFeature {
-    override fun addTag(userId: UserId, token: String, tag: Tag): Result<Tag> = session.authenticate(token){
+    override fun addTag(token: String, tag: Tag): Result<Tag> = session.authenticate(token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
             return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Label '${tag.label}' is already taken by the user ${it.value}")
         }
@@ -32,8 +32,8 @@ class TagFeatureImpl(
         success(save)
     }
 
-    override fun getAllTags(userId: UserId, token: String): Result<List<Tag>> = session.authenticate(token) {
-        success(tagRepository.getAllDefault(userId))
+    override fun getAllTags(token: String): Result<List<Tag>> = session.authenticate(token) {
+        success(tagRepository.getAllDefault(it))
     }
 
     override fun addDefaultTags() {
@@ -43,14 +43,14 @@ class TagFeatureImpl(
         tagRepository.saveAll(defaultTags)
     }
 
-    override fun deleteTag(userId: UserId, token: String, tagId: Long): Result<Nothing> = session.authenticate(token){
+    override fun deleteTag(token: String, tagId: Long): Result<Nothing> = session.authenticate(token){
         if(!tagRepository.deleteById(tagId)) {
             return@authenticate notFound("Tag with id $tagId has not been found")
         }
         success()
     }
 
-    override fun defaultTag(userId: UserId, token: String): Result<Tag> = session.authenticate(token) {
+    override fun defaultTag(token: String): Result<Tag> = session.authenticate(token) {
         val tagResult = tagRepository.defaultTag() ?: return@authenticate notFound("Il n'y a pas de tag par défaut d'enregistré")
         return@authenticate success(tagResult)
     }

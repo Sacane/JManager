@@ -57,6 +57,13 @@ open class FeatureTest {
         sessionManager.removeSession(john.user.id, token)
     }
 
+    fun launchWithConnectedUserWithoutAccount(action: TokenUserId.() -> Unit){
+        val john = createAndConnect("John")
+        val token = john.token
+        action(TokenUserId(john.user.id, token))
+        sessionManager.removeSession(john.user.id, token)
+    }
+
     inner class AccountTokenUserId(
         val userId: UserId,
         val tokenValue: String,
@@ -66,4 +73,8 @@ open class FeatureTest {
             transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(userId, account.id!!), transactions.toMutableList())))
         }
     }
+    inner class TokenUserId(
+        val userId: UserId,
+        val tokenValue: String
+    )
 }

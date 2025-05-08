@@ -15,12 +15,12 @@ import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
-    fun bookTransaction(userId: UserId, token: String, accountLabel: String, transaction: Transaction): Result<TransactionResumeResult>
-    fun retrieveTransactionsByMonthAndYear(userId: UserId, token: String, month: Month, year: Int, account: String): Result<List<Transaction>>
-    fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: String): Result<TransactionResumeResult>
-    fun findById(userID: Long, id: Long, token: String): Result<Transaction>
-    fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing>
-    fun confirmPreviewTransaction(userId: UserId, token: String, accountID: Long, transactionId: Long): Result<TransactionResumeResult>
+    fun bookTransaction(token: String, accountLabel: String, transaction: Transaction): Result<TransactionResumeResult>
+    fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, account: String): Result<List<Transaction>>
+    fun editTransaction(accountID: Long, transaction: Transaction, token: String): Result<TransactionResumeResult>
+    fun findById(id: Long, token: String): Result<Transaction>
+    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing>
+    fun confirmPreviewTransaction(token: String, accountID: Long, transactionId: Long): Result<TransactionResumeResult>
 }
 
 @DomainService
@@ -35,7 +35,6 @@ class TransactionFeatureImpl(
     }
 
     override fun editTransaction(
-        userID: Long,
         accountID: Long,
         transaction: Transaction,
         token: String
@@ -55,13 +54,12 @@ class TransactionFeatureImpl(
     }
 
     override fun bookTransaction(
-        userId: UserId,
         token: String,
         accountLabel: String,
         transaction: Transaction
-    ): Result<TransactionResumeResult> = session.authenticate(token) {
+    ): Result<TransactionResumeResult> = session.authenticate(token) { id ->
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
-            val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel)
+            val account = accountRepository.findAccountByLabelWithTransactions(id, accountLabel)
                 ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Le compte $accountLabel n'existe pas")
             val newTr =  transactionRepository.save(account.id!!, transaction)
                 ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Erreur est survenu lors de la transaction")
@@ -75,19 +73,18 @@ class TransactionFeatureImpl(
     }
 
     override fun retrieveTransactionsByMonthAndYear(
-        userId: UserId,
+
         token: String,
         month: Month,
         year: Int,
         account: String
     ): Result<List<Transaction>> = session.authenticate(token) {
-        success(transactionRepository.findAccountWithSheetByLabelAndUser(account, userId)?.retrieveSheetSurroundAndSortedByDate(month, year)
+        success(transactionRepository.findAccountWithSheetByLabelAndUser(account, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate notFound("Aucun compte ne correspond au label indiqué")
         )
     }
 
     override fun findById(
-        userID: Long,
         id: Long,
         token: String
     ): Result<Transaction> = session.authenticate(token, roleUser) {
@@ -96,7 +93,7 @@ class TransactionFeatureImpl(
         success(sheet)
     }
 
-    override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing> {
+    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
             val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
@@ -108,7 +105,6 @@ class TransactionFeatureImpl(
     }
 
     override fun confirmPreviewTransaction(
-        userId: UserId,
         token: String,
         accountID: Long,
         transactionId: Long

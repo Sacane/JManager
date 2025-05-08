@@ -29,15 +29,15 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
     }
 
     private val lock: Any = Any()
-    private val userSession: MutableMap<UserId, MutableSet<AccessToken>> = mutableMapOf()
+    private val userSession: MutableMap<Long, MutableSet<AccessToken>> = mutableMapOf()
 
     override fun addSession(userId: UserId, session: AccessToken): Unit = synchronized(lock){
-        val sessions = userSession.computeIfAbsent(userId) { mutableSetOf() }
+        val sessions = userSession.computeIfAbsent(userId.value!!) { mutableSetOf() }
         sessions.add(session)
     }
     private fun getSession(userId: UserId, token: String): AccessToken? = synchronized(lock) {
         return try {
-            userSession[userId]?.first { token == it.tokenValue }
+            userSession[userId.value]?.first { token == it.tokenValue }
         }catch (noSuchElementEx: NoSuchElementException){
             null
         }
@@ -49,6 +49,7 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
     ): Result<T> {
         val accessToken = synchronized(lock) {
             val decodedToken = tokenGenerator.readToken(token) ?: return unauthorized("Le token est invalide")
+            println("decodedToken: $decodedToken")
             val session = getSession(decodedToken.userId, decodedToken.tokenValue) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
             if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
             if (session.isExpired()) return timeout("La session a expiré")
@@ -61,7 +62,7 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
     }
 
     override fun removeSession(userId: UserId, token: String): Unit = synchronized(lock){
-        userSession[userId]?.removeIf{it.tokenValue == token}
+        userSession[userId.value]?.removeIf{it.tokenValue == token}
     }
     override fun purgeExpiredToken() = synchronized(lock) {
         var counter = 0
