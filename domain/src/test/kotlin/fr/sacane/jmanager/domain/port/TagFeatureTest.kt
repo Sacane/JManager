@@ -22,7 +22,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Add a tag must return success`() {
             launchWithConnectedUserInstance {
-                tagFeature.addTag(userId = this.userId, this.tokenValue, Tag("test"))
+                tagFeature.addTag(this.tokenValue, Tag("test"))
                     .assertSuccess()
             }
         }
@@ -31,7 +31,7 @@ class TagFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 tagState.init(UserTag(this.userId, mutableListOf(Tag("test"))))
 
-                tagFeature.addTag(userId = this.userId, this.tokenValue, Tag("test"))
+                tagFeature.addTag(this.tokenValue, Tag("test"))
                     .assertFailure()
             }
         }
@@ -43,14 +43,14 @@ class TagFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 tagState.init(UserTag(this.userId, mutableListOf(Tag("test", id = 90))))
 
-                tagFeature.deleteTag(userId = this.userId, this.tokenValue, 90)
+                tagFeature.deleteTag(this.tokenValue, 90)
                     .assertSuccess()
             }
         }
         @Test
         fun `Delete a tag that does not exist must return failure`() {
             launchWithConnectedUserInstance {
-                tagFeature.deleteTag(userId = this.userId, this.tokenValue, 10)
+                tagFeature.deleteTag(this.tokenValue, 10)
                     .assertFailure()
             }
         }
@@ -62,7 +62,7 @@ class TagFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 tagState.init(UserTag(this.userId, mutableListOf(Tag("test", id = 90))))
 
-                tagFeature.getAllTags(userId = this.userId, this.tokenValue)
+                tagFeature.getAllTags(this.tokenValue)
                     .assertSuccess()
             }
         }
