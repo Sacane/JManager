@@ -17,7 +17,7 @@ class JwtTokenGeneratorTest {
     fun `token must be correctly generated`() {
         val userId = UserId(1)
         val role = Role.USER
-        val token = tokenGenerator.generateToken(userId, role)
+        val token = tokenGenerator.generateToken(userId, "test", role)
 
         assertThat(token).isNotNull
         assertThat(token.userId).isEqualTo(userId)
@@ -29,7 +29,7 @@ class JwtTokenGeneratorTest {
     fun `should read a generated token`() {
         val userId = UserId(1)
         val role = Role.USER
-        val token = tokenGenerator.generateToken(userId, role)
+        val token = tokenGenerator.generateToken(userId, "test", role)
 
         val readToken = tokenGenerator.readToken(token.tokenValue)
 
