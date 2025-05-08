@@ -9,7 +9,6 @@ jobs:
   test-analysis:
     name: Test and analyze on all non-master branches
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v4
         with:
