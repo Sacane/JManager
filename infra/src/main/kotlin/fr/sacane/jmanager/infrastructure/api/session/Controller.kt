@@ -6,6 +6,8 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.infrastructure.api.id
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
+import jakarta.servlet.http.Cookie
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
@@ -21,10 +23,19 @@ class SessionController(
     }
 
     @PostMapping(path= ["/auth"])
-    fun login(@RequestBody userDTO: UserPasswordDTO): ResponseEntity<UserStorageDTO> {
-        val response = loginFeature.login(userDTO.username, userDTO.password)
+    fun login(
+        @RequestBody userDTO: UserPasswordDTO,
+        httpResponse: HttpServletResponse
+    ): ResponseEntity<UserStorageDTO> {
+        val domainResult = loginFeature.login(userDTO.username, userDTO.password)
         LOGGER.info("Start authenticate user ${userDTO.username}...")
-        return response.map {
+        return domainResult.map {
+            val cookie = Cookie("token", it.token).apply {
+                isHttpOnly = true
+                path = "/api/user"
+                maxAge = 60 * 60 * 24 // 1 day
+            }
+            httpResponse.addCookie(cookie)
             UserStorageDTO(
                 it.user.id.value,
                 username = it.user.username,
