@@ -1,7 +1,7 @@
 import com.github.gradle.node.pnpm.task.PnpmTask
 
 plugins {
-  id("com.github.node-gradle.node") version "3.5.1"
+  id("com.github.node-gradle.node") version "7.1.0"
 }
 
 

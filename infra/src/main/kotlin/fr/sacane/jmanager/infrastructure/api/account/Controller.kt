@@ -37,7 +37,7 @@ class AccountController (
 
     @GetMapping
     fun getAccounts(): ResponseEntity<List<AccountDTO>> {
-        LOGGER.info("Requesting all accounts... ${currentUser.token}")
+        LOGGER.info("Requesting all accounts...")
 
         val response = feature.findAllRegisteredAccounts(
             currentUser.token

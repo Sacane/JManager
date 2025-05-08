@@ -21,4 +21,11 @@ fun User.asAuthDetail(token: String, role: Role = Role.USER): JmanagerUserAuthDe
 }
 
 val currentUser: JmanagerUserAuthDetail
-    get() = SecurityContextHolder.getContext().authentication.principal as JmanagerUserAuthDetail
+    get() = try {
+        SecurityContextHolder.getContext().authentication.principal as JmanagerUserAuthDetail
+    } catch (e: Exception) {
+        throw UnauthorizedRequestException(
+            401,
+            "Impossible de récupérer l'utilisateur courant, veuillez vous reconnecter"
+        )
+    }
