@@ -108,7 +108,7 @@ class BookletControllerTest(
         fun `Delete account from an ID of an account by a user that does not exists should return 401`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                header("Authorization", "Bearer 123456789")
                 header("Content-Type", "application/json")
             } When {
                 delete("/api/account/203/100")

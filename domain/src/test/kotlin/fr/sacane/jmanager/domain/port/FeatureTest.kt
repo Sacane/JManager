@@ -26,7 +26,9 @@ open class FeatureTest {
         accountState.clear()
     }
     companion object {
-        val session = UUID.randomUUID().toString()
+        fun generateToken(userId: UserId): String {
+            return "${userId.value}||${UUID.randomUUID()}||${Role.USER.name}"
+        }
         fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction{
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
         }
@@ -39,19 +41,20 @@ open class FeatureTest {
         )
         return account
     }
-    fun createAndConnect(username: String): User {
+    private fun createAndConnect(username: String): UserToken {
         val userId = UserId(Random.nextLong())
         val user = User(userId, username, "$username@test.fr")
         userState.init(listOf(UserWithPassword(user,"test")))
-        sessionManager.addSession(userId, AccessToken(userId, session))
-        return user
+        val tokenValue = generateToken(user.id)
+        sessionManager.addSession(userId, AccessToken(userId, tokenValue))
+        return user.withToken(tokenValue)
     }
     fun launchWithConnectedUserInstance(action: AccountTokenUserId.() -> Unit){
-        val johnId = createAndConnect("John")
-        val account = createAccount(johnId, "test", Amount(0))
-
-        action(AccountTokenUserId(johnId.id, session, account))
-        sessionManager.removeSession(johnId.id, session)
+        val john = createAndConnect("John")
+        val account = createAccount(User(john.user.id, john.user.username, null), "test", Amount(0))
+        val token = john.token
+        action(AccountTokenUserId(john.user.id, token, account))
+        sessionManager.removeSession(john.user.id, token)
     }
 
     inner class AccountTokenUserId(

@@ -25,6 +25,7 @@ object FakeFactory {
 
         override fun readToken(token: String): AccessToken? {
             val parts = token.split("||")
+            println("parts: $parts")
             if (parts.size != 3) return null
             val userId = UserId(parts[0].toLong())
             val role = Role.valueOf(parts[2])
