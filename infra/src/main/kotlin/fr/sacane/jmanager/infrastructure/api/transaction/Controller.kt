@@ -10,6 +10,7 @@ import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import fr.sacane.jmanager.infrastructure.api.toModel
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.Month
@@ -25,6 +26,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     suspend fun createTransaction(
         @RequestBody userBookletResponse: UserBookletResponse
     ): ResponseEntity<TransactionResponse> {
+        logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
         return transactionFeature.bookTransaction(
             currentUser.token,
             userBookletResponse.accountLabel,
@@ -32,7 +34,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         ).map {
             it.toDTO()
         }.toHttpResponse().apply {
-            logger.info("Creating new transaction => ${userBookletResponse.transactionResult} TO => ${this.body?.tagDTO}")
+            logger.info("Transaction created successfully => ${userBookletResponse.transactionResult} TO => ${this.body}")
         }
     }
 

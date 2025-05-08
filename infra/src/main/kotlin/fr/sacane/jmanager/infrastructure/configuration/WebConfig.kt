@@ -13,14 +13,15 @@ import java.time.Duration
 @EnableScheduling
 class WebConfig: WebMvcConfigurer{
 
-
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
-            .allowedHeaders("Authorization", "X-Requested-With", "content-type")
+            .exposedHeaders("*")
+            .allowedMethods("*")
+            .allowedHeaders("*")
             .allowedOrigins("http://localhost:3000")
             .allowCredentials(true)
     }
+
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         registry.addResourceHandler("/resources/**", "/static/**")
             .addResourceLocations("/public", "classpath:/static/**")

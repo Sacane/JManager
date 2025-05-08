@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.infrastructure.api.account.BookletBookingRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -37,7 +38,7 @@ class BookletControllerTest(
             val body = BookletBookingRequest("test", 1000.toDouble(), "€")
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -53,7 +54,7 @@ class BookletControllerTest(
             val body = BookletBookingRequest("test", 1000.toDouble(), "ERR")
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -82,7 +83,7 @@ class BookletControllerTest(
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
                 delete("/api/account/$accountID")
@@ -96,7 +97,7 @@ class BookletControllerTest(
         fun `Delete account from an ID of an account that does not exists should return 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
                 delete("/api/account/231")
@@ -105,15 +106,15 @@ class BookletControllerTest(
             }
         }
         @Test
-        fun `Delete account from an ID of an account by a user that does not exists should return 401`() {
+        fun `Delete account from an ID of an account by a user that does not exists should return 404`() {
             Given {
                 port(port)
-                header("Authorization", "Bearer 123456789")
+                cookie(generateCookie(token))
                 header("Content-Type", "application/json")
             } When {
                 delete("/api/account/100")
             } Then {
-                statusCode(401)
+                statusCode(404)
             }
         }
     }
@@ -136,7 +137,7 @@ class BookletControllerTest(
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
                 get("/api/account/${account.id}")
@@ -153,7 +154,7 @@ class BookletControllerTest(
         fun `Request for an non registered booklet ID must send 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
                 get("/api/account/0")
@@ -191,7 +192,7 @@ class BookletControllerTest(
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
                 get("/api/account")

@@ -39,7 +39,7 @@ export default function useAuth() {
       const response = await axios.post(`${host}user/auth`, userAuth, { withCredentials: true })
       // user.value = response.data
       const result = response.data.token
-      const decoded = jwtDecode<{ username: string, role: string }>(result)
+      const decoded = jwtDecode<{ sub: string, username: string, role: string }>(result)
       user.value = {
         id: decoded.sub,
         username: decoded.username,

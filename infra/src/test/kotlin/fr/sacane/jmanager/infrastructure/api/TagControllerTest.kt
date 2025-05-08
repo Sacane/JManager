@@ -50,7 +50,7 @@ class TagControllerTest (
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -81,7 +81,7 @@ class TagControllerTest (
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -98,7 +98,7 @@ class TagControllerTest (
         fun `Request for tags with no registered personal tags must return at least the default ones`(){
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
             } When {
                 get("/api/tag")
             } Then {
@@ -125,7 +125,7 @@ class TagControllerTest (
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
             } When {
                 get("/api/tag")
             } Then {
@@ -141,7 +141,7 @@ class TagControllerTest (
         fun `GET only default tags must return them with status 200`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
             } When {
                 get("/api/tag/default")
             } Then {
@@ -167,7 +167,7 @@ class TagControllerTest (
             val targetTag = state.get().find { it.label == "test" } ?: fail("Tag not found")
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
             } When {
                 delete("/api/tag/${targetTag.id}")
             } Then {
@@ -180,7 +180,7 @@ class TagControllerTest (
         fun `Delete tag endpoint with non existing tag should return 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
             } When {
                 delete("/api/tag/1")
             } Then {

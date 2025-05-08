@@ -1,18 +1,16 @@
 package fr.sacane.jmanager.infrastructure.api.session
 
-import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.infrastructure.api.NotFoundException
 import fr.sacane.jmanager.infrastructure.api.asAuthDetail
-import fr.sacane.jmanager.infrastructure.spi.adapters.JwtTokenGenerator
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
@@ -28,20 +26,21 @@ class JwtCookieAuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        try {
         val jwt = request.cookies?.firstOrNull { it.name == "token" }?.value
 
         if (jwt != null && SecurityContextHolder.getContext().authentication == null) {
             val token = tokenGenerator.readToken(jwt)
 
             if (token != null) {
-                val user = userRepository.findUserById(token.userId)?.asAuthDetail(token.tokenValue, token.role)
-                    ?: throw IllegalArgumentException("User not found")
 
+                val user = userRepository.findUserById(token.userId)?.asAuthDetail(token.tokenValue, token.role)
+                    ?: throw NotFoundException(1050, "User not found")
                 val authentication = UsernamePasswordAuthenticationToken(
                     user,
                     null,
                     listOf(
-                        GrantedAuthority { "ROLE_${token.role.name}" }
+                        SimpleGrantedAuthority ("ROLE_${token.role.name}")
                     )
                 )
                 authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
@@ -49,7 +48,11 @@ class JwtCookieAuthenticationFilter(
                 SecurityContextHolder.getContext().authentication = authentication
             }
         }
-
         filterChain.doFilter(request, response)
+    } catch (ex: NotFoundException) {
+            response.status = 404
+            response.contentType = "application/json"
+            response.writer.write("""{"code":${ex.errCode},"message":"${ex.message}"}""")
+            SecurityContextHolder.clearContext()}
     }
 }

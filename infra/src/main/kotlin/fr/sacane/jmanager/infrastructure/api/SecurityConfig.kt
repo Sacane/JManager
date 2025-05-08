@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.api.session.JwtCookieAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
@@ -23,7 +24,8 @@ class SecurityConfig(
     ): SecurityFilterChain {
         http {
             authorizeHttpRequests {
-                authorize("api/user/auth", permitAll)
+                authorize("/**", permitAll)
+                authorize("/api/user/auth", permitAll)
                 authorize(anyRequest, authenticated)
             }
             sessionManagement {
@@ -33,7 +35,7 @@ class SecurityConfig(
                 disable()
             }
             cors {
-                disable()
+
             }
             httpBasic {
                 disable()
