@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.*
+import java.util.*
 
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
@@ -16,17 +17,22 @@ object FakeFactory {
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
     private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
-    private val sessionManager = InMemorySessionManager()
 
-    private val tokenGenerator: TokenGenerator = object : TokenGenerator {
+    val tokenGenerator: TokenGenerator = object : TokenGenerator {
         override fun generateToken(userId: UserId, role: Role): AccessToken {
-            return AccessToken(userId, "token", role = role)
+            return AccessToken(userId, "${userId.value}||${UUID.randomUUID()}||${role.name}", role = role)
         }
 
         override fun readToken(token: String): AccessToken? {
-            TODO("Not yet implemented")
+            val parts = token.split("||")
+            if (parts.size != 3) return null
+            val userId = UserId(parts[0].toLong())
+            val role = Role.valueOf(parts[2])
+            return AccessToken(userId, token, role = role)
         }
     }
+
+    private val sessionManager = InMemorySessionManager(tokenGenerator)
 
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager)

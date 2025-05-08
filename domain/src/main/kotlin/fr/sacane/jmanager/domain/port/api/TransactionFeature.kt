@@ -39,7 +39,7 @@ class TransactionFeatureImpl(
         accountID: Long,
         transaction: Transaction,
         token: String
-    ): Result<TransactionResumeResult> = session.authenticate(UserId(userID), token.toString(), roleUser){
+    ): Result<TransactionResumeResult> = session.authenticate(token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "L'ID de la transaction est null")
             val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction notFound("Le compte $accountID n'existe pas")
@@ -59,7 +59,7 @@ class TransactionFeatureImpl(
         token: String,
         accountLabel: String,
         transaction: Transaction
-    ): Result<TransactionResumeResult> = session.authenticate(userId, token) {
+    ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel)
                 ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Le compte $accountLabel n'existe pas")
@@ -80,7 +80,7 @@ class TransactionFeatureImpl(
         month: Month,
         year: Int,
         account: String
-    ): Result<List<Transaction>> = session.authenticate(userId, token) {
+    ): Result<List<Transaction>> = session.authenticate(token) {
         success(transactionRepository.findAccountWithSheetByLabelAndUser(account, userId)?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate notFound("Aucun compte ne correspond au label indiqué")
         )
@@ -90,7 +90,7 @@ class TransactionFeatureImpl(
         userID: Long,
         id: Long,
         token: String
-    ): Result<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
+    ): Result<Transaction> = session.authenticate(token, roleUser) {
         logger.info("Request for a transaction with id $id")
         val sheet = transactionRepository.findTransactionById(id) ?: return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $id n'existe pas")
         success(sheet)
@@ -112,7 +112,7 @@ class TransactionFeatureImpl(
         token: String,
         accountID: Long,
         transactionId: Long
-    ): Result<TransactionResumeResult> = session.authenticate(userId, token) {
+    ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Booklet $accountID not found")
