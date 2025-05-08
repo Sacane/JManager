@@ -5,11 +5,12 @@ import useAuth from './useAuth'
 export default function useQuery() {
   const config = useRuntimeConfig()
   const host = config.public.websocketUrl
-  const { defaultHeaders, tryRefresh, logout } = useAuth()
+  const { defaultHeaders, logout } = useAuth()
   async function get(url: string, params: any | undefined = undefined) {
     try {
       const response = await axios.get(`${host}${url}`, {
         headers: defaultHeaders.value,
+        withCredentials: true,
         params,
       })
       return response.data
@@ -21,6 +22,7 @@ export default function useQuery() {
     try {
       const response = await axios.delete(`${host}${url}`, {
         headers: defaultHeaders.value,
+        withCredentials: true,
         data: body,
       })
       return response.data
@@ -33,6 +35,7 @@ export default function useQuery() {
     try {
       const response = await axios.post(`${host}${url}`, body, {
         headers: defaultHeaders.value,
+        withCredentials: true,
       })
       return response.data
     } catch (error: any) {
@@ -43,6 +46,7 @@ export default function useQuery() {
     try {
       const response = await axios.patch(`${host}${url}`, body, {
         headers: defaultHeaders.value,
+        withCredentials: true,
       })
       return response.data
     } catch (error: any) {

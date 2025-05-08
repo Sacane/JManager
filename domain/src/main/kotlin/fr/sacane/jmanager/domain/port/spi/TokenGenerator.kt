@@ -5,6 +5,6 @@ import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
 
 interface TokenGenerator {
-    fun generateToken(userId: UserId, role: Role = Role.USER): AccessToken
+    fun generateToken(userId: UserId, username: String, role: Role = Role.USER): AccessToken
     fun readToken(token: String): AccessToken?
 }

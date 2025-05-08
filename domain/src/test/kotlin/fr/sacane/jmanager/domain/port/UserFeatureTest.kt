@@ -59,7 +59,7 @@ class UserFeatureTest: FeatureTest() {
                     UserWithPassword(user, DefaultHasher.hash("test"))
                 )
             )
-            val token = tokenGenerator.generateToken(user.id)
+            val token = tokenGenerator.generateToken(user.id, user.username)
             sessionFakeState.addSession(user.id, token)
             userFeature.logout(token.tokenValue)
                 .assertSuccess()

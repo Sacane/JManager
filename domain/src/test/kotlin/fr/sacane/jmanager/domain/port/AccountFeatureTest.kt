@@ -20,8 +20,8 @@ class AccountFeatureTest: FeatureTest() {
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
         private var accountFeature: AccountFeature = FakeFactory.accountFeature
         private val user = userRepository.register("jojo", "test") as User
-        private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}"
-        private val session: AccessToken = AccessToken(userId = user.id, tokenValue)
+        private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
+        private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
         private fun connectUser(user: User) {
             FakeFactory.sessionManager().addSession(user.id, session)

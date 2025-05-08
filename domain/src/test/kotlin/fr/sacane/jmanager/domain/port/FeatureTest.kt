@@ -26,8 +26,8 @@ open class FeatureTest {
         accountState.clear()
     }
     companion object {
-        fun generateToken(userId: UserId): String {
-            return "${userId.value}||${UUID.randomUUID()}||${Role.USER.name}"
+        fun generateToken(userId: UserId, username: String): String {
+            return "${userId.value}||${UUID.randomUUID()}||${Role.USER.name}||$username"
         }
         fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction{
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
@@ -45,8 +45,8 @@ open class FeatureTest {
         val userId = UserId(Random.nextLong())
         val user = User(userId, username, "$username@test.fr")
         userState.init(listOf(UserWithPassword(user,"test")))
-        val tokenValue = generateToken(user.id)
-        sessionManager.addSession(userId, AccessToken(userId, tokenValue))
+        val tokenValue = generateToken(user.id, user.username)
+        sessionManager.addSession(userId, AccessToken(userId, username, tokenValue))
         return user.withToken(tokenValue)
     }
     fun launchWithConnectedUserInstance(action: AccountTokenUserId.() -> Unit){
