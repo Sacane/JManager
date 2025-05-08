@@ -61,7 +61,7 @@ class UserFeatureTest: FeatureTest() {
             )
             val token = tokenGenerator.generateToken(user.id)
             sessionFakeState.addSession(user.id, token)
-            userFeature.logout(user.id, token.tokenValue)
+            userFeature.logout(token.tokenValue)
                 .assertSuccess()
         }
     }
