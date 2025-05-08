@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.api.session
 
-import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.UserFeature
@@ -8,8 +7,10 @@ import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.*
 import java.util.logging.Logger
 
@@ -35,7 +36,6 @@ class SessionController(
                 isHttpOnly = true
                 path = "/"
                 maxAge = 60 * 60 * 24 // 1 day
-                secure = false
             }
             httpResponse.addCookie(cookie)
             UserStorageDTO(
@@ -49,7 +49,8 @@ class SessionController(
 
     @PostMapping(path = ["/logout"])
     fun logout(
-        httpResponse: HttpServletResponse
+        httpResponse: HttpServletResponse,
+
     ): ResponseEntity<Nothing> {
         return loginFeature.logout(currentUser.token)
             .also {
@@ -57,7 +58,6 @@ class SessionController(
                     isHttpOnly = true
                     path = "/"
                     maxAge = 0
-                    secure = false
                 }
                 httpResponse.addCookie(cookie)
                 SecurityContextHolder.getContext().authentication = null
