@@ -38,27 +38,23 @@ export default function useAuth() {
     try {
       const response = await axios.post(`${host}user/auth`, userAuth, { withCredentials: true })
       // user.value = response.data
+      const result = response.data.token
+      const decoded = jwtDecode<{ username: string, role: string }>(result)
+      user.value = {
+        id: decoded.sub,
+        username: decoded.username,
+        role: decoded.role,
+        email: '',
+      }
+      localStorage.setItem('user', JSON.stringify(user.value))
       isAuthenticated.value = true
       navigateTo('/')
-      const token = response.data.token
-      const decoded = jwtDecode<{ id: string, username: string, role: string }>(token)
-      user.value = {
-        id: decoded.id,
-        username: decoded.username,
-        email: null,
-        role: decoded.role,
-      }
     } catch (e: any) {
       onError(e)
     }
   }
-  const defaultHeaders = computed(() => ({
-    Authorization: `Bearer ${user.value?.token}`,
-    Accept: 'application/json',
-  }))
   async function logout() {
     const config = {
-      headers: defaultHeaders.value,
       withCredentials: true,
     }
     try {
@@ -73,14 +69,8 @@ export default function useAuth() {
   }
 
   async function tryRefresh() {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${user.value?.refreshToken}`,
-        Accept: 'application/json',
-      },
-    }
     try {
-      const response = await axios.post(`${host}user/auth/refresh/${user.value?.id}`, null, config)
+      const response = await axios.post(`${host}user/auth/refresh/${user.value?.id}`, null)
       user.value = response.data
     } catch (e: any) {
       isAuthenticated.value = false
@@ -89,14 +79,8 @@ export default function useAuth() {
     }
   }
   async function register(registeredUser: UserRegister, onSuccess: () => void = () => console.log('success'), onError: (e: AxiosError) => void = e => console.error(e)) {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${user.value?.refreshToken}`,
-        Accept: 'application/json',
-      },
-    }
     try {
-      await axios.post(`${host}user/create`, registeredUser, config)
+      await axios.post(`${host}user/create`, registeredUser)
       onSuccess()
     } catch (e: any) {
       onError(e)
@@ -120,5 +104,5 @@ export default function useAuth() {
     throw error
   }
 
-  return { user: readonly(user), isAuthenticated, login, logout, defaultHeaders, tryRefresh, register }
+  return { user: readonly(user), isAuthenticated, login, logout, register }
 }
