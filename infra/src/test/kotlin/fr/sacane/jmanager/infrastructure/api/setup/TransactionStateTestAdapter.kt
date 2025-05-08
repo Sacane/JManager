@@ -14,7 +14,7 @@ data class AccountTransaction(
     val accountOwnerId: UserId,
     val accountName: String,
     val transactions: List<Transaction>,
-    val token: UUID,
+    val token: String,
 )
 
 @Component
