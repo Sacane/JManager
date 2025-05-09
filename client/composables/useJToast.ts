@@ -11,14 +11,6 @@ export default function useJToast() {
     })
   }
 
-  function info(message: string) {
-    toast.add({
-      severity: 'info',
-      summary: 'Information',
-      detail: message,
-      life: 3000,
-    })
-  }
   function warn(message: string) {
     toast.add({
       severity: 'warn',
@@ -37,12 +29,13 @@ export default function useJToast() {
     })
   }
   function errorAxios(axiosError: AxiosError, title: string = 'Erreur') {
+    const errorData = axiosError.response?.data as { message?: string }
     toast.add({
       severity: 'error',
       summary: title,
-      detail: axiosError.response?.data.message,
+      detail: errorData?.message || 'Une erreur inconnue est survenue',
       life: 3000,
     })
   }
-  return { success, info, warn, error, errorAxios }
+  return { success, warn, error, errorAxios }
 }

@@ -177,7 +177,6 @@ function openPreviewCreationDialog() {
 function bookTransaction(transaction: TransactionCreationDTO) {
   saveSheet(data.labelAccount, transaction)
     .then((result) => {
-      console.log('result', result)
       data.accountAmount = result.accountAmount
       data.previewAccountAmount = result.accountPreviewAmount
       const newTransaction = asDisplayableTransaction(result)
@@ -339,7 +338,7 @@ function onConfirmPreview(transaction) {
   }
 }
 
-.table-container ::v-deep .p-datatable-thead {
+.table-container :deep(.p-datatable-thead) {
   position: sticky;
   top: 0;
 }
