@@ -25,7 +25,7 @@ export default function useAuth() {
   const storedUser: User | undefined = JSON.parse(localStorage.getItem('user') as string)
   const isAuthenticated = ref<boolean>(false)
   const config = useRuntimeConfig()
-  const host = config.public.websocketUrl
+  const host = config.public.apiUrl
   if (storedUser) {
     user.value = storedUser
     isAuthenticated.value = true
