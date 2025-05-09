@@ -274,7 +274,7 @@ class TransactionControllerTest(
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(request))
             } When {
-                delete("/api/transaction/{userId}", mapOf("userId" to user!!.id.value))
+                delete("/api/transaction")
             } Then {
                 statusCode(200)
             }
@@ -293,7 +293,7 @@ class TransactionControllerTest(
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(request))
             } When {
-                delete("/api/transaction/{userId}", mapOf("userId" to user!!.id.value))
+                delete("/api/transaction")
             } Then {
                 statusCode(404)
             }
