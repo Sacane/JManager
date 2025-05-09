@@ -4,7 +4,7 @@ import useAuth from './useAuth'
 
 export default function useQuery() {
   const config = useRuntimeConfig()
-  const host = config.public.websocketUrl
+  const host = config.public.apiUrl
   const { logout } = useAuth()
 
   async function get(url: string, params: any | undefined = undefined) {
