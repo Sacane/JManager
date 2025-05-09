@@ -3,8 +3,9 @@ package fr.sacane.jmanager.infrastructure.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.infrastructure.api.account.UserBookletRequest
+import fr.sacane.jmanager.infrastructure.api.account.BookletBookingRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -34,10 +35,10 @@ class BookletControllerTest(
     inner class BookingBookletTest {
         @Test
         fun `Should create an account with its label and amount then send 200`() {
-            val body = UserBookletRequest(user?.id!!.value!!, "test", 1000.toDouble(), "€")
+            val body = BookletBookingRequest("test", 1000.toDouble(), "€")
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -50,10 +51,10 @@ class BookletControllerTest(
 
         @Test
         fun `Should send 400 with bad currency request`() {
-            val body = UserBookletRequest(user?.id!!.value!!, "test", 1000.toDouble(), "ERR")
+            val body = BookletBookingRequest("test", 1000.toDouble(), "ERR")
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -82,10 +83,10 @@ class BookletControllerTest(
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                delete("/api/account/${user!!.id.value!!}/$accountID")
+                delete("/api/account/$accountID")
             } Then {
                 statusCode(200)
             }
@@ -96,24 +97,24 @@ class BookletControllerTest(
         fun `Delete account from an ID of an account that does not exists should return 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                delete("/api/account/${user!!.id.value!!}/100")
+                delete("/api/account/231")
             } Then {
                 statusCode(404)
             }
         }
         @Test
-        fun `Delete account from an ID of an account by a user that does not exists should return 401`() {
+        fun `Delete account from an ID of an account by a user that does not exists should return 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie(generateCookie(token))
                 header("Content-Type", "application/json")
             } When {
-                delete("/api/account/203/100")
+                delete("/api/account/100")
             } Then {
-                statusCode(401)
+                statusCode(404)
             }
         }
     }
@@ -136,10 +137,10 @@ class BookletControllerTest(
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/account/${account.id}/user/${user?.id?.value}")
+                get("/api/account/${account.id}")
             } Then {
                 statusCode(200)
                 body(
@@ -153,10 +154,10 @@ class BookletControllerTest(
         fun `Request for an non registered booklet ID must send 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/account/user/${user?.id?.value}/find/0")
+                get("/api/account/0")
             } Then {
                 statusCode(404)
             }
@@ -191,10 +192,10 @@ class BookletControllerTest(
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/account/${user!!.id.value}")
+                get("/api/account")
             } Then {
                 statusCode(200)
                 body("size()", equalTo(3))

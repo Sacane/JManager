@@ -1,13 +1,12 @@
 package fr.sacane.jmanager.infrastructure.api.account
 
-import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.AccountFeature
-import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
@@ -27,27 +26,21 @@ class AccountController (
 
     @PostMapping
     fun createAccount(
-        @RequestBody userAccount: UserBookletRequest,
-        @RequestHeader("Authorization") token: String
+        @RequestBody userAccount: BookletBookingRequest
     ): ResponseEntity<AccountInfoDTO> {
         LOGGER.info("Booking a new Account...")
         return feature.save(
-            userAccount.id.id(),
-            token.asTokenUUID(),
+            currentUser.token,
             Account(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
         ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
 
+    @GetMapping
+    fun getAccounts(): ResponseEntity<List<AccountDTO>> {
+        LOGGER.info("Requesting all accounts...")
 
-    @GetMapping(path = ["{id}"])
-    fun getAccounts(
-        @PathVariable id: Long,
-        @RequestHeader("Authorization") token: String
-    ): ResponseEntity<List<AccountDTO>> {
-        LOGGER.info("Request for accounts of user $id")
         val response = feature.findAllRegisteredAccounts(
-            id.id(),
-            token.asTokenUUID()
+            currentUser.token
         )
         return response.map { accounts ->
             accounts.map {
@@ -56,19 +49,15 @@ class AccountController (
         }.toHttpResponse()
     }
 
-    @DeleteMapping(path = ["{userId}/{accountId}"])
+    @DeleteMapping(path = ["{accountId}"])
     fun deleteAccount(
-        @PathVariable userId: Long,
-        @PathVariable accountId: Long,
-        @RequestHeader("Authorization") token: String
-    ): ResponseEntity<Nothing> = feature.deleteAccountById(userId.id(), accountId, token.asTokenUUID()).toHttpResponse()
+        @PathVariable accountId: Long
+    ): ResponseEntity<Nothing> = feature.deleteAccountById(accountId, currentUser.token).toHttpResponse()
 
-    @GetMapping("{accountID}/user/{userID}")
+    @GetMapping("{accountID}")
     fun findAccountById(
-        @PathVariable("userID") userID: Long,
-        @PathVariable("accountID") accountID: Long,
-        @RequestHeader("Authorization") token: String
+        @PathVariable("accountID") accountID: Long
     ): ResponseEntity<AccountDTO> =
-        feature.findAccountById(userID.id(), accountID, token.asTokenUUID())
+        feature.findAccountById(accountID, currentUser.token)
             .map { it.toDTO() }.toHttpResponse()
 }

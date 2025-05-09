@@ -4,15 +4,14 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
-import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
-import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import fr.sacane.jmanager.infrastructure.api.toModel
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
-import java.text.DateFormat
 import java.time.LocalDate
 import java.time.Month
 import java.util.logging.Logger
@@ -22,55 +21,55 @@ import java.util.logging.Logger
 @Adapter(Side.APPLICATION)
 class TransactionController(private val transactionFeature: TransactionFeature) {
     private val logger = Logger.getLogger(TransactionController::class.java.name)
+
     @PostMapping
     suspend fun createTransaction(
-        @RequestBody userBookletResponse: UserBookletResponse,
-        @RequestHeader("Authorization") token: String
+        @RequestBody userBookletResponse: UserBookletResponse
     ): ResponseEntity<TransactionResponse> {
+        logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
         return transactionFeature.bookTransaction(
-            userBookletResponse.userId.id(),
-            token.asTokenUUID(),
+            currentUser.token,
             userBookletResponse.accountLabel,
             userBookletResponse.transactionResult.toModel()
         ).map {
             it.toDTO()
         }.toHttpResponse().apply {
-            logger.info("Creating new transaction => ${userBookletResponse.transactionResult} TO => ${this.body?.tagDTO}")
+            logger.info("Transaction created successfully => ${userBookletResponse.transactionResult} TO => ${this.body}")
         }
     }
-
 
     @DeleteMapping("{userId}")
     fun deleteByIds(
         @PathVariable("userId") userId: Long,
-        @RequestBody sheetIds: AccountTransactionsIdRequest,
-        @RequestHeader("Authorization") token: String
+        @RequestBody sheetIds: AccountTransactionsIdRequest
     ): ResponseEntity<Nothing>
-        = transactionFeature.deleteSheetsByIds(UserId(userId), sheetIds.accountId, sheetIds.sheetIds, token.asTokenUUID())
+        = transactionFeature.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds, currentUser.token)
         .toHttpResponse()
 
 
     @GetMapping
     fun getTransactionsByMonthAndYearAndAccountLabel(
-        @RequestParam("userId") userId: Long,
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
-        @RequestParam("accountLabel") accountLabel: String,
-        @RequestHeader("Authorization") token: String
+        @RequestParam("accountLabel") accountLabel: String
         ): ResponseEntity<TransactionListResponse> {
         LOGGER.info("Request transactions from booklet $accountLabel for month $month and year $year")
-        val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId.id(), token.asTokenUUID(), month ?: LocalDate.now().month, year, accountLabel)
+        val response = transactionFeature.retrieveTransactionsByMonthAndYear(
+            currentUser.token,
+            month ?: LocalDate.now().month,
+            year,
+            accountLabel
+        )
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(TransactionListResponse(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))
     }
 
     @PatchMapping
     fun patchTransaction(
-        @RequestBody dto: UserAccountIdsTransactionRequest,
-        @RequestHeader("Authorization") token: String
+        @RequestBody dto: UserAccountIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Start editing transaction => ${dto.sheet}")
-        return transactionFeature.editTransaction(dto.userId, dto.accountId, dto.sheet.toModel(), token.asTokenUUID())
+        return transactionFeature.editTransaction(dto.accountId, dto.sheet.toModel(), currentUser.token)
             .map {
                 it.toDTO()
             }.toHttpResponse()
@@ -80,26 +79,22 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
 
     @GetMapping("{id}")
     fun findById(
-        @RequestParam("userID") userID: Long,
-        @PathVariable("id") transactionID: Long,
-        @RequestHeader("Authorization") token: String
+        @PathVariable("id") transactionID: Long
     ): ResponseEntity<TransactionResult>
-        = transactionFeature.findById(userID, transactionID, token.asTokenUUID())
+        = transactionFeature.findById(transactionID, currentUser.token)
             .map {
                 it.toDTO()
             }.toHttpResponse()
 
     @PatchMapping("/confirm")
     fun confirmPreviewTransaction(
-        @RequestBody command: ConfirmPreviewCommand,
-        @RequestHeader("Authorization") token: String
+        @RequestBody command: ConfirmPreviewCommand
     ): ResponseEntity<TransactionResponse> {
         logger.info("Confirming preview Transaction...")
         return transactionFeature.confirmPreviewTransaction(
-            userId = command.userID.id(),
             transactionId = command.transactionID,
             accountID = command.accountID,
-            token = token.asTokenUUID()
+            token = currentUser.token
         ).map {
             it.toDTO()
         }.toHttpResponse().also {
@@ -128,7 +123,6 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
 
 
 data class ConfirmPreviewCommand(
-    val userID: Long,
     val accountID: Long,
     val transactionID: Long
 )

@@ -32,12 +32,12 @@ abstract class AuthenticatedUserTest {
     @BeforeEach
     fun beforeEach() {
         session.register("test", "test", "test").onSuccess { user = it }
-        session.login("test", "test").onSuccess { token = it.token.tokenValue.toString() }
+        session.login("test", "test").onSuccess { token = it.token }
     }
 
     @AfterEach
     fun tearDown() {
-        session.logout(user?.id!!, token.asTokenUUID())
+        session.logout(token.asTokenUUID())
         userPostgresRepository.deleteAll()
     }
 }

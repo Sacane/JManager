@@ -26,9 +26,6 @@ function handleClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  if (username.value === '') {
-    navigateTo('/login')
-  }
 })
 
 onBeforeUnmount(() => {

@@ -6,14 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import fr.sacane.jmanager.domain.asTokenUUID
-import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.Transaction
-import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.*
+import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -50,8 +49,10 @@ class TransactionControllerTest(
     @LocalServerPort val port: Int,
     @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
-    @Autowired var objectMapper: ObjectMapper
+    @Autowired var objectMapper: ObjectMapper,
+    @Autowired val tokenGenerator: TokenGenerator
 ): AuthenticatedUserTest() {
+
 
 
     @BeforeEach
@@ -73,11 +74,11 @@ class TransactionControllerTest(
             accountStateTestAdapter.init(
                 listOf(Account(200.toAmount(), "test", owner = user))
             )
-            val body = UserBookletResponse(user!!.id.value!!, "test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
+            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -93,11 +94,11 @@ class TransactionControllerTest(
 
         @Test
         fun `Create a transaction with an unknown account must send 404`() {
-            val body = UserBookletResponse(user!!.id.value!!, "test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
+            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie(generateCookie(token))
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -108,18 +109,18 @@ class TransactionControllerTest(
         }
 
         @Test
-        fun `Create a transaction with an unauthenticated user must send 401`() {
-            val body = UserBookletResponse(101, "test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
+        fun `Create a transaction with an unauthenticated user must send 404`() {
+            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
                 post("/api/transaction")
             } Then {
-                statusCode(401)
+                statusCode(404)
             }
         }
     }
@@ -144,7 +145,7 @@ class TransactionControllerTest(
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 param("userID", user!!.id.value)
             } When {
@@ -162,7 +163,7 @@ class TransactionControllerTest(
         fun `Request for an unknown transaction must send 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 param("userID", user!!.id.value)
             } When {
@@ -173,16 +174,16 @@ class TransactionControllerTest(
         }
 
         @Test
-        fun `Request for an unauthenticated user must send 401`() {
+        fun `Request for an unauthenticated user must send 404`() {
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
                 header("Content-Type", "application/json")
                 param("userID", "2")
             } When {
                 get("/api/transaction/{id}", mapOf("id" to "12"))
             } Then {
-                statusCode(401)
+                statusCode(404)
             }
         }
     }
@@ -213,7 +214,7 @@ class TransactionControllerTest(
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
 
                 param("userId", user!!.id.value)
@@ -269,7 +270,7 @@ class TransactionControllerTest(
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(request))
             } When {
@@ -288,7 +289,7 @@ class TransactionControllerTest(
             )
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(request))
             } When {
@@ -335,7 +336,7 @@ class TransactionControllerTest(
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -374,14 +375,13 @@ class TransactionControllerTest(
             val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
 
             val body = ConfirmPreviewCommand(
-                user!!.id.value!!,
                 account.id!!,
                 transaction.id!!,
             )
 
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {

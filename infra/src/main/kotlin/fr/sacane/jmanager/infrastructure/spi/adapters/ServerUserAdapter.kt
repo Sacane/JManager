@@ -9,6 +9,8 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.stereotype.Service
 import java.util.logging.Logger
 
@@ -17,7 +19,7 @@ import java.util.logging.Logger
 class ServerUserAdapter (
     private val userPostgresRepository: UserPostgresRepository,
     private val subscriptionMapper: SubscriptionMapper
-) : UserRepository{
+) : UserRepository {
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
     }
@@ -25,7 +27,8 @@ class ServerUserAdapter (
     @Transactional
     override fun findUserById(userId: UserId): User? {
         val id = userId.value ?: return null
-        return userPostgresRepository.findById(id).orElse(null).toModel()
+        val user = userPostgresRepository.findById(id).orElse(null) ?: return null
+        return user.toModel()
     }
     @Transactional
     override fun findUserByIdWithAccounts(userId: UserId): User? {

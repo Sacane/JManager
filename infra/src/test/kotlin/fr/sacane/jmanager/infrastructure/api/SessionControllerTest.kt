@@ -51,9 +51,9 @@ class SessionControllerTest(
         fun `Request for logout a connected user must return 200`(){
             Given {
                 port(port)
-                header("Authorization", token)
+                cookie("token", token)
             } When {
-                post("/api/user/logout/${user!!.id.value}")
+                post("/api/user/logout")
             } Then {
                 statusCode(200)
             }

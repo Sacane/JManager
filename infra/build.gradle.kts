@@ -24,6 +24,8 @@ group = "fr.sacane.jmanager"
 version = "1.0"
 val springBootVersion = "3.4.0"
 val restAssuredVersion = "5.5.0"
+val jwtVersion = "0.12.6"
+
 dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
@@ -45,6 +47,9 @@ dependencies {
     testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
+    implementation("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jwtVersion}")
 }
 
 jacoco {

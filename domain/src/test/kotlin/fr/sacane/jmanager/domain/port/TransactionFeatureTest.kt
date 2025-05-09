@@ -36,11 +36,11 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true)
                 val transactionToSave2 = generateTransaction("test", 50.toAmount(), false)
-                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave)
+                transactionFeature.bookTransaction(tokenValue, account.label, transactionToSave)
                     .assertTrue {
                         this.transaction.amount == transactionToSave.amount && this.transaction.label == transactionToSave.label
                     }
-                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave2)
+                transactionFeature.bookTransaction(tokenValue, account.label, transactionToSave2)
                     .assertTrue {
                         this.transaction.amount == transactionToSave2.amount && this.transaction.label == transactionToSave2.label
                     }
@@ -67,9 +67,9 @@ class TransactionFeatureTest: FeatureTest() {
                 val toInsertAtLast = generateTransaction("test100", 100.toAmount(), true, "31/01/2024".toDate())
                 val toInsertAtMiddle = generateTransaction("test50", 100.toAmount(), true, "28/01/2024".toDate())
 
-                transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtFirst).assertSuccess()
-                transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtMiddle).assertSuccess()
-                transactionFeature.bookTransaction(userId, tokenValue, account.label, toInsertAtLast).assertSuccess()
+                transactionFeature.bookTransaction(tokenValue, account.label, toInsertAtFirst).assertSuccess()
+                transactionFeature.bookTransaction(tokenValue, account.label, toInsertAtMiddle).assertSuccess()
+                transactionFeature.bookTransaction(tokenValue, account.label, toInsertAtLast).assertSuccess()
 
                 val state = transactionState.getStates()
                 val transactions = state.find { it.id.userId == userId && it.id.accountId == account.id }
@@ -95,7 +95,7 @@ class TransactionFeatureTest: FeatureTest() {
 
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "04/01/2024".toDate())
 
-                transactionFeature.bookTransaction(userId, tokenValue, account.label, transactionToSave)
+                transactionFeature.bookTransaction(tokenValue, account.label, transactionToSave)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -118,7 +118,7 @@ class TransactionFeatureTest: FeatureTest() {
                     generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
                 ))
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "02/01/2024".toDate())
-                transactionFeature.bookTransaction(userId, tokenValue, account.label, transactionToSave)
+                transactionFeature.bookTransaction(tokenValue, account.label, transactionToSave)
                     .assertSuccess()
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
                     ?.transactions
@@ -141,7 +141,7 @@ class TransactionFeatureTest: FeatureTest() {
                 ))
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true, "23/12/2023".toDate())
 
-                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionToSave)
+                transactionFeature.bookTransaction(tokenValue, account.label, transactionToSave)
                     .assertSuccess()
             }
         }
@@ -162,7 +162,7 @@ class TransactionFeatureTest: FeatureTest() {
                     generateTransaction("test5", 100.toAmount(), true, "01/02/2024".toDate()),
                     generateTransaction("test6", 100.toAmount(), true, "01/02/2024".toDate()),
                 ))
-                val response = transactionFeature.retrieveTransactionsByMonthAndYear(userId = userId , session.tokenValue, Month.JANUARY, 2024, account.label)
+                val response = transactionFeature.retrieveTransactionsByMonthAndYear(tokenValue, Month.JANUARY, 2024, account.label)
                 response.map { it.size } shouldBe 5
                 response.assertTrue {
                      all { it.date.month == Month.JANUARY }
@@ -183,7 +183,7 @@ class TransactionFeatureTest: FeatureTest() {
                 val expectedAmount = 105.toAmount()
                 val expectedDate = "02/02/2024".toDate()
                 transactionFeature.editTransaction(
-                    userId.value!!, account.id!!, elements.copy(label = "test1.0", _amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
+                    account.id!!, elements.copy(label = "test1.0", _amount = 105.toAmount(), date = "02/02/2024".toDate()), tokenValue
                 )
 
                 val actualTransaction = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -205,7 +205,7 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 initTransactions(listOf(t1, t2, t3, t4, t5))
 
-                transactionFeature.editTransaction(userId.value!!, account.id!!, t5.copy(date = "31/12/2023".toDate()), session.tokenValue)
+                transactionFeature.editTransaction(account.id!!, t5.copy(date = "31/12/2023".toDate()), tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -228,7 +228,7 @@ class TransactionFeatureTest: FeatureTest() {
             val t5 = generateTransaction("test5", 100.toAmount(), true, "04/01/2024".toDate())
             launchWithConnectedUserInstance {
                 initTransactions(listOf(t1, t2, t3, t4, t5))
-                transactionFeature.editTransaction(userId.value!!, account.id!!, t1.copy(date = "02/01/2024".toDate()), session.tokenValue)
+                transactionFeature.editTransaction(account.id!!, t1.copy(date = "02/01/2024".toDate()), tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -250,8 +250,8 @@ class TransactionFeatureTest: FeatureTest() {
                     transaction
                 ))
                 val transaction2 = generateTransaction("test1", 100.toAmount(), true, "02/01/2024".toDate())
-                transactionFeature.bookTransaction(userId, tokenValue, account.label, transaction2)
-                transactionFeature.editTransaction(userId.value!!, account.id!!, transaction2.copy(_amount = 105.toAmount()), session.tokenValue)
+                transactionFeature.bookTransaction(tokenValue, account.label, transaction2)
+                transactionFeature.editTransaction(account.id!!, transaction2.copy(_amount = 105.toAmount()), tokenValue)
                     .assertSuccess()
 
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
@@ -264,7 +264,7 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val toInsert = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
                 initTransactions(toInsert.asSingleton())
-                transactionFeature.findById(userId.value!!, toInsert.id!!, tokenValue)
+                transactionFeature.findById(toInsert.id!!, tokenValue)
                     .assertTrue { this.label == toInsert.label && this.amount == toInsert.amount }
             }
         }
@@ -275,7 +275,7 @@ class TransactionFeatureTest: FeatureTest() {
         fun `booking a preview transaction should not change the real amount of an account`() {
             launchWithConnectedUserInstance {
                 val transactionPreviewTest = Transaction(Random.nextLong(), "test#0", "01/01/2024".toDate(), 100.toAmount(), true, isPreview = true)
-                transactionFeature.bookTransaction(userId, session.tokenValue, account.label, transactionPreviewTest)
+                transactionFeature.bookTransaction(tokenValue, account.label, transactionPreviewTest)
                     .assertSuccess()
                 val actualAccount = accountState.getStates().find { it.userId == userId }?.account?.find { it.id == account.id }
                 val actualAmount = actualAccount?.amount ?: 10.toAmount().negate()
@@ -300,9 +300,9 @@ class TransactionFeatureTest: FeatureTest() {
                 initTransactions(listOf(
                     transaction, transaction2, transaction3, transaction4
                 ))
-                transactionFeature.deleteSheetsByIds(userId, account.id!!, listOf(
+                transactionFeature.deleteSheetsByIds(account.id!!, listOf(
                     transaction.id!!, transaction2.id!!
-                ), session.tokenValue)
+                ), tokenValue)
                     .assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == userId && it.id.accountId == account.id }
@@ -316,9 +316,9 @@ class TransactionFeatureTest: FeatureTest() {
         @Test
         fun `delete transaction with invalid account must return not found`() {
             launchWithConnectedUserInstance {
-                transactionFeature.deleteSheetsByIds(userId, 188, listOf(
+                transactionFeature.deleteSheetsByIds(188, listOf(
                     1029, 10291
-                ), session.tokenValue)
+                ), tokenValue)
                     .assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
 
@@ -342,7 +342,6 @@ class TransactionFeatureTest: FeatureTest() {
                 )
 
                 transactionFeature.confirmPreviewTransaction(
-                    userId,
                     tokenValue,
                     account.id!!,
                     transactionPreviewTest.id!!
@@ -365,7 +364,6 @@ class TransactionFeatureTest: FeatureTest() {
                 )
 
                 transactionFeature.confirmPreviewTransaction(
-                    userId,
                     tokenValue,
                     188,
                     transactionPreviewTest.id!!
@@ -376,7 +374,6 @@ class TransactionFeatureTest: FeatureTest() {
         fun `confirm preview transaction with a transaction that is not found must return to not found`() {
             launchWithConnectedUserInstance {
                 transactionFeature.confirmPreviewTransaction(
-                    userId,
                     tokenValue,
                     account.id!!,
                     188
