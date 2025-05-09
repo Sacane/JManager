@@ -16,7 +16,6 @@ export default function useQuery() {
         },
         params,
       })
-      console.log(response.data)
       return response.data
     } catch (error: any) {
       console.warn('handle error')
@@ -73,7 +72,6 @@ export default function useQuery() {
       if (status === 401) {
         // toast.error(message)
         localStorage.removeItem('user')
-        console.log('TEST LOGIN')
         navigateTo('/login')
         logout().then()
         return

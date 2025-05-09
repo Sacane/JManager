@@ -34,7 +34,7 @@ export default function useSheet() {
     })
   }
 
-  function confirmPreviewTransaction(accountId, transactionId): Promise<TransactionResultDTO> {
+  function confirmPreviewTransaction(accountId: string, transactionId: string): Promise<TransactionResultDTO> {
     return patch(`transaction/confirm`, {
       transactionID: transactionId,
       accountID: accountId,

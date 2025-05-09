@@ -78,6 +78,7 @@ export default function useAuth() {
       console.error(e.toString())
     }
   }
+  // eslint-disable-next-line no-console
   async function register(registeredUser: UserRegister, onSuccess: () => void = () => console.log('success'), onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
       await axios.post(`${host}user/create`, registeredUser)

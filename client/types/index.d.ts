@@ -58,9 +58,10 @@ declare global {
   }
 
   interface BookletCreationRequest {
-    id: number
     labelAccount: string
     amount: number
     currency: string
   }
 }
+
+export {}
