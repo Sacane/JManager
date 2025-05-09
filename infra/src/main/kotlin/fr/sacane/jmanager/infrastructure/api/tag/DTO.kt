@@ -18,7 +18,6 @@ data class ColorDTO(
 
 @Serializable
 data class UserTagRequest(
-    val userId: Long,
     val tagLabel: String,
     val colorDTO: ColorDTO
 )

@@ -14,7 +14,7 @@ data class AccountTransaction(
     val accountOwnerId: UserId,
     val accountName: String,
     val transactions: List<Transaction>,
-    val token: UUID,
+    val token: String,
 )
 
 @Component
@@ -35,7 +35,7 @@ class TransactionStateTestAdapter(
     override fun init(initialState: Collection<AccountTransaction>) {
         initialState.forEach {
             it.transactions.forEach { tr ->
-                transactionFeature.bookTransaction(it.accountOwnerId, it.token, it.accountName, tr)
+                transactionFeature.bookTransaction(it.token, it.accountName, tr)
             }
         }
     }

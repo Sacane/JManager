@@ -14,14 +14,14 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.util.*
 
-class AccountFeatureTest {
+class AccountFeatureTest: FeatureTest() {
 
     companion object{
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
         private var accountFeature: AccountFeature = FakeFactory.accountFeature
         private val user = userRepository.register("jojo", "test") as User
-        private val tokenValue = UUID.randomUUID()
-        private val session: AccessToken = AccessToken(tokenValue)
+        private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
+        private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
         private fun connectUser(user: User) {
             FakeFactory.sessionManager().addSession(user.id, session)
@@ -38,8 +38,8 @@ class AccountFeatureTest {
         private val element = Account(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = 50L)
         override val action: List<Result<out Any>>
             get() = listOf(
-                accountFeature.findAccountById(user.id, 50L, UUID.randomUUID()),
-                accountFeature.save(user.id, UUID.randomUUID(), element)
+                accountFeature.findAccountById(50L, UUID.randomUUID().toString()),
+                accountFeature.save(UUID.randomUUID().toString(), element)
             )
     }
 
@@ -50,7 +50,7 @@ class AccountFeatureTest {
         accountState.init(listOf(
             AccountByOwner(listOf(element), user.id)
         ))
-        accountFeature.findAccountById(user.id, 50L, session.tokenValue)
+        accountFeature.findAccountById(50L, session.tokenValue)
             .assertTrue {
                 this.label == "test"
             }
@@ -70,7 +70,7 @@ class AccountFeatureTest {
             owner = user,
             id= element.id,
         )
-        val response = accountFeature.editAccount(userID = user.id.value!!, account = account, session.tokenValue)
+        val response = accountFeature.editAccount(account = account, session.tokenValue)
 
         val expectedAnswer = Amount(BigDecimal(102))
 
@@ -86,7 +86,7 @@ class AccountFeatureTest {
             AccountByOwner(listOf(element), otherUser.id)
         ))
 
-        accountFeature.deleteAccountById(otherUser.id, element.id!!, session.tokenValue).assertTrue {
+        accountFeature.deleteAccountById(element.id!!, session.tokenValue).assertTrue {
             val accounts = accountState.getStates()
 
             val expectedAccountSize = 0
@@ -102,54 +102,58 @@ class AccountFeatureTest {
 
     @Test
     fun `As an account's owner, I can retrieve it by its label`() {
-        val otherUser = userRepository.register("jojo","test") as User
-        connectUser(otherUser)
-        val element = Account(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = 50L)
-        accountState.init(listOf(
-            AccountByOwner(listOf(element), otherUser.id)
-        ))
-
-        accountFeature.findByLabelAndUserId(otherUser.id, session.tokenValue, element.label)
-            .assertTrue {
-            this.label == "test" && this.amount == Amount(100)
+        launchWithConnectedUserInstance {
+            val element = Account(Amount.fromString("100", "€".asCurrency()), "test22", owner = user, id = 50L)
+            accountState.init(listOf(
+                AccountByOwner(listOf(element), userId)
+            ))
+            accountFeature.findByLabelAndUserId(tokenValue, element.label)
+                .assertTrue {
+                    this.label == "test22" && this.amount == Amount(100)
+                }
         }
     }
 
     @Test
     fun `As an account's owner,  I can retrieve All of my Registered Accounts`() {
-        val otherUser = userRepository.register("jojo", "test") as User
-        connectUser(otherUser)
-        val account = Account(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = 50L)
-        val account2 = Account(Amount.fromString("100", "€".asCurrency()), "test2", owner = user, id = 51L)
-        val account3 = Account( Amount.fromString("100", "€".asCurrency()), "test3", owner = user, id= 52L)
-        val account4 = Account( Amount.fromString("100", "€".asCurrency()), "test4", owner = user, id = 53L)
-        val expectedAccount = listOf(
-            account,
-            account2,
-            account3,
-            account4
-        )
-        accountState.init(listOf(
-            AccountByOwner(expectedAccount, otherUser.id)
-        ))
+        launchWithConnectedUserWithoutAccount {
+            val account = Account(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = 50L)
+            val account2 = Account(Amount.fromString("100", "€".asCurrency()), "test2", owner = user, id = 51L)
+            val account3 = Account( Amount.fromString("100", "€".asCurrency()), "test3", owner = user, id= 52L)
+            val account4 = Account( Amount.fromString("100", "€".asCurrency()), "test4", owner = user, id = 53L)
+            val expectedAccount = listOf(
+                account,
+                account2,
+                account3,
+                account4
+            )
+            accountState.init(listOf(
+                AccountByOwner(expectedAccount, userId)
+            ))
 
-        accountFeature.findAllRegisteredAccounts(otherUser.id, session.tokenValue)
-            .assertEquals(expectedAccount)
+            accountFeature.findAllRegisteredAccounts(tokenValue)
+                .assertContainsAtPosition(0, account)
+                .assertContainsAtPosition(1, account2)
+                .assertContainsAtPosition(2, account3)
+                .assertContainsAtPosition(3, account4)
+        }
+
     }
 
     @Test
     fun `As a Jmanager user, I can create new account`() {
-        val otherUser = userRepository.register("jojo", "test") as User
-        connectUser(otherUser)
+        launchWithConnectedUserWithoutAccount {
+            val accountToSave = Account( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = 50L)
 
-        val accountToSave = Account( Amount.fromString("100", "€".asCurrency()), "test1", owner = otherUser, id = 50L)
+            accountFeature.save(tokenValue, accountToSave)
+                .assertTrue {
+                    val expectedAmount = Amount(100)
+                    val expectedLabelAccount = "test1"
+                    this.amount == expectedAmount && this.label == expectedLabelAccount
+                }
+        }
 
-        accountFeature.save(otherUser.id, session.tokenValue, accountToSave)
-            .assertTrue {
-                val expectedAmount = Amount(100)
-                val expectedLabelAccount = "test1"
-                this.amount == expectedAmount && this.label == expectedLabelAccount
-            }
+
     }
 
     @Test
@@ -162,7 +166,7 @@ class AccountFeatureTest {
         ))
 
         val accountToSave = Account( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = 51L)
-        accountFeature.save(otherUser.id, session.tokenValue, accountToSave)
+        accountFeature.save(session.tokenValue, accountToSave)
             .assertFailure()
     }
 }

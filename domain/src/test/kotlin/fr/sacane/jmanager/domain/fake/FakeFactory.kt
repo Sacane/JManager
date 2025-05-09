@@ -4,12 +4,12 @@ import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.AccessToken
+import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.*
-import fr.sacane.jmanager.domain.port.spi.DefaultHasher
-import fr.sacane.jmanager.domain.port.spi.InMemorySessionManager
-import fr.sacane.jmanager.domain.port.spi.InfraTransactionProviderPort
-import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.spi.*
+import java.util.*
 
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
@@ -17,10 +17,27 @@ object FakeFactory {
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
     private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
-    private val sessionManager = InMemorySessionManager()
+
+    val tokenGenerator: TokenGenerator = object : TokenGenerator {
+        override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {
+            return AccessToken(userId, username, "${userId.value}||${UUID.randomUUID()}||${role.name}||$username", role = role)
+        }
+
+        override fun readToken(token: String): AccessToken? {
+            val parts = token.split("||")
+            if (parts.size != 4) return null
+            val userId = UserId(parts[0].toLong())
+            val role = Role.valueOf(parts[2])
+            val username = parts[3]
+            return AccessToken(userId, username, token, role = role)
+        }
+    }
+
+    private val sessionManager = InMemorySessionManager(tokenGenerator)
+
     val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager)
-    val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher)
+    val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
     fun accountState(): State<AccountByOwner>{

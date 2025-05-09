@@ -5,22 +5,31 @@ import useAuth from './useAuth'
 export default function useQuery() {
   const config = useRuntimeConfig()
   const host = config.public.websocketUrl
-  const { defaultHeaders, tryRefresh, logout } = useAuth()
+  const { logout } = useAuth()
+
   async function get(url: string, params: any | undefined = undefined) {
     try {
       const response = await axios.get(`${host}${url}`, {
-        headers: defaultHeaders.value,
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         params,
       })
+      console.log(response.data)
       return response.data
     } catch (error: any) {
+      console.warn('handle error')
       handleError(error)
     }
   }
   async function deleteQuery(url: string, body: any | undefined) {
     try {
       const response = await axios.delete(`${host}${url}`, {
-        headers: defaultHeaders.value,
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         data: body,
       })
       return response.data
@@ -32,7 +41,10 @@ export default function useQuery() {
   async function post(url: string, body: any | undefined) {
     try {
       const response = await axios.post(`${host}${url}`, body, {
-        headers: defaultHeaders.value,
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
       return response.data
     } catch (error: any) {
@@ -42,7 +54,10 @@ export default function useQuery() {
   async function patch(url: string, body: any | undefined) {
     try {
       const response = await axios.patch(`${host}${url}`, body, {
-        headers: defaultHeaders.value,
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
       return response.data
     } catch (error: any) {
@@ -55,12 +70,10 @@ export default function useQuery() {
       const axiosError = error as AxiosError<any, any>
       const status = axiosError.response?.data.status
       // const message = axiosError.response?.data.message
-      if (status === 307) {
-        tryRefresh().then()
-        return
-      } else if (status === 401) {
+      if (status === 401) {
         // toast.error(message)
         localStorage.removeItem('user')
+        console.log('TEST LOGIN')
         navigateTo('/login')
         logout().then()
         return

@@ -66,6 +66,7 @@ tasks.register("jacocoRootReport", JacocoReport::class) {
 		html.required.set(true)
 	}
 }
+
 tasks {
 	clean {
 		dependsOn(":client:clean")

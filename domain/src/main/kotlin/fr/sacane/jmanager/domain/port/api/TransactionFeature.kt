@@ -11,17 +11,16 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDateTime
 import java.time.Month
-import java.util.*
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
-    fun bookTransaction(userId: UserId, token: UUID, accountLabel: String, transaction: Transaction): Result<TransactionResumeResult>
-    fun retrieveTransactionsByMonthAndYear(userId: UserId, token: UUID, month: Month, year: Int, account: String): Result<List<Transaction>>
-    fun editTransaction(userID: Long, accountID: Long, transaction: Transaction, token: UUID): Result<TransactionResumeResult>
-    fun findById(userID: Long, id: Long, token: UUID): Result<Transaction>
-    fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID): Result<Nothing>
-    fun confirmPreviewTransaction(userId: UserId, token: UUID, accountID: Long, transactionId: Long): Result<TransactionResumeResult>
+    fun bookTransaction(token: String, accountLabel: String, transaction: Transaction): Result<TransactionResumeResult>
+    fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, account: String): Result<List<Transaction>>
+    fun editTransaction(accountID: Long, transaction: Transaction, token: String): Result<TransactionResumeResult>
+    fun findById(id: Long, token: String): Result<Transaction>
+    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing>
+    fun confirmPreviewTransaction(token: String, accountID: Long, transactionId: Long): Result<TransactionResumeResult>
 }
 
 @DomainService
@@ -36,11 +35,10 @@ class TransactionFeatureImpl(
     }
 
     override fun editTransaction(
-        userID: Long,
         accountID: Long,
         transaction: Transaction,
-        token: UUID
-    ): Result<TransactionResumeResult> = session.authenticate(UserId(userID), token, roleUser){
+        token: String
+    ): Result<TransactionResumeResult> = session.authenticate(token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if(transaction.id == null) return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "L'ID de la transaction est null")
             val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction notFound("Le compte $accountID n'existe pas")
@@ -56,13 +54,12 @@ class TransactionFeatureImpl(
     }
 
     override fun bookTransaction(
-        userId: UserId,
-        token: UUID,
+        token: String,
         accountLabel: String,
         transaction: Transaction
-    ): Result<TransactionResumeResult> = session.authenticate(userId, token) {
+    ): Result<TransactionResumeResult> = session.authenticate(token) { id ->
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
-            val account = accountRepository.findAccountByLabelWithTransactions(userId, accountLabel)
+            val account = accountRepository.findAccountByLabelWithTransactions(id, accountLabel)
                 ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Le compte $accountLabel n'existe pas")
             val newTr =  transactionRepository.save(account.id!!, transaction)
                 ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Erreur est survenu lors de la transaction")
@@ -76,28 +73,27 @@ class TransactionFeatureImpl(
     }
 
     override fun retrieveTransactionsByMonthAndYear(
-        userId: UserId,
-        token: UUID,
+
+        token: String,
         month: Month,
         year: Int,
         account: String
-    ): Result<List<Transaction>> = session.authenticate(userId, token) {
-        success(transactionRepository.findAccountWithSheetByLabelAndUser(account, userId)?.retrieveSheetSurroundAndSortedByDate(month, year)
+    ): Result<List<Transaction>> = session.authenticate(token) {
+        success(transactionRepository.findAccountWithSheetByLabelAndUser(account, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate notFound("Aucun compte ne correspond au label indiqué")
         )
     }
 
     override fun findById(
-        userID: Long,
         id: Long,
-        token: UUID
-    ): Result<Transaction> = session.authenticate(UserId(userID), token, roleUser) {
+        token: String
+    ): Result<Transaction> = session.authenticate(token, roleUser) {
         logger.info("Request for a transaction with id $id")
         val sheet = transactionRepository.findTransactionById(id) ?: return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $id n'existe pas")
         success(sheet)
     }
 
-    override fun deleteSheetsByIds(userId: UserId, accountID: Long, sheetIds: List<Long>, token: UUID): Result<Nothing> {
+    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
             val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
@@ -109,11 +105,10 @@ class TransactionFeatureImpl(
     }
 
     override fun confirmPreviewTransaction(
-        userId: UserId,
-        token: UUID,
+        token: String,
         accountID: Long,
         transactionId: Long
-    ): Result<TransactionResumeResult> = session.authenticate(userId, token) {
+    ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Booklet $accountID not found")

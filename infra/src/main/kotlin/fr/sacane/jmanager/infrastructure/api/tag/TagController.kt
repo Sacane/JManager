@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
-import fr.sacane.jmanager.infrastructure.api.id
+import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
@@ -21,35 +21,27 @@ class TagController(
 
     @PostMapping
     fun addPersonalTag(
-        @RequestBody userTagRequest: UserTagRequest,
-        @RequestHeader("Authorization") token: String
+        @RequestBody userTagRequest: UserTagRequest
     ): ResponseEntity<TagDTO>
-    = tagFeature.addTag(userId = userTagRequest.userId.id(), token = token.asTokenUUID(), userTagRequest.tagLabel.asPersonalTag(userTagRequest.colorDTO.asAwtColor()))
+    = tagFeature.addTag(token = currentUser.token, userTagRequest.tagLabel.asPersonalTag(userTagRequest.colorDTO.asAwtColor()))
             .map { it.toDTO() }.toHttpResponse()
 
 
-    @GetMapping("/user/{userId}")
+    @GetMapping
     fun getAllTags(
-        @RequestHeader("Authorization") token: String,
-        @PathVariable("userId") userId: Long
     ): ResponseEntity<List<TagDTO>>
-    = tagFeature.getAllTags(userId.id(), token.asTokenUUID()).map { it.map { tag -> tag.toDTO() } }.toHttpResponse()
+    = tagFeature.getAllTags(currentUser.token).map { it.map { tag -> tag.toDTO() } }.toHttpResponse()
 
 
-    @DeleteMapping("{tagId}/user/{userId}")
+    @DeleteMapping("{tagId}")
     fun deleteTag(
-        @RequestHeader("Authorization") token: String,
-        @PathVariable("userId") userId: Long,
         @PathVariable("tagId") tagId: Long
     ): ResponseEntity<Nothing>
-       = tagFeature.deleteTag(userId.id(), token.asTokenUUID(), tagId)
+       = tagFeature.deleteTag(currentUser.token, tagId)
            .toHttpResponse()
 
-    @GetMapping("/user/{userId}/default")
-    fun defaultTag(
-        @RequestHeader("Authorization") token: String,
-        @PathVariable("userId") userId: Long,
-    ): ResponseEntity<TagDTO> = tagFeature.defaultTag(userId.id(), token.asTokenUUID())
+    @GetMapping("/default")
+    fun defaultTag(): ResponseEntity<TagDTO> = tagFeature.defaultTag(currentUser.token)
         .map { it.toDTO() }.toHttpResponse()
 
 }
