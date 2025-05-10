@@ -27,6 +27,7 @@ class SecurityConfig(
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
             }
             authorizeHttpRequests {
+                authorize("/login", permitAll)
                 authorize("/api/user/auth", permitAll)
                 authorize(anyRequest, authenticated)
             }
