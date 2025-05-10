@@ -9,7 +9,7 @@ definePageMeta({
 
 const route = useRoute()
 const toastr = useJToast()
-const selectedSheets = ref([])
+const selectedSheets = ref<TransactionCreationDTO[]>([])
 
 const { translate, monthFromNumber, englishMonth } = useDate()
 const tag = useTag()
@@ -19,7 +19,19 @@ const { findByDate, deleteTransaction, confirmPreviewTransaction } = useTransact
 const date = new Date()
 const tags = ref<TagDTO[]>([])
 
-const formData = reactive({
+const formData = reactive<{
+  year: number
+  month: string
+  labelAccount: string
+  isRangeSelected: boolean
+  currentSheets: TransactionCreationDTO[]
+  currentAccountId: string
+  accountAmount: number
+  previewAccountAmount: number
+  dateYear: Date
+  dateMonth: string
+  tagDTO: TagDTO | null
+}>({
   year: date.getFullYear(),
   month: monthFromNumber(new Date().getMonth() + 1) as string,
   labelAccount: '',
@@ -41,8 +53,8 @@ function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString()).toFixed(2)} €` : '',
-    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString()).toFixed(2)} €` : '',
+    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '',
+    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
@@ -168,7 +180,7 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       formData.previewAccountAmount = result.accountPreviewAmount
       const newTransaction = asDisplayableTransaction(result)
       actualSheets.value.push(newTransaction)
-      actualSheets.value = [...actualSheets.value].sort((a, b) => b.date < a.date)
+      actualSheets.value = [...actualSheets.value].sort((a, b) => new Date(b.date) - new Date(a.date))
       isCreationDialogVisible.value = false
       resetPlaceholder()
       toastr.success('La transaction a bien été enregistrée')
@@ -179,7 +191,7 @@ function applyEditTransaction(transaction: TransactionCreationDTO) {
     .then((result: TransactionResultDTO) => {
       toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
       resetPlaceholder()
-      const index = actualSheets.value.findIndex(item => +item.id === +result.id)
+      const index = actualSheets.value.findIndex(item => (((item?.id) ? (+item?.id) : 0) === +result.id))
       if (index !== -1) {
         actualSheets.value[index] = asDisplayableTransaction(result)
       }
@@ -188,7 +200,7 @@ function applyEditTransaction(transaction: TransactionCreationDTO) {
       isEditDialogVisible.value = false
     }).catch(err => toastr.errorAxios(err))
 }
-// =============================================
+
 onMounted(() => {
   formData.month = monthFromNumber(new Date().getMonth() + 1) as string
   initAccount()
@@ -218,21 +230,20 @@ function rowStyle(row: TransactionCreationDTO): any | undefined {
   return style
 }
 
-function confirmPreview(transaction) {
-  confirmPreviewTransaction(formData.currentAccountId, transaction.id)
+function confirmPreview(transaction: TransactionCreationDTO) {
+  confirmPreviewTransaction(formData.currentAccountId, transaction.id as string)
     .then((result) => {
       formData.accountAmount = result.accountAmount
       formData.previewAccountAmount = result.accountPreviewAmount
       const index = actualSheets.value.findIndex(v => v.id === transaction.id)
       actualSheets.value.splice(index, 1)
       actualSheets.value.push(asDisplayableTransaction(result))
-      actualSheets.value = actualSheets.value.sort((a, b) => b.date < a.date)
-      console.warn('actualSheets', actualSheets.value)
+      actualSheets.value = actualSheets.value.sort((a, b) => new Date(b.date).getDate() - new Date(a.date).getDate())
       toastr.success('La validation de la transaction s\'est bien déroulé !')
     })
 }
 
-function onConfirmPreview(transaction) {
+function onConfirmPreview(transaction: TransactionCreationDTO) {
   confirm.require({
     message: 'Confirmez-vous vouloir valider cette transaction prévisionnelle ?',
     header: 'Valider la transaction',
