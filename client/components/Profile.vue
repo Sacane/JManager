@@ -109,13 +109,4 @@ onBeforeUnmount(() => {
 .dropdown-menu button:hover {
   background-color: #f0f0f0;
 }
-
-.dropdown-enter-active, .dropdown-leave-active {
-  transition: all 0.1s ease;
-}
-
-.dropdown-enter-from, .dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
 </style>

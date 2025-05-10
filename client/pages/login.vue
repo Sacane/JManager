@@ -1,41 +1,19 @@
 <script setup lang="ts">
 import useAuth from '../composables/useAuth'
 
-const { login, register } = useAuth()
+const { login } = useAuth()
 const toastr = useJToast()
 const userAuth = reactive({
   username: '',
   password: '',
 })
 
-const userRegistered = reactive({
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-})
-
-const mode = ref(true)
-
-function switchMode() {
-  mode.value = !mode.value
-}
-
 const hasFailedlogin = ref(false)
-const hasFailedRegister = ref(false)
 
 function log() {
-  console.log('LOGIN')
   login(userAuth, (e) => {
-    console.warn('ERROR ???')
     hasFailedlogin.value = true
     toastr.errorAxios(e)
-  })
-}
-function registerUser() {
-  register(userRegistered, () => switchMode(), (error) => {
-    hasFailedRegister.value = true
-    toastr.errorAxios(error, 'Erreur d\'enregistrement')
   })
 }
 </script>
@@ -47,7 +25,7 @@ function registerUser() {
       <h1 class="text-3xl text-black-600">
         JManager Application
       </h1>
-      <div v-if="mode">
+      <div>
         <form @submit.prevent="log">
           <div class="mb-4">
             <label for="username">Nom d'utilisateur</label>
@@ -86,14 +64,14 @@ function registerUser() {
       <!--        </form> -->
       <!--      </div> -->
 
-      <div class="mt-4">
-        <p class="text-black-600">
-          {{ mode ? "Vous n'avez pas de compte ?" : 'Vous avez déjà un compte ?' }}
-        </p>
-        <Button class="" @click="switchMode">
-          {{ mode ? 'S\'enregistrer' : 'Se connecter' }}
-        </Button>
-      </div>
+      <!--      <div class="mt-4"> -->
+      <!--                <p class="text-black-600"> -->
+      <!--                  {{ mode ? "Vous n'avez pas de compte ?" : 'Vous avez déjà un compte ?' }} -->
+      <!--                </p> -->
+      <!--        <Button> -->
+      <!--          Se connecter -->
+      <!--        </Button> -->
+      <!--      </div> -->
     </div>
   </div>
 </template>
