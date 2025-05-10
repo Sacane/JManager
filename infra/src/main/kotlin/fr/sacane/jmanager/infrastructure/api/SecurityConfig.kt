@@ -41,6 +41,7 @@ class SecurityConfig(
                 authorize("/assets/**", permitAll)
                 authorize("/js/**", permitAll)
                 authorize("/css/**", permitAll)
+                authorize("/_nuxt/**", permitAll)
 
                 authorize("/login", permitAll)
                 authorize("/api/user/auth", permitAll)
