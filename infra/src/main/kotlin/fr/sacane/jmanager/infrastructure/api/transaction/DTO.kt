@@ -1,17 +1,14 @@
 package fr.sacane.jmanager.infrastructure.api.transaction
 
-import com.fasterxml.jackson.annotation.JsonFormat
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
 import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.time.LocalDate
 
 @Serializable
 data class UserAccountIdsTransactionRequest(
-    val userId: Long,
     val accountId: Long,
     val sheet: TransactionResult
 )
