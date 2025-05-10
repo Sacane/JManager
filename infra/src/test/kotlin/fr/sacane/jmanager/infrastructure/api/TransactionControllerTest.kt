@@ -27,12 +27,13 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.Month
 
 class BigDecimalSerializer : JsonSerializer<BigDecimal>() {
     override fun serialize(value: BigDecimal, gen: JsonGenerator, serializers: SerializerProvider) {
-        gen.writeString(value.setScale(2, BigDecimal.ROUND_HALF_UP).toString())
+        gen.writeString(value.setScale(2, RoundingMode.HALF_UP).toString())
     }
 }
 

@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -19,11 +20,11 @@ object BigDecimalSerializer : KSerializer<BigDecimal> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: BigDecimal) {
-        encoder.encodeString(value.setScale(2, BigDecimal.ROUND_HALF_UP).toString())
+        encoder.encodeString(value.setScale(2, RoundingMode.HALF_UP).toString())
     }
 
     override fun deserialize(decoder: Decoder): BigDecimal {
-        return BigDecimal(decoder.decodeDouble()).setScale(2, BigDecimal.ROUND_HALF_UP)
+        return BigDecimal(decoder.decodeDouble()).setScale(2, RoundingMode.HALF_UP)
     }
 }
 
