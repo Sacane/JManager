@@ -10,7 +10,12 @@ definePageMeta({
 
 const { fetch, deleteAccount, createAccount } = useBooklet()
 const isAccountFilled = ref<boolean>(false)
-const data = ref<Array<BookletDTO>>([])
+const data = ref<Array<{
+  id: number
+  labelAccount: string
+  amount: string
+  currency: string
+}>>([])
 
 onMounted(async () => {
   await fetch().then((accountArray) => {

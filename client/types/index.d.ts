@@ -29,6 +29,7 @@ declare global {
     labelAccount: string
     transactions: Array<SheetDTO>
     previewAmount: number
+    currency?: string
   }
 
   interface SheetAverageDTO {

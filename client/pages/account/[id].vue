@@ -245,7 +245,7 @@ function confirmPreview(transaction: TransactionCreationDTO) {
 
 function onConfirmPreview(transaction: TransactionCreationDTO) {
   confirm.require({
-    message: 'Confirmez-vous vouloir valider cette transaction prévisionnelle ?',
+    message: 'Confirmez-vous vouloir valider cette transaction attendue ?',
     header: 'Valider la transaction',
     icon: 'pi pi-check',
     acceptLabel: 'Oui',
@@ -290,7 +290,7 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
         </Column>
         <Column :style="{ width: '10rem', textAlign: 'center' }">
           <template #body="{ data }">
-            <Button v-if="data.isPreview" v-tooltip="'Valider la transaction prévisionnel'" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
+            <Button v-if="data.isPreview" v-tooltip="'Valider la transaction attendue'" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
           </template>
         </Column>
       </DataTable>
@@ -301,7 +301,7 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
           Ajouter une transaction
         </Button>
         <Button class="preview-button" @click="openPreviewCreationDialog">
-          Ajouter une transaction prévisionnelle
+          Ajouter une transaction attendue
         </Button>
       </div>
       <Button class="trash" icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
