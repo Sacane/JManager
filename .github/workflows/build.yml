@@ -43,6 +43,7 @@ jobs:
     name: Build and deploy
     runs-on: self-hosted
     if: github.ref == 'refs/heads/master'
+    needs: test-analysis
     steps:
       - uses: actions/checkout@v4
         with:
