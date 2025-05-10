@@ -69,7 +69,7 @@ export default function useQuery() {
       const axiosError = error as AxiosError<any, any>
       const status = axiosError.response?.data.status
       // const message = axiosError.response?.data.message
-      if (status === 401) {
+      if (status === 401 || status === 403) {
         // toast.error(message)
         localStorage.removeItem('user')
         navigateTo('/login')

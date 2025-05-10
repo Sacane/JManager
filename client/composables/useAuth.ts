@@ -95,7 +95,7 @@ export default function useAuth() {
       if (status === 307) {
         tryRefresh().then()
         return
-      } else if (status === 401) {
+      } else if (status === 401 || status === 403) {
         isAuthenticated.value = false
         navigateTo('/login')
         return
