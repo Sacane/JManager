@@ -13,24 +13,24 @@ export default function useTransaction() {
     return get(`transaction/${id}`)
   }
 
-  function saveTransaction(accountLabel: string, sheetDTO: SheetDTO): Promise<TransactionResultDTO> {
+  function saveTransaction(accountLabel: string, transactionCreationDTO: TransactionCreationDTO): Promise<TransactionResultDTO> {
     return post('transaction', {
       accountLabel,
-      transactionResult: sheetDTO,
+      transactionResult: transactionCreationDTO,
     })
   }
 
   function deleteTransaction(accountId: number, ids: Array<number>): Promise<any> {
     return deleteQuery(`transaction`, {
       accountId,
-      sheetIds: ids,
+      transactionIds: ids,
     })
   }
 
-  function editTransaction(sheet: SheetDTO, accountId: number): Promise<TransactionResultDTO> {
+  function editTransaction(transactionCreationDTO: TransactionCreationDTO, accountId: number): Promise<TransactionResultDTO> {
     return patch('transaction', {
       accountId,
-      sheet,
+      transaction: transactionCreationDTO,
     })
   }
 

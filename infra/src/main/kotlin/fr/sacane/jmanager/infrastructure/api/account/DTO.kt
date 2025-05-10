@@ -12,7 +12,7 @@ data class AccountDTO(
     val amount: BigDecimal,
     val labelAccount: String,
     val previewAmount: String,
-    val sheets: List<TransactionResult>?,
+    val transactions: List<TransactionResult>?,
     val currency: String
 )
 

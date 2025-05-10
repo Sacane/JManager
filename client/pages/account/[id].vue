@@ -18,30 +18,31 @@ const { findById } = useBooklet()
 const { findByDate, deleteTransaction, confirmPreviewTransaction } = useTransaction()
 const date = new Date()
 const tags = ref<TagDTO[]>([])
+
 const data = reactive({
   year: date.getFullYear(),
   month: monthFromNumber(new Date().getMonth() + 1) as string,
   labelAccount: '',
   isRangeSelected: false,
-  currentSheets: [] as SheetDTO[],
+  currentSheets: [] as TransactionCreationDTO[],
   currentAccountId: '',
   accountAmount: 0.00,
   previewAccountAmount: 0.00,
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
-  tagDTO: undefined,
+  tagDTO: null,
 })
 
-const actualSheets = ref<SheetDTO[]>([])
+const actualSheets = ref<TransactionCreationDTO[]>([])
 
 const { saveTransaction, editTransaction, findTransactionById } = useTransaction()
 
-function asDisplayableTransaction(transaction: TransactionResultDTO): any {
+function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction.value).toFixed(2)} €` : '',
-    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction.value).toFixed(2)} €` : '',
+    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value.toString()).toFixed(2)} €` : '',
+    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value.toString()).toFixed(2)} €` : '',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
@@ -49,7 +50,7 @@ function asDisplayableTransaction(transaction: TransactionResultDTO): any {
 function retrieveSheets() {
   findByDate(englishMonth(data.month), data.year, data.labelAccount)
     .then((value: SheetAverageDTO) => {
-      actualSheets.value = value.sheets.map((sheet: SheetDTO) => {
+      actualSheets.value = value.transactions.map((sheet: TransactionCreationDTO) => {
         return asDisplayableTransaction(sheet)
       })
     })
@@ -94,18 +95,6 @@ function confirmDeleteButton() {
     accept: () => confirmDelete(),
   })
 }
-const editTransactionInfo = reactive({
-  id: 0,
-  label: '',
-  date: '',
-  amount: 0,
-  selectedMode: 'expenses',
-  accountId: 0,
-  value: 0.00,
-  tagDTO: undefined,
-  isIncome: false,
-  isPreview: false,
-})
 
 function onYearChange() {
   data.year = data.dateYear.getFullYear()
@@ -116,8 +105,6 @@ function back() {
 }
 
 const uDate = useDate()
-
-// =================== REFACTO ================
 
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
@@ -206,14 +193,13 @@ onMounted(() => {
   data.month = monthFromNumber(new Date().getMonth() + 1) as string
   initAccount()
   retrieveTags()
-  tag.getDefaultTag().then((tagDTO) => {
+  tag.getDefaultTag().then((tagDTO: TagDTO) => {
     data.tagDTO = tagDTO
-    editTransactionInfo.tagDTO = tagDTO
     transactionPlaceholder.tagDTO = tagDTO
     data.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
   })
 })
-function rowStyle(row: SheetDTO): any | undefined {
+function rowStyle(row: TransactionCreationDTO): any | undefined {
   const style: {
     backgroundColor?: string
     background?: string
@@ -275,8 +261,8 @@ function onConfirmPreview(transaction) {
                 <Calendar id="yearPicker" v-model="data.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
               <div class="flex flex-col justify-between lg:(flex-row gap-3)">
-                <BalanceCard title="Solde réel" :amount="data.accountAmount" is-preview />
-                <BalanceCard title="Solde prévisionnel" :amount="data.previewAccountAmount" is-preview />
+                <BalanceCard title="Solde réel" :amount="data.accountAmount.toString()" is-preview />
+                <BalanceCard title="Solde prévisionnel" :amount="data.previewAccountAmount.toString()" is-preview />
               </div>
             </div>
           </div>

@@ -39,7 +39,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     fun deleteByIds(
         @RequestBody sheetIds: AccountTransactionsIdRequest
     ): ResponseEntity<Nothing>
-        = transactionFeature.deleteSheetsByIds(sheetIds.accountId, sheetIds.sheetIds, currentUser.token)
+        = transactionFeature.deleteSheetsByIds(sheetIds.accountId, sheetIds.transactionIds, currentUser.token)
         .toHttpResponse()
 
 
@@ -64,12 +64,12 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     fun patchTransaction(
         @RequestBody dto: UserAccountIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
-        logger.info("Start editing transaction => ${dto.sheet}")
-        return transactionFeature.editTransaction(dto.accountId, dto.sheet.toModel(), currentUser.token)
+        logger.info("Start editing transaction => ${dto.transaction}")
+        return transactionFeature.editTransaction(dto.accountId, dto.transaction.toModel(), currentUser.token)
             .map {
                 it.toDTO()
             }.toHttpResponse()
-            .also { LOGGER.info("Transaction edited successfully : ${dto.sheet}") }
+            .also { LOGGER.info("Transaction edited successfully : ${dto.transaction}") }
     }
 
 

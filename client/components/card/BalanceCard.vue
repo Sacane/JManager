@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
   title: string
-  amount: number
+  amount: string
   isPreview?: boolean
 }>()
 
