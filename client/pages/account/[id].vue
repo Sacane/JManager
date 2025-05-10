@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
-import useSheet from '~/composables/useSheets'
+import useTransaction from '~/composables/useTransaction'
 import { getTagStyle } from '~/utils/util'
 
 definePageMeta({
@@ -15,7 +15,7 @@ const { translate, monthFromNumber, englishMonth } = useDate()
 const tag = useTag()
 
 const { findById } = useBooklet()
-const { findByDate, deleteSheet, confirmPreviewTransaction } = useSheets()
+const { findByDate, deleteTransaction, confirmPreviewTransaction } = useTransaction()
 const date = new Date()
 const tags = ref<TagDTO[]>([])
 const data = reactive({
@@ -34,7 +34,7 @@ const data = reactive({
 
 const actualSheets = ref<SheetDTO[]>([])
 
-const { saveSheet, editSheet, findTransactionById } = useSheet()
+const { saveTransaction, editTransaction, findTransactionById } = useTransaction()
 
 function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
@@ -70,7 +70,7 @@ function initAccount() {
 }
 
 async function confirmDelete() {
-  deleteSheet(Number.parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
+  deleteTransaction(Number.parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
     .then(() => initAccount())
     .finally(() => {
       findById(Number.parseInt(data.currentAccountId)).then((account) => {
@@ -175,7 +175,7 @@ function openPreviewCreationDialog() {
   isCreationDialogVisible.value = true
 }
 function bookTransaction(transaction: TransactionCreationDTO) {
-  saveSheet(data.labelAccount, transaction)
+  saveTransaction(data.labelAccount, transaction)
     .then((result) => {
       data.accountAmount = result.accountAmount
       data.previewAccountAmount = result.accountPreviewAmount
@@ -187,8 +187,8 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       toastr.success('La transaction a bien été enregistrée')
     })
 }
-function editTransaction(transaction: TransactionCreationDTO) {
-  editSheet(transaction, Number.parseInt(data.currentAccountId))
+function applyEditTransaction(transaction: TransactionCreationDTO) {
+  editTransaction(transaction, Number.parseInt(data.currentAccountId))
     .then((result: TransactionResultDTO) => {
       toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
       resetPlaceholder()
@@ -213,8 +213,12 @@ onMounted(() => {
     data.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
   })
 })
-function rowStyle(row): any | undefined {
-  const style = {}
+function rowStyle(row: SheetDTO): any | undefined {
+  const style: {
+    backgroundColor?: string
+    background?: string
+    color?: string
+  } = {}
   if (row.isPreview) {
     style.backgroundColor = '#a6a4a4'
   }
@@ -321,7 +325,7 @@ function onConfirmPreview(transaction) {
     :transaction-placeholder="transactionPlaceholder"
     button-title="Mettre à jour"
     @cancel-creation="cancelEditDialog"
-    @create-transaction="editTransaction"
+    @create-transaction="applyEditTransaction"
   />
 </template>
 
