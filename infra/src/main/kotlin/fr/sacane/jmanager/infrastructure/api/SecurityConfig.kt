@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
@@ -18,27 +19,18 @@ class SecurityConfig(
     private val userDetailsService: UserRepository,
 ) {
     @Bean
-    fun filterChain(
-        http: HttpSecurity
-    ): SecurityFilterChain {
+    fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http {
+            cors { }
+            csrf { disable() }
+            sessionManagement {
+                sessionCreationPolicy = SessionCreationPolicy.STATELESS
+            }
             authorizeHttpRequests {
-                authorize("/**", permitAll)
                 authorize("/api/user/auth", permitAll)
                 authorize(anyRequest, authenticated)
             }
-            sessionManagement {
-                sessionCreationPolicy = org.springframework.security.config.http.SessionCreationPolicy.STATELESS
-            }
-            csrf {
-                disable()
-            }
-            cors {
-
-            }
-            httpBasic {
-                disable()
-            }
+            httpBasic { disable() }
             addFilterBefore<UsernamePasswordAuthenticationFilter>(JwtCookieAuthenticationFilter(tokenGenerator, userDetailsService))
         }
         return http.build()

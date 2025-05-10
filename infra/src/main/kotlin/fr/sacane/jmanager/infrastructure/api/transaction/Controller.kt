@@ -22,7 +22,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     private val logger = Logger.getLogger(TransactionController::class.java.name)
 
     @PostMapping
-    suspend fun createTransaction(
+    fun createTransaction(
         @RequestBody userBookletResponse: UserBookletResponse
     ): ResponseEntity<TransactionResponse> {
         logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
@@ -32,9 +32,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             userBookletResponse.transactionResult.toModel()
         ).map {
             it.toDTO()
-        }.toHttpResponse().apply {
-            logger.info("Transaction created successfully => ${userBookletResponse.transactionResult} TO => ${this.body}")
-        }
+        }.toHttpResponse()
     }
 
     @DeleteMapping
