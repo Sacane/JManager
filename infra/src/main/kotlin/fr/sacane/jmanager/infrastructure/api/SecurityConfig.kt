@@ -36,16 +36,9 @@ class SecurityConfig(
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
             }
             authorizeHttpRequests {
-                authorize("/index.html", permitAll)
-                authorize("/favicon.ico", permitAll)
-                authorize("/assets/**", permitAll)
-                authorize("/js/**", permitAll)
-                authorize("/css/**", permitAll)
-                authorize("/_nuxt/**", permitAll)
-
-                authorize("/login", permitAll)
                 authorize("/api/user/auth", permitAll)
-                authorize(anyRequest, authenticated)
+                authorize("/api/**", authenticated)
+                authorize(anyRequest, permitAll)
             }
             httpBasic { disable() }
             exceptionHandling {
