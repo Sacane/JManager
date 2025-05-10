@@ -326,7 +326,6 @@ class TransactionControllerTest(
             val transactionToPatch = transactionStateTestAdapter.get()
                 .find { it.label == "test2" }!!
             val body = UserAccountIdsTransactionRequest(
-                user!!.id.value!!,
                 accountId = accountId!!,
                 sheet = transactionToPatch.toDTO()
                     .copy(
