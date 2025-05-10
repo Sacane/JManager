@@ -23,7 +23,7 @@ declare global {
     accountPreviewAmount: number
   }
 
-  interface AccountDTO {
+  interface BookletDTO {
     id: number | undefined
     amount: number
     labelAccount: string

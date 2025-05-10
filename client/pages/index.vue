@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
-import type { Account, AccountDTO } from '@/types'
-import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
+import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -11,10 +10,10 @@ const { createAccount, fetch } = useBooklet()
 const isAccountDialogOpen = ref(false)
 const toast = useJToast()
 
-const accounts = ref<AccountDTO[]>([])
-const sum = computed(() => accounts.value.reduce((acc: number, curr: AccountDTO) => acc + Number.parseFloat(curr.amount), 0.00))
+const accounts = ref<BookletDTO[]>([])
+const sum = computed(() => accounts.value.reduce((acc: number, curr: BookletDTO) => acc + Number.parseFloat(curr.amount.toString()), 0.00))
 
-function handleAccountCreation(account: Account) {
+function handleAccountCreation(account: { label: string, digit: number }) {
   createAccount(account.label, account.digit, '€')
     .then((acc) => {
       if (accounts.value.length < 3) {
@@ -97,7 +96,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
-  <AccountBookingDialog
+  <BookletBookingDialog
     :digit="0.00"
     :visible="isAccountDialogOpen"
     @create-account="handleAccountCreation"
@@ -149,18 +148,6 @@ onMounted(() => {
 .user-icon {
   color: var(--primary);
   font-size: 50px;
-}
-
-.card {
-  background: #fff;
-  border-radius: 12px;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 16px;
-  font-family: Arial, sans-serif;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Header de la carte */

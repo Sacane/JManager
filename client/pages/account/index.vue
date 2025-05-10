@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import useBooklet from '../../composables/useBooklet'
-import AccountBookingDialog from '~/components/dialog/AccountBookingDialog.vue'
+import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -10,7 +10,7 @@ definePageMeta({
 
 const { fetch, deleteAccount, createAccount } = useBooklet()
 const isAccountFilled = ref<boolean>(false)
-const data = ref<Array<AccountDTO>>([])
+const data = ref<Array<BookletDTO>>([])
 
 onMounted(async () => {
   await fetch().then((accountArray) => {
@@ -19,8 +19,8 @@ onMounted(async () => {
   })
 })
 
-function format(accounts: Array<AccountDTO>) {
-  data.value = accounts.map((account: AccountDTO) => {
+function format(accounts: Array<BookletDTO>) {
+  data.value = accounts.map((account: BookletDTO) => {
     return {
       id: account.id,
       labelAccount: account.labelAccount,
@@ -87,7 +87,7 @@ function openAccountDialog() {
         <Button icon="pi pi-plus" class="add-button" @click="openAccountDialog" />
       </div>
     </div>
-    <AccountBookingDialog
+    <BookletBookingDialog
       :visible="isAddAccountDialogOpen"
       @create-account="handleAccountCreation"
       @cancel="cancel"
