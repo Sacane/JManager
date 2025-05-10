@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
@@ -18,6 +19,14 @@ class SecurityConfig(
     private val tokenGenerator: TokenGenerator,
     private val userDetailsService: UserRepository,
 ) {
+
+    @Bean
+    fun accessDeniedHandler(): AccessDeniedHandlerImpl {
+        val handler = AccessDeniedHandlerImpl()
+        handler.setErrorPage("/login")
+        return handler
+    }
+
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http {
@@ -32,6 +41,9 @@ class SecurityConfig(
                 authorize(anyRequest, authenticated)
             }
             httpBasic { disable() }
+            exceptionHandling {
+                accessDeniedHandler()
+            }
             addFilterBefore<UsernamePasswordAuthenticationFilter>(JwtCookieAuthenticationFilter(tokenGenerator, userDetailsService))
         }
         return http.build()
