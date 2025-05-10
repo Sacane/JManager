@@ -327,7 +327,7 @@ class TransactionControllerTest(
                 .find { it.label == "test2" }!!
             val body = UserAccountIdsTransactionRequest(
                 accountId = accountId!!,
-                sheet = transactionToPatch.toDTO()
+                transaction = transactionToPatch.toDTO()
                     .copy(
                         label = "test4",
                         value = BigDecimal(150)
