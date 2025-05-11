@@ -1,4 +1,4 @@
-export default function useSheet() {
+export default function useTransaction() {
   const { deleteQuery, post, get, patch } = useQuery()
   const dateUse = useDate()
 
@@ -13,24 +13,24 @@ export default function useSheet() {
     return get(`transaction/${id}`)
   }
 
-  function saveSheet(accountLabel: string, sheetDTO: SheetDTO): Promise<TransactionResultDTO> {
+  function saveTransaction(accountLabel: string, transactionCreationDTO: TransactionCreationDTO): Promise<TransactionResultDTO> {
     return post('transaction', {
       accountLabel,
-      transactionResult: sheetDTO,
+      transactionResult: transactionCreationDTO,
     })
   }
 
-  function deleteSheet(accountId: number, ids: Array<number>): Promise<any> {
+  function deleteTransaction(accountId: number, ids: Array<number>): Promise<any> {
     return deleteQuery(`transaction`, {
       accountId,
-      sheetIds: ids,
+      transactionIds: ids,
     })
   }
 
-  function editSheet(sheet: SheetDTO, accountId: number): Promise<TransactionResultDTO> {
+  function editTransaction(transactionCreationDTO: TransactionCreationDTO, accountId: number): Promise<TransactionResultDTO> {
     return patch('transaction', {
       accountId,
-      sheet,
+      transaction: transactionCreationDTO,
     })
   }
 
@@ -41,5 +41,5 @@ export default function useSheet() {
     })
   }
 
-  return { findByDate, saveSheet, deleteSheet, editSheet, findTransactionById, confirmPreviewTransaction }
+  return { findByDate, saveTransaction, deleteTransaction, editTransaction, findTransactionById, confirmPreviewTransaction }
 }

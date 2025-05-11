@@ -9,7 +9,7 @@ export default function useBooklet() {
   const { get, post, deleteQuery } = useQuery()
   const accountFormatted = ref<AccountFormatted[]>([])
 
-  async function findAllBooklet(): Promise<Array<AccountDTO>> {
+  async function findAllBooklet(): Promise<Array<BookletDTO>> {
     return get(`account`).then()
   }
 
@@ -26,7 +26,7 @@ export default function useBooklet() {
     return deleteQuery(`account/${id}`, undefined)
   }
 
-  async function findById(accountId: number): Promise<AccountDTO> {
+  async function findById(accountId: number): Promise<BookletDTO> {
     return get(`account/${accountId}`)
   }
   return { createAccount: createBooklet, fetch: findAllBooklet, deleteAccount, accountFormatted, findById }

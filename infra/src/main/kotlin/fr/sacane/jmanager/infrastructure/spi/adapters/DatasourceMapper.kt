@@ -19,7 +19,7 @@ class AccountMapper(
     fun asResource(account: Account): AccountResource {
         val userResource = account.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), subscriptions = mutableListOf(), userResource.get(),  initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
+            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         } else {
             AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
         }
@@ -121,45 +121,11 @@ fun Tag.toPersonalTag(userResource: UserResource? = null): TagPersonalResource{
     return TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(color.red, color.green, color.blue), userResource)
 }
 
-internal fun User.asExistingResource(subscriptionMapper: SubscriptionMapper): UserResource
+internal fun User.asExistingResource(): UserResource
         = UserResource(idUser = this.id.value,
     username = username,
     email = email,
     accounts = this.accounts.map {it.asResource()}.toMutableList(),
-    subscriptions = this.subscriptionList.map { subscriptionMapper.asSubscriptionResource(it, this.asExistingResource(subscriptionMapper)) }.toMutableList(),
     tags = this.tags.map { it.toPersonalTag() }.toMutableList()
 )
-
-@Component
-class SubscriptionMapper(
-    private val accountJpaRepository: AccountJpaRepository
-) {
-    internal fun asSubscriptionResource(subscription: SubscriptionComplete, userResource: UserResource?): SubscriptionEntity {
-        val accounts = subscription.linkedAccountIds.map { accountJpaRepository.findByIdOrNull(it)!! }
-        val asResource = subscription.subscription.tag.asResource()
-        val subscriptionEntity = SubscriptionEntity(
-            subscription.subscription.label,
-            subscription.subscription.startDate,
-            subscription.subscription.amount.amount,
-            subscription.subscription.isIncome,
-            accounts = accounts.toMutableList(),
-            owner = userResource
-        )
-        when(asResource) {
-            is DefaultTagResource -> subscriptionEntity.tag = asResource
-            is TagPersonalResource -> subscriptionEntity.personalTag = asResource
-        }
-        return subscriptionEntity
-    }
-
-    internal fun toDomain(subscriptionEntity: SubscriptionEntity): SubscriptionComplete {
-        return SubscriptionComplete(
-            subscription = Subscription(subscriptionEntity.amount.toAmount(), subscriptionEntity.label, subscriptionEntity.beginDate, subscriptionEntity.isIncome, linkedAccount = emptyList(), tag = subscriptionEntity.tag?.toDomain()!!),
-            linkedAccountIds = subscriptionEntity.accounts.map { it.idAccount!! }
-        )
-    }
-
-
-
-}
 

@@ -23,16 +23,17 @@ declare global {
     accountPreviewAmount: number
   }
 
-  interface AccountDTO {
+  interface BookletDTO {
     id: number | undefined
     amount: number
     labelAccount: string
-    sheets: Array<SheetDTO>
+    transactions: Array<SheetDTO>
     previewAmount: number
+    currency?: string
   }
 
   interface SheetAverageDTO {
-    sheets: SheetDTO[]
+    transactions: TransactionCreationDTO[]
     sum: number
   }
   interface ColorDTO {
@@ -48,9 +49,9 @@ declare global {
   }
 
   interface TransactionCreationDTO {
-    id?: string
+    id: string | null
     label: string
-    value?: number
+    value: number | null
     isIncome: boolean
     date: string
     tagDTO: TagDTO

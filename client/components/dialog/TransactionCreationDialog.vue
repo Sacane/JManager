@@ -17,7 +17,7 @@ const digits = reactive({
 
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
-const validerButtonRef = ref(null)
+const validationButtonRef = ref(null)
 const inputNumberRef = ref(null)
 
 const { formattedDateString } = useDate()

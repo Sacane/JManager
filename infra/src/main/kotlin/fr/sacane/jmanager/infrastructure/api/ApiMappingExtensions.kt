@@ -25,7 +25,7 @@ internal fun TransactionResult.toModel(): Transaction
 = Transaction(this.id, this.label, LocalDate.parse(this.date), Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
 internal fun AccountDTO.toModel(user: User? = null): Account
-= Account(this.amount.toAmount(), this.labelAccount, this.sheets?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = this.amount.toAmount(), id = this.id)
+= Account(this.amount.toAmount(), this.labelAccount, this.transactions?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = this.amount.toAmount(), id = this.id)
 
 internal fun Transaction.toDTO(): TransactionResult {
     return TransactionResult(id, label, amount.amount, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag.toDTO(), isPreview)

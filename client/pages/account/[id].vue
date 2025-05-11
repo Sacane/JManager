@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
-import useSheet from '~/composables/useSheets'
+import useTransaction from '~/composables/useTransaction'
 import { getTagStyle } from '~/utils/util'
 
 definePageMeta({
@@ -9,47 +9,60 @@ definePageMeta({
 
 const route = useRoute()
 const toastr = useJToast()
-const selectedSheets = ref([])
+const selectedSheets = ref<TransactionCreationDTO[]>([])
 
 const { translate, monthFromNumber, englishMonth } = useDate()
 const tag = useTag()
 
 const { findById } = useBooklet()
-const { findByDate, deleteSheet, confirmPreviewTransaction } = useSheets()
+const { findByDate, deleteTransaction, confirmPreviewTransaction } = useTransaction()
 const date = new Date()
 const tags = ref<TagDTO[]>([])
-const data = reactive({
+
+const formData = reactive<{
+  year: number
+  month: string
+  labelAccount: string
+  isRangeSelected: boolean
+  currentSheets: TransactionCreationDTO[]
+  currentAccountId: string
+  accountAmount: number
+  previewAccountAmount: number
+  dateYear: Date
+  dateMonth: string
+  tagDTO: TagDTO | null
+}>({
   year: date.getFullYear(),
   month: monthFromNumber(new Date().getMonth() + 1) as string,
   labelAccount: '',
   isRangeSelected: false,
-  currentSheets: [] as SheetDTO[],
+  currentSheets: [] as TransactionCreationDTO[],
   currentAccountId: '',
   accountAmount: 0.00,
   previewAccountAmount: 0.00,
   dateYear: new Date(),
   dateMonth: translate(monthFromNumber(new Date().getMonth() + 1) as string),
-  tagDTO: undefined,
+  tagDTO: null,
 })
 
-const actualSheets = ref<SheetDTO[]>([])
+const actualSheets = ref<TransactionCreationDTO[]>([])
 
-const { saveSheet, editSheet, findTransactionById } = useSheet()
+const { saveTransaction, editTransaction, findTransactionById } = useTransaction()
 
-function asDisplayableTransaction(transaction: TransactionResultDTO): any {
+function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction.value).toFixed(2)} €` : '',
-    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction.value).toFixed(2)} €` : '',
+    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '',
+    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '',
     date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
 }
 function retrieveSheets() {
-  findByDate(englishMonth(data.month), data.year, data.labelAccount)
+  findByDate(englishMonth(formData.month), formData.year, formData.labelAccount)
     .then((value: SheetAverageDTO) => {
-      actualSheets.value = value.sheets.map((sheet: SheetDTO) => {
+      actualSheets.value = value.transactions.map((sheet: TransactionCreationDTO) => {
         return asDisplayableTransaction(sheet)
       })
     })
@@ -60,22 +73,22 @@ function retrieveTags() {
 
 function initAccount() {
   findById(Number.parseFloat(route.params?.id as string))
-    .then((account: AccountDTO) => {
-      data.labelAccount = account.labelAccount as string
-      data.currentAccountId = route.params?.id as string
-      data.accountAmount = account.amount
-      data.previewAccountAmount = account.previewAmount
+    .then((account: BookletDTO) => {
+      formData.labelAccount = account.labelAccount as string
+      formData.currentAccountId = route.params?.id as string
+      formData.accountAmount = account.amount
+      formData.previewAccountAmount = account.previewAmount
       retrieveSheets()
     })
 }
 
 async function confirmDelete() {
-  deleteSheet(Number.parseInt(data.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
+  deleteTransaction(Number.parseInt(formData.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
     .then(() => initAccount())
     .finally(() => {
-      findById(Number.parseInt(data.currentAccountId)).then((account) => {
-        data.accountAmount = account.amount
-        data.previewAccountAmount = account.previewAmount
+      findById(Number.parseInt(formData.currentAccountId)).then((account) => {
+        formData.accountAmount = account.amount
+        formData.previewAccountAmount = account.previewAmount
       })
       selectedSheets.value = []
     })
@@ -94,21 +107,9 @@ function confirmDeleteButton() {
     accept: () => confirmDelete(),
   })
 }
-const editTransactionInfo = reactive({
-  id: 0,
-  label: '',
-  date: '',
-  amount: 0,
-  selectedMode: 'expenses',
-  accountId: 0,
-  value: 0.00,
-  tagDTO: undefined,
-  isIncome: false,
-  isPreview: false,
-})
 
 function onYearChange() {
-  data.year = data.dateYear.getFullYear()
+  formData.year = formData.dateYear.getFullYear()
   retrieveSheets()
 }
 function back() {
@@ -116,8 +117,6 @@ function back() {
 }
 
 const uDate = useDate()
-
-// =================== REFACTO ================
 
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
@@ -175,46 +174,49 @@ function openPreviewCreationDialog() {
   isCreationDialogVisible.value = true
 }
 function bookTransaction(transaction: TransactionCreationDTO) {
-  saveSheet(data.labelAccount, transaction)
+  saveTransaction(formData.labelAccount, transaction)
     .then((result) => {
-      data.accountAmount = result.accountAmount
-      data.previewAccountAmount = result.accountPreviewAmount
+      formData.accountAmount = result.accountAmount
+      formData.previewAccountAmount = result.accountPreviewAmount
       const newTransaction = asDisplayableTransaction(result)
       actualSheets.value.push(newTransaction)
-      actualSheets.value = [...actualSheets.value].sort((a, b) => b.date < a.date)
+      actualSheets.value = [...actualSheets.value].sort((a, b) => new Date(b.date) - new Date(a.date))
       isCreationDialogVisible.value = false
       resetPlaceholder()
       toastr.success('La transaction a bien été enregistrée')
     })
 }
-function editTransaction(transaction: TransactionCreationDTO) {
-  editSheet(transaction, Number.parseInt(data.currentAccountId))
+function applyEditTransaction(transaction: TransactionCreationDTO) {
+  editTransaction(transaction, Number.parseInt(formData.currentAccountId))
     .then((result: TransactionResultDTO) => {
       toastr.success('La mise a jour de la transaction s\'est correctement déroulé')
       resetPlaceholder()
-      const index = actualSheets.value.findIndex(item => +item.id === +result.id)
+      const index = actualSheets.value.findIndex(item => (((item?.id) ? (+item?.id) : 0) === +result.id))
       if (index !== -1) {
         actualSheets.value[index] = asDisplayableTransaction(result)
       }
-      data.accountAmount = result.accountAmount
-      data.previewAccountAmount = result.accountPreviewAmount
+      formData.accountAmount = result.accountAmount
+      formData.previewAccountAmount = result.accountPreviewAmount
       isEditDialogVisible.value = false
     }).catch(err => toastr.errorAxios(err))
 }
-// =============================================
+
 onMounted(() => {
-  data.month = monthFromNumber(new Date().getMonth() + 1) as string
+  formData.month = monthFromNumber(new Date().getMonth() + 1) as string
   initAccount()
   retrieveTags()
-  tag.getDefaultTag().then((tagDTO) => {
-    data.tagDTO = tagDTO
-    editTransactionInfo.tagDTO = tagDTO
+  tag.getDefaultTag().then((tagDTO: TagDTO) => {
+    formData.tagDTO = tagDTO
     transactionPlaceholder.tagDTO = tagDTO
-    data.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
+    formData.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
   })
 })
-function rowStyle(row): any | undefined {
-  const style = {}
+function rowStyle(row: TransactionCreationDTO): any | undefined {
+  const style: {
+    backgroundColor?: string
+    background?: string
+    color?: string
+  } = {}
   if (row.isPreview) {
     style.backgroundColor = '#a6a4a4'
   }
@@ -228,23 +230,22 @@ function rowStyle(row): any | undefined {
   return style
 }
 
-function confirmPreview(transaction) {
-  confirmPreviewTransaction(data.currentAccountId, transaction.id)
+function confirmPreview(transaction: TransactionCreationDTO) {
+  confirmPreviewTransaction(formData.currentAccountId, transaction.id as string)
     .then((result) => {
-      data.accountAmount = result.accountAmount
-      data.previewAccountAmount = result.accountPreviewAmount
+      formData.accountAmount = result.accountAmount
+      formData.previewAccountAmount = result.accountPreviewAmount
       const index = actualSheets.value.findIndex(v => v.id === transaction.id)
       actualSheets.value.splice(index, 1)
       actualSheets.value.push(asDisplayableTransaction(result))
-      actualSheets.value = actualSheets.value.sort((a, b) => b.date < a.date)
-      console.warn('actualSheets', actualSheets.value)
+      actualSheets.value = actualSheets.value.sort((a, b) => new Date(b.date).getDate() - new Date(a.date).getDate())
       toastr.success('La validation de la transaction s\'est bien déroulé !')
     })
 }
 
-function onConfirmPreview(transaction) {
+function onConfirmPreview(transaction: TransactionCreationDTO) {
   confirm.require({
-    message: 'Confirmez-vous vouloir valider cette transaction prévisionnelle ?',
+    message: 'Confirmez-vous vouloir valider cette transaction attendue ?',
     header: 'Valider la transaction',
     icon: 'pi pi-check',
     acceptLabel: 'Oui',
@@ -258,21 +259,21 @@ function onConfirmPreview(transaction) {
   <ConfirmDialog />
   <div class="container-all">
     <div class="account-label">
-      <span>Livret {{ data.labelAccount }}</span>
+      <span>Livret {{ formData.labelAccount }}</span>
     </div>
     <div class="table-container">
-      <DataTable v-model:selection="selectedSheets" :header="data.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
+      <DataTable v-model:selection="selectedSheets" :header="formData.labelAccount" :row-style="rowStyle" :value="actualSheets" scrollable scroll-height="flex" selection-mode="multiple" @row-dblclick="onEditPage">
         <template #header>
           <div style="text-align: left; position: sticky; top: 0" class="w-full">
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
               <Button class="self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
               <div class="lg:w26% flex flex-row items-center">
-                <Dropdown v-model="data.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
-                <Calendar id="yearPicker" v-model="data.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
+                <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+                <Calendar id="yearPicker" v-model="formData.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
               <div class="flex flex-col justify-between lg:(flex-row gap-3)">
-                <BalanceCard title="Solde réel" :amount="data.accountAmount" is-preview />
-                <BalanceCard title="Solde prévisionnel" :amount="data.previewAccountAmount" is-preview />
+                <BalanceCard title="Solde réel" :amount="formData.accountAmount.toString()" is-preview />
+                <BalanceCard title="Solde prévisionnel" :amount="formData.previewAccountAmount.toString()" is-preview />
               </div>
             </div>
           </div>
@@ -289,7 +290,7 @@ function onConfirmPreview(transaction) {
         </Column>
         <Column :style="{ width: '10rem', textAlign: 'center' }">
           <template #body="{ data }">
-            <Button v-if="data.isPreview" v-tooltip="'Valider la transaction prévisionnel'" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
+            <Button v-if="data.isPreview" v-tooltip="'Valider la transaction attendue'" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
           </template>
         </Column>
       </DataTable>
@@ -300,7 +301,7 @@ function onConfirmPreview(transaction) {
           Ajouter une transaction
         </Button>
         <Button class="preview-button" @click="openPreviewCreationDialog">
-          Ajouter une transaction prévisionnelle
+          Ajouter une transaction attendue
         </Button>
       </div>
       <Button class="trash" icon="pi pi-trash" severity="danger" @click="confirmDeleteButton" />
@@ -321,7 +322,7 @@ function onConfirmPreview(transaction) {
     :transaction-placeholder="transactionPlaceholder"
     button-title="Mettre à jour"
     @cancel-creation="cancelEditDialog"
-    @create-transaction="editTransaction"
+    @create-transaction="applyEditTransaction"
   />
 </template>
 

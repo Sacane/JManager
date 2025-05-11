@@ -6,7 +6,7 @@ const accountData = ref({
   digit: null,
 })
 const isVisibleData = ref(false)
-const validerButtonRef = ref(null)
+const validationButtonRef = ref(null)
 const inputNumberRef = ref(null)
 
 function createAccount() {
@@ -25,7 +25,7 @@ function closeDialog() {
 function handleTabKey(event: KeyboardEvent) {
   if (event.key === 'Tab') {
     event.preventDefault()
-    const input = inputNumberRef.value.$el.querySelector('input')
+    const input = inputNumberRef?.value.$el.querySelector('input')
     if (input && input.value.includes(',')) {
       const cursorPosition = input.selectionStart
       const decimalPosition = input.value.indexOf(',')
@@ -60,7 +60,7 @@ function handleTabKey(event: KeyboardEvent) {
         <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
         <InputNumber ref="inputNumberRef" v-model="accountData.digit" placeholder="0,00" class="w-full" :max-fraction-digits="2" :min-fraction-digits="2" @keydown="handleTabKey" />
       </div>
-      <Button ref="validerButtonRef" label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="createAccount" />
+      <Button ref="validationButtonRef" label="Créer" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="createAccount" />
       <Button label="Annuler" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="closeDialog" />
     </div>
   </Dialog>

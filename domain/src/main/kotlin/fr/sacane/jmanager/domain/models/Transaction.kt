@@ -12,7 +12,6 @@ data class Transaction(
     var tag: Tag = Tag("Aucune", isDefault = true),
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false,
-    val fromSubscriptionFrom: SubscriptionFrom = NotFromSubscription()
 ) {
     val amount: Amount
         get() = _amount

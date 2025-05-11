@@ -13,8 +13,6 @@ class AccountResource(
     var label: String,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "account")
     var sheets: MutableList<TransactionResource> = mutableListOf(),
-    @ManyToMany
-    val subscriptions: MutableList<SubscriptionEntity> = mutableListOf(),
     @ManyToOne
     var owner: UserResource? = null,
     var initialSold: BigDecimal = BigDecimal.ZERO,

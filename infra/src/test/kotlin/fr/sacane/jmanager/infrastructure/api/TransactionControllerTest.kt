@@ -227,12 +227,12 @@ class TransactionControllerTest(
             } Then {
                 statusCode(200)
                 body(
-                    "sheets.label", hasItem("test1"),
-                    "sheets.label", hasItem("test2"),
-                    "sheets.label", hasItem("test3"),
-                    "sheets.label", hasItem("test4"),
-                    "sheets.label", hasItem("test5"),
-                    "sheets.label", not(hasItem("test6"))
+                    "transactions.label", hasItem("test1"),
+                    "transactions.label", hasItem("test2"),
+                    "transactions.label", hasItem("test3"),
+                    "transactions.label", hasItem("test4"),
+                    "transactions.label", hasItem("test5"),
+                    "transactions.label", not(hasItem("test6"))
                 )
             }
         }
@@ -327,7 +327,7 @@ class TransactionControllerTest(
                 .find { it.label == "test2" }!!
             val body = UserAccountIdsTransactionRequest(
                 accountId = accountId!!,
-                sheet = transactionToPatch.toDTO()
+                transaction = transactionToPatch.toDTO()
                     .copy(
                         label = "test4",
                         value = BigDecimal(150)

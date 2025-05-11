@@ -42,8 +42,8 @@ onMounted(() => {
 function formattedData(tagDTO: TagDTO): DataDisplay {
   const color = `rgb(${tagDTO.colorDTO.red}, ${tagDTO.colorDTO.green}, ${tagDTO.colorDTO.blue})`
   return {
-    id: tagDTO.tagId,
-    label: tagDTO.label,
+    id: tagDTO.tagId as number,
+    label: tagDTO.label as string,
     isDefault: (tagDTO.isDefault) ? 'Tag par défaut' : 'Tag personnel',
     color,
   }

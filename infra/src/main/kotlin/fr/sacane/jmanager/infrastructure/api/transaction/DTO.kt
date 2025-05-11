@@ -10,7 +10,7 @@ import java.time.LocalDate
 @Serializable
 data class UserAccountIdsTransactionRequest(
     val accountId: Long,
-    val sheet: TransactionResult
+    val transaction: TransactionResult
 )
 
 
@@ -27,7 +27,7 @@ data class TransactionResult(
     val isPreview: Boolean
 )
 data class TransactionListResponse(
-    val sheets: List<TransactionResult>
+    val transactions: List<TransactionResult>
 )
 
 @Serializable
@@ -53,5 +53,5 @@ data class UserBookletResponse(
 @Serializable
 data class AccountTransactionsIdRequest(
     val accountId: Long,
-    val sheetIds: List<Long>
+    val transactionIds: List<Long>
 )
