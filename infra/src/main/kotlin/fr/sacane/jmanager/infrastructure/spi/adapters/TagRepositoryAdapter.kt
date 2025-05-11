@@ -68,4 +68,26 @@ class TagRepositoryAdapter(
         return defaultTagPostgresRepository.findByName(Tag.noneTag().label)?.toDomain()
     }
 
+    @Transactional
+    override fun patch(tag: Tag): Tag? {
+        try {
+            tag.id?.let { tagPersonalPostgresRepository.patchTag(it, tag.label, tag.color.red, tag.color.green, tag.color.blue) } ?: return null
+            return tag
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    override fun existsById(tagId: Long): Boolean {
+        return tagPersonalPostgresRepository.existsById(tagId)
+    }
+
+    override fun existsAnotherTagByLabel(userId: UserId, tag: Tag): Boolean {
+        val tagInBase = userId.value?.let {
+            tagPersonalPostgresRepository.findByNameAndOwnerId(tag.label,
+                it
+            )
+        }
+        return tagInBase != null && tagInBase.idTag != tag.id
+    }
 }

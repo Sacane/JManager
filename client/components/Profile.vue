@@ -85,17 +85,6 @@ onBeforeUnmount(() => {
   margin-top: -12px;
 }
 
-.dropdown-menu {
-  position: absolute;
-  top: 85px; /* Adjust this value to position the dropdown below the circle */
-  right: 10px;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
 .dropdown-menu button {
   background: none;
   border: none;

@@ -5,8 +5,8 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.infrastructure.api.*
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
-import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
@@ -44,4 +44,11 @@ class TagController(
     fun defaultTag(): ResponseEntity<TagDTO> = tagFeature.defaultTag(currentUser.token)
         .map { it.toDTO() }.toHttpResponse()
 
+    @PatchMapping
+    fun editTag(
+        @RequestBody tagDTO: TagDTO
+    ): ResponseEntity<TagDTO> {
+        return tagFeature.editTag(currentUser.token, tagDTO.toDomain())
+            .map { it.toDTO() }.toHttpResponse()
+    }
 }

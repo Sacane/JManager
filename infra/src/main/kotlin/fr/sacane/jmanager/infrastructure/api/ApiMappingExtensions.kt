@@ -49,6 +49,7 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.INVALID, ResultState.REGISTRATION_ERROR,
     ResultState.BOOKLET_LABEL_EXIST,
     ResultState.TRANSACTION_ENTRY_ERROR,
+    ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
     ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR -> throw InvalidRequestException(this.status.code, this.message)
     ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.status.code, this.message)
     ResultState.TIMEOUT  -> throw TimeOutException(this.status.code, this.message)
@@ -63,3 +64,5 @@ internal fun ColorDTO.asAwtColor(): Color = Color(this.red, this.green, this.blu
 internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 
 internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
+
+internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))

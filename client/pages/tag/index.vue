@@ -15,10 +15,18 @@ interface DataDisplay {
   color: string
 }
 
-const { addPersonalTag, getAllTags, deleteTag } = useTag()
+const { addPersonalTag, getAllTags, deleteTag, editTag } = useTag()
 
 const tags = ref<DataDisplay[]>([])
 const addTagDialog = ref<boolean>(false)
+const editTagDialog = ref<boolean>(false)
+const tagToEdit = reactive({
+  id: 0,
+  label: '',
+  color: '',
+  isDefault: false,
+})
+
 const personalTagForm = reactive({
   tagLabel: '',
   color: {
@@ -64,7 +72,7 @@ function add() {
   })
 }
 
-function delTag(row: DataDisplay): void {
+function onDeleteClick(row: DataDisplay): void {
   tagToDelete.value = row
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer ce tag ?',
@@ -76,6 +84,39 @@ function delTag(row: DataDisplay): void {
         tags.value.splice(indexDelTag, 1)
       }
     }),
+  })
+}
+
+function onEditClick(row: DataDisplay): void {
+  editTagDialog.value = true
+  tagToEdit.label = row.label
+  tagToEdit.id = row.id
+  const rgb = row.color.match(/\d+/g)
+  if (rgb) {
+    const red = Number.parseInt(rgb[0])
+    const green = Number.parseInt(rgb[1])
+    const blue = Number.parseInt(rgb[2])
+    tagToEdit.color = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`
+  }
+}
+
+function edit() {
+  const rgb = hexToRgb(tagToEdit.color)
+  editTag({
+    tagId: tagToEdit.id,
+    label: tagToEdit.label,
+    colorDTO: {
+      red: rgb.r,
+      green: rgb.g,
+      blue: rgb.b,
+    },
+    isDefault: false,
+  }).then((tag: TagDTO) => {
+    const indexTag = tags.value.findIndex(e => e.id === tagToEdit.id)
+    if (indexTag !== -1) {
+      tags.value[indexTag] = formattedData(tag)
+    }
+    editTagDialog.value = false
   })
 }
 </script>
@@ -100,7 +141,10 @@ function delTag(row: DataDisplay): void {
               <div class="tag-header">
                 <h4>{{ tag.label }}</h4>
               </div>
-              <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised @click="delTag(tag)" />
+              <div class="flex gap-2">
+                <Button type="button" icon="pi pi-pencil" class="w-35px h-35px" rounded raised @click="onEditClick(tag)" />
+                <Button type="button" icon="pi pi-trash" class="w-35px h-35px" rounded raised @click="onDeleteClick(tag)" />
+              </div>
             </div>
           </div>
           <Button class="w50 self-center mb-10" @click="addTagDialog = true">
@@ -121,6 +165,20 @@ function delTag(row: DataDisplay): void {
           <input id="colorPicker" v-model="personalTagForm.hex" type="color">
         </div>
         <Button label="Ajouter le tag" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="add()" />
+      </div>
+    </Dialog>
+
+    <Dialog v-model:visible="editTagDialog" modal header="Mettre à jour le tag">
+      <div class="mt-6">
+        <div class="flex flex-col gap-3">
+          <label for="label" class="block text-sm font-medium text-gray-700">Libelle</label>
+          <InputText id="label" v-model="tagToEdit!.label" type="text" autocomplete="off" />
+        </div>
+        <div class="flex flex-col gap-3">
+          <label for="colorPicker" class="block text-sm font-medium text-gray-700">Couleur</label>
+          <input id="colorPicker" v-model="tagToEdit!.color" type="color">
+        </div>
+        <Button label="Mettre à jour le tag" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="edit()" />
       </div>
     </Dialog>
   </div>
