@@ -11,8 +11,6 @@ class UserResource(
     var password: String = "",
     @Column(unique = true, nullable = true)
     var email: String? = null,
-    @OneToMany(cascade = [(CascadeType.DETACH)])
-    val subscriptions: MutableList<SubscriptionEntity> = mutableListOf(),
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var accounts: MutableList<AccountResource> = mutableListOf(),
     @OneToMany(mappedBy = "owner")
@@ -29,9 +27,5 @@ class UserResource(
     fun addTag(tag: TagPersonalResource) {
         tag.owner = this
         tags.add(tag)
-    }
-    fun addSubscription(subscription: SubscriptionEntity) {
-        subscription.owner = this
-        subscriptions.add(subscription)
     }
 }

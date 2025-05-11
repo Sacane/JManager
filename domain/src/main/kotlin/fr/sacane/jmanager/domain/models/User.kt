@@ -15,11 +15,8 @@ class User(
     val username: String,
     val email: String?,
     val accounts: MutableList<Account> = mutableListOf(),
-    val tags: MutableSet<Tag> = mutableSetOf(),
-    private val subscriptions: MutableList<SubscriptionComplete> = mutableListOf()
+    val tags: MutableSet<Tag> = mutableSetOf()
 ) {
-    val subscriptionList: List<SubscriptionComplete>
-        get() = subscriptions
 
     fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
     fun hasAccount(labelAccount: String): Boolean = accounts.any { labelAccount == it.label }
@@ -31,9 +28,6 @@ class User(
     fun addAccount(account: Account) {
         accounts.add(account)
         account.owner = this
-    }
-    fun addSubscription(subscription: SubscriptionComplete) {
-        subscriptions.add(subscription)
     }
 }
 
