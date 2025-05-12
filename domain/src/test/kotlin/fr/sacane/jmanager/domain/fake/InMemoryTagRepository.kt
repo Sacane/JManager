@@ -52,6 +52,22 @@ class InMemoryTagRepository(
         return inMemoryDatabase.defaultTags.find { it.label == "Aucune" }
     }
 
+    override fun patch(tag: Tag): Tag? {
+        inMemoryDatabase.userByTag.forEach { (_, tags) ->
+            tags.removeIf { it.id == tag.id }
+            tags.add(tag)
+        }
+        return tag
+    }
+
+    override fun existsAnotherTagByLabel(userId: UserId, tag: Tag): Boolean {
+        return inMemoryDatabase.userByTag[userId]?.any { it.label == tag.label && it.id != tag.id } ?: false
+    }
+
+    override fun existsById(tagId: Long): Boolean {
+        return inMemoryDatabase.userByTag.values.flatten().any { it.id == tagId }
+    }
+
     override fun getStates(): List<Tag> {
         return inMemoryDatabase.defaultTags + inMemoryDatabase.userByTag.values.flatten()
     }

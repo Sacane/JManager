@@ -7,7 +7,9 @@ import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.api.TagFeature
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -15,6 +17,11 @@ class TagFeatureTest: FeatureTest() {
 
     private val tagState = FakeFactory.fakeTagRepository()
     private val tagFeature: TagFeature = FakeFactory.tagFeature()
+
+    @AfterEach
+    fun clearUp() {
+        tagState.clear()
+    }
 
     @Nested
     inner class AddTagFeatureTest {
@@ -82,6 +89,25 @@ class TagFeatureTest: FeatureTest() {
             tagFeature.addDefaultTags()
 
             assertEquals(defaultTags.size, tagState.getStates().size)
+        }
+    }
+    @Nested
+    inner class PatchTagFeatureTest {
+        @Test
+        fun `Patch a tag must return success`() {
+            launchWithConnectedUserInstance {
+                tagState.init(UserTag(this.userId, mutableListOf(Tag("test", id = 90))))
+
+                tagFeature.editTag(this.tokenValue, Tag("test2", id = 90))
+                    .assertSuccess()
+            }
+        }
+        @Test
+        fun `Patch a tag that does not exist must return failure`() {
+            launchWithConnectedUserInstance {
+                tagFeature.editTag(this.tokenValue, Tag("test2", id = 90))
+                    .assertFailure()
+            }
         }
     }
 }

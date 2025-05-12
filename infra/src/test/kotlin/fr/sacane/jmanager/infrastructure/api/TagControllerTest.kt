@@ -7,6 +7,7 @@ import fr.sacane.jmanager.infrastructure.api.setup.TagStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.UserTagsRequest
 
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
+import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import fr.sacane.jmanager.infrastructure.api.tag.UserTagRequest
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
@@ -183,6 +184,80 @@ class TagControllerTest (
                 cookie("token", token)
             } When {
                 delete("/api/tag/1")
+            } Then {
+                statusCode(404)
+            }
+        }
+    }
+
+    @Nested
+    inner class PatchTagEndpointTest {
+        @Test
+        fun `Patch tag endpoint successfully must return 200`() {
+            val element = Tag(label = "test", color = Color(10, 10, 10))
+            val initialState = listOf(
+                UserTagsRequest(
+                    user!!.id, listOf(element)
+                )
+            )
+            tagStateTestAdapter.init(
+                initialState
+            )
+            val targetTag = state.get().find { it.label == "test" } ?: fail("Tag not found")
+            val body = targetTag.toDTO().copy(
+                label = "test2",
+                colorDTO = ColorDTO(20, 20, 20)
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/tag")
+            } Then {
+                statusCode(200)
+                body(
+                    "label", equalTo("test2"),
+                    "colorDTO.red", equalTo(20),
+                    "colorDTO.green", equalTo(20),
+                    "colorDTO.blue", equalTo(20),
+                )
+            }
+        }
+
+        @Test
+        fun `Patch tag endpoint with non existing tag should return 404`() {
+            val body = TagDTO(
+                tagId = 1,
+                label = "test",
+                colorDTO = ColorDTO(10, 10, 10)
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/tag")
+            } Then {
+                statusCode(404)
+            }
+        }
+        @Test
+        fun `Patch tag endpoint with non existing tag should return 404 with empty body`() {
+            val body = TagDTO(
+                tagId = 1,
+                label = "test",
+                colorDTO = ColorDTO(10, 10, 10)
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/tag")
             } Then {
                 statusCode(404)
             }
