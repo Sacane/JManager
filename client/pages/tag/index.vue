@@ -100,7 +100,7 @@ function onEditClick(row: DataDisplay): void {
   }
 }
 
-function edit() {
+function applyEdit() {
   const rgb = hexToRgb(tagToEdit.color)
   editTag({
     tagId: tagToEdit.id,
@@ -117,6 +117,15 @@ function edit() {
       tags.value[indexTag] = formattedData(tag)
     }
     editTagDialog.value = false
+  })
+}
+
+function edit() {
+  confirm.require({
+    message: 'Si vous modifier ce tag toutes vos transaction rattachées a ce tag seront modifiées, voulez-vous continuer ?',
+    header: 'Confirmation de modification',
+    icon: 'pi pi-exclamation-triangle',
+    accept: () => applyEdit(),
   })
 }
 </script>
