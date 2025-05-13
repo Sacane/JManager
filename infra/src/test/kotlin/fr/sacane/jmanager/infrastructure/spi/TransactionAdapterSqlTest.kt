@@ -28,7 +28,7 @@ class TransactionAdapterSqlTest(
         @Test
         fun `Persist a transaction must return success`() {
             val transaction = Transaction(
-                _amount = Amount(10.0.toLong()),
+                amount = Amount(10.0.toLong()),
                 label = "test",
                 date = LocalDate.now(),
                 isIncome = false,
@@ -48,7 +48,7 @@ class TransactionAdapterSqlTest(
         @Test
         fun `Persist a transaction with a null User ID must return null`() {
             val transaction = Transaction(
-                _amount = Amount(10.0.toLong()),
+                amount = Amount(10.0.toLong()),
                 label = "test",
                 date = LocalDate.now(),
                 isIncome = false,
@@ -68,7 +68,7 @@ class TransactionAdapterSqlTest(
         @Test
         fun `Persist a transaction with an unknown account label must return null`() {
             val transaction = Transaction(
-                _amount = Amount(10.0.toLong()),
+                amount = Amount(10.0.toLong()),
                 label = "test",
                 date = LocalDate.now(),
                 isIncome = false,
