@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure.api.setup
 
-import fr.sacane.jmanager.domain.models.Transaction
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.State
@@ -8,7 +8,6 @@ import fr.sacane.jmanager.infrastructure.spi.adapters.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
-import java.util.*
 
 data class AccountTransaction(
     val accountOwnerId: UserId,

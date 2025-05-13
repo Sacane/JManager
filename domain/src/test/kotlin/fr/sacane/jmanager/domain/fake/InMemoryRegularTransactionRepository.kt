@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.State
-import fr.sacane.jmanager.domain.models.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 
 class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<RegularTransaction> {

@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import org.junit.jupiter.api.AfterEach
 import java.time.LocalDate
@@ -29,7 +30,7 @@ open class FeatureTest {
         fun generateToken(userId: UserId, username: String): String {
             return "${userId.value}||${UUID.randomUUID()}||${Role.USER.name}||$username"
         }
-        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction{
+        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction {
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
         }
     }

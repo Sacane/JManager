@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.utils.Result

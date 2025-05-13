@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.Transaction
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState

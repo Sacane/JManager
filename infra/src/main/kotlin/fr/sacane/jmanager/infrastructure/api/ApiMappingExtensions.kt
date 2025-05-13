@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.account.AccountDTO

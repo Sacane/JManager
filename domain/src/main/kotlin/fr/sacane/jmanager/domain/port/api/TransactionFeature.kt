@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.InfraTransactionProviderPort
 import fr.sacane.jmanager.domain.port.spi.SessionManager

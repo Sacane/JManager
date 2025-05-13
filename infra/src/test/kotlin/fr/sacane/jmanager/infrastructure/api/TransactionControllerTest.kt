@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction

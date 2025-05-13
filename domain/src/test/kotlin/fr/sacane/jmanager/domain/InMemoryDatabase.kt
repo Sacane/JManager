@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 
 class InMemoryDatabase {
     val users = mutableMapOf<UserId, UserWithPassword>()

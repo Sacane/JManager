@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import java.time.Month
 
 class Account(
