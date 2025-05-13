@@ -119,7 +119,7 @@ function handleTabKey(event: KeyboardEvent) {
       </Dropdown>
       <div class="flex flex-row gap-5">
         <Button severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
-        <Button ref="validerButtonRef" :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full bg-purple-600 text-white hover:bg-purple-700" @click="emitTransaction" />
+        <Button ref="validerButtonRef" :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full btn-primary text-white" @click="emitTransaction" />
       </div>
     </div>
   </Dialog>

@@ -48,6 +48,6 @@ const amountClass = computed(() => {
 }
 
 .negative {
-  color: #F44336;
+  color: var(--pink);
 }
 </style>

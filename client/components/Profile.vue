@@ -46,7 +46,7 @@ onBeforeUnmount(() => {
         </p>
       </div>
     </div>
-    <Button @click="handleLogout">
+    <Button class="btn-primary" @click="handleLogout">
       Se déconnecter
     </Button>
   </div>

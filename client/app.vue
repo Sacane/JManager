@@ -23,24 +23,38 @@ tryOnBeforeMount(() => {
 
 <style lang="scss">
 :root {
-  --primary: #7F52FF;
-  --text-color: #a3a1a7;
+  --primary: #822acc;
+  --primary-2: #722aaa;
+  --primary-3: #511e78;
+  --primary-4: #391555;
+  --yellow: #e0d824;
+  --pink: #f13c69;
+  --grey: #b1aeae;
+  --grey-2: #a7a7a7;
+  --text-color: var(--grey-1);
   --primary-background: #8863eb;
-  --primary-dark: #003366; /* Exemple de couleur sombre */
   --primary-light: #66ccff;
-  --secondary: #27282C;
+  --secondary: #27282C
+
 }
 body, html {
   margin: 0;
   padding: 0;
 }
-.button {
-  background-color: var(--primary);
+.btn-primary {
+  background-color: var(--primary-2);
+  border-color: var(--primary-2);
+  &:hover {
+    background-color: var(--primary-3);
+  }
 }
 pi {
   width: 100px;
 }
 .bg-primary{
-  background-color: var(--primary)
+  background-color: var(--primary);
+}
+p {
+  color: var(--grey-2);
 }
 </style>

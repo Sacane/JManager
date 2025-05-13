@@ -63,7 +63,7 @@ function closeOnNavigateIfMobile() {
 .section {
   color: #fff;
   font-size: 1.1rem;
-  background-color: var(--primary-background);
+  background-color: var(--primary-2);
 
   &:hover {
     opacity: 0.6;

@@ -71,6 +71,10 @@ function cancel() {
 function openAccountDialog() {
   isAddAccountDialogOpen.value = true
 }
+
+function amountClass(amount: string) {
+  return Number.parseFloat(amount) >= 0 ? 'positive' : 'negative'
+}
 </script>
 
 <template>
@@ -86,7 +90,9 @@ function openAccountDialog() {
             <Button icon="pi pi-trash" class="delete-button" severity="danger" @click.stop="applyDelete(account.id)" />
           </div>
           <div class="card-body">
-            <p>{{ account.amount }} {{ account.currency }}</p>
+            <p :class="amountClass(account.amount)">
+              {{ account.amount }} {{ account.currency }}
+            </p>
           </div>
         </div>
         <Button icon="pi pi-plus" class="add-button" @click="openAccountDialog" />
@@ -110,7 +116,7 @@ function openAccountDialog() {
 
 .info-text {
   text-align: center;
-  color: #555;
+  color: var(--grey-2);
   margin-bottom: 20px;
   font-weight: 900;
   font-size: 2rem;
@@ -150,19 +156,27 @@ function openAccountDialog() {
 .delete-button {
   background-color: transparent;
   border: none;
-  color: red;
+  color: var(--pink);
   cursor: pointer;
 }
 
 .add-button {
   font-size: 2rem;
-  background-color: var(--primary-color);
+  background-color: var(--primary);
   color: white;
-  border-radius: 50%;
+  border-radius: 100%;
   width: 60px;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.positive {
+  color: #1acf38;
+}
+
+.negative {
+  color: var(--pink);
 }
 </style>

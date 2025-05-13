@@ -266,7 +266,7 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
         <template #header>
           <div style="text-align: left; position: sticky; top: 0" class="w-full">
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
-              <Button class="self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
+              <Button class="btn-primary self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
               <div class="lg:w26% flex flex-row items-center">
                 <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
                 <Calendar id="yearPicker" v-model="formData.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
@@ -290,14 +290,14 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
         </Column>
         <Column :style="{ width: '10rem', textAlign: 'center' }">
           <template #body="{ data }">
-            <Button v-if="data.isPreview" v-tooltip="'Valider la transaction attendue'" class="custom-button" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
+            <Button v-if="data.isPreview" v-tooltip="'Valider la transaction attendue'" class="btn-primary color-white" rounded raised icon="pi pi-check" text aria-label="Filter" @click="onConfirmPreview(data)" />
           </template>
         </Column>
       </DataTable>
     </div>
     <div class="flex flex-col gap-5 lg:(flex-row justify-center items-center)">
       <div class="buttons-container">
-        <Button @click="openCreationDialog">
+        <Button class="btn-primary" @click="openCreationDialog">
           Ajouter une transaction
         </Button>
         <Button class="preview-button" @click="openPreviewCreationDialog">
@@ -371,11 +371,6 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
   @media (max-width: 780px) {
     gap: 10px;
   }
-}
-.custom-button {
-  background-color: green;
-  border-color: green;
-  color: white;
 }
 
 .custom-button .pi-check {
