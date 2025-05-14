@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
@@ -18,7 +19,10 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("api/transaction")
 @Adapter(Side.APPLICATION)
-class TransactionController(private val transactionFeature: TransactionFeature) {
+class TransactionController(
+    private val transactionFeature: TransactionFeature,
+    private val regularTransactionFeature: RegularTransactionFeature,
+) {
     private val logger = Logger.getLogger(TransactionController::class.java.name)
 
     @PostMapping
@@ -97,6 +101,20 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             logger.info("Preview Transaction confirmed successfully")
         }
     }
+
+    @PostMapping("/regular")
+    fun createRegularTransaction(
+        @RequestBody regularTransactionCreationRequest: RegularTransactionCreationRequest
+    ): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
+        return regularTransactionFeature.bookRegularTransaction(
+            currentUser.token,
+            regularTransactionCreationRequest.toDomain()
+        ).map {
+            it.toDTO()
+        }.toHttpResponse()
+    }
+
 
     companion object {
         private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)

@@ -55,3 +55,28 @@ data class AccountTransactionsIdRequest(
     val accountId: Long,
     val transactionIds: List<Long>
 )
+
+@Serializable
+data class RegularTransactionCreationRequest(
+    val label: String,
+    @Serializable(with = LocalDateSerializer::class)
+    val startDate: LocalDate,
+    @Serializable(with = BigDecimalSerializer::class)
+    val value: BigDecimal,
+    val isIncome: Boolean,
+    val regularity: String,
+    val tagDTO: TagDTO? = null
+)
+
+@Serializable
+data class RegularTransactionDTO(
+    val id: String,
+    val label: String,
+    @Serializable(with = LocalDateSerializer::class)
+    val startDate: LocalDate,
+    @Serializable(with = BigDecimalSerializer::class)
+    val value: BigDecimal,
+    val isIncome: Boolean,
+    val regularity: String,
+    val tagDTO: TagDTO
+)

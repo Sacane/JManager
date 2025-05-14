@@ -23,6 +23,4 @@ data class RegularTransaction (
     override var isIncome: Boolean,
     override var tag: Tag = Tag("Aucune", isDefault = true),
     val regularity: Regularity = Regularity.MONTHLY
-): BaseTransaction() {
-
-}
+): BaseTransaction()

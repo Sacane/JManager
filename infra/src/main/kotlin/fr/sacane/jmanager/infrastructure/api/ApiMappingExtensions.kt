@@ -1,6 +1,9 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.RegularTransactionId
+import fr.sacane.jmanager.domain.models.transaction.Regularity
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -8,6 +11,7 @@ import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
+import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionCreationRequest
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import org.springframework.http.ResponseEntity
 import java.awt.Color
@@ -67,3 +71,16 @@ internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
 
 internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))
+
+
+internal fun RegularTransactionCreationRequest.toDomain(): RegularTransaction {
+    return RegularTransaction(
+
+        startDate = LocalDate.now(),
+        label = this.label,
+        amount = Amount(this.value),
+        isIncome = this.isIncome,
+        tag = Tag(label = this.tagDTO.label, id = this.tagDTO.tagId, isDefault = this.tagDTO.isDefault, color = Color(this.tagDTO.colorDTO.red, this.tagDTO.colorDTO.green, this.tagDTO.colorDTO.blue)),
+        regularity = Regularity.valueOf(this.regularity)
+    )
+}
