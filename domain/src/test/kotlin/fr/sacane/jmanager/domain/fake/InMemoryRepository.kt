@@ -2,7 +2,10 @@ package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort

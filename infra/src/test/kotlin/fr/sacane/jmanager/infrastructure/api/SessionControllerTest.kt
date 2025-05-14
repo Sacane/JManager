@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import fr.sacane.jmanager.infrastructure.api.session.RegisteredUserDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserPasswordDTO
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.module.kotlin.extensions.Given

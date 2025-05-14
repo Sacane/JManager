@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api.setup
 
-import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.State
 import fr.sacane.jmanager.infrastructure.spi.adapters.toModel

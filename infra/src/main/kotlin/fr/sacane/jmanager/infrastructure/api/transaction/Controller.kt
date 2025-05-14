@@ -9,9 +9,6 @@ import fr.sacane.jmanager.domain.models.transaction.Regularity
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.*
-import fr.sacane.jmanager.infrastructure.api.toDTO
-import fr.sacane.jmanager.infrastructure.api.toHttpResponse
-import fr.sacane.jmanager.infrastructure.api.toModel
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*

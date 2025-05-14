@@ -7,7 +7,6 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.utils.success
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.*

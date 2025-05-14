@@ -1,17 +1,13 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionCreationRequest
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

@@ -3,8 +3,8 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository

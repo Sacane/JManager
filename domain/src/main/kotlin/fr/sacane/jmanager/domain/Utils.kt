@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain
 
 import fr.sacane.jmanager.domain.models.Amount
-import java.util.*
 
 fun String.asTokenUUID(): String = this.replace("Bearer ", "")
 

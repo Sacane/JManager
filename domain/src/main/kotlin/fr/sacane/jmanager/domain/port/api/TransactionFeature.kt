@@ -3,7 +3,9 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.InfraTransactionProviderPort

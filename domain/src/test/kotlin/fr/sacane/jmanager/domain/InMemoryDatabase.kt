@@ -3,7 +3,10 @@ package fr.sacane.jmanager.domain
 import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 
 class InMemoryDatabase {

@@ -1,6 +1,9 @@
 package fr.sacane.jmanager.infrastructure.spi
 
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter

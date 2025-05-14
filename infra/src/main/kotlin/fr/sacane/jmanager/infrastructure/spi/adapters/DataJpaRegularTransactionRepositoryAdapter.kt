@@ -14,7 +14,6 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepo
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import jakarta.transaction.Transactional
-import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 

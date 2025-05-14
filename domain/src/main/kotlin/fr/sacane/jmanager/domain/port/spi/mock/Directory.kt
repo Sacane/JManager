@@ -1,8 +1,8 @@
 package fr.sacane.jmanager.domain.port.spi.mock
 
 import fr.sacane.jmanager.domain.models.Tag
-import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import java.time.LocalDate
 import java.time.Month
 

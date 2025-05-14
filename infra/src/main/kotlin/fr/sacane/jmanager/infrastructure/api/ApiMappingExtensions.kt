@@ -2,8 +2,6 @@ package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.RegularTransactionId
-import fr.sacane.jmanager.domain.models.transaction.Regularity
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -11,7 +9,6 @@ import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
-import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionCreationRequest
 import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import org.springframework.http.ResponseEntity

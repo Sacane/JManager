@@ -2,8 +2,8 @@ package fr.sacane.jmanager.domain.port.spi
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 
 @Port(Side.INFRASTRUCTURE)
 interface TransactionRepositoryPort {
