@@ -12,6 +12,7 @@ import fr.sacane.jmanager.infrastructure.api.session.UserDTO
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionCreationRequest
+import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import org.springframework.http.ResponseEntity
 import java.awt.Color
@@ -72,15 +73,14 @@ internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label,
 
 internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))
 
-
-internal fun RegularTransactionCreationRequest.toDomain(): RegularTransaction {
-    return RegularTransaction(
-
-        startDate = LocalDate.now(),
+internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
+    return RegularTransactionDTO(
+        id = this.id.value,
         label = this.label,
-        amount = Amount(this.value),
+        startDate = this.startDate,
+        value = this.amount.amount,
         isIncome = this.isIncome,
-        tag = Tag(label = this.tagDTO.label, id = this.tagDTO.tagId, isDefault = this.tagDTO.isDefault, color = Color(this.tagDTO.colorDTO.red, this.tagDTO.colorDTO.green, this.tagDTO.colorDTO.blue)),
-        regularity = Regularity.valueOf(this.regularity)
+        regularity = this.regularity.name,
+        tagDTO = this.tag.toDTO()
     )
 }

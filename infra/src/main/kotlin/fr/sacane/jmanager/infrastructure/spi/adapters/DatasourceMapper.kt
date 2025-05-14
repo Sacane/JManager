@@ -1,6 +1,8 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
@@ -30,10 +32,8 @@ class AccountMapper(
 internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): TransactionResource {
     val resource = TransactionResource(label=this.label)
     resource.date = this.date
-
     resource.value = amount.amount
     resource.isIncome = isIncome
-
     resource.idSheet = this.id
     resource.lastModified = this.lastModified
     if(tagResource != null) {
@@ -45,6 +45,8 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
     resource.isPreview = isPreview
     return resource
 }
+
+
 internal fun Account.asResource(): AccountResource {
     val sheets = if (this.sheets().isEmpty()) {
         mutableListOf()
@@ -128,3 +130,14 @@ internal fun User.asExistingResource(): UserResource
     tags = this.tags.map { it.toPersonalTag() }.toMutableList()
 )
 
+internal fun RegularTransactionResource.toDomain(): RegularTransaction {
+    return RegularTransaction(
+        RegularTransactionId(this.regularTransactionId.toString()),
+        this.startDate,
+        this.label,
+        Amount(this.amount),
+        this.isIncome,
+        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
+        regularity = this.regularity
+    )
+}

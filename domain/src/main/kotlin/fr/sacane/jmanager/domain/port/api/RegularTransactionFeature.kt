@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.Regularity
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.success
 import java.time.LocalDate
@@ -21,7 +22,7 @@ sealed interface RegularTransactionFeature {
         label: String,
         amount: Amount,
         isIncome: Boolean,
-        tag: Tag = Tag("Aucune", isDefault = true),
+        tag: Tag? = null,
         regularity: Regularity = Regularity.MONTHLY
     ): Result<RegularTransaction>
 }
@@ -29,6 +30,7 @@ sealed interface RegularTransactionFeature {
 @DomainService
 class RegularTransactionFeatureImpl(
     private val regularTransactionRepository: RegularTransactionRepository,
+    private val tagRepository: TagRepository,
     private val session: SessionManager
 ) : RegularTransactionFeature {
 
@@ -38,7 +40,7 @@ class RegularTransactionFeatureImpl(
         label: String,
         amount: Amount,
         isIncome: Boolean,
-        tag: Tag,
+        tag: Tag?,
         regularity: Regularity
     ): Result<RegularTransaction> = session.authenticate(token) {
         val transaction = regularTransactionRepository.saveRegularTransaction(
@@ -47,7 +49,7 @@ class RegularTransactionFeatureImpl(
             label,
             amount,
             isIncome,
-            tag,
+            tag ?: tagRepository.defaultTag() ?: Tag("Aucune", isDefault = true),
             regularity
         )
         return@authenticate success(transaction)

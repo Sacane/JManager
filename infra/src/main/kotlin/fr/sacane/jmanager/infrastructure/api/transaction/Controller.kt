@@ -2,10 +2,13 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.models.transaction.Regularity
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
-import fr.sacane.jmanager.infrastructure.api.currentUser
+import fr.sacane.jmanager.infrastructure.api.*
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import fr.sacane.jmanager.infrastructure.api.toModel
@@ -109,7 +112,12 @@ class TransactionController(
         logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
         return regularTransactionFeature.bookRegularTransaction(
             currentUser.token,
-            regularTransactionCreationRequest.toDomain()
+            regularTransactionCreationRequest.startDate,
+            regularTransactionCreationRequest.label,
+            regularTransactionCreationRequest.value.toAmount(),
+            regularTransactionCreationRequest.isIncome,
+            tag = regularTransactionCreationRequest.tagDTO?.toDomain() ?: Tag("Aucune", isDefault = true),
+            regularity = Regularity.valueOf(regularTransactionCreationRequest.regularity),
         ).map {
             it.toDTO()
         }.toHttpResponse()
