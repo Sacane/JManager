@@ -13,6 +13,7 @@ import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
+import jakarta.transaction.Transactional
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -23,7 +24,7 @@ class DataJpaRegularTransactionRepositoryAdapter(
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
 ): RegularTransactionRepository {
-
+    @Transactional
     override fun saveRegularTransaction(
         userId: UserId,
         startDate: LocalDate,

@@ -59,8 +59,7 @@ data class AccountTransactionsIdRequest(
 @Serializable
 data class RegularTransactionCreationRequest(
     val label: String,
-    @Serializable(with = LocalDateSerializer::class)
-    val startDate: LocalDate,
+    val startDate: String,
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
     val isIncome: Boolean,

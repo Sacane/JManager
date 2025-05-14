@@ -112,7 +112,7 @@ class TransactionController(
         logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
         return regularTransactionFeature.bookRegularTransaction(
             currentUser.token,
-            regularTransactionCreationRequest.startDate,
+            LocalDate.parse(regularTransactionCreationRequest.startDate),
             regularTransactionCreationRequest.label,
             regularTransactionCreationRequest.value.toAmount(),
             regularTransactionCreationRequest.isIncome,
