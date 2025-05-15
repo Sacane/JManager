@@ -17,4 +17,6 @@ interface RegularTransactionRepository {
         tag: Tag,
         regularity: Regularity
     ): RegularTransaction
+
+    fun getAllRegularTransactions(userId: UserId): List<RegularTransaction>
 }

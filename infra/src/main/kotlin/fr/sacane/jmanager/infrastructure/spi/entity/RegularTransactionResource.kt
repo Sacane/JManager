@@ -15,6 +15,8 @@ data class RegularTransactionResource(
     val isIncome: Boolean,
     @Enumerated(EnumType.STRING)
     val regularity: Regularity,
+    @ManyToOne(fetch = FetchType.LAZY)
+    var owner: UserResource? = null,
     val currency: String = "€",
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
@@ -28,4 +30,9 @@ data class RegularTransactionResource(
     @Id
     @GeneratedValue
     val regularTransactionId: UUID? = null
-)
+){
+    fun addOwner(owner: UserResource) {
+        this.owner = owner
+        owner.regularTransactions.add(this)
+    }
+}

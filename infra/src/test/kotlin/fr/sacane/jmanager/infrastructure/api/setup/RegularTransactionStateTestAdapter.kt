@@ -2,8 +2,8 @@ package fr.sacane.jmanager.infrastructure.api.setup
 
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
-import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.infrastructure.State
+import fr.sacane.jmanager.infrastructure.spi.adapters.DataJpaRegularTransactionRepositoryAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import jakarta.transaction.Transactional
@@ -18,7 +18,7 @@ data class OwnerRegularTransaction(
 @Component
 class RegularTransactionStateTestAdapter(
     private val regularTransactionJpaRepository: RegularTransactionJpaRepository,
-    private val regularTransactionFeature: RegularTransactionFeature
+    private val regularTransactionRepositoryAdapter: DataJpaRegularTransactionRepositoryAdapter
 ): State<OwnerRegularTransaction, RegularTransaction> {
     @Transactional
     override fun get(): Collection<RegularTransaction> {
@@ -27,20 +27,20 @@ class RegularTransactionStateTestAdapter(
     }
 
     override fun clear() {
-        regularTransactionJpaRepository.deleteAll()
+         regularTransactionJpaRepository.deleteAll()
     }
 
     override fun init(initialState: Collection<OwnerRegularTransaction>) {
         initialState.forEach {
-            it.transactions.forEach { tr ->
-                regularTransactionFeature.bookRegularTransaction(
-                    token = it.token,
-                    startDate = tr.startDate,
-                    label = tr.label,
-                    amount = tr.amount,
-                    isIncome = tr.isIncome,
-                    tag = tr.tag,
-                    regularity = tr.regularity
+            it.transactions.forEach { transaction ->
+                regularTransactionRepositoryAdapter.saveRegularTransaction(
+                    userId = it.ownerId,
+                    startDate = transaction.startDate,
+                    label = transaction.label,
+                    amount = transaction.amount,
+                    isIncome = transaction.isIncome,
+                    tag = transaction.tag,
+                    regularity = transaction.regularity
                 )
             }
         }

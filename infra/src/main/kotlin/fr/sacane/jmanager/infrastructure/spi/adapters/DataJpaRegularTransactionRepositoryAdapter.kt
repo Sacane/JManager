@@ -13,7 +13,9 @@ import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
@@ -21,7 +23,8 @@ import java.time.LocalDate
 class DataJpaRegularTransactionRepositoryAdapter(
     private val regularTransactionJpaRepository: RegularTransactionJpaRepository,
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
-    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
+    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
+    private val userPostgresRepository: UserPostgresRepository,
 ): RegularTransactionRepository {
     @Transactional
     override fun saveRegularTransaction(
@@ -33,13 +36,16 @@ class DataJpaRegularTransactionRepositoryAdapter(
         tag: Tag,
         regularity: Regularity
     ): RegularTransaction {
+        val user = userPostgresRepository.findByIdOrNull(userId.value!!)
+            ?: throw IllegalArgumentException("User not found")
         val transaction = RegularTransactionResource(
             startDate = startDate,
             label = label,
             amount = amount.amount,
             isIncome = isIncome,
-            regularity = regularity,
+            regularity = regularity
         )
+        transaction.addOwner(user)
 
         val toInsertTransaction = when(val tagResource = tag.mapToTag()) {
             is DefaultTagResource -> transaction.copy(
@@ -57,6 +63,11 @@ class DataJpaRegularTransactionRepositoryAdapter(
         }
         val savedRegularTransactionResource = regularTransactionJpaRepository.save(toInsertTransaction)
         return savedRegularTransactionResource.toDomain()
+    }
+
+    override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
+        return regularTransactionJpaRepository.findAllByUserId(userId.value!!)
+            .map { it.toDomain() }
     }
 
 

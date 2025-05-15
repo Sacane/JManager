@@ -120,6 +120,13 @@ class TransactionController(
         }.toHttpResponse()
     }
 
+    @GetMapping("/regular")
+    fun getAllRegularTransactions(): ResponseEntity<List<RegularTransactionDTO>> {
+        return regularTransactionFeature.getAllRegularTransactions(currentUser.token)
+            .map { it.map { transaction -> transaction.toDTO() } }
+            .toHttpResponse()
+    }
+
 
     companion object {
         private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)
