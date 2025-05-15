@@ -63,6 +63,24 @@ declare global {
     amount: number
     currency: string
   }
+
+  interface RegularTransactionCreationRequest {
+    label: string
+    startDate: string
+    value: number
+    isIncome: boolean
+    regularity: string
+    tagDTO?: TagDTO | null
+  }
+  interface RegularTransactionDTO {
+    id: string
+    label: string
+    startDate: string
+    value: number
+    isIncome: boolean
+    regularity: string
+    tagDTO: TagDTO
+  }
 }
 
 export {}

@@ -48,4 +48,8 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
         transactions.add(transaction)
         return transaction
     }
+
+    override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
+        return transactions.filter { it.id.value.startsWith("${userId.value}") }
+    }
 }
