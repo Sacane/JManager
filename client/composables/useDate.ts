@@ -82,5 +82,30 @@ export default function useDate() {
     return `${year}-${month}-${day}`
   }
 
-  return { months, translate, monthFromNumber, dateFromString, formattedDateString, englishMonth }
+  function frequencyToString(frequency: Frequency): string {
+    switch (frequency) {
+      case 'DAILY':
+        return 'Tous les jours'
+      case 'WEEKLY':
+        return 'Chaque semaine'
+      case 'MONTHLY':
+        return 'Tous les mois'
+      case 'YEARLY':
+        return 'Chaque année'
+    }
+  }
+  function strToFrequency(str: string): string {
+    switch (str) {
+      case 'Tous les jours':
+        return 'DAILY'
+      case 'Chaque semaine':
+        return 'WEEKLY'
+      case 'Tous les mois':
+        return 'MONTHLY'
+      case 'Chaque année':
+        return 'YEARLY'
+    }
+  }
+
+  return { months, translate, monthFromNumber, dateFromString, formattedDateString, englishMonth, frequencyToString, strToFrequency }
 }

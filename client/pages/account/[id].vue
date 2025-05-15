@@ -173,6 +173,7 @@ function openPreviewCreationDialog() {
   transactionPlaceholder.isPreview = true
   isCreationDialogVisible.value = true
 }
+
 function bookTransaction(transaction: TransactionCreationDTO) {
   saveTransaction(formData.labelAccount, transaction)
     .then((result) => {

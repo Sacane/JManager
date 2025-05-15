@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import useDate from '~/composables/useDate'
+import { getTagStyle } from '~/utils/util'
 
 export interface TransactionCreationProps {
   title: string
@@ -17,12 +18,11 @@ const digits = reactive({
 
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
-const validationButtonRef = ref(null)
 const inputNumberRef = ref(null)
 
 const { formattedDateString } = useDate()
 
-const tags = ref([])
+const tags = ref<TagDTO[]>([])
 
 onMounted(() => {
   tag.getAllTags().then((tagsResult) => {
@@ -126,8 +126,6 @@ function handleTabKey(event: KeyboardEvent) {
 </template>
 
 <style scoped>
-$secondary-color: #000;
-
 .inputNumber ::placeholder {
   color: grey;
   opacity: 0.8;
