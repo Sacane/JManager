@@ -105,6 +105,9 @@ function closeDialog() {
           <Dropdown v-model="regularTrForm.frequency" :options="[frequencyToString('DAILY'), frequencyToString('WEEKLY'), frequencyToString('MONTHLY'), frequencyToString('YEARLY')]" placeholder="Répéter" class="w-full md:w-14rem" />
         </div>
       </div>
+      <div v-if="regularTrForm.frequency === frequencyToString('MONTHLY')" class="flex flex-col gap-3">
+        <Monthly />
+      </div>
       <div class="flex flex-row gap-5">
         <Button severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
         <Button label="Créer" class="mt-6 w-full btn-primary text-white" @click="emitTransaction" />
