@@ -4,16 +4,19 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
+import java.time.LocalDate
 
 @Port(Side.APPLICATION)
-sealed interface AccountFeature {
+sealed interface BookletFeature {
     fun findAccountById(accountID: Long, token: String): Result<Account>
     fun editAccount(account: Account, token: String): Result<Account>
     fun deleteAccountById(accountID: Long, token: String): Result<Nothing>
@@ -23,18 +26,20 @@ sealed interface AccountFeature {
 }
 
 @DomainService
-class AccountFeatureImpl(
+class BookletFeatureImpl(
     private val userRepository: UserRepository,
     private val session: SessionManager,
-    private val accountRepository: AccountRepositoryPort
-): AccountFeature {
+    private val accountRepository: AccountRepositoryPort,
+    private val regularTransactionRepository: RegularTransactionRepository,
+): BookletFeature {
     override fun findAccountById(
         accountID: Long,
         token: String
     ): Result<Account> = session.authenticate(token) {
+        val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(it, accountID)
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
-            return@authenticate success(this)
-        }?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le compte est introuvable")
+            success(this)
+        } ?: failure(ResultState.BOOKLET_NOT_FOUND, "Le compte est introuvable")
     }
 
     override fun editAccount(
@@ -95,5 +100,13 @@ class AccountFeatureImpl(
         val accountSaved = accountRepository.save(it, account)
             ?: return@authenticate failure(ResultState.INFRASTRUCTURE_ERROR,"Erreur lors de la sauvegarde du compte")
         success(accountSaved)
+    }
+
+    fun addRegularTransactionsForCurrentPeriod(
+        userId: UserId, currentDate: LocalDate
+    ) {
+        val regularTransactions = regularTransactionRepository.getAllRegularTransactions(userId)
+
+
     }
 }

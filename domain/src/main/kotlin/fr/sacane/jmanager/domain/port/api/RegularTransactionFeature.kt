@@ -5,8 +5,8 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
-import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.Regularity
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TagRepository
@@ -23,7 +23,7 @@ sealed interface RegularTransactionFeature {
         amount: Amount,
         isIncome: Boolean,
         tag: Tag? = null,
-        regularity: Regularity = Regularity.MONTHLY
+        frequency: Frequency = Frequency.MONTHLY
     ): Result<RegularTransaction>
 
     fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>>
@@ -43,7 +43,7 @@ class RegularTransactionFeatureImpl(
         amount: Amount,
         isIncome: Boolean,
         tag: Tag?,
-        regularity: Regularity
+        frequency: Frequency
     ): Result<RegularTransaction> = session.authenticate(token) {
         val transaction = regularTransactionRepository.saveRegularTransaction(
             it,
@@ -52,7 +52,7 @@ class RegularTransactionFeatureImpl(
             amount,
             isIncome,
             tag ?: tagRepository.defaultTag() ?: Tag("Aucune", isDefault = true),
-            regularity
+            frequency
         )
         return@authenticate success(transaction)
     }

@@ -14,7 +14,7 @@ data class Transaction(
     override var tag: Tag = Tag("Aucune", isDefault = true),
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false,
-): BaseTransaction() {
+): BaseTransaction {
     val isNotPreview: Boolean
     get() = !isPreview
 

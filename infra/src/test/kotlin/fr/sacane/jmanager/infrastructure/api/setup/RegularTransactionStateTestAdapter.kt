@@ -1,7 +1,8 @@
 package fr.sacane.jmanager.infrastructure.api.setup
 
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.infrastructure.State
 import fr.sacane.jmanager.infrastructure.spi.adapters.DataJpaRegularTransactionRepositoryAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
@@ -40,7 +41,7 @@ class RegularTransactionStateTestAdapter(
                     amount = transaction.amount,
                     isIncome = transaction.isIncome,
                     tag = transaction.tag,
-                    regularity = transaction.regularity
+                    frequency = Frequency.MONTHLY
                 )
             }
         }

@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.infrastructure.api.currentUser
+import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
@@ -65,9 +66,9 @@ class SessionController(
                 SecurityContextHolder.clearContext()
             }.toHttpResponse()
     }
-//    @PostMapping(path= ["/create"])
-//    fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-//        val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
-//        return response.map { u -> u.toDTO() }.toHttpResponse()
-//    }
+    @PostMapping(path= ["/create"])
+    fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
+        val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
+        return response.map { u -> u.toDTO() }.toHttpResponse()
+    }
 }

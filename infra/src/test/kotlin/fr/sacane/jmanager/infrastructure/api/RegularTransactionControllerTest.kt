@@ -2,9 +2,11 @@ package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.RegularTransactionId
-import fr.sacane.jmanager.domain.models.transaction.Regularity
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.OwnerRegularTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionCreationRequest
@@ -82,13 +84,13 @@ class RegularTransactionControllerTest(
                     OwnerRegularTransaction(
                         ownerId = user!!.id,
                         transactions = listOf(
-                            RegularTransaction(
+                            MonthlyTransaction(
                                 id = RegularTransactionId(""),
                                 startDate = LocalDate.now(),
                                 label = "Test",
                                 amount = BigDecimal(100.0).toAmount(),
                                 isIncome = true,
-                                regularity = Regularity.MONTHLY,
+                                frequencyProperty = FrequencyProperty.Forever()
                             )
                         ),
                         token = token

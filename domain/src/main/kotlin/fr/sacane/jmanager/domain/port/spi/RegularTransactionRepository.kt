@@ -3,8 +3,9 @@ package fr.sacane.jmanager.domain.port.spi
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.Regularity
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import java.time.LocalDate
 
 interface RegularTransactionRepository {
@@ -15,8 +16,16 @@ interface RegularTransactionRepository {
         amount: Amount,
         isIncome: Boolean,
         tag: Tag,
-        regularity: Regularity
+        frequency: Frequency
     ): RegularTransaction
 
     fun getAllRegularTransactions(userId: UserId): List<RegularTransaction>
+
+    fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>
+
+    fun linkedRegularTransactionsWithBooklet(
+        userId: UserId,
+        regularTransactionId: RegularTransactionId,
+        bookletId: Long
+    )
 }

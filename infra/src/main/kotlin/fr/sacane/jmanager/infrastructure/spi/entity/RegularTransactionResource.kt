@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
-import fr.sacane.jmanager.domain.models.transaction.Regularity
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -14,7 +14,7 @@ data class RegularTransactionResource(
     val amount: BigDecimal,
     val isIncome: Boolean,
     @Enumerated(EnumType.STRING)
-    val regularity: Regularity,
+    val frequency: Frequency,
     @ManyToOne(fetch = FetchType.LAZY)
     var owner: UserResource? = null,
     val currency: String = "€",
@@ -29,10 +29,16 @@ data class RegularTransactionResource(
 
     @Id
     @GeneratedValue
-    val regularTransactionId: UUID? = null
+    val regularTransactionId: UUID? = null,
+    @ManyToMany(mappedBy = "regularTransactions")
+    var accounts: MutableList<AccountResource> = mutableListOf()
 ){
     fun addOwner(owner: UserResource) {
         this.owner = owner
         owner.regularTransactions.add(this)
+    }
+
+    fun addAccount(account: AccountResource) {
+        accounts.add(account)
     }
 }

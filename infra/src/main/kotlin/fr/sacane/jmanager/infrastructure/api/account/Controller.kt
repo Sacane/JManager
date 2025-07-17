@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Account
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.port.api.AccountFeature
+import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
@@ -18,7 +18,7 @@ import java.util.logging.Logger
 @RequestMapping("api/account")
 @Adapter(Side.APPLICATION)
 class AccountController (
-    private val feature: AccountFeature
+    private val feature: BookletFeature
 ) {
     companion object {
         private val LOGGER: Logger = Logger.getLogger("AccountController")

@@ -16,6 +16,7 @@ object FakeFactory {
     private val fakeAccountRepository: InMemoryAccountRepository = InMemoryAccountRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
+    private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository()
     private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
 
     val tokenGenerator: TokenGenerator = object : TokenGenerator {
@@ -35,7 +36,7 @@ object FakeFactory {
 
     private val sessionManager = InMemorySessionManager(tokenGenerator)
 
-    val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
+    val accountFeature = BookletFeatureImpl(userRepository, sessionManager, fakeAccountRepository, inMemoryRegularTransactionRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager)
     val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)

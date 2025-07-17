@@ -1,8 +1,9 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
@@ -77,7 +78,7 @@ internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
         startDate = this.startDate,
         value = this.amount.amount,
         isIncome = this.isIncome,
-        regularity = this.regularity.name,
+        regularity = Frequency.MONTHLY.toString(),
         tagDTO = this.tag.toDTO()
     )
 }

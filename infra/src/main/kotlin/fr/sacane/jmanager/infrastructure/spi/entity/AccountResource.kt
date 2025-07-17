@@ -20,10 +20,22 @@ class AccountResource(
     @Id
     @GeneratedValue
     @Column(name = "id_account")
-    var idAccount: Long? = null
+    var idAccount: Long? = null,
+    @ManyToMany
+    @JoinTable(
+        name = "account_regular_transaction",
+        joinColumns = [JoinColumn(name = "account_id")],
+        inverseJoinColumns = [JoinColumn(name = "regular_transaction_id")]
+    )
+    val regularTransactions: MutableList<RegularTransactionResource> = mutableListOf()
 ) {
     fun addTransaction(transaction: TransactionResource) {
         sheets.add(transaction)
         transaction.account = this
+    }
+
+    fun addRegularTransaction(regularTransaction: RegularTransactionResource) {
+        regularTransactions.add(regularTransaction)
+        regularTransaction.addAccount(this)
     }
 }

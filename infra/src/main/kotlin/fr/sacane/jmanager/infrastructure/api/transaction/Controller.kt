@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.models.transaction.Regularity
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.*
@@ -114,7 +114,7 @@ class TransactionController(
             regularTransactionCreationRequest.value.toAmount(),
             regularTransactionCreationRequest.isIncome,
             tag = regularTransactionCreationRequest.tagDTO?.toDomain() ?: Tag("Aucune", isDefault = true),
-            regularity = Regularity.valueOf(regularTransactionCreationRequest.regularity),
+            frequency = Frequency.valueOf(regularTransactionCreationRequest.regularity),
         ).map {
             it.toDTO()
         }.toHttpResponse()

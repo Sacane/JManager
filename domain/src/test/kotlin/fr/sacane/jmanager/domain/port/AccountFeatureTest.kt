@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.*
 import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.api.AccountFeature
+import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
 import org.junit.jupiter.api.AfterEach
@@ -18,7 +18,7 @@ class AccountFeatureTest: FeatureTest() {
 
     companion object{
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
-        private var accountFeature: AccountFeature = FakeFactory.accountFeature
+        private var bookletFeature: BookletFeature = FakeFactory.accountFeature
         private val user = userRepository.register("jojo", "test") as User
         private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
         private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
@@ -38,8 +38,8 @@ class AccountFeatureTest: FeatureTest() {
         private val element = Account(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = 50L)
         override val action: List<Result<out Any>>
             get() = listOf(
-                accountFeature.findAccountById(50L, UUID.randomUUID().toString()),
-                accountFeature.save(UUID.randomUUID().toString(), element)
+                bookletFeature.findAccountById(50L, UUID.randomUUID().toString()),
+                bookletFeature.save(UUID.randomUUID().toString(), element)
             )
     }
 
@@ -50,7 +50,7 @@ class AccountFeatureTest: FeatureTest() {
         accountState.init(listOf(
             AccountByOwner(listOf(element), user.id)
         ))
-        accountFeature.findAccountById(50L, session.tokenValue)
+        bookletFeature.findAccountById(50L, session.tokenValue)
             .assertTrue {
                 this.label == "test"
             }
@@ -70,7 +70,7 @@ class AccountFeatureTest: FeatureTest() {
             owner = user,
             id= element.id,
         )
-        val response = accountFeature.editAccount(account = account, session.tokenValue)
+        val response = bookletFeature.editAccount(account = account, session.tokenValue)
 
         val expectedAnswer = Amount(BigDecimal(102))
 
@@ -86,7 +86,7 @@ class AccountFeatureTest: FeatureTest() {
             AccountByOwner(listOf(element), otherUser.id)
         ))
 
-        accountFeature.deleteAccountById(element.id!!, session.tokenValue).assertTrue {
+        bookletFeature.deleteAccountById(element.id!!, session.tokenValue).assertTrue {
             val accounts = accountState.getStates()
 
             val expectedAccountSize = 0
@@ -107,7 +107,7 @@ class AccountFeatureTest: FeatureTest() {
             accountState.init(listOf(
                 AccountByOwner(listOf(element), userId)
             ))
-            accountFeature.findByLabelAndUserId(tokenValue, element.label)
+            bookletFeature.findByLabelAndUserId(tokenValue, element.label)
                 .assertTrue {
                     this.label == "test22" && this.amount == Amount(100)
                 }
@@ -131,7 +131,7 @@ class AccountFeatureTest: FeatureTest() {
                 AccountByOwner(expectedAccount, userId)
             ))
 
-            accountFeature.findAllRegisteredAccounts(tokenValue)
+            bookletFeature.findAllRegisteredAccounts(tokenValue)
                 .assertContainsAtPosition(0, account)
                 .assertContainsAtPosition(1, account2)
                 .assertContainsAtPosition(2, account3)
@@ -145,7 +145,7 @@ class AccountFeatureTest: FeatureTest() {
         launchWithConnectedUserWithoutAccount {
             val accountToSave = Account( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = 50L)
 
-            accountFeature.save(tokenValue, accountToSave)
+            bookletFeature.save(tokenValue, accountToSave)
                 .assertTrue {
                     val expectedAmount = Amount(100)
                     val expectedLabelAccount = "test1"
@@ -166,7 +166,7 @@ class AccountFeatureTest: FeatureTest() {
         ))
 
         val accountToSave = Account( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = 51L)
-        accountFeature.save(session.tokenValue, accountToSave)
+        bookletFeature.save(session.tokenValue, accountToSave)
             .assertFailure()
     }
 }

@@ -1,9 +1,11 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.models.transaction.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.RegularTransactionId
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
@@ -131,13 +133,13 @@ internal fun User.asExistingResource(): UserResource
 )
 
 internal fun RegularTransactionResource.toDomain(): RegularTransaction {
-    return RegularTransaction(
-        RegularTransactionId(this.regularTransactionId.toString()),
+    return MonthlyTransaction(
+        label = this.label,
+        amount = Amount(this.amount),
+        isIncome = this.isIncome,
+        id = RegularTransactionId(this.regularTransactionId.toString()),
         this.startDate,
-        this.label,
-        Amount(this.amount),
-        this.isIncome,
         tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
-        regularity = this.regularity
+        frequencyProperty = FrequencyProperty.Forever(),
     )
 }
