@@ -1,12 +1,14 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.FrequencyPropertyEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.*
 
 @Entity
+@Table(name = "regular_transaction")
 data class RegularTransactionResource(
     val startDate: LocalDate,
     val label: String,
@@ -31,7 +33,9 @@ data class RegularTransactionResource(
     @GeneratedValue
     val regularTransactionId: UUID? = null,
     @ManyToMany(mappedBy = "regularTransactions")
-    var accounts: MutableList<AccountResource> = mutableListOf()
+    var accounts: MutableList<AccountResource> = mutableListOf(),
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+    var frequencyProperty: FrequencyPropertyEntity? = null
 ){
     fun addOwner(owner: UserResource) {
         this.owner = owner

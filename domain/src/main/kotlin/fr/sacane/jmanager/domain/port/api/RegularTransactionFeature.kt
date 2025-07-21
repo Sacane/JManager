@@ -27,6 +27,11 @@ sealed interface RegularTransactionFeature {
     ): Result<RegularTransaction>
 
     fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>>
+
+    fun bookRegularTransaction(
+        token: String,
+        regularTransaction: RegularTransaction,
+    ): Result<RegularTransaction>
 }
 
 @DomainService
@@ -62,5 +67,21 @@ class RegularTransactionFeatureImpl(
             val transactions = regularTransactionRepository.getAllRegularTransactions(it)
             return@authenticate success(transactions)
         }
+    }
+
+    override fun bookRegularTransaction(
+        token: String,
+        regularTransaction: RegularTransaction
+    ): Result<RegularTransaction>  = session.authenticate(token = token){
+        val transaction = regularTransactionRepository.saveRegularTransaction(
+            it,
+            regularTransaction.startDate,
+            regularTransaction.label,
+            regularTransaction.amount,
+            regularTransaction.isIncome,
+            regularTransaction.tag,
+            Frequency.MONTHLY
+        )
+        return@authenticate success(transaction)
     }
 }

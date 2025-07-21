@@ -17,7 +17,7 @@ enum class Frequency {
 value class RegularTransactionId(val value: String)
 
 interface RegularTransaction: BaseTransaction {
-    val id: RegularTransactionId
+    val id: RegularTransactionId?
     val startDate: LocalDate
     val frequencyProperty: FrequencyProperty
 }
