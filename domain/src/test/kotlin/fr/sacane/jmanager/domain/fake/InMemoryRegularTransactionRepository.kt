@@ -53,7 +53,7 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
     }
 
     override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
-        return transactions.filter { it.id.value.startsWith("${userId.value}") }
+        return transactions.filter { it.id!!.value.startsWith("${userId.value}") }
     }
 
     override fun getAllRegularUsedByAccount(
@@ -70,7 +70,7 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
     ){
         val regularTransactions = transactionsByAccount[bookletId] ?: return
         regularTransactions.forEach { transaction ->
-            if (transaction.id.value.startsWith("${userId.value}")) {
+            if (transaction.id!!.value.startsWith("${userId.value}")) {
                 transactionsByAccount.computeIfAbsent(bookletId) { mutableListOf() }.add(transaction)
             }
         }
