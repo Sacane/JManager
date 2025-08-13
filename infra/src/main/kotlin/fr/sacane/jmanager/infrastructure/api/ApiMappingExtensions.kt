@@ -73,7 +73,7 @@ internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId, i
 
 internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
     return RegularTransactionDTO(
-        id = this.id.value,
+        id = this.id!!.value,
         label = this.label,
         startDate = this.startDate,
         value = this.amount.amount,
