@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.domain.port.spi
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 
@@ -11,5 +11,5 @@ interface TransactionRepositoryPort {
     fun deleteAllSheetsById(sheetIds: List<Long>)
     fun findTransactionById(transactionId: Long): Transaction?
     fun save(accountId: Long, transaction: Transaction): Transaction?
-    fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account?
+    fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet?
 }

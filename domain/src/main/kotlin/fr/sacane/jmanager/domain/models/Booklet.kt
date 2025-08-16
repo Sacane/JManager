@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.models
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import java.time.Month
 
-class Account(
+class Booklet(
     var amount: Amount,
     private var labelAccount: String,
     private val _transactions: MutableList<Transaction> = mutableListOf(),
@@ -19,7 +19,7 @@ class Account(
     val transactions: List<Transaction>
         get() = _transactions
 
-    override fun equals(other: Any?): Boolean = (other is Account) && labelAccount == other.label
+    override fun equals(other: Any?): Boolean = (other is Booklet) && labelAccount == other.label
     fun sheets(): List<Transaction>{
         return transactions.toList()
     }
@@ -28,13 +28,13 @@ class Account(
         return transactions.firstOrNull { it.id == id }
     }
 
-    fun updateFrom(account: Account) {
-        amount = account.amount
-        labelAccount = account.label
+    fun updateFrom(booklet: Booklet) {
+        amount = booklet.amount
+        labelAccount = booklet.label
         _transactions.replaceAll {
             Transaction(it.id, it.label, it.date, it.amount, it.isIncome, it.tag)
         }
-        previewAmount = account.previewAmount
+        previewAmount = booklet.previewAmount
     }
 
     override fun hashCode(): Int {

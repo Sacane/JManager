@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
@@ -78,7 +78,7 @@ class SqlTransactionAdapter(
     }
 
     @Transactional
-    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
+    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet? {
         if(userId.value == null) return null
         return accountJpaRepository.findSheetsByLabelAndAccountOf(label, userId.value!!)
             ?.toModel()

@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.account
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.BookletFeature
@@ -17,11 +17,11 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("api/account")
 @Adapter(Side.APPLICATION)
-class AccountController (
+class BookletController (
     private val feature: BookletFeature
 ) {
     companion object {
-        private val LOGGER: Logger = Logger.getLogger("AccountController")
+        private val LOGGER: Logger = Logger.getLogger("BookletController")
     }
 
     @PostMapping
@@ -31,7 +31,7 @@ class AccountController (
         LOGGER.info("Booking a new Account...")
         return feature.save(
             currentUser.token,
-            Account(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
+            Booklet(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
         ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
 

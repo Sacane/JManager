@@ -15,7 +15,7 @@ abstract class AbstractTransactionResource(
     open var label: String,
 
     @Column(nullable = false)
-    open var amount: Double, // Adapter si Amount est un value object complexe
+    open var amount: Double,
 
     @Column(nullable = false)
     open var isIncome: Boolean,

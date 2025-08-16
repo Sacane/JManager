@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
@@ -17,12 +17,12 @@ import java.time.LocalDate
 
 @Port(Side.APPLICATION)
 sealed interface BookletFeature {
-    fun findAccountById(accountID: Long, token: String): Result<Account>
-    fun editAccount(account: Account, token: String): Result<Account>
+    fun findAccountById(accountID: Long, token: String): Result<Booklet>
+    fun editAccount(booklet: Booklet, token: String): Result<Booklet>
     fun deleteAccountById(accountID: Long, token: String): Result<Nothing>
-    fun findByLabelAndUserId(token: String, label: String): Result<Account>
-    fun findAllRegisteredAccounts(token: String): Result<List<Account>>
-    fun save(token: String, account: Account): Result<Account>
+    fun findByLabelAndUserId(token: String, label: String): Result<Booklet>
+    fun findAllRegisteredAccounts(token: String): Result<List<Booklet>>
+    fun save(token: String, booklet: Booklet): Result<Booklet>
 }
 
 @DomainService
@@ -35,7 +35,7 @@ class BookletFeatureImpl(
     override fun findAccountById(
         accountID: Long,
         token: String
-    ): Result<Account> = session.authenticate(token) {
+    ): Result<Booklet> = session.authenticate(token) {
         val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(it, accountID)
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
             success(this)
@@ -43,15 +43,15 @@ class BookletFeatureImpl(
     }
 
     override fun editAccount(
-        account: Account,
+        booklet: Booklet,
         token: String
-    ): Result<Account> = session.authenticate(token) {
-        val accountID = account.id ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.label} est introuvable en base")
-        val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${account.id} est introuvable")
-        if(oldAccount.id != account.id && oldAccount.label == account.label){
+    ): Result<Booklet> = session.authenticate(token) {
+        val accountID = booklet.id ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${booklet.label} est introuvable en base")
+        val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${booklet.id} est introuvable")
+        if(oldAccount.id != booklet.id && oldAccount.label == booklet.label){
             return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le libellé du livret existe déjà")
         }
-        oldAccount.updateFrom(account)
+        oldAccount.updateFrom(booklet)
         val registered = accountRepository.upsert(oldAccount)
         success(registered)
     }
@@ -70,11 +70,11 @@ class BookletFeatureImpl(
     override fun findByLabelAndUserId(
         token: String,
         label: String
-    ): Result<Account> = session.authenticate(token) {
+    ): Result<Booklet> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(it)
             ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur recherché n'existe pas")
         success(
-            user.accounts
+            user.booklets
             .find { acc -> acc.label == label }
             ?: return@authenticate failure(ResultState.BOOKLET_LABEL_NOT_EXIST, "Le compte $label n'est pas enregistré en base")
         )
@@ -82,22 +82,22 @@ class BookletFeatureImpl(
 
     override fun findAllRegisteredAccounts(
         token: String
-    ): Result<List<Account>> = session.authenticate(token) {
+    ): Result<List<Booklet>> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(it)
             ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "L'utilisateur n'existe pas en base")
-        return@authenticate success(user.accounts)
+        return@authenticate success(user.booklets)
     }
 
     override fun save(
         token: String,
-        account: Account
-    ): Result<Account> = session.authenticate(token) {
+        booklet: Booklet
+    ): Result<Booklet> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(it)
             ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur n'existe pas en base")
-        if(user.hasAccount(account.label)) {
-            return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le profil contient déjà un compte avec le label ${account.label}")
+        if(user.hasAccount(booklet.label)) {
+            return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le profil contient déjà un compte avec le label ${booklet.label}")
         }
-        val accountSaved = accountRepository.save(it, account)
+        val accountSaved = accountRepository.save(it, booklet)
             ?: return@authenticate failure(ResultState.INFRASTRUCTURE_ERROR,"Erreur lors de la sauvegarde du compte")
         success(accountSaved)
     }

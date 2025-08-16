@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -98,10 +98,10 @@ class TransactionFeatureImpl(
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
-            val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
-            account.removeTransactionIf(isSheetOnList)
-            accountRepository.upsert(account)
+            booklet.removeTransactionIf(isSheetOnList)
+            accountRepository.upsert(booklet)
             transactionRepository.deleteAllSheetsById(sheetIds)
             return@executeInTransaction success()
         }

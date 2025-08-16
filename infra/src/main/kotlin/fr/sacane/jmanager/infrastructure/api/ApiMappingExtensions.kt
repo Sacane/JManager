@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity
 import java.awt.Color
 import java.time.LocalDate
 
-internal fun Account.toDTO(): AccountDTO = AccountDTO(
+internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
     this.amount.amount,
     this.label,
@@ -28,8 +28,8 @@ internal fun Account.toDTO(): AccountDTO = AccountDTO(
 internal fun TransactionResult.toModel(): Transaction
 = Transaction(this.id, this.label, LocalDate.parse(this.date), Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
-internal fun AccountDTO.toModel(user: User? = null): Account
-= Account(this.amount.toAmount(), this.labelAccount, this.transactions?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = this.amount.toAmount(), id = this.id)
+internal fun AccountDTO.toModel(user: User? = null): Booklet
+= Booklet(this.amount.toAmount(), this.labelAccount, this.transactions?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = this.amount.toAmount(), id = this.id)
 
 internal fun Transaction.toDTO(): TransactionResult {
     return TransactionResult(id, label, amount.amount, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag.toDTO(), isPreview)
@@ -73,7 +73,7 @@ internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId, i
 
 internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
     return RegularTransactionDTO(
-        id = this.id!!.value,
+        id = this.id?.value!!,
         label = this.label,
         startDate = this.startDate,
         value = this.amount.amount,

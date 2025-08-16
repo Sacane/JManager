@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.*
+import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -127,6 +128,27 @@ class TransactionController(
             .toHttpResponse()
     }
 
+    @PostMapping("/monthly")
+    fun createMonthlyTransaction(
+
+    ): ResponseEntity<TransactionResponse> {
+        logger.info("Creating monthly transaction...")
+        return transactionFeature.bookTransaction(
+            currentUser.token,
+            MonthlyTransactionCreationRequest(
+                label = "Monthly Salary",
+                value = "3000",
+                isIncome = true,
+                month = LocalDate.now().month,
+                year = LocalDate.now().year
+            )
+        ).map {
+            it.toDTO()
+        }.toHttpResponse().also {
+            logger.info("Monthly transaction created successfully")
+        }
+    }
+
 
     companion object {
         private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)
@@ -151,4 +173,13 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
 data class ConfirmPreviewCommand(
     val accountID: Long,
     val transactionID: Long
+)
+
+data class MonthlyTransactionCreationRequest(
+    val label: String,
+    val value: String,
+    val isIncome: Boolean,
+    val tagDTO: TagDTO? = null,
+    val month: Month,
+    val year: Int
 )

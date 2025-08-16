@@ -34,13 +34,13 @@ open class FeatureTest {
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
         }
     }
-    fun createAccount(userId: User, label: String, amount: Amount): Account {
+    fun createAccount(userId: User, label: String, amount: Amount): Booklet {
         val id = Random.nextLong()
-        val account = Account(id = id, amount = amount, labelAccount = label, owner = userId)
+        val booklet = Booklet(id = id, amount = amount, labelAccount = label, owner = userId)
         accountState.init(
-            AccountByOwner(account.asSingleton(), userId.id).asSingleton()
+            AccountByOwner(booklet.asSingleton(), userId.id).asSingleton()
         )
-        return account
+        return booklet
     }
     private fun createAndConnect(username: String): UserToken {
         val userId = UserId(Random.nextLong())
@@ -68,10 +68,10 @@ open class FeatureTest {
     inner class AccountTokenUserId(
         val userId: UserId,
         val tokenValue: String,
-        val account: Account
+        val booklet: Booklet
     ) {
         fun initTransactions(transactions: List<Transaction>) {
-            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(userId, account.id!!), transactions.toMutableList())))
+            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(userId, booklet.id!!), transactions.toMutableList())))
         }
     }
     inner class TokenUserId(

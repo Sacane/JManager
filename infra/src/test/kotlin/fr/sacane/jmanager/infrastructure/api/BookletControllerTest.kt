@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.infrastructure.api.account.BookletBookingRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
@@ -71,7 +71,7 @@ class BookletControllerTest(
         fun `Request delete account from its ID should return 200`() {
             accountStateAdapter.init(
                 listOf(
-                    Account(
+                    Booklet(
                         id = null,
                         amount = Amount.fromString("100.00"),
                         labelAccount = "test",
@@ -125,7 +125,7 @@ class BookletControllerTest(
         fun `Request a Booklet from an existing ID must return 200 with the asking booklet`() {
             accountStateAdapter.init(
                 listOf(
-                    Account(
+                    Booklet(
                         id = null,
                         amount = Amount.fromString("100.00"),
                         labelAccount = "test",
@@ -170,19 +170,19 @@ class BookletControllerTest(
         fun `Request for all booklets of a user must return 200 with the asking booklets`() {
             accountStateAdapter.init(
                 listOf(
-                    Account(
+                    Booklet(
                         id = null,
                         amount = Amount.fromString("50.00"),
                         labelAccount = "test2",
                         owner = user,
                     ),
-                    Account(
+                    Booklet(
                         id = null,
                         amount = Amount.fromString("60.00"),
                         labelAccount = "test3",
                         owner = user,
                     ),
-                    Account(
+                    Booklet(
                         id = null,
                         amount = Amount.fromString("0.00"),
                         labelAccount = "test",

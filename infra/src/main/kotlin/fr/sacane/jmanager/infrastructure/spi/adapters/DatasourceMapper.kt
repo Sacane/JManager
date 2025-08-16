@@ -19,12 +19,12 @@ class AccountMapper(
     val userRepository: UserPostgresRepository,
     val tagRepository: TagRepository
 ){
-    fun asResource(account: Account): AccountResource {
-        val userResource = account.owner?.id?.value?.let { userRepository.findById(it) }
+    fun asResource(booklet: Booklet): AccountResource {
+        val userResource = booklet.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.amount, idAccount = booklet.id, previewAmount = booklet.previewAmount.amount)
         } else {
-            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = booklet.initialSold.amount, idAccount = booklet.id, previewAmount = booklet.previewAmount.amount)
         }
     }
 }
@@ -49,7 +49,7 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
 }
 
 
-internal fun Account.asResource(): AccountResource {
+internal fun Booklet.asResource(): AccountResource {
     val sheets = if (this.sheets().isEmpty()) {
         mutableListOf()
     } else {
@@ -76,8 +76,8 @@ internal fun TransactionResource.toModel(): Transaction
     isPreview = isPreview
 )
 
-internal fun AccountResource.toModel(): Account
-= Account(
+internal fun AccountResource.toModel(): Booklet
+= Booklet(
     this.amount.toAmount(),
     this.label,
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
@@ -99,10 +99,10 @@ internal fun UserResource.toModelWithSimpleAccounts()
     id = UserId(this.idUser),
     username = this.username,
     email = this.email,
-    accounts = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
+    booklets = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
 )
 
-internal fun AccountResource.toSimpleModel(): Account = Account(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
+internal fun AccountResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
 
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
     UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password)
@@ -128,7 +128,7 @@ internal fun User.asExistingResource(): UserResource
         = UserResource(idUser = this.id.value,
     username = username,
     email = email,
-    accounts = this.accounts.map {it.asResource()}.toMutableList(),
+    accounts = this.booklets.map {it.asResource()}.toMutableList(),
     tags = this.tags.map { it.toPersonalTag() }.toMutableList()
 )
 

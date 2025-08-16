@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi
 
-import fr.sacane.jmanager.domain.models.Account
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
@@ -38,13 +38,13 @@ class TransactionAdapterSqlTest(
                 tag = Tag("test"),
                 id = null
             )
-            val account = Account(
+            val booklet = Booklet(
                 labelAccount = "test",
                 amount = Amount(10.0.toLong()),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(account))
-            val result = sqlTransactionAdapter.persist(userId = user!!.id, account.label, transaction)
+            accountStateTestAdapter.init(listOf(booklet))
+            val result = sqlTransactionAdapter.persist(userId = user!!.id, booklet.label, transaction)
             assertNotNull(result?.id)
         }
 
@@ -58,13 +58,13 @@ class TransactionAdapterSqlTest(
                 tag = Tag("test"),
                 id = null
             )
-            val account = Account(
+            val booklet = Booklet(
                 labelAccount = "test",
                 amount = Amount(10.0.toLong()),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(account))
-            val result = sqlTransactionAdapter.persist(userId = UserId(null), account.label, transaction)
+            accountStateTestAdapter.init(listOf(booklet))
+            val result = sqlTransactionAdapter.persist(userId = UserId(null), booklet.label, transaction)
             assertNull(result)
         }
 
@@ -78,12 +78,12 @@ class TransactionAdapterSqlTest(
                 tag = Tag("test"),
                 id = null
             )
-            val account = Account(
+            val booklet = Booklet(
                 labelAccount = "test",
                 amount = Amount(10.0.toLong()),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(account))
+            accountStateTestAdapter.init(listOf(booklet))
             val result = sqlTransactionAdapter.persist(userId = UserId(null), "unknown", transaction)
             assertNull(result)
         }
