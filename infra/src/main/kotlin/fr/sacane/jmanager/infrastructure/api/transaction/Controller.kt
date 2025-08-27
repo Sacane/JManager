@@ -6,6 +6,9 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.*
@@ -24,7 +27,11 @@ class TransactionController(
     private val transactionFeature: TransactionFeature,
     private val regularTransactionFeature: RegularTransactionFeature,
 ) {
-    private val logger = Logger.getLogger(TransactionController::class.java.name)
+
+    companion object {
+        private val logger = Logger.getLogger(TransactionController::class.java.name)
+    }
+
 
     @PostMapping
     fun createTransaction(
@@ -54,7 +61,7 @@ class TransactionController(
         @RequestParam("year") year: Int,
         @RequestParam("accountLabel") accountLabel: String
         ): ResponseEntity<TransactionListResponse> {
-        LOGGER.info("Request transactions from booklet $accountLabel for month $month and year $year")
+        logger.info("Request transactions from booklet $accountLabel for month $month and year $year")
         val response = transactionFeature.retrieveTransactionsByMonthAndYear(
             currentUser.token,
             month ?: LocalDate.now().month,
@@ -74,7 +81,7 @@ class TransactionController(
             .map {
                 it.toDTO()
             }.toHttpResponse()
-            .also { LOGGER.info("Transaction edited successfully : ${dto.transaction}") }
+            .also { logger.info("Transaction edited successfully : ${dto.transaction}") }
     }
 
 
@@ -131,16 +138,18 @@ class TransactionController(
     @PostMapping("/monthly")
     fun createMonthlyTransaction(
 
-    ): ResponseEntity<TransactionResponse> {
+    ): ResponseEntity<RegularTransactionDTO> {
         logger.info("Creating monthly transaction...")
-        return transactionFeature.bookTransaction(
+        return regularTransactionFeature.bookRegularTransaction(
             currentUser.token,
-            MonthlyTransactionCreationRequest(
+            MonthlyTransaction(
+                id = RegularTransactionId(""),
                 label = "Monthly Salary",
-                value = "3000",
+                amount = 3000.toAmount(),
                 isIncome = true,
-                month = LocalDate.now().month,
-                year = LocalDate.now().year
+                tag = Tag("Salary", isDefault = true),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
             )
         ).map {
             it.toDTO()
@@ -150,9 +159,6 @@ class TransactionController(
     }
 
 
-    companion object {
-        private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)
-    }
 }
 
 fun TransactionResumeResult.toDTO(): TransactionResponse {

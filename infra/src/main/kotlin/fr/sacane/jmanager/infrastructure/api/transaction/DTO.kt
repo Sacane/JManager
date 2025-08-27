@@ -79,3 +79,27 @@ data class RegularTransactionDTO(
     val regularity: String,
     val tagDTO: TagDTO
 )
+
+@Serializable
+data class MonthlyRegularTransactionRequest (
+    val label: String,
+    @Serializable(with = BigDecimalSerializer::class)
+    val value: BigDecimal,
+    val isIncome: Boolean,
+    val tagDTO: TagDTO? = null,
+    val frequencyProperty: FrequencyPropertyDTO
+)
+
+enum class FrequencyType {
+    FOREVER,
+    SPECIFIC_REPETITION_TIMES,
+    UNTIL_DATE
+}
+
+@Serializable
+data class FrequencyPropertyDTO(
+    val type: FrequencyType,
+    @Serializable(with = LocalDateSerializer::class)
+    val untilDate: LocalDate? = null,
+    val times: Int? = null
+)
