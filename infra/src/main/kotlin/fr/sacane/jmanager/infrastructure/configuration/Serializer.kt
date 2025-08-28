@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.configuration
 
+import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyType
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -54,6 +55,23 @@ object LocalDateSerializer : KSerializer<LocalDate> {
     override fun deserialize(decoder: Decoder): LocalDate {
         return LocalDate.parse(decoder.decodeString(), formatter)
     }
+}
+
+object FrequencyPropertyTypeSerializer : KSerializer<FrequencyPropertyType> {
+    override val descriptor: SerialDescriptor
+        get() = PrimitiveSerialDescriptor("Frequency property type", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: FrequencyPropertyType
+    ) {
+        encoder.encodeString(value.name)
+    }
+
+    override fun deserialize(decoder: Decoder): FrequencyPropertyType {
+        return FrequencyPropertyType.valueOf(decoder.decodeString())
+    }
+
 }
 
 val json = Json {

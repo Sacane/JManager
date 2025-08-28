@@ -1,11 +1,14 @@
 package fr.sacane.jmanager.infrastructure.api.transaction
 
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
+import fr.sacane.jmanager.infrastructure.configuration.FrequencyPropertyTypeSerializer
 import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.time.LocalDate
+import kotlin.times
 
 @Serializable
 data class UserAccountIdsTransactionRequest(
@@ -86,20 +89,29 @@ data class MonthlyRegularTransactionRequest (
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
     val isIncome: Boolean,
-    val tagDTO: TagDTO? = null,
+    val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO
 )
 
-enum class FrequencyType {
+enum class FrequencyPropertyType {
     FOREVER,
-    SPECIFIC_REPETITION_TIMES,
-    UNTIL_DATE
+    UNTIL_DATE,
+    TIMES
 }
 
 @Serializable
 data class FrequencyPropertyDTO(
-    val type: FrequencyType,
+    @Serializable(with = FrequencyPropertyTypeSerializer::class)
+    val type: FrequencyPropertyType,
     @Serializable(with = LocalDateSerializer::class)
     val untilDate: LocalDate? = null,
     val times: Int? = null
 )
+
+fun FrequencyPropertyDTO.frequencyToDomain(frequencyProperty: FrequencyPropertyType): FrequencyProperty {
+    return when (frequencyProperty) {
+        FrequencyPropertyType.FOREVER -> FrequencyProperty.Forever()
+        FrequencyPropertyType.UNTIL_DATE -> FrequencyProperty.UntilDate(this.untilDate!!)
+        FrequencyPropertyType.TIMES -> FrequencyProperty.SpecificRepetitionTimes(this.times!!)
+    }
+}
