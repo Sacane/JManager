@@ -90,7 +90,8 @@ data class MonthlyRegularTransactionRequest (
     val value: BigDecimal,
     val isIncome: Boolean,
     val tagDTO: TagDTO,
-    val frequencyProperty: FrequencyPropertyDTO
+    val frequencyProperty: FrequencyPropertyDTO,
+    val frequencyPropertyType: FrequencyPropertyType
 )
 
 enum class FrequencyPropertyType {
@@ -106,7 +107,24 @@ data class FrequencyPropertyDTO(
     @Serializable(with = LocalDateSerializer::class)
     val untilDate: LocalDate? = null,
     val times: Int? = null
-)
+) {
+    init {
+        when (type) {
+            FrequencyPropertyType.FOREVER -> {
+                require(untilDate == null) { "untilDate must be null when type is FOREVER" }
+                require(times == null) { "times must be null when type is FOREVER" }
+            }
+            FrequencyPropertyType.UNTIL_DATE -> {
+                require(untilDate != null) { "untilDate must be provided when type is UNTIL_DATE" }
+                require(times == null) { "times must be null when type is UNTIL_DATE" }
+            }
+            FrequencyPropertyType.TIMES -> {
+                require(untilDate == null) { "untilDate must be null when type is TIMES" }
+                require(times != null && times > 0) { "times must be a positive integer when type is TIMES" }
+            }
+        }
+    }
+}
 
 fun FrequencyPropertyDTO.frequencyToDomain(frequencyProperty: FrequencyPropertyType): FrequencyProperty {
     return when (frequencyProperty) {

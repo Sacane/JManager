@@ -149,7 +149,7 @@ class TransactionController(
                 amount = request.value.toAmount(),
                 isIncome = true,
                 tag = request.tagDTO.toDomain(),
-                frequencyProperty = FrequencyProperty.Forever(),
+                frequencyProperty = request.frequencyProperty.frequencyToDomain(request.frequencyPropertyType),
                 startDate = LocalDate.now(),
             )
         ).map {
