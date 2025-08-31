@@ -140,7 +140,7 @@ class TransactionController(
     fun createMonthlyTransaction(
         @RequestBody request: MonthlyRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
-        logger.info("Creating monthly transaction...")
+        logger.info("Creating monthly transaction... from userID ${currentUser.id}")
         return regularTransactionFeature.bookRegularTransaction(
             currentUser.token,
             MonthlyTransaction(
