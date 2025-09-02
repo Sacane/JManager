@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
+import type { FrequencyPropertyDTOClient, FrequencyPropertyType } from '~/components/frequency-part/Monthly.vue'
 
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
@@ -12,6 +13,11 @@ const regularTrForm = reactive({
   amount: undefined,
   date: new Date(),
   frequency: frequencyToString('MONTHLY'),
+  monthlyFrequency: {
+    type: 'FOREVER' as FrequencyPropertyType,
+    untilDate: null as Date | null,
+    times: null as number | null,
+  },
   isIncome: false,
   tagDTO: {
     tagId: 0,
@@ -52,6 +58,10 @@ function closeDialog() {
   emit('visible', false)
   emit('cancelCreation')
   isVisibleData.value = false
+}
+
+function updateMonthlyFrequencyValue(value: FrequencyPropertyDTOClient) {
+  regularTrForm.monthlyFrequency = value
 }
 </script>
 
@@ -106,7 +116,10 @@ function closeDialog() {
         </div>
       </div>
       <div v-if="regularTrForm.frequency === frequencyToString('MONTHLY')" class="flex flex-col gap-3">
-        <Monthly />
+        <Monthly
+          :model-value="regularTrForm.monthlyFrequency"
+          @update:model-value="value => updateMonthlyFrequencyValue(value)"
+        />
       </div>
       <div class="flex flex-row gap-5">
         <Button severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
