@@ -13,7 +13,7 @@ import java.util.UUID
 @DiscriminatorColumn(name = "frequency_type")
 data class MonthlyRegularRegularTransactionEntity(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     val id: UUID? = null,
 
     @Column(nullable = false)
