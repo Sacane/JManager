@@ -28,4 +28,6 @@ interface RegularTransactionRepository {
         regularTransactionId: RegularTransactionId,
         bookletId: Long
     )
+
+    fun saveRegularTransaction(userId: UserId, transaction: RegularTransaction): RegularTransaction
 }

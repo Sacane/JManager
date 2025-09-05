@@ -20,7 +20,7 @@ const regularTrForm = reactive({
   },
   isIncome: false,
   tagDTO: {
-    tagId: 0,
+    tagId: 0 as number | undefined,
     label: '',
     colorDTO: {
       red: 0,

@@ -14,7 +14,7 @@ import java.time.LocalDate
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "frequency_type")
-abstract class FrequencyPropertyEntity(
+sealed class FrequencyPropertyEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     open val id: Long? = null

@@ -9,10 +9,22 @@ import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.AbstractRegularTransactionResource
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.ForeverEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.FrequencyPropertyEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRegularTransactionEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.SpecificRepetitionTimesEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.UntilDateEntity
+import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
+import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 import java.awt.Color
+import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Component
 class AccountMapper(
@@ -142,4 +154,91 @@ internal fun RegularTransactionResource.toDomain(): RegularTransaction {
         tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
         frequencyProperty = FrequencyProperty.Forever(),
     )
+}
+
+@Component
+class RegularTransactionOperatorAdapter(
+    private val monthlyTransactionResourceJpaRepository: MonthlyTransactionResourceJpaRepository,
+    private val tagMapperAdapter: JpaTagMapperAdapter,
+    private val defaultTagPostgresRepository: DefaultTagPostgresRepository
+) {
+
+    @Transactional
+    fun save(user: UserResource, regularTransaction: RegularTransaction): AbstractRegularTransactionResource {
+        return when (regularTransaction) {
+            is MonthlyTransaction -> {
+                val monthlyRegularTransactionEntity = MonthlyRegularRegularTransactionEntity(
+                    id = UUID.fromString(regularTransaction.id.value),
+                    startDate = regularTransaction.startDate,
+                    label = regularTransaction.label,
+                    amount = regularTransaction.amount.amount.toDouble(),
+                    isIncome = regularTransaction.isIncome,
+                    frequencyProperty = regularTransaction.frequencyProperty.toResource(),
+                ).copy(owner = user)
+                when(val tagResource = tagMapperAdapter.mapToResource(
+                    regularTransaction.tag
+                )) {
+                    is DefaultTagResource -> monthlyRegularTransactionEntity.copy(
+                        tag = tagResource,
+                        personalTag = null
+                    )
+                    is TagPersonalResource -> monthlyRegularTransactionEntity.copy(
+                        tag = null,
+                        personalTag = tagResource
+                    )
+                    null -> monthlyRegularTransactionEntity.copy(
+                        tag = defaultTagPostgresRepository.findUnknownTag(),
+                        personalTag = null
+                    )
+                }
+                monthlyTransactionResourceJpaRepository.save(monthlyRegularTransactionEntity)
+            }
+        }
+    }
+}
+
+@Component
+class JpaTagMapperAdapter(
+    private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
+    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
+) {
+    fun mapToResource(tag: Tag): AbstractTagResource? {
+        return tag.id?.let {
+            if(tag.isDefault) {
+                defaultTagPostgresRepository.findByIdNullable(it)
+            } else {
+                tagPersonalPostgresRepository.findByIdNullable(it)
+            }
+        }
+    }
+}
+
+internal fun FrequencyProperty.toResource(): FrequencyPropertyEntity {
+    return when(this) {
+        is FrequencyProperty.Forever -> ForeverEntity()
+        is FrequencyProperty.UntilDate -> UntilDateEntity(this.date)
+        is FrequencyProperty.SpecificRepetitionTimes -> SpecificRepetitionTimesEntity(this.number)
+    }
+}
+
+internal fun FrequencyPropertyEntity.toDomain(): FrequencyProperty {
+    return when(this) {
+        is ForeverEntity -> FrequencyProperty.Forever()
+        is UntilDateEntity -> FrequencyProperty.UntilDate(this.date)
+        is SpecificRepetitionTimesEntity -> FrequencyProperty.SpecificRepetitionTimes(this.number)
+    }
+}
+
+internal fun AbstractRegularTransactionResource.toDomain() = when(this) {
+    is MonthlyRegularRegularTransactionEntity -> MonthlyTransaction(
+        label = this.label,
+        amount = Amount(BigDecimal(this.amount)),
+        isIncome = this.isIncome,
+        id = RegularTransactionId(this.id.toString()),
+        this.startDate,
+        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain()!!,
+        frequencyProperty = this.frequencyProperty.toDomain()
+    )
+
+    else -> TODO("Not yet implemented")
 }

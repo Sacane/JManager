@@ -16,7 +16,7 @@ enum class Frequency {
 @JvmInline
 value class RegularTransactionId(val value: String)
 
-interface RegularTransaction: BaseTransaction {
+sealed interface RegularTransaction: BaseTransaction {
     val id: RegularTransactionId?
     val startDate: LocalDate
     val frequencyProperty: FrequencyProperty
@@ -29,6 +29,5 @@ class MonthlyTransaction(
     override val id: RegularTransactionId,
     override val startDate: LocalDate,
     override val frequencyProperty: FrequencyProperty,
-    val monthlyRepeatProperty: MonthlyRepeatProperty? = null,
     override var tag: Tag = Tag("Aucune", isDefault = true),
 ): RegularTransaction

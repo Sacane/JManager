@@ -58,7 +58,7 @@ function closeDialog() {
 function handleTabKey(event: KeyboardEvent) {
   if (event.key === 'Tab') {
     event.preventDefault()
-    const input = inputNumberRef.value.$el.querySelector('input')
+    const input = inputNumberRef.value?.$el.querySelector('input')
     if (input && input.value.includes(',')) {
       const cursorPosition = input.selectionStart
       const decimalPosition = input.value.indexOf(',')

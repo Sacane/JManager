@@ -31,7 +31,7 @@ data class RegularTransactionResource(
 
     @Id
     @GeneratedValue
-    val regularTransactionId: UUID? = null,
+    var regularTransactionId: UUID? = null,
     @ManyToMany(mappedBy = "regularTransactions")
     var accounts: MutableList<AccountResource> = mutableListOf(),
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
@@ -39,7 +39,6 @@ data class RegularTransactionResource(
 ){
     fun addOwner(owner: UserResource) {
         this.owner = owner
-        owner.regularTransactions.add(this)
     }
 
     fun addAccount(account: AccountResource) {

@@ -28,8 +28,21 @@ class DataJpaRegularTransactionRepositoryAdapter(
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
     private val userPostgresRepository: UserPostgresRepository,
-    private val bookletJpaRepository: AccountJpaRepository
+    private val bookletJpaRepository: AccountJpaRepository,
+    private val regularTransactionOperatorAdapter: RegularTransactionOperatorAdapter
 ): RegularTransactionRepository {
+
+    @Transactional
+    override fun saveRegularTransaction(
+        userId: UserId,
+        transaction: RegularTransaction
+    ): RegularTransaction {
+        val user = userPostgresRepository.findByIdOrNull(userId.value!!)
+            ?: throw IllegalArgumentException("User not found")
+        return regularTransactionOperatorAdapter.save(user, transaction).toDomain()
+    }
+
+
     @Transactional
     override fun saveRegularTransaction(
         userId: UserId,

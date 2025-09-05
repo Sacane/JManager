@@ -48,7 +48,7 @@ class RegularTransactionFeatureImpl(
         amount: Amount,
         isIncome: Boolean,
         tag: Tag?,
-        frequency: Frequency
+        frequency: Frequency,
     ): Result<RegularTransaction> = session.authenticate(token) {
         val transaction = regularTransactionRepository.saveRegularTransaction(
             it,
@@ -74,13 +74,8 @@ class RegularTransactionFeatureImpl(
         regularTransaction: RegularTransaction
     ): Result<RegularTransaction>  = session.authenticate(token = token){
         val transaction = regularTransactionRepository.saveRegularTransaction(
-            it,
-            regularTransaction.startDate,
-            regularTransaction.label,
-            regularTransaction.amount,
-            regularTransaction.isIncome,
-            regularTransaction.tag,
-            Frequency.MONTHLY
+            userId = it,
+            transaction = regularTransaction
         )
         return@authenticate success(transaction)
     }

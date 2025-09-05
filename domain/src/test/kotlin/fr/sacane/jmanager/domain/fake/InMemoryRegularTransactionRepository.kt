@@ -76,4 +76,12 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
         }
     }
 
+    override fun saveRegularTransaction(
+        userId: UserId,
+        transaction: RegularTransaction
+    ): RegularTransaction {
+        transactions.add(transaction)
+        return transaction
+    }
+
 }

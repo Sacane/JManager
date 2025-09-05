@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRegularTransactionEntity
 import jakarta.persistence.*
 
 @Table(name="userResource")
@@ -11,12 +12,12 @@ class UserResource(
     var password: String = "",
     @Column(unique = true, nullable = true)
     var email: String? = null,
-    @OneToMany(mappedBy = "owner", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = false)
-    val regularTransactions: MutableList<RegularTransactionResource> = mutableListOf(),
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var accounts: MutableList<AccountResource> = mutableListOf(),
     @OneToMany(mappedBy = "owner")
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
+    @OneToMany(mappedBy = "owner")
+    var monthlyTransactions: MutableList<MonthlyRegularRegularTransactionEntity> = mutableListOf(),
     @Id
     @GeneratedValue
     @Column(name = "id_user")

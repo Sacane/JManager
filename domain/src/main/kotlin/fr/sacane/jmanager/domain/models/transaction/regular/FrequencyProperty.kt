@@ -2,7 +2,7 @@ package fr.sacane.jmanager.domain.models.transaction.regular
 
 import java.time.LocalDate
 
-interface FrequencyProperty {
+sealed interface FrequencyProperty {
     class Forever: FrequencyProperty
 
     class SpecificRepetitionTimes(val number: Int): FrequencyProperty
