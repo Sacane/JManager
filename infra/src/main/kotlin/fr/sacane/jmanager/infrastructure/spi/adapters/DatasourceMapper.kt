@@ -168,7 +168,7 @@ class RegularTransactionOperatorAdapter(
         return when (regularTransaction) {
             is MonthlyTransaction -> {
                 val monthlyRegularTransactionEntity = MonthlyRegularRegularTransactionEntity(
-                    id = UUID.fromString(regularTransaction.id.value),
+                    transactionId = UUID.fromString(regularTransaction.id.value),
                     startDate = regularTransaction.startDate,
                     label = regularTransaction.label,
                     amount = regularTransaction.amount.amount.toDouble(),
@@ -235,7 +235,7 @@ internal fun AbstractRegularTransactionResource.toDomain() = when(this) {
         label = this.label,
         amount = Amount(BigDecimal(this.amount)),
         isIncome = this.isIncome,
-        id = RegularTransactionId(this.id.toString()),
+        id = RegularTransactionId(this.transactionId.toString()),
         this.startDate,
         tag = this.tag?.toDomain() ?: this.personalTag?.toDomain()!!,
         frequencyProperty = this.frequencyProperty.toDomain()
