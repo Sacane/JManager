@@ -226,6 +226,7 @@ internal fun FrequencyPropertyEntity.toDomain(): FrequencyProperty {
         is ForeverEntity -> FrequencyProperty.Forever()
         is UntilDateEntity -> FrequencyProperty.UntilDate(this.date)
         is SpecificRepetitionTimesEntity -> FrequencyProperty.SpecificRepetitionTimes(this.number)
+        else -> throw IllegalArgumentException("Unknown FrequencyPropertyEntity type")
     }
 }
 
