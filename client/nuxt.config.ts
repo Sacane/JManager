@@ -147,11 +147,12 @@ export default defineNuxtConfig({
           zoomOut: 'Dézoomer',
         },
       },
+      theme: {
+        preset: Lara, // ou Aura
+        // options: { /* personnalisation (tokens) si besoin */ }
+      },
     },
-    theme: {
-      preset: Lara, // ou Aura
-      // options: { /* personnalisation (tokens) si besoin */ }
-    },
+    zIndex: { modal: 1100, overlay: 1000, menu: 1000, tooltip: 1200 }, // fiabilise les overlays
   },
   runtimeConfig: isDev ? devRuntimeConfig : runtimeConfig,
 
