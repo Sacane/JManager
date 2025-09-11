@@ -14,7 +14,7 @@ import java.util.UUID
 data class MonthlyRegularRegularTransactionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID? = null,
+    val transactionId: UUID? = null,
 
     @Column(nullable = false)
     var startDate: LocalDate,
