@@ -1,4 +1,5 @@
 import process from 'node:process'
+import Lara from '@primevue/themes/lara'
 import runtimeConfig from './env.config.json'
 import devRuntimeConfig from './env.dev.config.json'
 
@@ -147,6 +148,10 @@ export default defineNuxtConfig({
         },
       },
     },
+    theme: {
+      preset: Lara, // ou Aura
+      // options: { /* personnalisation (tokens) si besoin */ }
+    },
   },
   runtimeConfig: isDev ? devRuntimeConfig : runtimeConfig,
 
@@ -185,7 +190,7 @@ export default defineNuxtConfig({
 
   // global CSS files
   css: [
-    'primevue/resources/themes/lara-light-purple/theme.css',
+
   ],
 
   // plugin configurations
@@ -196,7 +201,7 @@ export default defineNuxtConfig({
     '@nuxtjs/critters',
     '@nuxtjs/color-mode',
     '@pinia/nuxt',
-    'nuxt-primevue',
+    '@primevue/nuxt-module',
   ],
 
   i18n: {

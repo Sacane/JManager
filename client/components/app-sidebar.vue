@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import Profile from '~/components/Profile.vue'
 import useAuth from '../composables/useAuth'
 import 'primeicons/primeicons.css'
-import Profile from '~/components/Profile.vue'
 
 const { isAuthenticated } = useAuth()
 const isSidebarOpen = ref(true)

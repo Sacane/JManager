@@ -1,10 +1,10 @@
 <script setup lang="ts">
-
+import AppSidebar from '~/components/app-sidebar.vue'
 </script>
 
 <template>
   <div class="flex flex-row w-screen-h-screen">
-    <Sidebar class="sidebar" />
+    <AppSidebar class="sidebar" />
     <div class="flex flex-col w-screen h-screen">
       <!-- ------------------------------ -->
       <div class="content lg:(w-full h-screen flex flex-col)">
