@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
 import { useConfirm } from 'primevue/useconfirm'
+import { onMounted, reactive, ref } from 'vue'
 import useTag from '~/composables/useTag'
 import { hexToRgb } from '~/utils/util'
 
