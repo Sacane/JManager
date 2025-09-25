@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TagRepository
@@ -32,13 +33,19 @@ sealed interface RegularTransactionFeature {
         token: String,
         regularTransaction: RegularTransaction,
     ): Result<RegularTransaction>
+
+    fun linkTransactionAndAccount(
+        token: String,
+        transactionId: String,
+        bookletId: Long
+    ): Result<Nothing>
 }
 
 @DomainService
 class RegularTransactionFeatureImpl(
     private val regularTransactionRepository: RegularTransactionRepository,
     private val tagRepository: TagRepository,
-    private val session: SessionManager,
+    private val session: SessionManager
 ) : RegularTransactionFeature {
 
     override fun bookRegularTransaction(
@@ -78,5 +85,18 @@ class RegularTransactionFeatureImpl(
             transaction = regularTransaction
         )
         return@authenticate success(transaction)
+    }
+
+    override fun linkTransactionAndAccount(
+        token: String,
+        transactionId: String,
+        bookletId: Long
+    ): Result<Nothing> = session.authenticate(token) {
+        regularTransactionRepository.linkedRegularTransactionsWithBooklet(
+            it,
+            RegularTransactionId(transactionId),
+            bookletId
+        )
+        return@authenticate success()
     }
 }

@@ -8,7 +8,6 @@ import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.time.LocalDate
-import kotlin.times
 
 @Serializable
 data class UserAccountIdsTransactionRequest(
@@ -124,6 +123,12 @@ data class FrequencyPropertyDTO(
         }
     }
 }
+
+data class RegularTransactionLinkRequest(
+    val transactionId: String,
+    val bookletId: Long
+)
+
 
 fun FrequencyPropertyDTO.frequencyToDomain(): FrequencyProperty {
     return when (type) {

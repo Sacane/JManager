@@ -29,7 +29,6 @@ import java.util.UUID
 @Component
 class AccountMapper(
     val userRepository: UserPostgresRepository,
-    val tagRepository: TagRepository
 ){
     fun asResource(booklet: Booklet): AccountResource {
         val userResource = booklet.owner?.id?.value?.let { userRepository.findById(it) }
@@ -163,6 +162,10 @@ class RegularTransactionOperatorAdapter(
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository
 ) {
 
+    companion object {
+        private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionOperatorAdapter::class.java)
+    }
+
     @Transactional
     fun save(user: UserResource, regularTransaction: RegularTransaction): AbstractRegularTransactionResource {
         return when (regularTransaction) {
@@ -191,6 +194,7 @@ class RegularTransactionOperatorAdapter(
                         personalTag = null
                     )
                 }
+                logger.info("Save monthly transaction in postgres database")
                 monthlyTransactionResourceJpaRepository.save(monthlyRegularTransactionEntity)
             }
         }
