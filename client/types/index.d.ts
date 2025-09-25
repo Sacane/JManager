@@ -81,6 +81,30 @@ declare global {
     regularity: string
     tagDTO: TagDTO
   }
+
+  interface FrequencyPropertyDTO {
+    type: 'FOREVER' | 'UNTIL_DATE' | 'TIMES'
+    untilDate?: string
+    times?: number
+  }
+  interface MonthlyTransactionCreationRequest {
+    label: string
+    value: number
+    isIncome: boolean
+    date: string
+    tagDTO?: TagDTO | null
+    frequencyProperty: FrequencyPropertyDTO
+
+  }
+  interface MonthlyTransactionCreationResponse {
+    id: string
+    label: string
+    value: number
+    isIncome: boolean
+    date: string
+    tagDTO: TagDTO
+    frequencyProperty: FrequencyPropertyDTO
+  }
 }
 
 export {}

@@ -38,7 +38,7 @@ sealed interface RegularTransactionFeature {
 class RegularTransactionFeatureImpl(
     private val regularTransactionRepository: RegularTransactionRepository,
     private val tagRepository: TagRepository,
-    private val session: SessionManager
+    private val session: SessionManager,
 ) : RegularTransactionFeature {
 
     override fun bookRegularTransaction(

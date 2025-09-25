@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import java.time.LocalDate
 
@@ -30,4 +31,5 @@ interface RegularTransactionRepository {
     )
 
     fun saveRegularTransaction(userId: UserId, transaction: RegularTransaction): RegularTransaction
+    fun saveMonthlyRegularTransaction(userId: UserId, monthlyTransaction: MonthlyTransaction): RegularTransaction
 }

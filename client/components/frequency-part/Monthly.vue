@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import Calendar from 'primevue/calendar'
+import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
+import { computed, ref, watch } from 'vue'
 
 export type FrequencyPropertyType = 'FOREVER' | 'UNTIL_DATE' | 'TIMES'
 
@@ -66,7 +66,7 @@ function displayableType(type: FrequencyPropertyType): string {
 
     <div v-if="isUntilDate" class="form-group">
       <label for="untilDate">Date de fin</label>
-      <Calendar
+      <DatePicker
         id="untilDate"
         v-model="props.modelValue.untilDate"
         date-format="dd/mm/yy"

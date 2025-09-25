@@ -6,14 +6,11 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
-import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.*
-import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
-import kotlinx.serialization.Serializable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -140,7 +137,7 @@ class TransactionController(
     fun createMonthlyTransaction(
         @RequestBody request: MonthlyRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
-        logger.info("Creating monthly transaction... from userID ${currentUser.id}")
+        logger.info("Creating monthly transaction $request from userID ${currentUser.id}")
         return regularTransactionFeature.bookRegularTransaction(
             currentUser.token,
             MonthlyTransaction(
@@ -149,7 +146,7 @@ class TransactionController(
                 amount = request.value.toAmount(),
                 isIncome = true,
                 tag = request.tagDTO.toDomain(),
-                frequencyProperty = request.frequencyProperty.frequencyToDomain(request.frequencyPropertyType),
+                frequencyProperty = request.frequencyProperty.frequencyToDomain(),
                 startDate = LocalDate.now(),
             )
         ).map {

@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.AbstractTagResource
@@ -40,6 +41,15 @@ class DataJpaRegularTransactionRepositoryAdapter(
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
             ?: throw IllegalArgumentException("User not found")
         return regularTransactionOperatorAdapter.save(user, transaction).toDomain()
+    }
+
+    override fun saveMonthlyRegularTransaction(
+        userId: UserId,
+        monthlyTransaction: MonthlyTransaction
+    ): RegularTransaction{
+        val user = userPostgresRepository.findByIdOrNull(userId.value!!)
+            ?: throw IllegalArgumentException("User not found")
+        return regularTransactionOperatorAdapter.save(user, monthlyTransaction).toDomain()
     }
 
 

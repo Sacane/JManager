@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import type { FrequencyPropertyDTOClient, FrequencyPropertyType } from '~/components/frequency-part/Monthly.vue'
 import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
-import type { FrequencyPropertyDTOClient, FrequencyPropertyType } from '~/components/frequency-part/Monthly.vue'
 
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
@@ -61,6 +61,7 @@ function closeDialog() {
 }
 
 function updateMonthlyFrequencyValue(value: FrequencyPropertyDTOClient) {
+  console.warn('updateMonthlyFrequencyValue', value)
   regularTrForm.monthlyFrequency = value
 }
 </script>

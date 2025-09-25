@@ -91,7 +91,6 @@ data class MonthlyRegularTransactionRequest (
     val isIncome: Boolean,
     val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO,
-    val frequencyPropertyType: FrequencyPropertyType
 )
 
 enum class FrequencyPropertyType {
@@ -126,8 +125,8 @@ data class FrequencyPropertyDTO(
     }
 }
 
-fun FrequencyPropertyDTO.frequencyToDomain(frequencyProperty: FrequencyPropertyType): FrequencyProperty {
-    return when (frequencyProperty) {
+fun FrequencyPropertyDTO.frequencyToDomain(): FrequencyProperty {
+    return when (type) {
         FrequencyPropertyType.FOREVER -> FrequencyProperty.Forever()
         FrequencyPropertyType.UNTIL_DATE -> FrequencyProperty.UntilDate(this.untilDate!!)
         FrequencyPropertyType.TIMES -> FrequencyProperty.SpecificRepetitionTimes(this.times!!)

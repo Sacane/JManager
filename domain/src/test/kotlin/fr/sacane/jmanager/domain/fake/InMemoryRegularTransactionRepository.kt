@@ -84,4 +84,12 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
         return transaction
     }
 
+    override fun saveMonthlyRegularTransaction(
+        userId: UserId,
+        monthlyTransaction: MonthlyTransaction
+    ): RegularTransaction {
+        transactions.add(monthlyTransaction)
+        return monthlyTransaction
+    }
+
 }

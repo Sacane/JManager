@@ -5,7 +5,7 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
-const { saveRegularTransaction, getRegularTransaction } = useRegularTransaction()
+const { getRegularTransaction, saveMonthlyTransaction } = useRegularTransaction()
 
 const transactions = ref<RegularTransactionDTO[]>([])
 
@@ -30,8 +30,8 @@ function cancelCreationDialog() {
   isCreationDialogVisible.value = false
 }
 
-function onSave(transaction: RegularTransactionCreationRequest) {
-  saveRegularTransaction(transaction)
+function onSave(transaction: MonthlyTransactionCreationRequest) {
+  saveMonthlyTransaction(transaction)
     .then((regularTransaction: RegularTransactionDTO) => {
       console.warn('Transaction saved successfully', regularTransaction)
       isCreationDialogVisible.value = false
