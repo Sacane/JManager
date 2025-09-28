@@ -9,8 +9,6 @@ import java.util.UUID
 
 @Entity
 @Table(name = "monthly_regular_transaction")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "frequency_type")
 data class MonthlyRegularRegularTransactionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,8 +24,8 @@ data class MonthlyRegularRegularTransactionEntity(
     override val tag: DefaultTagResource? = null,
     @ManyToOne
     override val personalTag: TagPersonalResource? = null,
-    @ManyToOne
-    val frequencyProperty: FrequencyPropertyEntity,
+    @ManyToOne(cascade = [CascadeType.ALL])
+    var frequencyProperty: FrequencyPropertyEntity? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     override val owner: UserResource? = null
 ) : AbstractRegularTransactionResource(label, amount, isIncome)

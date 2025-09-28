@@ -40,6 +40,7 @@ tryOnBeforeMount(() => {
 body, html {
   margin: 0;
   padding: 0;
+  font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 .btn-primary {
   background-color: var(--primary-2);

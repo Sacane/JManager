@@ -7,13 +7,18 @@ import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.time.LocalDate
+import java.util.UUID
 
 @Port(Side.APPLICATION)
 sealed interface RegularTransactionFeature {
@@ -45,7 +50,8 @@ sealed interface RegularTransactionFeature {
 class RegularTransactionFeatureImpl(
     private val regularTransactionRepository: RegularTransactionRepository,
     private val tagRepository: TagRepository,
-    private val session: SessionManager
+    private val session: SessionManager,
+    private val unitOfWork: UnitOfWorkTransactionProviderPort
 ) : RegularTransactionFeature {
 
     override fun bookRegularTransaction(
@@ -79,12 +85,19 @@ class RegularTransactionFeatureImpl(
     override fun bookRegularTransaction(
         token: String,
         regularTransaction: RegularTransaction
-    ): Result<RegularTransaction>  = session.authenticate(token = token){
-        val transaction = regularTransactionRepository.saveRegularTransaction(
-            userId = it,
-            transaction = regularTransaction
-        )
-        return@authenticate success(transaction)
+    ): Result<RegularTransaction> = session.authenticate(token = token){ userId ->
+        return@authenticate unitOfWork.executeInTransaction(
+            regularTransaction
+        ) {
+            val transaction = when (it) {
+                is MonthlyTransaction ->  regularTransactionRepository.saveMonthlyRegularTransaction(
+                    userId = userId,
+                    monthlyTransaction = it.copy(id = RegularTransactionId(UUID.randomUUID().toString()))
+                )
+                else -> return@executeInTransaction failure(ResultState.UNAUTHORIZED, "Transaction type not supported")
+            }
+            return@executeInTransaction success(transaction)
+        }
     }
 
     override fun linkTransactionAndAccount(

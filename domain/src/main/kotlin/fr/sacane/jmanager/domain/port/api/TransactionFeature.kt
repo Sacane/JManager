@@ -8,7 +8,7 @@ import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
-import fr.sacane.jmanager.domain.port.spi.InfraTransactionProviderPort
+import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.utils.*
@@ -31,7 +31,7 @@ class TransactionFeatureImpl(
     private val transactionRepository: TransactionRepositoryPort,
     private val session: SessionManager,
     private val accountRepository: AccountRepositoryPort,
-    private val infraTransactionManager: InfraTransactionProviderPort
+    private val infraTransactionManager: UnitOfWorkTransactionProviderPort
 ): TransactionFeature{
     companion object {
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)

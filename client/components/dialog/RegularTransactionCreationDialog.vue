@@ -15,8 +15,8 @@ const regularTrForm = reactive({
   frequency: frequencyToString('MONTHLY'),
   monthlyFrequency: {
     type: 'FOREVER' as FrequencyPropertyType,
-    untilDate: null as Date | null,
-    times: null as number | null,
+    untilDate: undefined,
+    times: undefined,
   },
   isIncome: false,
   tagDTO: {
@@ -41,16 +41,19 @@ function emitTransaction() {
   if (regularTrForm.amount === undefined || regularTrForm.amount <= 0 || regularTrForm.label === '') {
     return
   }
-  const formattedDate = formattedDateString(regularTrForm.date)
-  const regularTransactionCreationRequest: RegularTransactionCreationRequest = {
-    label: regularTrForm.label,
-    value: regularTrForm.amount,
-    isIncome: regularTrForm.isIncome,
-    startDate: formattedDate,
-    tagDTO: regularTrForm.tagDTO,
-    regularity: strToFrequency(regularTrForm.frequency),
+  const frequency = strToFrequency(regularTrForm.frequency)
+  if (frequency === 'MONTHLY') {
+    const formattedStartDate = formattedDateString(regularTrForm.date)
+    const regularTransactionCreationRequest: MonthlyTransactionCreationRequest = {
+      label: regularTrForm.label,
+      value: regularTrForm.amount,
+      isIncome: regularTrForm.isIncome,
+      startDate: formattedStartDate,
+      tagDTO: regularTrForm.tagDTO,
+      frequencyProperty: regularTrForm.monthlyFrequency,
+    }
+    emit('createTransaction', regularTransactionCreationRequest)
   }
-  emit('createTransaction', regularTransactionCreationRequest)
 }
 
 const isVisibleData = ref(false)
@@ -61,7 +64,6 @@ function closeDialog() {
 }
 
 function updateMonthlyFrequencyValue(value: FrequencyPropertyDTOClient) {
-  console.warn('updateMonthlyFrequencyValue', value)
   regularTrForm.monthlyFrequency = value
 }
 </script>

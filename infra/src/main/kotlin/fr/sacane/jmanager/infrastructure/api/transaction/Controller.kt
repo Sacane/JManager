@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.Month
+import java.util.UUID
 import java.util.logging.Logger
 
 @RestController

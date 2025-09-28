@@ -17,7 +17,7 @@ object FakeFactory {
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
     private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository()
-    private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
+    private val manager: UnitOfWorkTransactionProviderPort = UnitOfWorkTransactionProviderPort.DEFAULT
 
     val tokenGenerator: TokenGenerator = object : TokenGenerator {
         override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {

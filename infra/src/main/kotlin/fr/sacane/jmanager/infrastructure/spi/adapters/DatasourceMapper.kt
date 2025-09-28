@@ -6,7 +6,6 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
-import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.AbstractRegularTransactionResource
@@ -19,12 +18,10 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepo
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
-import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 import java.awt.Color
 import java.math.BigDecimal
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Component
 class AccountMapper(
@@ -166,19 +163,17 @@ class RegularTransactionOperatorAdapter(
         private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionOperatorAdapter::class.java)
     }
 
-    @Transactional
     fun save(user: UserResource, regularTransaction: RegularTransaction): AbstractRegularTransactionResource {
         return when (regularTransaction) {
             is MonthlyTransaction -> {
+                val frequencyProperty = regularTransaction.frequencyProperty.toResource()
                 val monthlyRegularTransactionEntity = MonthlyRegularRegularTransactionEntity(
-                    transactionId = UUID.fromString(regularTransaction.id.value),
                     startDate = regularTransaction.startDate,
                     label = regularTransaction.label,
                     amount = regularTransaction.amount.amount.toDouble(),
                     isIncome = regularTransaction.isIncome,
-                    frequencyProperty = regularTransaction.frequencyProperty.toResource(),
                 ).copy(owner = user)
-                when(val tagResource = tagMapperAdapter.mapToResource(
+                val result = when(val tagResource = tagMapperAdapter.mapToResource(
                     regularTransaction.tag
                 )) {
                     is DefaultTagResource -> monthlyRegularTransactionEntity.copy(
@@ -194,8 +189,9 @@ class RegularTransactionOperatorAdapter(
                         personalTag = null
                     )
                 }
+                frequencyProperty.addMonthlyRegularTransaction(result)
                 logger.info("Save monthly transaction in postgres database")
-                monthlyTransactionResourceJpaRepository.save(monthlyRegularTransactionEntity)
+                monthlyTransactionResourceJpaRepository.save(result)
             }
         }
     }
@@ -228,8 +224,8 @@ internal fun FrequencyProperty.toResource(): FrequencyPropertyEntity {
 internal fun FrequencyPropertyEntity.toDomain(): FrequencyProperty {
     return when(this) {
         is ForeverEntity -> FrequencyProperty.Forever()
-        is UntilDateEntity -> FrequencyProperty.UntilDate(this.date)
-        is SpecificRepetitionTimesEntity -> FrequencyProperty.SpecificRepetitionTimes(this.number)
+        is UntilDateEntity -> FrequencyProperty.UntilDate(this.date!!)
+        is SpecificRepetitionTimesEntity -> FrequencyProperty.SpecificRepetitionTimes(this.number!!)
         else -> throw IllegalArgumentException("Unknown FrequencyPropertyEntity type")
     }
 }
@@ -241,8 +237,8 @@ internal fun AbstractRegularTransactionResource.toDomain() = when(this) {
         isIncome = this.isIncome,
         id = RegularTransactionId(this.transactionId.toString()),
         this.startDate,
-        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain()!!,
-        frequencyProperty = this.frequencyProperty.toDomain()
+        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: error("Tag not found in database for transaction with id ${this.transactionId}"),
+        frequencyProperty = this.frequencyProperty?.toDomain()!!
     )
 
     else -> TODO("Not yet implemented")

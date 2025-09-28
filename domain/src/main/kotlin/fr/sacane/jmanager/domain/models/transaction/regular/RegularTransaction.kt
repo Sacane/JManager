@@ -22,7 +22,7 @@ sealed interface RegularTransaction: BaseTransaction {
     val frequencyProperty: FrequencyProperty
 }
 
-class MonthlyTransaction(
+data class MonthlyTransaction(
     override var label: String,
     override var amount: Amount,
     override var isIncome: Boolean,

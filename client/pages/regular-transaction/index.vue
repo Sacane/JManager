@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
 
 definePageMeta({
@@ -6,9 +7,7 @@ definePageMeta({
 })
 
 const { getRegularTransaction, saveMonthlyTransaction } = useRegularTransaction()
-
 const transactions = ref<RegularTransactionDTO[]>([])
-
 const { frequencyToString } = useDate()
 
 onMounted(() => {

@@ -2,6 +2,7 @@
 import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 import { computed, ref, watch } from 'vue'
+import useDate from '~/composables/useDate'
 
 export type FrequencyPropertyType = 'FOREVER' | 'UNTIL_DATE' | 'TIMES'
 
@@ -22,7 +23,7 @@ const emit = defineEmits<{
 const frequencyTypes: FrequencyPropertyType[] = ['FOREVER', 'UNTIL_DATE', 'TIMES']
 
 const errors = ref<{ untilDate?: string, times?: string }>({})
-
+const { formattedDateString } = useDate()
 const isUntilDate = computed(() => props.modelValue.type === 'UNTIL_DATE')
 const isTimes = computed(() => props.modelValue.type === 'TIMES')
 
@@ -73,7 +74,7 @@ function displayableType(type: FrequencyPropertyType): string {
         :show-icon="true"
         :min-date="new Date()"
         class="w-full"
-        @update:model-value="updateField('untilDate', props.modelValue.untilDate)"
+        @update:model-value="updateField('untilDate', formattedDateString(props.modelValue.untilDate))"
       />
       <span v-if="errors.untilDate" class="error">{{ errors.untilDate }}</span>
     </div>

@@ -87,6 +87,8 @@ data class MonthlyRegularTransactionRequest (
     val label: String,
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
+    @Serializable(with = LocalDateSerializer::class)
+    val startDate: LocalDate,
     val isIncome: Boolean,
     val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO,

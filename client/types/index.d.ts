@@ -91,7 +91,7 @@ declare global {
     label: string
     value: number
     isIncome: boolean
-    date: string
+    startDate: string
     tagDTO?: TagDTO | null
     frequencyProperty: FrequencyPropertyDTO
 
