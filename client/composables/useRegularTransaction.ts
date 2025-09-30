@@ -10,6 +10,9 @@ export default function useRegularTransaction() {
   async function getRegularTransaction(): Promise<RegularTransactionDTO[]> {
     return get('transaction/regular')
   }
+  async function getRegularTransactionById(id: string): Promise<RegularTransactionDTO> {
+    return get(`transaction/regular/${id}`)
+  }
 
-  return { getRegularTransaction, saveMonthlyTransaction }
+  return { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById }
 }

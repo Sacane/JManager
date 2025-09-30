@@ -63,15 +63,6 @@ declare global {
     amount: number
     currency: string
   }
-
-  interface RegularTransactionCreationRequest {
-    label: string
-    startDate: string
-    value: number
-    isIncome: boolean
-    regularity: string
-    tagDTO?: TagDTO | null
-  }
   interface RegularTransactionDTO {
     id: string
     label: string
@@ -80,6 +71,7 @@ declare global {
     isIncome: boolean
     regularity: string
     tagDTO: TagDTO
+    frequencyProperty: FrequencyPropertyDTO
   }
 
   interface FrequencyPropertyDTO {
@@ -95,15 +87,6 @@ declare global {
     tagDTO?: TagDTO | null
     frequencyProperty: FrequencyPropertyDTO
 
-  }
-  interface MonthlyTransactionCreationResponse {
-    id: string
-    label: string
-    value: number
-    isIncome: boolean
-    date: string
-    tagDTO: TagDTO
-    frequencyProperty: FrequencyPropertyDTO
   }
 }
 

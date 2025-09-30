@@ -44,6 +44,8 @@ sealed interface RegularTransactionFeature {
         transactionId: String,
         bookletId: Long
     ): Result<Nothing>
+
+    fun getRegularTransactionById(token: String, transactionId: String): Result<RegularTransaction>
 }
 
 @DomainService
@@ -111,5 +113,15 @@ class RegularTransactionFeatureImpl(
             bookletId
         )
         return@authenticate success()
+    }
+
+    override fun getRegularTransactionById(
+        token: String,
+        transactionId: String
+    ): Result<RegularTransaction> = session.authenticate(token) {
+        return@authenticate success(regularTransactionRepository.getRegularTransactionById(
+            it,
+            RegularTransactionId(transactionId)
+        ))
     }
 }

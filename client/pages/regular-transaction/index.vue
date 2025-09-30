@@ -6,7 +6,7 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
-const { getRegularTransaction, saveMonthlyTransaction } = useRegularTransaction()
+const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById } = useRegularTransaction()
 const transactions = ref<RegularTransactionDTO[]>([])
 const { frequencyToString } = useDate()
 

@@ -52,6 +52,14 @@ class DataJpaRegularTransactionRepositoryAdapter(
         return regularTransactionOperatorAdapter.save(user, monthlyTransaction).toDomain()
     }
 
+    override fun getRegularTransactionById(
+        userId: UserId,
+        transactionId: RegularTransactionId
+    ): RegularTransaction {
+        return regularTransactionJpaRepository.findByIdOrNull(transactionId.value.asUUID())?.toDomain()
+            ?: throw IllegalArgumentException("Transaction not found")
+    }
+
 
     @Transactional
     override fun saveRegularTransaction(

@@ -32,4 +32,5 @@ interface RegularTransactionRepository {
 
     fun saveRegularTransaction(userId: UserId, transaction: RegularTransaction): RegularTransaction
     fun saveMonthlyRegularTransaction(userId: UserId, monthlyTransaction: MonthlyTransaction): RegularTransaction
+    fun getRegularTransactionById(userId: UserId, transactionId: RegularTransactionId): RegularTransaction
 }

@@ -79,7 +79,8 @@ data class RegularTransactionDTO(
     val value: BigDecimal,
     val isIncome: Boolean,
     val regularity: String,
-    val tagDTO: TagDTO
+    val tagDTO: TagDTO,
+    val frequencyProperty: FrequencyPropertyDTO,
 )
 
 @Serializable
@@ -137,5 +138,13 @@ fun FrequencyPropertyDTO.frequencyToDomain(): FrequencyProperty {
         FrequencyPropertyType.FOREVER -> FrequencyProperty.Forever()
         FrequencyPropertyType.UNTIL_DATE -> FrequencyProperty.UntilDate(this.untilDate!!)
         FrequencyPropertyType.TIMES -> FrequencyProperty.SpecificRepetitionTimes(this.times!!)
+    }
+}
+
+fun FrequencyProperty.toDTO(): FrequencyPropertyDTO {
+    return when(this){
+        is FrequencyProperty.Forever -> FrequencyPropertyDTO(type = FrequencyPropertyType.FOREVER)
+        is FrequencyProperty.UntilDate -> FrequencyPropertyDTO(type = FrequencyPropertyType.UNTIL_DATE, untilDate = this.date)
+        is FrequencyProperty.SpecificRepetitionTimes -> FrequencyPropertyDTO(type = FrequencyPropertyType.TIMES, times = this.number)
     }
 }

@@ -169,7 +169,15 @@ class TransactionController(
         }
     }
 
-
+    @GetMapping("/regular/{id}")
+    fun getRegularTransactionById(@PathVariable id: String): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Fetching regular transaction with ID $id")
+        return regularTransactionFeature.getRegularTransactionById(currentUser.token, id).map {
+            it.toDTO()
+        }.toHttpResponse().also {
+            logger.info("Regular transaction fetched successfully")
+        }
+    }
 }
 
 fun TransactionResumeResult.toDTO(): TransactionResponse {

@@ -4,14 +4,17 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
+import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
+import fr.sacane.jmanager.infrastructure.api.transaction.toDTO
 import org.springframework.http.ResponseEntity
 import java.awt.Color
 import java.time.LocalDate
@@ -79,6 +82,7 @@ internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
         value = this.amount.amount,
         isIncome = this.isIncome,
         regularity = Frequency.MONTHLY.toString(),
-        tagDTO = this.tag.toDTO()
+        tagDTO = this.tag.toDTO(),
+        frequencyProperty = frequencyProperty.toDTO()
     )
 }
