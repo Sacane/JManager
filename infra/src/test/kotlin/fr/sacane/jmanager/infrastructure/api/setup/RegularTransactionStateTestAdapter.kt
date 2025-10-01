@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.infrastructure.State
-import fr.sacane.jmanager.infrastructure.spi.adapters.DataJpaRegularTransactionRepositoryAdapter
+import fr.sacane.jmanager.infrastructure.spi.adapters.RegularTransactionRepositoryDataJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import jakarta.transaction.Transactional
@@ -19,7 +19,7 @@ data class OwnerRegularTransaction(
 @Component
 class RegularTransactionStateTestAdapter(
     private val regularTransactionJpaRepository: RegularTransactionJpaRepository,
-    private val regularTransactionRepositoryAdapter: DataJpaRegularTransactionRepositoryAdapter
+    private val regularTransactionRepositoryAdapter: RegularTransactionRepositoryDataJpaAdapter
 ): State<OwnerRegularTransaction, RegularTransaction> {
     @Transactional
     override fun get(): Collection<RegularTransaction> {

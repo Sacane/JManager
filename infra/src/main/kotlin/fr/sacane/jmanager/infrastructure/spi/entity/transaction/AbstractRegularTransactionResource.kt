@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity.transaction
 
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
@@ -30,4 +31,6 @@ abstract class AbstractRegularTransactionResource(
     open val personalTag:TagPersonalResource? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     open val owner: UserResource? = null
-)
+) {
+    abstract fun toDomain(): RegularTransaction
+}

@@ -14,6 +14,7 @@ import fr.sacane.jmanager.infrastructure.spi.entity.RegularTransactionResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
@@ -24,13 +25,14 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Service
-class DataJpaRegularTransactionRepositoryAdapter(
+class RegularTransactionRepositoryDataJpaAdapter(
     private val regularTransactionJpaRepository: RegularTransactionJpaRepository,
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
     private val userPostgresRepository: UserPostgresRepository,
     private val bookletJpaRepository: AccountJpaRepository,
-    private val regularTransactionOperatorAdapter: RegularTransactionOperatorAdapter
+    private val regularTransactionOperatorAdapter: RegularTransactionOperatorAdapter,
+    private val monthlyRegularTransactionRepository: MonthlyTransactionResourceJpaRepository
 ): RegularTransactionRepository {
 
     @Transactional
@@ -56,8 +58,10 @@ class DataJpaRegularTransactionRepositoryAdapter(
         userId: UserId,
         transactionId: RegularTransactionId
     ): RegularTransaction {
-        return regularTransactionJpaRepository.findByIdOrNull(transactionId.value.asUUID())?.toDomain()
-            ?: throw IllegalArgumentException("Transaction not found")
+        val id = transactionId.value.asUUID()
+
+        return monthlyRegularTransactionRepository.findByIdOrNull(id)?.toDomain()
+            ?: throw IllegalArgumentException("Transaction $transactionId not found")
     }
 
 
@@ -101,8 +105,11 @@ class DataJpaRegularTransactionRepositoryAdapter(
     }
 
     override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
-        return regularTransactionJpaRepository.findAllByUserId(userId.value!!)
-            .map { it.toDomain() }
+        val monthlyOnes = monthlyRegularTransactionRepository.findAll()
+            .filter { it.owner?.idUser == userId.value }
+
+        // TODO later add others regular transaction
+        return monthlyOnes.map { it.toDomain() }
     }
 
     override fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction> {
