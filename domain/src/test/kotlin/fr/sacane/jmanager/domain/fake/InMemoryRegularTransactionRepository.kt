@@ -92,4 +92,11 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
         return monthlyTransaction
     }
 
+    override fun getRegularTransactionById(
+        userId: UserId,
+        transactionId: RegularTransactionId
+    ): RegularTransaction {
+        return transactions.find { it.id == transactionId } ?: throw NoSuchElementException("No transaction found with id $transactionId")
+    }
+
 }

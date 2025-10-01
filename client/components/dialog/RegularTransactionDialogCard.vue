@@ -27,7 +27,6 @@ const visible = computed({
   set: value => emit('update:modelValue', value),
 })
 
-// Initialisation avec tous les champs de RegularTransactionDTO
 const formData = ref<RegularTransactionDTO>({
   id: '',
   label: '',
@@ -68,7 +67,6 @@ const frequencyTypeOptions = [
   { label: 'Nombre de fois', value: 'TIMES' },
 ]
 
-// Computed pour gérer la conversion des dates
 const startDateValue = computed({
   get: () => formData.value.startDate ? new Date(formData.value.startDate) : null,
   set: (value) => {
