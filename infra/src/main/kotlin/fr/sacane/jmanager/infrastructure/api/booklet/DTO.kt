@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.api.account
+package fr.sacane.jmanager.infrastructure.api.booklet
 
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer

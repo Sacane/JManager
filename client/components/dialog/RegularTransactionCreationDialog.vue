@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FrequencyPropertyDTOClient, FrequencyPropertyType } from '~/components/frequency-part/Monthly.vue'
+import type { FrequencyPropertyDTOClient, FrequencyPropertyType } from '~/components/frequency-part/FrequencySelector.vue'
 import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
 
@@ -18,6 +18,7 @@ const regularTrForm = reactive({
     untilDate: undefined,
     times: undefined,
   },
+  repeatDay: null as number | null,
   isIncome: false,
   tagDTO: {
     tagId: 0 as number | undefined,
@@ -51,8 +52,19 @@ function emitTransaction() {
       startDate: formattedStartDate,
       tagDTO: regularTrForm.tagDTO,
       frequencyProperty: regularTrForm.monthlyFrequency,
+      repeatDay: regularTrForm.repeatDay,
     }
     emit('createTransaction', regularTransactionCreationRequest)
+    // clear form values
+    regularTrForm.label = ''
+    regularTrForm.amount = undefined
+    regularTrForm.date = new Date()
+    regularTrForm.frequency = frequencyToString('MONTHLY')
+    regularTrForm.monthlyFrequency = {
+      type: 'FOREVER' as FrequencyPropertyType,
+      untilDate: undefined,
+      times: undefined,
+    }
   }
 }
 
@@ -65,6 +77,9 @@ function closeDialog() {
 
 function updateMonthlyFrequencyValue(value: FrequencyPropertyDTOClient) {
   regularTrForm.monthlyFrequency = value
+}
+function updateMonthlyRepeatValue(value: number | null) {
+  regularTrForm.repeatDay = value
 }
 </script>
 
@@ -119,9 +134,13 @@ function updateMonthlyFrequencyValue(value: FrequencyPropertyDTOClient) {
         </div>
       </div>
       <div v-if="regularTrForm.frequency === frequencyToString('MONTHLY')" class="flex flex-col gap-3">
-        <Monthly
+        <FrequencySelector
           :model-value="regularTrForm.monthlyFrequency"
           @update:model-value="value => updateMonthlyFrequencyValue(value)"
+        />
+        <MonthlyRepeatSelector
+          :repeat-day="regularTrForm.repeatDay"
+          @update:repeat-day="value => updateMonthlyRepeatValue(value)"
         />
       </div>
       <div class="flex flex-row gap-5">

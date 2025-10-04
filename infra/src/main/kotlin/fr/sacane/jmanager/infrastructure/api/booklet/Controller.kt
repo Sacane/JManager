@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.api.account
+package fr.sacane.jmanager.infrastructure.api.booklet
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side

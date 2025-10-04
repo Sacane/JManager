@@ -93,6 +93,7 @@ data class MonthlyRegularTransactionRequest (
     val isIncome: Boolean,
     val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO,
+    val repeatDay: Int?
 )
 
 enum class FrequencyPropertyType {

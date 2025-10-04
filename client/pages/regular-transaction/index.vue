@@ -9,6 +9,7 @@ definePageMeta({
 const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById } = useRegularTransaction()
 const transactions = ref<RegularTransactionDTO[]>([])
 const { frequencyToString } = useDate()
+const jToast = useJToast()
 
 onMounted(() => {
   getRegularTransaction()
@@ -30,14 +31,17 @@ function cancelCreationDialog() {
 }
 
 function onSave(transaction: MonthlyTransactionCreationRequest) {
+  console.warn('attempt to save transaction', transaction)
   saveMonthlyTransaction(transaction)
     .then((regularTransaction: RegularTransactionDTO) => {
       console.warn('Transaction saved successfully', regularTransaction)
       isCreationDialogVisible.value = false
       transactions.value.push(regularTransaction)
+      jToast.success('La transaction mensuel a bien été généré')
     })
     .catch((err) => {
       console.error(err)
+      jToast.errorAxios(err)
     })
 }
 

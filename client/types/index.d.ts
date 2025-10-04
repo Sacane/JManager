@@ -86,7 +86,7 @@ declare global {
     startDate: string
     tagDTO?: TagDTO | null
     frequencyProperty: FrequencyPropertyDTO
-
+    repeatDay: number | null
   }
 }
 

@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.infrastructure.api.account.BookletBookingRequest
+import fr.sacane.jmanager.infrastructure.api.booklet.BookletBookingRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given

@@ -29,20 +29,6 @@ object BigDecimalSerializer : KSerializer<BigDecimal> {
     }
 }
 
-object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
-    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalDateTime", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: LocalDateTime) {
-        encoder.encodeString(value.format(formatter))
-    }
-
-    override fun deserialize(decoder: Decoder): LocalDateTime {
-        return LocalDateTime.parse(decoder.decodeString(), formatter)
-    }
-}
-
 object LocalDateSerializer : KSerializer<LocalDate> {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -72,11 +58,4 @@ object FrequencyPropertyTypeSerializer : KSerializer<FrequencyPropertyType> {
         return FrequencyPropertyType.valueOf(decoder.decodeString())
     }
 
-}
-
-val json = Json {
-    serializersModule = SerializersModule {
-        contextual(BigDecimalSerializer)
-        contextual(LocalDateTimeSerializer)
-    }
 }

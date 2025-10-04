@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
@@ -161,7 +162,13 @@ class TransactionController(
                 tag = request.tagDTO.toDomain(),
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
                 startDate = LocalDate.now(),
-            )
+            ).apply {
+                if(request.repeatDay != null) {
+                    copy(
+                        monthlyRepeatProperty = MonthlyRepeatProperty(request.repeatDay)
+                    )
+                }
+            }
         ).map {
             it.toDTO()
         }.toHttpResponse().also {
