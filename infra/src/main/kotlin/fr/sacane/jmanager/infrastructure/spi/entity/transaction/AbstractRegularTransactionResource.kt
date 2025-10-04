@@ -30,7 +30,9 @@ abstract class AbstractRegularTransactionResource(
     @JoinColumn(name = "personal_tag_id", referencedColumnName = "idTag")
     open val personalTag:TagPersonalResource? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    open val owner: UserResource? = null
+    open val owner: UserResource? = null,
+    @ManyToOne(cascade = [CascadeType.ALL])
+    open var frequencyProperty: FrequencyPropertyEntity? = null,
 ) {
     abstract fun toDomain(): RegularTransaction
 }

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component
 import java.awt.Color
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.time.Month
 
 @Component
 class AccountMapper(
@@ -152,50 +153,6 @@ internal fun RegularTransactionResource.toDomain(): RegularTransaction {
     )
 }
 
-@Component
-class RegularTransactionOperatorAdapter(
-    private val monthlyTransactionResourceJpaRepository: MonthlyTransactionResourceJpaRepository,
-    private val tagMapperAdapter: JpaTagMapperAdapter,
-    private val defaultTagPostgresRepository: DefaultTagPostgresRepository
-) {
-
-    companion object {
-        private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionOperatorAdapter::class.java)
-    }
-
-    fun save(user: UserResource, regularTransaction: RegularTransaction): AbstractRegularTransactionResource {
-        return when (regularTransaction) {
-            is MonthlyTransaction -> {
-                val frequencyProperty = regularTransaction.frequencyProperty.toResource()
-                val monthlyRegularTransactionEntity = MonthlyRegularRegularTransactionEntity(
-                    startDate = regularTransaction.startDate,
-                    label = regularTransaction.label,
-                    amount = regularTransaction.amount.amount.toDouble(),
-                    isIncome = regularTransaction.isIncome,
-                ).copy(owner = user)
-                val result = when(val tagResource = tagMapperAdapter.mapToResource(
-                    regularTransaction.tag
-                )) {
-                    is DefaultTagResource -> monthlyRegularTransactionEntity.copy(
-                        tag = tagResource,
-                        personalTag = null
-                    )
-                    is TagPersonalResource -> monthlyRegularTransactionEntity.copy(
-                        tag = null,
-                        personalTag = tagResource
-                    )
-                    null -> monthlyRegularTransactionEntity.copy(
-                        tag = defaultTagPostgresRepository.findUnknownTag(),
-                        personalTag = null
-                    )
-                }
-                frequencyProperty.addMonthlyRegularTransaction(result)
-                logger.info("Save monthly transaction in postgres database")
-                monthlyTransactionResourceJpaRepository.save(result)
-            }
-        }
-    }
-}
 
 @Component
 class JpaTagMapperAdapter(
@@ -228,18 +185,4 @@ internal fun FrequencyPropertyEntity.toDomain(): FrequencyProperty {
         is SpecificRepetitionTimesEntity -> FrequencyProperty.SpecificRepetitionTimes(this.number!!)
         else -> throw IllegalArgumentException("Unknown FrequencyPropertyEntity type")
     }
-}
-
-internal fun AbstractRegularTransactionResource.toDomain() = when(this) {
-    is MonthlyRegularRegularTransactionEntity -> MonthlyTransaction(
-        label = this.label,
-        amount = Amount(BigDecimal(this.amount)),
-        isIncome = this.isIncome,
-        id = RegularTransactionId(this.transactionId.toString()),
-        this.startDate,
-        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: error("Tag not found in database for transaction with id ${this.transactionId}"),
-        frequencyProperty = this.frequencyProperty?.toDomain()!!
-    )
-
-    else -> TODO("Not yet implemented")
 }

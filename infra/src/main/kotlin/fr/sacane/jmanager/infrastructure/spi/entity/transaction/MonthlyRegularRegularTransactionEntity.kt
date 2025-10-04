@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.spi.entity.transaction
 
 import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
@@ -26,12 +27,13 @@ data class MonthlyRegularRegularTransactionEntity(
     override var label: String,
     override var amount: Double,
     override var isIncome: Boolean,
+    val repeatDay: Int?,
     @ManyToOne
     override val tag: DefaultTagResource? = null,
     @ManyToOne
     override val personalTag: TagPersonalResource? = null,
     @ManyToOne(cascade = [CascadeType.ALL])
-    var frequencyProperty: FrequencyPropertyEntity? = null,
+    override var frequencyProperty: FrequencyPropertyEntity? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     override val owner: UserResource? = null
 ) : AbstractRegularTransactionResource(label, amount, isIncome) {
@@ -43,7 +45,8 @@ data class MonthlyRegularRegularTransactionEntity(
             id = RegularTransactionId(this.transactionId.toString()),
             this.startDate,
             tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: error("Tag not found in database for transaction with id ${this.transactionId}"),
-            frequencyProperty = this.frequencyProperty?.toDomain()!!
+            frequencyProperty = this.frequencyProperty?.toDomain()!!,
+            monthlyRepeatProperty = repeatDay?.let { MonthlyRepeatProperty(it) }
         )
     }
 }

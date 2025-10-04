@@ -1,9 +1,9 @@
 package fr.sacane.jmanager.domain.models.transaction.regular
 
-enum class MonthlyRepeatProperty {
-    FIRST_OF_MONTH,
-    SECOND_OF_MONTH,
-    THIRD_OF_MONTH,
-    FOURTH_OF_MONTH,
-    LAST_OF_MONTH
+enum class MonthlyRepeatAttribute(val repeatDay: Int) {
+    FIRST_OF_MONTH(1),
+    SECOND_OF_MONTH(2),
+    THIRD_OF_MONTH(3),
+    FOURTH_OF_MONTH(4),
+    LAST_OF_MONTH(31)
 }

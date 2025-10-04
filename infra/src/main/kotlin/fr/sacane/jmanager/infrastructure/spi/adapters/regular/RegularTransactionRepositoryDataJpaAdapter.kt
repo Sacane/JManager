@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.spi.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters.regular
 
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
+import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
 import fr.sacane.jmanager.infrastructure.spi.entity.AbstractTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.RegularTransactionResource

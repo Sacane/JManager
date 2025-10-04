@@ -96,7 +96,6 @@ class RegularTransactionFeatureImpl(
                     userId = userId,
                     monthlyTransaction = it.copy(id = RegularTransactionId(UUID.randomUUID().toString()))
                 )
-                else -> return@executeInTransaction failure(ResultState.UNAUTHORIZED, "Transaction type not supported")
             }
             return@executeInTransaction success(transaction)
         }

@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.spi.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters.transaction
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
@@ -6,6 +6,8 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.infrastructure.spi.adapters.asResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.toModel
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
@@ -15,7 +17,6 @@ import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
-
 @Service
 @Adapter(Side.INFRASTRUCTURE)
 class SqlTransactionAdapter(
@@ -23,7 +24,7 @@ class SqlTransactionAdapter(
     private val accountJpaRepository: AccountJpaRepository,
     private val tagRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
-) : TransactionRepositoryPort{
+) : TransactionRepositoryPort {
 
     @Transactional
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
