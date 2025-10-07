@@ -132,7 +132,7 @@ function edit() {
 
 <template>
   <ConfirmDialog />
-  <div class="mt-15 lg:mt-0 w-full flex flex-col justify-center align-center gap-5">
+  <div class="mt-15 lg:mt-0 w-full flex flex-col justify-center align-center gap-5 tag-section">
     <TabView v-model:active-index="activeTabIndex">
       <TabPanel header="Tags par défaut">
         <div class="flex flex-col lg:flex-row gap-10 justify-center align-center">
@@ -213,6 +213,10 @@ function edit() {
   padding: 0 10px;
   height: 100%;
   color: #000;
+}
+.tag-section {
+  padding: 2rem;
+  max-width: 90%;
 }
 
 .tag-section h2 {

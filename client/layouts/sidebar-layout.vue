@@ -3,9 +3,9 @@ import AppSidebar from '~/components/app-sidebar.vue'
 </script>
 
 <template>
-  <div class="flex flex-row w-screen-h-screen">
+  <div class="flex flex-row w-full h-screen">
     <AppSidebar class="sidebar" />
-    <div class="flex flex-col w-screen h-screen">
+    <div class="flex flex-col w-full h-screen">
       <!-- ------------------------------ -->
       <div class="content lg:(w-full h-screen flex flex-col)">
         <slot />
@@ -17,12 +17,6 @@ import AppSidebar from '~/components/app-sidebar.vue'
 <style scoped>
 .sidebar {
   width: 230px;
-  position: fixed;
-}
-
-.content {
-  width: 85%;
-  margin-left: 230px;
 }
 @media (max-width: 768px) {
   .content {
