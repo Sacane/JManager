@@ -94,8 +94,8 @@ function onEditClick(row: DataDisplay): void {
   const rgb = row.color.match(/\d+/g)
   if (rgb) {
     const red = Number.parseInt(rgb[0])
-    const green = Number.parseInt(rgb[1])
-    const blue = Number.parseInt(rgb[2])
+    const green = Number.parseInt(rgb[1] as string)
+    const blue = Number.parseInt(rgb[2] as string)
     tagToEdit.color = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`
   }
 }
@@ -134,8 +134,8 @@ function edit() {
   <ConfirmDialog />
   <div class="mt-15 lg:mt-0 w-full flex flex-col justify-center align-center gap-5 tag-section">
     <TabView v-model:active-index="activeTabIndex">
-      <TabPanel header="Tags par défaut">
-        <div class="flex flex-col lg:flex-row gap-10 justify-center align-center">
+      <TabPanel header="Tags par défaut" :value="0">
+        <div class="flex flex-col lg:flex-row flex-wrap gap-10 justify-start align-center">
           <div v-for="tag in tags.filter(t => t.isDefault === 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
             <div class="tag-header">
               <h4>{{ tag.label }}</h4>
@@ -143,7 +143,7 @@ function edit() {
           </div>
         </div>
       </TabPanel>
-      <TabPanel header="Tags personnels">
+      <TabPanel header="Tags personnels" :value="1">
         <div class="flex flex-col gap-10 w-full justify-center">
           <div class="flex flex-col lg:flex-row gap-10 justify-center align-center">
             <div v-for="tag in tags.filter(t => t.isDefault !== 'Tag par défaut')" :key="tag.id" class="tag-card" :style="{ '--tag-color': tag.color }">
