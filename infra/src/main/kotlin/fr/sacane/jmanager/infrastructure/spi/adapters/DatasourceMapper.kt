@@ -90,7 +90,7 @@ internal fun AccountResource.toModel(): Booklet
     this.amount.toAmount(),
     this.label,
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
-    this.owner?.toModel(),
+    owner = this.owner?.toModel(),
     previewAmount = this.previewAmount.toAmount(),
     initialSold = Amount(this.initialSold),
     id = this.idAccount

@@ -9,7 +9,6 @@ import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.RegularChecker
-import fr.sacane.jmanager.domain.port.spi.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
