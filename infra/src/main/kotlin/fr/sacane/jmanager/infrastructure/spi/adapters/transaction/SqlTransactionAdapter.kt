@@ -16,6 +16,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaReposito
 import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import java.time.Month
 
 @Service
 @Adapter(Side.INFRASTRUCTURE)
@@ -83,5 +84,23 @@ class SqlTransactionAdapter(
         if(userId.value == null) return null
         return accountJpaRepository.findSheetsByLabelAndAccountOf(label, userId.value!!)
             ?.toModel()
+    }
+
+    override fun findAccountWithTransactionById(id: Long): Booklet? {
+        return accountJpaRepository.findTransactionsById(id)?.toModel()
+    }
+
+    override fun findTransactionsByBookletId(bookletId: Long): List<Transaction>? {
+        return accountJpaRepository.findTransactionsById(bookletId)?.sheets?.map { it.toModel() }
+    }
+
+    override fun findTransactionsByBookletYearAndMonth(
+        bookletId: Long,
+        year: Int,
+        month: Month
+    ): List<Transaction>? {
+        return accountJpaRepository.findTransactionsById(bookletId)?.sheets?.filter {
+            it.date.year == year && it.date.month == month
+        }?.map { it.toModel()}
     }
 }

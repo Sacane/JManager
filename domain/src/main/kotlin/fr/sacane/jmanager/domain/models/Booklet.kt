@@ -1,12 +1,14 @@
 package fr.sacane.jmanager.domain.models
 
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import java.time.Month
 
 class Booklet(
     var amount: Amount,
     private var labelAccount: String,
     private val _transactions: MutableList<Transaction> = mutableListOf(),
+    private val _regularTransactions: MutableList<RegularTransaction> = mutableListOf(),
     var owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
@@ -18,6 +20,8 @@ class Booklet(
 
     val transactions: List<Transaction>
         get() = _transactions
+    val regularTransactions: List<RegularTransaction>
+        get() = _regularTransactions
 
     override fun equals(other: Any?): Boolean = (other is Booklet) && labelAccount == other.label
     fun sheets(): List<Transaction>{
@@ -81,24 +85,6 @@ class Booklet(
             this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
         }
         _transactions.removeIf { tr -> transactionId == tr.id }
-    }
-    private fun removeAllTransactions(transactions: List<Transaction>) {
-        for(transaction in transactions){
-            removeTransaction(transaction)
-        }
-    }
-
-    fun addTransactions(transactions: List<Transaction>) {
-        transactions.forEach {
-            addTransaction(it)
-        }
-    }
-
-    fun addAllTransaction(transactions: List<Transaction>) {
-        removeAllTransactions(transactions)
-        transactions.forEach {
-            addTransaction(it)
-        }
     }
 
     fun removeTransactionIf(sheetOnList: (s: Transaction) -> Boolean) {

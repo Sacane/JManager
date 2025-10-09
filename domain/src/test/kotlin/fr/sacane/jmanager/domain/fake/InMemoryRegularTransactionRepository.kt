@@ -59,8 +59,8 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
     override fun getAllRegularUsedByAccount(
         userId: UserId,
         accountID: Long
-    ): List<RegularTransaction> {
-        return transactionsByAccount[accountID] ?: emptyList()
+    ): List<RegularTransaction>? {
+        return transactionsByAccount[accountID]
     }
 
     override fun linkedRegularTransactionsWithBooklet(

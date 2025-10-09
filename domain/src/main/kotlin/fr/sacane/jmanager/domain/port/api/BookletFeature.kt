@@ -3,17 +3,26 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
+import fr.sacane.jmanager.domain.usecase.RegularTransactionGeneratorService
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
+import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.Month
 
 @Port(Side.APPLICATION)
 sealed interface BookletFeature {
@@ -23,6 +32,7 @@ sealed interface BookletFeature {
     fun findByLabelAndUserId(token: String, label: String): Result<Booklet>
     fun findAllRegisteredAccounts(token: String): Result<List<Booklet>>
     fun save(token: String, booklet: Booklet): Result<Booklet>
+    fun loadTransactionsForBookletForAMonth(token: String, bookletId: Long, month: Month, year: Int): Result<BookletLoadingResult>
 }
 
 @DomainService
@@ -31,6 +41,8 @@ class BookletFeatureImpl(
     private val session: SessionManager,
     private val accountRepository: AccountRepositoryPort,
     private val regularTransactionRepository: RegularTransactionRepository,
+    private val regularTransactionGeneratorService: RegularTransactionGenerator,
+    private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProviderPort
 ): BookletFeature {
     override fun findAccountById(
         accountID: Long,
@@ -102,11 +114,44 @@ class BookletFeatureImpl(
         success(accountSaved)
     }
 
-    fun addRegularTransactionsForCurrentPeriod(
-        userId: UserId, currentDate: LocalDate
-    ) {
-        val regularTransactions = regularTransactionRepository.getAllRegularTransactions(userId)
+    override fun loadTransactionsForBookletForAMonth(
+        token: String,
+        bookletId: Long,
+        month: Month,
+        year: Int
+    ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
+        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
+                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
 
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Regular transactions not found for this account")
 
+            val missingTransactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                booklet.id!!,
+                regularTransactions,
+                month,
+                year
+            )
+
+            missingTransactions.forEach { transaction -> booklet.addTransaction(transaction) }
+            val transactions = booklet.retrieveSheetSurroundAndSortedByDate(month, year).partition { it.isPreview }
+
+            return@executeInTransaction success(BookletLoadingResult(
+                currentTransactions = transactions.second,
+                previsionalTransactions = transactions.first,
+                regularTransactions = regularTransactions,
+                realSold = booklet.amount,
+                previsionalSold = booklet.previewAmount
+            ))
+        }
     }
 }
+
+data class BookletLoadingResult(
+    val currentTransactions: List<Transaction>,
+    val previsionalTransactions: List<Transaction>,
+    val regularTransactions: List<RegularTransaction>,
+    val realSold: Amount,
+    val previsionalSold: Amount
+)

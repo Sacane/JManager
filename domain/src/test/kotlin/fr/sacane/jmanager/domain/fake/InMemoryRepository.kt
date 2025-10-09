@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import java.time.Month
 import java.util.*
 
 data class IdUserAccountByTransaction(
@@ -45,6 +46,22 @@ class InMemoryTransactionRepository(
 
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet? {
         return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
+    }
+
+    override fun findAccountWithTransactionById(id: Long): Booklet? {
+        return inMemoryDatabase.findAccountById(id)
+    }
+
+    override fun findTransactionsByBookletId(bookletId: Long): List<Transaction>? {
+        return inMemoryDatabase.findAccountById(bookletId)?.transactions
+    }
+
+    override fun findTransactionsByBookletYearAndMonth(
+        bookletId: Long,
+        year: Int,
+        month: Month
+    ): List<Transaction>? {
+        return inMemoryDatabase.findAccountById(bookletId)?.retrieveSheetSurroundAndSortedByDate(month, year)
     }
 
     override fun getStates(): Collection<IdUserAccountByTransaction> {

@@ -22,7 +22,7 @@ interface RegularTransactionRepository {
 
     fun getAllRegularTransactions(userId: UserId): List<RegularTransaction>
 
-    fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>
+    fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>?
 
     fun linkedRegularTransactionsWithBooklet(
         userId: UserId,

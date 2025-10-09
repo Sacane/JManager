@@ -5,7 +5,6 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.BaseTransaction
 import java.time.LocalDate
-import java.time.MonthDay
 
 enum class Frequency {
     DAILY,

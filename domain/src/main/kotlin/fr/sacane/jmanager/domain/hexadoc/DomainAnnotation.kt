@@ -15,6 +15,11 @@ annotation class DefaultSource
 @Inherited
 annotation class DomainService
 
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS)
+@Inherited
+annotation class UseCase
+
 annotation class Adapter(val domainSide: Side = Side.UNSPECIFIED)
 
 enum class Side{

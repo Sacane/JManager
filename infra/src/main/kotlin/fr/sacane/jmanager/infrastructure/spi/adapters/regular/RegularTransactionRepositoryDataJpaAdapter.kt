@@ -113,7 +113,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
         return monthlyOnes.map { it.toDomain() }
     }
 
-    override fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction> {
+    override fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>? {
         return regularTransactionJpaRepository.findAllByUserId(userId.value!!)
             .filter { it.accounts.any { account -> account.idAccount == accountID } }
             .map { it.toDomain() }

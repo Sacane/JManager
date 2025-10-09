@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain.models.transaction
 
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -14,6 +15,7 @@ data class Transaction(
     override var tag: Tag = Tag("Aucune", isDefault = true),
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false,
+    val regularTransactionId: RegularTransactionId? = null
 ): BaseTransaction {
     val isNotPreview: Boolean
     get() = !isPreview
