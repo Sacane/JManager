@@ -7,15 +7,15 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
+const { findByIdMonthAndYear } = useBooklet()
 const route = useRoute()
 const toastr = useJToast()
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 
-const { translate, monthFromNumber, englishMonth } = useDate()
+const { translate, monthFromNumber, englishMonth, numberFromMonth } = useDate()
 const tag = useTag()
 
-const { findById } = useBooklet()
-const { findByDate, deleteTransaction, confirmPreviewTransaction } = useTransaction()
+const { deleteTransaction, confirmPreviewTransaction } = useTransaction()
 const date = new Date()
 const tags = ref<TagDTO[]>([])
 
@@ -59,37 +59,38 @@ function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
     tagDTO: transaction.tagDTO,
   }
 }
-function retrieveSheets() {
-  findByDate(englishMonth(formData.month), formData.year, formData.labelAccount)
-    .then((value: SheetAverageDTO) => {
-      actualSheets.value = value.transactions.map((sheet: TransactionCreationDTO) => {
+
+/**
+ * Récupère les informations du compte et ses transactions pour le mois/année sélectionnés
+ * Utilise l'endpoint consolidé pour limiter les appels HTTP
+ */
+function loadBookletData() {
+  const accountId = Number.parseInt(route.params?.id as string)
+
+  findByIdMonthAndYear(accountId, numberFromMonth(formData.month), formData.year)
+    .then((result: BookletReport) => {
+      // Mise à jour des informations du compte
+      formData.labelAccount = result.label
+      formData.currentAccountId = route.params?.id as string
+      formData.accountAmount = Number.parseInt(result.realSold)
+      formData.previewAccountAmount = Number.parseInt(result.previewSold)
+
+      // Mise à jour des transactions
+      actualSheets.value = result.transactions.map((sheet: TransactionCreationDTO) => {
         return asDisplayableTransaction(sheet)
       })
     })
+    .catch(err => toastr.errorAxios(err))
 }
+
 function retrieveTags() {
   tag.getAllTags().then(tagDTOs => tags.value = tagDTOs)
 }
 
-function initAccount() {
-  findById(Number.parseFloat(route.params?.id as string))
-    .then((account: BookletDTO) => {
-      formData.labelAccount = account.labelAccount as string
-      formData.currentAccountId = route.params?.id as string
-      formData.accountAmount = account.amount
-      formData.previewAccountAmount = account.previewAmount
-      retrieveSheets()
-    })
-}
-
 async function confirmDelete() {
   deleteTransaction(Number.parseInt(formData.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
-    .then(() => initAccount())
+    .then(() => loadBookletData())
     .finally(() => {
-      findById(Number.parseInt(formData.currentAccountId)).then((account) => {
-        formData.accountAmount = account.amount
-        formData.previewAccountAmount = account.previewAmount
-      })
       selectedSheets.value = []
     })
 }
@@ -110,8 +111,9 @@ function confirmDeleteButton() {
 
 function onYearChange() {
   formData.year = formData.dateYear.getFullYear()
-  retrieveSheets()
+  loadBookletData()
 }
+
 function back() {
   navigateTo('/account')
 }
@@ -199,12 +201,13 @@ function applyEditTransaction(transaction: TransactionCreationDTO) {
       formData.accountAmount = result.accountAmount
       formData.previewAccountAmount = result.accountPreviewAmount
       isEditDialogVisible.value = false
-    }).catch(err => toastr.errorAxios(err))
+    })
+    .catch(err => toastr.errorAxios(err))
 }
 
 onMounted(() => {
   formData.month = monthFromNumber(new Date().getMonth() + 1) as string
-  initAccount()
+  initBooklet()
   retrieveTags()
   tag.getDefaultTag().then((tagDTO: TagDTO) => {
     formData.tagDTO = tagDTO
@@ -269,7 +272,7 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
               <Button class="btn-primary self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
               <div class="lg:w26% flex flex-row items-center">
-                <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+                <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="loadBookletData()" />
                 <Calendar id="yearPicker" v-model="formData.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
               <div class="flex flex-col justify-between lg:(flex-row gap-3)">

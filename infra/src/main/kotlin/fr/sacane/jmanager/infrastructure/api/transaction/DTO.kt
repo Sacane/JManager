@@ -28,8 +28,12 @@ data class TransactionResult(
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean
 )
+
+@Serializable
 data class TransactionListResponse(
-    val transactions: List<TransactionResult>
+    val transactions: List<TransactionResult>,
+    val amount: String,
+    val previewAmount: String,
 )
 
 @Serializable

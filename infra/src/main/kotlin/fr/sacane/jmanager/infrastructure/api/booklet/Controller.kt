@@ -9,8 +9,12 @@ import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
+import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResponse
+import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
+import kotlinx.serialization.Serializable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.time.Month
 import java.util.logging.Logger
 
 
@@ -25,10 +29,10 @@ class BookletController (
     }
 
     @PostMapping
-    fun createAccount(
+    fun saveBooklet(
         @RequestBody userAccount: BookletBookingRequest
     ): ResponseEntity<AccountInfoDTO> {
-        LOGGER.info("Booking a new Account...")
+        LOGGER.info("Booking a new Booklet...")
         return feature.save(
             currentUser.token,
             Booklet(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
@@ -36,7 +40,7 @@ class BookletController (
     }
 
     @GetMapping
-    fun getAccounts(): ResponseEntity<List<AccountDTO>> {
+    fun getAllBooklets(): ResponseEntity<List<AccountDTO>> {
         LOGGER.info("Requesting all accounts...")
 
         val response = feature.findAllRegisteredAccounts(
@@ -55,9 +59,40 @@ class BookletController (
     ): ResponseEntity<Nothing> = feature.deleteAccountById(accountId, currentUser.token).toHttpResponse()
 
     @GetMapping("{accountID}")
-    fun findAccountById(
+    fun findBookletById(
         @PathVariable("accountID") accountID: Long
-    ): ResponseEntity<AccountDTO> =
-        feature.findAccountById(accountID, currentUser.token)
+    ): ResponseEntity<AccountDTO> {
+        LOGGER.info("Requesting account with ID $accountID")
+        return feature.findAccountById(accountID, currentUser.token)
             .map { it.toDTO() }.toHttpResponse()
+    }
+
+    @GetMapping("report/{accountID}")
+    fun findBookletReportByIdMonthAndYear(
+        @PathVariable("accountID") accountID: Long,
+        @RequestParam("month") month: Int,
+        @RequestParam("year") year: Int
+    ): ResponseEntity<BookletReport> {
+        LOGGER.info("Requesting account report for account $accountID")
+        val result = feature.loadTransactionsForBookletForAMonth(
+            token = currentUser.token, accountID, Month.of(month), year
+        )
+        val report = result.map { res ->
+            BookletReport(
+                label = res.label,
+                transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() },
+                realSold = res.realSold.amount.toString(),
+                previewSold = res.previsionalSold.amount.toString()
+            )
+        }
+        return report.toHttpResponse()
+    }
 }
+
+@Serializable
+data class BookletReport(
+    val label: String,
+    val transactions: List<TransactionResult>,
+    val realSold: String,
+    val previewSold: String,
+)

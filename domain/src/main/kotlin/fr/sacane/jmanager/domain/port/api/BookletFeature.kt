@@ -121,23 +121,23 @@ class BookletFeatureImpl(
         year: Int
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
-            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
 
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Regular transactions not found for this account")
 
-            val missingTransactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
-                booklet.id!!,
+            regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                bookletId,
                 regularTransactions,
                 month,
                 year
             )
+            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
+                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
 
-            missingTransactions.forEach { transaction -> booklet.addTransaction(transaction) }
             val transactions = booklet.retrieveSheetSurroundAndSortedByDate(month, year).partition { it.isPreview }
 
             return@executeInTransaction success(BookletLoadingResult(
+                label = booklet.label,
                 currentTransactions = transactions.second,
                 previsionalTransactions = transactions.first,
                 regularTransactions = regularTransactions,
@@ -149,6 +149,7 @@ class BookletFeatureImpl(
 }
 
 data class BookletLoadingResult(
+    val label: String,
     val currentTransactions: List<Transaction>,
     val previsionalTransactions: List<Transaction>,
     val regularTransactions: List<RegularTransaction>,

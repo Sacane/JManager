@@ -88,6 +88,12 @@ declare global {
     frequencyProperty: FrequencyPropertyDTO
     repeatDay: number | null
   }
+  interface BookletReport {
+    label: string
+    transactions: TransactionResultDTO[]
+    realSold: string
+    previewSold: string
+  }
 }
 
 export {}

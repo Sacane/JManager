@@ -29,5 +29,12 @@ export default function useBooklet() {
   async function findById(accountId: number): Promise<BookletDTO> {
     return get(`account/${accountId}`)
   }
-  return { createAccount: createBooklet, fetch: findAllBooklet, deleteAccount, accountFormatted, findById }
+
+  async function findByIdMonthAndYear(accountId: number, month: number, year: number): Promise<BookletReport> {
+    return get(`account/${accountId}`, {
+      month,
+      year,
+    })
+  }
+  return { createAccount: createBooklet, fetch: findAllBooklet, deleteAccount, accountFormatted, findById, findByIdMonthAndYear }
 }

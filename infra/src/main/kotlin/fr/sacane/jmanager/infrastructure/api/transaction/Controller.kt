@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.*
@@ -17,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.Month
-import java.util.UUID
 import java.util.logging.Logger
 
 @RestController
@@ -26,6 +26,7 @@ import java.util.logging.Logger
 class TransactionController(
     private val transactionFeature: TransactionFeature,
     private val regularTransactionFeature: RegularTransactionFeature,
+    private val bookletFeature: BookletFeature
 ) {
 
     companion object {
@@ -71,17 +72,16 @@ class TransactionController(
     fun getTransactionsByMonthAndYearAndAccountLabel(
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
-        @RequestParam("accountLabel") accountLabel: String
+        @RequestParam("bookletId") bookletId: Long
         ): ResponseEntity<TransactionListResponse> {
-        logger.info("Request transactions from booklet $accountLabel for month $month and year $year")
-        val response = transactionFeature.retrieveTransactionsByMonthAndYear(
-            currentUser.token,
-            month ?: LocalDate.now().month,
-            year,
-            accountLabel
-        )
+        logger.info("Request transactions from booklet $bookletId for month $month and year $year")
+        val response = bookletFeature.loadTransactionsForBookletForAMonth(currentUser.token, bookletId, month ?: Month.JANUARY, year)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(TransactionListResponse(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))
+        return ResponseEntity.ok(TransactionListResponse(
+            transactions = response.mapTo { (it!!.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() } },
+            amount = response.mapTo { it!!.realSold.amount.toString() },
+            previewAmount = response.mapTo { it!!.previsionalSold.amount.toString() }
+        )).also { logger.info("Transactions fetched successfully") }
     }
 
     @PatchMapping
