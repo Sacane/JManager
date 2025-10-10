@@ -31,7 +31,7 @@ export default function useBooklet() {
   }
 
   async function findByIdMonthAndYear(accountId: number, month: number, year: number): Promise<BookletReport> {
-    return get(`account/${accountId}`, {
+    return get(`account/report/${accountId}`, {
       month,
       year,
     })

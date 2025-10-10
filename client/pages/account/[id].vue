@@ -12,7 +12,7 @@ const route = useRoute()
 const toastr = useJToast()
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 
-const { translate, monthFromNumber, englishMonth, numberFromMonth } = useDate()
+const { englishMonth, translate, monthFromNumber, numberFromMonth } = useDate()
 const tag = useTag()
 
 const { deleteTransaction, confirmPreviewTransaction } = useTransaction()
@@ -60,22 +60,22 @@ function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
   }
 }
 
-/**
- * Récupère les informations du compte et ses transactions pour le mois/année sélectionnés
- * Utilise l'endpoint consolidé pour limiter les appels HTTP
- */
+function onMonthChange(event: any) {
+  formData.month = englishMonth(event.value)
+  loadBookletData()
+}
+
 function loadBookletData() {
   const accountId = Number.parseInt(route.params?.id as string)
 
-  findByIdMonthAndYear(accountId, numberFromMonth(formData.month), formData.year)
+  findByIdMonthAndYear(accountId, numberFromMonth(formData.month) as number, formData.year)
     .then((result: BookletReport) => {
-      // Mise à jour des informations du compte
       formData.labelAccount = result.label
       formData.currentAccountId = route.params?.id as string
       formData.accountAmount = Number.parseInt(result.realSold)
       formData.previewAccountAmount = Number.parseInt(result.previewSold)
+      formData.month = translate(formData.month)
 
-      // Mise à jour des transactions
       actualSheets.value = result.transactions.map((sheet: TransactionCreationDTO) => {
         return asDisplayableTransaction(sheet)
       })
@@ -134,6 +134,7 @@ const transactionPlaceholder: TransactionCreationDTO = reactive({
   tagDTO: {},
   isPreview: false,
 })
+
 function onEditPage(event: any) {
   findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
     digits.digit = transaction.value
@@ -147,6 +148,7 @@ function onEditPage(event: any) {
     isEditDialogVisible.value = true
   }).catch(err => toastr.errorAxios(err))
 }
+
 function resetPlaceholder() {
   digits.digit = 0.00
   tag.getDefaultTag().then((tagDTO) => {
@@ -159,18 +161,22 @@ function resetPlaceholder() {
   transactionPlaceholder.isIncome = false
   transactionPlaceholder.id = null
 }
+
 function cancelEditDialog() {
   isEditDialogVisible.value = false
   resetPlaceholder()
 }
+
 function cancelCreationDialog() {
   isCreationDialogVisible.value = false
   resetPlaceholder()
 }
+
 function openCreationDialog() {
   transactionPlaceholder.isPreview = false
   isCreationDialogVisible.value = true
 }
+
 function openPreviewCreationDialog() {
   transactionPlaceholder.isPreview = true
   isCreationDialogVisible.value = true
@@ -189,6 +195,7 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       toastr.success('La transaction a bien été enregistrée')
     })
 }
+
 function applyEditTransaction(transaction: TransactionCreationDTO) {
   editTransaction(transaction, Number.parseInt(formData.currentAccountId))
     .then((result: TransactionResultDTO) => {
@@ -207,7 +214,7 @@ function applyEditTransaction(transaction: TransactionCreationDTO) {
 
 onMounted(() => {
   formData.month = monthFromNumber(new Date().getMonth() + 1) as string
-  initBooklet()
+  loadBookletData()
   retrieveTags()
   tag.getDefaultTag().then((tagDTO: TagDTO) => {
     formData.tagDTO = tagDTO
@@ -215,6 +222,7 @@ onMounted(() => {
     formData.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
   })
 })
+
 function rowStyle(row: TransactionCreationDTO): any | undefined {
   const style: {
     backgroundColor?: string
@@ -272,7 +280,7 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
               <Button class="btn-primary self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
               <div class="lg:w26% flex flex-row items-center">
-                <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="loadBookletData()" />
+                <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="onMonthChange($event)" />
                 <Calendar id="yearPicker" v-model="formData.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
               <div class="flex flex-col justify-between lg:(flex-row gap-3)">
