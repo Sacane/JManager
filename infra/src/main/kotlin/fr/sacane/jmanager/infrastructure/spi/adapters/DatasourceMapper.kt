@@ -1,28 +1,21 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
-import fr.sacane.jmanager.infrastructure.spi.entity.transaction.AbstractRegularTransactionResource
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.ForeverEntity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.FrequencyPropertyEntity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRegularTransactionEntity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.SpecificRepetitionTimesEntity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.UntilDateEntity
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.stereotype.Component
 import java.awt.Color
-import java.math.BigDecimal
 import java.time.LocalDateTime
-import java.time.Month
 
 @Component
 class AccountMapper(
@@ -141,19 +134,6 @@ internal fun User.asExistingResource(): UserResource
     tags = this.tags.map { it.toPersonalTag() }.toMutableList()
 )
 
-internal fun RegularTransactionResource.toDomain(): RegularTransaction {
-    return MonthlyTransaction(
-        label = this.label,
-        amount = Amount(this.amount),
-        isIncome = this.isIncome,
-        id = RegularTransactionId(this.regularTransactionId.toString()),
-        this.startDate,
-        tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
-        frequencyProperty = FrequencyProperty.Forever(),
-    )
-}
-
-
 @Component
 class JpaTagMapperAdapter(
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
@@ -173,7 +153,7 @@ class JpaTagMapperAdapter(
 internal fun FrequencyProperty.toResource(): FrequencyPropertyEntity {
     return when(this) {
         is FrequencyProperty.Forever -> ForeverEntity()
-        is FrequencyProperty.UntilDate -> UntilDateEntity(this.date)
+        is FrequencyProperty.UntilDate -> UntilDateEntity(this.date, )
         is FrequencyProperty.SpecificRepetitionTimes -> SpecificRepetitionTimesEntity(this.number)
     }
 }

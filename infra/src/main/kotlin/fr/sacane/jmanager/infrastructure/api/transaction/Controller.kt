@@ -122,23 +122,6 @@ class TransactionController(
         }
     }
 
-    @PostMapping("/regular")
-    fun createRegularTransaction(
-        @RequestBody regularTransactionCreationRequest: RegularTransactionCreationRequest
-    ): ResponseEntity<RegularTransactionDTO> {
-        logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
-        return regularTransactionFeature.bookRegularTransaction(
-            currentUser.token,
-            LocalDate.parse(regularTransactionCreationRequest.startDate),
-            regularTransactionCreationRequest.label,
-            regularTransactionCreationRequest.value.toAmount(),
-            regularTransactionCreationRequest.isIncome,
-            tag = regularTransactionCreationRequest.tagDTO?.toDomain() ?: Tag("Aucune", isDefault = true),
-            frequency = Frequency.valueOf(regularTransactionCreationRequest.regularity),
-        ).map {
-            it.toDTO()
-        }.toHttpResponse()
-    }
 
     @GetMapping("/regular")
     fun getAllRegularTransactions(): ResponseEntity<List<RegularTransactionDTO>> {
@@ -162,13 +145,14 @@ class TransactionController(
                 tag = request.tagDTO.toDomain(),
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
                 startDate = LocalDate.now(),
-            ).apply {
+            ).run {
                 if(request.repeatDay != null) {
                     copy(
                         monthlyRepeatProperty = MonthlyRepeatProperty(request.repeatDay)
                     )
-                }
-            }
+                } else this
+            },
+            request.bookletIds
         ).map {
             it.toDTO()
         }.toHttpResponse().also {

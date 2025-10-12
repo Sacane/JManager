@@ -21,8 +21,6 @@ sealed interface RegularTransaction: BaseTransaction {
     val id: RegularTransactionId?
     val startDate: LocalDate
     val frequencyProperty: FrequencyProperty
-    val lastCompletedDate: LocalDate?
-    val nextClosestDate: LocalDate?
     val associatedBooklets: List<Booklet>
 }
 
@@ -37,8 +35,6 @@ data class MonthlyTransaction(
     override val startDate: LocalDate,
     override val frequencyProperty: FrequencyProperty,
     override var tag: Tag = Tag("Aucune", isDefault = true),
-    override val lastCompletedDate: LocalDate = LocalDate.now(),
-    override val nextClosestDate: LocalDate = LocalDate.now(),
     override val associatedBooklets: List<Booklet> = listOf(),
     val monthlyRepeatProperty: MonthlyRepeatProperty? = null
 ): RegularTransaction {

@@ -11,12 +11,10 @@ import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
 import fr.sacane.jmanager.infrastructure.spi.entity.AbstractTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
-import fr.sacane.jmanager.infrastructure.spi.entity.RegularTransactionResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
@@ -27,14 +25,14 @@ import java.util.UUID
 
 @Service
 class RegularTransactionRepositoryDataJpaAdapter(
-    private val regularTransactionJpaRepository: RegularTransactionJpaRepository,
-    private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
-    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
     private val userPostgresRepository: UserPostgresRepository,
     private val bookletJpaRepository: AccountJpaRepository,
     private val regularTransactionOperatorAdapter: RegularTransactionOperatorAdapter,
     private val monthlyRegularTransactionRepository: MonthlyTransactionResourceJpaRepository
 ): RegularTransactionRepository {
+    companion object {
+        private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionRepositoryDataJpaAdapter::class.java)
+    }
 
     @Transactional
     override fun saveRegularTransaction(
@@ -48,8 +46,10 @@ class RegularTransactionRepositoryDataJpaAdapter(
 
     override fun saveMonthlyRegularTransaction(
         userId: UserId,
-        monthlyTransaction: MonthlyTransaction
+        monthlyTransaction: MonthlyTransaction,
+        bookletIds: List<Long>
     ): RegularTransaction{
+        logger.info("Saving transaction {}", monthlyTransaction)
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
             ?: throw IllegalArgumentException("User not found")
         return regularTransactionOperatorAdapter.save(user, monthlyTransaction).toDomain()
@@ -66,45 +66,6 @@ class RegularTransactionRepositoryDataJpaAdapter(
     }
 
 
-    @Transactional
-    override fun saveRegularTransaction(
-        userId: UserId,
-        startDate: LocalDate,
-        label: String,
-        amount: Amount,
-        isIncome: Boolean,
-        tag: Tag,
-        frequency: Frequency
-    ): RegularTransaction {
-        val user = userPostgresRepository.findByIdOrNull(userId.value!!)
-            ?: throw IllegalArgumentException("User not found")
-        val transaction = RegularTransactionResource(
-            startDate = startDate,
-            label = label,
-            amount = amount.amount,
-            isIncome = isIncome,
-            frequency = frequency
-        )
-        transaction.addOwner(user)
-
-        val toInsertTransaction = when(val tagResource = tag.mapToTag()) {
-            is DefaultTagResource -> transaction.copy(
-                tag = tagResource,
-                personalTag = null
-            )
-            is TagPersonalResource -> transaction.copy(
-                tag = null,
-                personalTag = tagResource
-            )
-            null -> transaction.copy(
-                tag = defaultTagPostgresRepository.findUnknownTag(),
-                personalTag = null
-            )
-        }
-        val savedRegularTransactionResource = regularTransactionJpaRepository.save(toInsertTransaction)
-        return savedRegularTransactionResource.toDomain()
-    }
-
     override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
         val monthlyOnes = monthlyRegularTransactionRepository.findAll()
             .filter { it.owner?.idUser == userId.value }
@@ -114,9 +75,10 @@ class RegularTransactionRepositoryDataJpaAdapter(
     }
 
     override fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>? {
-        return regularTransactionJpaRepository.findAllByUserId(userId.value!!)
-            .filter { it.accounts.any { account -> account.idAccount == accountID } }
-            .map { it.toDomain() }
+        val monthlyOnes = monthlyRegularTransactionRepository.findAll()
+            .filter { it.owner?.idUser == userId.value }
+            .filter { transaction -> transaction.accounts.any { it.idAccount == accountID } }
+        return monthlyOnes.map { it.toDomain() }
     }
 
     @Transactional
@@ -128,22 +90,11 @@ class RegularTransactionRepositoryDataJpaAdapter(
         val booklet = bookletJpaRepository.findByIdOrNull(bookletId)
             ?: throw IllegalArgumentException("Booklet not found")
 
-        val regularTransaction = regularTransactionJpaRepository.findByIdOrNull(regularTransactionId.value.asUUID()) ?:
+        val regularTransaction = monthlyRegularTransactionRepository.findByIdOrNull(regularTransactionId.value.asUUID()) ?:
             throw IllegalArgumentException("Regular transaction not found")
 
-        booklet.addRegularTransaction(regularTransaction)
-        regularTransactionJpaRepository.save(regularTransaction)
-    }
-
-
-    private fun Tag.mapToTag(): AbstractTagResource? {
-        return this.id?.let {
-            if(this.isDefault) {
-                defaultTagPostgresRepository.findByIdNullable(it)
-            } else {
-                tagPersonalPostgresRepository.findByIdNullable(it)
-            }
-        }
+        booklet.addMonthlyTransaction(regularTransaction)
+        monthlyRegularTransactionRepository.save(regularTransaction)
     }
 }
 

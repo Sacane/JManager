@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters.regular
 
-import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.infrastructure.spi.adapters.JpaTagMapperAdapter
@@ -13,7 +12,6 @@ import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRe
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
 import org.springframework.stereotype.Component
-import java.time.Month
 
 
 @Component
@@ -30,13 +28,13 @@ class RegularTransactionOperatorAdapter(
     fun save(user: UserResource, regularTransaction: RegularTransaction): AbstractRegularTransactionResource {
         return when (regularTransaction) {
             is MonthlyTransaction -> {
-                val frequencyProperty = regularTransaction.frequencyProperty.toResource()
                 val monthlyRegularTransactionEntity = MonthlyRegularRegularTransactionEntity(
                     startDate = regularTransaction.startDate,
                     label = regularTransaction.label,
                     amount = regularTransaction.amount.amount.toDouble(),
                     isIncome = regularTransaction.isIncome,
-                    repeatDay = regularTransaction.monthlyRepeatProperty?.repeatDay
+                    repeatDay = regularTransaction.monthlyRepeatProperty?.repeatDay,
+                    frequencyProperty = regularTransaction.frequencyProperty.toResource()
                 ).copy(owner = user)
                 val result = when(val tagResource = tagMapperAdapter.mapToResource(
                     regularTransaction.tag
@@ -54,8 +52,7 @@ class RegularTransactionOperatorAdapter(
                         personalTag = null
                     )
                 }
-                frequencyProperty.addMonthlyRegularTransaction(result)
-                logger.info("Save monthly transaction in postgres database")
+                logger.info("Save monthly transaction in postgres database {}", result)
                 monthlyTransactionResourceJpaRepository.save(result)
             }
         }

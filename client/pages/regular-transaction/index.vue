@@ -6,12 +6,23 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
+const { fetch } = useBooklet()
 const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById } = useRegularTransaction()
 const transactions = ref<RegularTransactionDTO[]>([])
 const { frequencyToString } = useDate()
 const jToast = useJToast()
+const booklets = ref<OnlyBookletInfo[]>([])
 
 onMounted(() => {
+  fetch()
+    .then((res: BookletDTO[]) => {
+      booklets.value = res.map(booklet => ({
+        id: booklet.id,
+        amount: booklet.amount,
+        labelAccount: booklet.labelAccount,
+        currency: booklet.currency,
+      }))
+    })
   getRegularTransaction()
     .then((res) => {
       transactions.value = res
@@ -31,7 +42,6 @@ function cancelCreationDialog() {
 }
 
 function onSave(transaction: MonthlyTransactionCreationRequest) {
-  console.warn('attempt to save transaction', transaction)
   saveMonthlyTransaction(transaction)
     .then((regularTransaction: RegularTransactionDTO) => {
       console.warn('Transaction saved successfully', regularTransaction)
@@ -75,7 +85,6 @@ async function handleRowDoubleClick(event: any) {
 // Sauvegarder les modifications
 function handleEditSave(updatedTransaction: RegularTransactionDTO) {
   // TODO: Implémenter la méthode updateRegularTransaction dans useRegularTransaction
-  console.log('Transaction mise à jour:', updatedTransaction)
 
   // Mettre à jour la liste localement
   const index = transactions.value.findIndex(t => t.id === updatedTransaction.id)
@@ -114,6 +123,7 @@ function handleEditSave(updatedTransaction: RegularTransactionDTO) {
 
     <RegularTransactionCreationDialog
       :visible="isCreationDialogVisible"
+      :booklets="booklets"
       @create-transaction="onSave"
       @cancel-creation="cancelCreationDialog"
     />

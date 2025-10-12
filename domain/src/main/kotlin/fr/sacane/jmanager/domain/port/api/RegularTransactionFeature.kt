@@ -22,21 +22,13 @@ import java.util.UUID
 
 @Port(Side.APPLICATION)
 sealed interface RegularTransactionFeature {
-    fun bookRegularTransaction(
-        token: String,
-        startDate: LocalDate,
-        label: String,
-        amount: Amount,
-        isIncome: Boolean,
-        tag: Tag? = null,
-        frequency: Frequency = Frequency.MONTHLY
-    ): Result<RegularTransaction>
 
     fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>>
 
     fun bookRegularTransaction(
         token: String,
         regularTransaction: RegularTransaction,
+        bookletIds: List<Long>
     ): Result<RegularTransaction>
 
     fun linkTransactionAndAccount(
@@ -56,26 +48,6 @@ class RegularTransactionFeatureImpl(
     private val unitOfWork: UnitOfWorkTransactionProviderPort
 ) : RegularTransactionFeature {
 
-    override fun bookRegularTransaction(
-        token: String,
-        startDate: LocalDate,
-        label: String,
-        amount: Amount,
-        isIncome: Boolean,
-        tag: Tag?,
-        frequency: Frequency,
-    ): Result<RegularTransaction> = session.authenticate(token) {
-        val transaction = regularTransactionRepository.saveRegularTransaction(
-            it,
-            startDate,
-            label,
-            amount,
-            isIncome,
-            tag ?: tagRepository.defaultTag() ?: Tag("Aucune", isDefault = true),
-            frequency
-        )
-        return@authenticate success(transaction)
-    }
 
     override fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>> {
         return session.authenticate(token) {
@@ -86,7 +58,8 @@ class RegularTransactionFeatureImpl(
 
     override fun bookRegularTransaction(
         token: String,
-        regularTransaction: RegularTransaction
+        regularTransaction: RegularTransaction,
+        bookletIds: List<Long>
     ): Result<RegularTransaction> = session.authenticate(token = token){ userId ->
         return@authenticate unitOfWork.executeInTransaction(
             regularTransaction
@@ -94,7 +67,8 @@ class RegularTransactionFeatureImpl(
             val transaction = when (it) {
                 is MonthlyTransaction ->  regularTransactionRepository.saveMonthlyRegularTransaction(
                     userId = userId,
-                    monthlyTransaction = it.copy(id = RegularTransactionId(UUID.randomUUID().toString()))
+                    monthlyTransaction = it.copy(id = RegularTransactionId(UUID.randomUUID().toString())),
+                    bookletIds = bookletIds
                 )
             }
             return@executeInTransaction success(transaction)

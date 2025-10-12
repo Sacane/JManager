@@ -6,7 +6,6 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.infrastructure.State
 import fr.sacane.jmanager.infrastructure.spi.adapters.regular.RegularTransactionRepositoryDataJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
-import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 

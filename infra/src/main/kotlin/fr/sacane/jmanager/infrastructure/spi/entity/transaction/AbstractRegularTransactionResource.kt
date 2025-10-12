@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.OneToOne
 
 @MappedSuperclass
 abstract class AbstractRegularTransactionResource(
@@ -21,6 +22,8 @@ abstract class AbstractRegularTransactionResource(
 
     @Column(nullable = false)
     open var isIncome: Boolean,
+    @OneToOne(cascade = [CascadeType.ALL])
+    open var frequencyProperty: FrequencyPropertyEntity? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     @JoinColumn(name = "tag_id", referencedColumnName = "idTag")
@@ -31,8 +34,7 @@ abstract class AbstractRegularTransactionResource(
     open val personalTag:TagPersonalResource? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     open val owner: UserResource? = null,
-    @ManyToOne(cascade = [CascadeType.ALL])
-    open var frequencyProperty: FrequencyPropertyEntity? = null,
-) {
+
+    ) {
     abstract fun toDomain(): RegularTransaction
 }

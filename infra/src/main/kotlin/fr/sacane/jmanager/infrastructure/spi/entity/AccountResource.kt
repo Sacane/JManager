@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRegularTransactionEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
 
@@ -17,25 +18,19 @@ class AccountResource(
     var owner: UserResource? = null,
     var initialSold: BigDecimal = BigDecimal.ZERO,
     var previewAmount: BigDecimal = BigDecimal.ZERO,
+    @ManyToMany(mappedBy = "accounts", fetch = FetchType.LAZY)
+    var monthlyTransactions: MutableSet<MonthlyRegularRegularTransactionEntity> = mutableSetOf(),
     @Id
     @GeneratedValue
     @Column(name = "id_account")
-    var idAccount: Long? = null,
-    @ManyToMany
-    @JoinTable(
-        name = "account_regular_transaction",
-        joinColumns = [JoinColumn(name = "account_id")],
-        inverseJoinColumns = [JoinColumn(name = "regular_transaction_id")]
-    )
-    val regularTransactions: MutableList<RegularTransactionResource> = mutableListOf()
+    var idAccount: Long? = null
 ) {
-    fun addTransaction(transaction: TransactionResource) {
-        sheets.add(transaction)
-        transaction.account = this
+    fun addMonthlyTransaction(monthlyTransaction: MonthlyRegularRegularTransactionEntity) {
+        monthlyTransactions.add(monthlyTransaction)
+        monthlyTransaction.addBooklet(this)
     }
-
-    fun addRegularTransaction(regularTransaction: RegularTransactionResource) {
-        regularTransactions.add(regularTransaction)
-        regularTransaction.addAccount(this)
+    fun removeRegularTransaction(monthlyTransaction: MonthlyRegularRegularTransactionEntity) {
+        monthlyTransactions.removeIf { it.transactionId == monthlyTransaction.transactionId }
+        monthlyTransaction.accounts.remove(this)
     }
 }

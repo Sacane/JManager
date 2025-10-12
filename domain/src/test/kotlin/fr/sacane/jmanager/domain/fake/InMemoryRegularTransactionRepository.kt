@@ -86,9 +86,13 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
 
     override fun saveMonthlyRegularTransaction(
         userId: UserId,
-        monthlyTransaction: MonthlyTransaction
+        monthlyTransaction: MonthlyTransaction,
+        bookletIds: List<Long>
     ): RegularTransaction {
         transactions.add(monthlyTransaction)
+        bookletIds.forEach {
+            transactionsByAccount.computeIfAbsent(it) { mutableListOf() }.add(monthlyTransaction)
+        }
         return monthlyTransaction
     }
 

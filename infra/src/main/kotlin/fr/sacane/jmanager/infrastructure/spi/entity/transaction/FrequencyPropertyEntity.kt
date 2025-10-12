@@ -9,8 +9,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Inheritance
 import jakarta.persistence.InheritanceType
-import jakarta.persistence.OneToMany
-import org.hibernate.internal.util.collections.CollectionHelper.listOf
+import jakarta.persistence.OneToOne
 import java.time.LocalDate
 
 @Entity
@@ -20,29 +19,23 @@ abstract class FrequencyPropertyEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     open val id: Long? = null,
-    @OneToMany(mappedBy = "frequencyProperty", orphanRemoval = true)
-    open val monthlyRegularTransactions: MutableList<MonthlyRegularRegularTransactionEntity> = mutableListOf()
-) {
-    fun addMonthlyRegularTransaction(monthlyRegularTransaction: MonthlyRegularRegularTransactionEntity) {
-        monthlyRegularTransactions.add(monthlyRegularTransaction)
-        monthlyRegularTransaction.frequencyProperty = this
-    }
-}
-
+    @OneToOne(mappedBy = "frequencyProperty", orphanRemoval = true)
+    open val monthlyRegularTransaction: MonthlyRegularRegularTransactionEntity? = null
+)
 @Entity
 @DiscriminatorValue("FOREVER")
-class ForeverEntity : FrequencyPropertyEntity()
+class ForeverEntity() : FrequencyPropertyEntity()
 
 @Entity
 @DiscriminatorValue("SPECIFIC_REPETITION_TIMES")
 class SpecificRepetitionTimesEntity(
     @Column
-    val number: Int? = null
+    val number: Int? = null,
 ) : FrequencyPropertyEntity()
 
 @Entity
 @DiscriminatorValue("UNTIL_DATE")
 class UntilDateEntity(
     @Column
-    val date: LocalDate? = null
+    val date: LocalDate? = null,
 ) : FrequencyPropertyEntity()

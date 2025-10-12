@@ -3,6 +3,9 @@ import type { FrequencyPropertyDTOClient, FrequencyPropertyType } from '~/compon
 import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
 
+const props = defineProps<{
+  booklets: OnlyBookletInfo[]
+}>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
 const tags = ref<TagDTO[]>([])
@@ -30,8 +33,11 @@ const regularTrForm = reactive({
     },
     isDefault: false,
   },
+  selectedBooklets: [] as OnlyBookletInfo[],
 })
+
 onMounted(() => {
+  console.log(props.booklets)
   tag.getAllTags().then((tagsResult) => {
     tags.value = tagsResult
     regularTrForm.tagDTO = tagsResult[0]
@@ -53,6 +59,7 @@ function emitTransaction() {
       tagDTO: regularTrForm.tagDTO,
       frequencyProperty: regularTrForm.monthlyFrequency,
       repeatDay: regularTrForm.repeatDay,
+      bookletIds: regularTrForm.selectedBooklets.map(b => b.id as number),
     }
     emit('createTransaction', regularTransactionCreationRequest)
     // clear form values
@@ -65,6 +72,7 @@ function emitTransaction() {
       untilDate: undefined,
       times: undefined,
     }
+    regularTrForm.selectedBooklets = []
   }
 }
 
@@ -132,6 +140,25 @@ function updateMonthlyRepeatValue(value: number | null) {
           <p>Fréquence</p>
           <Dropdown v-model="regularTrForm.frequency" :options="[frequencyToString('DAILY'), frequencyToString('WEEKLY'), frequencyToString('MONTHLY'), frequencyToString('YEARLY')]" placeholder="Répéter" class="w-full md:w-14rem" />
         </div>
+      </div>
+      <div class="flex flex-col gap-3 mt-4">
+        <label for="booklets" class="block text-sm font-medium text-gray-700">Livrets associés</label>
+        <MultiSelect
+          id="booklets"
+          v-model="regularTrForm.selectedBooklets"
+          :options="booklets"
+          option-label="labelAccount"
+          placeholder="Sélectionner un ou plusieurs livrets"
+          class="w-full"
+          display="chip"
+        >
+          <template #option="slotProps">
+            <div class="flex items-center gap-2">
+              <span>{{ slotProps.option.labelAccount }}</span>
+            </div>
+          </template>
+        </MultiSelect>
+        <small class="text-gray-500">La transaction sera appliquée aux livrets sélectionnés</small>
       </div>
       <div v-if="regularTrForm.frequency === frequencyToString('MONTHLY')" class="flex flex-col gap-3">
         <FrequencySelector
