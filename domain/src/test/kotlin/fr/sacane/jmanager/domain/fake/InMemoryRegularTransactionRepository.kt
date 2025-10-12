@@ -30,28 +30,6 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
         transactions.addAll(initialState)
     }
 
-    override fun saveRegularTransaction(
-        userId: UserId,
-        startDate: LocalDate,
-        label: String,
-        amount: Amount,
-        isIncome: Boolean,
-        tag: Tag,
-        frequency: Frequency
-    ): RegularTransaction {
-        val transaction = MonthlyTransaction(
-            id = RegularTransactionId("${userId.value}-${UUID.randomUUID()}"),
-            startDate = startDate,
-            label = label,
-            amount = amount,
-            isIncome = isIncome,
-            tag = tag,
-            frequencyProperty = FrequencyProperty.Forever(),
-        )
-        transactions.add(transaction)
-        return transaction
-    }
-
     override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
         return transactions.filter { it.id!!.value.startsWith("${userId.value}") }
     }
@@ -78,9 +56,13 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, State<
 
     override fun saveRegularTransaction(
         userId: UserId,
-        transaction: RegularTransaction
+        transaction: RegularTransaction,
+        bookletIds: List<Long>
     ): RegularTransaction {
         transactions.add(transaction)
+        bookletIds.forEach {
+            transactionsByAccount.computeIfAbsent(it) { mutableListOf() }.add(transaction)
+        }
         return transaction
     }
 
