@@ -214,6 +214,7 @@ class TransactionControllerTest(
                     )
                 )
             )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
             Given {
                 port(port)
                 cookie("token", token)
@@ -222,7 +223,7 @@ class TransactionControllerTest(
                 param("userId", user!!.id.value)
                 param("month", Month.JUNE)
                 param("year", 2024)
-                param("accountLabel", "test")
+                param("bookletId", booklet.id)
             } When {
                 get("/api/transaction")
             } Then {

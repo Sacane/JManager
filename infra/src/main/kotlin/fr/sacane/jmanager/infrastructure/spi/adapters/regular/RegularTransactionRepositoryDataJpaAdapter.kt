@@ -1,27 +1,17 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters.regular
 
-import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
-import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
-import fr.sacane.jmanager.infrastructure.spi.entity.AbstractTagResource
-import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
-import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import java.time.LocalDate
-import java.util.UUID
+import java.util.*
 
 @Service
 class RegularTransactionRepositoryDataJpaAdapter(
@@ -37,11 +27,12 @@ class RegularTransactionRepositoryDataJpaAdapter(
     @Transactional
     override fun saveRegularTransaction(
         userId: UserId,
-        transaction: RegularTransaction
+        transaction: RegularTransaction,
+        bookletIds: List<Long>
     ): RegularTransaction {
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
             ?: throw IllegalArgumentException("User not found")
-        return regularTransactionOperatorAdapter.save(user, transaction).toDomain()
+        return regularTransactionOperatorAdapter.save(user, transaction, bookletIds).toDomain()
     }
 
     override fun saveMonthlyRegularTransaction(
@@ -52,7 +43,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
         logger.info("Saving transaction {}", monthlyTransaction)
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
             ?: throw IllegalArgumentException("User not found")
-        return regularTransactionOperatorAdapter.save(user, monthlyTransaction).toDomain()
+        return regularTransactionOperatorAdapter.save(user, monthlyTransaction, bookletIds).toDomain()
     }
 
     override fun getRegularTransactionById(

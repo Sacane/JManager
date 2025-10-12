@@ -17,7 +17,7 @@ interface RegularTransactionRepository {
         bookletId: Long
     )
 
-    fun saveRegularTransaction(userId: UserId, transaction: RegularTransaction): RegularTransaction
+    fun saveRegularTransaction(userId: UserId, transaction: RegularTransaction, bookletIds: List<Long>): RegularTransaction
     fun saveMonthlyRegularTransaction(userId: UserId, monthlyTransaction: MonthlyTransaction, bookletIds: List<Long>): RegularTransaction
     fun getRegularTransactionById(userId: UserId, transactionId: RegularTransactionId): RegularTransaction
 }
