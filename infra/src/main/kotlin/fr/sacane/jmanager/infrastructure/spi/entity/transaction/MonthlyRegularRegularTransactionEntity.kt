@@ -38,11 +38,11 @@ data class MonthlyRegularRegularTransactionEntity(
     @ManyToOne
     override val personalTag: TagPersonalResource? = null,
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
     @JoinTable(
         name = "monthly_transaction_booklet",
         joinColumns = [JoinColumn(name = "transaction_id")],
-        inverseJoinColumns = [JoinColumn(name = "id_account")]
+        inverseJoinColumns = [JoinColumn(name = "id_account", nullable = false)]
     )
     var accounts: MutableSet<AccountResource> = mutableSetOf(),
     @ManyToOne(fetch = FetchType.LAZY)

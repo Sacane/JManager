@@ -153,7 +153,7 @@ class JpaTagMapperAdapter(
 internal fun FrequencyProperty.toResource(): FrequencyPropertyEntity {
     return when(this) {
         is FrequencyProperty.Forever -> ForeverEntity()
-        is FrequencyProperty.UntilDate -> UntilDateEntity(this.date, )
+        is FrequencyProperty.UntilDate -> UntilDateEntity(this.date)
         is FrequencyProperty.SpecificRepetitionTimes -> SpecificRepetitionTimesEntity(this.number)
     }
 }
