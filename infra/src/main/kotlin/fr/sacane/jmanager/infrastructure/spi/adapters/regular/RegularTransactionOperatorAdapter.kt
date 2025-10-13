@@ -34,7 +34,7 @@ class RegularTransactionOperatorAdapter(
                 val monthlyRegularTransactionEntity = MonthlyRegularTransactionEntity(
                     startDate = regularTransaction.startDate,
                     label = regularTransaction.label,
-                    amount = regularTransaction.amount.amount.toDouble(),
+                    amount = regularTransaction.amount.value.toDouble(),
                     isIncome = regularTransaction.isIncome,
                     repeatDay = regularTransaction.monthlyRepeatProperty?.repeatDay,
                     frequencyProperty = regularTransaction.frequencyProperty.toResource()

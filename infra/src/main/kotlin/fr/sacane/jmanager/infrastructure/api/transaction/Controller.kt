@@ -2,10 +2,8 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
@@ -79,8 +77,8 @@ class TransactionController(
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(TransactionListResponse(
             transactions = response.mapTo { (it!!.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() } },
-            amount = response.mapTo { it!!.realSold.amount.toString() },
-            previewAmount = response.mapTo { it!!.previsionalSold.amount.toString() }
+            amount = response.mapTo { it!!.realSold.value.toString() },
+            previewAmount = response.mapTo { it!!.previsionalSold.value.toString() }
         )).also { logger.info("Transactions fetched successfully") }
     }
 
@@ -176,11 +174,11 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
         this.transaction.id.toString(),
         this.transaction.label,
         this.transaction.date,
-        this.transaction.amount.amount.toString(),
+        this.transaction.amount.value.toString(),
         this.transaction.isIncome,
         this.transaction.tag.toDTO(),
-        this.accountAmount.amount.toString(),
-        this.accountPreviewAmount.amount.toString(),
+        this.accountAmount.value.toString(),
+        this.accountPreviewAmount.value.toString(),
         this.transaction.isPreview
     )
 }

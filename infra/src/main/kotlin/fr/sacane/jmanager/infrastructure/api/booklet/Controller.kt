@@ -9,7 +9,6 @@ import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
-import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResponse
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import kotlinx.serialization.Serializable
 import org.springframework.http.ResponseEntity
@@ -81,8 +80,8 @@ class BookletController (
             BookletReport(
                 label = res.label,
                 transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() },
-                realSold = res.realSold.amount.toString(),
-                previewSold = res.previsionalSold.amount.toString()
+                realSold = res.realSold.value.toString(),
+                previewSold = res.previsionalSold.value.toString()
             )
         }
         return report.toHttpResponse()

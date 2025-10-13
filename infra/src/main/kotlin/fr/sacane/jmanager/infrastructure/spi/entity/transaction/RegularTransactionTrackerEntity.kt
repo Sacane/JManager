@@ -26,12 +26,16 @@ data class RegularTransactionTrackerEntity(
     @Column(name = "last_generated_date", nullable = false)
     val lastGeneratedDate: LocalDate,
 
+    @Column(name = "number_of_generated_transaction", nullable = false)
+    val numberOfGeneratedTransaction: Int = 0
+
 ) {
     fun toDomain(): RegularTransactionTracker = RegularTransactionTracker(
         id = id,
         regularTransactionId = RegularTransactionId(regularTransactionId),
         bookletId = bookletId,
-        lastGeneratedDate = lastGeneratedDate
+        lastGeneratedDate = lastGeneratedDate,
+        numberOfGeneratedTransaction = numberOfGeneratedTransaction
     )
 
     companion object {
@@ -40,7 +44,8 @@ data class RegularTransactionTrackerEntity(
                 id = tracker.id,
                 regularTransactionId = tracker.regularTransactionId.value,
                 bookletId = tracker.bookletId,
-                lastGeneratedDate = tracker.lastGeneratedDate
+                lastGeneratedDate = tracker.lastGeneratedDate,
+                numberOfGeneratedTransaction = tracker.numberOfGeneratedTransaction
             )
     }
 }

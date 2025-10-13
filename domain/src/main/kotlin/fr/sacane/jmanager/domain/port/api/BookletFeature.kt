@@ -1,23 +1,14 @@
 package fr.sacane.jmanager.domain.port.api
 
-import com.sun.org.slf4j.internal.LoggerFactory
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
-import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
-import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
-import fr.sacane.jmanager.domain.port.spi.RegularTransactionTrackerRepository
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
-import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
-import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.port.spi.*
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
-import fr.sacane.jmanager.domain.usecase.RegularTransactionGeneratorService
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
@@ -134,24 +125,44 @@ class BookletFeatureImpl(
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Regular transactions not found for this account")
 
-            val generatedTransactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
-                bookletId,
-                regularTransactions,
-                month,
-                year
-            )
-            LOGGER.info("Generated ${generatedTransactions.size} transactions")
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
 
-            val transactions = booklet.retrieveSheetSurroundAndSortedByDate(month, year).partition { it.isPreview }
+            val currentDate = LocalDate.now()
+            val currentMonth = currentDate.month
+            val currentYear = currentDate.year
+            
+            val monthsToGenerate = generateMonthRange(currentMonth, currentYear, month, year)
+            val allGeneratedTransactions = mutableListOf<Transaction>()
+            
+            monthsToGenerate.forEach { (genMonth, genYear) ->
+                val generated = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                    bookletId,
+                    regularTransactions,
+                    genMonth,
+                    genYear
+                )
+                allGeneratedTransactions.addAll(generated)
+            }
+            
+            LOGGER.info("Generated ${allGeneratedTransactions.size} transactions for months from $currentMonth/$currentYear to $month/$year")
 
-            if (generatedTransactions.isNotEmpty()) {
-                generatedTransactions.forEach {
+            if (allGeneratedTransactions.isNotEmpty()) {
+                allGeneratedTransactions.forEach {
                     booklet.addTransaction(it)
                 }
                 accountRepository.update(booklet)
             }
+
+            val transactions = booklet.retrieveSheetSurroundAndSortedByDate(month, year).partition { it.isPreview }
+
+            val previsionalSold = calculatePrevisionalSold(
+                booklet,
+                currentMonth,
+                currentYear,
+                month,
+                year
+            )
 
             val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
@@ -159,7 +170,7 @@ class BookletFeatureImpl(
                 previsionalTransactions = transactions.first,
                 regularTransactions = regularTransactions,
                 realSold = booklet.amount,
-                previsionalSold = booklet.previewAmount
+                previsionalSold = previsionalSold
             )
             LOGGER.info("""
                 Booklet loaded successfully :
@@ -168,10 +179,81 @@ class BookletFeatureImpl(
                 Previsional transactions: ${transactions.first.size}
                 Regular transactions: ${regularTransactions.size}
                 Real sold: ${booklet.amount}
-                Previsional sold: ${booklet.previewAmount}
+                Previsional sold: $previsionalSold
             """.trimIndent())
             return@executeInTransaction success(bookletLoadingResult)
         }
+    }
+
+    /**
+     * Generates a list of months between the start month and year and the end month and year.
+     */
+    private fun generateMonthRange(
+        startMonth: Month,
+        startYear: Int,
+        endMonth: Month,
+        endYear: Int
+    ): List<Pair<Month, Int>> {
+        val months = mutableListOf<Pair<Month, Int>>()
+        var currentMonth = startMonth
+        var currentYear = startYear
+        
+        while (currentYear < endYear || (currentYear == endYear && currentMonth <= endMonth)) {
+            months.add(Pair(currentMonth, currentYear))
+            
+            if (currentMonth == Month.DECEMBER) {
+                currentMonth = Month.JANUARY
+                currentYear++
+            } else {
+                currentMonth = Month.of(currentMonth.value + 1)
+            }
+        }
+        
+        return months
+    }
+
+    /**
+     * Calculates the provisional balance (sold) for a booklet between the current month and year
+     * and a target month and year, considering all relevant transactions in the specified date range.
+     *
+     * @param booklet the booklet object containing the current balance, transactions, and other details
+     * @param currentMonth the current month used as the starting point of the calculation
+     * @param currentYear the current year used as the starting point of the calculation
+     * @param targetMonth the target month up to which the balance is calculated
+     * @param targetYear the target year up to which the balance is calculated
+     * @return the provisional balance as an `Amount` object
+     */
+    private fun calculatePrevisionalSold(
+        booklet: Booklet,
+        currentMonth: Month,
+        currentYear: Int,
+        targetMonth: Month,
+        targetYear: Int
+    ): Amount {
+        val currentDate = LocalDate.now()
+        val allTransactions = booklet.transactions
+        
+        val relevantTransactions = allTransactions.filter { transaction ->
+            val transactionDate = transaction.date
+            val transactionYearMonth = transactionDate.year * 12 + transactionDate.monthValue
+            val currentYearMonth = currentYear * 12 + currentMonth.value
+            val targetYearMonth = targetYear * 12 + targetMonth.value
+
+            when {
+                transactionYearMonth < currentYearMonth -> false
+                transactionYearMonth == currentYearMonth -> {
+                    !transaction.isPreview || transactionDate.isAfter(currentDate) || transactionDate.isEqual(currentDate)
+                }
+                transactionYearMonth <= targetYearMonth -> true
+                else -> false
+            }
+        }
+        
+        val totalAmount = relevantTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
+            acc.add(transaction.amount.value)
+        }
+        
+        return Amount(booklet.amount.value.add(totalAmount))
     }
 }
 

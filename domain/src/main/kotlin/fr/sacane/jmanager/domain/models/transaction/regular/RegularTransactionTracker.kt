@@ -6,5 +6,6 @@ data class RegularTransactionTracker(
     val id: Long? = null,
     val regularTransactionId: RegularTransactionId,
     val bookletId: Long,
-    val lastGeneratedDate: LocalDate
+    val lastGeneratedDate: LocalDate,
+    val numberOfGeneratedTransaction: Int = 0
 )

@@ -19,7 +19,7 @@ import java.time.LocalDate
 
 internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
-    this.amount.amount,
+    this.amount.value,
     this.label,
     this.previewAmount.toStringValue(),
     this.sheets().map { sheet -> sheet.toDTO() },
@@ -30,7 +30,7 @@ internal fun TransactionResult.toModel(): Transaction
 = Transaction(this.id, this.label, LocalDate.parse(this.date), Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
 internal fun Transaction.toDTO(): TransactionResult {
-    return TransactionResult(id, label, amount.amount, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag.toDTO(), isPreview)
+    return TransactionResult(id, label, amount.value, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag.toDTO(), isPreview)
 }
 
 
@@ -74,7 +74,7 @@ internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
         id = this.id?.value!!,
         label = this.label,
         startDate = this.startDate,
-        value = this.amount.amount,
+        value = this.amount.value,
         isIncome = this.isIncome,
         regularity = Frequency.MONTHLY.toString(),
         tagDTO = this.tag.toDTO(),

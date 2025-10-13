@@ -23,9 +23,9 @@ class AccountMapper(
     fun asResource(booklet: Booklet): AccountResource {
         val userResource = booklet.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.amount, idAccount = booklet.id, previewAmount = booklet.previewAmount.amount)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         } else {
-            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = booklet.initialSold.amount, idAccount = booklet.id, previewAmount = booklet.previewAmount.amount)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         }
     }
 }
@@ -35,7 +35,7 @@ class AccountMapper(
 internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): TransactionResource {
     val resource = TransactionResource(label=this.label)
     resource.date = this.date
-    resource.value = amount.amount
+    resource.value = amount.value
     resource.isIncome = isIncome
     resource.idSheet = this.id
     resource.lastModified = this.lastModified
@@ -56,7 +56,7 @@ internal fun Booklet.asResource(): AccountResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return AccountResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.amount, previewAmount = this.previewAmount.amount)
+    return AccountResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.value, previewAmount = this.previewAmount.value)
 }
 
 internal fun User.asResource(password: String): UserResource {

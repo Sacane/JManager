@@ -6,7 +6,6 @@ import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -18,7 +17,7 @@ class AccountJpaRepositoryAdapter(
     @Transactional
     override fun editFromAnother(booklet: Booklet): Booklet? {
         val accountFromDatabase = accountRepository.findByIdWithSheets(booklet.id!!) ?: return null
-        accountFromDatabase.amount = booklet.amount.amount
+        accountFromDatabase.amount = booklet.amount.value
         return accountFromDatabase.toModel()
     }
 
@@ -56,6 +55,6 @@ class AccountJpaRepositoryAdapter(
         }.toModel()
     }
     override fun update(booklet: Booklet) {
-        accountRepository.update(booklet.label, booklet.amount.amount, booklet.previewAmount.amount, booklet.id!!)
+        accountRepository.update(booklet.label, booklet.amount.value, booklet.previewAmount.value, booklet.id!!)
     }
 }
