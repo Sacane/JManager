@@ -8,7 +8,7 @@ import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.AbstractRegularTransactionResource
-import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRegularTransactionEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularTransactionEntity
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
@@ -31,7 +31,7 @@ class RegularTransactionOperatorAdapter(
     fun save(user: UserResource, regularTransaction: RegularTransaction, bookletIds: List<Long>): AbstractRegularTransactionResource {
         return when (regularTransaction) {
             is MonthlyTransaction -> {
-                val monthlyRegularTransactionEntity = MonthlyRegularRegularTransactionEntity(
+                val monthlyRegularTransactionEntity = MonthlyRegularTransactionEntity(
                     startDate = regularTransaction.startDate,
                     label = regularTransaction.label,
                     amount = regularTransaction.amount.amount.toDouble(),

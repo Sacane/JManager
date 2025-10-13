@@ -27,4 +27,7 @@ interface AccountJpaRepository: CrudRepository<AccountResource, Long>{
 
     @Query("SELECT account FROM AccountResource account LEFT JOIN FETCH account.sheets WHERE account.idAccount = :id")
     fun findTransactionsById(id: Long): AccountResource?
+
+    @Query("SELECT account FROM AccountResource account LEFT JOIN FETCH account.monthlyTransactions WHERE account.idAccount = :id")
+    fun findByIdWithMonthlyTransactions(id: Long): AccountResource?
 }

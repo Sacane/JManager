@@ -26,8 +26,6 @@ data class RegularTransactionTrackerEntity(
     @Column(name = "last_generated_date", nullable = false)
     val lastGeneratedDate: LocalDate,
 
-    @Version
-    val version: Long? = null
 ) {
     fun toDomain(): RegularTransactionTracker = RegularTransactionTracker(
         id = id,
@@ -53,6 +51,7 @@ interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransact
     @Query("SELECT r FROM RegularTransactionTrackerEntity r WHERE r.regularTransactionId = :regularTransactionId AND r.bookletId = :bookletId")
     fun findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId: String, bookletId: Long): RegularTransactionTrackerEntity?
     fun findAllByBookletId(bookletId: Long): List<RegularTransactionTrackerEntity>
+    fun deleteAllByBookletId(bookletId: Long)
 }
 
 @Service
@@ -74,5 +73,9 @@ class RegularTransactionTrackerRepositoryAdapter(
 
     override fun findAllTrackersForBooklet(bookletId: Long): List<RegularTransactionTracker> {
         return jpaRepository.findAllByBookletId(bookletId).map { it.toDomain() }
+    }
+
+    override fun deleteTrackerByBookletId(bookletId: Long) {
+        jpaRepository.deleteAllByBookletId(bookletId)
     }
 }

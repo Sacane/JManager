@@ -20,7 +20,7 @@ abstract class FrequencyPropertyEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     open val id: Long? = null,
     @OneToOne(mappedBy = "frequencyProperty", orphanRemoval = true)
-    open val monthlyRegularTransaction: MonthlyRegularRegularTransactionEntity? = null
+    open val monthlyRegularTransaction: MonthlyRegularTransactionEntity? = null
 )
 @Entity
 @DiscriminatorValue("FOREVER")

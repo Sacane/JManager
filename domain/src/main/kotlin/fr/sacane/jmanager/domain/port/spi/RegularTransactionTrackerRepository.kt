@@ -32,4 +32,11 @@ interface RegularTransactionTrackerRepository {
      * @return A list of RegularTransactionTracker objects associated with the provided booklet ID.
      */
     fun findAllTrackersForBooklet(bookletId: Long): List<RegularTransactionTracker>
+
+    /**
+     * Deletes all trackers associated with a specific booklet.
+     *
+     * @param bookletId The identifier of the booklet for which the trackers are deleted.
+     */
+    fun deleteTrackerByBookletId(bookletId: Long)
 }

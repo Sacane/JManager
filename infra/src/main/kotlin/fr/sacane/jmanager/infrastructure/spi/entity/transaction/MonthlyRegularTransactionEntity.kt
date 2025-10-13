@@ -18,7 +18,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "monthly_regular_transaction")
-data class MonthlyRegularRegularTransactionEntity(
+data class MonthlyRegularTransactionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     val transactionId: UUID? = null,
@@ -38,7 +38,7 @@ data class MonthlyRegularRegularTransactionEntity(
     @ManyToOne
     override val personalTag: TagPersonalResource? = null,
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
+    @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @JoinTable(
         name = "monthly_transaction_booklet",
         joinColumns = [JoinColumn(name = "transaction_id")],
@@ -69,7 +69,6 @@ data class MonthlyRegularRegularTransactionEntity(
     }
 
     fun removeBooklet(account: AccountResource) {
-        accounts.remove(account)
-        account.monthlyTransactions.remove(this)
+        accounts.removeIf { it.idAccount == account.idAccount }
     }
 }

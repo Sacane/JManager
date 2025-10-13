@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port.api
 
+import com.sun.org.slf4j.internal.LoggerFactory
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
@@ -10,6 +11,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.spi.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
@@ -23,6 +25,7 @@ import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Month
+import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface BookletFeature {
@@ -42,13 +45,16 @@ class BookletFeatureImpl(
     private val accountRepository: AccountRepositoryPort,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
-    private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProviderPort
+    private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProviderPort,
+    private val trackerRepository: RegularTransactionTrackerRepository
 ): BookletFeature {
+    companion object {
+        private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
+    }
     override fun findAccountById(
         accountID: Long,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
-        val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(it, accountID)
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
             success(this)
         } ?: failure(ResultState.BOOKLET_NOT_FOUND, "Le compte est introuvable")
@@ -72,11 +78,14 @@ class BookletFeatureImpl(
         accountID: Long,
         token: String
     ): Result<Nothing> = session.authenticate(token) {
-        if(accountRepository.findAccountByIdWithTransactions(accountID) == null){
-            return@authenticate failure(ResultState.NOT_FOUND, "Le livret $accountID n'existe pas")
+        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+            if(accountRepository.findAccountByIdWithTransactions(accountID) == null){
+                return@executeInTransaction failure(ResultState.NOT_FOUND, "Le livret $accountID n'existe pas")
+            }
+            accountRepository.deleteAccountById(accountID)
+            trackerRepository.deleteTrackerByBookletId(accountID)
+            return@executeInTransaction success()
         }
-        accountRepository.deleteAccountById(accountID)
-        success()
     }
 
     override fun findByLabelAndUserId(
@@ -121,29 +130,47 @@ class BookletFeatureImpl(
         year: Int
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
-
+            LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Regular transactions not found for this account")
 
-            regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+            val generatedTransactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
                 bookletId,
                 regularTransactions,
                 month,
                 year
             )
+            LOGGER.info("Generated ${generatedTransactions.size} transactions")
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
 
             val transactions = booklet.retrieveSheetSurroundAndSortedByDate(month, year).partition { it.isPreview }
 
-            return@executeInTransaction success(BookletLoadingResult(
+            if (generatedTransactions.isNotEmpty()) {
+                generatedTransactions.forEach {
+                    booklet.addTransaction(it)
+                }
+                accountRepository.update(booklet)
+            }
+
+            val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
                 currentTransactions = transactions.second,
                 previsionalTransactions = transactions.first,
                 regularTransactions = regularTransactions,
                 realSold = booklet.amount,
                 previsionalSold = booklet.previewAmount
-            ))
+            )
+            LOGGER.info("""
+                Booklet loaded successfully :
+                Label: ${booklet.label}
+                Current transactions: ${transactions.second.size}
+                Previsional transactions: ${transactions.first.size}
+                Regular transactions: ${regularTransactions.size}
+                Real sold: ${booklet.amount}
+                Previsional sold: ${booklet.previewAmount}
+            """.trimIndent())
+            return@executeInTransaction success(bookletLoadingResult)
         }
     }
 }

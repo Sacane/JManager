@@ -73,7 +73,7 @@ class BookletController (
         @RequestParam("month") month: Int,
         @RequestParam("year") year: Int
     ): ResponseEntity<BookletReport> {
-        LOGGER.info("Requesting account report for account $accountID")
+        LOGGER.info("Requesting account report for booklet $accountID")
         val result = feature.loadTransactionsForBookletForAMonth(
             token = currentUser.token, accountID, Month.of(month), year
         )

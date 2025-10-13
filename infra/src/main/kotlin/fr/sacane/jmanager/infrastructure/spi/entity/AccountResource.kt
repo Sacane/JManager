@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
-import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRegularTransactionEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularTransactionEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
 
@@ -18,19 +18,21 @@ class AccountResource(
     var owner: UserResource? = null,
     var initialSold: BigDecimal = BigDecimal.ZERO,
     var previewAmount: BigDecimal = BigDecimal.ZERO,
-    @ManyToMany(mappedBy = "accounts", fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
-    var monthlyTransactions: MutableSet<MonthlyRegularRegularTransactionEntity> = mutableSetOf(),
+    @ManyToMany(mappedBy = "accounts", fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    var monthlyTransactions: MutableSet<MonthlyRegularTransactionEntity> = mutableSetOf(),
     @Id
     @GeneratedValue
     @Column(name = "id_account")
     var idAccount: Long? = null
 ) {
-    fun addMonthlyTransaction(monthlyTransaction: MonthlyRegularRegularTransactionEntity) {
+    fun addMonthlyTransaction(monthlyTransaction: MonthlyRegularTransactionEntity) {
         monthlyTransactions.add(monthlyTransaction)
         monthlyTransaction.addBooklet(this)
     }
-    fun removeRegularTransaction(monthlyTransaction: MonthlyRegularRegularTransactionEntity) {
-        monthlyTransactions.removeIf { it.transactionId == monthlyTransaction.transactionId }
-        monthlyTransaction.accounts.remove(this)
+    fun clearAllMonthlyTransactions() {
+        monthlyTransactions.toList().forEach { transaction ->
+            transaction.removeBooklet(this)
+        }
+        monthlyTransactions.clear()
     }
 }

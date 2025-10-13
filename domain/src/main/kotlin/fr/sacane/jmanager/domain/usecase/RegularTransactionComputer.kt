@@ -17,7 +17,7 @@ interface RegularTransactionGenerator {
      * Generates a list of missing previsional transactions for a given booklet and target timeframe
      * based on the provided regular transactions.
      *
-     * @param booklet The booklet for which the previsional transactions are generated.
+     * @param bookletId The booklet ID for which the previsional transactions are generated.
      * @param regularTransactions The list of regular transactions to use for generating missing previsional transactions.
      * @param targetMonth The month for which the previsional transactions are being generated.
      * @param targetYear The year for which the previsional transactions are being generated.
@@ -56,7 +56,11 @@ class RegularTransactionGeneratorService(
                 regularTransaction.startDate
             }
 
-            val targetDate = LocalDate.of(targetYear, targetMonth, 1)
+            val targetDate = LocalDate.of(
+                targetYear,
+                targetMonth,
+                targetMonth.length(YearMonth.of(targetYear, targetMonth).isLeapYear)
+            )
 
             val transactionsToCreate = generateTransactionsBetween(
                 regularTransaction,

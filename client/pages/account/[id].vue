@@ -67,8 +67,9 @@ function onMonthChange(event: any) {
 
 function loadBookletData() {
   const accountId = Number.parseInt(route.params?.id as string)
-
-  findByIdMonthAndYear(accountId, numberFromMonth(formData.month) as number, formData.year)
+  const month = numberFromMonth(formData.month) as number
+  console.warn(month)
+  findByIdMonthAndYear(accountId, month, formData.year)
     .then((result: BookletReport) => {
       formData.labelAccount = result.label
       formData.currentAccountId = route.params?.id as string
@@ -88,8 +89,26 @@ function retrieveTags() {
 }
 
 async function confirmDelete() {
-  deleteTransaction(Number.parseInt(formData.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
-    .then(() => loadBookletData())
+  deleteTransaction(Number.parseInt(formData.currentAccountId), selectedSheets.value.map(sheet => Number.parseInt(sheet.id as string)))
+    .then(() => {
+      selectedSheets.value.forEach((sheet) => {
+        const index = actualSheets.value.findIndex(item => (((item?.id) ? (+item?.id) : 0) === +sheet!.id))
+        if (index !== -1) {
+          actualSheets.value.splice(index, 1)
+          const value = Number.parseFloat(sheet?.value) ?? 0.00
+          console.log('sheet value', value)
+          if (sheet.isPreview) {
+            console.log('form data.previewAccountAmount', formData.previewAccountAmount)
+            formData.previewAccountAmount = sheet.isIncome ? Number.parseFloat(formData.previewAccountAmount) - value : formData.previewAccountAmount + value
+            console.log('form data.previewAccountAmount after', formData.previewAccountAmount)
+          } else {
+            console.log('form data.accountAmount', formData.accountAmount)
+            formData.accountAmount = sheet.isIncome ? Number.parseFloat(formData.accountAmount) - value : formData.accountAmount + value
+            console.log('form data.accountAmount after', formData.accountAmount)
+          }
+        }
+      })
+    })
     .finally(() => {
       selectedSheets.value = []
     })
@@ -219,7 +238,6 @@ onMounted(() => {
   tag.getDefaultTag().then((tagDTO: TagDTO) => {
     formData.tagDTO = tagDTO
     transactionPlaceholder.tagDTO = tagDTO
-    formData.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
   })
 })
 

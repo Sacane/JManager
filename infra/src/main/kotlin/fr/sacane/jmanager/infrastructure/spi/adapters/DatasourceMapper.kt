@@ -7,7 +7,6 @@ import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.ForeverEntity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.FrequencyPropertyEntity
-import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularRegularTransactionEntity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.SpecificRepetitionTimesEntity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.UntilDateEntity
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
