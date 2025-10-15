@@ -12,7 +12,7 @@ tryOnBeforeMount(() => {
 </script>
 
 <template>
-  <div font="text">
+  <div font="text" class="w-full h-full">
     <NuxtLoadingIndicator />
     <NuxtLayout>
       <Toast />
