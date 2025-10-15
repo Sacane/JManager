@@ -4,7 +4,7 @@ import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 
 definePageMeta({
-  layout: 'sidebar-layout',
+  layout: 'default',
 })
 
 const { user } = useAuth()
@@ -15,7 +15,6 @@ const toast = useJToast()
 const accounts = ref<BookletDTO[]>([])
 const sum = computed(() => accounts.value.reduce((acc: number, curr: BookletDTO) => acc + Number.parseFloat(curr.amount.toString()), 0.00))
 
-// Animation refs
 const heroRef = ref(null)
 const featuresRef = ref(null)
 const statsRef = ref(null)
@@ -23,7 +22,6 @@ const isHeroVisible = ref(false)
 const isFeaturesVisible = ref(false)
 const isStatsVisible = ref(false)
 
-// Setup intersection observers for scroll animations
 useIntersectionObserver(heroRef, ([{ isIntersecting }]) => {
   if (isIntersecting) {
     isHeroVisible.value = true
