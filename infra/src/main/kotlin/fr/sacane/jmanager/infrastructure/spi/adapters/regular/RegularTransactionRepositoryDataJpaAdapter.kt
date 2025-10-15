@@ -24,17 +24,6 @@ class RegularTransactionRepositoryDataJpaAdapter(
         private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionRepositoryDataJpaAdapter::class.java)
     }
 
-    @Transactional
-    override fun saveRegularTransaction(
-        userId: UserId,
-        transaction: RegularTransaction,
-        bookletIds: List<Long>
-    ): RegularTransaction {
-        val user = userPostgresRepository.findByIdOrNull(userId.value!!)
-            ?: throw IllegalArgumentException("User not found")
-        return regularTransactionOperatorAdapter.save(user, transaction, bookletIds).toDomain()
-    }
-
     override fun saveMonthlyRegularTransaction(
         userId: UserId,
         monthlyTransaction: MonthlyTransaction,
@@ -49,11 +38,10 @@ class RegularTransactionRepositoryDataJpaAdapter(
     override fun getRegularTransactionById(
         userId: UserId,
         transactionId: RegularTransactionId
-    ): RegularTransaction {
+    ): RegularTransaction? {
         val id = transactionId.value.asUUID()
 
         return monthlyRegularTransactionRepository.findByIdOrNull(id)?.toDomain()
-            ?: throw IllegalArgumentException("Transaction $transactionId not found")
     }
 
 
@@ -70,22 +58,6 @@ class RegularTransactionRepositoryDataJpaAdapter(
             .filter { it.owner?.idUser == userId.value }
             .filter { transaction -> transaction.accounts.any { it.idAccount == accountID } }
         return monthlyOnes.map { it.toDomain() }
-    }
-
-    @Transactional
-    override fun linkedRegularTransactionsWithBooklet(
-        userId: UserId,
-        regularTransactionId: RegularTransactionId,
-        bookletId: Long
-    ) {
-        val booklet = bookletJpaRepository.findByIdOrNull(bookletId)
-            ?: throw IllegalArgumentException("Booklet not found")
-
-        val regularTransaction = monthlyRegularTransactionRepository.findByIdOrNull(regularTransactionId.value.asUUID()) ?:
-            throw IllegalArgumentException("Regular transaction not found")
-
-        booklet.addMonthlyTransaction(regularTransaction)
-        monthlyRegularTransactionRepository.save(regularTransaction)
     }
 }
 

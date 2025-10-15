@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.*
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
@@ -25,6 +26,7 @@ object FakeFactory {
     private val inMemoryRegularTransactionGenerator: RegularTransactionGenerator = RegularTransactionGeneratorService(
         transactionRepository, inMemoryTrackerRepository
     )
+    val regularTransactionState: BiState<List<UserRegularTransaction>, List<RegularTransaction>> = inMemoryRegularTransactionRepository
 
     val tokenGenerator: TokenGenerator = object : TokenGenerator {
         override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {
@@ -42,12 +44,19 @@ object FakeFactory {
     }
 
     private val sessionManager = InMemorySessionManager(tokenGenerator)
+    private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
 
     val accountFeature = BookletFeatureImpl(userRepository, sessionManager, fakeAccountRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator, manager, inMemoryTrackerRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryRegularChecker)
     val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)
-    private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
+    val regularTransactionFeature = RegularTransactionFeatureImpl(
+        inMemoryRegularTransactionRepository,
+        inMemoryTagRepository,
+        sessionManager,
+        manager
+    )
+
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository
     }

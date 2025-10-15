@@ -103,9 +103,9 @@ class AccountFeatureTest: FeatureTest() {
     @Test
     fun `As an account's owner, I can retrieve it by its label`() {
         launchWithConnectedUserInstance {
-            val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = user, id = 50L)
+            val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = Companion.user, id = 50L)
             accountState.init(listOf(
-                AccountByOwner(listOf(element), userId)
+                AccountByOwner(listOf(element), this.user.id)
             ))
             bookletFeature.findByLabelAndUserId(tokenValue, element.label)
                 .assertTrue {

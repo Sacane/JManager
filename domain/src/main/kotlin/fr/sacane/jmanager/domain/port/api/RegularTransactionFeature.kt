@@ -31,12 +31,6 @@ sealed interface RegularTransactionFeature {
         bookletIds: List<Long>
     ): Result<RegularTransaction>
 
-    fun linkTransactionAndAccount(
-        token: String,
-        transactionId: String,
-        bookletId: Long
-    ): Result<Nothing>
-
     fun getRegularTransactionById(token: String, transactionId: String): Result<RegularTransaction>
 }
 
@@ -75,26 +69,15 @@ class RegularTransactionFeatureImpl(
         }
     }
 
-    override fun linkTransactionAndAccount(
-        token: String,
-        transactionId: String,
-        bookletId: Long
-    ): Result<Nothing> = session.authenticate(token) {
-        regularTransactionRepository.linkedRegularTransactionsWithBooklet(
-            it,
-            RegularTransactionId(transactionId),
-            bookletId
-        )
-        return@authenticate success()
-    }
 
     override fun getRegularTransactionById(
         token: String,
         transactionId: String
     ): Result<RegularTransaction> = session.authenticate(token) {
-        return@authenticate success(regularTransactionRepository.getRegularTransactionById(
+        val result = regularTransactionRepository.getRegularTransactionById(
             it,
             RegularTransactionId(transactionId)
-        ))
+        ) ?: return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $transactionId n'existe pas")
+        return@authenticate success(result)
     }
 }

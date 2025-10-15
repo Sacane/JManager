@@ -29,8 +29,8 @@ class InMemoryDatabase {
         regularBooklets.add(RegularByBooklet(transaction, bookletIds))
     }
     fun addTrackerByBooklet(bookletId: Long, transactionTracker: RegularTransactionTracker) {
-        trackers[bookletId] = trackers[bookletId] ?: mutableListOf()
-        trackers[bookletId]?.add(transactionTracker)
+        trackers[bookletId]?.removeIf { it.regularTransactionId == transactionTracker.regularTransactionId }
+        trackers.computeIfAbsent(bookletId) { mutableListOf() }.add(transactionTracker)
     }
 
     fun  findTrackerByBooklet(bookletId: Long): List<RegularTransactionTracker>? = trackers[bookletId]

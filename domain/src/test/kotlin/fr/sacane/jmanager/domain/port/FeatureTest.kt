@@ -54,7 +54,7 @@ open class FeatureTest {
         val john = createAndConnect("John")
         val account = createAccount(User(john.user.id, john.user.username, null), "test", Amount(0))
         val token = john.token
-        action(AccountTokenUserId(john.user.id, token, account))
+        action(AccountTokenUserId(john.user, token, account))
         sessionManager.removeSession(john.user.id, token)
     }
 
@@ -66,12 +66,12 @@ open class FeatureTest {
     }
 
     inner class AccountTokenUserId(
-        val userId: UserId,
+        val user: MinimalUserRepresentation,
         val tokenValue: String,
         val booklet: Booklet
     ) {
         fun initTransactions(transactions: List<Transaction>) {
-            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(userId, booklet.id!!), transactions.toMutableList())))
+            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, booklet.id!!), transactions.toMutableList())))
         }
     }
     inner class TokenUserId(

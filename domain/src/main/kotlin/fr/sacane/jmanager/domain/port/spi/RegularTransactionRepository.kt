@@ -8,16 +8,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 interface RegularTransactionRepository {
 
     fun getAllRegularTransactions(userId: UserId): List<RegularTransaction>
-
     fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>?
 
-    fun linkedRegularTransactionsWithBooklet(
-        userId: UserId,
-        regularTransactionId: RegularTransactionId,
-        bookletId: Long
-    )
-
-    fun saveRegularTransaction(userId: UserId, transaction: RegularTransaction, bookletIds: List<Long>): RegularTransaction
     fun saveMonthlyRegularTransaction(userId: UserId, monthlyTransaction: MonthlyTransaction, bookletIds: List<Long>): RegularTransaction
-    fun getRegularTransactionById(userId: UserId, transactionId: RegularTransactionId): RegularTransaction
+    fun getRegularTransactionById(userId: UserId, transactionId: RegularTransactionId): RegularTransaction?
 }

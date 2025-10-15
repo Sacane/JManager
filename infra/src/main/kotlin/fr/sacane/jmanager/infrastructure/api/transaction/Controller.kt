@@ -46,18 +46,6 @@ class TransactionController(
         }.toHttpResponse()
     }
 
-    @PostMapping("/link")
-    fun linkRegularTransactionAndAccount(
-        @RequestBody regularTransactionLinkRequest: RegularTransactionLinkRequest
-    ): ResponseEntity<Nothing>{
-        logger.info("Starting link regular transaction and account for user ${SecurityContextHolder.getContext().authentication}")
-        return regularTransactionFeature.linkTransactionAndAccount(
-            currentUser.token,
-            regularTransactionLinkRequest.transactionId,
-            regularTransactionLinkRequest.bookletId
-        ).toHttpResponse()
-    }
-
     @DeleteMapping
     fun deleteByIds(
         @RequestBody sheetIds: AccountTransactionsIdRequest

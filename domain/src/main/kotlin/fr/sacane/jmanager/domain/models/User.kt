@@ -8,7 +8,11 @@ data class MinimalUserRepresentation(
     val id: UserId = UserId(null),
     val username: String,
     val email: String? = null,
-)
+) {
+
+    fun toUser(): User = User(id = id, username = username, email = email)
+
+}
 
 class User(
     val id: UserId = UserId(null),

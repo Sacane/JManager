@@ -35,7 +35,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Add a tag with the same label must return failure`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.userId, mutableListOf(Tag("test"))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test"))))
 
                 tagFeature.addTag(this.tokenValue, Tag("test"))
                     .assertFailure()
@@ -47,7 +47,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Delete a tag must return success`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.userId, mutableListOf(Tag("test", id = 90))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = 90))))
 
                 tagFeature.deleteTag(this.tokenValue, 90)
                     .assertSuccess()
@@ -66,7 +66,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Get all tags must return success`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.userId, mutableListOf(Tag("test", id = 90))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = 90))))
 
                 tagFeature.getAllTags(this.tokenValue)
                     .assertSuccess()
@@ -95,7 +95,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Patch a tag must return success`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.userId, mutableListOf(Tag("test", id = 90))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = 90))))
 
                 tagFeature.editTag(this.tokenValue, Tag("test2", id = 90))
                     .assertSuccess()
