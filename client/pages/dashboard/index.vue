@@ -16,6 +16,7 @@ import {
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import { rgbToHex } from '~/utils/util'
 
 // Register Chart.js components
 ChartJS.register(
@@ -528,7 +529,7 @@ onMounted(() => {
               <i class="pi pi-tags" />
               Tags populaires
             </h2>
-            <button class="add-button" @click="navigateTo('/tags')">
+            <button class="add-button" @click="navigateTo('/tag')">
               <i class="pi pi-plus" />
               Nouveau
             </button>
@@ -537,7 +538,7 @@ onMounted(() => {
             <div v-if="tags.length === 0" class="empty-state">
               <i class="pi pi-tag" />
               <p>Aucun tag créé</p>
-              <button class="create-button" @click="navigateTo('/tags')">
+              <button class="create-button" @click="navigateTo('/tag')">
                 Créer un tag
               </button>
             </div>
@@ -547,15 +548,15 @@ onMounted(() => {
                 :key="tag.tagId"
                 class="tag-chip"
                 :style="{
-                  backgroundColor: `${tag.colorDTO.hexCode}20`,
-                  borderColor: tag.colorDTO.hexCode,
-                  color: tag.colorDTO.hexCode,
+                  backgroundColor: `${rgbToHex(tag.colorDTO)}20`,
+                  borderColor: rgbToHex(tag.colorDTO),
+                  color: rgbToHex(tag.colorDTO),
                 }"
               >
                 <i class="pi pi-tag" />
                 {{ tag.label }}
               </div>
-              <button v-if="tags.length > 6" class="view-all-tags" @click="navigateTo('/tags')">
+              <button v-if="tags.length > 6" class="view-all-tags" @click="navigateTo('/tag')">
                 +{{ tags.length - 6 }} autres
               </button>
             </div>
@@ -624,9 +625,22 @@ onMounted(() => {
 <style scoped>
 .dashboard-container {
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   padding: 20px;
+  position: relative;
+}
+
+/* Ensure background extends to full height */
+.dashboard-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  z-index: -1;
 }
 
 /* ===== HEADER ===== */
@@ -688,11 +702,183 @@ onMounted(() => {
   justify-content: center;
   padding: 80px 20px;
   gap: 16px;
+  min-height: 60vh;
 }
 
 .loading-icon {
   font-size: 48px;
   color: #822acc;
+}
+
+/* ===== KPI SECTION ===== */
+.kpi-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 30px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+}
+
+.kpi-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(130, 42, 204, 0.15);
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.kpi-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, #822acc, #651e9e);
+}
+
+.gradient-red {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.gradient-green {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.gradient-yellow {
+  background: linear-gradient(135deg, #e0d824, #d4c91e);
+}
+
+.kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.kpi-trend.positive {
+  background: #10b98120;
+  color: #10b981;
+}
+
+.kpi-trend.negative {
+  background: #ef444420;
+  color: #ef4444;
+}
+
+.kpi-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.kpi-info {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ===== CHARTS SECTION ===== */
+.charts-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 30px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease 0.2s;
+}
+
+.charts-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chart-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.chart-card.large-chart {
+  grid-column: 1 / -1;
+}
+
+.chart-header {
+  margin-bottom: 20px;
+}
+
+.chart-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-title i {
+  color: #822acc;
+}
+
+.chart-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.chart-body {
+  height: 300px;
+  position: relative;
+}
+
+.doughnut-container {
+  height: 280px;
+}
+
+/* ===== DASHBOARD CONTENT ===== */
+.dashboard-content {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 40px;
 }
 
 /* ===== KPI SECTION ===== */
@@ -1146,6 +1332,7 @@ onMounted(() => {
   padding: 24px;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  margin-bottom: 20px;
 }
 
 .stat-item {

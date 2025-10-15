@@ -9,6 +9,14 @@ export function hexToRgb(hex: string): { r: number, g: number, b: number } {
     : { r: 0, g: 0, b: 0 }
 }
 
+export function rgbToHex(color: { red: number, green: number, blue: number }): string {
+  const toHex = (value: number) => {
+    const hex = Math.max(0, Math.min(255, value)).toString(16)
+    return hex.length === 1 ? `0${hex}` : hex
+  }
+  return `#${toHex(color.red)}${toHex(color.green)}${toHex(color.blue)}`
+}
+
 export function getTagStyle(colorDTO: { red: number, green: number, blue: number }) {
   const { red, green, blue } = colorDTO
   const brightness = (red * 299 + green * 587 + blue * 114) / 1000
