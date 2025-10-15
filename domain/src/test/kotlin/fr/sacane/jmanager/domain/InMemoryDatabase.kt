@@ -8,35 +8,57 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
+
+data class RegularByBooklet(val transaction: RegularTransaction, val bookletIds: List<Long>)
 
 class InMemoryDatabase {
     val users = mutableMapOf<UserId, UserWithPassword>()
 
     private val userByBooklet = mutableMapOf<UserId, MutableList<Booklet>>()
-    private val accountByTransaction = mutableMapOf<Long, MutableList<Transaction>>()
+    private val bookletsByTransaction = mutableMapOf<Long, MutableList<Transaction>>()
     private val tags = mutableMapOf<UserId, MutableList<Tag>>()
     val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
-    private val bookletList = mutableListOf<Booklet>()
     val defaultTags = mutableListOf<Tag>()
+    private val trackers = mutableMapOf<Long, MutableList<RegularTransactionTracker>>()
+    private val regularBooklets = mutableListOf<RegularByBooklet>()
+
+    fun addRegularBooklet(transaction: RegularTransaction, bookletIds: List<Long>) {
+        regularBooklets.add(RegularByBooklet(transaction, bookletIds))
+    }
+    fun addTrackerByBooklet(bookletId: Long, transactionTracker: RegularTransactionTracker) {
+        trackers[bookletId] = trackers[bookletId] ?: mutableListOf()
+        trackers[bookletId]?.add(transactionTracker)
+    }
+
+    fun  findTrackerByBooklet(bookletId: Long): List<RegularTransactionTracker>? = trackers[bookletId]
+
+    fun findTrackerByBookletAndTransaction(bookletId: Long, transactionId: RegularTransactionId): RegularTransactionTracker? = trackers[bookletId]?.find { it.regularTransactionId == transactionId }
+
+    fun deleteTrackerByBookletId(bookletId: Long) {
+        trackers.remove(bookletId)
+    }
 
     fun addAccount(ownerId: UserId, booklet: Booklet) {
         if(userByBooklet[ownerId] == null) {
             userByBooklet[ownerId] = mutableListOf()
         }
         userByBooklet[ownerId]?.add(booklet)
-        accountByTransaction[booklet.id!!] = mutableListOf()
+        bookletsByTransaction[booklet.id!!] = mutableListOf()
     }
     fun removeAccountById(accountId: Long) {
         userByBooklet.forEach {
             it.value.removeIf { account -> account.id == accountId }
         }
-        accountByTransaction.remove(accountId)
+        bookletsByTransaction.remove(accountId)
     }
 
     fun upsert(booklet: Booklet) {
         val accountId = booklet.id
         userByBooklet[booklet.owner?.id]?.find { it.id == accountId }?.updateFrom(booklet)
-        accountByTransaction.computeIfAbsent(accountId!!) { mutableListOf() }
+        bookletsByTransaction.computeIfAbsent(accountId!!) { mutableListOf() }
     }
 
     fun findAccountById(accountId: Long): Booklet? {
@@ -45,7 +67,7 @@ class InMemoryDatabase {
         userByBooklet.forEach {
             val account = it.value.find { acc -> acc.id == accountId }
             if(account != null) {
-                targetBooklet = Booklet(account.amount, account.label, accountByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner, id = accountId)
+                targetBooklet = Booklet(account.amount, account.label, bookletsByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner, id = accountId)
             }
         }
         return targetBooklet
@@ -53,7 +75,7 @@ class InMemoryDatabase {
 
     fun clearAccounts() {
         userByBooklet.clear()
-        accountByTransaction.clear()
+        bookletsByTransaction.clear()
     }
 
     private fun accountsWithTransactions(): List<Booklet> {
@@ -63,7 +85,7 @@ class InMemoryDatabase {
 
         bookletList.forEach {
             result.add(
-                Booklet(it.amount, it.label, accountByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner, id = it.id)
+                Booklet(it.amount, it.label, bookletsByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner, id = it.id)
             )
         }
         return result
@@ -84,7 +106,7 @@ class InMemoryDatabase {
     fun addTransaction(userAccountId: IdUserAccount, transaction: Transaction) {
         val account = userByBooklet[userAccountId.userId]?.find { it.id == userAccountId.accountId }
         account?.addTransaction(transaction)
-        accountByTransaction[account!!.id]?.add(transaction)
+        bookletsByTransaction[account!!.id]?.add(transaction)
     }
     fun addMassiveTransaction(collection: Collection<IdUserAccountByTransaction>){
         collection.forEach { idByTr ->
@@ -94,11 +116,8 @@ class InMemoryDatabase {
         }
     }
 
-    fun upsertTransactions(transactionList: List<Transaction>) {
-
-    }
     fun removeAllTransactionsById(transactionIds: List<Long>) {
-        accountByTransaction.forEach { (_, transactions) ->
+        bookletsByTransaction.forEach { (_, transactions) ->
             println(transactions.removeAll { transactionIds.contains(it.id) })
         }
     }
@@ -121,7 +140,7 @@ class InMemoryDatabase {
         userByBooklet.forEach { (key, value) ->
             value.forEach {
                 val id = IdUserAccount(key, it.id!!)
-                accountByTransaction[it.id]!!.forEach { transaction ->
+                bookletsByTransaction[it.id]!!.forEach { transaction ->
                     transactionsResult[id to transaction.id!!] = transaction
                 }
 
@@ -142,11 +161,11 @@ class InMemoryDatabase {
 
 
     fun clearTransactions() {
-        accountByTransaction.clear()
+        bookletsByTransaction.clear()
     }
 
     fun saveTransaction(accountId: Long, transaction: Transaction) {
-        accountByTransaction[accountId]?.add(transaction)
+        bookletsByTransaction[accountId]?.add(transaction)
     }
 
     fun addTag(userId: UserId, tag: Tag) {
