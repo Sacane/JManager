@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.usecase
 
+import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -31,7 +32,7 @@ data class PrevisionalTransactionResult(
     val totalIncome: Amount,
     val totalExpenses: Amount
 )
-
+@UseCase
 class PrevisionalTransactionFilterImpl : PrevisionalTransactionFilter {
     override fun filterPrevisionalTransactions(
         booklets: List<Booklet>,

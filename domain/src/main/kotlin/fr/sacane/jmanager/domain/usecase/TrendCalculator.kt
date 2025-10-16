@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.usecase
 
+import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.MonthlyTrend
@@ -20,6 +21,7 @@ interface TrendCalculator {
     fun calculateTrend(booklets: List<Booklet>): List<MonthlyTrend>
 }
 
+@UseCase
 class TrendCalculatorImpl : TrendCalculator {
     override fun calculateTrend(booklets: List<Booklet>): List<MonthlyTrend> {
         println("Booklets size ${booklets.size}")
