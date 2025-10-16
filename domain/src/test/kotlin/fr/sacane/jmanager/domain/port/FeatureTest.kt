@@ -1,10 +1,12 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
@@ -19,6 +21,7 @@ open class FeatureTest {
     private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
     private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
     private val sessionManager: SessionManager = FakeFactory.sessionManager()
+    private val tagState: BiState<UserTag, List<Tag>> = FakeFactory.fakeTagRepository()
 
     @AfterEach
     fun cleanUp() {
@@ -72,6 +75,11 @@ open class FeatureTest {
     ) {
         fun initTransactions(transactions: List<Transaction>) {
             transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, booklet.id!!), transactions.toMutableList())))
+        }
+        fun initTags(tags: List<UserTag>) {
+            tags.forEach {
+                tagState.init(it)
+            }
         }
     }
     inner class TokenUserId(

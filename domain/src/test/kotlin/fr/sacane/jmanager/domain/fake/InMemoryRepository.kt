@@ -94,6 +94,7 @@ class InMemoryUserRepository (
                 user.addAccount(account)
             }
         }
+        println(user)
         return user
     }
 

@@ -10,8 +10,12 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.*
+import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculatorImpl
+import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculatorImpl
+import fr.sacane.jmanager.domain.usecase.PrevisionalTransactionFilterImpl
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGeneratorService
+import fr.sacane.jmanager.domain.usecase.TrendCalculatorImpl
 import java.util.*
 
 object FakeFactory {
@@ -56,6 +60,18 @@ object FakeFactory {
         sessionManager,
         manager
     )
+
+    val statsFeature: StatsFeature by lazy {
+        StatsFeatureImpl(
+            session = sessionManager(),
+            userRepository = fakeUserRepository(),
+            accountRepository = fakeAccountRepository,
+            monthlyStatsCalculator = MonthlyStatsCalculatorImpl(),
+            categoryDistributionCalculator = CategoryDistributionCalculatorImpl(),
+            trendCalculator = TrendCalculatorImpl(),
+            previsionalTransactionFilter = PrevisionalTransactionFilterImpl()
+        )
+    }
 
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository

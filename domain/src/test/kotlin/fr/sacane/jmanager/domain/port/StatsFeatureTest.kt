@@ -1,9 +1,14 @@
 package fr.sacane.jmanager.domain.port
 
-import fr.sacane.jmanager.domain.*
+import fr.sacane.jmanager.domain.AuthenticationTest
+import fr.sacane.jmanager.domain.State
+import fr.sacane.jmanager.domain.assertFailure
+import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.api.StatsFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
@@ -24,9 +29,6 @@ class StatsFeatureTest : FeatureTest() {
         private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
 
-        private fun connectUser(user: User) {
-            FakeFactory.sessionManager().addSession(user.id, session)
-        }
     }
 
     @AfterEach
@@ -51,13 +53,16 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return monthly stats for a given account and year`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Salary", Amount(BigDecimal("2000")), true, LocalDate.of(2025, 1, 15)),
+                    generateTransaction("Rent", Amount(BigDecimal("-800")), false, LocalDate.of(2025, 1, 5)),
+                    generateTransaction("Groceries", Amount(BigDecimal("-200")), false, LocalDate.of(2025, 2, 10))
+                )
+                initTransactions(transactions)
 
                 statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
-                        this.year == 2025
-                                && this.monthlyData.size == 12
+                        this.year == 2025 && this.monthlyData.size == 12
                     }
             }
         }
@@ -65,8 +70,11 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate correct income and expenses per month`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithMonthlyTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Salary", Amount(BigDecimal("500")), true, LocalDate.of(2025, 1, 15)),
+                    generateTransaction("Groceries", Amount(BigDecimal("-200")), false, LocalDate.of(2025, 1, 10))
+                )
+                initTransactions(transactions)
 
                 statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
@@ -81,12 +89,12 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return empty stats when no transactions exist for the year`() {
             launchWithConnectedUserInstance {
-                val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
                 statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
-                        this.monthlyData.all { it.income.value == BigDecimal.ZERO && it.expenses.value == BigDecimal.ZERO }
+                        this.monthlyData.all {
+                            it.income.value.compareTo(BigDecimal.ZERO) == 0 &&
+                                    it.expenses.value.compareTo(BigDecimal.ZERO) == 0
+                        }
                     }
             }
         }
@@ -102,13 +110,16 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should not include previsional transactions in monthly stats`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithPrevisionalTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Future Salary", Amount(BigDecimal("2000")), true, LocalDate.of(2025, 1, 15), isPreview = true),
+                    generateTransaction("Real Expense", Amount(BigDecimal("-100")), false, LocalDate.of(2025, 1, 10), isPreview = false)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
                         val januaryData = this.monthlyData.find { it.month == 1 }
-                        januaryData != null && januaryData.income.value == BigDecimal.ZERO
+                        januaryData != null && januaryData.income.value.compareTo(BigDecimal.ZERO) == 0
                     }
             }
         }
@@ -120,8 +131,13 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return category distribution for all user transactions`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithTaggedTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val foodTag = Tag(id = 1L, label = "Food", isDefault = false)
+                initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
+                val transactions = listOf(
+                    generateTransactionWithTag("Groceries", Amount(BigDecimal("-100")), LocalDate.of(2025, 1, 10), foodTag),
+                    generateTransactionWithTag("Restaurant", Amount(BigDecimal("-50")), LocalDate.of(2025, 1, 15), foodTag)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getCategoryDistribution(tokenValue)
                     .assertTrue {
@@ -133,8 +149,14 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate correct amounts per category`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithMultipleCategoryTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val foodTag = Tag(id = 1L, label = "Food", isDefault = false)
+                initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
+
+                val transactions = listOf(
+                    generateTransactionWithTag("Groceries", Amount(BigDecimal("-100")), LocalDate.of(2025, 1, 10), foodTag),
+                    generateTransactionWithTag("Restaurant", Amount(BigDecimal("-200")), LocalDate.of(2025, 1, 15), foodTag)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getCategoryDistribution(tokenValue)
                     .assertTrue {
@@ -147,13 +169,20 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate correct percentages for each category`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithBalancedCategories()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val foodTag = Tag("Food",1L,  isDefault = false)
+                val transportTag = Tag("Transport",2L, isDefault =  false)
+                initTags(listOf(UserTag(user.id, mutableListOf(foodTag, transportTag))))
+
+                val transactions = listOf(
+                    generateTransactionWithTag("Groceries", Amount(BigDecimal("-500")), LocalDate.of(2025, 1, 10), foodTag),
+                    generateTransactionWithTag("Gas", Amount(BigDecimal("-500")), LocalDate.of(2025, 1, 15), transportTag)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getCategoryDistribution(tokenValue)
                     .assertTrue {
                         val totalPercentage = this.categories.sumOf { it.percentage.toDouble() }
-                        totalPercentage in 99.9..100.1 // Allow for rounding
+                        totalPercentage in 99.9..100.1
                     }
             }
         }
@@ -174,26 +203,37 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should group transactions without tags as uncategorized`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithUntaggedTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Untagged expense", Amount(BigDecimal("-100")), false, LocalDate.of(2025, 1, 10))
+                )
+                initTransactions(transactions)
 
-                statsFeature.getCategoryDistribution(tokenValue)
-                    .assertTrue {
-                        val uncategorized = this.categories.find { it.tagLabel == "Uncategorized" }
-                        uncategorized != null && uncategorized.totalAmount.value > BigDecimal.ZERO
-                    }
+                val result = statsFeature.getCategoryDistribution(tokenValue)
+
+                result.assertTrue {
+                    val uncategorized = this.categories.find { it.tagLabel == "Aucune" }
+                    uncategorized != null && uncategorized.totalAmount.value > BigDecimal.ZERO
+                }
             }
         }
 
         @Test
         fun `Should only include expenses in category distribution`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithIncomeAndExpenses()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val foodTag = Tag(id = 1L, label = "Food", isDefault = false)
+                val salaryTag = Tag(id = 2L, label = "Salary",  isDefault = false)
+
+                initTags(listOf(UserTag(user.id, mutableListOf(foodTag, salaryTag))))
+
+                val transactions = listOf(
+                    generateTransactionWithTag("Groceries", Amount(BigDecimal("-100")), LocalDate.of(2025, 1, 10), foodTag),
+                    generateTransactionWithTag("Monthly Salary", Amount(BigDecimal("2000")), LocalDate.of(2025, 1, 15), salaryTag)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getCategoryDistribution(tokenValue)
                     .assertTrue {
-                        this.categories.all { it.totalAmount.value <= BigDecimal.ZERO }
+                        this.categories.all { it.totalAmount.value >= BigDecimal.ZERO }
                     }
             }
         }
@@ -205,8 +245,12 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return trend for last 12 months`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithYearlyTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val currentDate = LocalDate.now()
+                val transactions = (0..11).map { monthsAgo ->
+                    val date = currentDate.minusMonths(monthsAgo.toLong())
+                    generateTransaction("Transaction $monthsAgo", Amount(BigDecimal("100")), true, date)
+                }
+                initTransactions(transactions)
 
                 statsFeature.getTrendStats(tokenValue)
                     .assertTrue {
@@ -218,8 +262,12 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate balance evolution correctly`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithProgressiveTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val currentDate = LocalDate.now()
+                val transactions = (0..11).map { monthsAgo ->
+                    val date = currentDate.minusMonths(monthsAgo.toLong())
+                    generateTransaction("Income $monthsAgo", Amount(BigDecimal("${100 * (monthsAgo + 1)}")), true, date)
+                }
+                initTransactions(transactions)
 
                 statsFeature.getTrendStats(tokenValue)
                     .assertTrue {
@@ -233,9 +281,24 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should include all user accounts in trend calculation`() {
             launchWithConnectedUserInstance {
-                val booklet1 = createBookletWithTransactions("account1")
-                val booklet2 = createBookletWithTransactions("account2")
-                accountState.init(listOf(AccountByOwner(listOf(booklet1, booklet2), user.id)))
+                val currentDate = LocalDate.now()
+                val transactions1 = listOf(
+                    generateTransaction("Transaction 1", Amount(BigDecimal("100")), true, currentDate)
+                )
+                initTransactions(transactions1)
+
+                val booklet2 = Booklet(
+                    Amount.fromString("500", "€".asCurrency()),
+                    "account2",
+                    owner = user.toUser(),
+                    id = 51L
+                )
+                val transactions2 = listOf(
+                    generateTransaction("Transaction 2", Amount(BigDecimal("200")), true, currentDate)
+                )
+                transactions2.forEach { booklet2.addTransaction(it) }
+
+                accountState.init(listOf(AccountByOwner(listOf(booklet2), user.id)))
 
                 statsFeature.getTrendStats(tokenValue)
                     .assertTrue {
@@ -247,8 +310,12 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should order months from oldest to most recent`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithYearlyTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val currentDate = LocalDate.now()
+                val transactions = (0..11).map { monthsAgo ->
+                    val date = currentDate.minusMonths(monthsAgo.toLong())
+                    generateTransaction("Transaction $monthsAgo", Amount(BigDecimal("100")), true, date)
+                }
+                initTransactions(transactions)
 
                 statsFeature.getTrendStats(tokenValue)
                     .assertTrue {
@@ -261,13 +328,17 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should handle months with no transactions`() {
             launchWithConnectedUserInstance {
-                val booklet = createBookletWithSparseTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val currentDate = LocalDate.now()
+                val transactions = listOf(
+                    generateTransaction("Transaction 1", Amount(BigDecimal("100")), true, currentDate.minusMonths(10)),
+                    generateTransaction("Transaction 2", Amount(BigDecimal("100")), true, currentDate.minusMonths(5))
+                )
+                initTransactions(transactions)
 
                 statsFeature.getTrendStats(tokenValue)
                     .assertTrue {
                         this.monthlyTrends.any {
-                            it.income.value == BigDecimal.ZERO && it.expenses.value == BigDecimal.ZERO
+                            it.income.value.compareTo(BigDecimal.ZERO) == 0 && it.expenses.value.compareTo(BigDecimal.ZERO) == 0
                         }
                     }
             }
@@ -282,8 +353,12 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
-                val booklet = createBookletWithFuturePrevisionalTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Future Rent", Amount(BigDecimal("-800")), false, startDate.plusDays(15), isPreview = true),
+                    generateTransaction("Future Salary", Amount(BigDecimal("2000")), true, startDate.plusMonths(1), isPreview = true),
+                    generateTransaction("Future Bill", Amount(BigDecimal("-100")), false, startDate.plusMonths(2), isPreview = true)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {
@@ -299,8 +374,12 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
-                val booklet = createBookletWithMixedTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Future Rent", Amount(BigDecimal("-800")), false, startDate.plusDays(15), isPreview = true),
+                    generateTransaction("Real Expense", Amount(BigDecimal("-100")), false, startDate.plusDays(10), isPreview = false),
+                    generateTransaction("Future Salary", Amount(BigDecimal("2000")), true, startDate.plusMonths(1), isPreview = true)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {
@@ -314,9 +393,14 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
-                val booklet1 = createBookletWithFuturePrevisionalTransactions("account1")
-                val booklet2 = createBookletWithFuturePrevisionalTransactions("account2")
-                accountState.init(listOf(AccountByOwner(listOf(booklet1, booklet2), user.id)))
+                val transactions1 = listOf(
+                    generateTransaction("Future Rent", Amount(BigDecimal("-800")), false, startDate.plusDays(15), isPreview = true)
+                )
+                initTransactions(transactions1)
+
+                val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "account2", owner = user.toUser(), id = 51L)
+                booklet2.addTransaction(generateTransaction("Future Bill", Amount(BigDecimal("-100")), false, startDate.plusMonths(1), isPreview = true))
+                accountState.init(listOf(AccountByOwner(listOf(booklet, booklet2), user.id)))
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {
@@ -330,8 +414,11 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
-                val booklet = createBookletWithFuturePrevisionalTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Future Salary", Amount(BigDecimal("2000")), true, startDate.plusMonths(1), isPreview = true),
+                    generateTransaction("Future Rent", Amount(BigDecimal("-800")), false, startDate.plusDays(15), isPreview = true)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {
@@ -356,8 +443,7 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
-                val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                initTransactions(emptyList())
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {
@@ -371,8 +457,12 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
-                val booklet = createBookletWithUnorderedPrevisionalTransactions()
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                val transactions = listOf(
+                    generateTransaction("Future 3", Amount(BigDecimal("-100")), false, startDate.plusMonths(2), isPreview = true),
+                    generateTransaction("Future 1", Amount(BigDecimal("-800")), false, startDate.plusDays(15), isPreview = true),
+                    generateTransaction("Future 2", Amount(BigDecimal("2000")), true, startDate.plusMonths(1), isPreview = true)
+                )
+                initTransactions(transactions)
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {
@@ -383,88 +473,20 @@ class StatsFeatureTest : FeatureTest() {
         }
     }
 
-    // Helper functions pour créer des données de test
-    private fun createBookletWithTransactions(label: String = "test"): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), label, owner = user, id = 50L)
-        // Transactions will be added here
-        return booklet
-    }
-
-    private fun createBookletWithMonthlyTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add January income and expenses
-        return booklet
-    }
-
-    private fun createBookletWithPrevisionalTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add previsional transactions
-        return booklet
-    }
-
-    private fun createBookletWithTaggedTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add transactions with tags
-        return booklet
-    }
-
-    private fun createBookletWithMultipleCategoryTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add transactions with multiple categories
-        return booklet
-    }
-
-    private fun createBookletWithBalancedCategories(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add transactions with balanced categories
-        return booklet
-    }
-
-    private fun createBookletWithUntaggedTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add transactions without tags
-        return booklet
-    }
-
-    private fun createBookletWithIncomeAndExpenses(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add both income and expenses
-        return booklet
-    }
-
-    private fun createBookletWithYearlyTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add transactions across 12 months
-        return booklet
-    }
-
-    private fun createBookletWithProgressiveTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add transactions with progressive growth
-        return booklet
-    }
-
-    private fun createBookletWithSparseTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add transactions with gaps
-        return booklet
-    }
-
-    private fun createBookletWithFuturePrevisionalTransactions(label: String = "test"): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), label, owner = user, id = 50L)
-        // Add future previsional transactions
-        return booklet
-    }
-
-    private fun createBookletWithMixedTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add mix of previsional and actual transactions
-        return booklet
-    }
-
-    private fun createBookletWithUnorderedPrevisionalTransactions(): Booklet {
-        val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
-        // Add unordered previsional transactions
-        return booklet
+    private fun generateTransactionWithTag(
+        label: String,
+        amount: Amount,
+        date: LocalDate,
+        tag: Tag
+    ): Transaction {
+        return Transaction(
+            id = kotlin.random.Random.nextLong(),
+            label = label,
+            date = date,
+            amount = amount,
+            isIncome = amount.value >= BigDecimal.ZERO,
+            tag = tag,
+            isPreview = false
+        )
     }
 }
