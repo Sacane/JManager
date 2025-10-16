@@ -22,6 +22,7 @@ const tags = ref<TagDTO[]>([])
 
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
+const isMobile = ref(false)
 
 const bookletData = reactive({
   id: '',
@@ -260,6 +261,23 @@ function rowClass(row: TransactionCreationDTO): string {
   return ''
 }
 
+function toggleSelection(transaction: TransactionCreationDTO) {
+  const index = selectedSheets.value.findIndex(t => t.id === transaction.id)
+  if (index === -1) {
+    selectedSheets.value.push(transaction)
+  } else {
+    selectedSheets.value.splice(index, 1)
+  }
+}
+
+function isSelected(transaction: TransactionCreationDTO): boolean {
+  return selectedSheets.value.some(t => t.id === transaction.id)
+}
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768
+}
+
 onMounted(async () => {
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
   await loadBookletData()
@@ -267,6 +285,13 @@ onMounted(async () => {
 
   const defaultTag = await tag.getDefaultTag()
   currentTransaction.tagDTO = defaultTag
+
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
@@ -349,13 +374,13 @@ onMounted(async () => {
         <Button
           class="btn-primary"
           icon="pi pi-plus"
-          label="Nouvelle transaction"
+          :label="isMobile ? 'Transaction' : 'Nouvelle transaction'"
           @click="openCreationDialog"
         />
         <Button
           class="btn-secondary"
           icon="pi pi-clock"
-          label="Transaction prévisionnelle"
+          :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
           @click="openPreviewCreationDialog"
         />
       </div>
@@ -370,8 +395,8 @@ onMounted(async () => {
       />
     </div>
 
-    <!-- Table des transactions -->
-    <div class="transactions-table">
+    <!-- Table des transactions (Desktop) -->
+    <div v-if="!isMobile" class="transactions-table">
       <DataTable
         v-model:selection="selectedSheets"
         :value="actualSheets"
@@ -457,6 +482,99 @@ onMounted(async () => {
         </Column>
       </DataTable>
     </div>
+
+    <!-- Liste des transactions (Mobile) -->
+    <div v-else class="transactions-mobile">
+      <div v-if="actualSheets.length === 0" class="empty-state-mobile">
+        <i class="pi pi-inbox" />
+        <h3>Aucune transaction</h3>
+        <p>Commencez par créer votre première transaction</p>
+        <Button
+          class="btn-primary"
+          icon="pi pi-plus"
+          label="Créer"
+          @click="openCreationDialog"
+        />
+      </div>
+
+      <div v-else class="transaction-cards">
+        <div
+          v-for="transaction in actualSheets"
+          :key="transaction.id"
+          class="transaction-card" :class="[{
+            'preview-card': transaction.isPreview,
+            'selected-card': isSelected(transaction),
+          }]"
+          @click="toggleSelection(transaction)"
+        >
+          <!-- Header de la carte -->
+          <div class="card-header">
+            <div class="card-header-left">
+              <Checkbox
+                :model-value="isSelected(transaction)"
+                :binary="true"
+                @click.stop="toggleSelection(transaction)"
+              />
+              <div class="card-date">
+                <i class="pi pi-calendar" />
+                <span>{{ transaction.date }}</span>
+              </div>
+            </div>
+
+            <div class="card-header-right">
+              <Button
+                v-if="transaction.isPreview"
+                v-tooltip="'Valider'"
+                class="validate-button-mobile"
+                icon="pi pi-check"
+                text
+                rounded
+                severity="success"
+                size="small"
+                @click.stop="onConfirmPreview(transaction)"
+              />
+              <Button
+                v-tooltip="'Modifier'"
+                class="edit-button-mobile"
+                icon="pi pi-pencil"
+                text
+                rounded
+                size="small"
+                @click.stop="onEditTransaction({ data: transaction })"
+              />
+            </div>
+          </div>
+
+          <!-- Corps de la carte -->
+          <div class="card-body">
+            <div class="card-label">
+              <span class="label-text">{{ transaction.label }}</span>
+              <i v-if="transaction.isPreview" class="pi pi-clock preview-badge" />
+            </div>
+
+            <div class="card-amount-section">
+              <div class="card-amount" :class="[transaction.isIncome ? 'income' : 'expense']">
+                <span class="amount-value">
+                  {{ transaction.isIncome ? '+' : '-' }}
+                  {{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }} €
+                </span>
+              </div>
+
+              <Tag
+                :value="transaction.tagDTO.label"
+                :style="getTagStyle(transaction.tagDTO.colorDTO)"
+                class="card-tag"
+              />
+            </div>
+          </div>
+
+          <!-- Indicateur de sélection -->
+          <div v-if="isSelected(transaction)" class="selection-indicator">
+            <i class="pi pi-check" />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Dialogs -->
@@ -490,8 +608,11 @@ onMounted(async () => {
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
 
   @media (max-width: 768px) {
+    height: auto;
+    min-height: 100vh;
     padding: 10px;
     gap: 15px;
+    padding-bottom: 30px;
   }
 }
 
@@ -505,6 +626,7 @@ onMounted(async () => {
 
   @media (max-width: 768px) {
     padding: 16px;
+    border-radius: 16px;
   }
 }
 
@@ -513,6 +635,10 @@ onMounted(async () => {
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+  }
 }
 
 .back-button {
@@ -536,7 +662,8 @@ onMounted(async () => {
     margin: 0 0 8px 0;
 
     @media (max-width: 768px) {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
+      margin-bottom: 6px;
     }
   }
 }
@@ -545,6 +672,10 @@ onMounted(async () => {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
 }
 
 .stat-badge {
@@ -559,6 +690,11 @@ onMounted(async () => {
   font-weight: 600;
   color: #822acc;
 
+  @media (max-width: 768px) {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
+
   &.preview {
     background: linear-gradient(135deg, #f59e0b10, #d9770610);
     border-color: rgba(245, 158, 11, 0.3);
@@ -567,6 +703,10 @@ onMounted(async () => {
 
   i {
     font-size: 0.75rem;
+
+    @media (max-width: 768px) {
+      font-size: 0.7rem;
+    }
   }
 }
 
@@ -588,12 +728,17 @@ onMounted(async () => {
 
   @media (max-width: 768px) {
     flex-direction: column;
+    gap: 8px;
   }
 
   :deep(.p-dropdown),
   :deep(.p-calendar) {
     border: 2px solid #e5e7eb;
     border-radius: 12px;
+
+    @media (max-width: 768px) {
+      border-radius: 10px;
+    }
 
     &:hover {
       border-color: #822acc;
@@ -612,6 +757,7 @@ onMounted(async () => {
 
   @media (max-width: 768px) {
     width: 100%;
+    min-width: unset;
   }
 }
 
@@ -622,6 +768,7 @@ onMounted(async () => {
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 
@@ -632,6 +779,11 @@ onMounted(async () => {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 12px;
+  }
 
   &::before {
     content: '';
@@ -703,8 +855,17 @@ onMounted(async () => {
   font-weight: 700;
   margin-bottom: 8px;
 
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
   i {
     font-size: 1rem;
+
+    @media (max-width: 768px) {
+      font-size: 0.9rem;
+    }
   }
 }
 
@@ -724,6 +885,10 @@ onMounted(async () => {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    gap: 12px;
+  }
 }
 
 .action-buttons {
@@ -733,9 +898,12 @@ onMounted(async () => {
 
   @media (max-width: 768px) {
     width: 100%;
+    gap: 8px;
 
     button {
       flex: 1;
+      font-size: 0.875rem;
+      padding: 0.625rem 1rem;
     }
   }
 }
@@ -784,7 +952,7 @@ onMounted(async () => {
   }
 }
 
-// ===== TABLE =====
+// ===== TABLE (DESKTOP) =====
 .transactions-table {
   flex: 1;
   background: white;
@@ -961,5 +1129,372 @@ onMounted(async () => {
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 0.875rem;
+}
+
+// ===== MOBILE TRANSACTIONS =====
+.transactions-mobile {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    overflow: visible;
+    flex: none;
+  }
+}
+
+.empty-state-mobile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(130, 42, 204, 0.08);
+
+  i {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0 0 20px 0;
+  }
+}
+
+.transaction-cards {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    overflow-y: visible;
+    flex: none;
+    gap: 16px;
+    padding: 0;
+  }
+
+  // Style de la scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(130, 42, 204, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(130, 42, 204, 0.4);
+    }
+  }
+}
+
+.transaction-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(130, 42, 204, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 18px;
+    border-radius: 18px;
+    box-shadow: 0 3px 15px rgba(130, 42, 204, 0.12);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #822acc, #651e9e);
+    transition: width 0.3s ease;
+
+    @media (max-width: 768px) {
+      width: 5px;
+    }
+  }
+
+  &.preview-card {
+    background: linear-gradient(135deg, #fffbeb, #fefce8);
+    border-color: rgba(245, 158, 11, 0.2);
+
+    &::before {
+      background: linear-gradient(180deg, #f59e0b, #d97706);
+    }
+
+    .preview-badge {
+      color: #f59e0b;
+      font-size: 1rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+  }
+
+  &.selected-card {
+    border-color: #822acc;
+    background: linear-gradient(135deg, #faf5ff, #f9f5ff);
+    box-shadow: 0 4px 16px rgba(130, 42, 204, 0.2);
+
+    &::before {
+      width: 6px;
+    }
+
+    @media (max-width: 768px) {
+      box-shadow: 0 5px 20px rgba(130, 42, 204, 0.25);
+    }
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+
+  @media (max-width: 768px) {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+  }
+}
+
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    gap: 14px;
+  }
+}
+
+.card-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    gap: 7px;
+  }
+
+  i {
+    font-size: 0.875rem;
+    color: #822acc;
+
+    @media (max-width: 768px) {
+      font-size: 0.95rem;
+    }
+  }
+}
+
+.card-header-right {
+  display: flex;
+  gap: 4px;
+
+  @media (max-width: 768px) {
+    gap: 6px;
+  }
+}
+
+.validate-button-mobile {
+  color: #10b981;
+
+  &:hover {
+    background: rgba(16, 185, 129, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    :deep(.p-button-icon) {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.edit-button-mobile {
+  color: #822acc;
+
+  &:hover {
+    background: rgba(130, 42, 204, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    :deep(.p-button-icon) {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    gap: 14px;
+  }
+}
+
+.card-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  flex: 1;
+  word-break: break-word;
+
+  @media (max-width: 768px) {
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+}
+
+.card-amount-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+.card-amount {
+  flex: 1;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+
+  .amount-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+
+    @media (max-width: 768px) {
+      font-size: 1.75rem;
+    }
+  }
+
+  &.expense .amount-value {
+    color: #ef4444;
+  }
+
+  &.income .amount-value {
+    color: #10b981;
+  }
+}
+
+.card-tag {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    align-self: flex-start;
+  }
+}
+
+.selection-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #822acc, #651e9e);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
+  animation: scaleIn 0.2s ease;
+
+  @media (max-width: 768px) {
+    width: 32px;
+    height: 32px;
+    top: 14px;
+    right: 14px;
+  }
+
+  i {
+    color: white;
+    font-size: 0.875rem;
+    font-weight: bold;
+
+    @media (max-width: 768px) {
+      font-size: 1rem;
+    }
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Checkbox customization
+:deep(.p-checkbox) {
+  .p-checkbox-box {
+    border-color: #822acc;
+    width: 22px;
+    height: 22px;
+
+    &.p-highlight {
+      background: linear-gradient(135deg, #822acc, #651e9e);
+      border-color: #822acc;
+    }
+  }
 }
 </style>
