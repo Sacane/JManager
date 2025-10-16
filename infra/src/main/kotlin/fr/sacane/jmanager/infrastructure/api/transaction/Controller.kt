@@ -127,7 +127,7 @@ class TransactionController(
                 id = RegularTransactionId(""),
                 label = request.label,
                 amount = request.value.toAmount(),
-                isIncome = true,
+                isIncome = request.isIncome,
                 tag = request.tagDTO.toDomain(),
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
                 startDate = LocalDate.now(),

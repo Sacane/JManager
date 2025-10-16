@@ -2,6 +2,8 @@ package fr.sacane.jmanager.infrastructure.spi.adapters.regular
 
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.infrastructure.api.NotFoundException
 import fr.sacane.jmanager.infrastructure.spi.adapters.JpaTagMapperAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.toResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
@@ -57,7 +59,7 @@ class RegularTransactionOperatorAdapter(
                 }
                 bookletIds.forEach { bookletId ->
                     val booklet = accountJpaRepository.findByIdOrNull(bookletId)
-                        ?: throw IllegalArgumentException("Booklet with id $bookletId not found")
+                        ?: throw NotFoundException(ResultState.NOT_FOUND.code,"Booklet with id $bookletId not found")
                     result.addBooklet(booklet)
                 }
                 logger.info("Save monthly transaction in postgres database {}", result)

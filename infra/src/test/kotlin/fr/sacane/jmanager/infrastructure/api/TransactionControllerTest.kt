@@ -32,6 +32,12 @@ import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.Month
 
+class LocalDateSerializer : JsonSerializer<LocalDate>() {
+    override fun serialize(value: LocalDate, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeString(value.toString())
+    }
+}
+
 class BigDecimalSerializer : JsonSerializer<BigDecimal>() {
     override fun serialize(value: BigDecimal, gen: JsonGenerator, serializers: SerializerProvider) {
         gen.writeString(value.setScale(2, RoundingMode.HALF_UP).toString())
@@ -41,6 +47,7 @@ class BigDecimalSerializer : JsonSerializer<BigDecimal>() {
 fun configureObjectMapper(objectMapper: ObjectMapper): ObjectMapper {
     val module = SimpleModule()
     module.addSerializer(BigDecimal::class.java, BigDecimalSerializer())
+    module.addSerializer(LocalDate::class.java, LocalDateSerializer())
     objectMapper.registerModule(module)
     return objectMapper
 }

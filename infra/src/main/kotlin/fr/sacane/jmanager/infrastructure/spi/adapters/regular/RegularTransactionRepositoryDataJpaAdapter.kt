@@ -16,7 +16,6 @@ import java.util.*
 @Service
 class RegularTransactionRepositoryDataJpaAdapter(
     private val userPostgresRepository: UserPostgresRepository,
-    private val bookletJpaRepository: AccountJpaRepository,
     private val regularTransactionOperatorAdapter: RegularTransactionOperatorAdapter,
     private val monthlyRegularTransactionRepository: MonthlyTransactionResourceJpaRepository
 ): RegularTransactionRepository {
