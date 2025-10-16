@@ -83,6 +83,7 @@ object FakeFactory {
         fakeAccountRepository.clear()
         userRepository.clear()
         transactionRepository.clear()
+        inMemoryTagRepository.clear()
     }
 
     fun fakeUserRepository(): InMemoryUserRepository {
