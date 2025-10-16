@@ -36,7 +36,6 @@ class TransactionController(
     fun createTransaction(
         @RequestBody userBookletResponse: UserBookletResponse
     ): ResponseEntity<TransactionResponse> {
-        logger.info("Current user : ${SecurityContextHolder.getContext().authentication}")
         return transactionFeature.bookTransaction(
             currentUser.token,
             userBookletResponse.accountLabel,
