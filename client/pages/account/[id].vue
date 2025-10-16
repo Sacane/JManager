@@ -1191,7 +1191,6 @@ onUnmounted(() => {
     padding: 0;
   }
 
-  // Style de la scrollbar
   &::-webkit-scrollbar {
     width: 6px;
   }
