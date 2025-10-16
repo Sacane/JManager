@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import Profile from '~/components/Profile.vue'
 import useAuth from '../composables/useAuth'
 import 'primeicons/primeicons.css'
-import Profile from '~/components/Profile.vue'
 
 const { isAuthenticated } = useAuth()
 const isSidebarOpen = ref(true)
@@ -21,9 +21,9 @@ function closeOnNavigateIfMobile() {
     <button v-if="!isSidebarOpen" class="lg:hidden p-2 fixed top-2 left-2" @click="isSidebarOpen = !isSidebarOpen">
       <i class="pi pi-bars text-2xl" />
     </button>
-    <div :class="{ 'sidebar-open': isSidebarOpen, 'sidebar-closed': !isSidebarOpen }" class="sidebar lg:flex flex-col border-r w-full lg:w-80 h-screen text-center justify-between content fixed lg:relative">
+    <div :class="{ 'sidebar-open': isSidebarOpen, 'sidebar-closed': !isSidebarOpen }" class="sidebar lg:flex flex-col border-r w-full lg:w-80 h-screen justify-between content fixed lg:relative">
       <div class="flex flex-col h-full">
-        <NuxtLink to="/" class="title">
+        <NuxtLink to="/" class="title text-center">
           <img src="@/public/favicon.ico" alt="icon" class="w-10 lg:w-10">
         </NuxtLink>
         <div class="mt-4 flex flex-col gap-2">
@@ -35,6 +35,9 @@ function closeOnNavigateIfMobile() {
           </NuxtLink>
           <NuxtLink v-if="isAuthenticated" to="/tag" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
             <i class="pi pi-tag text-20px" /> Mes tags
+          </NuxtLink>
+          <NuxtLink v-if="isAuthenticated" to="/regular-transaction" class="hover:bg-gray-200 py-2 px-4 decoration-none section flex flex-row overflow-hidden gap-3" active-class="bg-primary-color-white" @click="closeOnNavigateIfMobile()">
+            <i class="pi pi-tag text-20px" /> Mes transactions régulières
           </NuxtLink>
         </div>
         <div class="h-full flex flex-col justify-end mb-20">

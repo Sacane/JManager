@@ -3,7 +3,6 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword

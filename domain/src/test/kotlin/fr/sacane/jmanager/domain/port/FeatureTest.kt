@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import org.junit.jupiter.api.AfterEach
 import java.time.LocalDate
@@ -29,17 +30,17 @@ open class FeatureTest {
         fun generateToken(userId: UserId, username: String): String {
             return "${userId.value}||${UUID.randomUUID()}||${Role.USER.name}||$username"
         }
-        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction{
+        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction {
             return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
         }
     }
-    fun createAccount(userId: User, label: String, amount: Amount): Account {
+    fun createAccount(userId: User, label: String, amount: Amount): Booklet {
         val id = Random.nextLong()
-        val account = Account(id = id, amount = amount, labelAccount = label, owner = userId)
+        val booklet = Booklet(id = id, amount = amount, labelAccount = label, owner = userId)
         accountState.init(
-            AccountByOwner(account.asSingleton(), userId.id).asSingleton()
+            AccountByOwner(booklet.asSingleton(), userId.id).asSingleton()
         )
-        return account
+        return booklet
     }
     private fun createAndConnect(username: String): UserToken {
         val userId = UserId(Random.nextLong())
@@ -53,7 +54,7 @@ open class FeatureTest {
         val john = createAndConnect("John")
         val account = createAccount(User(john.user.id, john.user.username, null), "test", Amount(0))
         val token = john.token
-        action(AccountTokenUserId(john.user.id, token, account))
+        action(AccountTokenUserId(john.user, token, account))
         sessionManager.removeSession(john.user.id, token)
     }
 
@@ -65,12 +66,12 @@ open class FeatureTest {
     }
 
     inner class AccountTokenUserId(
-        val userId: UserId,
+        val user: MinimalUserRepresentation,
         val tokenValue: String,
-        val account: Account
+        val booklet: Booklet
     ) {
         fun initTransactions(transactions: List<Transaction>) {
-            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(userId, account.id!!), transactions.toMutableList())))
+            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, booklet.id!!), transactions.toMutableList())))
         }
     }
     inner class TokenUserId(

@@ -12,7 +12,7 @@ tryOnBeforeMount(() => {
 </script>
 
 <template>
-  <div font="text">
+  <div font="text" class="w-full h-full">
     <NuxtLoadingIndicator />
     <NuxtLayout>
       <Toast />
@@ -40,6 +40,7 @@ tryOnBeforeMount(() => {
 body, html {
   margin: 0;
   padding: 0;
+  font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 .btn-primary {
   background-color: var(--primary-2);
@@ -48,6 +49,16 @@ body, html {
     background-color: var(--primary-3);
   }
 }
+
+.p-button.btn-primary {
+  background-color: var(--primary-2);
+  border-color: var(--primary-2);
+}
+.p-button.btn-primary:hover {
+  background-color: var(--primary-3);
+  border-color: var(--primary-3);
+}
+
 pi {
   width: 100px;
 }

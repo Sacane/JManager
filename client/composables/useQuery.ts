@@ -72,8 +72,9 @@ export default function useQuery() {
       if (status === 401 || status === 403) {
         // toast.error(message)
         localStorage.removeItem('user')
-        navigateTo('/login')
-        logout().then()
+        logout().then(() => {
+          navigateTo('/login')
+        })
         return
       }
       // toast.error(message)

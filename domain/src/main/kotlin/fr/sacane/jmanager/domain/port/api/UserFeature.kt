@@ -3,13 +3,14 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.*
-import java.util.*
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)

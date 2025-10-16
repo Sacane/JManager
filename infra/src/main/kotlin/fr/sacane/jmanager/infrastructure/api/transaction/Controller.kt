@@ -3,11 +3,14 @@ package fr.sacane.jmanager.infrastructure.api.transaction
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
+import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.port.api.BookletFeature
+import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
-import fr.sacane.jmanager.infrastructure.api.currentUser
-import fr.sacane.jmanager.infrastructure.api.toDTO
-import fr.sacane.jmanager.infrastructure.api.toHttpResponse
-import fr.sacane.jmanager.infrastructure.api.toModel
+import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -18,8 +21,16 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("api/transaction")
 @Adapter(Side.APPLICATION)
-class TransactionController(private val transactionFeature: TransactionFeature) {
-    private val logger = Logger.getLogger(TransactionController::class.java.name)
+class TransactionController(
+    private val transactionFeature: TransactionFeature,
+    private val regularTransactionFeature: RegularTransactionFeature,
+    private val bookletFeature: BookletFeature
+) {
+
+    companion object {
+        private val logger = Logger.getLogger(TransactionController::class.java.name)
+    }
+
 
     @PostMapping
     fun createTransaction(
@@ -47,17 +58,16 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
     fun getTransactionsByMonthAndYearAndAccountLabel(
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
-        @RequestParam("accountLabel") accountLabel: String
+        @RequestParam("bookletId") bookletId: Long
         ): ResponseEntity<TransactionListResponse> {
-        LOGGER.info("Request transactions from booklet $accountLabel for month $month and year $year")
-        val response = transactionFeature.retrieveTransactionsByMonthAndYear(
-            currentUser.token,
-            month ?: LocalDate.now().month,
-            year,
-            accountLabel
-        )
+        logger.info("Request transactions from booklet $bookletId for month $month and year $year")
+        val response = bookletFeature.loadTransactionsForBookletForAMonth(currentUser.token, bookletId, month ?: Month.JANUARY, year)
         if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(TransactionListResponse(response.mapTo { it!!.map { sheet -> sheet.toDTO() } }))
+        return ResponseEntity.ok(TransactionListResponse(
+            transactions = response.mapTo { (it!!.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() } },
+            amount = response.mapTo { it!!.realSold.value.toString() },
+            previewAmount = response.mapTo { it!!.previsionalSold.value.toString() }
+        )).also { logger.info("Transactions fetched successfully") }
     }
 
     @PatchMapping
@@ -69,7 +79,7 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
             .map {
                 it.toDTO()
             }.toHttpResponse()
-            .also { LOGGER.info("Transaction edited successfully : ${dto.transaction}") }
+            .also { logger.info("Transaction edited successfully : ${dto.transaction}") }
     }
 
 
@@ -98,8 +108,52 @@ class TransactionController(private val transactionFeature: TransactionFeature) 
         }
     }
 
-    companion object {
-        private val LOGGER: Logger = Logger.getLogger(TransactionController::javaClass.name)
+
+    @GetMapping("/regular")
+    fun getAllRegularTransactions(): ResponseEntity<List<RegularTransactionDTO>> {
+        return regularTransactionFeature.getAllRegularTransactions(currentUser.token)
+            .map { it.map { transaction -> transaction.toDTO() } }
+            .toHttpResponse()
+    }
+
+    @PostMapping("/monthly")
+    fun createMonthlyTransaction(
+        @RequestBody request: MonthlyRegularTransactionRequest
+    ): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Creating monthly transaction $request from userID ${currentUser.id}")
+        return regularTransactionFeature.bookRegularTransaction(
+            currentUser.token,
+            MonthlyTransaction(
+                id = RegularTransactionId(""),
+                label = request.label,
+                amount = request.value.toAmount(),
+                isIncome = request.isIncome,
+                tag = request.tagDTO.toDomain(),
+                frequencyProperty = request.frequencyProperty.frequencyToDomain(),
+                startDate = LocalDate.now(),
+            ).run {
+                if(request.repeatDay != null) {
+                    copy(
+                        monthlyRepeatProperty = MonthlyRepeatProperty(request.repeatDay)
+                    )
+                } else this
+            },
+            request.bookletIds
+        ).map {
+            it.toDTO()
+        }.toHttpResponse().also {
+            logger.info("Monthly transaction created successfully")
+        }
+    }
+
+    @GetMapping("/regular/{id}")
+    fun getRegularTransactionById(@PathVariable id: String): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Fetching regular transaction with ID $id")
+        return regularTransactionFeature.getRegularTransactionById(currentUser.token, id).map {
+            it.toDTO()
+        }.toHttpResponse().also {
+            logger.info("Regular transaction fetched successfully")
+        }
     }
 }
 
@@ -108,11 +162,11 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
         this.transaction.id.toString(),
         this.transaction.label,
         this.transaction.date,
-        this.transaction.amount.amount.toString(),
+        this.transaction.amount.value.toString(),
         this.transaction.isIncome,
         this.transaction.tag.toDTO(),
-        this.accountAmount.amount.toString(),
-        this.accountPreviewAmount.amount.toString(),
+        this.accountAmount.value.toString(),
+        this.accountPreviewAmount.value.toString(),
         this.transaction.isPreview
     )
 }

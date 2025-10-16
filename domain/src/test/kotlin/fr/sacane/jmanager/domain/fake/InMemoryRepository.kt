@@ -2,10 +2,15 @@ package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.UserWithPassword
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import java.time.Month
 import java.util.*
 
 data class IdUserAccountByTransaction(
@@ -19,7 +24,7 @@ class InMemoryTransactionRepository(
 
 
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
-        val accounts = inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.account?.find { it.label == accountLabel } ?: return null
+        val accounts = inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklet?.find { it.label == accountLabel } ?: return null
         val userAccountId = accounts.id?.let { IdUserAccount(userId, it) } ?: return null
         inMemoryDatabase.addTransaction(userAccountId, transaction)
 
@@ -39,8 +44,24 @@ class InMemoryTransactionRepository(
         return transaction
     }
 
-    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
+    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet? {
         return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
+    }
+
+    override fun findAccountWithTransactionById(id: Long): Booklet? {
+        return inMemoryDatabase.findAccountById(id)
+    }
+
+    override fun findTransactionsByBookletId(bookletId: Long): List<Transaction>? {
+        return inMemoryDatabase.findAccountById(bookletId)?.transactions
+    }
+
+    override fun findTransactionsByBookletYearAndMonth(
+        bookletId: Long,
+        year: Int,
+        month: Month
+    ): List<Transaction>? {
+        return inMemoryDatabase.findAccountById(bookletId)?.retrieveSheetSurroundAndSortedByDate(month, year)
     }
 
     override fun getStates(): Collection<IdUserAccountByTransaction> {
@@ -69,7 +90,7 @@ class InMemoryUserRepository (
         val user = inMemoryDatabase.users[userId]?.user ?: return null
         val accounts = inMemoryDatabase.accountsByOwner().find { it.userId == userId }
         if(accounts != null) {
-            for(account in accounts.account) {
+            for(account in accounts.booklet) {
                 user.addAccount(account)
             }
         }
@@ -116,11 +137,11 @@ class InMemoryUserRepository (
 }
 
 data class AccountByOwner(
-    val account: List<Account>,
+    val booklet: List<Booklet>,
     val userId: UserId
 ) {
-    fun existsById(accountId: Long): Account? {
-        return account.find { it.id == accountId }
+    fun existsById(accountId: Long): Booklet? {
+        return booklet.find { it.id == accountId }
     }
 }
 
@@ -128,20 +149,20 @@ class InMemoryAccountRepository(
     private val inMemoryDatabase: InMemoryDatabase
 ): AccountRepositoryPort, State<AccountByOwner> {
 
-    override fun editFromAnother(account: Account): Account {
-        inMemoryDatabase.upsert(account)
-        return account
+    override fun editFromAnother(booklet: Booklet): Booklet {
+        inMemoryDatabase.upsert(booklet)
+        return booklet
     }
-    override fun save(ownerId: UserId, account: Account): Account {
-        inMemoryDatabase.addAccount(ownerId, account)
-        return account
+    override fun save(ownerId: UserId, booklet: Booklet): Booklet {
+        inMemoryDatabase.addAccount(ownerId, booklet)
+        return booklet
     }
 
-    override fun findAccountByIdWithTransactions(accountId: Long): Account? {
+    override fun findAccountByIdWithTransactions(accountId: Long): Booklet? {
         return inMemoryDatabase.findAccountById(accountId)
     }
 
-    override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Account? {
+    override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Booklet? {
         return inMemoryDatabase.findAccountByOwnerAndLabel(userId, accountLabel)
     }
 
@@ -149,15 +170,15 @@ class InMemoryAccountRepository(
         inMemoryDatabase.removeAccountById(accountId)
     }
 
-    override fun upsert(account: Account): Account {
-        account.id?.let {
-            inMemoryDatabase.upsert(account)
+    override fun upsert(booklet: Booklet): Booklet {
+        booklet.id?.let {
+            inMemoryDatabase.upsert(booklet)
         }
-        return account
+        return booklet
     }
 
-    override fun update(account: Account) {
-        upsert(account)
+    override fun update(booklet: Booklet) {
+        upsert(booklet)
     }
 
     override fun getStates(): Collection<AccountByOwner> {

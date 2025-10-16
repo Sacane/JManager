@@ -1,20 +1,25 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
-import fr.sacane.jmanager.infrastructure.api.account.AccountDTO
+import fr.sacane.jmanager.infrastructure.api.booklet.AccountDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
+import fr.sacane.jmanager.infrastructure.api.transaction.RegularTransactionDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
+import fr.sacane.jmanager.infrastructure.api.transaction.toDTO
 import org.springframework.http.ResponseEntity
 import java.awt.Color
 import java.time.LocalDate
 
-internal fun Account.toDTO(): AccountDTO = AccountDTO(
+internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
-    this.amount.amount,
+    this.amount.value,
     this.label,
     this.previewAmount.toStringValue(),
     this.sheets().map { sheet -> sheet.toDTO() },
@@ -24,11 +29,8 @@ internal fun Account.toDTO(): AccountDTO = AccountDTO(
 internal fun TransactionResult.toModel(): Transaction
 = Transaction(this.id, this.label, LocalDate.parse(this.date), Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
-internal fun AccountDTO.toModel(user: User? = null): Account
-= Account(this.amount.toAmount(), this.labelAccount, this.transactions?.map { it.toModel() }?.toMutableList() ?: throw IllegalStateException("Impossible to send null sheets"), user, previewAmount = this.amount.toAmount(), id = this.id)
-
 internal fun Transaction.toDTO(): TransactionResult {
-    return TransactionResult(id, label, amount.amount, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag.toDTO(), isPreview)
+    return TransactionResult(id, label, amount.value, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag.toDTO(), isPreview)
 }
 
 
@@ -66,3 +68,16 @@ internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
 
 internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))
+
+internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
+    return RegularTransactionDTO(
+        id = this.id?.value!!,
+        label = this.label,
+        startDate = this.startDate,
+        value = this.amount.value,
+        isIncome = this.isIncome,
+        regularity = Frequency.MONTHLY.toString(),
+        tagDTO = this.tag.toDTO(),
+        frequencyProperty = frequencyProperty.toDTO()
+    )
+}

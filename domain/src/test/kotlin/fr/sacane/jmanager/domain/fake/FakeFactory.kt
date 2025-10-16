@@ -7,16 +7,26 @@ import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.*
+import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
+import fr.sacane.jmanager.domain.usecase.RegularTransactionGeneratorService
 import java.util.*
 
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
+    private val  inMemoryTrackerRepository: RegularTransactionTrackerRepository  = InMemoryRegularTrackerRepository(inMemoryDatabase)
     private val fakeAccountRepository: InMemoryAccountRepository = InMemoryAccountRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
-    private val manager: InfraTransactionProviderPort = InfraTransactionProviderPort.DEFAULT
+    private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository()
+    private val manager: UnitOfWorkTransactionProviderPort = UnitOfWorkTransactionProviderPort.DEFAULT
+    private val inMemoryRegularChecker: InMemoryRegularChecker = InMemoryRegularChecker()
+    private val inMemoryRegularTransactionGenerator: RegularTransactionGenerator = RegularTransactionGeneratorService(
+        transactionRepository, inMemoryTrackerRepository
+    )
+    val regularTransactionState: BiState<List<UserRegularTransaction>, List<RegularTransaction>> = inMemoryRegularTransactionRepository
 
     val tokenGenerator: TokenGenerator = object : TokenGenerator {
         override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {
@@ -34,12 +44,19 @@ object FakeFactory {
     }
 
     private val sessionManager = InMemorySessionManager(tokenGenerator)
-
-    val accountFeature = AccountFeatureImpl(userRepository, sessionManager, fakeAccountRepository)
-    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager)
-    val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
+
+    val accountFeature = BookletFeatureImpl(userRepository, sessionManager, fakeAccountRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator, manager, inMemoryTrackerRepository)
+    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryRegularChecker)
+    val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
+    val regularTransactionFeature = RegularTransactionFeatureImpl(
+        inMemoryRegularTransactionRepository,
+        inMemoryTagRepository,
+        sessionManager,
+        manager
+    )
+
     fun accountState(): State<AccountByOwner>{
         return fakeAccountRepository
     }

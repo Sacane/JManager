@@ -22,12 +22,12 @@ class ProblemDetailHandler {
         problemDetail.title = "Internal server error"
         problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"
         problemDetail.setProperty("code", 111)
-        LOGGER.error("Internal server error : {}", ex.message)
+        LOGGER.error("Internal server error : {}", ex.cause?.message ?: ex.message)
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail)
     }
 
     @ExceptionHandler(InvalidCurrencyException::class)
-    fun onIrregularException(ex: InvalidCurrencyException): ResponseEntity<ProblemDetail> {
+    fun onCurrencyException(ex: InvalidCurrencyException): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
         problemDetail.title = "Invalid given currency"
         problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"

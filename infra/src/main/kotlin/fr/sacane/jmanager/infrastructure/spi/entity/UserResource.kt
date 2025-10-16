@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularTransactionEntity
 import jakarta.persistence.*
 
 @Table(name="userResource")
@@ -15,6 +16,8 @@ class UserResource(
     var accounts: MutableList<AccountResource> = mutableListOf(),
     @OneToMany(mappedBy = "owner")
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
+    @OneToMany(mappedBy = "owner")
+    var monthlyTransactions: MutableList<MonthlyRegularTransactionEntity> = mutableListOf(),
     @Id
     @GeneratedValue
     @Column(name = "id_user")

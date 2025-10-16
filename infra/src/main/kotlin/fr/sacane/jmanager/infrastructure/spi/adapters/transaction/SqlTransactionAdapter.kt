@@ -1,11 +1,13 @@
-package fr.sacane.jmanager.infrastructure.spi.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters.transaction
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Account
-import fr.sacane.jmanager.domain.models.Transaction
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.infrastructure.spi.adapters.asResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.toModel
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
@@ -14,7 +16,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaReposito
 import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-
+import java.time.Month
 
 @Service
 @Adapter(Side.INFRASTRUCTURE)
@@ -23,7 +25,7 @@ class SqlTransactionAdapter(
     private val accountJpaRepository: AccountJpaRepository,
     private val tagRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
-) : TransactionRepositoryPort{
+) : TransactionRepositoryPort {
 
     @Transactional
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
@@ -78,9 +80,27 @@ class SqlTransactionAdapter(
     }
 
     @Transactional
-    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Account? {
+    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet? {
         if(userId.value == null) return null
         return accountJpaRepository.findSheetsByLabelAndAccountOf(label, userId.value!!)
             ?.toModel()
+    }
+
+    override fun findAccountWithTransactionById(id: Long): Booklet? {
+        return accountJpaRepository.findTransactionsById(id)?.toModel()
+    }
+
+    override fun findTransactionsByBookletId(bookletId: Long): List<Transaction>? {
+        return accountJpaRepository.findTransactionsById(bookletId)?.sheets?.map { it.toModel() }
+    }
+
+    override fun findTransactionsByBookletYearAndMonth(
+        bookletId: Long,
+        year: Int,
+        month: Month
+    ): List<Transaction>? {
+        return accountJpaRepository.findTransactionsById(bookletId)?.sheets?.filter {
+            it.date.year == year && it.date.month == month
+        }?.map { it.toModel()}
     }
 }

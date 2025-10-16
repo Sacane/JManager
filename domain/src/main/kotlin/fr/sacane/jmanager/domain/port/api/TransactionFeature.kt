@@ -3,9 +3,13 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.models.roleUser
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
-import fr.sacane.jmanager.domain.port.spi.InfraTransactionProviderPort
+import fr.sacane.jmanager.domain.port.spi.RegularChecker
+import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.utils.*
@@ -28,7 +32,8 @@ class TransactionFeatureImpl(
     private val transactionRepository: TransactionRepositoryPort,
     private val session: SessionManager,
     private val accountRepository: AccountRepositoryPort,
-    private val infraTransactionManager: InfraTransactionProviderPort
+    private val infraTransactionManager: UnitOfWorkTransactionProviderPort,
+    private val regularChecker: RegularChecker,
 ): TransactionFeature{
     companion object {
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
@@ -73,7 +78,6 @@ class TransactionFeatureImpl(
     }
 
     override fun retrieveTransactionsByMonthAndYear(
-
         token: String,
         month: Month,
         year: Int,
@@ -95,10 +99,10 @@ class TransactionFeatureImpl(
 
     override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
-            val account: Account = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
-            account.removeTransactionIf(isSheetOnList)
-            accountRepository.upsert(account)
+            booklet.removeTransactionIf(isSheetOnList)
+            accountRepository.upsert(booklet)
             transactionRepository.deleteAllSheetsById(sheetIds)
             return@executeInTransaction success()
         }

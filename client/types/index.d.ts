@@ -32,6 +32,8 @@ declare global {
     currency?: string
   }
 
+  type OnlyBookletInfo = Pick<BookletDTO, 'id' | 'amount' | 'labelAccount' | 'currency'>
+
   interface SheetAverageDTO {
     transactions: TransactionCreationDTO[]
     sum: number
@@ -62,6 +64,38 @@ declare global {
     labelAccount: string
     amount: number
     currency: string
+  }
+  interface RegularTransactionDTO {
+    id: string
+    label: string
+    startDate: string
+    value: number
+    isIncome: boolean
+    regularity: string
+    tagDTO: TagDTO
+    frequencyProperty: FrequencyPropertyDTO
+  }
+
+  interface FrequencyPropertyDTO {
+    type: 'FOREVER' | 'UNTIL_DATE' | 'TIMES'
+    untilDate?: string
+    times?: number
+  }
+  interface MonthlyTransactionCreationRequest {
+    label: string
+    value: number
+    isIncome: boolean
+    startDate: string
+    tagDTO?: TagDTO | null
+    frequencyProperty: FrequencyPropertyDTO
+    repeatDay: number | null
+    bookletIds: number[]
+  }
+  interface BookletReport {
+    label: string
+    transactions: TransactionResultDTO[]
+    realSold: string
+    previewSold: string
   }
 }
 

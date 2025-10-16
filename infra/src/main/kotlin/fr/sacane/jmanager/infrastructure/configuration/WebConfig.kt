@@ -9,8 +9,6 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-import org.springframework.web.servlet.function.RequestPredicates.path
-import org.springframework.web.servlet.function.RequestPredicates.pathExtension
 import org.springframework.web.servlet.function.RouterFunction
 import org.springframework.web.servlet.function.RouterFunctions.route
 import org.springframework.web.servlet.function.ServerResponse

@@ -7,7 +7,6 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
 import fr.sacane.jmanager.domain.utils.timeout
-import java.util.*
 import java.util.logging.Logger
 
 interface SessionManager{

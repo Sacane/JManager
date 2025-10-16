@@ -1,12 +1,17 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.spi.TagRepository
+import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.ForeverEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.FrequencyPropertyEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.SpecificRepetitionTimesEntity
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.UntilDateEntity
+import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 import java.awt.Color
 import java.time.LocalDateTime
@@ -14,14 +19,13 @@ import java.time.LocalDateTime
 @Component
 class AccountMapper(
     val userRepository: UserPostgresRepository,
-    val tagRepository: TagRepository
 ){
-    fun asResource(account: Account): AccountResource {
-        val userResource = account.owner?.id?.value?.let { userRepository.findById(it) }
+    fun asResource(booklet: Booklet): AccountResource {
+        val userResource = booklet.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         } else {
-            AccountResource(amount = account.amount.applyOnValue { it }, label = account.label, sheets = account.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = account.initialSold.amount, idAccount = account.id, previewAmount = account.previewAmount.amount)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         }
     }
 }
@@ -31,10 +35,8 @@ class AccountMapper(
 internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): TransactionResource {
     val resource = TransactionResource(label=this.label)
     resource.date = this.date
-
-    resource.value = amount.amount
+    resource.value = amount.value
     resource.isIncome = isIncome
-
     resource.idSheet = this.id
     resource.lastModified = this.lastModified
     if(tagResource != null) {
@@ -46,13 +48,15 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
     resource.isPreview = isPreview
     return resource
 }
-internal fun Account.asResource(): AccountResource {
+
+
+internal fun Booklet.asResource(): AccountResource {
     val sheets = if (this.sheets().isEmpty()) {
         mutableListOf()
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return AccountResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.amount, previewAmount = this.previewAmount.amount)
+    return AccountResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.value, previewAmount = this.previewAmount.value)
 }
 
 internal fun User.asResource(password: String): UserResource {
@@ -73,12 +77,12 @@ internal fun TransactionResource.toModel(): Transaction
     isPreview = isPreview
 )
 
-internal fun AccountResource.toModel(): Account
-= Account(
+internal fun AccountResource.toModel(): Booklet
+= Booklet(
     this.amount.toAmount(),
     this.label,
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
-    this.owner?.toModel(),
+    owner = this.owner?.toModel(),
     previewAmount = this.previewAmount.toAmount(),
     initialSold = Amount(this.initialSold),
     id = this.idAccount
@@ -96,10 +100,10 @@ internal fun UserResource.toModelWithSimpleAccounts()
     id = UserId(this.idUser),
     username = this.username,
     email = this.email,
-    accounts = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
+    booklets = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
 )
 
-internal fun AccountResource.toSimpleModel(): Account = Account(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
+internal fun AccountResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
 
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
     UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password)
@@ -125,7 +129,39 @@ internal fun User.asExistingResource(): UserResource
         = UserResource(idUser = this.id.value,
     username = username,
     email = email,
-    accounts = this.accounts.map {it.asResource()}.toMutableList(),
+    accounts = this.booklets.map {it.asResource()}.toMutableList(),
     tags = this.tags.map { it.toPersonalTag() }.toMutableList()
 )
 
+@Component
+class JpaTagMapperAdapter(
+    private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
+    private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
+) {
+    fun mapToResource(tag: Tag): AbstractTagResource? {
+        return tag.id?.let {
+            if(tag.isDefault) {
+                defaultTagPostgresRepository.findByIdNullable(it)
+            } else {
+                tagPersonalPostgresRepository.findByIdNullable(it)
+            }
+        }
+    }
+}
+
+internal fun FrequencyProperty.toResource(): FrequencyPropertyEntity {
+    return when(this) {
+        is FrequencyProperty.Forever -> ForeverEntity()
+        is FrequencyProperty.UntilDate -> UntilDateEntity(this.date)
+        is FrequencyProperty.SpecificRepetitionTimes -> SpecificRepetitionTimesEntity(this.number)
+    }
+}
+
+internal fun FrequencyPropertyEntity.toDomain(): FrequencyProperty {
+    return when(this) {
+        is ForeverEntity -> FrequencyProperty.Forever()
+        is UntilDateEntity -> FrequencyProperty.UntilDate(this.date!!)
+        is SpecificRepetitionTimesEntity -> FrequencyProperty.SpecificRepetitionTimes(this.number!!)
+        else -> throw IllegalArgumentException("Unknown FrequencyPropertyEntity type")
+    }
+}

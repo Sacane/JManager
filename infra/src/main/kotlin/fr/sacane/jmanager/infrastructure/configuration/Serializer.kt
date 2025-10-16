@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.configuration
 
+import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyType
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -28,20 +29,6 @@ object BigDecimalSerializer : KSerializer<BigDecimal> {
     }
 }
 
-object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
-    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalDateTime", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: LocalDateTime) {
-        encoder.encodeString(value.format(formatter))
-    }
-
-    override fun deserialize(decoder: Decoder): LocalDateTime {
-        return LocalDateTime.parse(decoder.decodeString(), formatter)
-    }
-}
-
 object LocalDateSerializer : KSerializer<LocalDate> {
     private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -56,9 +43,19 @@ object LocalDateSerializer : KSerializer<LocalDate> {
     }
 }
 
-val json = Json {
-    serializersModule = SerializersModule {
-        contextual(BigDecimalSerializer)
-        contextual(LocalDateTimeSerializer)
+object FrequencyPropertyTypeSerializer : KSerializer<FrequencyPropertyType> {
+    override val descriptor: SerialDescriptor
+        get() = PrimitiveSerialDescriptor("Frequency property type", PrimitiveKind.STRING)
+
+    override fun serialize(
+        encoder: Encoder,
+        value: FrequencyPropertyType
+    ) {
+        encoder.encodeString(value.name)
     }
+
+    override fun deserialize(decoder: Decoder): FrequencyPropertyType {
+        return FrequencyPropertyType.valueOf(decoder.decodeString())
+    }
+
 }

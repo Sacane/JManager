@@ -36,6 +36,7 @@ class SecurityConfig(
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
             }
             authorizeHttpRequests {
+                authorize("/api/user/create", permitAll)
                 authorize("/api/user/auth", permitAll)
                 authorize("/api/**", authenticated)
                 authorize(anyRequest, permitAll)

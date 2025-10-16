@@ -8,26 +8,30 @@ data class MinimalUserRepresentation(
     val id: UserId = UserId(null),
     val username: String,
     val email: String? = null,
-)
+) {
+
+    fun toUser(): User = User(id = id, username = username, email = email)
+
+}
 
 class User(
     val id: UserId = UserId(null),
     val username: String,
     val email: String?,
-    val accounts: MutableList<Account> = mutableListOf(),
+    val booklets: MutableList<Booklet> = mutableListOf(),
     val tags: MutableSet<Tag> = mutableSetOf()
 ) {
 
     fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
-    fun hasAccount(labelAccount: String): Boolean = accounts.any { labelAccount == it.label }
+    fun hasAccount(labelAccount: String): Boolean = booklets.any { labelAccount == it.label }
     override fun toString(): String = "username: $username"
 
     fun removeAccount(accountID: Long) {
-        accounts.removeIf { it.id == accountID }
+        booklets.removeIf { it.id == accountID }
     }
-    fun addAccount(account: Account) {
-        accounts.add(account)
-        account.owner = this
+    fun addAccount(booklet: Booklet) {
+        booklets.add(booklet)
+        booklet.owner = this
     }
 }
 

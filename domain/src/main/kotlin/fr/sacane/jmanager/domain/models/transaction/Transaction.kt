@@ -1,21 +1,22 @@
-package fr.sacane.jmanager.domain.models
+package fr.sacane.jmanager.domain.models.transaction
 
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class Transaction(
     val id: Long?,
-    var label: String,
+    override var label: String,
     var date: LocalDate,
-    private var _amount: Amount,
-    var isIncome: Boolean,
-    var tag: Tag = Tag("Aucune", isDefault = true),
+    override var amount: Amount,
+    override var isIncome: Boolean,
+    override var tag: Tag = Tag("Aucune", isDefault = true),
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false,
-) {
-    val amount: Amount
-        get() = _amount
-
+    val regularTransactionId: RegularTransactionId? = null
+): BaseTransaction {
     val isNotPreview: Boolean
     get() = !isPreview
 
@@ -23,7 +24,7 @@ data class Transaction(
         if(other.id != this.id) return false
         this.label = other.label
         this.date = other.date
-        this._amount = other._amount
+        this.amount = other.amount
         this.isIncome = other.isIncome
         this.tag = other.tag
         this.isPreview = other.isPreview
@@ -34,7 +35,7 @@ data class Transaction(
         return """
             label: $label
             date: $date
-            value: $_amount
+            value: $amount
             isIncome: $isIncome
             tag: $tag
             lastModified: $lastModified

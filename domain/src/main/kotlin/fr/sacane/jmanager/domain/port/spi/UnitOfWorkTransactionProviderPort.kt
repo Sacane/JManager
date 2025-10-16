@@ -1,9 +1,9 @@
 package fr.sacane.jmanager.domain.port.spi
 
-interface InfraTransactionProviderPort {
+interface UnitOfWorkTransactionProviderPort {
     companion object{
-        val DEFAULT: InfraTransactionProviderPort
-            get() = object : InfraTransactionProviderPort {
+        val DEFAULT: UnitOfWorkTransactionProviderPort
+            get() = object : UnitOfWorkTransactionProviderPort {
                 override fun <T, R> executeInTransaction(input: T, executable: (T) -> R): R {
                     return executable(input)
                 }

@@ -7,15 +7,15 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
+const { findByIdMonthAndYear } = useBooklet()
 const route = useRoute()
 const toastr = useJToast()
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 
-const { translate, monthFromNumber, englishMonth } = useDate()
+const { englishMonth, translate, monthFromNumber, numberFromMonth } = useDate()
 const tag = useTag()
 
-const { findById } = useBooklet()
-const { findByDate, deleteTransaction, confirmPreviewTransaction } = useTransaction()
+const { deleteTransaction, confirmPreviewTransaction } = useTransaction()
 const date = new Date()
 const tags = ref<TagDTO[]>([])
 
@@ -59,37 +59,57 @@ function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
     tagDTO: transaction.tagDTO,
   }
 }
-function retrieveSheets() {
-  findByDate(englishMonth(formData.month), formData.year, formData.labelAccount)
-    .then((value: SheetAverageDTO) => {
-      actualSheets.value = value.transactions.map((sheet: TransactionCreationDTO) => {
+
+function onMonthChange(event: any) {
+  formData.month = englishMonth(event.value)
+  loadBookletData()
+}
+
+function loadBookletData() {
+  const accountId = Number.parseInt(route.params?.id as string)
+  const month = numberFromMonth(formData.month) as number
+  console.warn(month)
+  findByIdMonthAndYear(accountId, month, formData.year)
+    .then((result: BookletReport) => {
+      formData.labelAccount = result.label
+      formData.currentAccountId = route.params?.id as string
+      formData.accountAmount = Number.parseInt(result.realSold)
+      formData.previewAccountAmount = Number.parseInt(result.previewSold)
+      formData.month = translate(formData.month)
+
+      actualSheets.value = result.transactions.map((sheet: TransactionCreationDTO) => {
         return asDisplayableTransaction(sheet)
       })
     })
+    .catch(err => toastr.errorAxios(err))
 }
+
 function retrieveTags() {
   tag.getAllTags().then(tagDTOs => tags.value = tagDTOs)
 }
 
-function initAccount() {
-  findById(Number.parseFloat(route.params?.id as string))
-    .then((account: BookletDTO) => {
-      formData.labelAccount = account.labelAccount as string
-      formData.currentAccountId = route.params?.id as string
-      formData.accountAmount = account.amount
-      formData.previewAccountAmount = account.previewAmount
-      retrieveSheets()
-    })
-}
-
 async function confirmDelete() {
-  deleteTransaction(Number.parseInt(formData.currentAccountId), selectedSheets.value.map(sheet => sheet.id))
-    .then(() => initAccount())
-    .finally(() => {
-      findById(Number.parseInt(formData.currentAccountId)).then((account) => {
-        formData.accountAmount = account.amount
-        formData.previewAccountAmount = account.previewAmount
+  deleteTransaction(Number.parseInt(formData.currentAccountId), selectedSheets.value.map(sheet => Number.parseInt(sheet.id as string)))
+    .then(() => {
+      selectedSheets.value.forEach((sheet) => {
+        const index = actualSheets.value.findIndex(item => (((item?.id) ? (+item?.id) : 0) === +sheet!.id))
+        if (index !== -1) {
+          actualSheets.value.splice(index, 1)
+          const value = Number.parseFloat(sheet?.value) ?? 0.00
+          console.log('sheet value', value)
+          if (sheet.isPreview) {
+            console.log('form data.previewAccountAmount', formData.previewAccountAmount)
+            formData.previewAccountAmount = sheet.isIncome ? Number.parseFloat(formData.previewAccountAmount) - value : formData.previewAccountAmount + value
+            console.log('form data.previewAccountAmount after', formData.previewAccountAmount)
+          } else {
+            console.log('form data.accountAmount', formData.accountAmount)
+            formData.accountAmount = sheet.isIncome ? Number.parseFloat(formData.accountAmount) - value : formData.accountAmount + value
+            console.log('form data.accountAmount after', formData.accountAmount)
+          }
+        }
       })
+    })
+    .finally(() => {
       selectedSheets.value = []
     })
 }
@@ -110,8 +130,9 @@ function confirmDeleteButton() {
 
 function onYearChange() {
   formData.year = formData.dateYear.getFullYear()
-  retrieveSheets()
+  loadBookletData()
 }
+
 function back() {
   navigateTo('/account')
 }
@@ -132,6 +153,7 @@ const transactionPlaceholder: TransactionCreationDTO = reactive({
   tagDTO: {},
   isPreview: false,
 })
+
 function onEditPage(event: any) {
   findTransactionById(Number.parseInt(event.data.id)).then((transaction) => {
     digits.digit = transaction.value
@@ -145,6 +167,7 @@ function onEditPage(event: any) {
     isEditDialogVisible.value = true
   }).catch(err => toastr.errorAxios(err))
 }
+
 function resetPlaceholder() {
   digits.digit = 0.00
   tag.getDefaultTag().then((tagDTO) => {
@@ -157,22 +180,27 @@ function resetPlaceholder() {
   transactionPlaceholder.isIncome = false
   transactionPlaceholder.id = null
 }
+
 function cancelEditDialog() {
   isEditDialogVisible.value = false
   resetPlaceholder()
 }
+
 function cancelCreationDialog() {
   isCreationDialogVisible.value = false
   resetPlaceholder()
 }
+
 function openCreationDialog() {
   transactionPlaceholder.isPreview = false
   isCreationDialogVisible.value = true
 }
+
 function openPreviewCreationDialog() {
   transactionPlaceholder.isPreview = true
   isCreationDialogVisible.value = true
 }
+
 function bookTransaction(transaction: TransactionCreationDTO) {
   saveTransaction(formData.labelAccount, transaction)
     .then((result) => {
@@ -186,6 +214,7 @@ function bookTransaction(transaction: TransactionCreationDTO) {
       toastr.success('La transaction a bien été enregistrée')
     })
 }
+
 function applyEditTransaction(transaction: TransactionCreationDTO) {
   editTransaction(transaction, Number.parseInt(formData.currentAccountId))
     .then((result: TransactionResultDTO) => {
@@ -198,19 +227,20 @@ function applyEditTransaction(transaction: TransactionCreationDTO) {
       formData.accountAmount = result.accountAmount
       formData.previewAccountAmount = result.accountPreviewAmount
       isEditDialogVisible.value = false
-    }).catch(err => toastr.errorAxios(err))
+    })
+    .catch(err => toastr.errorAxios(err))
 }
 
 onMounted(() => {
   formData.month = monthFromNumber(new Date().getMonth() + 1) as string
-  initAccount()
+  loadBookletData()
   retrieveTags()
   tag.getDefaultTag().then((tagDTO: TagDTO) => {
     formData.tagDTO = tagDTO
     transactionPlaceholder.tagDTO = tagDTO
-    formData.month = translate(monthFromNumber(new Date().getMonth() + 1) as string)
   })
 })
+
 function rowStyle(row: TransactionCreationDTO): any | undefined {
   const style: {
     backgroundColor?: string
@@ -268,7 +298,7 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
             <div class="flex flex-col h-auto gap-2px lg:(flex-row justify-between align-center)">
               <Button class="btn-primary self-center h-20% lg:(h-50% min-w-30px)" icon="pi pi-arrow-left" @click="back()" />
               <div class="lg:w26% flex flex-row items-center">
-                <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="retrieveSheets()" />
+                <Dropdown v-model="formData.month" :options="uDate.months.map(u => translate(u))" placeholder="Selectionner un mois" class="md:w-14rem" @change="onMonthChange($event)" />
                 <Calendar id="yearPicker" v-model="formData.dateYear" class="md:w-14rem" view="year" date-format="yy" @date-select="onYearChange" />
               </div>
               <div class="flex flex-col justify-between lg:(flex-row gap-3)">

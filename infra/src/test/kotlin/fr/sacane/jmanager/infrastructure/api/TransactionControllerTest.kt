@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
@@ -31,6 +32,12 @@ import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.Month
 
+class LocalDateSerializer : JsonSerializer<LocalDate>() {
+    override fun serialize(value: LocalDate, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeString(value.toString())
+    }
+}
+
 class BigDecimalSerializer : JsonSerializer<BigDecimal>() {
     override fun serialize(value: BigDecimal, gen: JsonGenerator, serializers: SerializerProvider) {
         gen.writeString(value.setScale(2, RoundingMode.HALF_UP).toString())
@@ -40,6 +47,7 @@ class BigDecimalSerializer : JsonSerializer<BigDecimal>() {
 fun configureObjectMapper(objectMapper: ObjectMapper): ObjectMapper {
     val module = SimpleModule()
     module.addSerializer(BigDecimal::class.java, BigDecimalSerializer())
+    module.addSerializer(LocalDate::class.java, LocalDateSerializer())
     objectMapper.registerModule(module)
     return objectMapper
 }
@@ -73,7 +81,7 @@ class TransactionControllerTest(
         @Test
         fun `Create a transaction must send 200`() {
             accountStateTestAdapter.init(
-                listOf(Account(200.toAmount(), "test", owner = user))
+                listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
 
@@ -132,7 +140,7 @@ class TransactionControllerTest(
         @Test
         fun `Find a transaction with its id must send 200 and the asked transaction`() {
             // When
-            val element = Account(200.00.toAmount(), "test", owner = user)
+            val element = Booklet(200.00.toAmount(), "test", owner = user)
             accountStateTestAdapter.init(
                 listOf(element)
             )
@@ -193,7 +201,7 @@ class TransactionControllerTest(
         @Test
         fun `Request for transactions for a certain month and year must return 200 with all the requested ones and only those`() {
             accountStateTestAdapter.init(
-                listOf(Account(200.toAmount(), "test", owner = user))
+                listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
                 Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
@@ -213,6 +221,7 @@ class TransactionControllerTest(
                     )
                 )
             )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
             Given {
                 port(port)
                 cookie("token", token)
@@ -221,7 +230,7 @@ class TransactionControllerTest(
                 param("userId", user!!.id.value)
                 param("month", Month.JUNE)
                 param("year", 2024)
-                param("accountLabel", "test")
+                param("bookletId", booklet.id)
             } When {
                 get("/api/transaction")
             } Then {
@@ -243,7 +252,7 @@ class TransactionControllerTest(
         @Test
         fun `delete an existing transaction should return 200`() {
             accountStateTestAdapter.init(
-                listOf(Account(200.toAmount(), "test", owner = user))
+                listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
                 Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
@@ -305,7 +314,7 @@ class TransactionControllerTest(
         @Test
         fun `Update an existing transaction should return 200 and the updated one`() {
             accountStateTestAdapter.init(
-                listOf(Account(200.toAmount(), "test", owner = user))
+                listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
                 Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
@@ -351,7 +360,7 @@ class TransactionControllerTest(
         @Test
         fun `Request to confirm a preview transaction`() {
             accountStateTestAdapter.init(
-                listOf(Account(200.toAmount(), "test", owner = user))
+                listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
                 Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false, isPreview = true),
