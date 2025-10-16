@@ -65,6 +65,13 @@ onMounted(() => {
 
 <template>
   <div class="landing-container">
+    <!-- Navigation Button -->
+    <div class="dashboard-nav">
+      <button class="dashboard-button" @click="navigateTo('/dashboard')">
+        <i class="pi pi-home" />
+        <span>Retour au Dashboard</span>
+      </button>
+    </div>
     <!-- Hero Section -->
     <section ref="heroRef" class="hero-section" :class="{ visible: isHeroVisible }">
       <div class="hero-content">
@@ -84,6 +91,10 @@ onMounted(() => {
             <button class="cta-primary" @click="isAccountDialogOpen = true">
               <i class="pi pi-plus-circle" />
               <span>Créer mon premier livret</span>
+            </button>
+            <button v-if="accounts.length > 0" class="cta-secondary" @click="navigateTo('/dashboard')">
+              <i class="pi pi-arrow-right" />
+              <span>Accéder à mon espace</span>
             </button>
             <div class="quick-stats">
               <div class="stat-item">
@@ -285,6 +296,44 @@ onMounted(() => {
   overflow-x: hidden;
 }
 
+/* ===== DASHBOARD NAV ===== */
+.dashboard-nav {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  animation: fadeSlideDown 0.6s ease-out;
+}
+
+.dashboard-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  color: #822acc;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 2px solid rgba(130, 42, 204, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-button:hover {
+  background: #822acc;
+  color: white;
+  border-color: #822acc;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(130, 42, 204, 0.3);
+}
+
+.dashboard-button i {
+  font-size: 18px;
+}
+
 /* ===== HERO SECTION ===== */
 .hero-section {
   position: relative;
@@ -403,6 +452,29 @@ onMounted(() => {
 .cta-primary:hover {
   transform: translateY(-3px);
   box-shadow: 0 15px 40px rgba(224, 216, 36, 0.4);
+}
+
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 18px 36px;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: fit-content;
+}
+
+.cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-3px);
 }
 
 .quick-stats {
@@ -918,6 +990,19 @@ onMounted(() => {
 
   .hero-title {
     font-size: 2rem;
+  }
+
+  .dashboard-button {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+  .dashboard-button span {
+    display: none;
+  }
+
+  .dashboard-button i {
+    margin: 0;
   }
 
   .hero-description {

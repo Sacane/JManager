@@ -19,8 +19,8 @@ declare global {
     color: ColorDTO
     tagDTO: TagDTO
     isPreview: boolean
-    accountAmount: number
-    accountPreviewAmount: number
+    accountAmount: string
+    accountPreviewAmount: string
   }
 
   interface BookletDTO {
