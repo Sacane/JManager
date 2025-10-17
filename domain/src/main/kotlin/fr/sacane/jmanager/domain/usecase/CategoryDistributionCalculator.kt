@@ -16,20 +16,17 @@ interface CategoryDistributionCalculator {
      *
      * @param transactions the list of transactions to analyze
      * @return a pair where the first element is a list of `CategoryData` containing distribution data
-     *         for each category, and the second element is the total amount of all transactions
+     *         for each category, and the second element is the total amount for all transactions
      */
     fun calculateDistribution(transactions: List<Transaction>): Pair<List<CategoryData>, Amount>
 }
 
 @UseCase
 class CategoryDistributionCalculatorImpl : CategoryDistributionCalculator {
-    companion object {
-        private const val UNCATEGORIZED_LABEL = "Uncategorized"
-    }
 
     override fun calculateDistribution(transactions: List<Transaction>): Pair<List<CategoryData>, Amount> {
         val expenseTransactions = transactions.filter {
-            it.amount.value < BigDecimal.ZERO && !it.isPreview
+            !it.isIncome && !it.isPreview
         }
 
         val totalExpenses = expenseTransactions
@@ -40,7 +37,7 @@ class CategoryDistributionCalculatorImpl : CategoryDistributionCalculator {
         }
 
         val groupedByTag = expenseTransactions.groupBy { transaction ->
-            transaction.tag.label to transaction.tag.id
+            transaction.tag.label to transaction.tag.id!!
         }
 
         val categoryData = groupedByTag.map { (tagInfo, transactions) ->

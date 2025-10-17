@@ -129,9 +129,19 @@ class StatsFeatureImpl(
                 "L'utilisateur est introuvable"
             )
 
-        val allTransactions = user.booklets.flatMap { booklet ->
+        val booklets = user.booklets.map {
+            bookletRepository.findAccountByIdWithTransactions(it.id!!)
+                ?: return@authenticate failure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Le compte ${it.id} est introuvable"
+                )
+        }
+
+        val allTransactions = booklets.flatMap { booklet ->
             booklet.transactions
         }
+
+        LOGGER.info("All transactions fetched: ${allTransactions.size} transactions found")
 
         val (categories, totalExpenses) = categoryDistributionCalculator.calculateDistribution(
             transactions = allTransactions
