@@ -164,7 +164,7 @@ const balanceGrowth = computed(() => {
 })
 
 const savingsRate = computed(() => {
-  if (monthlyIncome.value === 0) {
+  if (monthlyIncome.value === 0 || monthlyExpenses.value > monthlyIncome.value) {
     return 0
   }
 
@@ -416,6 +416,8 @@ async function loadDashboardData() {
       getTrendStats().catch(() => null),
       getPrevisionalTransactions(startDate, endDate).catch(() => null),
     ])
+
+    console.warn(trendsData)
 
     categoryDistribution.value = categoryData
     trendStats.value = trendsData

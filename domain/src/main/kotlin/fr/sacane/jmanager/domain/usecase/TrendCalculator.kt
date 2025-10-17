@@ -40,11 +40,11 @@ class TrendCalculatorImpl : TrendCalculator {
             }
 
             val income = monthTransactions
-                .filter { it.amount.value > BigDecimal.ZERO }
+                .filter { it.isIncome }
                 .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value) }
 
             val expenses = monthTransactions
-                .filter { it.amount.value < BigDecimal.ZERO }
+                .filter { !it.isIncome }
                 .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
 
             val balance = income.subtract(expenses)

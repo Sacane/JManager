@@ -18,6 +18,7 @@ import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.logging.Logger
 
@@ -168,11 +169,27 @@ class StatsFeatureImpl(
                 "L'utilisateur est introuvable"
             )
 
+        val booklets = user.booklets.map { booklet ->
+            bookletRepository.findAccountByIdWithTransactions(booklet.id!!)
+                ?: return@authenticate failure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Le compte ${booklet.id} est introuvable"
+                )
+        }
+
         val monthlyTrends = trendCalculator.calculateTrend(
-            booklets = user.booklets
+            booklets = booklets
         )
 
         LOGGER.info("Trend stats calculated: ${monthlyTrends.size} months processed")
+
+        for (trend in monthlyTrends) {
+            if (trend.income.value > BigDecimal.ZERO || trend.expenses.value > BigDecimal.ZERO) {
+                LOGGER.info(
+                    "Month: ${trend.year}-${trend.month} | Income: ${trend.income} | Expenses: ${trend.expenses}"
+                )
+            }
+        }
 
         success(
             TrendStatsOutput(
