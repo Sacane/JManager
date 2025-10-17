@@ -5,15 +5,54 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
+import org.springframework.web.ErrorResponse
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 @ControllerAdvice(annotations = [RestController::class])
 class ProblemDetailHandler {
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(ProblemDetailHandler::class.java)
+    }
+
+
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    fun handleMissingParams(ex: MissingServletRequestParameterException): ResponseEntity<ProblemDetail> {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Bad Request"
+        problemDetail.detail = "Missing mandatory parameter : ${ex.message}"
+        problemDetail.setProperty("code", 65)
+        LOGGER.error("Bad Request : {}", ex.cause?.message ?: ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ResponseEntity<ProblemDetail> {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Bad Request"
+        problemDetail.detail = "Invalid type parameter : ${ex.message}"
+        problemDetail.setProperty("code", 65)
+        LOGGER.error("Bad Request : {}", ex.cause?.message ?: ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail> {
+        val errors = ex.bindingResult.fieldErrors.associate {
+            it.field to (it.defaultMessage ?: "Valeur invalide")
+        }
+
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Bad Request"
+        problemDetail.detail = "invalid value : ${ex.message}"
+        problemDetail.setProperty("code", 65)
+        LOGGER.error("Bad Request : {}", ex.cause?.message ?: ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
     }
 
     @ExceptionHandler(Exception::class, InternalServerErrorException::class)

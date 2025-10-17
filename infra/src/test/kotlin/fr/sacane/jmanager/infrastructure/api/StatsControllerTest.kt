@@ -31,7 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.time.LocalDate
-import kotlin.random.Random
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -74,29 +73,22 @@ class StatsControllerTest(
             val year = LocalDate.now().year
 
             transactionStateTestAdapter.init(
-                listOf(
-                    AccountTransaction(
-                        user!!.id,
-                        accountName = booklet.label,
+                createTransaction(
                         listOf(
-                        Transaction(
-                            id = 0,
+                            TransactionTestInput(
                             label = "Salaire",
                             amount = 2000.toAmount(),
                             isIncome = true,
                             date = LocalDate.of(year, 1, 15),
-                            tag = defaultTag
                         ),
-                        Transaction(
-                            id = 1,
+                            TransactionTestInput(
                             label = "Courses",
                             isIncome = false,
                             amount = 150.toAmount(),
                             date = LocalDate.of(year, 1, 20),
-                            tag = defaultTag
                         )
-                    ), token.asTokenUUID())
-                ),
+                    )
+                )
             )
 
             Given {
@@ -154,29 +146,22 @@ class StatsControllerTest(
         fun `Get category distribution must send 200 and return distribution`() {
 
             transactionStateTestAdapter.init(
-                listOf(
-                    AccountTransaction(
-                        user!!.id,
-                        accountName = booklet.label,
-                        listOf(
-                            Transaction(
-                                id = 0,
-                                label = "Courses",
-                                amount = (150).toAmount(),
-                                isIncome = false,
-                                date = LocalDate.now(),
-                                tag = defaultTag
-                            ),
-                            Transaction(
-                                id = 1,
-                                label = "Restaurant",
-                                amount = 50.toAmount(),
-                                isIncome = false,
-                                date = LocalDate.now(),
-                                tag = defaultTag
-                            )
-                        ), token.asTokenUUID())
-                ),
+                createTransaction(
+                    listOf(
+                        TransactionTestInput(
+                            label = "Courses",
+                            amount = (150).toAmount(),
+                            isIncome = false,
+                            date = LocalDate.now(),
+                        ),
+                        TransactionTestInput(
+                            label = "Restaurant",
+                            amount = 50.toAmount(),
+                            isIncome = false,
+                            date = LocalDate.now()
+                        )
+                    )
+                )
             )
 
             Given {
@@ -382,9 +367,9 @@ class StatsControllerTest(
         inputs: List<TransactionTestInput> = listOf()
     ): List<AccountTransaction> {
         return listOf(AccountTransaction(
-            transactions = inputs.map {
+            transactions = inputs.mapIndexed { index, it ->
                 Transaction(
-                    id = Random.nextLong(),
+                    id = null,
                     label = it.label,
                     amount = it.amount,
                     isIncome = it.isIncome,
