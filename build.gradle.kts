@@ -25,7 +25,7 @@ allprojects{
 
 sonar {
 	properties {
-		property("sonar.projectKey", "Jmanager")
+		property("sonar.projectKey", "Sacane_JManager_bd0b693a-0a00-4752-98e2-4c1466482beb")
 		property("sonar.projectName", "Jmanager")
 		property("sonar.coverage.jacoco.xmlReportPaths",
 			listOf(
