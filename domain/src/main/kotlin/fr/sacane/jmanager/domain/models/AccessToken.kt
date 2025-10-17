@@ -24,9 +24,6 @@ data class AccessToken(
     fun isExpired(): Boolean{
         return tokenExpirationDate.isBefore(now())
     }
-    fun isRefreshTokenExpired(): Boolean {
-        return refreshTokenLifetime.isBefore(now())
-    }
 
     fun updateLifetime() {
         tokenExpirationDate = now().plusMinutes(Env.TOKEN_LIFETIME_IN_MINUTES)

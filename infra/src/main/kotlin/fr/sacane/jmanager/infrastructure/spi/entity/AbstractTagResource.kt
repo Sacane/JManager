@@ -12,15 +12,7 @@ sealed class AbstractTagResource(
     var color: Color = Color(0, 0, 0),
     @OneToMany(cascade = [(CascadeType.ALL)])
     var linkedTransaction: MutableSet<TransactionResource> = mutableSetOf(),
-){
-    fun addTransaction(transaction: TransactionResource) {
-        linkedTransaction.add(transaction)
-        when(this) {
-            is DefaultTagResource -> transaction.linkDefaultTag(this)
-            is TagPersonalResource -> transaction.linkPersonalTag(this)
-        }
-    }
-}
+)
 
 @Entity
 class DefaultTagResource(
