@@ -54,17 +54,17 @@ const formData = ref<RegularTransactionDTO>({
 const originalData = ref<string>('')
 
 const frequencyOptions = [
-  { label: 'Quotidien', value: 'DAILY' },
-  { label: 'Hebdomadaire', value: 'WEEKLY' },
-  { label: 'Mensuel', value: 'MONTHLY' },
-  { label: 'Trimestriel', value: 'QUARTERLY' },
-  { label: 'Annuel', value: 'YEARLY' },
+  /* { label: 'Quotidien', value: 'DAILY', icon: 'pi pi-calendar' },
+  { label: 'Hebdomadaire', value: 'WEEKLY', icon: 'pi pi-calendar' }, */
+  { label: 'Mensuel', value: 'MONTHLY', icon: 'pi pi-calendar' },
+  /* { label: 'Trimestriel', value: 'QUARTERLY', icon: 'pi pi-calendar' },
+  { label: 'Annuel', value: 'YEARLY', icon: 'pi pi-calendar' }, */
 ]
 
 const frequencyTypeOptions = [
-  { label: 'Pour toujours', value: 'FOREVER' },
-  { label: 'Jusqu\'à une date', value: 'UNTIL_DATE' },
-  { label: 'Nombre de fois', value: 'TIMES' },
+  { label: 'Pour toujours', value: 'FOREVER', icon: 'pi pi-infinity' },
+  { label: 'Jusqu\'à une date', value: 'UNTIL_DATE', icon: 'pi pi-calendar-times' },
+  { label: 'Nombre de fois', value: 'TIMES', icon: 'pi pi-hashtag' },
 ]
 
 const startDateValue = computed({
@@ -143,148 +143,232 @@ function handleEdit() {
   <Dialog
     v-model:visible="visible"
     modal
-    header="Modifier la transaction régulière"
+    :header="formData.isIncome ? '💰 Transaction régulière - Recette' : '💸 Transaction régulière - Dépense'"
     :style="{ width: '50rem' }"
     :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
+    :draggable="false"
   >
     <div v-if="loading" class="flex justify-center items-center py-8">
       <ProgressSpinner />
     </div>
 
     <template v-else-if="transaction">
-      <div class="flex flex-col gap-4 py-4">
-        <div class="flex flex-col gap-2">
-          <label for="label" class="font-semibold">Libellé</label>
-          <InputText
-            id="label"
-            v-model="formData.label"
-            placeholder="Libellé de la transaction"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="value" class="font-semibold">Montant</label>
-          <InputNumber
-            id="value"
-            v-model="formData.value"
-            mode="currency"
-            currency="EUR"
-            locale="fr-FR"
-          />
-        </div>
-
-        <div class="flex items-center gap-2">
-          <Checkbox
-            id="isIncome"
-            v-model="formData.isIncome"
-            :binary="true"
-          />
-          <label for="isIncome" class="font-semibold">Revenu</label>
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="regularity" class="font-semibold">Fréquence</label>
-          <Dropdown
-            id="regularity"
-            v-model="formData.regularity"
-            :options="frequencyOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Sélectionner une fréquence"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="startDate" class="font-semibold">Date de début</label>
-          <Calendar
-            id="startDate"
-            v-model="startDateValue"
-            date-format="dd/mm/yy"
-            placeholder="Date de début"
-          />
-        </div>
-
-        <!-- Section FrequencyProperty -->
-        <div class="flex flex-col gap-4 p-4 border rounded-lg bg-gray-50">
-          <h3 class="font-semibold text-lg">
-            Propriétés de la fréquence
-          </h3>
-
-          <div class="flex flex-col gap-2">
-            <label for="frequencyType" class="font-semibold">Type de fréquence</label>
-            <Dropdown
-              id="frequencyType"
-              v-model="formData.frequencyProperty.type"
-              :options="frequencyTypeOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Sélectionner un type"
-            />
+      <div class="flex flex-col gap-5 py-4">
+        <!-- Section Informations générales -->
+        <div class="section-card">
+          <div class="section-header">
+            <i class="pi pi-info-circle" />
+            <h3>Informations générales</h3>
           </div>
-
-          <template v-if="formData.frequencyProperty.type === 'UNTIL_DATE'">
-            <div class="flex flex-col gap-2">
-              <label for="untilDate" class="font-semibold">Jusqu'au</label>
-              <Calendar
-                id="untilDate"
-                v-model="untilDateValue"
-                date-format="dd/mm/yy"
-                placeholder="Date de fin"
+          <div class="section-content">
+            <div class="form-field">
+              <label for="label" class="field-label">
+                <i class="pi pi-tag" />
+                Libellé
+              </label>
+              <InputText
+                id="label"
+                v-model="formData.label"
+                placeholder="Ex: Salaire, Loyer, Abonnement..."
+                class="w-full"
               />
             </div>
-          </template>
 
-          <template v-if="formData.frequencyProperty.type === 'TIMES'">
-            <div class="flex flex-col gap-2">
-              <label for="times" class="font-semibold">Nombre d'occurrences</label>
-              <InputNumber
-                id="times"
-                v-model="formData.frequencyProperty.times"
-                :min="1"
-                placeholder="Nombre de fois"
-                show-buttons
-              />
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-field">
+                <label for="value" class="field-label">
+                  <i class="pi pi-euro" />
+                  Montant
+                </label>
+                <InputNumber
+                  id="value"
+                  v-model="formData.value"
+                  mode="currency"
+                  currency="EUR"
+                  locale="fr-FR"
+                  class="w-full"
+                />
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">
+                  <i class="pi pi-arrow-right-arrow-left" />
+                  Type de transaction
+                </label>
+                <div class="flex items-center gap-4 h-[42px]">
+                  <div class="flex items-center gap-2">
+                    <RadioButton
+                      id="expense"
+                      v-model="formData.isIncome"
+                      name="transactionType"
+                      :value="false"
+                    />
+                    <label for="expense" class="cursor-pointer">
+                      <Tag value="Dépense" severity="danger" icon="pi pi-arrow-down" />
+                    </label>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <RadioButton
+                      id="income"
+                      v-model="formData.isIncome"
+                      name="transactionType"
+                      :value="true"
+                    />
+                    <label for="income" class="cursor-pointer">
+                      <Tag value="Recette" severity="success" icon="pi pi-arrow-up" />
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
-          </template>
+          </div>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <label for="tag" class="font-semibold">Tag</label>
-          <Dropdown
-            id="tag"
-            v-model="formData.tagDTO"
-            :options="tags"
-            option-label="label"
-            placeholder="Sélectionner un tag"
-          >
-            <template #value="slotProps">
-              <Tag
-                v-if="slotProps.value"
-                :value="slotProps.value.label"
-                :style="getTagStyle(slotProps.value.colorDTO)"
+        <!-- Section Fréquence -->
+        <div class="section-card">
+          <div class="section-header">
+            <i class="pi pi-clock" />
+            <h3>Fréquence et dates</h3>
+          </div>
+          <div class="section-content">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-field">
+                <label for="regularity" class="field-label">
+                  <i class="pi pi-sync" />
+                  Fréquence
+                </label>
+                <Dropdown
+                  id="regularity"
+                  v-model="formData.regularity"
+                  :options="frequencyOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Sélectionner une fréquence"
+                  class="w-full"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="startDate" class="field-label">
+                  <i class="pi pi-calendar-plus" />
+                  Date de début
+                </label>
+                <Calendar
+                  id="startDate"
+                  v-model="startDateValue"
+                  date-format="dd/mm/yy"
+                  placeholder="Sélectionner une date"
+                  class="w-full"
+                  show-icon
+                />
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="frequencyType" class="field-label">
+                <i class="pi pi-replay" />
+                Durée de récurrence
+              </label>
+              <Dropdown
+                id="frequencyType"
+                v-model="formData.frequencyProperty.type"
+                :options="frequencyTypeOptions"
+                option-label="label"
+                option-value="value"
+                placeholder="Sélectionner un type"
+                class="w-full"
               />
-            </template>
-            <template #option="slotProps">
-              <Tag
-                :value="slotProps.option.label"
-                :style="getTagStyle(slotProps.option.colorDTO)"
-              />
-            </template>
-          </Dropdown>
+            </div>
+
+            <Transition name="fade">
+              <div v-if="formData.frequencyProperty.type === 'UNTIL_DATE'" class="form-field">
+                <label for="untilDate" class="field-label">
+                  <i class="pi pi-calendar-times" />
+                  Date de fin
+                </label>
+                <Calendar
+                  id="untilDate"
+                  v-model="untilDateValue"
+                  date-format="dd/mm/yy"
+                  placeholder="Sélectionner une date de fin"
+                  class="w-full"
+                  show-icon
+                />
+              </div>
+            </Transition>
+
+            <Transition name="fade">
+              <div v-if="formData.frequencyProperty.type === 'TIMES'" class="form-field">
+                <label for="times" class="field-label">
+                  <i class="pi pi-hashtag" />
+                  Nombre d'occurrences
+                </label>
+                <InputNumber
+                  id="times"
+                  v-model="formData.frequencyProperty.times"
+                  :min="1"
+                  placeholder="Nombre de fois"
+                  show-buttons
+                  class="w-full"
+                />
+              </div>
+            </Transition>
+          </div>
+        </div>
+
+        <!-- Section Tag -->
+        <div class="section-card">
+          <div class="section-header">
+            <i class="pi pi-bookmark" />
+            <h3>Catégorie</h3>
+          </div>
+          <div class="section-content">
+            <div class="form-field">
+              <label for="tag" class="field-label">
+                <i class="pi pi-tags" />
+                Tag associé
+              </label>
+              <Dropdown
+                id="tag"
+                v-model="formData.tagDTO"
+                :options="tags"
+                option-label="label"
+                placeholder="Sélectionner un tag"
+                class="w-full"
+              >
+                <template #value="slotProps">
+                  <Tag
+                    v-if="slotProps.value"
+                    :value="slotProps.value.label"
+                    :style="getTagStyle(slotProps.value.colorDTO)"
+                  />
+                </template>
+                <template #option="slotProps">
+                  <Tag
+                    :value="slotProps.option.label"
+                    :style="getTagStyle(slotProps.option.colorDTO)"
+                  />
+                </template>
+              </Dropdown>
+            </div>
+          </div>
         </div>
       </div>
     </template>
 
     <template #footer>
-      <div class="flex justify-end gap-2">
+      <div class="flex justify-end gap-3">
         <Button
           label="Annuler"
+          icon="pi pi-times"
           severity="secondary"
           :disabled="loading"
+          outlined
           @click="handleCancel"
         />
         <Button
-          label="Modifier"
+          label="Enregistrer"
+          icon="pi pi-check"
           :disabled="!hasChanges || loading"
           @click="handleEdit"
         />
@@ -299,7 +383,111 @@ function handleEdit() {
   overflow-y: auto;
 }
 
-.bg-gray-50 {
-  background-color: rgba(0, 0, 0, 0.02);
+.section-card {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface-50);
+  border-bottom: 1px solid var(--surface-border);
+
+  i {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+}
+
+.section-content {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-color-secondary);
+
+  i {
+    font-size: 0.875rem;
+    color: var(--primary-color);
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+:deep(.p-inputtext),
+:deep(.p-dropdown),
+:deep(.p-calendar),
+:deep(.p-inputnumber) {
+  &:focus,
+  &:focus-within {
+    box-shadow: 0 0 0 0.2rem var(--primary-color-alpha);
+  }
+}
+
+:deep(.p-radiobutton) {
+  .p-radiobutton-box {
+    border-width: 2px;
+  }
+}
+
+.grid {
+  display: grid;
+
+  &.grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.gap-4 {
+  gap: 1rem;
 }
 </style>

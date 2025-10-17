@@ -44,7 +44,6 @@ const { getRegularTransaction } = useRegularTransaction()
 const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
 const toast = useJToast()
-const dateUse = useDate()
 
 // Refs
 const isAccountDialogOpen = ref(false)
