@@ -22,9 +22,9 @@ import org.springframework.test.context.TestPropertySource
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class BookletControllerTest(
-    @LocalServerPort val port: Int,
-    @Autowired val accountStateAdapter: AccountStateTestAdapter,
-    @Autowired val objectMapper: ObjectMapper
+    @param:LocalServerPort val port: Int,
+    @param:Autowired val accountStateAdapter: AccountStateTestAdapter,
+    @param:Autowired val objectMapper: ObjectMapper
 ): AuthenticatedUserTest() {
 
     @AfterEach
