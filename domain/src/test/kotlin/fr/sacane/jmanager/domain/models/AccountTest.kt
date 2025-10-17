@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
-import fr.sacane.jmanager.domain.port.spi.mock.Directory
+import fr.sacane.jmanager.domain.mock.Directory
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Month

@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi.mock
+package fr.sacane.jmanager.domain.mock
 
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.toAmount
