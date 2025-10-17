@@ -12,9 +12,9 @@ data class Transaction(
     var date: LocalDate,
     override var amount: Amount,
     override var isIncome: Boolean,
-    override var tag: Tag = Tag("Aucune", isDefault = true),
     var lastModified: LocalDateTime = LocalDateTime.now(),
     var isPreview: Boolean = false,
+    override var tag: Tag? = null,
     val regularTransactionId: RegularTransactionId? = null
 ): BaseTransaction {
     val isNotPreview: Boolean

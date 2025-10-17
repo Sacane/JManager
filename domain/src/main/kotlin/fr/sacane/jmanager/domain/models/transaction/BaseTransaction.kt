@@ -7,5 +7,5 @@ interface BaseTransaction {
     var label: String
     var amount: Amount
     var isIncome: Boolean
-    var tag: Tag
+    var tag: Tag?
 }

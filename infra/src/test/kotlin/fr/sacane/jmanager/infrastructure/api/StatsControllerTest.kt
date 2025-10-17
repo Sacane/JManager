@@ -50,7 +50,7 @@ class StatsControllerTest(
     @BeforeEach
     fun setup() {
         configureObjectMapper(objectMapper)
-        defaultTag = tagRepository.defaultTag()!!
+        defaultTag = tagRepository.defaultTag()
 
         accountStateTestAdapter.init(
             listOf(Booklet(1000.toAmount(), "Compte Principal", owner = user))

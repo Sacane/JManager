@@ -26,7 +26,6 @@ object FakeFactory {
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
     private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository()
     private val manager: UnitOfWorkTransactionProviderPort = UnitOfWorkTransactionProviderPort.DEFAULT
-    private val inMemoryRegularChecker: InMemoryRegularChecker = InMemoryRegularChecker()
     private val inMemoryRegularTransactionGenerator: RegularTransactionGenerator = RegularTransactionGeneratorService(
         transactionRepository, inMemoryTrackerRepository
     )
@@ -51,7 +50,7 @@ object FakeFactory {
     private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
 
     val accountFeature = BookletFeatureImpl(userRepository, sessionManager, fakeAccountRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator, manager, inMemoryTrackerRepository)
-    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryRegularChecker)
+    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryTagRepository)
     val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
     val regularTransactionFeature = RegularTransactionFeatureImpl(
@@ -67,7 +66,7 @@ object FakeFactory {
             userRepository = fakeUserRepository(),
             bookletRepository = fakeAccountRepository,
             monthlyStatsCalculator = MonthlyStatsCalculatorImpl(),
-            categoryDistributionCalculator = CategoryDistributionCalculatorImpl(),
+            categoryDistributionCalculator = CategoryDistributionCalculatorImpl(inMemoryTagRepository),
             trendCalculator = TrendCalculatorImpl(),
             previsionalTransactionFilter = PrevisionalTransactionFilterImpl()
         )
@@ -97,9 +96,13 @@ object FakeFactory {
     fun sessionManager(): SessionManager {
         return sessionManager
     }
-    fun fakeTagRepository(): BiState<UserTag, List<Tag>> {
+    fun tagTestState(): BiState<UserTag, List<Tag>> {
         return inMemoryTagRepository
     }
+    fun fakeTagRepository(): InMemoryTagRepository {
+        return inMemoryTagRepository
+    }
+
     fun tagFeature(): TagFeature {
         return tagFeature
     }

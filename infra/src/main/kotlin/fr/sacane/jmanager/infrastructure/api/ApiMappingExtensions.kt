@@ -30,7 +30,7 @@ internal fun TransactionResult.toModel(): Transaction
 = Transaction(this.id, this.label, LocalDate.parse(this.date), Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
 internal fun Transaction.toDTO(): TransactionResult {
-    return TransactionResult(id, label, amount.value, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag.toDTO(), isPreview)
+    return TransactionResult(id, label, amount.value, amount.currency.symbol, isIncome, date.toString(), tagDTO = tag?.toDTO(), isPreview)
 }
 
 
@@ -77,7 +77,7 @@ internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
         value = this.amount.value,
         isIncome = this.isIncome,
         regularity = Frequency.MONTHLY.toString(),
-        tagDTO = this.tag.toDTO(),
+        tagDTO = this.tag!!.toDTO(),
         frequencyProperty = frequencyProperty.toDTO()
     )
 }

@@ -107,10 +107,10 @@ fun MonthlyTrend.toDTO() = MonthlyTrendDTO(
     totalAccounts = totalAccounts
 )
 
-fun PrevisionalTransactionsOutput.toDTO() = PrevisionalTransactionsDTO(
-    transactions = transactions.map { it.toTransactionDTO() },
+fun PrevisionalTransactionsOutput.toDTO(defaultTag: Tag) = PrevisionalTransactionsDTO(
+    transactions = transactions.map { it.toTransactionDTO(defaultTag) },
     groupedByAccount = groupedByAccount.mapValues { (_, transactions) ->
-        transactions.map { it.toTransactionDTO() }
+        transactions.map { it.toTransactionDTO(defaultTag) }
     },
     totalAmount = totalAmount.toStringValue(),
     totalIncome = totalIncome.toStringValue(),
@@ -119,11 +119,11 @@ fun PrevisionalTransactionsOutput.toDTO() = PrevisionalTransactionsDTO(
     endDate = endDate
 )
 
-fun Transaction.toTransactionDTO() = TransactionDTO(
+fun Transaction.toTransactionDTO(defaultTag: Tag) = TransactionDTO(
     id = id,
     label = label,
     amount = amount.toStringValue(),
     isIncome = isIncome,
     date = date,
-    tag = tag.label
+    tag = tag?.label ?: defaultTag.label
 )

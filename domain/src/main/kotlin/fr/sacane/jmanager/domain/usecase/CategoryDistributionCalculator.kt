@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.CategoryData
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.port.spi.TagRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -22,7 +23,9 @@ interface CategoryDistributionCalculator {
 }
 
 @UseCase
-class CategoryDistributionCalculatorImpl : CategoryDistributionCalculator {
+class CategoryDistributionCalculatorImpl(
+    private val tagRepository: TagRepository
+) : CategoryDistributionCalculator {
 
     override fun calculateDistribution(transactions: List<Transaction>): Pair<List<CategoryData>, Amount> {
         val expenseTransactions = transactions.filter {
@@ -36,8 +39,10 @@ class CategoryDistributionCalculatorImpl : CategoryDistributionCalculator {
             return Pair(emptyList(), Amount(BigDecimal.ZERO))
         }
 
+
         val groupedByTag = expenseTransactions.groupBy { transaction ->
-            transaction.tag.label to transaction.tag.id!!
+            val tag = transaction.tag ?: tagRepository.defaultTag()
+            tag.label to tag.id!!
         }
 
         val categoryData = groupedByTag.map { (tagInfo, transactions) ->

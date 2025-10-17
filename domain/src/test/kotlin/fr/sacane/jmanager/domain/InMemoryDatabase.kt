@@ -21,7 +21,14 @@ class InMemoryDatabase {
     private val bookletsByTransaction = mutableMapOf<Long, MutableList<Transaction>>()
     private val tags = mutableMapOf<UserId, MutableList<Tag>>()
     val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
-    val defaultTags = mutableListOf<Tag>()
+    val defaultTags = fr.sacane.jmanager.domain.models.defaultTags.mapIndexed { index, tag ->
+        Tag(
+            id = index.toLong(),
+            label = tag.label,
+            isDefault = tag.isDefault,
+            color = tag.color
+        )
+    }
     private val trackers = mutableMapOf<Long, MutableList<RegularTransactionTracker>>()
     private val regularBooklets = mutableListOf<RegularByBooklet>()
 

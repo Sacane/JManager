@@ -36,7 +36,7 @@ class Booklet(
         amount = booklet.amount
         labelAccount = booklet.label
         _transactions.replaceAll {
-            Transaction(it.id, it.label, it.date, it.amount, it.isIncome, it.tag)
+            Transaction(it.id, it.label, it.date, it.amount, it.isIncome, tag = it.tag)
         }
         previewAmount = booklet.previewAmount
     }

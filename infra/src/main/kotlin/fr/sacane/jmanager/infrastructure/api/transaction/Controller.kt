@@ -12,7 +12,6 @@ import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.Month
@@ -163,7 +162,7 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
         this.transaction.date,
         this.transaction.amount.value.toString(),
         this.transaction.isIncome,
-        this.transaction.tag.toDTO(),
+        this.transaction.tag!!.toDTO(),
         this.accountAmount.value.toString(),
         this.accountPreviewAmount.value.toString(),
         this.transaction.isPreview

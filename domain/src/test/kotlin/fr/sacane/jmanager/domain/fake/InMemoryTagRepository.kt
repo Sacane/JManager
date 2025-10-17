@@ -35,7 +35,6 @@ class InMemoryTagRepository(
     }
 
     override fun saveAll(defaultTags: List<Tag>) {
-        inMemoryDatabase.defaultTags.addAll(defaultTags)
     }
 
     override fun existsDefault(): Boolean {
@@ -48,8 +47,8 @@ class InMemoryTagRepository(
         return result
     }
 
-    override fun defaultTag(): Tag? {
-        return inMemoryDatabase.defaultTags.find { it.label == "Aucune" }
+    override fun defaultTag(): Tag {
+        return inMemoryDatabase.defaultTags.find { it.label == "Aucune" }!!
     }
 
     override fun patch(tag: Tag): Tag? {
@@ -73,7 +72,6 @@ class InMemoryTagRepository(
     }
 
     override fun clear() {
-        inMemoryDatabase.defaultTags.clear()
         inMemoryDatabase.userByTag.clear()
     }
 

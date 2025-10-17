@@ -23,9 +23,13 @@ class AccountMapper(
     fun asResource(booklet: Booklet): AccountResource {
         val userResource = booklet.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
+                it.tag?.asResource()
+            ) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         } else {
-            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(it.tag.asResource()) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
+            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
+                it.tag?.asResource()
+            ) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         }
     }
 }

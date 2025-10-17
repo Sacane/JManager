@@ -64,8 +64,8 @@ class TagRepositoryAdapter(
         }
     }
 
-    override fun defaultTag(): Tag? {
-        return defaultTagPostgresRepository.findByName(Tag.noneTag().label)?.toDomain()
+    override fun defaultTag(): Tag {
+        return defaultTagPostgresRepository.findByName(Tag.noneTag().label)?.toDomain() ?: error("No default tag found")
     }
 
     @Transactional

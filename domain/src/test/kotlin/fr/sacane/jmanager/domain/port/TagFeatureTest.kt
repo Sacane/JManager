@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 
 class TagFeatureTest: FeatureTest() {
 
-    private val tagState = FakeFactory.fakeTagRepository()
+    private val tagState = FakeFactory.tagTestState()
     private val tagFeature: TagFeature = FakeFactory.tagFeature()
 
     @AfterEach

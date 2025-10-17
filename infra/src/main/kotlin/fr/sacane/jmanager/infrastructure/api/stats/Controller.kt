@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api.stats
 
 import fr.sacane.jmanager.domain.port.api.StatsFeature
+import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
@@ -11,7 +12,8 @@ import java.util.logging.Logger
 @RestController
 @RequestMapping("/api/stats")
 class StatsController(
-    private val statsFeature: StatsFeature
+    private val statsFeature: StatsFeature,
+    private val tagFeature: TagFeature
 ) {
     companion object {
         private val LOGGER: Logger = Logger.getLogger("StatsController")
@@ -55,7 +57,9 @@ class StatsController(
         LOGGER.info("Requesting previsional transactions from $startDate to $endDate")
 
         return statsFeature.getPrevisionalTransactions(currentUser.token, startDate, endDate)
-            .map { it.toDTO() }
+            .map {
+                tagFeature.defaultTag(currentUser.token).mapTo { tag -> it.toDTO(tag!!)}
+            }
             .toHttpResponse()
     }
 }

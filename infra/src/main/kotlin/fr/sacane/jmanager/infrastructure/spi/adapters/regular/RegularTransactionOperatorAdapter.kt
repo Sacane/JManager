@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.NotFoundException
 import fr.sacane.jmanager.infrastructure.spi.adapters.JpaTagMapperAdapter
+import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
 import fr.sacane.jmanager.infrastructure.spi.adapters.toResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
@@ -23,7 +24,8 @@ class RegularTransactionOperatorAdapter(
     private val monthlyTransactionResourceJpaRepository: MonthlyTransactionResourceJpaRepository,
     private val tagMapperAdapter: JpaTagMapperAdapter,
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
-    private val accountJpaRepository: AccountJpaRepository
+    private val accountJpaRepository: AccountJpaRepository,
+    private val defaultTagRepository: DefaultTagPostgresRepository
 ) {
 
     companion object {
@@ -42,7 +44,7 @@ class RegularTransactionOperatorAdapter(
                     frequencyProperty = regularTransaction.frequencyProperty.toResource()
                 ).copy(owner = user)
                 val result = when(val tagResource = tagMapperAdapter.mapToResource(
-                    regularTransaction.tag
+                    regularTransaction.tag ?: defaultTagRepository.findUnknownTag()?.toDomain()!!
                 )) {
                     is DefaultTagResource -> monthlyRegularTransactionEntity.copy(
                         tag = tagResource,

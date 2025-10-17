@@ -21,7 +21,7 @@ open class FeatureTest {
     private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
     private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
     private val sessionManager: SessionManager = FakeFactory.sessionManager()
-    private val tagState: BiState<UserTag, List<Tag>> = FakeFactory.fakeTagRepository()
+    private val tagState: BiState<UserTag, List<Tag>> = FakeFactory.tagTestState()
 
     @AfterEach
     fun cleanUp() {
@@ -30,11 +30,12 @@ open class FeatureTest {
         accountState.clear()
     }
     companion object {
+        private val tagRepository = FakeFactory.fakeTagRepository()
         fun generateToken(userId: UserId, username: String): String {
             return "${userId.value}||${UUID.randomUUID()}||${Role.USER.name}||$username"
         }
-        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), isPreview: Boolean = false): Transaction {
-            return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview)
+        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), tag: Tag? = null, isPreview: Boolean = false): Transaction {
+            return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview, tag = tag ?: tagRepository.defaultTag())
         }
     }
     fun createAccount(userId: User, label: String, amount: Amount): Booklet {

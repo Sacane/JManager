@@ -207,7 +207,7 @@ class StatsFeatureTest : FeatureTest() {
         fun `Should group transactions without tags as uncategorized`() {
             launchWithConnectedUserInstance {
                 val transactions = listOf(
-                    generateTransaction("Untagged expense", Amount(BigDecimal("-100")), false, LocalDate.of(2025, 1, 10))
+                    generateTransaction("Untagged expense", Amount(BigDecimal("100")), false, LocalDate.of(2025, 1, 10))
                 )
                 initTransactions(transactions)
 

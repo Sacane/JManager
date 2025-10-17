@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters.transaction
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
@@ -32,7 +33,7 @@ class SqlTransactionAdapter(
         val id = userId.value ?: return null
         val account = accountJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
         val transactionResource: TransactionResource
-        if(transaction.tag.label == "Aucune"){
+        if(transaction.tag?.label == Tag.noneTag().label){
             val noneTag = tagRepository.findUnknownTag()
             transactionResource = transaction.asResource(noneTag)
         } else {
@@ -49,8 +50,8 @@ class SqlTransactionAdapter(
     }
 
     fun Transaction.mapToRightTag(): TransactionResource {
-        val tag = this.tag.id?.let {
-            if(this.tag.isDefault) {
+        val tag = this.tag?.id?.let {
+            if(this.tag?.isDefault == true) {
                 tagRepository.findByIdNullable(it)
             } else {
                 tagPersonalPostgresRepository.findByIdNullable(it)
@@ -69,10 +70,13 @@ class SqlTransactionAdapter(
 
 
     override fun save(accountId: Long, transaction: Transaction): Transaction? {
-        val tag = if(transaction.tag.isDefault){
-            tagRepository.findByName(transaction.tag.label)
+        val tag = if(transaction.tag == null) {
+            tagRepository.findUnknownTag()!!
+        }
+        else if(transaction.tag!!.isDefault){
+            tagRepository.findByName(transaction.tag!!.label)
         } else {
-            tagPersonalPostgresRepository.findByIdNullable(transaction.tag.id!!)
+            tagPersonalPostgresRepository.findByIdNullable(transaction.tag?.id!!)
         }
         val transactionResource = transaction.asResource(tag)
         transactionResource.account = accountJpaRepository.findByIdOrNull(accountId)

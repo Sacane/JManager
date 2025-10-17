@@ -12,7 +12,7 @@ interface TagRepository {
     fun saveAll(defaultTags: List<Tag>)
     fun existsDefault(): Boolean
     fun deleteById(tagId: Long): Boolean
-    fun defaultTag(): Tag?
+    fun defaultTag(): Tag
     fun patch(tag: Tag): Tag?
     fun existsAnotherTagByLabel(userId: UserId, tag: Tag): Boolean
     fun existsById(tagId: Long): Boolean

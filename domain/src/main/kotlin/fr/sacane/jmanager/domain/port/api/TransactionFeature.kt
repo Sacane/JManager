@@ -8,9 +8,9 @@ import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
-import fr.sacane.jmanager.domain.port.spi.RegularChecker
 import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
 import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDateTime
@@ -33,7 +33,7 @@ class TransactionFeatureImpl(
     private val session: SessionManager,
     private val accountRepository: BookletRepositoryPort,
     private val infraTransactionManager: UnitOfWorkTransactionProviderPort,
-    private val regularChecker: RegularChecker,
+    private val tagRepository: TagRepository
 ): TransactionFeature{
     companion object {
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
@@ -70,6 +70,11 @@ class TransactionFeatureImpl(
                 ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Erreur est survenu lors de la transaction")
             if(transaction.amount.isNegative()) {
                 return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Le montant de la transaction ne peut pas être négatif")
+            }
+            if (newTr.tag == null) {
+                newTr.copy(
+                    tag = tagRepository.defaultTag()
+                )
             }
             account.addTransaction(newTr)
             accountRepository.update(account)

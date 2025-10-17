@@ -34,7 +34,7 @@ data class MonthlyTransaction(
     override val id: RegularTransactionId,
     override val startDate: LocalDate,
     override val frequencyProperty: FrequencyProperty,
-    override var tag: Tag = Tag("Aucune", isDefault = true),
+    override var tag: Tag? = null,
     override val associatedBooklets: List<Booklet> = listOf(),
     val monthlyRepeatProperty: MonthlyRepeatProperty? = null
 ): RegularTransaction {
