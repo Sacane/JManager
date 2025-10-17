@@ -13,12 +13,14 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
+import { addMonths, endOfMonth, format, startOfMonth } from 'date-fns'
+import { fr } from 'date-fns/locale'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import useStats from '~/composables/useStats'
 import { rgbToHex } from '~/utils/util'
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -40,6 +42,7 @@ const { user } = useAuth()
 const { createAccount, fetch: fetchBooklets } = useBooklet()
 const { getRegularTransaction } = useRegularTransaction()
 const { getAllTags } = useTag()
+const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
 const toast = useJToast()
 const dateUse = useDate()
 
@@ -48,6 +51,9 @@ const isAccountDialogOpen = ref(false)
 const accounts = ref<BookletDTO[]>([])
 const regularTransactions = ref<RegularTransactionDTO[]>([])
 const tags = ref<TagDTO[]>([])
+const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
+const trendStats = ref<TrendStatsDTO | null>(null)
+const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const selectedPeriod = ref<'month' | 'year'>('month')
 const isLoading = ref(true)
 
@@ -75,73 +81,225 @@ const totalBalance = computed(() =>
   accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount.toString()), 0.00),
 )
 
-// Mock data - À remplacer par vos vraies données API
-const monthlyExpenses = computed(() => 2450.00) // TODO: Calculate from transactions
-const monthlyIncome = computed(() => 3200.00) // TODO: Calculate from transactions
-const savingsRate = computed(() =>
-  totalBalance.value > 0 ? ((monthlyIncome.value - monthlyExpenses.value) / monthlyIncome.value * 100).toFixed(1) : 0,
+const currentMonthTrend = computed(() => {
+  if (!trendStats.value?.monthlyTrends.length) {
+    return null
+  }
+
+  const currentMonth = new Date().getMonth() + 1
+  const currentYear = new Date().getFullYear()
+
+  return trendStats.value.monthlyTrends.find(
+    trend => trend.month === currentMonth && trend.year === currentYear,
+  )
+})
+
+const previousMonthTrend = computed(() => {
+  if (!trendStats.value?.monthlyTrends.length) {
+    return null
+  }
+
+  const lastMonth = new Date()
+  lastMonth.setMonth(lastMonth.getMonth() - 1)
+  const month = lastMonth.getMonth() + 1
+  const year = lastMonth.getFullYear()
+
+  return trendStats.value.monthlyTrends.find(
+    trend => trend.month === month && trend.year === year,
+  )
+})
+
+const monthlyExpenses = computed(() => {
+  const expenses = currentMonthTrend.value?.expenses
+  return expenses ? Number.parseFloat(expenses) : 0
+})
+
+const monthlyIncome = computed(() => {
+  const income = currentMonthTrend.value?.income
+  return income ? Number.parseFloat(income) : 0
+})
+
+const expensesGrowth = computed(() => {
+  if (!currentMonthTrend.value || !previousMonthTrend.value) {
+    return 0
+  }
+
+  const current = Number.parseFloat(currentMonthTrend.value.expenses)
+  const previous = Number.parseFloat(previousMonthTrend.value.expenses)
+
+  if (previous === 0) {
+    return 0
+  }
+
+  return ((current - previous) / previous * 100)
+})
+
+const incomeGrowth = computed(() => {
+  if (!currentMonthTrend.value || !previousMonthTrend.value) {
+    return 0
+  }
+
+  const current = Number.parseFloat(currentMonthTrend.value.income)
+  const previous = Number.parseFloat(previousMonthTrend.value.income)
+
+  if (previous === 0) {
+    return 0
+  }
+
+  return ((current - previous) / previous * 100)
+})
+
+const balanceGrowth = computed(() => {
+  if (!currentMonthTrend.value || !previousMonthTrend.value) {
+    return 0
+  }
+
+  const current = Number.parseFloat(currentMonthTrend.value.balance)
+  const previous = Number.parseFloat(previousMonthTrend.value.balance)
+
+  if (previous === 0) {
+    return 0
+  }
+
+  return ((current - previous) / previous * 100)
+})
+
+const savingsRate = computed(() => {
+  if (monthlyIncome.value === 0) {
+    return 0
+  }
+
+  return ((monthlyIncome.value - monthlyExpenses.value) / monthlyIncome.value * 100)
+})
+
+const upcomingPayments = computed(() =>
+  previsionalTransactions.value?.transactions.slice(0, 5) || [],
 )
 
-const upcomingPayments = computed(() => regularTransactions.value.slice(0, 5)) // Next 5 regular transactions
+const totalPrevisionalTransactions = computed(() =>
+  previsionalTransactions.value?.transactions.length || 0,
+)
 
 // Chart data
-const expensesTrendData = computed(() => ({
-  labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-  datasets: [
-    {
-      label: 'Dépenses',
-      data: [2200, 2450, 2100, 2600, 2300, 2450, 2500, 2350, 2400, 2550, 2300, 2450], // Mock data
-      borderColor: '#ef4444',
-      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-      tension: 0.4,
-      fill: true,
-    },
-    {
-      label: 'Revenus',
-      data: [3000, 3200, 3100, 3300, 3200, 3200, 3400, 3300, 3200, 3500, 3300, 3200], // Mock data
-      borderColor: '#10b981',
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-      tension: 0.4,
-      fill: true,
-    },
-  ],
-}))
+const expensesTrendData = computed(() => {
+  if (!trendStats.value?.monthlyTrends.length) {
+    return {
+      labels: [],
+      datasets: [],
+    }
+  }
 
-const categoryExpensesData = computed(() => ({
-  labels: tags.value.map(tag => tag.label).slice(0, 6) || ['Alimentation', 'Transport', 'Loisirs', 'Logement', 'Santé', 'Autres'],
-  datasets: [
-    {
-      data: [450, 280, 320, 850, 150, 400], // Mock data - TODO: Calculate from transactions with tags
-      backgroundColor: [
-        '#822acc',
-        '#10b981',
-        '#f59e0b',
-        '#3b82f6',
-        '#ef4444',
-        '#8b5cf6',
-      ],
-      borderWidth: 0,
-    },
-  ],
-}))
+  // Get last 12 months
+  const sortedTrends = [...trendStats.value.monthlyTrends]
+    .sort((a, b) => {
+      if (a.year !== b.year) {
+        return a.year - b.year
+      }
+      return a.month - b.month
+    })
+    .slice(-12)
 
-const monthlyComparisonData = computed(() => ({
-  labels: ['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4'],
-  datasets: [
-    {
-      label: 'Ce mois',
-      data: [580, 620, 510, 740], // Mock data
-      backgroundColor: '#822acc',
-      borderRadius: 8,
-    },
-    {
-      label: 'Mois dernier',
-      data: [620, 550, 680, 600], // Mock data
-      backgroundColor: '#b1aeae',
-      borderRadius: 8,
-    },
-  ],
-}))
+  const labels = sortedTrends.map((trend) => {
+    const date = new Date(trend.year, trend.month - 1)
+    return format(date, 'MMM', { locale: fr })
+  })
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Dépenses',
+        data: sortedTrends.map(trend => Number.parseFloat(trend.expenses)),
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Revenus',
+        data: sortedTrends.map(trend => Number.parseFloat(trend.income)),
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  }
+})
+
+const categoryExpensesData = computed(() => {
+  if (!categoryDistribution.value?.categories.length) {
+    return {
+      labels: [],
+      datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }],
+    }
+  }
+
+  // Sort by amount and take top 6
+  const sortedCategories = [...categoryDistribution.value.categories]
+    .sort((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
+    .slice(0, 6)
+
+  return {
+    labels: sortedCategories.map(cat => cat.tagLabel),
+    datasets: [
+      {
+        data: sortedCategories.map(cat => Number.parseFloat(cat.totalAmount)),
+        backgroundColor: [
+          '#822acc',
+          '#10b981',
+          '#f59e0b',
+          '#3b82f6',
+          '#ef4444',
+          '#8b5cf6',
+        ],
+        borderWidth: 0,
+      },
+    ],
+  }
+})
+
+const monthlyComparisonData = computed(() => {
+  if (!trendStats.value?.monthlyTrends.length) {
+    return {
+      labels: [],
+      datasets: [],
+    }
+  }
+
+  // Get current and previous month
+  const now = new Date()
+  const currentMonthData = trendStats.value.monthlyTrends.find(
+    t => t.month === now.getMonth() + 1 && t.year === now.getFullYear(),
+  )
+
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1)
+  const previousMonthData = trendStats.value.monthlyTrends.find(
+    t => t.month === prevMonth.getMonth() + 1 && t.year === prevMonth.getFullYear(),
+  )
+
+  // Weekly breakdown (simplified, dividing by 4)
+  const currentExpenses = currentMonthData ? Number.parseFloat(currentMonthData.expenses) : 0
+  const previousExpenses = previousMonthData ? Number.parseFloat(previousMonthData.expenses) : 0
+
+  return {
+    labels: ['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4'],
+    datasets: [
+      {
+        label: 'Ce mois',
+        data: Array.from({ length: 4 }).fill(currentExpenses / 4),
+        backgroundColor: '#822acc',
+        borderRadius: 8,
+      },
+      {
+        label: 'Mois dernier',
+        data: Array.from({ length: 4 }).fill(previousExpenses / 4),
+        backgroundColor: '#b1aeae',
+        borderRadius: 8,
+      },
+    ],
+  }
+})
 
 const chartOptions = {
   responsive: true,
@@ -209,8 +367,8 @@ const doughnutOptions = {
           const label = context.label || ''
           const value = context.parsed || 0
           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
-          const percentage = ((value / total) * 100).toFixed(1)
-          return `${label}: ${value}€ (${percentage}%)`
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
+          return `${label}: ${value.toFixed(2)}€ (${percentage}%)`
         },
       },
     },
@@ -238,6 +396,7 @@ function cancel() {
 async function loadDashboardData() {
   isLoading.value = true
   try {
+    // Load basic data
     const [accountsData, regularTransData, tagsData] = await Promise.all([
       fetchBooklets(),
       getRegularTransaction().catch(() => []),
@@ -247,6 +406,21 @@ async function loadDashboardData() {
     accounts.value = accountsData
     regularTransactions.value = regularTransData
     tags.value = tagsData
+
+    // Load stats data
+    const now = new Date()
+    const startDate = format(startOfMonth(now), 'yyyy-MM-dd')
+    const endDate = format(endOfMonth(addMonths(now, 3)), 'yyyy-MM-dd')
+
+    const [categoryData, trendsData, previsionalData] = await Promise.all([
+      getCategoryDistribution().catch(() => null),
+      getTrendStats().catch(() => null),
+      getPrevisionalTransactions(startDate, endDate).catch(() => null),
+    ])
+
+    categoryDistribution.value = categoryData
+    trendStats.value = trendsData
+    previsionalTransactions.value = previsionalData
   } catch (error) {
     toast.error('Erreur lors du chargement des données')
     console.error(error)
@@ -274,10 +448,18 @@ onMounted(() => {
           </p>
         </div>
         <div class="header-actions">
-          <button class="period-toggle" :class="{ active: selectedPeriod === 'month' }" @click="selectedPeriod = 'month'">
+          <button
+            class="period-toggle"
+            :class="{ active: selectedPeriod === 'month' }"
+            @click="selectedPeriod = 'month'"
+          >
             Mois
           </button>
-          <button class="period-toggle" :class="{ active: selectedPeriod === 'year' }" @click="selectedPeriod = 'year'">
+          <button
+            class="period-toggle"
+            :class="{ active: selectedPeriod === 'year' }"
+            @click="selectedPeriod = 'year'"
+          >
             Année
           </button>
         </div>
@@ -299,9 +481,9 @@ onMounted(() => {
             <div class="kpi-icon gradient-purple">
               <i class="pi pi-wallet" />
             </div>
-            <span class="kpi-trend positive">
-              <i class="pi pi-arrow-up" />
-              +5.2%
+            <span v-if="balanceGrowth !== 0" class="kpi-trend" :class="balanceGrowth > 0 ? 'positive' : 'negative'">
+              <i :class="balanceGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(balanceGrowth).toFixed(1) }}%
             </span>
           </div>
           <div class="kpi-content">
@@ -322,9 +504,9 @@ onMounted(() => {
             <div class="kpi-icon gradient-red">
               <i class="pi pi-arrow-down" />
             </div>
-            <span class="kpi-trend negative">
-              <i class="pi pi-arrow-up" />
-              +3.5%
+            <span v-if="expensesGrowth !== 0" class="kpi-trend" :class="expensesGrowth > 0 ? 'negative' : 'positive'">
+              <i :class="expensesGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(expensesGrowth).toFixed(1) }}%
             </span>
           </div>
           <div class="kpi-content">
@@ -345,9 +527,9 @@ onMounted(() => {
             <div class="kpi-icon gradient-green">
               <i class="pi pi-arrow-up" />
             </div>
-            <span class="kpi-trend positive">
-              <i class="pi pi-arrow-up" />
-              +2.1%
+            <span v-if="incomeGrowth !== 0" class="kpi-trend" :class="incomeGrowth > 0 ? 'positive' : 'negative'">
+              <i :class="incomeGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(incomeGrowth).toFixed(1) }}%
             </span>
           </div>
           <div class="kpi-content">
@@ -368,9 +550,9 @@ onMounted(() => {
             <div class="kpi-icon gradient-yellow">
               <i class="pi pi-chart-line" />
             </div>
-            <span class="kpi-trend positive">
-              <i class="pi pi-arrow-up" />
-              +1.8%
+            <span v-if="savingsRate !== 0" class="kpi-trend" :class="savingsRate > 0 ? 'positive' : 'negative'">
+              <i :class="savingsRate > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(savingsRate).toFixed(1) }}%
             </span>
           </div>
           <div class="kpi-content">
@@ -378,7 +560,7 @@ onMounted(() => {
               Taux d'épargne
             </h3>
             <p class="kpi-value">
-              {{ savingsRate }}%
+              {{ savingsRate.toFixed(1) }}%
             </p>
             <p class="kpi-info">
               Objectif: 30%
@@ -411,7 +593,7 @@ onMounted(() => {
               Dépenses par catégorie
             </h2>
             <p class="chart-subtitle">
-              Répartition du mois en cours
+              Répartition totale: {{ categoryDistribution?.totalExpenses || '0.00' }} €
             </p>
           </div>
           <div class="chart-body doughnut-container">
@@ -487,7 +669,7 @@ onMounted(() => {
           <div class="info-header">
             <h2 class="info-title">
               <i class="pi pi-calendar" />
-              Prochaines mensualités
+              Prochaines transactions
             </h2>
             <button class="add-button" @click="navigateTo('/regular-transactions')">
               <i class="pi pi-cog" />
@@ -497,7 +679,7 @@ onMounted(() => {
           <div class="info-body">
             <div v-if="upcomingPayments.length === 0" class="empty-state">
               <i class="pi pi-calendar-times" />
-              <p>Aucune mensualité configurée</p>
+              <p>Aucune transaction prévue</p>
               <button class="create-button" @click="navigateTo('/regular-transactions')">
                 Configurer une mensualité
               </button>
@@ -512,11 +694,11 @@ onMounted(() => {
                     {{ payment.label }}
                   </p>
                   <p class="payment-frequency">
-                    {{ dateUse.frequencyToString('MONTHLY') }}
+                    {{ new Date(payment.date).toLocaleDateString('fr-FR') }}
                   </p>
                 </div>
                 <p class="payment-amount" :class="{ expense: !payment.isIncome, income: payment.isIncome }">
-                  {{ !payment.isIncome ? '-' : '+' }}{{ payment.value }} €
+                  {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
                 </p>
               </div>
             </div>
@@ -592,7 +774,7 @@ onMounted(() => {
           <i class="pi pi-clock" />
           <div>
             <p class="stat-value">
-              0
+              {{ totalPrevisionalTransactions }}
             </p>
             <p class="stat-label">
               Transactions prévisionnelles
@@ -600,13 +782,13 @@ onMounted(() => {
           </div>
         </div>
         <div class="stat-item">
-          <i class="pi pi-check-circle" />
+          <i class="pi pi-chart-line" />
           <div>
             <p class="stat-value">
-              0
+              {{ categoryDistribution?.categories.length || 0 }}
             </p>
             <p class="stat-label">
-              Transactions ce mois
+              Catégories actives
             </p>
           </div>
         </div>

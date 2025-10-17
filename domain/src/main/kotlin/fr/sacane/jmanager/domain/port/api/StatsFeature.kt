@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.CategoryDistributionOutput
 import fr.sacane.jmanager.domain.models.MonthlyAccountStatsOutput
 import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
-import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculator
@@ -70,7 +70,7 @@ sealed interface StatsFeature {
 class StatsFeatureImpl(
     private val session: SessionManager,
     private val userRepository: UserRepository,
-    private val accountRepository: AccountRepositoryPort,
+    private val bookletRepository: BookletRepositoryPort,
     private val monthlyStatsCalculator: MonthlyStatsCalculator,
     private val categoryDistributionCalculator: CategoryDistributionCalculator,
     private val trendCalculator: TrendCalculator,
@@ -88,7 +88,7 @@ class StatsFeatureImpl(
     ): Result<MonthlyAccountStatsOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching monthly stats for account $accountId and year $year")
 
-        val booklet = accountRepository.findAccountByIdWithTransactions(accountId)
+        val booklet = bookletRepository.findAccountByIdWithTransactions(accountId)
             ?: return@authenticate failure(
                 ResultState.BOOKLET_NOT_FOUND,
                 "Le compte $accountId est introuvable"
@@ -191,8 +191,16 @@ class StatsFeatureImpl(
                 "L'utilisateur est introuvable"
             )
 
+        val booklets = user.booklets.map {
+            bookletRepository.findAccountByIdWithTransactions(it.id!!)
+                ?: return@authenticate failure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Le compte ${it.id} est introuvable"
+                )
+        }
+
         val result = previsionalTransactionFilter.filterPrevisionalTransactions(
-            booklets = user.booklets,
+            booklets = booklets,
             startDate = startDate,
             endDate = endDate
         )

@@ -6,6 +6,8 @@ import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.AccountByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.fake.IdUserAccount
+import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -28,6 +30,7 @@ class StatsFeatureTest : FeatureTest() {
         private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
         private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
         private val accountState: State<AccountByOwner> = FakeFactory.accountState()
+        private val transactionState = FakeFactory.fakeTransactionRepository()
 
     }
 
@@ -394,13 +397,15 @@ class StatsFeatureTest : FeatureTest() {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
                 val transactions1 = listOf(
-                    generateTransaction("Future Rent", Amount(BigDecimal("-800")), false, startDate.plusDays(15), isPreview = true)
+                    generateTransaction("Future Rent", Amount(BigDecimal("800")), false, startDate.plusDays(15), isPreview = true)
                 )
                 initTransactions(transactions1)
 
                 val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "account2", owner = user.toUser(), id = 51L)
-                booklet2.addTransaction(generateTransaction("Future Bill", Amount(BigDecimal("-100")), false, startDate.plusMonths(1), isPreview = true))
-                accountState.init(listOf(AccountByOwner(listOf(booklet, booklet2), user.id)))
+                accountState.init(listOf(AccountByOwner(listOf(booklet2), user.id)))
+                transactionState.init(
+                    listOf(IdUserAccountByTransaction(IdUserAccount(user.id, booklet2.id!!), mutableListOf(generateTransaction("Future Bill", Amount(BigDecimal("100")), false, startDate.plusMonths(1), isPreview = true))))
+                )
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {

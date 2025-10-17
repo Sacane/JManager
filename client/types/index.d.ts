@@ -97,6 +97,66 @@ declare global {
     realSold: string
     previewSold: string
   }
+
+  interface MonthlyAccountStatsDTO {
+    accountId: number
+    accountLabel: string
+    year: number
+    monthlyData: MonthlyDataDTO[]
+  }
+
+  interface MonthlyDataDTO {
+    month: number
+    income: string
+    expenses: string
+    balance: string
+  }
+
+  interface CategoryDistributionDTO {
+    categories: CategoryDataDTO[]
+    totalExpenses: string
+  }
+
+  interface CategoryDataDTO {
+    tagLabel: string
+    tagId: number | null
+    totalAmount: string
+    percentage: number
+    transactionCount: number
+  }
+
+  interface TrendStatsDTO {
+    monthlyTrends: MonthlyTrendDTO[]
+  }
+
+  interface MonthlyTrendDTO {
+    month: number
+    year: number
+    income: string
+    expenses: string
+    balance: string
+    cumulativeBalance: string
+    totalAccounts: number
+  }
+
+  interface PrevisionalTransactionsDTO {
+    transactions: StatsTransactionDTO[]
+    groupedByAccount: Record<string, StatsTransactionDTO[]>
+    totalAmount: string
+    totalIncome: string
+    totalExpenses: string
+    startDate: string
+    endDate: string
+  }
+
+  interface StatsTransactionDTO {
+    id: number | null
+    label: string
+    amount: string
+    isIncome: boolean
+    date: string
+    tag: string
+  }
 }
 
 export {}

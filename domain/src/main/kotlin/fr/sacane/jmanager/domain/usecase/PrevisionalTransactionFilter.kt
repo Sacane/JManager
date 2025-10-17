@@ -57,11 +57,11 @@ class PrevisionalTransactionFilterImpl : PrevisionalTransactionFilter {
         }.filterValues { it.isNotEmpty() }
 
         val totalIncome = previsionalTransactions
-            .filter { it.amount.value > BigDecimal.ZERO }
+            .filter { it.isIncome }
             .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value) }
 
         val totalExpenses = previsionalTransactions
-            .filter { it.amount.value < BigDecimal.ZERO }
+            .filter { !it.isIncome }
             .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
 
         val totalAmount = totalIncome.subtract(totalExpenses)

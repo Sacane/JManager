@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.AccountRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
@@ -146,9 +146,9 @@ data class AccountByOwner(
     }
 }
 
-class InMemoryAccountRepository(
+class InMemoryBookletRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): AccountRepositoryPort, State<AccountByOwner> {
+): BookletRepositoryPort, State<AccountByOwner> {
 
     override fun editFromAnother(booklet: Booklet): Booklet {
         inMemoryDatabase.upsert(booklet)

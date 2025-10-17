@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 
 @Port(Side.INFRASTRUCTURE)
-interface AccountRepositoryPort {
+interface BookletRepositoryPort {
     fun editFromAnother(booklet: Booklet): Booklet?
     fun save(ownerId: UserId, booklet: Booklet): Booklet?
     fun findAccountByIdWithTransactions(accountId: Long): Booklet?

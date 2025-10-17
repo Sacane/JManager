@@ -33,7 +33,7 @@ sealed interface BookletFeature {
 class BookletFeatureImpl(
     private val userRepository: UserRepository,
     private val session: SessionManager,
-    private val accountRepository: AccountRepositoryPort,
+    private val accountRepository: BookletRepositoryPort,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProviderPort,

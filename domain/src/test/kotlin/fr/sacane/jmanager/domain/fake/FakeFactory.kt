@@ -21,7 +21,7 @@ import java.util.*
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
     private val  inMemoryTrackerRepository: RegularTransactionTrackerRepository  = InMemoryRegularTrackerRepository(inMemoryDatabase)
-    private val fakeAccountRepository: InMemoryAccountRepository = InMemoryAccountRepository(inMemoryDatabase)
+    private val fakeAccountRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
     private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository()
@@ -65,7 +65,7 @@ object FakeFactory {
         StatsFeatureImpl(
             session = sessionManager(),
             userRepository = fakeUserRepository(),
-            accountRepository = fakeAccountRepository,
+            bookletRepository = fakeAccountRepository,
             monthlyStatsCalculator = MonthlyStatsCalculatorImpl(),
             categoryDistributionCalculator = CategoryDistributionCalculatorImpl(),
             trendCalculator = TrendCalculatorImpl(),
