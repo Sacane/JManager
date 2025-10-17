@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
 import org.slf4j.LoggerFactory
+import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import java.time.DateTimeException
 
 @ControllerAdvice(annotations = [RestController::class])
 class ProblemDetailHandler {
@@ -34,24 +36,20 @@ class ProblemDetailHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Bad Request"
+        problemDetail.title = "Method type mismatch"
         problemDetail.detail = "Invalid type parameter : ${ex.message}"
         problemDetail.setProperty("code", 65)
-        LOGGER.error("Bad Request : {}", ex.cause?.message ?: ex.message)
+        LOGGER.error("Method type mismatch : {}", ex.cause?.message ?: ex.message)
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail> {
-        val errors = ex.bindingResult.fieldErrors.associate {
-            it.field to (it.defaultMessage ?: "Valeur invalide")
-        }
-
         val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Bad Request"
+        problemDetail.title = "Method argument not valid"
         problemDetail.detail = "invalid value : ${ex.message}"
         problemDetail.setProperty("code", 65)
-        LOGGER.error("Bad Request : {}", ex.cause?.message ?: ex.message)
+        LOGGER.error("Method argument not valid : {}", ex.cause?.message ?: ex.message)
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
     }
 
@@ -86,7 +84,7 @@ class ProblemDetailHandler {
     }
 
     @ExceptionHandler(NotFoundException::class)
-    fun handleForbiddenException(ex: NotFoundException): ResponseEntity<ProblemDetail> {
+    fun handleNotFoundException(ex: NotFoundException): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND)
         problemDetail.title = "Not_Found error"
         problemDetail.detail = ex.message
@@ -95,7 +93,7 @@ class ProblemDetailHandler {
     }
 
     @ExceptionHandler(InvalidRequestException::class)
-    fun handleForbiddenException(ex: InvalidRequestException): ResponseEntity<ProblemDetail> {
+    fun handleInvalidRequestException(ex: InvalidRequestException): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
         problemDetail.title = "Bad Request error"
         problemDetail.detail = ex.message
@@ -104,7 +102,7 @@ class ProblemDetailHandler {
     }
 
     @ExceptionHandler(UnauthorizedRequestException::class)
-    fun handleForbiddenException(ex: UnauthorizedRequestException): ResponseEntity<ProblemDetail> {
+    fun handleUnauthorizedRequestException(ex: UnauthorizedRequestException): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED)
         problemDetail.title = "Unauthorized error"
         problemDetail.detail = ex.message
@@ -112,12 +110,32 @@ class ProblemDetailHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail)
     }
     @ExceptionHandler(TimeOutException::class)
-    fun handleForbiddenException(ex: TimeOutException): ResponseEntity<ProblemDetail> {
+    fun handleTimeOutException(ex: TimeOutException): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED)
         problemDetail.title = "Unauthorized error"
         problemDetail.detail = ex.message
         problemDetail.setProperty("code", ex.errCode)
         LOGGER.error("TimeOutException : {} with code {}", ex.message, ex.errCode)
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail)
+    }
+
+    @ExceptionHandler(DateTimeException::class)
+    fun handleInvalidMonth(ex: DateTimeException): ResponseEntity<ProblemDetail> {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Date time error"
+        problemDetail.detail = ex.message
+        problemDetail.setProperty("code", 68)
+        LOGGER.error("DateTimeException : {}", ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+    }
+
+    @ExceptionHandler(TypeMismatchException::class)
+    fun handleTypeMismatch(ex: TypeMismatchException): ResponseEntity<ProblemDetail> {
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Type Mismatch error"
+        problemDetail.detail = ex.message
+        problemDetail.setProperty("code", 67)
+        LOGGER.error("TypeMismatchException : {}", ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
     }
 }

@@ -6,6 +6,8 @@ import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.infrastructure.api.booklet.BookletBookingRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
+import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
@@ -26,7 +28,8 @@ import java.time.LocalDate
 class BookletControllerTest(
     @param:LocalServerPort val port: Int,
     @param:Autowired val accountStateAdapter: AccountStateTestAdapter,
-    @param:Autowired val objectMapper: ObjectMapper
+    @param:Autowired val objectMapper: ObjectMapper,
+    @param:Autowired private val transactionStateTestAdapter: TransactionStateTestAdapter
 ): AuthenticatedUserTest() {
 
     @AfterEach
@@ -247,28 +250,33 @@ class BookletControllerTest(
                 owner = user,
             )
             val currentDate = LocalDate.now()
-            booklet.addTransaction(
-                Transaction(
-                    id = null,
-                    label = "Transaction 1",
-                    amount = Amount.fromString("100.00"),
-                    date = currentDate,
-                    isPreview = false,
-                    isIncome = true,
-                )
-            )
-            booklet.addTransaction(
-                Transaction(
-                    id = null,
-                    label = "Transaction 2",
-                    amount = Amount.fromString("50.00"),
-                    date = currentDate,
-                    isPreview = false,
-                    isIncome = false,
-                )
+            accountStateAdapter.init(listOf(booklet))
+            transactionStateTestAdapter.init(
+                listOf(AccountTransaction(
+                    user!!.id,
+                    booklet.label,
+                    transactions = listOf(
+                        Transaction(
+                            id = null,
+                            label = "Transaction 2",
+                            amount = Amount.fromString("50.00"),
+                            date = currentDate,
+                            isPreview = false,
+                            isIncome = false,
+                        ),
+                        Transaction(
+                            id = null,
+                            label = "Transaction 1",
+                            amount = Amount.fromString("100.00"),
+                            date = currentDate,
+                            isPreview = false,
+                            isIncome = true,
+                        )
+                    ),
+                    token = token
+                ))
             )
 
-            accountStateAdapter.init(listOf(booklet))
             val savedBooklet = accountStateAdapter.get().first()
 
             Given {
@@ -305,14 +313,15 @@ class BookletControllerTest(
 
         @Test
         fun `Request report with invalid month should return 400`() {
+            val element = Booklet(
+                id = null,
+                amount = Amount.fromString("1000.00"),
+                labelAccount = "Test Account",
+                owner = user,
+            )
             accountStateAdapter.init(
                 listOf(
-                    Booklet(
-                        id = null,
-                        amount = Amount.fromString("1000.00"),
-                        labelAccount = "Test Account",
-                        owner = user,
-                    )
+                    element
                 )
             )
             val booklet = accountStateAdapter.get().first()

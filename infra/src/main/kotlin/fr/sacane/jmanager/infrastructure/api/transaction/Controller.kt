@@ -53,7 +53,7 @@ class TransactionController(
 
 
     @GetMapping
-    fun getTransactionsByMonthAndYearAndAccountLabel(
+    fun getTransactionsByMonthAndYearAndAccountId(
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
         @RequestParam("bookletId") bookletId: Long
