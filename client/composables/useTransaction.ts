@@ -9,7 +9,7 @@ export default function useTransaction() {
       accountLabel,
     })
   }
-  async function findTransactionById(id: number) {
+  async function findTransactionById(id: number): Promise<TransactionResultDTO> {
     return get(`transaction/${id}`)
   }
 

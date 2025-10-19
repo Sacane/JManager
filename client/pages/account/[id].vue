@@ -328,14 +328,14 @@ onUnmounted(() => {
       <!-- Filtres et soldes -->
       <div class="header-controls">
         <div class="date-filters">
-          <Dropdown
+          <Select
             v-model="displayMonth"
             :options="useDate().months.map(u => translate(u))"
             placeholder="Mois"
             class="month-dropdown"
             @change="onMonthChange($event)"
           />
-          <Calendar
+          <DatePicker
             v-model="bookletData.dateYear"
             view="year"
             date-format="yy"
@@ -581,7 +581,7 @@ onUnmounted(() => {
   <TransactionCreationDialog
     :visible="isCreationDialogVisible"
     title="Nouvelle transaction"
-    :digit-placeholder="currentTransaction.value as number"
+    :digit-placeholder="currentTransaction.value"
     :transaction-placeholder="currentTransaction"
     @cancel-creation="isCreationDialogVisible = false"
     @create-transaction="bookTransaction"
@@ -590,7 +590,7 @@ onUnmounted(() => {
   <TransactionCreationDialog
     :visible="isEditDialogVisible"
     title="Modifier la transaction"
-    :digit-placeholder="currentTransaction.value as number"
+    :digit-placeholder="currentTransaction.value"
     :transaction-placeholder="currentTransaction"
     button-title="Mettre à jour"
     @cancel-creation="isEditDialogVisible = false"

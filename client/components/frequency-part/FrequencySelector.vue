@@ -55,7 +55,7 @@ function displayableType(type: FrequencyPropertyType): string {
   <form class="freq-form" @submit.prevent>
     <div class="form-group">
       <h3>Type de fréquence</h3>
-      <Dropdown
+      <Select
         :model-value="props.modelValue.type"
         :options="frequencyTypes"
         :option-label="displayableType"

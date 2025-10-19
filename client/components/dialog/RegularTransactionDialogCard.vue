@@ -237,7 +237,7 @@ function handleEdit() {
                   <i class="pi pi-sync" />
                   Fréquence
                 </label>
-                <Dropdown
+                <Select
                   id="regularity"
                   v-model="formData.regularity"
                   :options="frequencyOptions"
@@ -253,7 +253,7 @@ function handleEdit() {
                   <i class="pi pi-calendar-plus" />
                   Date de début
                 </label>
-                <Calendar
+                <DatePicker
                   id="startDate"
                   v-model="startDateValue"
                   date-format="dd/mm/yy"
@@ -269,7 +269,7 @@ function handleEdit() {
                 <i class="pi pi-replay" />
                 Durée de récurrence
               </label>
-              <Dropdown
+              <Select
                 id="frequencyType"
                 v-model="formData.frequencyProperty.type"
                 :options="frequencyTypeOptions"
@@ -286,7 +286,7 @@ function handleEdit() {
                   <i class="pi pi-calendar-times" />
                   Date de fin
                 </label>
-                <Calendar
+                <DatePicker
                   id="untilDate"
                   v-model="untilDateValue"
                   date-format="dd/mm/yy"
@@ -328,7 +328,7 @@ function handleEdit() {
                 <i class="pi pi-tags" />
                 Tag associé
               </label>
-              <Dropdown
+              <Select
                 id="tag"
                 v-model="formData.tagDTO"
                 :options="tags"
@@ -349,7 +349,7 @@ function handleEdit() {
                     :style="getTagStyle(slotProps.option.colorDTO)"
                   />
                 </template>
-              </Dropdown>
+              </Select>
             </div>
           </div>
         </div>
