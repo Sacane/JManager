@@ -92,6 +92,10 @@ export default function useDate() {
     return parse(dateString, 'yyyy-MM-dd', new Date())
   }
 
+  function formatDate(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  }
+
   function formattedDateString(date: Date): string {
     const day = String(date.getDate()).padStart(2, '0')
     const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -125,5 +129,5 @@ export default function useDate() {
     }
   }
 
-  return { months, translate, monthFromNumber, dateFromString, formattedDateString, englishMonth, frequencyToString, strToFrequency, numberFromMonth }
+  return { months, translate, monthFromNumber, dateFromString, formattedDateString, englishMonth, frequencyToString, strToFrequency, numberFromMonth, formatDate }
 }

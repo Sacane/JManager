@@ -1,3 +1,5 @@
+import { format } from 'date-fns'
+
 export default function useTransaction() {
   const { deleteQuery, post, get, patch } = useQuery()
   const dateUse = useDate()
@@ -16,7 +18,10 @@ export default function useTransaction() {
   function saveTransaction(accountLabel: string, transactionCreationDTO: TransactionCreationDTO): Promise<TransactionResultDTO> {
     return post('transaction', {
       accountLabel,
-      transactionResult: transactionCreationDTO,
+      transactionResult: {
+        ...transactionCreationDTO,
+        date: format(transactionCreationDTO.date, 'yyyy-MM-dd'),
+      },
     })
   }
 
@@ -30,7 +35,10 @@ export default function useTransaction() {
   function editTransaction(transactionCreationDTO: TransactionCreationDTO, accountId: number): Promise<TransactionResultDTO> {
     return patch('transaction', {
       accountId,
-      transaction: transactionCreationDTO,
+      transaction: {
+        ...transactionCreationDTO,
+        date: format(transactionCreationDTO.date, 'yyyy-MM-dd'),
+      },
     })
   }
 

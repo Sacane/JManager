@@ -12,7 +12,7 @@ const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
 
-const { englishMonth, translate, monthFromNumber, numberFromMonth } = useDate()
+const { englishMonth, translate, monthFromNumber, numberFromMonth, formattedDateString } = useDate()
 const tag = useTag()
 const { deleteTransaction, confirmPreviewTransaction, saveTransaction, editTransaction, findTransactionById } = useTransaction()
 
@@ -39,7 +39,7 @@ const currentTransaction = reactive<TransactionCreationDTO>({
   label: '',
   value: null,
   isIncome: false,
-  date: new Date().toString(),
+  date: new Date(),
   tagDTO: {},
   isPreview: false,
 })
@@ -55,7 +55,7 @@ function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
     id: transaction.id,
     expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
     incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
-    date: transaction.date.toString(),
+    date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
 }
@@ -89,6 +89,7 @@ async function loadBookletData() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   } catch (err) {
     toast.errorAxios(err)
+    console.error(err)
   }
 }
 

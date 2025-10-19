@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
 
 export interface TransactionCreationProps {
@@ -20,8 +19,6 @@ const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 const inputNumberRef = ref(null)
 
-const { formattedDateString, dateFromString } = useDate()
-
 const tags = ref<TagDTO[]>([])
 
 onMounted(() => {
@@ -38,13 +35,12 @@ function emitTransaction() {
     jToast.warn('Veuillez saisir un montant supérieur à 0')
     return
   }
-  const formattedDate = formattedDateString(dateFromString(transactionResult.date))
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
     value: transactionResult.value,
     isIncome: transactionResult.isIncome,
-    date: formattedDate,
+    date: transactionResult.date,
     tagDTO: transactionResult.tagDTO,
     isPreview: transactionResult.isPreview,
   }

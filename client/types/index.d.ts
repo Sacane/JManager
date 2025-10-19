@@ -5,7 +5,7 @@ declare global {
     label: string
     value: number
     isIncome: boolean
-    date: string
+    date: Date
     color: ColorDTO
     tagDTO: TagDTO
     isPreview: boolean
@@ -55,7 +55,7 @@ declare global {
     label: string
     value: number | null
     isIncome: boolean
-    date: string
+    date: Date
     tagDTO: TagDTO
     isPreview: boolean
   }
@@ -68,7 +68,7 @@ declare global {
   interface RegularTransactionDTO {
     id: string
     label: string
-    startDate: string
+    startDate: Date
     value: number
     isIncome: boolean
     regularity: string
@@ -78,14 +78,14 @@ declare global {
 
   interface FrequencyPropertyDTO {
     type: 'FOREVER' | 'UNTIL_DATE' | 'TIMES'
-    untilDate?: string
+    untilDate?: Date
     times?: number
   }
   interface MonthlyTransactionCreationRequest {
     label: string
     value: number
     isIncome: boolean
-    startDate: string
+    startDate: Date
     tagDTO?: TagDTO | null
     frequencyProperty: FrequencyPropertyDTO
     repeatDay: number | null
@@ -145,8 +145,8 @@ declare global {
     totalAmount: string
     totalIncome: string
     totalExpenses: string
-    startDate: string
-    endDate: string
+    startDate: Date
+    endDate: Date
   }
 
   interface StatsTransactionDTO {
@@ -154,7 +154,7 @@ declare global {
     label: string
     amount: string
     isIncome: boolean
-    date: string
+    date: Date
     tag: string
   }
 }
