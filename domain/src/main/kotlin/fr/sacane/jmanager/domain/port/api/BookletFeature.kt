@@ -250,7 +250,12 @@ class BookletFeatureImpl(
         }
         
         val totalAmount = relevantTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
-            acc.add(transaction.amount.value)
+            val value = transaction.amount.value.abs()
+            if (transaction.isIncome) {
+                acc.add(value)
+            } else {
+                acc.subtract(value)
+            }
         }
         
         return Amount(booklet.amount.value.add(totalAmount))

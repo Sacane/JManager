@@ -83,7 +83,7 @@ class TransactionControllerTest(
             accountStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
+            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
                 port(port)
@@ -103,7 +103,7 @@ class TransactionControllerTest(
 
         @Test
         fun `Create a transaction with an unknown account must send 404`() {
-            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
+            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
                 port(port)
@@ -119,7 +119,7 @@ class TransactionControllerTest(
 
         @Test
         fun `Create a transaction with an unauthenticated user must send 404`() {
-            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now().toString(), null, false))
+            val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
                 port(port)

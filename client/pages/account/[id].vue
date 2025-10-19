@@ -12,7 +12,7 @@ const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
 
-const { englishMonth, translate, monthFromNumber, numberFromMonth, formattedDateString } = useDate()
+const { englishMonth, translate, monthFromNumber, numberFromMonth } = useDate()
 const tag = useTag()
 const { deleteTransaction, confirmPreviewTransaction, saveTransaction, editTransaction, findTransactionById } = useTransaction()
 
@@ -49,7 +49,7 @@ const transactionsCount = computed(() => actualSheets.value.length)
 const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedSheets.value.length > 0)
 
-function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
+function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
     ...transaction,
     id: transaction.id,
@@ -80,7 +80,7 @@ async function loadBookletData() {
     const result: BookletReport = await findByIdMonthAndYear(accountId, month, bookletData.year)
 
     bookletData.label = result.label
-    bookletData.id = route.params?.id as string
+    bookletData.id = route.params?.id
     bookletData.realSold = Number.parseFloat(result.realSold)
     bookletData.previewSold = Number.parseFloat(result.previewSold)
 

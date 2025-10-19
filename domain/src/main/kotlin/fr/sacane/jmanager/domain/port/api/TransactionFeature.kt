@@ -64,6 +64,7 @@ class TransactionFeatureImpl(
         transaction: Transaction
     ): Result<TransactionResumeResult> = session.authenticate(token) { id ->
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
+            logger.info("Request for a transaction with id $id")
             val account = accountRepository.findAccountByLabelWithTransactions(id, accountLabel)
                 ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Le compte $accountLabel n'existe pas")
             val newTr =  transactionRepository.save(account.id!!, transaction)
@@ -78,6 +79,7 @@ class TransactionFeatureImpl(
             }
             account.addTransaction(newTr)
             accountRepository.update(account)
+            logger.info("Transaction $newTr has been created, the booklet sold has been updated : $account")
             success(TransactionResumeResult(newTr, account.amount, account.previewAmount))
         }
     }
