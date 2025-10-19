@@ -125,20 +125,20 @@ function updateMonthlyRepeatValue(value: number | null) {
       </div>
       <div class="flex flex-col gap-3 w-50%">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
-        <Calendar id="calendar" v-model="regularTrForm.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
+        <DatePicker id="calendar" v-model="regularTrForm.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
       </div>
       <div class="flex flex-row gap-5">
         <div class="flex flex-col">
           <p>Tag</p>
-          <Dropdown v-model="regularTrForm.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
+          <Select v-model="regularTrForm.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
             <template #option="slotTag">
               <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
             </template>
-          </Dropdown>
+          </Select>
         </div>
         <div class="flex flex-col">
           <p>Fréquence</p>
-          <Dropdown v-model="regularTrForm.frequency" :options="[frequencyToString('DAILY'), frequencyToString('WEEKLY'), frequencyToString('MONTHLY'), frequencyToString('YEARLY')]" placeholder="Répéter" class="w-full md:w-14rem" />
+          <Select v-model="regularTrForm.frequency" :options="[frequencyToString('DAILY'), frequencyToString('WEEKLY'), frequencyToString('MONTHLY'), frequencyToString('YEARLY')]" placeholder="Répéter" class="w-full md:w-14rem" />
         </div>
       </div>
       <div class="flex flex-col gap-3 mt-4">

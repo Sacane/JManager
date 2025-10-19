@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
 
 export interface TransactionCreationProps {
   title: string
-  digitPlaceholder: number
+  digitPlaceholder: number | null
   transactionPlaceholder: TransactionCreationDTO
   buttonTitle?: string
 }
@@ -19,8 +18,6 @@ const digits = reactive({
 const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 const inputNumberRef = ref(null)
-
-const { formattedDateString } = useDate()
 
 const tags = ref<TagDTO[]>([])
 
@@ -38,13 +35,12 @@ function emitTransaction() {
     jToast.warn('Veuillez saisir un montant supérieur à 0')
     return
   }
-  const formattedDate = formattedDateString(transactionResult.date)
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
     value: transactionResult.value,
     isIncome: transactionResult.isIncome,
-    date: formattedDate,
+    date: transactionResult.date,
     tagDTO: transactionResult.tagDTO,
     isPreview: transactionResult.isPreview,
   }
@@ -109,14 +105,14 @@ function handleTabKey(event: KeyboardEvent) {
       </div>
       <div class="flex flex-col gap-3 w-50%">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
-        <Calendar id="calendar" v-model="transactionResult.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
+        <DatePicker id="calendar" v-model="transactionResult.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
       </div>
       <p>Tag</p>
-      <Dropdown v-model="transactionResult.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
+      <Select v-model="transactionResult.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
         <template #option="slotTag">
           <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
         </template>
-      </Dropdown>
+      </Select>
       <div class="flex flex-row gap-5">
         <Button severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
         <Button ref="validerButtonRef" :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full btn-primary text-white" @click="emitTransaction" />

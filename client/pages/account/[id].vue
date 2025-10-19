@@ -39,7 +39,7 @@ const currentTransaction = reactive<TransactionCreationDTO>({
   label: '',
   value: null,
   isIncome: false,
-  date: new Date().toString(),
+  date: new Date(),
   tagDTO: {},
   isPreview: false,
 })
@@ -49,13 +49,13 @@ const transactionsCount = computed(() => actualSheets.value.length)
 const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedSheets.value.length > 0)
 
-function asDisplayableTransaction(transaction: TransactionCreationDTO): any {
+function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
     ...transaction,
     id: transaction.id,
     expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
     incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
-    date: transaction.date.toString(),
+    date: transaction.date,
     tagDTO: transaction.tagDTO,
   }
 }
@@ -80,7 +80,7 @@ async function loadBookletData() {
     const result: BookletReport = await findByIdMonthAndYear(accountId, month, bookletData.year)
 
     bookletData.label = result.label
-    bookletData.id = route.params?.id as string
+    bookletData.id = route.params?.id
     bookletData.realSold = Number.parseFloat(result.realSold)
     bookletData.previewSold = Number.parseFloat(result.previewSold)
 
@@ -89,6 +89,7 @@ async function loadBookletData() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   } catch (err) {
     toast.errorAxios(err)
+    console.error(err)
   }
 }
 
@@ -328,14 +329,14 @@ onUnmounted(() => {
       <!-- Filtres et soldes -->
       <div class="header-controls">
         <div class="date-filters">
-          <Dropdown
+          <Select
             v-model="displayMonth"
             :options="useDate().months.map(u => translate(u))"
             placeholder="Mois"
             class="month-dropdown"
             @change="onMonthChange($event)"
           />
-          <Calendar
+          <DatePicker
             v-model="bookletData.dateYear"
             view="year"
             date-format="yy"
@@ -581,7 +582,7 @@ onUnmounted(() => {
   <TransactionCreationDialog
     :visible="isCreationDialogVisible"
     title="Nouvelle transaction"
-    :digit-placeholder="currentTransaction.value as number"
+    :digit-placeholder="currentTransaction.value"
     :transaction-placeholder="currentTransaction"
     @cancel-creation="isCreationDialogVisible = false"
     @create-transaction="bookTransaction"
@@ -590,7 +591,7 @@ onUnmounted(() => {
   <TransactionCreationDialog
     :visible="isEditDialogVisible"
     title="Modifier la transaction"
-    :digit-placeholder="currentTransaction.value as number"
+    :digit-placeholder="currentTransaction.value"
     :transaction-placeholder="currentTransaction"
     button-title="Mettre à jour"
     @cancel-creation="isEditDialogVisible = false"

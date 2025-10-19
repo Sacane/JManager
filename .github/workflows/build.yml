@@ -9,6 +9,7 @@ jobs:
   test-analysis:
     name: Test and analyze on all branches
     runs-on: self-hosted
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,7 +43,7 @@ jobs:
   build:
     name: Build and deploy
     runs-on: self-hosted
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     needs: test-analysis
     steps:
       - uses: actions/checkout@v4
