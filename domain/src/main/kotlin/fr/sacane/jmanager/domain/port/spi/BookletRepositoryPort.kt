@@ -14,4 +14,5 @@ interface BookletRepositoryPort {
     fun deleteAccountById(accountId: Long)
     fun upsert(booklet: Booklet): Booklet
     fun update(booklet: Booklet)
+    fun findBookletsForUser(userId: UserId): List<Booklet>
 }

@@ -57,4 +57,8 @@ class BookletJpaRepositoryAdapter(
     override fun update(booklet: Booklet) {
         accountRepository.update(booklet.label, booklet.amount.value, booklet.previewAmount.value, booklet.id!!)
     }
+
+    override fun findBookletsForUser(userId: UserId): List<Booklet> {
+        return userId.value?.let { userId -> accountRepository.findAllBookletsByUserId(userId).map { it.toModel() } } ?: emptyList()
+    }
 }

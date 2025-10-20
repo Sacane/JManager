@@ -124,19 +124,7 @@ class StatsFeatureImpl(
     ): Result<CategoryDistributionOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching category distribution for user $userId")
 
-        val user = userRepository.findUserByIdWithAccounts(userId)
-            ?: return@authenticate failure(
-                ResultState.USER_NOT_FOUND,
-                "L'utilisateur est introuvable"
-            )
-
-        val booklets = user.booklets.map {
-            bookletRepository.findAccountByIdWithTransactions(it.id!!)
-                ?: return@authenticate failure(
-                    ResultState.BOOKLET_NOT_FOUND,
-                    "Le compte ${it.id} est introuvable"
-                )
-        }
+        val booklets = bookletRepository.findBookletsForUser(userId)
 
         val allTransactions = booklets.flatMap { booklet ->
             booklet.transactions
@@ -163,19 +151,7 @@ class StatsFeatureImpl(
     ): Result<TrendStatsOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching trend stats for user $userId")
 
-        val user = userRepository.findUserByIdWithAccounts(userId)
-            ?: return@authenticate failure(
-                ResultState.USER_NOT_FOUND,
-                "L'utilisateur est introuvable"
-            )
-
-        val booklets = user.booklets.map { booklet ->
-            bookletRepository.findAccountByIdWithTransactions(booklet.id!!)
-                ?: return@authenticate failure(
-                    ResultState.BOOKLET_NOT_FOUND,
-                    "Le compte ${booklet.id} est introuvable"
-                )
-        }
+        val booklets = bookletRepository.findBookletsForUser(userId)
 
         val monthlyTrends = trendCalculator.calculateTrend(
             booklets = booklets
@@ -212,19 +188,7 @@ class StatsFeatureImpl(
             )
         }
 
-        val user = userRepository.findUserByIdWithAccounts(userId)
-            ?: return@authenticate failure(
-                ResultState.USER_NOT_FOUND,
-                "L'utilisateur est introuvable"
-            )
-
-        val booklets = user.booklets.map {
-            bookletRepository.findAccountByIdWithTransactions(it.id!!)
-                ?: return@authenticate failure(
-                    ResultState.BOOKLET_NOT_FOUND,
-                    "Le compte ${it.id} est introuvable"
-                )
-        }
+        val booklets = bookletRepository.findBookletsForUser(userId)
 
         val result = previsionalTransactionFilter.filterPrevisionalTransactions(
             booklets = booklets,

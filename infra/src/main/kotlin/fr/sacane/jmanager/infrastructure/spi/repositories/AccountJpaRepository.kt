@@ -7,7 +7,6 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
-import java.time.Month
 
 @Repository
 interface AccountJpaRepository: CrudRepository<AccountResource, Long>{
@@ -30,4 +29,7 @@ interface AccountJpaRepository: CrudRepository<AccountResource, Long>{
 
     @Query("SELECT account FROM AccountResource account LEFT JOIN FETCH account.monthlyTransactions WHERE account.idAccount = :id")
     fun findByIdWithMonthlyTransactions(id: Long): AccountResource?
+
+    @Query("SELECT account FROM AccountResource account LEFT JOIN FETCH account.sheets LEFT JOIN FETCH account.monthlyTransactions WHERE account.owner.idUser = :userId")
+    fun findAllBookletsByUserId(userId: Long): List<AccountResource>
 }

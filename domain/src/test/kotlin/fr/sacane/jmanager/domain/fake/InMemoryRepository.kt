@@ -182,6 +182,10 @@ class InMemoryBookletRepository(
         upsert(booklet)
     }
 
+    override fun findBookletsForUser(userId: UserId): List<Booklet> {
+        return inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklet ?: emptyList()
+    }
+
     override fun getStates(): Collection<AccountByOwner> {
         return inMemoryDatabase.accountsByOwner()
     }
