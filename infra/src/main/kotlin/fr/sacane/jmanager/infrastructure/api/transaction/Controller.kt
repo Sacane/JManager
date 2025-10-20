@@ -60,12 +60,14 @@ class TransactionController(
         ): ResponseEntity<TransactionListResponse> {
         logger.info("Request transactions from booklet $bookletId for month $month and year $year")
         val response = bookletFeature.loadTransactionsForBookletForAMonth(currentUser.token, bookletId, month ?: Month.JANUARY, year)
-        if(response.status.isFailure()) return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(TransactionListResponse(
-            transactions = response.mapTo { (it!!.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() } },
-            amount = response.mapTo { it!!.realSold.value.toString() },
-            previewAmount = response.mapTo { it!!.previsionalSold.value.toString() }
-        )).also { logger.info("Transactions fetched successfully") }
+
+        return response.map {
+            TransactionListResponse(
+                transactions = (it!!.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() },
+                amount = it.realSold.value.toString() ,
+                previewAmount = it.previsionalSold.value.toString()
+            )
+        }.toHttpResponse().also { logger.info("Transactions fetched successfully") }
     }
 
     @PatchMapping

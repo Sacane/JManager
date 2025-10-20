@@ -48,18 +48,9 @@ class Result <S>(
         return this
     }
 
-    private fun isSuccessAndNotEmpty(): Boolean {
-        return isSuccess() && data != null
-    }
-
-    fun <T> mapBoth(
-        onSuccess: (S?) -> T,
-        onFailure: (Pair<String, ResultState>) -> T
-    ): T? = when {
-        isSuccess() && data == null -> null
-        isSuccessAndNotEmpty() -> onSuccess.invoke(data)
-        isFailure() -> onFailure(Pair(message, status))
-        else -> null
+    fun mapNotNullOrFailure(): S? {
+        if (this.isFailure()) null
+        return this.data
     }
 
     fun isSuccess(): Boolean{
@@ -76,7 +67,7 @@ class Result <S>(
         return Result(status, mapper.invoke(value))
     }
 
-    fun <T> mapTo (
+    fun <T> mapNullable (
             mapper: (S?) -> T
     ): T {
         return mapper.invoke(this.data)

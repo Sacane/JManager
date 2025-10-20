@@ -15,7 +15,6 @@ import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import fr.sacane.jmanager.infrastructure.api.transaction.toDTO
 import org.springframework.http.ResponseEntity
 import java.awt.Color
-import java.time.LocalDate
 
 internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
     this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
@@ -41,7 +40,7 @@ internal fun Long.id(): UserId = UserId(this)
 
 internal fun <T> Result<T>.toHttpResponse()
 : ResponseEntity<T> = when(this.status){
-    ResultState.OK -> mapTo { ResponseEntity.ok(it) }
+    ResultState.OK -> mapNullable { ResponseEntity.ok(it) }
     ResultState.NOT_FOUND,
     ResultState.TAG_NOT_FOUND,
     ResultState.USER_NOT_FOUND,

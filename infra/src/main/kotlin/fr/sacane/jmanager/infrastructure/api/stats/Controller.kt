@@ -2,6 +2,8 @@ package fr.sacane.jmanager.infrastructure.api.stats
 
 import fr.sacane.jmanager.domain.port.api.StatsFeature
 import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.infrastructure.api.NotFoundException
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
@@ -55,10 +57,11 @@ class StatsController(
         @RequestParam endDate: LocalDate
     ): ResponseEntity<PrevisionalTransactionsDTO> {
         LOGGER.info("Requesting previsional transactions from $startDate to $endDate")
-
+        val defaultTag = tagFeature.defaultTag(currentUser.token).mapNotNullOrFailure() ?: throw NotFoundException(
+            ResultState.TAG_NOT_FOUND.code, "Default tag not found")
         return statsFeature.getPrevisionalTransactions(currentUser.token, startDate, endDate)
             .map {
-                tagFeature.defaultTag(currentUser.token).mapTo { tag -> it.toDTO(tag!!)}
+                it.toDTO(defaultTag)
             }
             .toHttpResponse()
     }
