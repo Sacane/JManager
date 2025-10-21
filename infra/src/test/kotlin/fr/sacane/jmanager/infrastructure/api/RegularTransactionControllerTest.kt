@@ -279,7 +279,7 @@ class RegularTransactionControllerTest(
 
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(request))
             } When {
@@ -357,7 +357,7 @@ class RegularTransactionControllerTest(
         fun `Get regular transaction with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/transaction/regular/{id}", mapOf("id" to "00000000-0000-0000-0000-000000000000"))
@@ -447,7 +447,7 @@ class RegularTransactionControllerTest(
         fun `Get all regular transactions with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/transaction/regular")

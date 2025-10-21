@@ -9,6 +9,10 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.utility.DockerImageName
 
 
 abstract class AuthenticatedUserTest {
@@ -22,6 +26,23 @@ abstract class AuthenticatedUserTest {
     private lateinit var session: UserFeature
 
     companion object {
+        private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:15-alpine"))
+            .withDatabaseName("test")
+            .withUsername("sa")
+            .withPassword("sa")
+
+        init {
+            postgresContainer.start()
+        }
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun configureProperties(registry: DynamicPropertyRegistry) {
+            registry.add("spring.datasource.url") { postgresContainer.jdbcUrl }
+            registry.add("spring.datasource.username") { postgresContainer.username }
+            registry.add("spring.datasource.password") { postgresContainer.password }
+        }
+
         @BeforeAll
         @JvmStatic
         fun setup() {

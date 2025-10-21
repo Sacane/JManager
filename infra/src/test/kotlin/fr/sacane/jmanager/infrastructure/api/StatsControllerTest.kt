@@ -129,7 +129,7 @@ class StatsControllerTest(
 
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/stats/monthly/{accountId}/{year}", mapOf("accountId" to booklet.id!!, "year" to year))
@@ -199,7 +199,7 @@ class StatsControllerTest(
         fun `Get category distribution with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/stats/category-distribution")
@@ -274,7 +274,7 @@ class StatsControllerTest(
         fun `Get trend stats with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/stats/trends")
@@ -339,7 +339,7 @@ class StatsControllerTest(
 
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
                 queryParam("startDate", startDate.toString())
                 queryParam("endDate", endDate.toString())

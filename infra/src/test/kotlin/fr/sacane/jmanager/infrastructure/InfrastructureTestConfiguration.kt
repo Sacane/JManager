@@ -7,20 +7,13 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Profile
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import javax.sql.DataSource
 
 @TestConfiguration
-@Profile("test")
 class InfrastructureTestConfiguration {
-    @Bean
-    fun dataSource(): DataSource = EmbeddedDatabaseBuilder()
-        .setType(EmbeddedDatabaseType.H2)
-        .build()
+    // Aucun bean DataSource ici : on laisse Spring Boot s'initialiser à partir
+    // des propriétés de datasource (définies par le bootstrap Testcontainers)
 }
 
 class TestLocalDateSerializer : JsonSerializer<LocalDate>() {

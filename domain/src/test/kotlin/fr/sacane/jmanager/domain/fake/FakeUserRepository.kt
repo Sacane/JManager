@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.State
+import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -32,9 +33,9 @@ class FakeUserRepository: UserRepository, State<User> {
         return user.user
     }
 
-    override fun register(username: String, password: String): User {
-        val user = User(id = UserId(Random(15).nextLong()), username = username, email="")
-        users.add(UserWithPassword(user, password))
+    override fun register(username: String, password: String, roles: Set<Role>): User {
+        val user = User(id = UserId(Random(15).nextLong()), username = username, email="", roles = roles)
+        users.add(UserWithPassword(user, password, roles))
         return user
     }
 

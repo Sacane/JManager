@@ -232,7 +232,7 @@ class BookletFeatureImpl(
     ): Amount {
         val currentDate = LocalDate.now()
         val allTransactions = booklet.transactions
-        
+
         val relevantTransactions = allTransactions.filter { transaction ->
             val transactionDate = transaction.date
             val transactionYearMonth = transactionDate.year * 12 + transactionDate.monthValue
@@ -242,7 +242,7 @@ class BookletFeatureImpl(
             when {
                 transactionYearMonth < currentYearMonth -> false
                 transactionYearMonth == currentYearMonth -> {
-                    !transaction.isPreview || transactionDate.isAfter(currentDate) || transactionDate.isEqual(currentDate)
+                    transaction.isPreview
                 }
                 transactionYearMonth <= targetYearMonth -> true
                 else -> false
