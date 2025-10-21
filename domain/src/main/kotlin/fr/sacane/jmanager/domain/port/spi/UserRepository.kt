@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain.port.spi
 
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -14,6 +15,6 @@ interface UserRepository {
     fun findByPseudonym(pseudonym: String): User?
     fun findByPseudonymWithEncodedPassword(pseudonym: String): UserWithPassword?
     fun create(user: UserWithPassword): User?
-    fun register(username: String, password: String): User?
+    fun register(username: String, password: String, roles: Set<Role> = setOf(Role.USER)): User?
     fun upsert(user: User): User?
 }

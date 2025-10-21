@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.weight
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
 import fr.sacane.jmanager.domain.utils.timeout
@@ -13,7 +14,7 @@ interface SessionManager{
     fun addSession(userId: UserId, session: AccessToken)
     fun <T> authenticate(
         token: String,
-        requiredRoles: Array<Role> = arrayOf(Role.USER, Role.ADMIN),
+        requiredRoles: List<Role> = listOf(Role.USER),
         block: (UserId) -> Result<T>
     ): Result<T>
     fun removeSession(userId: UserId, token: String)
@@ -43,13 +44,15 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
     }
     override fun <T> authenticate(
         token: String,
-        requiredRoles: Array<Role>,
+        requiredRoles: List<Role>,
         block: (UserId) -> Result<T>
     ): Result<T> {
         val accessToken = synchronized(lock) {
             val decodedToken = tokenGenerator.readToken(token) ?: return unauthorized("Le token est invalide, une erreur est survenu à la lecture")
             val session = getSession(decodedToken.userId, decodedToken.tokenValue) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
-            if (!requiredRoles.contains(session.role)) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
+
+            val roles = session.roles
+            if (roles.weight() < requiredRoles.weight()) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
             if (session.isExpired()) return timeout("La session a expiré")
             if (session.tokenValue != token) return unauthorized("Le token est invalide")
             session.updateLifetime()

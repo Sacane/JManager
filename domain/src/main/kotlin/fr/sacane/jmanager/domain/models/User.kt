@@ -19,16 +19,13 @@ class User(
     val username: String,
     val email: String?,
     val booklets: MutableList<Booklet> = mutableListOf(),
-    val tags: MutableSet<Tag> = mutableSetOf()
+    val tags: MutableSet<Tag> = mutableSetOf(),
+    val roles: Set<Role> = setOf(Role.USER)
 ) {
 
     fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
     fun hasAccount(labelAccount: String): Boolean = booklets.any { labelAccount == it.label }
     override fun toString(): String = "username: $username"
-
-    fun removeAccount(accountID: Long) {
-        booklets.removeIf { it.id == accountID }
-    }
     fun addAccount(booklet: Booklet) {
         booklets.add(booklet)
         booklet.owner = this
@@ -38,4 +35,12 @@ class User(
 data class UserWithPassword(
     val user: User,
     val password: String,
+    val roles: Set<Role> = setOf(Role.USER)
 )
+
+enum class Role(val weight: Int) {
+    USER(1),
+    ADMIN(2)
+}
+
+fun Collection<Role>.weight(): Int = this.sumOf { it.weight }

@@ -69,7 +69,6 @@ class Booklet(
         if(transaction.isNotPreview) {
             this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
-        println("preview amount before calculation : $previewAmount")
         this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
     private fun removeTransaction(transaction: Transaction) {

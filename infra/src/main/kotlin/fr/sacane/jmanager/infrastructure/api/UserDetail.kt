@@ -7,11 +7,11 @@ import org.springframework.security.core.context.SecurityContextHolder
 data class JmanagerUserAuthDetail(
     val id: Long,
     val username: String,
-    val role: Role,
+    val role: Set<Role>,
     val token: String
 )
 
-fun User.asAuthDetail(token: String, role: Role = Role.USER): JmanagerUserAuthDetail {
+fun User.asAuthDetail(token: String, role: Set<Role> = setOf(Role.USER)): JmanagerUserAuthDetail {
     return JmanagerUserAuthDetail(
         id = this.id.value!!,
         username = this.username,

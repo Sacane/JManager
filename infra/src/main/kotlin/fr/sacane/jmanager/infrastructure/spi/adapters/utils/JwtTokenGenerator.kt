@@ -21,13 +21,16 @@ class JwtTokenGenerator(
             return SecretKeySpec(keyBytes, 0, keyBytes.size, "HmacSHA256")
         }
 
-    override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {
+    override fun generateToken(userId: UserId, username: String, roles: Set<Role>): AccessToken {
         val expirationDate = Date(System.currentTimeMillis() + 60 * 60 * 1000) // 1 hour
-        return Jwts.builder()
+        var claim = Jwts.builder()
             .subject(userId.value.toString())
             .expiration(expirationDate)
-            .claim("role", role.name)
             .claim("username", username)
+        for(role in roles) {
+            claim = claim.claim(role.name, true)
+        }
+        return claim
             .signWith(signingKey)
             .compact()
             .let { tokenValue ->
@@ -36,7 +39,7 @@ class JwtTokenGenerator(
                     userName = username,
                     tokenValue = tokenValue,
                     tokenExpirationDate = expirationDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
-                    role = role
+                    roles = roles
                 )
             }
 
@@ -51,7 +54,8 @@ class JwtTokenGenerator(
                 .payload
 
             val userId = UserId(claims.subject.toLong())
-            val role = Role.valueOf(claims["role"].toString())
+            val roleUser = claims["USER"] as? Boolean ?: false
+            val roleAdmin = claims["ADMIN"] as? Boolean ?: false
             val expirationDate = claims.expiration.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
 
             AccessToken(
@@ -59,7 +63,10 @@ class JwtTokenGenerator(
                 userName = claims["username"].toString(),
                 tokenValue = token,
                 tokenExpirationDate = expirationDate,
-                role = role
+                roles = buildSet {
+                    if (roleUser) add(Role.USER)
+                    if (roleAdmin) add(Role.ADMIN)
+                }
             )
         } catch (e: Exception) {
             println("Error reading token $token: ${e.message}")

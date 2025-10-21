@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -60,8 +61,8 @@ class UserRepositoryJpaAdapter (
         }
     }
     @Transactional
-    override fun register(username: String, password: String): User? {
-        val userResource = UserResource(username = username, password = password)
+    override fun register(username: String, password: String, roles: Set<Role>): User? {
+        val userResource = UserResource(username = username, password = password, roles = roles.toMutableSet())
         val userResponse = userPostgresRepository.save(
             userResource
         )

@@ -4,12 +4,10 @@ import fr.sacane.jmanager.domain.Env
 import java.time.LocalDateTime
 import java.time.LocalDateTime.now
 import java.util.*
-enum class Role {
-    ADMIN, USER
-}
 
-val roleUser = arrayOf(Role.USER)
-val roleAdmin = arrayOf(Role.ADMIN)
+
+val roleUser = listOf(Role.USER)
+val roleAdmin = listOf(Role.USER, Role.ADMIN)
 
 
 data class AccessToken(
@@ -19,7 +17,7 @@ data class AccessToken(
     var tokenExpirationDate: LocalDateTime = now().plusHours(1),
     val refreshToken: UUID? = UUID.randomUUID(),
     var refreshTokenLifetime: LocalDateTime = now().plusDays(1),
-    val role: Role = Role.USER
+    val roles: Set<Role> = setOf(Role.USER)
 ){
     fun isExpired(): Boolean{
         return tokenExpirationDate.isBefore(now())

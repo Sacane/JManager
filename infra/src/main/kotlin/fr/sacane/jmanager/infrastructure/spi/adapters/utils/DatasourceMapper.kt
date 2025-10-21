@@ -98,6 +98,7 @@ internal fun UserResource.toModel()
     id = UserId(this.idUser),
     username = this.username,
     email = this.email,
+    roles = roles
 )
 internal fun UserResource.toModelWithSimpleAccounts()
         : User = User(
@@ -110,7 +111,7 @@ internal fun UserResource.toModelWithSimpleAccounts()
 internal fun BookletResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
 
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
-    UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password)
+    UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password, roles)
 
 fun Tag.asResource(): AbstractTagResource {
     return when(this.isDefault) {

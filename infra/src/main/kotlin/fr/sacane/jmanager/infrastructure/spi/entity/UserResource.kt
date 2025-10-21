@@ -1,8 +1,9 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
+import fr.sacane.jmanager.domain.models.Role
 import jakarta.persistence.*
 
-@Table(name="userResource")
+@Table(name="user_resource")
 @Entity
 class UserResource(
     @Column(unique = true, nullable = false)
@@ -15,6 +16,14 @@ class UserResource(
     var accounts: MutableList<BookletResource> = mutableListOf(),
     @OneToMany(mappedBy = "owner")
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "user_role",
+        joinColumns = [JoinColumn(name = "id_user", referencedColumnName = "id_user")]
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    var roles: MutableSet<Role> = mutableSetOf(Role.USER),
     @Id
     @GeneratedValue
     @Column(name = "id_user")
