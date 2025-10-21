@@ -7,7 +7,7 @@ import java.math.BigDecimal
 
 @Entity
 @Table(name = "account")
-class AccountResource(
+class BookletResource(
     @Column(name = "amount")
     var amount: BigDecimal = BigDecimal(0.0),
     @Column(name = "label", length = 30, nullable = false)

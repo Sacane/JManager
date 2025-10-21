@@ -1,8 +1,8 @@
 package fr.sacane.jmanager.infrastructure.datasource
 
-import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
+import fr.sacane.jmanager.infrastructure.spi.entity.BookletResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -24,7 +24,7 @@ class InfraUserTest {
     lateinit var userPostgresRepository: UserPostgresRepository
 
     @Autowired
-    lateinit var accountJpaRepository: AccountJpaRepository
+    lateinit var bookletJpaRepository: BookletJpaRepository
 
     fun basicUserTest(): UserResource {
         return UserResource("johan_test", "0101012000","johan.ramaroson@test.com")
@@ -56,7 +56,7 @@ class InfraUserTest {
         userPostgresRepository.save(user)
 
         val byName = userPostgresRepository.findByUsername(user.username)
-        val account = AccountResource(label = "test account")
+        val account = BookletResource(label = "test account")
         account.amount = BigDecimal(102)
 
         byName?.accounts!!.add(account)
@@ -65,7 +65,7 @@ class InfraUserTest {
 
         assertThat(userPostgresRepository.count()).isLessThan(2)
         assertThat(byName.accounts).isNotEmpty
-        assertThat(accountJpaRepository.count()).isGreaterThan(0)
+        assertThat(bookletJpaRepository.count()).isGreaterThan(0)
         userPostgresRepository.deleteByUsername("johan_test")
 
     }

@@ -31,7 +31,7 @@ class TransactionResource(
     var lastModified: LocalDateTime? = null,
     var isPreview: Boolean = false,
     @ManyToOne(fetch = FetchType.LAZY)
-    var account: AccountResource? = null,
+    var account: BookletResource? = null,
     ){
     override fun toString(): String {
         return """

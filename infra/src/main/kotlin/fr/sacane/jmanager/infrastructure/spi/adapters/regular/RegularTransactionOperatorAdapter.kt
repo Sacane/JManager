@@ -12,7 +12,7 @@ import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.AbstractRegularTransactionResource
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularTransactionEntity
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -24,7 +24,7 @@ class RegularTransactionOperatorAdapter(
     private val monthlyTransactionResourceJpaRepository: MonthlyTransactionResourceJpaRepository,
     private val tagMapperAdapter: JpaTagMapperAdapter,
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
-    private val accountJpaRepository: AccountJpaRepository,
+    private val bookletJpaRepository: BookletJpaRepository,
     private val defaultTagRepository: DefaultTagPostgresRepository
 ) {
 
@@ -60,7 +60,7 @@ class RegularTransactionOperatorAdapter(
                     )
                 }
                 bookletIds.forEach { bookletId ->
-                    val booklet = accountJpaRepository.findByIdOrNull(bookletId)
+                    val booklet = bookletJpaRepository.findByIdOrNull(bookletId)
                         ?: throw NotFoundException(ResultState.NOT_FOUND.code,"Booklet with id $bookletId not found")
                     result.addBooklet(booklet)
                 }

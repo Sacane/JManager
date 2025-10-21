@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
-import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
+import fr.sacane.jmanager.infrastructure.spi.entity.BookletResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
@@ -44,7 +44,7 @@ data class MonthlyRegularTransactionEntity(
         joinColumns = [JoinColumn(name = "transaction_id")],
         inverseJoinColumns = [JoinColumn(name = "id_account", nullable = false)]
     )
-    var accounts: MutableSet<AccountResource> = mutableSetOf(),
+    var accounts: MutableSet<BookletResource> = mutableSetOf(),
     @ManyToOne(fetch = FetchType.LAZY)
     override val owner: UserResource? = null
 ) : AbstractRegularTransactionResource(label, amount, isIncome, frequencyProperty) {
@@ -63,12 +63,12 @@ data class MonthlyRegularTransactionEntity(
             monthlyRepeatProperty = repeatDay?.let { MonthlyRepeatProperty(it) }
         )
     }
-    fun addBooklet(account: AccountResource) {
+    fun addBooklet(account: BookletResource) {
         accounts.add(account)
         account.monthlyTransactions.add(this)
     }
 
-    fun removeBooklet(account: AccountResource) {
+    fun removeBooklet(account: BookletResource) {
         accounts.removeIf { it.idAccount == account.idAccount }
     }
 }

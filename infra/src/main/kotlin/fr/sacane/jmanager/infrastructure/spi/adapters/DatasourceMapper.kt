@@ -20,14 +20,14 @@ import java.time.LocalDateTime
 class AccountMapper(
     val userRepository: UserPostgresRepository,
 ){
-    fun asResource(booklet: Booklet): AccountResource {
+    fun asResource(booklet: Booklet): BookletResource {
         val userResource = booklet.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
+            BookletResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
                 it.tag?.asResource()
             ) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         } else {
-            AccountResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
+            BookletResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
                 it.tag?.asResource()
             ) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
         }
@@ -54,13 +54,13 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
 }
 
 
-internal fun Booklet.asResource(): AccountResource {
+internal fun Booklet.asResource(): BookletResource {
     val sheets = if (this.sheets().isEmpty()) {
         mutableListOf()
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return AccountResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.value, previewAmount = this.previewAmount.value)
+    return BookletResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.value, previewAmount = this.previewAmount.value)
 }
 
 internal fun User.asResource(password: String): UserResource {
@@ -81,7 +81,7 @@ internal fun TransactionResource.toModel(): Transaction
     isPreview = isPreview
 )
 
-internal fun AccountResource.toModel(): Booklet
+internal fun BookletResource.toModel(): Booklet
 = Booklet(
     this.amount.toAmount(),
     this.label,
@@ -107,7 +107,7 @@ internal fun UserResource.toModelWithSimpleAccounts()
     booklets = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
 )
 
-internal fun AccountResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
+internal fun BookletResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
 
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
     UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password)

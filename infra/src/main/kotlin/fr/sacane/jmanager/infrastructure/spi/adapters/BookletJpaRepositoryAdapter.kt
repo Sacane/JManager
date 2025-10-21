@@ -3,14 +3,14 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Repository
 
 @Repository
 class BookletJpaRepositoryAdapter(
-    private val accountRepository: AccountJpaRepository,
+    private val accountRepository: BookletJpaRepository,
     private val userRepository: UserPostgresRepository,
     private val accountMapper: AccountMapper
 ): BookletRepositoryPort {
