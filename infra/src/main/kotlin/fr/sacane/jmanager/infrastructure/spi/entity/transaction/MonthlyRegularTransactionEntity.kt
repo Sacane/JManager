@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatPropert
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
 import fr.sacane.jmanager.infrastructure.spi.entity.BookletResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource

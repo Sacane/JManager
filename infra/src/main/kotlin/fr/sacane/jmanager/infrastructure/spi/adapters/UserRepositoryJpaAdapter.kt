@@ -6,6 +6,11 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asExistingResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithPasswords
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithSimpleAccounts
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional

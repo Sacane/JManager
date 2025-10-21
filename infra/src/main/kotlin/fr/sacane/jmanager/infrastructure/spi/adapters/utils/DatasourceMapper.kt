@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.infrastructure.spi.adapters
+package fr.sacane.jmanager.infrastructure.spi.adapters.utils
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction

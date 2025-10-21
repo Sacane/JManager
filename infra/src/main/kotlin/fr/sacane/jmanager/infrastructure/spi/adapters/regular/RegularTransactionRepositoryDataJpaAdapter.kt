@@ -14,7 +14,7 @@ import java.util.*
 @Service
 class RegularTransactionRepositoryDataJpaAdapter(
     private val userPostgresRepository: UserPostgresRepository,
-    private val regularTransactionOperatorAdapter: RegularTransactionOperatorAdapter,
+    private val regularTransactionOperator: RegularTransactionOperator,
     private val monthlyRegularTransactionRepository: MonthlyTransactionResourceJpaRepository
 ): RegularTransactionRepository {
     companion object {
@@ -29,7 +29,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
         logger.info("Saving transaction {}", monthlyTransaction)
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
             ?: throw IllegalArgumentException("User not found")
-        return regularTransactionOperatorAdapter.save(user, monthlyTransaction, bookletIds).toDomain()
+        return regularTransactionOperator.save(user, monthlyTransaction, bookletIds).toDomain()
     }
 
     override fun getRegularTransactionById(

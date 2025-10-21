@@ -2,8 +2,8 @@ package fr.sacane.jmanager.infrastructure.api.setup
 
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.infrastructure.State
-import fr.sacane.jmanager.infrastructure.spi.adapters.AccountMapper
-import fr.sacane.jmanager.infrastructure.spi.adapters.toModel
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.AccountMapper
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component

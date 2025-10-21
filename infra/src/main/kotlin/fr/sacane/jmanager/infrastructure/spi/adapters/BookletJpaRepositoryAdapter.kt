@@ -3,6 +3,8 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.AccountMapper
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional

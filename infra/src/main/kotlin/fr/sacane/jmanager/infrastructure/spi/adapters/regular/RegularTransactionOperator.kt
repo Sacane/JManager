@@ -4,9 +4,9 @@ import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.NotFoundException
-import fr.sacane.jmanager.infrastructure.spi.adapters.JpaTagMapperAdapter
-import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
-import fr.sacane.jmanager.infrastructure.spi.adapters.toResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.JpaTagMapperAdapter
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-class RegularTransactionOperatorAdapter(
+class RegularTransactionOperator(
     private val monthlyTransactionResourceJpaRepository: MonthlyTransactionResourceJpaRepository,
     private val tagMapperAdapter: JpaTagMapperAdapter,
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
@@ -29,7 +29,7 @@ class RegularTransactionOperatorAdapter(
 ) {
 
     companion object {
-        private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionOperatorAdapter::class.java)
+        private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionOperator::class.java)
     }
 
     fun save(user: UserResource, regularTransaction: RegularTransaction, bookletIds: List<Long>): AbstractRegularTransactionResource {

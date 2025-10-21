@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapter
 
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.infrastructure.spi.adapters.JwtTokenGenerator
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.JwtTokenGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.*

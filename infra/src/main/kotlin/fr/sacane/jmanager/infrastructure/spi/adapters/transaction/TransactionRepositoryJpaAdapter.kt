@@ -7,8 +7,8 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
-import fr.sacane.jmanager.infrastructure.spi.adapters.asResource
-import fr.sacane.jmanager.infrastructure.spi.adapters.toModel
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository

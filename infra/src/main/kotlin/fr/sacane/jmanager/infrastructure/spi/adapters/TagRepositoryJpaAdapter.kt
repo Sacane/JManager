@@ -3,6 +3,9 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.TagRepository
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toPersonalTag
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
@@ -11,7 +14,7 @@ import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 
 @Service
-class TagRepositoryAdapter(
+class TagRepositoryJpaAdapter(
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
     private val userPostgresRepository: UserPostgresRepository
