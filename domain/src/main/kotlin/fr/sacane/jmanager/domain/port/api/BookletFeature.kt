@@ -122,11 +122,12 @@ class BookletFeatureImpl(
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
-            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Regular transactions not found for this account")
 
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+                ?: emptyList()
 
             val currentDate = LocalDate.now()
             val currentMonth = currentDate.month
@@ -164,11 +165,17 @@ class BookletFeatureImpl(
                 year
             )
 
+            // Filter regular transactions to only include those that have started before or during the requested month
+            val requestedDate = LocalDate.of(year, month, 1)
+            val filteredRegularTransactions = regularTransactions.filter { rt ->
+                !rt.startDate.isAfter(requestedDate.withDayOfMonth(requestedDate.lengthOfMonth()))
+            }
+
             val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
                 currentTransactions = transactions.second,
                 previsionalTransactions = transactions.first,
-                regularTransactions = regularTransactions,
+                regularTransactions = filteredRegularTransactions,
                 realSold = booklet.amount,
                 previsionalSold = previsionalSold
             )

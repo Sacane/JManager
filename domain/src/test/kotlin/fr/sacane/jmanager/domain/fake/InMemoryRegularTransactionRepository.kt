@@ -30,6 +30,10 @@ class InMemoryRegularTransactionRepository(
     }
 
     override fun init(initialState: List<UserRegularTransaction>) {
+        // Clear all existing regular transactions first
+        inMemoryDatabase.clearRegularTransactions()
+
+        // Then initialize with new state
         val groupedByUser = initialState.groupBy { it.userId }
         groupedByUser.forEach { (userId, userTransactions) ->
             val regularByBooklets = userTransactions.map {

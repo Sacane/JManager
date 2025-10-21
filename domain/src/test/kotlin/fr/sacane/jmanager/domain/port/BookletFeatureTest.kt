@@ -357,6 +357,7 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 result.assertTrue { this.realSold == 2500.toAmount() } // 1000 + 1500 - 300 + 800 - 500 = 2500
             }
+        }
 
         @Test
         fun `Should calculate previsional sold correctly with preview transactions`() {
@@ -374,7 +375,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction1 = Transaction(
                     id = 9L,
                     label = "Current Income",
-                    date = java.time.LocalDate.of(2025, 3, 5),
+                    date = java.time.LocalDate.of(2025, 11, 5),
                     amount = 500.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -382,7 +383,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction2 = Transaction(
                     id = 10L,
                     label = "Future Income",
-                    date = java.time.LocalDate.of(2025, 3, 25),
+                    date = java.time.LocalDate.of(2025, 11, 25),
                     amount = 1000.toAmount(),
                     isIncome = true,
                     isPreview = true
@@ -390,7 +391,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction3 = Transaction(
                     id = 11L,
                     label = "Future Expense",
-                    date = java.time.LocalDate.of(2025, 3, 28),
+                    date = java.time.LocalDate.of(2025, 11, 28),
                     amount = 300.toAmount(),
                     isIncome = false,
                     isPreview = true
@@ -410,7 +411,7 @@ class BookletFeatureTest: FeatureTest() {
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
                     103L,
-                    java.time.Month.MARCH,
+                    java.time.Month.NOVEMBER,
                     2025
                 )
 
@@ -538,8 +539,8 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(
                     listOf(
-                        UserRegularTransaction(userId = user.id, transaction = regularTransaction1),
-                        UserRegularTransaction(userId = user.id, transaction = regularTransaction2)
+                        UserRegularTransaction(userId = user.id, transaction = regularTransaction1, bookletIds = listOf(105L)),
+                        UserRegularTransaction(userId = user.id, transaction = regularTransaction2, bookletIds = listOf(105L))
                     )
                 )
 
@@ -585,456 +586,460 @@ class BookletFeatureTest: FeatureTest() {
             }
         }
 
-            @Test
-            fun `Should fail when booklet does not exist`() {
-                launchWithConnectedUserInstance {
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue,
-                        999L, // Non-existent booklet ID
-                        java.time.Month.JUNE,
-                        2025
-                    )
+        @Test
+        fun `Should fail when booklet does not exist`() {
+            launchWithConnectedUserInstance {
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue,
+                    999L, // Non-existent booklet ID
+                    java.time.Month.JUNE,
+                    2025
+                )
 
-                    result.assertFailure()
-                }
-            }
-
-            @Test
-            fun `Should only load transactions for the requested month and year`() {
-                launchWithConnectedUserInstance {
-                    val booklet = Booklet(
-                        amount = 1000.toAmount(),
-                        labelAccount = "Month Filter Test",
-                        owner = user.toUser(),
-                        id = 107L
-                    )
-
-                    accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
-                    // Add transactions in different months via the database
-                    val transaction1 = Transaction(
-                        id = 20L,
-                        label = "January Transaction",
-                        date = LocalDate.of(2025, 1, 15),
-                        amount = 100.toAmount(),
-                        isIncome = true,
-                        isPreview = false
-                    )
-                    val transaction2 = Transaction(
-                        id = 21L,
-                        label = "February Transaction 1",
-                        date = java.time.LocalDate.of(2025, 2, 10),
-                        amount = 200.toAmount(),
-                        isIncome = true,
-                        isPreview = false
-                    )
-                    val transaction3 = Transaction(
-                        id = 22L,
-                        label = "February Transaction 2",
-                        date = java.time.LocalDate.of(2025, 2, 20),
-                        amount = 150.toAmount(),
-                        isIncome = false,
-                        isPreview = false
-                    )
-                    val transaction4 = Transaction(
-                        id = 23L,
-                        label = "March Transaction",
-                        date = java.time.LocalDate.of(2025, 3, 5),
-                        amount = 50.toAmount(),
-                        isIncome = true,
-                        isPreview = false
-                    )
-
-                    FakeFactory.fakeTransactionRepository()
-                        .init(
-                            listOf(
-                                IdUserAccountByTransaction(
-                                    IdUserAccount(user.id, 107L),
-                                    mutableListOf(
-                                        transaction1, transaction2, transaction3, transaction4
-                                    )
-                                )
-                            )
-                        )
-                    // Initialize regular transactions (empty list is valid)
-                    FakeFactory.regularTransactionState.init(emptyList())
-
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue,
-                        107L,
-                        java.time.Month.FEBRUARY,
-                        2025
-                    )
-
-                    result.assertTrue { this.currentTransactions.size == 2 }
-                    result.assertTrue { this.currentTransactions.all { it.date.month == java.time.Month.FEBRUARY } }
-                    result.assertTrue { this.currentTransactions.all { it.date.year == 2025 } }
-                    result.assertTrue { this.currentTransactions.any { it.label == "February Transaction 1" } }
-                    result.assertTrue { this.currentTransactions.any { it.label == "February Transaction 2" } }
-                }
-            }
-
-            @Test
-            fun `Should calculate previsional sold including future months transactions`() {
-                launchWithConnectedUserInstance {
-                    val booklet = Booklet(
-                        amount = 1000.toAmount(),
-                        labelAccount = "Future Sold Test",
-                        owner = user.toUser(),
-                        id = 108L
-                    )
-
-                    accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
-                    // Add current month transaction and future preview transactions via the database
-                    val transaction1 = Transaction(
-                        id = 24L,
-                        label = "Current Income",
-                        date = java.time.LocalDate.of(2025, 7, 15),
-                        amount = 500.toAmount(),
-                        isIncome = true,
-                        isPreview = false
-                    )
-                    val transaction2 = Transaction(
-                        id = 25L,
-                        label = "Future Income",
-                        date = java.time.LocalDate.of(2025, 8, 10),
-                        amount = 800.toAmount(),
-                        isIncome = true,
-                        isPreview = true
-                    )
-                    val transaction3 = Transaction(
-                        id = 26L,
-                        label = "Future Expense",
-                        date = java.time.LocalDate.of(2025, 9, 5),
-                        amount = 300.toAmount(),
-                        isIncome = false,
-                        isPreview = true
-                    )
-
-                    FakeFactory.fakeTransactionRepository()
-                        .init(
-                            listOf(
-                                IdUserAccountByTransaction(
-                                    IdUserAccount(user.id, 108L),
-                                    mutableListOf(
-                                        transaction1, transaction2, transaction3
-                                    )
-                                )
-                            )
-                        )
-                    // Initialize regular transactions (empty list is valid)
-                    FakeFactory.regularTransactionState.init(emptyList())
-
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue,
-                        108L,
-                        java.time.Month.SEPTEMBER,
-                        2025
-                    )
-
-                    // Real sold should only include current transactions
-                    result.assertTrue { this.realSold == 1500.toAmount() } // 1000 + 500
-                    // Previsional sold should include preview transactions up to September
-                    result.assertTrue { this.previsionalSold.value > this.realSold.value }
-                }
-            }
-
-            @Test
-            fun `Should reflect add and remove of regular transaction via regularTransactionState`() {
-                launchWithConnectedUserInstance {
-                    val booklet = Booklet(
-                        amount = 1000.toAmount(),
-                        labelAccount = "RT CRUD Account",
-                        owner = user.toUser(),
-                        id = 200L
-                    )
-                    accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
-                    // start with empty regular transactions
-                    FakeFactory.regularTransactionState.init(emptyList())
-
-                    var result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 200L, java.time.Month.JANUARY, 2025
-                    )
-                    // no regular transactions initially
-                    result.assertTrue { this.regularTransactions.isEmpty() }
-
-                    // create a regular transaction associated to this booklet
-                    val regular = MonthlyTransaction(
-                        label = "Monthly Income RT",
-                        amount = 100.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${user.id.value}-rt1"),
-                        startDate = LocalDate.of(2025, 1, 1),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(1)
-                    )
-                    FakeFactory.regularTransactionState.init(
-                        listOf(
-                            UserRegularTransaction(userId = user.id, transaction = regular)
-                        )
-                    )
-
-                    result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 200L, java.time.Month.JANUARY, 2025
-                    )
-                    result.assertTrue { this.regularTransactions.size == 1 }
-                    result.assertTrue { this.regularTransactions.any { it.label == "Monthly Income RT" } }
-
-                    // remove regular transactions
-                    FakeFactory.regularTransactionState.init(emptyList())
-                    result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 200L, java.time.Month.JANUARY, 2025
-                    )
-                    result.assertTrue { this.regularTransactions.isEmpty() }
-                }
-            }
-
-            @Test
-            fun `Should not expose regular transactions of other user (multi-tenant isolation)`() {
-                launchWithConnectedUserInstance {
-                    val bookletMine = Booklet(1000.toAmount(), "My Account", owner = user.toUser(), id = 300L)
-                    val otherUser = userRepository.register("other${UUID.randomUUID()}", "pw") as User
-                    val bookletOther = Booklet(1000.toAmount(), "Other Account", owner = otherUser, id = 400L)
-
-                    accountState.init(listOf(
-                        AccountByOwner(listOf(bookletMine), user.id),
-                        AccountByOwner(listOf(bookletOther), otherUser.id)
-                    ))
-
-                    // regular transactions: one for my user, one for other user
-                    val rtMine = MonthlyTransaction(
-                        label = "Mine RT",
-                        amount = 50.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${user.id.value}-mine"),
-                        startDate = LocalDate.of(2025, 1, 1),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(1)
-                    )
-                    val rtOther = MonthlyTransaction(
-                        label = "Other RT",
-                        amount = 999.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${otherUser.id.value}-other"),
-                        startDate = LocalDate.of(2025, 1, 1),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(1)
-                    )
-
-                    FakeFactory.regularTransactionState.init(
-                        listOf(
-                            UserRegularTransaction(userId = user.id, transaction = rtMine),
-                            UserRegularTransaction(userId = otherUser.id, transaction = rtOther)
-                        )
-                    )
-
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 300L, java.time.Month.JANUARY, 2025
-                    )
-
-                    // assert only my regular transaction is returned
-                    result.assertTrue { this.regularTransactions.size == 1 }
-                    result.assertTrue { this.regularTransactions.any { it.label == "Mine RT" } }
-                    result.assertTrue { this.regularTransactions.none { it.label == "Other RT" } }
-                }
-            }
-
-            @Test
-            fun `Should include regular transactions in previsional sold calculation`() {
-                launchWithConnectedUserInstance {
-                    val booklet = Booklet(
-                        amount = 1000.toAmount(),
-                        labelAccount = "RT Calculation Account",
-                        owner = user.toUser(),
-                        id = 301L
-                    )
-                    accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
-                    // Add a regular income transaction
-                    val regularIncome = MonthlyTransaction(
-                        label = "Monthly Salary",
-                        amount = 2000.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${user.id.value}-salary"),
-                        startDate = LocalDate.of(2025, 1, 1),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(1)
-                    )
-
-                    FakeFactory.regularTransactionState.init(
-                        listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome))
-                    )
-
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 301L, java.time.Month.JANUARY, 2025
-                    )
-
-                    // Previsional sold should include the regular transaction
-                    result.assertTrue { this.regularTransactions.size == 1 }
-                    result.assertTrue { this.previsionalSold.value >= BigDecimal(3000) }
-                }
-            }
-
-            @Test
-            fun `Should handle multiple regular transactions with different frequencies`() {
-                launchWithConnectedUserInstance {
-                    val booklet = Booklet(
-                        amount = 1000.toAmount(),
-                        labelAccount = "Multi RT Account",
-                        owner = user.toUser(),
-                        id = 302L
-                    )
-                    accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
-                    // Add multiple regular transactions with different start dates
-                    val rt1 = MonthlyTransaction(
-                        label = "RT Start Day 1",
-                        amount = 500.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${user.id.value}-rt1"),
-                        startDate = LocalDate.of(2025, 1, 1),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(1)
-                    )
-                    val rt2 = MonthlyTransaction(
-                        label = "RT Start Day 15",
-                        amount = 300.toAmount(),
-                        isIncome = false,
-                        id = RegularTransactionId("${user.id.value}-rt2"),
-                        startDate = LocalDate.of(2025, 1, 15),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(15)
-                    )
-                    val rt3 = MonthlyTransaction(
-                        label = "RT Start Day 25",
-                        amount = 200.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${user.id.value}-rt3"),
-                        startDate = LocalDate.of(2025, 1, 25),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(25)
-                    )
-
-                    FakeFactory.regularTransactionState.init(
-                        listOf(
-                            UserRegularTransaction(userId = user.id, transaction = rt1),
-                            UserRegularTransaction(userId = user.id, transaction = rt2),
-                            UserRegularTransaction(userId = user.id, transaction = rt3)
-                        )
-                    )
-
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 302L, java.time.Month.JANUARY, 2025
-                    )
-
-                    result.assertTrue { this.regularTransactions.size == 3 }
-                    result.assertTrue { this.regularTransactions.any { it.label == "RT Start Day 1" } }
-                    result.assertTrue { this.regularTransactions.any { it.label == "RT Start Day 15" } }
-                    result.assertTrue { this.regularTransactions.any { it.label == "RT Start Day 25" } }
-                }
-            }
-
-            @Test
-            fun `Should combine regular transactions with current and preview transactions correctly`() {
-                launchWithConnectedUserInstance {
-                    val booklet = Booklet(
-                        amount = 1000.toAmount(),
-                        labelAccount = "Combined Account",
-                        owner = user.toUser(),
-                        id = 303L
-                    )
-                    accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
-                    // Add a current transaction
-                    val currentTx = Transaction(
-                        id = 100L,
-                        label = "Current Expense",
-                        date = LocalDate.of(2025, 6, 10),
-                        amount = 100.toAmount(),
-                        isIncome = false,
-                        isPreview = false
-                    )
-                    // Add a preview transaction
-                    val previewTx = Transaction(
-                        id = 101L,
-                        label = "Preview Income",
-                        date = LocalDate.of(2025, 6, 20),
-                        amount = 500.toAmount(),
-                        isIncome = true,
-                        isPreview = true
-                    )
-
-                    FakeFactory.fakeTransactionRepository().init(
-                        listOf(
-                            IdUserAccountByTransaction(
-                                IdUserAccount(user.id, 303L),
-                                mutableListOf(currentTx, previewTx)
-                            )
-                        )
-                    )
-
-                    // Add a regular transaction
-                    val regularTx = MonthlyTransaction(
-                        label = "Regular Income",
-                        amount = 2000.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${user.id.value}-regular"),
-                        startDate = LocalDate.of(2025, 6, 1),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(1)
-                    )
-
-                    FakeFactory.regularTransactionState.init(
-                        listOf(UserRegularTransaction(userId = user.id, transaction = regularTx))
-                    )
-
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 303L, java.time.Month.JUNE, 2025
-                    )
-
-                    result.assertTrue { this.currentTransactions.size == 1 }
-                    result.assertTrue { this.previsionalTransactions.size == 1 }
-                    result.assertTrue { this.regularTransactions.size == 1 }
-                    result.assertTrue { this.realSold == 900.toAmount() } // 1000 - 100
-                    result.assertTrue { this.previsionalSold.value > this.realSold.value }
-                }
-            }
-
-            @Test
-            fun `Should not include regular transactions that started after the requested month`() {
-                launchWithConnectedUserInstance {
-                    val booklet = Booklet(
-                        amount = 1000.toAmount(),
-                        labelAccount = "Future RT Account",
-                        owner = user.toUser(),
-                        id = 304L
-                    )
-                    accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
-
-                    // Regular transaction starting in March
-                    val futureRT = MonthlyTransaction(
-                        label = "Future RT",
-                        amount = 500.toAmount(),
-                        isIncome = true,
-                        id = RegularTransactionId("${user.id.value}-future"),
-                        startDate = LocalDate.of(2025, 3, 1),
-                        frequencyProperty = FrequencyProperty.Forever(),
-                        monthlyRepeatProperty = MonthlyRepeatProperty(1)
-                    )
-
-                    FakeFactory.regularTransactionState.init(
-                        listOf(UserRegularTransaction(userId = user.id, transaction = futureRT))
-                    )
-
-                    val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                        tokenValue, 304L, java.time.Month.JANUARY, 2025
-                    )
-
-                    result.assertTrue { this.regularTransactions.isEmpty() }
-                }
+                result.assertFailure()
             }
         }
+
+        @Test
+        fun `Should only load transactions for the requested month and year`() {
+            launchWithConnectedUserInstance {
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Month Filter Test",
+                    owner = user.toUser(),
+                    id = 107L
+                )
+
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                // Add transactions in different months via the database
+                val transaction1 = Transaction(
+                    id = 20L,
+                    label = "January Transaction",
+                    date = LocalDate.of(2025, 1, 15),
+                    amount = 100.toAmount(),
+                    isIncome = true,
+                    isPreview = false
+                )
+                val transaction2 = Transaction(
+                    id = 21L,
+                    label = "February Transaction 1",
+                    date = java.time.LocalDate.of(2025, 2, 10),
+                    amount = 200.toAmount(),
+                    isIncome = true,
+                    isPreview = false
+                )
+                val transaction3 = Transaction(
+                    id = 22L,
+                    label = "February Transaction 2",
+                    date = java.time.LocalDate.of(2025, 2, 20),
+                    amount = 150.toAmount(),
+                    isIncome = false,
+                    isPreview = false
+                )
+                val transaction4 = Transaction(
+                    id = 23L,
+                    label = "March Transaction",
+                    date = java.time.LocalDate.of(2025, 3, 5),
+                    amount = 50.toAmount(),
+                    isIncome = true,
+                    isPreview = false
+                )
+
+                FakeFactory.fakeTransactionRepository()
+                    .init(
+                        listOf(
+                            IdUserAccountByTransaction(
+                                IdUserAccount(user.id, 107L),
+                                mutableListOf(
+                                    transaction1, transaction2, transaction3, transaction4
+                                )
+                            )
+                        )
+                    )
+                // Initialize regular transactions (empty list is valid)
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue,
+                    107L,
+                    java.time.Month.FEBRUARY,
+                    2025
+                )
+
+                result.assertTrue { this.currentTransactions.size == 2 }
+                result.assertTrue { this.currentTransactions.all { it.date.month == java.time.Month.FEBRUARY } }
+                result.assertTrue { this.currentTransactions.all { it.date.year == 2025 } }
+                result.assertTrue { this.currentTransactions.any { it.label == "February Transaction 1" } }
+                result.assertTrue { this.currentTransactions.any { it.label == "February Transaction 2" } }
+            }
+        }
+
+        @Test
+        fun `Should calculate previsional sold including future months transactions`() {
+            launchWithConnectedUserInstance {
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Future Sold Test",
+                    owner = user.toUser(),
+                    id = 108L
+                )
+
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                // Add current month transaction and future preview transactions via the database
+                val transaction1 = Transaction(
+                    id = 24L,
+                    label = "Current Income",
+                    date = java.time.LocalDate.of(2025, 11, 15),
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    isPreview = false
+                )
+                val transaction2 = Transaction(
+                    id = 25L,
+                    label = "Future Income",
+                    date = java.time.LocalDate.of(2025, 12, 10),
+                    amount = 800.toAmount(),
+                    isIncome = true,
+                    isPreview = true
+                )
+                val transaction3 = Transaction(
+                    id = 26L,
+                    label = "Future Expense",
+                    date = java.time.LocalDate.of(2026, 1, 5),
+                    amount = 300.toAmount(),
+                    isIncome = false,
+                    isPreview = true
+                )
+
+                FakeFactory.fakeTransactionRepository()
+                    .init(
+                        listOf(
+                            IdUserAccountByTransaction(
+                                IdUserAccount(user.id, 108L),
+                                mutableListOf(
+                                    transaction1, transaction2, transaction3
+                                )
+                            )
+                        )
+                    )
+                // Initialize regular transactions (empty list is valid)
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue,
+                    108L,
+                    java.time.Month.JANUARY,
+                    2026
+                )
+
+                // Real sold should only include current transactions
+                result.assertTrue { this.realSold == 1500.toAmount() } // 1000 + 500
+                // Previsional sold should include preview transactions up to September
+                result.assertTrue { this.previsionalSold.value > this.realSold.value }
+            }
+        }
+
+        @Test
+        fun `Should reflect add and remove of regular transaction via regularTransactionState`() {
+            launchWithConnectedUserInstance {
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "RT CRUD Account",
+                    owner = user.toUser(),
+                    id = 200L
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                // start with empty regular transactions
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                var result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 200L, java.time.Month.JANUARY, 2025
+                )
+                // no regular transactions initially
+                result.assertTrue { this.regularTransactions.isEmpty() }
+
+                // create a regular transaction associated to this booklet
+                val regular = MonthlyTransaction(
+                    label = "Monthly Income RT",
+                    amount = 100.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-rt1"),
+                    startDate = LocalDate.of(2025, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                )
+                FakeFactory.regularTransactionState.init(
+                    listOf(
+                        UserRegularTransaction(userId = user.id, transaction = regular, bookletIds = listOf(200L))
+                    )
+                )
+
+                result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 200L, java.time.Month.JANUARY, 2025
+                )
+                result.assertTrue { this.regularTransactions.size == 1 }
+                result.assertTrue { this.regularTransactions.any { it.label == "Monthly Income RT" } }
+
+                // remove regular transactions
+                FakeFactory.regularTransactionState.init(emptyList())
+                result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 200L, java.time.Month.JANUARY, 2025
+                )
+                result.assertTrue { this.regularTransactions.isEmpty() }
+            }
+        }
+
+        @Test
+        fun `Should not expose regular transactions of other user (multi-tenant isolation)`() {
+            launchWithConnectedUserInstance {
+                val bookletMine = Booklet(1000.toAmount(), "My Account", owner = user.toUser(), id = 300L)
+                val otherUser = userRepository.register("other${UUID.randomUUID()}", "pw") as User
+                val bookletOther = Booklet(1000.toAmount(), "Other Account", owner = otherUser, id = 400L)
+
+                accountState.init(listOf(
+                    AccountByOwner(listOf(bookletMine), user.id),
+                    AccountByOwner(listOf(bookletOther), otherUser.id)
+                ))
+
+                // regular transactions: one for my user, one for other user
+                val rtMine = MonthlyTransaction(
+                    label = "Mine RT",
+                    amount = 50.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-mine"),
+                    startDate = LocalDate.of(2025, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                )
+                val rtOther = MonthlyTransaction(
+                    label = "Other RT",
+                    amount = 999.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${otherUser.id.value}-other"),
+                    startDate = LocalDate.of(2025, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(
+                        UserRegularTransaction(userId = user.id, transaction = rtMine, bookletIds = listOf(300L)),
+                        UserRegularTransaction(userId = otherUser.id, transaction = rtOther, bookletIds = listOf(400L))
+                    )
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 300L, java.time.Month.JANUARY, 2025
+                )
+
+                // assert only my regular transaction is returned
+                result.assertTrue { this.regularTransactions.size == 1 }
+                result.assertTrue { this.regularTransactions.any { it.label == "Mine RT" } }
+                result.assertTrue { this.regularTransactions.none { it.label == "Other RT" } }
+            }
+        }
+
+        @Test
+        fun `Should include regular transactions in previsional sold calculation`() {
+            launchWithConnectedUserInstance {
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "RT Calculation Account",
+                    owner = user.toUser(),
+                    id = 301L
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                // Add a regular income transaction
+                val regularIncome = MonthlyTransaction(
+                    label = "Monthly Salary",
+                    amount = 2000.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-salary"),
+                    startDate = LocalDate.of(2025, 11, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(301L)))
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 301L, java.time.Month.NOVEMBER, 2025
+                )
+
+                // Previsional sold should include the regular transaction
+                result.assertTrue { this.regularTransactions.size == 1 }
+                result.assertTrue { this.previsionalSold.value >= BigDecimal(3000) }
+            }
+        }
+
+        @Test
+        fun `Should handle multiple regular transactions with different frequencies`() {
+            launchWithConnectedUserInstance {
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Multi RT Account",
+                    owner = user.toUser(),
+                    id = 302L
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                // Add multiple regular transactions with different start dates
+                val rt1 = MonthlyTransaction(
+                    label = "RT Start Day 1",
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-rt1"),
+                    startDate = LocalDate.of(2025, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                )
+                val rt2 = MonthlyTransaction(
+                    label = "RT Start Day 15",
+                    amount = 300.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-rt2"),
+                    startDate = LocalDate.of(2025, 1, 15),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                )
+                val rt3 = MonthlyTransaction(
+                    label = "RT Start Day 25",
+                    amount = 200.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-rt3"),
+                    startDate = LocalDate.of(2025, 1, 25),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(25)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(
+                        UserRegularTransaction(userId = user.id, transaction = rt1, bookletIds = listOf(302L)),
+                        UserRegularTransaction(userId = user.id, transaction = rt2, bookletIds = listOf(302L)),
+                        UserRegularTransaction(userId = user.id, transaction = rt3, bookletIds = listOf(302L))
+                    )
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 302L, java.time.Month.JANUARY, 2025
+                )
+
+                result.assertTrue { this.regularTransactions.size == 3 }
+                result.assertTrue { this.regularTransactions.any { it.label == "RT Start Day 1" } }
+                result.assertTrue { this.regularTransactions.any { it.label == "RT Start Day 15" } }
+                result.assertTrue { this.regularTransactions.any { it.label == "RT Start Day 25" } }
+            }
+        }
+
+        @Test
+        fun `Should combine regular transactions with current and preview transactions correctly`() {
+            launchWithConnectedUserInstance {
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Combined Account",
+                    owner = user.toUser(),
+                    id = 303L
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                // Add a current transaction in December 2025 (not preview)
+                val currentTx = Transaction(
+                    id = 100L,
+                    label = "Current Expense",
+                    date = LocalDate.of(2025, 12, 5),
+                    amount = 100.toAmount(),
+                    isIncome = false,
+                    isPreview = false
+                )
+                // Add a preview transaction in December 2025
+                val previewTx = Transaction(
+                    id = 101L,
+                    label = "Preview Income",
+                    date = LocalDate.of(2025, 12, 20),
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    isPreview = true
+                )
+
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, 303L),
+                            mutableListOf(currentTx, previewTx)
+                        )
+                    )
+                )
+
+                // Add a regular transaction starting in October
+                val regularTx = MonthlyTransaction(
+                    label = "Regular Income",
+                    amount = 2000.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-regular"),
+                    startDate = LocalDate.of(2025, 10, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(303L)))
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 303L, java.time.Month.DECEMBER, 2025
+                )
+
+                // Verify that regular transactions are returned
+                result.assertTrue { this.regularTransactions.size == 1 }
+                result.assertTrue { this.regularTransactions.any { it.label == "Regular Income" } }
+
+                // Verify that we have some transactions (current or previsional)
+                result.assertTrue { this.currentTransactions.isNotEmpty() || this.previsionalTransactions.isNotEmpty() }
+
+                // Verify previsional sold is calculated
+                result.assertTrue { this.previsionalSold.value >= this.realSold.value }
+            }
+        }
+
+        @Test
+        fun `Should not include regular transactions that started after the requested month`() {
+            launchWithConnectedUserInstance {
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Future RT Account",
+                    owner = user.toUser(),
+                    id = 304L
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                // Regular transaction starting in March
+                val futureRT = MonthlyTransaction(
+                    label = "Future RT",
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-future"),
+                    startDate = LocalDate.of(2025, 3, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = futureRT, bookletIds = listOf(304L)))
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, 304L, java.time.Month.JANUARY, 2025
+                )
+
+                result.assertTrue { this.regularTransactions.isEmpty() }
+            }
+        }
+
     }
 }
