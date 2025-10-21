@@ -24,7 +24,7 @@ object FakeFactory {
     private val fakeAccountRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
-    private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository()
+    private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository(inMemoryDatabase)
     private val manager: UnitOfWorkTransactionProviderPort = UnitOfWorkTransactionProviderPort.DEFAULT
     private val inMemoryRegularTransactionGenerator: RegularTransactionGenerator = RegularTransactionGeneratorService(
         transactionRepository, inMemoryTrackerRepository

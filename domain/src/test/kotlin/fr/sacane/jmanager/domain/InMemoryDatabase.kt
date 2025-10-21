@@ -31,9 +31,39 @@ class InMemoryDatabase {
     }
     private val trackers = mutableMapOf<Long, MutableList<RegularTransactionTracker>>()
     private val regularBooklets = mutableListOf<RegularByBooklet>()
+    private val regularTransactionsByUser = mutableMapOf<UserId, MutableList<RegularByBooklet>>()
 
-    fun addRegularBooklet(transaction: RegularTransaction, bookletIds: List<Long>) {
-        regularBooklets.add(RegularByBooklet(transaction, bookletIds))
+    fun addRegularBooklet(userId: UserId, transaction: RegularTransaction, bookletIds: List<Long>) {
+        val regularByBooklet = RegularByBooklet(transaction, bookletIds)
+        regularBooklets.add(regularByBooklet)
+        regularTransactionsByUser.computeIfAbsent(userId) { mutableListOf() }.add(regularByBooklet)
+    }
+
+    fun getAllRegularTransactionsByUser(userId: UserId): List<RegularTransaction> {
+        return regularTransactionsByUser[userId]?.map { it.transaction } ?: emptyList()
+    }
+
+    fun getAllRegularTransactionsByBooklet(userId: UserId, bookletId: Long): List<RegularTransaction> {
+        return regularTransactionsByUser[userId]
+            ?.filter { it.bookletIds.contains(bookletId) }
+            ?.map { it.transaction }
+            ?: emptyList()
+    }
+
+    fun getRegularTransactionById(userId: UserId, transactionId: RegularTransactionId): RegularTransaction? {
+        return regularTransactionsByUser[userId]
+            ?.map { it.transaction }
+            ?.find { it.id == transactionId }
+    }
+
+    fun clearRegularTransactions() {
+        regularBooklets.clear()
+        regularTransactionsByUser.clear()
+    }
+
+    fun initRegularTransactions(userId: UserId, initialState: List<RegularByBooklet>) {
+        regularTransactionsByUser[userId] = initialState.toMutableList()
+        regularBooklets.addAll(initialState)
     }
     fun addTrackerByBooklet(bookletId: Long, transactionTracker: RegularTransactionTracker) {
         trackers[bookletId]?.removeIf { it.regularTransactionId == transactionTracker.regularTransactionId }

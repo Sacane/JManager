@@ -230,7 +230,6 @@ class BookletFeatureImpl(
         targetMonth: Month,
         targetYear: Int
     ): Amount {
-        val currentDate = LocalDate.now()
         val allTransactions = booklet.transactions
 
         val relevantTransactions = allTransactions.filter { transaction ->
