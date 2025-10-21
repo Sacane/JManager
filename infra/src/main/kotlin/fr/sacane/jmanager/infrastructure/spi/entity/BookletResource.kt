@@ -25,10 +25,6 @@ class BookletResource(
     @Column(name = "id_account")
     var idAccount: Long? = null
 ) {
-    fun addMonthlyTransaction(monthlyTransaction: MonthlyRegularTransactionEntity) {
-        monthlyTransactions.add(monthlyTransaction)
-        monthlyTransaction.addBooklet(this)
-    }
     fun clearAllMonthlyTransactions() {
         monthlyTransactions.toList().forEach { transaction ->
             transaction.removeBooklet(this)

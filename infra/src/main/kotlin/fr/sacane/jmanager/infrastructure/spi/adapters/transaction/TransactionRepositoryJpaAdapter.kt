@@ -21,7 +21,7 @@ import java.time.Month
 
 @Service
 @Adapter(Side.INFRASTRUCTURE)
-class SqlTransactionAdapter(
+class TransactionRepositoryJpaAdapter(
     private val transactionJpaRepository: TransactionJpaRepository,
     private val bookletJpaRepository: BookletJpaRepository,
     private val tagRepository: DefaultTagPostgresRepository,

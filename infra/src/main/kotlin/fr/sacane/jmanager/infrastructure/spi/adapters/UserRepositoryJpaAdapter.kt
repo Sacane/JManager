@@ -14,7 +14,7 @@ import java.util.logging.Logger
 
 @Service
 @Adapter(Side.INFRASTRUCTURE)
-class ServerUserAdapter (
+class UserRepositoryJpaAdapter (
     private val userPostgresRepository: UserPostgresRepository,
 ) : UserRepository {
     companion object{

@@ -42,11 +42,4 @@ class TransactionResource(
             accountAmount: $accountAmount
         """.trimIndent()
     }
-
-    fun linkPersonalTag(tag: TagPersonalResource) {
-        this.personalTag = tag
-    }
-    fun linkDefaultTag(tag: DefaultTagResource) {
-        this.tag = tag
-    }
 }
