@@ -74,7 +74,7 @@ function resetTransaction() {
 
 async function loadBookletData() {
   try {
-    const accountId = Number.parseInt(route.params?.id as string)
+    const accountId = route.params?.id as string
     const month = numberFromMonth(bookletData.month) as number
 
     const result: BookletReport = await findByIdMonthAndYear(accountId, month, bookletData.year)
@@ -144,7 +144,7 @@ async function bookTransaction(transaction: TransactionCreationDTO) {
 
 async function onEditTransaction(event: any) {
   try {
-    const transaction = await findTransactionById(Number.parseInt(event.data.id))
+    const transaction = await findTransactionById(event.data.id)
 
     currentTransaction.id = event.data.id
     currentTransaction.label = transaction.label
@@ -162,9 +162,9 @@ async function onEditTransaction(event: any) {
 
 async function applyEditTransaction(transaction: TransactionCreationDTO) {
   try {
-    const result: TransactionResultDTO = await editTransaction(transaction, Number.parseInt(bookletData.id))
+    const result: TransactionResultDTO = await editTransaction(transaction, bookletData.id)
 
-    const index = actualSheets.value.findIndex(item => (+item?.id!) === +result.id)
+    const index = actualSheets.value.findIndex(item => item?.id === result.id)
     if (index !== -1) {
       actualSheets.value[index] = asDisplayableTransaction(result)
     }
@@ -183,12 +183,12 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
 async function confirmDelete() {
   try {
     await deleteTransaction(
-      Number.parseInt(bookletData.id),
-      selectedSheets.value.map(sheet => Number.parseInt(sheet.id as string)),
+      bookletData.id,
+      selectedSheets.value.map(sheet => sheet.id as string),
     )
 
     selectedSheets.value.forEach((sheet) => {
-      const index = actualSheets.value.findIndex(item => (+item?.id!) === +sheet!.id)
+      const index = actualSheets.value.findIndex(item => item?.id === sheet!.id)
       if (index !== -1) {
         actualSheets.value.splice(index, 1)
         const value = Number.parseFloat(sheet?.value?.toString() ?? '0')

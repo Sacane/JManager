@@ -9,7 +9,7 @@ definePageMeta({
 })
 
 interface DataDisplay {
-  id: number
+  id: string
   label: string
   isDefault: boolean
   color: string
@@ -24,7 +24,7 @@ const searchQuery = ref<string>('')
 const filterType = ref<string>('all') // 'all', 'default', 'personal'
 
 const tagToEdit = reactive({
-  id: 0,
+  id: '',
   label: '',
   color: '',
   isDefault: false,
@@ -46,7 +46,7 @@ onMounted(() => {
 function formattedData(tagDTO: TagDTO): DataDisplay {
   const color = `rgb(${tagDTO.colorDTO.red}, ${tagDTO.colorDTO.green}, ${tagDTO.colorDTO.blue})`
   return {
-    id: tagDTO.tagId as number,
+    id: tagDTO.tagId as string,
     label: tagDTO.label as string,
     isDefault: tagDTO.isDefault as boolean,
     color,

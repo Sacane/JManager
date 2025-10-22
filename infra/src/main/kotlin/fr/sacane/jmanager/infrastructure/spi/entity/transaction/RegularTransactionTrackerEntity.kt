@@ -14,9 +14,6 @@ import java.util.UUID
 @Entity
 @Table(name = "regular_transaction_tracker")
 data class RegularTransactionTrackerEntity(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: UUID? = null,
 
     @Column(name = "regular_transaction_id", nullable = false)
     val regularTransactionId: String,
@@ -28,8 +25,10 @@ data class RegularTransactionTrackerEntity(
     val lastGeneratedDate: LocalDate,
 
     @Column(name = "number_of_generated_transaction", nullable = false)
-    val numberOfGeneratedTransaction: Int = 0
-
+    val numberOfGeneratedTransaction: Int = 0,
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
 ) {
     fun toDomain(): RegularTransactionTracker = RegularTransactionTracker(
         id = id,

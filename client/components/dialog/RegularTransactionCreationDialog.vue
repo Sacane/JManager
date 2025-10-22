@@ -24,7 +24,7 @@ const regularTrForm = reactive({
   repeatDay: null as number | null,
   isIncome: false,
   tagDTO: {
-    tagId: 0 as number | undefined,
+    tagId: undefined as string | undefined,
     label: '',
     colorDTO: {
       red: 0,
@@ -59,7 +59,7 @@ function emitTransaction() {
       tagDTO: regularTrForm.tagDTO,
       frequencyProperty: regularTrForm.monthlyFrequency,
       repeatDay: regularTrForm.repeatDay,
-      bookletIds: regularTrForm.selectedBooklets.map(b => b.id as number),
+      bookletIds: regularTrForm.selectedBooklets.map(b => b.id as string),
     }
     emit('createTransaction', regularTransactionCreationRequest)
     // clear form values

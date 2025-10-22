@@ -1,7 +1,7 @@
 declare global {
   // declare your types here
   interface SheetDTO {
-    id: number
+    id: string
     label: string
     value: number
     isIncome: boolean
@@ -44,7 +44,7 @@ declare global {
     blue: number
   }
   interface TagDTO {
-    tagId: number | undefined
+    tagId: string | undefined
     label: string | undefined
     colorDTO: ColorDTO
     isDefault: boolean
@@ -89,7 +89,7 @@ declare global {
     tagDTO?: TagDTO | null
     frequencyProperty: FrequencyPropertyDTO
     repeatDay: number | null
-    bookletIds: number[]
+    bookletIds: string[]
   }
   interface BookletReport {
     label: string
@@ -99,7 +99,7 @@ declare global {
   }
 
   interface MonthlyAccountStatsDTO {
-    accountId: number
+    accountId: string
     accountLabel: string
     year: number
     monthlyData: MonthlyDataDTO[]
@@ -119,7 +119,7 @@ declare global {
 
   interface CategoryDataDTO {
     tagLabel: string
-    tagId: number | null
+    tagId: string | null
     totalAmount: string
     percentage: number
     transactionCount: number
@@ -150,7 +150,7 @@ declare global {
   }
 
   interface StatsTransactionDTO {
-    id: number | null
+    id: string | null
     label: string
     amount: string
     isIncome: boolean

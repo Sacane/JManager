@@ -11,7 +11,7 @@ definePageMeta({
 const { fetch, deleteAccount, createAccount } = useBooklet()
 const isAccountFilled = ref<boolean>(false)
 const data = ref<Array<{
-  id: number
+  id: string
   labelAccount: string
   amount: string
   currency: string
@@ -37,11 +37,11 @@ function format(accounts: Array<BookletDTO>) {
 
 const router = useRouter()
 
-function onCardClick(accountId: number) {
+function onCardClick(accountId: string) {
   router.push(`/account/${accountId}`)
 }
 
-function applyDelete(accountId: number) {
+function applyDelete(accountId: string) {
   deleteAccount(accountId).finally(() => {
     fetch().then((accountArray) => {
       format(accountArray)

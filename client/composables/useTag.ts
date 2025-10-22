@@ -10,7 +10,7 @@ export default function useTag() {
   async function getAllTags(): Promise<TagDTO[]> {
     return get(`tag`)
   }
-  async function deleteTag(id: number): Promise<void> {
+  async function deleteTag(id: string): Promise<void> {
     return deleteQuery(`tag/${id}`, {})
       .catch(err => console.error(err))
   }
