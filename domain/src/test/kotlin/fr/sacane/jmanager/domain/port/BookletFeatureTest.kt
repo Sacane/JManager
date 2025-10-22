@@ -250,7 +250,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add expense transactions via the database
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Rent",
@@ -277,7 +276,6 @@ class BookletFeatureTest: FeatureTest() {
                         )
                     )
 
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -350,7 +348,6 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -376,7 +373,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add current and preview transactions via the database
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current Income",
@@ -410,7 +406,6 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -440,7 +435,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add 3 current transactions and 2 preview transactions via the database
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current 1",
@@ -493,7 +487,6 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -523,7 +516,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Create regular transactions
                 val regularTransaction1 = MonthlyTransaction(
                     label = "Monthly Salary",
                     amount = 3000.toAmount(),
@@ -577,7 +569,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -621,7 +612,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add transactions in different months via the database
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "January Transaction",
@@ -666,7 +656,6 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -697,7 +686,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add current month transaction and future preview transactions via the database
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current Income",
@@ -734,7 +722,6 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -744,9 +731,7 @@ class BookletFeatureTest: FeatureTest() {
                     2026
                 )
 
-                // Real sold should only include current transactions
                 result.assertTrue { this.realSold == 1500.toAmount() } // 1000 + 500
-                // Previsional sold should include preview transactions up to September
                 result.assertTrue { this.previsionalSold.value > this.realSold.value }
             }
         }
@@ -763,16 +748,13 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // start with empty regular transactions
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 var result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025
                 )
-                // no regular transactions initially
                 result.assertTrue { this.regularTransactions.isEmpty() }
 
-                // create a regular transaction associated to this booklet
                 val regular = MonthlyTransaction(
                     label = "Monthly Income RT",
                     amount = 100.toAmount(),
@@ -794,7 +776,6 @@ class BookletFeatureTest: FeatureTest() {
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Monthly Income RT" } }
 
-                // remove regular transactions
                 FakeFactory.regularTransactionState.init(emptyList())
                 result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025
@@ -817,7 +798,6 @@ class BookletFeatureTest: FeatureTest() {
                     AccountByOwner(listOf(bookletOther), otherUser.id)
                 ))
 
-                // regular transactions: one for my user, one for other user
                 val rtMine = MonthlyTransaction(
                     label = "Mine RT",
                     amount = 50.toAmount(),
@@ -848,7 +828,6 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue, bookletIdMine, java.time.Month.JANUARY, 2025
                 )
 
-                // assert only my regular transaction is returned
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Mine RT" } }
                 result.assertTrue { this.regularTransactions.none { it.label == "Other RT" } }
@@ -867,7 +846,6 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add a regular income transaction
                 val regularIncome = MonthlyTransaction(
                     label = "Monthly Salary",
                     amount = 2000.toAmount(),
@@ -886,7 +864,6 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue, bookletId, java.time.Month.NOVEMBER, 2025
                 )
 
-                // Previsional sold should include the regular transaction
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.previsionalSold.value >= BigDecimal(3000) }
             }
@@ -904,7 +881,6 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add multiple regular transactions with different start dates
                 val rt1 = MonthlyTransaction(
                     label = "RT Start Day 1",
                     amount = 500.toAmount(),
@@ -964,7 +940,6 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add a current transaction in December 2025 (not preview)
                 val currentTx = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current Expense",
@@ -973,7 +948,6 @@ class BookletFeatureTest: FeatureTest() {
                     isIncome = false,
                     isPreview = false
                 )
-                // Add a preview transaction in December 2025
                 val previewTx = Transaction(
                     id = UUID.randomUUID(),
                     label = "Preview Income",
@@ -992,7 +966,6 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                // Add a regular transaction starting in October
                 val regularTx = MonthlyTransaction(
                     label = "Regular Income",
                     amount = 2000.toAmount(),
@@ -1011,14 +984,11 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue, bookletId, java.time.Month.DECEMBER, 2025
                 )
 
-                // Verify that regular transactions are returned
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Regular Income" } }
 
-                // Verify that we have some transactions (current or previsional)
                 result.assertTrue { this.currentTransactions.isNotEmpty() || this.previsionalTransactions.isNotEmpty() }
 
-                // Verify previsional sold is calculated
                 result.assertTrue { this.previsionalSold.value >= this.realSold.value }
             }
         }
@@ -1035,7 +1005,6 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Regular transaction starting in March
                 val futureRT = MonthlyTransaction(
                     label = "Future RT",
                     amount = 500.toAmount(),

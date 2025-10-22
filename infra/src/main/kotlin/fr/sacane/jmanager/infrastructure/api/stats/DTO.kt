@@ -66,7 +66,6 @@ data class TransactionDTO(
     val tag: String
 )
 
-// Extension functions pour convertir du domaine vers DTO
 fun MonthlyAccountStatsOutput.toDTO() = MonthlyAccountStatsDTO(
     accountId = accountId,
     accountLabel = accountLabel,

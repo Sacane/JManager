@@ -38,7 +38,7 @@ class MonthlyStatsCalculatorTest {
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
 
-        val marchStats = monthlyStats[2] // March is index 2 (0-based)
+        val marchStats = monthlyStats[2]
         assertEquals(100.toAmount(), marchStats.income)
     }
 
@@ -52,7 +52,7 @@ class MonthlyStatsCalculatorTest {
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
 
-        val mayStats = monthlyStats[4] // May is index 4
+        val mayStats = monthlyStats[4]
         assertEquals(100.toAmount(), mayStats.income)
     }
 
@@ -66,7 +66,7 @@ class MonthlyStatsCalculatorTest {
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
 
-        val juneStats = monthlyStats[5] // June is index 5
+        val juneStats = monthlyStats[5]
         assertEquals(500.toAmount(), juneStats.income)
         assertEquals(400.toAmount(), juneStats.expenses)
         assertEquals(100.toAmount(), juneStats.balance)
@@ -83,7 +83,7 @@ class MonthlyStatsCalculatorTest {
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
 
-        val julyStats = monthlyStats[6] // July is index 6
+        val julyStats = monthlyStats[6]
         assertEquals(1500.toAmount(), julyStats.income)
         assertEquals(500.toAmount(), julyStats.expenses)
         assertEquals(1000.toAmount(), julyStats.balance)

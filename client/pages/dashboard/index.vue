@@ -266,7 +266,6 @@ const monthlyComparisonData = computed(() => {
     }
   }
 
-  // Get current and previous month
   const now = new Date()
   const currentMonthData = trendStats.value.monthlyTrends.find(
     t => t.month === now.getMonth() + 1 && t.year === now.getFullYear(),

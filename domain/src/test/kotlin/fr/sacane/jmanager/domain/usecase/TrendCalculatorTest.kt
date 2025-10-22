@@ -103,7 +103,7 @@ class TrendCalculatorTest {
         val lastMonth = currentDate.minusMonths(1)
         val booklet = Booklet(1000.toAmount(), "Account")
 
-        // Last month: +100
+
         booklet.addTransaction(
             Transaction(UUID.randomUUID(), "Last month income", lastMonth, 200.toAmount(), isIncome = true)
         )
@@ -111,7 +111,6 @@ class TrendCalculatorTest {
             Transaction(UUID.randomUUID(), "Last month expense", lastMonth, 100.toAmount(), isIncome = false)
         )
 
-        // Current month: +50
         booklet.addTransaction(
             Transaction(UUID.randomUUID(), "Current income", currentDate, 150.toAmount(), isIncome = true)
         )
@@ -134,7 +133,6 @@ class TrendCalculatorTest {
         assertEquals(100.toAmount(), lastMonthTrend!!.balance)
         assertEquals(50.toAmount(), currentMonthTrend!!.balance)
 
-        // Cumulative balance should add up
         assertTrue(currentMonthTrend.cumulativeBalance.value >= lastMonthTrend.cumulativeBalance.value)
     }
 
@@ -222,7 +220,6 @@ class TrendCalculatorTest {
         val twoMonthsAgo = LocalDate.now().minusMonths(2)
         val booklet = Booklet(1000.toAmount(), "Account")
 
-        // Only add transaction to 2 months ago
         booklet.addTransaction(
             Transaction(UUID.randomUUID(), "Old income", twoMonthsAgo, 500.toAmount(), isIncome = true)
         )

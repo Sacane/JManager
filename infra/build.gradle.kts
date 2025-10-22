@@ -54,7 +54,6 @@ dependencies {
     testImplementation("io.rest-assured:rest-assured:${restAssuredVersion}")
     testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
 
-    // Testcontainers for PostgreSQL
     testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
     testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")

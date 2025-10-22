@@ -106,7 +106,6 @@ class RegularTransactionControllerTest(
                 )
             }
 
-            // Vérifier que la transaction a bien été créée
             val createdTransactions = monthlyTransactionStateForTestAdapter.get()
             assertEquals(1, createdTransactions.size)
             assertEquals("Salaire", createdTransactions.first().label)
@@ -425,7 +424,6 @@ class RegularTransactionControllerTest(
                 )
             }
 
-            // Vérifier que les transactions ont bien été récupérées
             val transactions = monthlyTransactionStateForTestAdapter.get()
             assertEquals(2, transactions.size)
         }

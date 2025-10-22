@@ -74,7 +74,6 @@ class ProblemDetailHandler {
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun onIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ProblemDetail> {
-        // Les erreurs de parsing UUID (Invalid UUID string) doivent retourner 404
         if (ex.message?.contains("Invalid UUID string") == true) {
             val problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND)
             problemDetail.title = "Resource not found"
@@ -83,7 +82,6 @@ class ProblemDetailHandler {
             LOGGER.error("Invalid UUID provided : {}", ex.message)
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail)
         }
-        // Autres IllegalArgumentException retournent 400
         val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
         problemDetail.title = "Bad Request"
         problemDetail.detail = "Invalid argument : ${ex.message}"
