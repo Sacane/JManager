@@ -33,7 +33,7 @@ jobs:
       - name: allow permission
         run: chmod +x ./gradlew
       - name: Run tests
-        run: ./gradlew test jacocoTestReport --info  # Run Gradle tests
+        run: ./gradlew :domain:test :infra:test jacocoTestReport --info  # Run Gradle tests
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
