@@ -1,7 +1,7 @@
 export type Frequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
 
 export default function useRegularTransaction() {
-  const { post, get } = useQuery()
+  const { post, get, patch, deleteQuery } = useQuery()
 
   async function saveMonthlyTransaction(monthlyTransaction: MonthlyTransactionCreationRequest): Promise<RegularTransactionDTO> {
     return post('transaction/monthly', monthlyTransaction)
@@ -10,9 +10,24 @@ export default function useRegularTransaction() {
   async function getRegularTransaction(): Promise<RegularTransactionDTO[]> {
     return get('transaction/regular')
   }
+
   async function getRegularTransactionById(id: string): Promise<RegularTransactionDTO> {
     return get(`transaction/regular/${id}`)
   }
 
-  return { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById }
+  async function updateRegularTransaction(transaction: UpdateRegularTransactionRequest): Promise<RegularTransactionDTO> {
+    return patch('transaction/regular', transaction)
+  }
+
+  async function deleteRegularTransaction(id: string): Promise<void> {
+    return deleteQuery(`transaction/regular/${id}`, {})
+  }
+
+  return {
+    getRegularTransaction,
+    saveMonthlyTransaction,
+    getRegularTransactionById,
+    updateRegularTransaction,
+    deleteRegularTransaction,
+  }
 }

@@ -68,7 +68,7 @@ declare global {
   interface RegularTransactionDTO {
     id: string
     label: string
-    startDate: Date
+    startDate: Date | string
     value: number
     isIncome: boolean
     regularity: string
@@ -78,9 +78,15 @@ declare global {
 
   interface FrequencyPropertyDTO {
     type: 'FOREVER' | 'UNTIL_DATE' | 'TIMES'
-    untilDate?: Date
+    untilDate?: Date | string
     times?: number
   }
+
+  interface RecurrenceRuleDTO {
+    type: string
+    value?: number
+  }
+
   interface MonthlyTransactionCreationRequest {
     label: string
     value: number
@@ -90,6 +96,17 @@ declare global {
     frequencyProperty: FrequencyPropertyDTO
     repeatDay: number | null
     bookletIds: string[]
+  }
+
+  interface UpdateRegularTransactionRequest {
+    id: string
+    label: string
+    value: number
+    isIncome: boolean
+    tagDTO: TagDTO
+    frequencyProperty: FrequencyPropertyDTO
+    bookletIds: string[]
+    recurrenceRule: RecurrenceRuleDTO
   }
   interface BookletReport {
     label: string
