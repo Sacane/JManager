@@ -14,6 +14,7 @@ import fr.sacane.jmanager.infrastructure.spi.entity.transaction.RegularTransacti
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
+import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
@@ -31,6 +32,7 @@ class RegularTransactionOperator(
         private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionOperator::class.java)
     }
 
+    @Transactional
     fun save(user: UserResource, regularTransaction: RegularTransaction, bookletIds: List<java.util.UUID>): RegularTransactionEntity {
         val regularTransactionEntity = RegularTransactionEntity(
             startDate = regularTransaction.startDate,
@@ -60,7 +62,7 @@ class RegularTransactionOperator(
         }
 
         bookletIds.forEach { bookletId ->
-            val booklet = bookletJpaRepository.findByIdOrNull(bookletId)
+            val booklet = bookletJpaRepository.findByIdWithRegularTransactions(bookletId)
                 ?: throw NotFoundException(ResultState.NOT_FOUND.code,"Booklet with id $bookletId not found")
             result.addBooklet(booklet)
         }

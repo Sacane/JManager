@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.UserRegularTransaction
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
@@ -279,6 +280,85 @@ class RegularTransactionFeatureTest : FeatureTest() {
     @Nested
     inner class DeleteRegularTransactionTest {
 
+        @Test
+        fun `should delete a regular transaction successfully`() {
+            launchWithConnectedUserInstance {
+                val monthlyTransaction = RegularTransaction(
+                    label = "Abonnement à supprimer",
+                    amount = 19.99.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id}-monthly-delete"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction)))
+
+                val result = regularTransactionFeature.deleteRegularTransaction(
+                    tokenValue,
+                    monthlyTransaction.id.value
+                )
+
+                result.assertSuccess()
+                result.onSuccess { deleted ->
+                    assertTrue(deleted)
+                }
+
+                val getResult = regularTransactionFeature.getRegularTransactionById(
+                    tokenValue,
+                    monthlyTransaction.id.value
+                )
+                getResult.assertFailure()
+            }
+        }
+
+        @Test
+        fun `should fail when deleting non-existing transaction`() {
+            launchWithConnectedUserInstance {
+                val result = regularTransactionFeature.deleteRegularTransaction(
+                    tokenValue,
+                    "non-existing-id"
+                )
+
+                result.assertFailure()
+            }
+        }
+
+        @Test
+        fun `should fail with unauthorized when token is invalid`() {
+            val result = regularTransactionFeature.deleteRegularTransaction(
+                "invalid-token",
+                "some-id"
+            )
+
+            result.assertFailure(ResultState.UNAUTHORIZED)
+        }
+
+        @Test
+        fun `should not delete transaction belonging to another user`() {
+            launchWithConnectedUserInstance {
+                val otherUserId = UserId(UUID.randomUUID())
+                val monthlyTransaction = RegularTransaction(
+                    label = "Transaction d'un autre utilisateur",
+                    amount = 25.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${otherUserId.value}-monthly-other"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                regularTransactionState.init(listOf(UserRegularTransaction(otherUserId, monthlyTransaction)))
+
+                val result = regularTransactionFeature.deleteRegularTransaction(
+                    tokenValue,
+                    monthlyTransaction.id.value
+                )
+
+                result.assertFailure()
+            }
+        }
     }
 
     @Nested

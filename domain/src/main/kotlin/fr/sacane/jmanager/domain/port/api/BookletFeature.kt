@@ -170,7 +170,6 @@ class BookletFeatureImpl(
                 year
             )
 
-            // Filter regular transactions to only include those that have started before or during the requested month
             val requestedDate = LocalDate.of(year, month, 1)
             val filteredRegularTransactions = regularTransactions.filter { rt ->
                 !rt.startDate.isAfter(requestedDate.withDayOfMonth(requestedDate.lengthOfMonth()))

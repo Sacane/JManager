@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -14,7 +15,8 @@ import java.util.*
 class RegularTransactionRepositoryDataJpaAdapter(
     private val userPostgresRepository: UserPostgresRepository,
     private val regularTransactionOperator: RegularTransactionOperator,
-    private val regularTransactionRepository: RegularTransactionResourceJpaRepository
+    private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
+    private val bookletJpaRepository: BookletJpaRepository
 ): RegularTransactionRepository {
     companion object {
         private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionRepositoryDataJpaAdapter::class.java)
@@ -46,10 +48,8 @@ class RegularTransactionRepositoryDataJpaAdapter(
     }
 
     override fun getAllRegularUsedByAccount(userId: UserId, accountID: UUID): List<RegularTransaction>? {
-        return regularTransactionRepository.findAll()
-            .filter { it.owner?.idUser == userId.value }
-            .filter { transaction -> transaction.accounts.any { it.idAccount == accountID } }
-            .map { it.toDomain() }
+        return bookletJpaRepository.findByIdWithRegularTransactions(accountID)
+            ?.regularTransactions?.map { it.toDomain() }
     }
 
     override fun updateRegularTransaction(

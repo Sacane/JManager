@@ -64,12 +64,10 @@ function onSave(transaction: MonthlyTransactionCreationRequest) {
     })
 }
 
-// Gestion du dialog d'édition
 const isEditDialogVisible = ref(false)
 const selectedTransaction = ref<RegularTransactionDTO | null>(null)
 const loadingTransaction = ref(false)
 
-// Gestionnaire de double-clic sur une ligne
 async function handleRowDoubleClick(event: any) {
   const transactionId = event.data.id
 
@@ -91,11 +89,7 @@ async function handleRowDoubleClick(event: any) {
   }
 }
 
-// Sauvegarder les modifications
 function handleEditSave(updatedTransaction: RegularTransactionDTO) {
-  // TODO: Implémenter la méthode updateRegularTransaction dans useRegularTransaction
-
-  // Mettre à jour la liste localement
   const index = transactions.value.findIndex(t => t.id === updatedTransaction.id)
   if (index !== -1) {
     transactions.value[index] = updatedTransaction

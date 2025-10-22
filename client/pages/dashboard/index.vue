@@ -276,7 +276,6 @@ const monthlyComparisonData = computed(() => {
     t => t.month === prevMonth.getMonth() + 1 && t.year === prevMonth.getFullYear(),
   )
 
-  // Weekly breakdown (simplified, dividing by 4)
   const currentExpenses = currentMonthData ? Number.parseFloat(currentMonthData.expenses) : 0
   const previousExpenses = previousMonthData ? Number.parseFloat(previousMonthData.expenses) : 0
 
