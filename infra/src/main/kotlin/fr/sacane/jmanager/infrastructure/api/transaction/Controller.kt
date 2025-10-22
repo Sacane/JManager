@@ -152,6 +152,41 @@ class TransactionController(
             logger.info("Regular transaction fetched successfully")
         }
     }
+
+    @PatchMapping("/regular")
+    fun updateRegularTransaction(
+        @RequestBody request: UpdateRegularTransactionRequest
+    ): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Updating regular transaction ${request.id}")
+        return regularTransactionFeature.updateRegularTransaction(
+            currentUser.token,
+            RegularTransaction(
+                id = RegularTransactionId(request.id),
+                label = request.label,
+                amount = request.value.toAmount(),
+                isIncome = request.isIncome,
+                tag = request.tagDTO.toDomain(),
+                frequencyProperty = request.frequencyProperty.frequencyToDomain(),
+                startDate = LocalDate.now(), // Sera ignoré dans la logique métier
+                recurrenceRule = request.recurrenceRule.toDomain()
+            )
+        ).map {
+            it.toDTO()
+        }.toHttpResponse().also {
+            logger.info("Regular transaction updated successfully")
+        }
+    }
+
+    @DeleteMapping("/regular/{id}")
+    fun deleteRegularTransaction(@PathVariable id: String): ResponseEntity<Unit> {
+        logger.info("Deleting regular transaction $id")
+        return regularTransactionFeature.deleteRegularTransaction(currentUser.token, id)
+            .map { }
+            .toHttpResponse()
+            .also {
+                logger.info("Regular transaction deleted successfully")
+            }
+    }
 }
 
 fun TransactionResumeResult.toDTO(): TransactionResponse {

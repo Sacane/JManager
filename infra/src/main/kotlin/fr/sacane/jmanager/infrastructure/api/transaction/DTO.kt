@@ -139,6 +139,25 @@ data class RegularTransactionLinkRequest(
     val bookletId: String
 )
 
+@Serializable
+data class UpdateRegularTransactionRequest(
+    val id: String,
+    val label: String,
+    @Serializable(with = BigDecimalSerializer::class)
+    val value: BigDecimal,
+    val isIncome: Boolean,
+    val tagDTO: TagDTO,
+    val frequencyProperty: FrequencyPropertyDTO,
+    val bookletIds: List<String>,
+    val recurrenceRule: RecurrenceRuleDTO
+)
+
+@Serializable
+data class RecurrenceRuleDTO(
+    val type: String,
+    val value: Int? = null
+)
+
 
 fun FrequencyPropertyDTO.frequencyToDomain(): FrequencyProperty {
     return when (type) {
@@ -153,5 +172,17 @@ fun FrequencyProperty.toDTO(): FrequencyPropertyDTO {
         is FrequencyProperty.Forever -> FrequencyPropertyDTO(type = FrequencyPropertyType.FOREVER)
         is FrequencyProperty.UntilDate -> FrequencyPropertyDTO(type = FrequencyPropertyType.UNTIL_DATE, untilDate = this.date)
         is FrequencyProperty.SpecificRepetitionTimes -> FrequencyPropertyDTO(type = FrequencyPropertyType.TIMES, times = this.number)
+    }
+}
+
+fun RecurrenceRuleDTO.toDomain(): fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule {
+    return when(type.uppercase()) {
+        "MONTHLY" -> fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Monthly(value ?: 1)
+        "YEARLY" -> {
+            val month = value?.div(100) ?: 1  // Les deux premiers chiffres représentent le mois
+            val day = value?.rem(100) ?: 1    // Les deux derniers chiffres représentent le jour
+            fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Yearly(month, day)
+        }
+        else -> throw IllegalArgumentException("Unknown recurrence rule type: $type")
     }
 }
