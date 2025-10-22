@@ -12,6 +12,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRep
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 class TagRepositoryJpaAdapter(
@@ -61,7 +62,7 @@ class TagRepositoryJpaAdapter(
         return defaultTagPostgresRepository.findAll().count() > 2
     }
     @Transactional
-    override fun deleteById(tagId: Long): Boolean {
+    override fun deleteById(tagId: UUID): Boolean {
         return tagPersonalPostgresRepository.existsById(tagId).also {
             if(it) tagPersonalPostgresRepository.deleteById(tagId)
         }
@@ -81,7 +82,7 @@ class TagRepositoryJpaAdapter(
         }
     }
 
-    override fun existsById(tagId: Long): Boolean {
+    override fun existsById(tagId: UUID): Boolean {
         return tagPersonalPostgresRepository.existsById(tagId)
     }
 

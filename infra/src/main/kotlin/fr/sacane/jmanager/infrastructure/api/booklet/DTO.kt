@@ -7,7 +7,7 @@ import java.math.BigDecimal
 
 @Serializable
 data class AccountDTO(
-    val id: Long?,
+    val id: String?,
     @Serializable(with = BigDecimalSerializer::class)
     val amount: BigDecimal,
     val labelAccount: String,

@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.BookletFeature
+import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
@@ -54,27 +55,27 @@ class BookletController (
 
     @DeleteMapping(path = ["{accountId}"])
     fun deleteAccount(
-        @PathVariable accountId: Long
-    ): ResponseEntity<Nothing> = feature.deleteAccountById(accountId, currentUser.token).toHttpResponse()
+        @PathVariable accountId: String
+    ): ResponseEntity<Nothing> = feature.deleteAccountById(accountId.toUUID(), currentUser.token).toHttpResponse()
 
     @GetMapping("{accountID}")
     fun findBookletById(
-        @PathVariable("accountID") accountID: Long
+        @PathVariable("accountID") accountID: String
     ): ResponseEntity<AccountDTO> {
         LOGGER.info("Requesting account with ID $accountID")
-        return feature.findAccountById(accountID, currentUser.token)
+        return feature.findAccountById(accountID.toUUID(), currentUser.token)
             .map { it.toDTO() }.toHttpResponse()
     }
 
     @GetMapping("report/{accountID}")
     fun findBookletReportByIdMonthAndYear(
-        @PathVariable("accountID") accountID: Long,
+        @PathVariable("accountID") accountID: String,
         @RequestParam("month") month: Int,
         @RequestParam("year") year: Int
     ): ResponseEntity<BookletReport> {
         LOGGER.info("Requesting account report for booklet $accountID")
         val result = feature.loadTransactionsForBookletForAMonth(
-            token = currentUser.token, accountID, Month.of(month), year
+            token = currentUser.token, accountID.toUUID(), Month.of(month), year
         )
         val report = result.map { res ->
             BookletReport(

@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.entity
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularTransactionEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.util.UUID
 
 
 @Entity
@@ -21,9 +22,9 @@ class BookletResource(
     @ManyToMany(mappedBy = "accounts", fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     var monthlyTransactions: MutableSet<MonthlyRegularTransactionEntity> = mutableSetOf(),
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_account")
-    var idAccount: Long? = null
+    var idAccount: UUID? = null
 ) {
     fun clearAllMonthlyTransactions() {
         monthlyTransactions.toList().forEach { transaction ->

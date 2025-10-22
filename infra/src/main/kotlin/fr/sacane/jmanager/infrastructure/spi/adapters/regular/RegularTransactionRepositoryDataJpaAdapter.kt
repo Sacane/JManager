@@ -24,7 +24,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
     override fun saveMonthlyRegularTransaction(
         userId: UserId,
         monthlyTransaction: MonthlyTransaction,
-        bookletIds: List<Long>
+        bookletIds: List<UUID>
     ): RegularTransaction{
         logger.info("Saving transaction {}", monthlyTransaction)
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
@@ -50,7 +50,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
         return monthlyOnes.map { it.toDomain() }
     }
 
-    override fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>? {
+    override fun getAllRegularUsedByAccount(userId: UserId, accountID: UUID): List<RegularTransaction>? {
         val monthlyOnes = monthlyRegularTransactionRepository.findAll()
             .filter { it.owner?.idUser == userId.value }
             .filter { transaction -> transaction.accounts.any { it.idAccount == accountID } }

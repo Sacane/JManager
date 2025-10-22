@@ -9,6 +9,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 @Repository
 class BookletJpaRepositoryAdapter(
@@ -33,7 +34,7 @@ class BookletJpaRepositoryAdapter(
         return accountSaved.toModel()
     }
 
-    override fun findAccountByIdWithTransactions(accountId: Long): Booklet? {
+    override fun findAccountByIdWithTransactions(accountId: UUID): Booklet? {
         val accountResponse = accountRepository.findByIdWithSheets(accountId)
         return accountResponse?.toModel()
     }
@@ -43,7 +44,7 @@ class BookletJpaRepositoryAdapter(
         return accountRepository.findByOwnerAndLabelWithSheets(userId.value!!, accountLabel)?.toModel() ?: return null
     }
 
-    override fun deleteAccountById(accountId: Long) {
+    override fun deleteAccountById(accountId: UUID) {
         val account = accountRepository.findByIdWithMonthlyTransactions(accountId) ?: return
         account.clearAllMonthlyTransactions()
         accountRepository.deleteById(accountId)

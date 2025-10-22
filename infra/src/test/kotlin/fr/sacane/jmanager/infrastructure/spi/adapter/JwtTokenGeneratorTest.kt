@@ -15,7 +15,7 @@ class JwtTokenGeneratorTest {
 
     @Test
     fun `token must be correctly generated`() {
-        val userId = UserId(1)
+        val userId = UserId(UUID.randomUUID())
         val role = Role.USER
         val token = tokenGenerator.generateToken(userId, "test", setOf(role))
 
@@ -27,7 +27,7 @@ class JwtTokenGeneratorTest {
 
     @Test
     fun `should read a generated token`() {
-        val userId = UserId(1)
+        val userId = UserId(UUID.randomUUID())
         val role = Role.USER
         val token = tokenGenerator.generateToken(userId, "test", setOf(role))
 

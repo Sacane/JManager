@@ -4,15 +4,16 @@ import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 
 @Entity
 @Table(name="sheet")
 class TransactionResource(
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(unique = true, name = "id_sheet", nullable = false)
-    var idSheet: Long? = null,
+    var idSheet: UUID? = null,
     @Column(name = "label_sheet")
     var label: String,
     @Column(name="date")

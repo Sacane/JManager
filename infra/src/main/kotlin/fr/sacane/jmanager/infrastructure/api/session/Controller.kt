@@ -41,7 +41,7 @@ class SessionController(
             }
             httpResponse.addCookie(cookie)
             UserStorageDTO(
-                it.user.id.value,
+                it.user.id.value.toString(),
                 username = it.user.username,
                 email = it.user.email,
                 token = it.token

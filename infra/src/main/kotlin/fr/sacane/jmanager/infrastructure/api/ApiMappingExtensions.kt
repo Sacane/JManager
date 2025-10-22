@@ -17,7 +17,7 @@ import org.springframework.http.ResponseEntity
 import java.awt.Color
 
 internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
-    this.id ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
+    this.id?.toString() ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
     this.amount.value,
     this.label,
     this.previewAmount.toStringValue(),
@@ -26,17 +26,17 @@ internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
 )
 
 internal fun TransactionResult.toModel(): Transaction
-= Transaction(this.id, this.label, this.date, Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
+= Transaction(this.id?.let { java.util.UUID.fromString(it) }, this.label, this.date, Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId?.let { java.util.UUID.fromString(it) }, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
 
 internal fun Transaction.toDTO(): TransactionResult {
-    return TransactionResult(id, label, amount.value, amount.currency.symbol, isIncome, date, tagDTO = tag?.toDTO(), isPreview)
+    return TransactionResult(id?.toString(), label, amount.value, amount.currency.symbol, isIncome, date, tagDTO = tag?.toDTO(), isPreview)
 }
 
 
 internal fun User.toDTO(): UserDTO
-= UserDTO(this.id.value ?: 0, this.username, this.email)
+= UserDTO(this.id.value?.toString() ?: "", this.username, this.email)
 
-internal fun Long.id(): UserId = UserId(this)
+internal fun String.id(): UserId = UserId(java.util.UUID.fromString(this))
 
 internal fun <T> Result<T>.toHttpResponse()
 : ResponseEntity<T> = when(this.status){
@@ -64,9 +64,9 @@ internal fun ColorDTO.asAwtColor(): Color = Color(this.red, this.green, this.blu
 
 internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 
-internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id!!, label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
+internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id?.toString(), label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
 
-internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))
+internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId?.let { java.util.UUID.fromString(it) }, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))
 
 internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
     return RegularTransactionDTO(

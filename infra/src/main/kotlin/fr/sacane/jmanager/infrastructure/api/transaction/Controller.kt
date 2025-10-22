@@ -10,6 +10,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
+import fr.sacane.jmanager.domain.toUUID
+import fr.sacane.jmanager.domain.toUUIDs
 import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -48,7 +50,7 @@ class TransactionController(
     fun deleteByIds(
         @RequestBody sheetIds: AccountTransactionsIdRequest
     ): ResponseEntity<Nothing>
-        = transactionFeature.deleteSheetsByIds(sheetIds.accountId, sheetIds.transactionIds, currentUser.token)
+        = transactionFeature.deleteSheetsByIds(sheetIds.accountId.toUUID(), sheetIds.transactionIds.toUUIDs(), currentUser.token)
         .toHttpResponse()
 
 
@@ -56,14 +58,14 @@ class TransactionController(
     fun getTransactionsByMonthAndYearAndAccountId(
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
-        @RequestParam("bookletId") bookletId: Long
+        @RequestParam("bookletId") bookletId: String
         ): ResponseEntity<TransactionListResponse> {
         logger.info("Request transactions from booklet $bookletId for month $month and year $year")
-        val response = bookletFeature.loadTransactionsForBookletForAMonth(currentUser.token, bookletId, month ?: Month.JANUARY, year)
+        val response = bookletFeature.loadTransactionsForBookletForAMonth(currentUser.token, java.util.UUID.fromString(bookletId), month ?: Month.JANUARY, year)
 
         return response.map {
             TransactionListResponse(
-                transactions = (it!!.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() },
+                transactions = (it.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() },
                 amount = it.realSold.value.toString() ,
                 previewAmount = it.previsionalSold.value.toString()
             )
@@ -75,7 +77,7 @@ class TransactionController(
         @RequestBody dto: UserAccountIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Start editing transaction => ${dto.transaction}")
-        return transactionFeature.editTransaction(dto.accountId, dto.transaction.toModel(), currentUser.token)
+        return transactionFeature.editTransaction(java.util.UUID.fromString(dto.accountId), dto.transaction.toModel(), currentUser.token)
             .map {
                 it.toDTO()
             }.toHttpResponse()
@@ -85,9 +87,9 @@ class TransactionController(
 
     @GetMapping("{id}")
     fun findById(
-        @PathVariable("id") transactionID: Long
+        @PathVariable("id") transactionID: String
     ): ResponseEntity<TransactionResult>
-        = transactionFeature.findById(transactionID, currentUser.token)
+        = transactionFeature.findById(java.util.UUID.fromString(transactionID), currentUser.token)
             .map {
                 it.toDTO()
             }.toHttpResponse()
@@ -98,8 +100,8 @@ class TransactionController(
     ): ResponseEntity<TransactionResponse> {
         logger.info("Confirming preview Transaction...")
         return transactionFeature.confirmPreviewTransaction(
-            transactionId = command.transactionID,
-            accountID = command.accountID,
+            transactionId = java.util.UUID.fromString(command.transactionID),
+            accountID = java.util.UUID.fromString(command.accountID),
             token = currentUser.token
         ).map {
             it.toDTO()
@@ -138,7 +140,7 @@ class TransactionController(
                     )
                 } else this
             },
-            request.bookletIds
+            request.bookletIds.map { java.util.UUID.fromString(it) }
         ).map {
             it.toDTO()
         }.toHttpResponse().also {
@@ -173,6 +175,6 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
 
 
 data class ConfirmPreviewCommand(
-    val accountID: Long,
-    val transactionID: Long
+    val accountID: String,
+    val transactionID: String
 )

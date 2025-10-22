@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.entity
 
 import fr.sacane.jmanager.domain.models.Role
 import jakarta.persistence.*
+import java.util.UUID
 
 @Table(name="user_resource")
 @Entity
@@ -25,9 +26,9 @@ class UserResource(
     @Column(name = "role")
     var roles: MutableSet<Role> = mutableSetOf(Role.USER),
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_user")
-    var idUser: Long? = null,
+    var idUser: UUID? = null,
 ) {
     fun addAccount(bookletResource: BookletResource) {
         bookletResource.owner = this

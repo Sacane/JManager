@@ -35,6 +35,7 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -86,7 +87,7 @@ class RegularTransactionControllerTest(
                     times = null
                 ),
                 repeatDay = 15,
-                bookletIds = listOf(booklet.id!!)
+                bookletIds = listOf(booklet.id!!.toString())
             )
 
             Given {
@@ -130,7 +131,7 @@ class RegularTransactionControllerTest(
                     times = 12
                 ),
                 repeatDay = null,
-                bookletIds = listOf(booklet.id!!)
+                bookletIds = listOf(booklet.id!!.toString())
             )
 
             Given {
@@ -159,7 +160,7 @@ class RegularTransactionControllerTest(
                 )
             )
             val booklets = accountStateTestAdapter.get()
-            val bookletIds = booklets.mapNotNull { it.id }
+            val bookletIds = booklets.mapNotNull { it.id?.toString() }
 
             val request = MonthlyRegularTransactionRequest(
                 label = "Abonnement",
@@ -212,7 +213,7 @@ class RegularTransactionControllerTest(
                     times = null
                 ),
                 repeatDay = 5,
-                bookletIds = listOf(booklet.id!!)
+                bookletIds = listOf(booklet.id!!.toString())
             )
 
             Given {
@@ -245,7 +246,7 @@ class RegularTransactionControllerTest(
                     times = null
                 ),
                 repeatDay = 15,
-                bookletIds = listOf(999999L)
+                bookletIds = listOf(UUID.randomUUID().toString())
             )
 
             Given {
@@ -274,12 +275,12 @@ class RegularTransactionControllerTest(
                     times = null
                 ),
                 repeatDay = 15,
-                bookletIds = listOf(1L)
+                bookletIds = listOf(UUID.randomUUID().toString())
             )
 
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(request))
             } When {
@@ -315,7 +316,7 @@ class RegularTransactionControllerTest(
                 listOf(
                     BookletMonthlyTransactionInput(
                         userId = user!!.id,
-                        bookletID = booklet.id!!,
+                        bookletID = booklet.id!!.toString(),
                         regularTransaction = monthlyTransaction
                     )
                 )
@@ -357,7 +358,7 @@ class RegularTransactionControllerTest(
         fun `Get regular transaction with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/transaction/regular/{id}", mapOf("id" to "00000000-0000-0000-0000-000000000000"))
@@ -404,7 +405,7 @@ class RegularTransactionControllerTest(
                 monthlyTransactions.map {
                     BookletMonthlyTransactionInput(
                         userId = user!!.id,
-                        bookletID = booklet.id!!,
+                        bookletID = booklet.id!!.toString(),
                         regularTransaction = it
                     )
                 }
@@ -447,7 +448,7 @@ class RegularTransactionControllerTest(
         fun `Get all regular transactions with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", setOf(Role.USER)).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/transaction/regular")

@@ -60,16 +60,16 @@ class TransactionRepositoryJpaAdapter(
         return this.asResource(tag)
     }
 
-    override fun deleteAllSheetsById(sheetIds: List<Long>) {
+    override fun deleteAllSheetsById(sheetIds: List<java.util.UUID>) {
         transactionJpaRepository.deleteAllById(sheetIds)
     }
 
-    override fun findTransactionById(transactionId: Long): Transaction? {
+    override fun findTransactionById(transactionId: java.util.UUID): Transaction? {
         return transactionJpaRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
     }
 
 
-    override fun save(accountId: Long, transaction: Transaction): Transaction? {
+    override fun save(accountId: java.util.UUID, transaction: Transaction): Transaction? {
         val tag = if(transaction.tag == null) {
             tagRepository.findUnknownTag()!!
         }
@@ -90,16 +90,16 @@ class TransactionRepositoryJpaAdapter(
             ?.toModel()
     }
 
-    override fun findAccountWithTransactionById(id: Long): Booklet? {
+    override fun findAccountWithTransactionById(id: java.util.UUID): Booklet? {
         return bookletJpaRepository.findTransactionsById(id)?.toModel()
     }
 
-    override fun findTransactionsByBookletId(bookletId: Long): List<Transaction>? {
+    override fun findTransactionsByBookletId(bookletId: java.util.UUID): List<Transaction>? {
         return bookletJpaRepository.findTransactionsById(bookletId)?.sheets?.map { it.toModel() }
     }
 
     override fun findTransactionsByBookletYearAndMonth(
-        bookletId: Long,
+        bookletId: java.util.UUID,
         year: Int,
         month: Month
     ): List<Transaction>? {

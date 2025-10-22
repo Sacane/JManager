@@ -32,7 +32,7 @@ class RegularTransactionOperator(
         private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionOperator::class.java)
     }
 
-    fun save(user: UserResource, regularTransaction: RegularTransaction, bookletIds: List<Long>): AbstractRegularTransactionResource {
+    fun save(user: UserResource, regularTransaction: RegularTransaction, bookletIds: List<java.util.UUID>): AbstractRegularTransactionResource {
         return when (regularTransaction) {
             is MonthlyTransaction -> {
                 val monthlyRegularTransactionEntity = MonthlyRegularTransactionEntity(

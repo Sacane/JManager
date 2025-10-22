@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class RegularTransactionTracker(
-    val id: Long? = null,
+    val id: UUID? = null,
     val regularTransactionId: RegularTransactionId,
     val bookletId: UUID,
     val lastGeneratedDate: LocalDate,

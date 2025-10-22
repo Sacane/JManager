@@ -15,29 +15,31 @@ import org.springframework.http.HttpStatus
 import java.awt.Color
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 class ApiMappingExtensionsTest {
 
     @Test
     fun `Booklet toDTO should convert booklet to AccountDTO`() {
         val transaction = Transaction(
-            id = 1L,
+            id = UUID.randomUUID(),
             label = "Test",
             date = LocalDate.now(),
             amount = 100.toAmount(),
             isIncome = true,
             tag = null
         )
+        val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 1000.toAmount(),
             labelAccount = "Main Account",
-            id = 5L
+            id = bookletId
         )
         booklet.addTransaction(transaction)
 
         val dto = booklet.toDTO()
 
-        assertEquals(5L, dto.id)
+        assertEquals(bookletId.toString(), dto.id)
         assertEquals(BigDecimal("1100.00"), dto.amount)
         assertEquals("Main Account", dto.labelAccount)
         assertEquals("€", dto.currency)
@@ -64,12 +66,13 @@ class ApiMappingExtensionsTest {
     fun `Transaction toDTO should convert transaction correctly`() {
         val tag = Tag(
             label = "Shopping",
-            id = 1L,
+            id = UUID.randomUUID(),
             color = Color.RED,
             isDefault = false
         )
+        val trId = UUID.randomUUID()
         val transaction = Transaction(
-            id = 10L,
+            id = trId,
             label = "Buy shoes",
             date = LocalDate.of(2024, 6, 15),
             amount = 150.toAmount(),
@@ -79,7 +82,7 @@ class ApiMappingExtensionsTest {
 
         val dto = transaction.toDTO()
 
-        assertEquals(10L, dto.id)
+        assertEquals(trId.toString(), dto.id)
         assertEquals("Buy shoes", dto.label)
         assertEquals(BigDecimal("150.00"), dto.value)
         assertEquals("€", dto.currency)
@@ -92,7 +95,7 @@ class ApiMappingExtensionsTest {
     @Test
     fun `Transaction toDTO should handle transaction without tag`() {
         val transaction = Transaction(
-            id = 11L,
+            id = UUID.randomUUID(),
             label = "No tag transaction",
             date = LocalDate.now(),
             amount = 50.toAmount(),
@@ -110,13 +113,14 @@ class ApiMappingExtensionsTest {
     fun `TransactionResult toModel should convert DTO to Transaction`() {
         val colorDTO = ColorDTO(red = 255, green = 0, blue = 0)
         val tagDTO = TagDTO(
-            tagId = 1L,
+            tagId = UUID.randomUUID().toString(),
             label = "Food",
             isDefault = false,
             colorDTO = colorDTO
         )
+        val trId = UUID.randomUUID()
         val transactionResult = TransactionResult(
-            id = 20L,
+            id = trId.toString(),
             label = "Restaurant",
             value = BigDecimal("75.50"),
             currency = "€",
@@ -128,7 +132,7 @@ class ApiMappingExtensionsTest {
 
         val transaction = transactionResult.toModel()
 
-        assertEquals(20L, transaction.id)
+        assertEquals(trId, transaction.id)
         assertEquals("Restaurant", transaction.label)
         assertEquals(75.50.toAmount(), transaction.amount)
         assertFalse(transaction.isIncome)
@@ -141,7 +145,7 @@ class ApiMappingExtensionsTest {
     @Test
     fun `TransactionResult toModel should use default Aucune tag when tagDTO is null`() {
         val transactionResult = TransactionResult(
-            id = 21L,
+            id = UUID.randomUUID().toString(),
             label = "No tag",
             value = BigDecimal("100.00"),
             currency = "€",
@@ -160,24 +164,18 @@ class ApiMappingExtensionsTest {
 
     @Test
     fun `User toDTO should convert user correctly`() {
+        val userId = UUID.randomUUID()
         val user = User(
-            id = UserId(123L),
+            id = UserId(userId),
             username = "john_doe",
             email = "john@example.com"
         )
 
         val dto = user.toDTO()
 
-        assertEquals(123L, dto.id)
+        assertEquals(userId.toString(), dto.id)
         assertEquals("john_doe", dto.username)
         assertEquals("john@example.com", dto.email)
-    }
-
-    @Test
-    fun `Long id extension should create UserId`() {
-        val userId = 456L.id()
-
-        assertEquals(456L, userId.value)
     }
 
     @Test
@@ -286,16 +284,17 @@ class ApiMappingExtensionsTest {
 
     @Test
     fun `Tag toDTO should convert tag correctly`() {
+        val tagId = UUID.randomUUID()
         val tag = Tag(
             label = "Transport",
-            id = 42L,
+            id = tagId,
             color = Color.BLUE,
             isDefault = true
         )
 
         val dto = tag.toDTO()
 
-        assertEquals(42L, dto.tagId)
+        assertEquals(tagId.toString(), dto.tagId)
         assertEquals("Transport", dto.label)
         assertTrue(dto.isDefault)
         assertEquals(0, dto.colorDTO.red)
@@ -306,8 +305,9 @@ class ApiMappingExtensionsTest {
     @Test
     fun `TagDTO toDomain should convert to Tag model`() {
         val colorDTO = ColorDTO(red = 255, green = 128, blue = 0)
+        val tagId = UUID.randomUUID()
         val tagDTO = TagDTO(
-            tagId = 99L,
+            tagId = tagId.toString(),
             label = "Custom Tag",
             isDefault = false,
             colorDTO = colorDTO
@@ -315,7 +315,7 @@ class ApiMappingExtensionsTest {
 
         val tag = tagDTO.toDomain()
 
-        assertEquals(99L, tag.id)
+        assertEquals(tagId, tag.id)
         assertEquals("Custom Tag", tag.label)
         assertFalse(tag.isDefault)
         assertEquals(Color(255, 128, 0), tag.color)

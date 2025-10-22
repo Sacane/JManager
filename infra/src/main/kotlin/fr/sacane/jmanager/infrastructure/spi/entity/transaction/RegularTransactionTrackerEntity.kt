@@ -9,19 +9,20 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.util.UUID
 
 @Entity
 @Table(name = "regular_transaction_tracker")
 data class RegularTransactionTrackerEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    val id: UUID? = null,
 
     @Column(name = "regular_transaction_id", nullable = false)
     val regularTransactionId: String,
 
     @Column(name = "booklet_id", nullable = false)
-    val bookletId: Long,
+    val bookletId: UUID,
 
     @Column(name = "last_generated_date", nullable = false)
     val lastGeneratedDate: LocalDate,
@@ -51,12 +52,12 @@ data class RegularTransactionTrackerEntity(
 }
 
 @Repository
-interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransactionTrackerEntity, Long> {
+interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransactionTrackerEntity, UUID> {
 
     @Query("SELECT r FROM RegularTransactionTrackerEntity r WHERE r.regularTransactionId = :regularTransactionId AND r.bookletId = :bookletId")
-    fun findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId: String, bookletId: Long): RegularTransactionTrackerEntity?
-    fun findAllByBookletId(bookletId: Long): List<RegularTransactionTrackerEntity>
-    fun deleteAllByBookletId(bookletId: Long)
+    fun findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId: String, bookletId: UUID): RegularTransactionTrackerEntity?
+    fun findAllByBookletId(bookletId: UUID): List<RegularTransactionTrackerEntity>
+    fun deleteAllByBookletId(bookletId: UUID)
 }
 
 @Service
@@ -66,7 +67,7 @@ class RegularTransactionTrackerRepositoryAdapter(
 
     override fun findTracker(
         regularTransactionId: RegularTransactionId,
-        bookletId: Long
+        bookletId: UUID
     ): RegularTransactionTracker? {
         return jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId.value, bookletId)?.toDomain()
     }
@@ -76,11 +77,11 @@ class RegularTransactionTrackerRepositoryAdapter(
         return jpaRepository.save(entity).toDomain()
     }
 
-    override fun findAllTrackersForBooklet(bookletId: Long): List<RegularTransactionTracker> {
+    override fun findAllTrackersForBooklet(bookletId: UUID): List<RegularTransactionTracker> {
         return jpaRepository.findAllByBookletId(bookletId).map { it.toDomain() }
     }
 
-    override fun deleteTrackerByBookletId(bookletId: Long) {
+    override fun deleteTrackerByBookletId(bookletId: UUID) {
         jpaRepository.deleteAllByBookletId(bookletId)
     }
 }

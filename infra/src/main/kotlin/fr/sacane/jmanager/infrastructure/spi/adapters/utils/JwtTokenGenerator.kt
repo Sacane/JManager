@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
+import fr.sacane.jmanager.domain.toUUID
 import io.jsonwebtoken.Jwts
 import org.springframework.beans.factory.annotation.Value
 import java.time.ZoneId
@@ -53,7 +54,7 @@ class JwtTokenGenerator(
                 .parseSignedClaims(token)
                 .payload
 
-            val userId = UserId(claims.subject.toLong())
+            val userId = UserId(claims.subject.toUUID())
             val roleUser = claims["USER"] as? Boolean ?: false
             val roleAdmin = claims["ADMIN"] as? Boolean ?: false
             val expirationDate = claims.expiration.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()

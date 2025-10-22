@@ -11,7 +11,6 @@ class ExceptionTest {
 
         assertEquals(403, exception.errCode)
         assertEquals("Access forbidden", exception.message)
-        assertTrue(exception is RuntimeException)
     }
 
     @Test
@@ -20,7 +19,6 @@ class ExceptionTest {
 
         assertEquals(408, exception.errCode)
         assertEquals("Request timeout", exception.message)
-        assertTrue(exception is RuntimeException)
     }
 
     @Test
@@ -29,7 +27,6 @@ class ExceptionTest {
 
         assertEquals(404, exception.errCode)
         assertEquals("Resource not found", exception.message)
-        assertTrue(exception is RuntimeException)
     }
 
     @Test
@@ -38,7 +35,6 @@ class ExceptionTest {
 
         assertEquals(400, exception.errCode)
         assertEquals("Invalid request", exception.message)
-        assertTrue(exception is RuntimeException)
     }
 
     @Test
@@ -47,7 +43,6 @@ class ExceptionTest {
 
         assertEquals(401, exception.errCode)
         assertEquals("Unauthorized access", exception.message)
-        assertTrue(exception is RuntimeException)
     }
 
     @Test
@@ -56,7 +51,6 @@ class ExceptionTest {
 
         assertEquals(500, exception.errCode)
         assertEquals("Internal server error", exception.message)
-        assertTrue(exception is RuntimeException)
     }
 
     @Test

@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserDTO(
-    val id: Long,
+    val id: String,
     val username: String,
     val email: String? = null
 )
@@ -24,7 +24,7 @@ data class UserPasswordDTO(
 
 @Serializable
 data class UserStorageDTO(
-    val id: Long? = null,
+    val id: String? = null,
     val username: String,
     val email: String? = null,
     val token: String,
