@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.spi.TagRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import java.util.UUID
 
 data class UserTag(

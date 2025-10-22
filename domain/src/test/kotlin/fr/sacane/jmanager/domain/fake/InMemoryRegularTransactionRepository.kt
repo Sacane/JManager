@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
-import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import java.util.UUID
 
 data class UserRegularTransaction(

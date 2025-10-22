@@ -6,8 +6,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
-import fr.sacane.jmanager.domain.port.spi.RegularTransactionTrackerRepository
-import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
@@ -34,7 +34,7 @@ interface RegularTransactionGenerator {
 
 @UseCase
 class RegularTransactionGeneratorService(
-    private val transactionRepository: TransactionRepositoryPort,
+    private val transactionRepository: TransactionRepository,
     private val trackerRepository: RegularTransactionTrackerRepository
 ): RegularTransactionGenerator {
 

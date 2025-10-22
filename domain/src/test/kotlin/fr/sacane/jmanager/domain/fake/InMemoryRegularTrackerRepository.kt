@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.fake
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
-import fr.sacane.jmanager.domain.port.spi.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import java.util.UUID
 
 class InMemoryRegularTrackerRepository(

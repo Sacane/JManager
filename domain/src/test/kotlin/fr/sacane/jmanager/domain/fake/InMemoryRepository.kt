@@ -8,8 +8,8 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
-import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
 import java.util.*
@@ -21,7 +21,7 @@ data class IdUserAccountByTransaction(
 
 class InMemoryTransactionRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): TransactionRepositoryPort, State<IdUserAccountByTransaction> {
+): TransactionRepository, State<IdUserAccountByTransaction> {
 
 
     override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
@@ -149,7 +149,7 @@ data class AccountByOwner(
 
 class InMemoryBookletRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): BookletRepositoryPort, State<AccountByOwner> {
+): BookletRepository, State<AccountByOwner> {
 
     override fun editFromAnother(booklet: Booklet): Booklet {
         inMemoryDatabase.upsert(booklet)

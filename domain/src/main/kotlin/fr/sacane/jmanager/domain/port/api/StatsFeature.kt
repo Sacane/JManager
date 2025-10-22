@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.CategoryDistributionOutput
 import fr.sacane.jmanager.domain.models.MonthlyAccountStatsOutput
 import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
-import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculator
@@ -72,7 +72,7 @@ sealed interface StatsFeature {
 class StatsFeatureImpl(
     private val session: SessionManager,
     private val userRepository: UserRepository,
-    private val bookletRepository: BookletRepositoryPort,
+    private val bookletRepository: BookletRepository,
     private val monthlyStatsCalculator: MonthlyStatsCalculator,
     private val categoryDistributionCalculator: CategoryDistributionCalculator,
     private val trendCalculator: TrendCalculator,

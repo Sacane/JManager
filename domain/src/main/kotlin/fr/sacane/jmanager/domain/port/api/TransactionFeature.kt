@@ -7,11 +7,11 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
-import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.TagRepository
-import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDateTime
 import java.time.Month
@@ -30,10 +30,10 @@ sealed interface TransactionFeature {
 
 @DomainService
 class TransactionFeatureImpl(
-    private val transactionRepository: TransactionRepositoryPort,
+    private val transactionRepository: TransactionRepository,
     private val session: SessionManager,
-    private val accountRepository: BookletRepositoryPort,
-    private val infraTransactionManager: UnitOfWorkTransactionProviderPort,
+    private val accountRepository: BookletRepository,
+    private val infraTransactionManager: UnitOfWorkTransactionProvider,
     private val tagRepository: TagRepository
 ): TransactionFeature{
     companion object {

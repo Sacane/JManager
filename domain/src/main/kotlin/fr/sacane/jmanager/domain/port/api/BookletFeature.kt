@@ -8,6 +8,10 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.*
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -34,10 +38,10 @@ sealed interface BookletFeature {
 class BookletFeatureImpl(
     private val userRepository: UserRepository,
     private val session: SessionManager,
-    private val accountRepository: BookletRepositoryPort,
+    private val accountRepository: BookletRepository,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
-    private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProviderPort,
+    private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository
 ): BookletFeature {
     companion object {

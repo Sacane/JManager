@@ -3,21 +3,17 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.spi.UnitOfWorkTransactionProviderPort
-import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.TagRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
-import java.time.LocalDate
 import java.util.UUID
 
 @Port(Side.APPLICATION)
@@ -39,7 +35,7 @@ class RegularTransactionFeatureImpl(
     private val regularTransactionRepository: RegularTransactionRepository,
     private val tagRepository: TagRepository,
     private val session: SessionManager,
-    private val unitOfWork: UnitOfWorkTransactionProviderPort
+    private val unitOfWork: UnitOfWorkTransactionProvider
 ) : RegularTransactionFeature {
 
 

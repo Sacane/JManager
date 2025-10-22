@@ -10,6 +10,8 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.*
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculatorImpl
 import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculatorImpl
 import fr.sacane.jmanager.domain.usecase.PrevisionalTransactionFilterImpl
@@ -20,12 +22,12 @@ import java.util.*
 
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
-    private val  inMemoryTrackerRepository: RegularTransactionTrackerRepository  = InMemoryRegularTrackerRepository(inMemoryDatabase)
+    private val  inMemoryTrackerRepository: RegularTransactionTrackerRepository = InMemoryRegularTrackerRepository(inMemoryDatabase)
     private val fakeAccountRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
     private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository(inMemoryDatabase)
-    private val manager: UnitOfWorkTransactionProviderPort = UnitOfWorkTransactionProviderPort.DEFAULT
+    private val manager: UnitOfWorkTransactionProvider = UnitOfWorkTransactionProvider.DEFAULT
     private val inMemoryRegularTransactionGenerator: RegularTransactionGenerator = RegularTransactionGeneratorService(
         transactionRepository, inMemoryTrackerRepository
     )

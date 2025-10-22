@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi
+package fr.sacane.jmanager.domain.port.spi.repository
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
@@ -8,7 +8,7 @@ import java.time.Month
 import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
-interface TransactionRepositoryPort {
+interface TransactionRepository {
     fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?
     fun deleteAllSheetsById(sheetIds: List<UUID>)
     fun findTransactionById(transactionId: UUID): Transaction?

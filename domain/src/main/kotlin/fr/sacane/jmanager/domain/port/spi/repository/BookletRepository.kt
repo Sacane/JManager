@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi
+package fr.sacane.jmanager.domain.port.spi.repository
 
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
-interface BookletRepositoryPort {
+interface BookletRepository {
     fun editFromAnother(booklet: Booklet): Booklet?
     fun save(ownerId: UserId, booklet: Booklet): Booklet?
     fun findAccountByIdWithTransactions(accountId: UUID): Booklet?

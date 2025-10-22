@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.AccountMapper
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
@@ -16,7 +16,7 @@ class BookletJpaRepositoryAdapter(
     private val accountRepository: BookletJpaRepository,
     private val userRepository: UserPostgresRepository,
     private val accountMapper: AccountMapper
-): BookletRepositoryPort {
+): BookletRepository {
     @Transactional
     override fun editFromAnother(booklet: Booklet): Booklet? {
         val accountFromDatabase = accountRepository.findByIdWithSheets(booklet.id!!) ?: return null

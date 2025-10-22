@@ -1,9 +1,9 @@
-package fr.sacane.jmanager.domain.port.spi
+package fr.sacane.jmanager.domain.port.spi.repository
 
-interface UnitOfWorkTransactionProviderPort {
+interface UnitOfWorkTransactionProvider {
     companion object{
-        val DEFAULT: UnitOfWorkTransactionProviderPort
-            get() = object : UnitOfWorkTransactionProviderPort {
+        val DEFAULT: UnitOfWorkTransactionProvider
+            get() = object : UnitOfWorkTransactionProvider {
                 override fun <T, R> executeInTransaction(input: T, executable: (T) -> R): R {
                     return executable(input)
                 }
