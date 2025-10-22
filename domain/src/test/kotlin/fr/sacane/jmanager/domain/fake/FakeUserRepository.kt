@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import java.util.UUID
 import kotlin.random.Random
 
 class FakeUserRepository: UserRepository, State<User> {
@@ -34,7 +35,7 @@ class FakeUserRepository: UserRepository, State<User> {
     }
 
     override fun register(username: String, password: String, roles: Set<Role>): User {
-        val user = User(id = UserId(Random(15).nextLong()), username = username, email="", roles = roles)
+        val user = User(id = UserId(UUID.randomUUID()), username = username, email="", roles = roles)
         users.add(UserWithPassword(user, password, roles))
         return user
     }

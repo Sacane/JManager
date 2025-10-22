@@ -39,15 +39,15 @@ object FakeFactory {
         override fun readToken(token: String): AccessToken? {
             val parts = token.split("||")
             if (parts.size != 4) return null
-            val userId = UserId(parts[0].toLong())
-            val roleStrings = parts[3].split("|").mapNotNull {
+            val userId = UserId(UUID.fromString(parts[0]))
+            val roleStrings = parts[2].split("|").mapNotNull {
                 try {
                     Role.valueOf(it)
                 } catch (e: IllegalArgumentException) {
                     null
                 }
             }.toSet()
-            val username = parts[2]
+            val username = parts[3]
             return AccessToken(userId, username, token, roles = roleStrings)
         }
     }

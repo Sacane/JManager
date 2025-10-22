@@ -8,11 +8,12 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
+import java.util.UUID
 
 data class UserRegularTransaction(
     val userId: UserId,
     val transaction: RegularTransaction,
-    val bookletIds: List<Long> = emptyList()
+    val bookletIds: List<UUID> = emptyList()
 )
 
 class InMemoryRegularTransactionRepository(
@@ -49,7 +50,7 @@ class InMemoryRegularTransactionRepository(
 
     override fun getAllRegularUsedByAccount(
         userId: UserId,
-        accountID: Long
+        accountID: UUID
     ): List<RegularTransaction> {
         return inMemoryDatabase.getAllRegularTransactionsByBooklet(userId, accountID)
     }
@@ -57,7 +58,7 @@ class InMemoryRegularTransactionRepository(
     override fun saveMonthlyRegularTransaction(
         userId: UserId,
         monthlyTransaction: MonthlyTransaction,
-        bookletIds: List<Long>
+        bookletIds: List<UUID>
     ): RegularTransaction {
         inMemoryDatabase.addRegularBooklet(userId, monthlyTransaction, bookletIds)
         return monthlyTransaction

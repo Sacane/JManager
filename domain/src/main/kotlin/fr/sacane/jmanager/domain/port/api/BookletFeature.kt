@@ -16,17 +16,18 @@ import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Month
+import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface BookletFeature {
-    fun findAccountById(accountID: Long, token: String): Result<Booklet>
+    fun findAccountById(accountID: UUID, token: String): Result<Booklet>
     fun editAccount(booklet: Booklet, token: String): Result<Booklet>
-    fun deleteAccountById(accountID: Long, token: String): Result<Nothing>
+    fun deleteAccountById(accountID: UUID, token: String): Result<Nothing>
     fun findByLabelAndUserId(token: String, label: String): Result<Booklet>
     fun findAllRegisteredAccounts(token: String): Result<List<Booklet>>
     fun save(token: String, booklet: Booklet): Result<Booklet>
-    fun loadTransactionsForBookletForAMonth(token: String, bookletId: Long, month: Month, year: Int): Result<BookletLoadingResult>
+    fun loadTransactionsForBookletForAMonth(token: String, bookletId: UUID, month: Month, year: Int): Result<BookletLoadingResult>
 }
 
 @DomainService
@@ -43,7 +44,7 @@ class BookletFeatureImpl(
         private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
     }
     override fun findAccountById(
-        accountID: Long,
+        accountID: UUID,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
@@ -66,7 +67,7 @@ class BookletFeatureImpl(
     }
 
     override fun deleteAccountById(
-        accountID: Long,
+        accountID: UUID,
         token: String
     ): Result<Nothing> = session.authenticate(token) {
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
@@ -116,7 +117,7 @@ class BookletFeatureImpl(
 
     override fun loadTransactionsForBookletForAMonth(
         token: String,
-        bookletId: Long,
+        bookletId: UUID,
         month: Month,
         year: Int
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->

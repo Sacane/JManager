@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.UUID
 
 class TrendCalculatorTest {
 
@@ -52,13 +53,13 @@ class TrendCalculatorTest {
 
         booklet.addTransaction(
             Transaction(
-                1L, "Preview income", currentDate, 100.toAmount(),
+                UUID.randomUUID(), "Preview income", currentDate, 100.toAmount(),
                 isIncome = true, isPreview = true
             )
         )
         booklet.addTransaction(
             Transaction(
-                2L, "Preview expense", currentDate, 50.toAmount(),
+                UUID.randomUUID(), "Preview expense", currentDate, 50.toAmount(),
                 isIncome = false, isPreview = true
             )
         )
@@ -79,10 +80,10 @@ class TrendCalculatorTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Income", currentDate, 500.toAmount(), isIncome = true)
+            Transaction(UUID.randomUUID(), "Income", currentDate, 500.toAmount(), isIncome = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Expense", currentDate, 200.toAmount(), isIncome = false)
+            Transaction(UUID.randomUUID(), "Expense", currentDate, 200.toAmount(), isIncome = false)
         )
 
         val trends = calculator.calculateTrend(listOf(booklet))
@@ -104,18 +105,18 @@ class TrendCalculatorTest {
 
         // Last month: +100
         booklet.addTransaction(
-            Transaction(1L, "Last month income", lastMonth, 200.toAmount(), isIncome = true)
+            Transaction(UUID.randomUUID(), "Last month income", lastMonth, 200.toAmount(), isIncome = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Last month expense", lastMonth, 100.toAmount(), isIncome = false)
+            Transaction(UUID.randomUUID(), "Last month expense", lastMonth, 100.toAmount(), isIncome = false)
         )
 
         // Current month: +50
         booklet.addTransaction(
-            Transaction(3L, "Current income", currentDate, 150.toAmount(), isIncome = true)
+            Transaction(UUID.randomUUID(), "Current income", currentDate, 150.toAmount(), isIncome = true)
         )
         booklet.addTransaction(
-            Transaction(4L, "Current expense", currentDate, 100.toAmount(), isIncome = false)
+            Transaction(UUID.randomUUID(), "Current expense", currentDate, 100.toAmount(), isIncome = false)
         )
 
         val trends = calculator.calculateTrend(listOf(booklet))
@@ -144,10 +145,10 @@ class TrendCalculatorTest {
         val booklet2 = Booklet(2000.toAmount(), "Account 2")
 
         booklet1.addTransaction(
-            Transaction(1L, "Income 1", currentDate, 300.toAmount(), isIncome = true)
+            Transaction(UUID.randomUUID(), "Income 1", currentDate, 300.toAmount(), isIncome = true)
         )
         booklet2.addTransaction(
-            Transaction(2L, "Income 2", currentDate, 200.toAmount(), isIncome = true)
+            Transaction(UUID.randomUUID(), "Income 2", currentDate, 200.toAmount(), isIncome = true)
         )
 
         val trends = calculator.calculateTrend(listOf(booklet1, booklet2))
@@ -199,10 +200,10 @@ class TrendCalculatorTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Income", currentDate, 1000.toAmount(), isIncome = true)
+            Transaction(UUID.randomUUID(), "Income", currentDate, 1000.toAmount(), isIncome = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Expense", currentDate, 300.toAmount(), isIncome = false)
+            Transaction(UUID.randomUUID(), "Expense", currentDate, 300.toAmount(), isIncome = false)
         )
 
         val trends = calculator.calculateTrend(listOf(booklet))
@@ -223,7 +224,7 @@ class TrendCalculatorTest {
 
         // Only add transaction to 2 months ago
         booklet.addTransaction(
-            Transaction(1L, "Old income", twoMonthsAgo, 500.toAmount(), isIncome = true)
+            Transaction(UUID.randomUUID(), "Old income", twoMonthsAgo, 500.toAmount(), isIncome = true)
         )
 
         val trends = calculator.calculateTrend(listOf(booklet))

@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.mock.Directory
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Month
+import java.util.UUID
 
 class AccountTest {
 
@@ -17,7 +18,7 @@ class AccountTest {
             Booklet(constantValue, "Secondaire", mutableListOf())
         )
 
-        val user = User(UserId(1), "johan", "johan.test@test.fr", booklets)
+        val user = User(UserId(UUID.randomUUID()), "johan", "johan.test@test.fr", booklets)
         assertTrue{
             user.booklets.contains(Booklet(constantValue, "test", mutableListOf()))
         }
@@ -26,7 +27,7 @@ class AccountTest {
     @Test
     fun `by giving a year and a month, accounts should retrieve its corresponding sheets`(){
         val sheets = Directory.transactionInventories
-        val booklet = Booklet(1050.toAmount(), "Primary", sheets, id = 2.toLong())
+        val booklet = Booklet(1050.toAmount(), "Primary", sheets, id = UUID.randomUUID())
         val sheetsOfDecember = booklet.retrieveSheetSurroundAndSortedByDate(Month.DECEMBER, 2022)
         assertTrue {
             sheetsOfDecember.all { it.date.month == Month.DECEMBER && it.date.year == 2022 } && sheetsOfDecember.size == 3

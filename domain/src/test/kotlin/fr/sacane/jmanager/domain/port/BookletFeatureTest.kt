@@ -45,10 +45,10 @@ class BookletFeatureTest: FeatureTest() {
 
     @Nested
     inner class AccountFeatureAuthTest: AuthenticationTest {
-        private val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = 50L)
+        private val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         override val action: List<Result<out Any>>
             get() = listOf(
-                bookletFeature.findAccountById(50L, UUID.randomUUID().toString()),
+                bookletFeature.findAccountById(UUID.randomUUID(), UUID.randomUUID().toString()),
                 bookletFeature.save(UUID.randomUUID().toString(), element)
             )
     }
@@ -56,11 +56,12 @@ class BookletFeatureTest: FeatureTest() {
     @Test
     fun `Should find account by its Id`() {
         connectUser(user)
-        val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id=50L)
+        val id = UUID.randomUUID()
+        val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id= id)
         accountState.init(listOf(
             AccountByOwner(listOf(element), user.id)
         ))
-        bookletFeature.findAccountById(50L, session.tokenValue)
+        bookletFeature.findAccountById(id, session.tokenValue)
             .assertTrue {
                 this.label == "test"
             }
@@ -69,7 +70,7 @@ class BookletFeatureTest: FeatureTest() {
     @Test
     fun `Given an existing account it could be edit`() {
         connectUser(user)
-        val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = 50L)
+        val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         accountState.init(listOf(
             AccountByOwner(listOf(element), user.id)
         ))
@@ -91,7 +92,7 @@ class BookletFeatureTest: FeatureTest() {
     fun `As an owner of an account, I can delete it`() {
         val otherUser = userRepository.register("jojo",  "test") as User
         connectUser(otherUser)
-        val element = Booklet( Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = 50L)
+        val element = Booklet( Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         accountState.init(listOf(
             AccountByOwner(listOf(element), otherUser.id)
         ))
@@ -107,13 +108,13 @@ class BookletFeatureTest: FeatureTest() {
         val accounts = accountState.getStates()
         val ofUser = accounts.find { it.userId == otherUser.id }!!
 
-        assertNull(ofUser.existsById(50))
+        assertNull(ofUser.existsById(UUID.randomUUID()))
     }
 
     @Test
     fun `As an account's owner, I can retrieve it by its label`() {
         launchWithConnectedUserInstance {
-            val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = Companion.user, id = 50L)
+            val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = Companion.user, id = UUID.randomUUID())
             accountState.init(listOf(
                 AccountByOwner(listOf(element), this.user.id)
             ))
@@ -127,10 +128,11 @@ class BookletFeatureTest: FeatureTest() {
     @Test
     fun `As an account's owner,  I can retrieve All of my Registered Accounts`() {
         launchWithConnectedUserWithoutAccount {
-            val booklet = Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = 50L)
-            val booklet2 = Booklet(Amount.fromString("100", "€".asCurrency()), "test2", owner = user, id = 51L)
-            val booklet3 = Booklet( Amount.fromString("100", "€".asCurrency()), "test3", owner = user, id= 52L)
-            val booklet4 = Booklet( Amount.fromString("100", "€".asCurrency()), "test4", owner = user, id = 53L)
+
+            val booklet = Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
+            val booklet2 = Booklet(Amount.fromString("100", "€".asCurrency()), "test2", owner = user, id = UUID.randomUUID())
+            val booklet3 = Booklet( Amount.fromString("100", "€".asCurrency()), "test3", owner = user, id= UUID.randomUUID())
+            val booklet4 = Booklet( Amount.fromString("100", "€".asCurrency()), "test4", owner = user, id = UUID.randomUUID())
             val expectedAccount = listOf(
                 booklet,
                 booklet2,
@@ -153,7 +155,7 @@ class BookletFeatureTest: FeatureTest() {
     @Test
     fun `As a Jmanager user, I can create new account`() {
         launchWithConnectedUserWithoutAccount {
-            val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = 50L)
+            val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
 
             bookletFeature.save(tokenValue, bookletToSave)
                 .assertTrue {
@@ -172,10 +174,10 @@ class BookletFeatureTest: FeatureTest() {
         connectUser(otherUser)
 
         accountState.init(listOf(
-            AccountByOwner(listOf(Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = otherUser, id = 50L)), otherUser.id)
+            AccountByOwner(listOf(Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())), otherUser.id)
         ))
 
-        val bookletToSave = Booklet( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = 51L)
+        val bookletToSave = Booklet( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())
         bookletFeature.save(session.tokenValue, bookletToSave)
             .assertFailure()
     }
@@ -186,18 +188,19 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should calculate real sold correctly with income transactions only`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Test Account",
                     owner = user.toUser(),
-                    id = 100L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 // Add income transactions via the database
                 val transaction1 = Transaction(
-                    id = 1L,
+                    id = UUID.randomUUID(),
                     label = "Salary",
                     date = java.time.LocalDate.of(2025, 1, 15),
                     amount = 2000.toAmount(),
@@ -205,18 +208,17 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction2 = Transaction(
-                    id = 2L,
+                    id = UUID.randomUUID(),
                     label = "Bonus",
                     date = java.time.LocalDate.of(2025, 1, 20),
                     amount = 500.toAmount(),
                     isIncome = true,
                     isPreview = false
                 )
-
                 FakeFactory.fakeTransactionRepository()
-                    .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, 100L), mutableListOf(transaction1))))
+                    .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, bookletId), mutableListOf(transaction1))))
                 FakeFactory.fakeTransactionRepository()
-                    .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, 100L), mutableListOf(transaction2))))
+                    .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, bookletId), mutableListOf(transaction2))))
 
 
                 // Initialize regular transactions (empty list is valid)
@@ -224,7 +226,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    100L,
+                    bookletId,
                     java.time.Month.JANUARY,
                     2025
                 )
@@ -238,18 +240,19 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should calculate real sold correctly with expense transactions only`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Test Account",
                     owner = user.toUser(),
-                    id = 101L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 // Add expense transactions via the database
                 val transaction1 = Transaction(
-                    id = 3L,
+                    id = UUID.randomUUID(),
                     label = "Rent",
                     date = java.time.LocalDate.of(2025, 1, 5),
                     amount = 500.toAmount(),
@@ -257,7 +260,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction2 = Transaction(
-                    id = 4L,
+                    id = UUID.randomUUID(),
                     label = "Groceries",
                     date = java.time.LocalDate.of(2025, 1, 10),
                     amount = 200.toAmount(),
@@ -268,7 +271,7 @@ class BookletFeatureTest: FeatureTest() {
                     .init(
                         listOf(
                             IdUserAccountByTransaction(
-                                IdUserAccount(user.id, 101L),
+                                IdUserAccount(user.id, bookletId),
                                 mutableListOf(transaction1, transaction2)
                             )
                         )
@@ -279,7 +282,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    101L,
+                    bookletId,
                     java.time.Month.JANUARY,
                     2025
                 )
@@ -293,17 +296,18 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should calculate real sold correctly with mixed income and expense transactions`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Mixed Account",
                     owner = user.toUser(),
-                    id = 102L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
-                    id = 5L,
+                    id = UUID.randomUUID(),
                     label = "Income 1",
                     date = java.time.LocalDate.of(2025, 2, 5),
                     amount = 1500.toAmount(),
@@ -311,7 +315,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction2 = Transaction(
-                    id = 6L,
+                    id = UUID.randomUUID(),
                     label = "Expense 1",
                     date = java.time.LocalDate.of(2025, 2, 10),
                     amount = 300.toAmount(),
@@ -319,7 +323,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction3 = Transaction(
-                    id = 7L,
+                    id = UUID.randomUUID(),
                     label = "Income 2",
                     date = java.time.LocalDate.of(2025, 2, 15),
                     amount = 800.toAmount(),
@@ -327,7 +331,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction4 = Transaction(
-                    id = 8L,
+                    id = UUID.randomUUID(),
                     label = "Expense 2",
                     date = java.time.LocalDate.of(2025, 2, 20),
                     amount = 500.toAmount(),
@@ -339,7 +343,7 @@ class BookletFeatureTest: FeatureTest() {
                     .init(
                         listOf(
                             IdUserAccountByTransaction(
-                                IdUserAccount(user.id, 102L),
+                                IdUserAccount(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3, transaction4
                                 )
@@ -351,7 +355,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    102L,
+                    bookletId,
                     java.time.Month.FEBRUARY,
                     2025
                 )
@@ -361,19 +365,20 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should calculate previsional sold correctly with preview transactions`() {
+            val bookletId = UUID.randomUUID()
             launchWithConnectedUserInstance {
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Preview Account",
                     owner = user.toUser(),
-                    id = 103L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 // Add current and preview transactions via the database
                 val transaction1 = Transaction(
-                    id = 9L,
+                    id = UUID.randomUUID(),
                     label = "Current Income",
                     date = java.time.LocalDate.of(2025, 11, 5),
                     amount = 500.toAmount(),
@@ -381,7 +386,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction2 = Transaction(
-                    id = 10L,
+                    id = UUID.randomUUID(),
                     label = "Future Income",
                     date = java.time.LocalDate.of(2025, 11, 25),
                     amount = 1000.toAmount(),
@@ -389,7 +394,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
                 val transaction3 = Transaction(
-                    id = 11L,
+                    id = UUID.randomUUID(),
                     label = "Future Expense",
                     date = java.time.LocalDate.of(2025, 11, 28),
                     amount = 300.toAmount(),
@@ -400,7 +405,7 @@ class BookletFeatureTest: FeatureTest() {
                     .init(
                         listOf(
                             IdUserAccountByTransaction(
-                                IdUserAccount(user.id, 103L),
+                                IdUserAccount(user.id, bookletId),
                                 mutableListOf(transaction1, transaction2, transaction3)
                             )
                         )
@@ -410,7 +415,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    103L,
+                    bookletId,
                     java.time.Month.NOVEMBER,
                     2025
                 )
@@ -425,18 +430,19 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should separate current and previsional transactions correctly`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 2000.toAmount(),
                     labelAccount = "Separation Test",
                     owner = user.toUser(),
-                    id = 104L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 // Add 3 current transactions and 2 preview transactions via the database
                 val transaction1 = Transaction(
-                    id = 12L,
+                    id = UUID.randomUUID(),
                     label = "Current 1",
                     date = java.time.LocalDate.of(2025, 4, 1),
                     amount = 100.toAmount(),
@@ -444,7 +450,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction2 = Transaction(
-                    id = 13L,
+                    id = UUID.randomUUID(),
                     label = "Current 2",
                     date = java.time.LocalDate.of(2025, 4, 10),
                     amount = 50.toAmount(),
@@ -452,7 +458,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction3 = Transaction(
-                    id = 14L,
+                    id = UUID.randomUUID(),
                     label = "Current 3",
                     date = java.time.LocalDate.of(2025, 4, 15),
                     amount = 75.toAmount(),
@@ -460,7 +466,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction4 = Transaction(
-                    id = 15L,
+                    id = UUID.randomUUID(),
                     label = "Preview 1",
                     date = java.time.LocalDate.of(2025, 4, 20),
                     amount = 200.toAmount(),
@@ -468,7 +474,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
                 val transaction5 = Transaction(
-                    id = 16L,
+                    id = UUID.randomUUID(),
                     label = "Preview 2",
                     date = java.time.LocalDate.of(2025, 4, 25),
                     amount = 150.toAmount(),
@@ -480,7 +486,7 @@ class BookletFeatureTest: FeatureTest() {
                     .init(
                         listOf(
                             IdUserAccountByTransaction(
-                                IdUserAccount(user.id, 104L),
+                                IdUserAccount(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3, transaction4, transaction5
                                 )
@@ -492,7 +498,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    104L,
+                    bookletId,
                     java.time.Month.APRIL,
                     2025
                 )
@@ -507,11 +513,12 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should retrieve regular transactions for the booklet`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Regular Account",
                     owner = user.toUser(),
-                    id = 105L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
@@ -539,14 +546,14 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(
                     listOf(
-                        UserRegularTransaction(userId = user.id, transaction = regularTransaction1, bookletIds = listOf(105L)),
-                        UserRegularTransaction(userId = user.id, transaction = regularTransaction2, bookletIds = listOf(105L))
+                        UserRegularTransaction(userId = user.id, transaction = regularTransaction1, bookletIds = listOf(bookletId)),
+                        UserRegularTransaction(userId = user.id, transaction = regularTransaction2, bookletIds = listOf(bookletId))
                     )
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    105L,
+                    bookletId,
                     java.time.Month.JANUARY,
                     2025
                 )
@@ -560,11 +567,12 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should return empty lists when booklet has no transactions`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 500.toAmount(),
                     labelAccount = "Empty Account",
                     owner = user.toUser(),
-                    id = 106L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
@@ -574,7 +582,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    106L,
+                    bookletId,
                     java.time.Month.MAY,
                     2025
                 )
@@ -591,7 +599,7 @@ class BookletFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    999L, // Non-existent booklet ID
+                    UUID.randomUUID(), // Non-existent booklet ID
                     java.time.Month.JUNE,
                     2025
                 )
@@ -603,18 +611,19 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should only load transactions for the requested month and year`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Month Filter Test",
                     owner = user.toUser(),
-                    id = 107L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 // Add transactions in different months via the database
                 val transaction1 = Transaction(
-                    id = 20L,
+                    id = UUID.randomUUID(),
                     label = "January Transaction",
                     date = LocalDate.of(2025, 1, 15),
                     amount = 100.toAmount(),
@@ -622,7 +631,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction2 = Transaction(
-                    id = 21L,
+                    id = UUID.randomUUID(),
                     label = "February Transaction 1",
                     date = java.time.LocalDate.of(2025, 2, 10),
                     amount = 200.toAmount(),
@@ -630,7 +639,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction3 = Transaction(
-                    id = 22L,
+                    id = UUID.randomUUID(),
                     label = "February Transaction 2",
                     date = java.time.LocalDate.of(2025, 2, 20),
                     amount = 150.toAmount(),
@@ -638,7 +647,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction4 = Transaction(
-                    id = 23L,
+                    id = UUID.randomUUID(),
                     label = "March Transaction",
                     date = java.time.LocalDate.of(2025, 3, 5),
                     amount = 50.toAmount(),
@@ -650,7 +659,7 @@ class BookletFeatureTest: FeatureTest() {
                     .init(
                         listOf(
                             IdUserAccountByTransaction(
-                                IdUserAccount(user.id, 107L),
+                                IdUserAccount(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3, transaction4
                                 )
@@ -662,7 +671,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    107L,
+                    bookletId,
                     java.time.Month.FEBRUARY,
                     2025
                 )
@@ -678,18 +687,19 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should calculate previsional sold including future months transactions`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Future Sold Test",
                     owner = user.toUser(),
-                    id = 108L
+                    id = bookletId
                 )
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 // Add current month transaction and future preview transactions via the database
                 val transaction1 = Transaction(
-                    id = 24L,
+                    id = UUID.randomUUID(),
                     label = "Current Income",
                     date = java.time.LocalDate.of(2025, 11, 15),
                     amount = 500.toAmount(),
@@ -697,7 +707,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 val transaction2 = Transaction(
-                    id = 25L,
+                    id = UUID.randomUUID(),
                     label = "Future Income",
                     date = java.time.LocalDate.of(2025, 12, 10),
                     amount = 800.toAmount(),
@@ -705,7 +715,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
                 val transaction3 = Transaction(
-                    id = 26L,
+                    id = UUID.randomUUID(),
                     label = "Future Expense",
                     date = java.time.LocalDate.of(2026, 1, 5),
                     amount = 300.toAmount(),
@@ -717,7 +727,7 @@ class BookletFeatureTest: FeatureTest() {
                     .init(
                         listOf(
                             IdUserAccountByTransaction(
-                                IdUserAccount(user.id, 108L),
+                                IdUserAccount(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3
                                 )
@@ -729,7 +739,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     tokenValue,
-                    108L,
+                    bookletId,
                     java.time.Month.JANUARY,
                     2026
                 )
@@ -744,11 +754,12 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should reflect add and remove of regular transaction via regularTransactionState`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "RT CRUD Account",
                     owner = user.toUser(),
-                    id = 200L
+                    id = bookletId
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
@@ -756,7 +767,7 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 var result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 200L, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
                 )
                 // no regular transactions initially
                 result.assertTrue { this.regularTransactions.isEmpty() }
@@ -773,12 +784,12 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(
                     listOf(
-                        UserRegularTransaction(userId = user.id, transaction = regular, bookletIds = listOf(200L))
+                        UserRegularTransaction(userId = user.id, transaction = regular, bookletIds = listOf(bookletId))
                     )
                 )
 
                 result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 200L, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
                 )
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Monthly Income RT" } }
@@ -786,7 +797,7 @@ class BookletFeatureTest: FeatureTest() {
                 // remove regular transactions
                 FakeFactory.regularTransactionState.init(emptyList())
                 result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 200L, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
                 )
                 result.assertTrue { this.regularTransactions.isEmpty() }
             }
@@ -795,9 +806,11 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should not expose regular transactions of other user (multi-tenant isolation)`() {
             launchWithConnectedUserInstance {
-                val bookletMine = Booklet(1000.toAmount(), "My Account", owner = user.toUser(), id = 300L)
+                val bookletIdMine = UUID.randomUUID()
+                val bookletMine = Booklet(1000.toAmount(), "My Account", owner = user.toUser(), id = bookletIdMine)
                 val otherUser = userRepository.register("other${UUID.randomUUID()}", "pw") as User
-                val bookletOther = Booklet(1000.toAmount(), "Other Account", owner = otherUser, id = 400L)
+                val bookletIdOther = UUID.randomUUID()
+                val bookletOther = Booklet(1000.toAmount(), "Other Account", owner = otherUser, id = bookletIdOther)
 
                 accountState.init(listOf(
                     AccountByOwner(listOf(bookletMine), user.id),
@@ -826,13 +839,13 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(
                     listOf(
-                        UserRegularTransaction(userId = user.id, transaction = rtMine, bookletIds = listOf(300L)),
-                        UserRegularTransaction(userId = otherUser.id, transaction = rtOther, bookletIds = listOf(400L))
+                        UserRegularTransaction(userId = user.id, transaction = rtMine, bookletIds = listOf(bookletIdMine)),
+                        UserRegularTransaction(userId = otherUser.id, transaction = rtOther, bookletIds = listOf(bookletIdOther))
                     )
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 300L, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletIdMine, java.time.Month.JANUARY, 2025
                 )
 
                 // assert only my regular transaction is returned
@@ -845,11 +858,12 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should include regular transactions in previsional sold calculation`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "RT Calculation Account",
                     owner = user.toUser(),
-                    id = 301L
+                    id = bookletId
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
@@ -865,11 +879,11 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 FakeFactory.regularTransactionState.init(
-                    listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(301L)))
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(bookletId)))
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 301L, java.time.Month.NOVEMBER, 2025
+                    tokenValue, bookletId, java.time.Month.NOVEMBER, 2025
                 )
 
                 // Previsional sold should include the regular transaction
@@ -881,11 +895,12 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should handle multiple regular transactions with different frequencies`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Multi RT Account",
                     owner = user.toUser(),
-                    id = 302L
+                    id = bookletId
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
@@ -920,14 +935,14 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(
                     listOf(
-                        UserRegularTransaction(userId = user.id, transaction = rt1, bookletIds = listOf(302L)),
-                        UserRegularTransaction(userId = user.id, transaction = rt2, bookletIds = listOf(302L)),
-                        UserRegularTransaction(userId = user.id, transaction = rt3, bookletIds = listOf(302L))
+                        UserRegularTransaction(userId = user.id, transaction = rt1, bookletIds = listOf(bookletId)),
+                        UserRegularTransaction(userId = user.id, transaction = rt2, bookletIds = listOf(bookletId)),
+                        UserRegularTransaction(userId = user.id, transaction = rt3, bookletIds = listOf(bookletId))
                     )
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 302L, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
                 )
 
                 result.assertTrue { this.regularTransactions.size == 3 }
@@ -940,17 +955,18 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should combine regular transactions with current and preview transactions correctly`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Combined Account",
                     owner = user.toUser(),
-                    id = 303L
+                    id = bookletId
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
                 // Add a current transaction in December 2025 (not preview)
                 val currentTx = Transaction(
-                    id = 100L,
+                    id = UUID.randomUUID(),
                     label = "Current Expense",
                     date = LocalDate.of(2025, 12, 5),
                     amount = 100.toAmount(),
@@ -959,7 +975,7 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 // Add a preview transaction in December 2025
                 val previewTx = Transaction(
-                    id = 101L,
+                    id = UUID.randomUUID(),
                     label = "Preview Income",
                     date = LocalDate.of(2025, 12, 20),
                     amount = 500.toAmount(),
@@ -970,7 +986,7 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository().init(
                     listOf(
                         IdUserAccountByTransaction(
-                            IdUserAccount(user.id, 303L),
+                            IdUserAccount(user.id, bookletId),
                             mutableListOf(currentTx, previewTx)
                         )
                     )
@@ -988,11 +1004,11 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 FakeFactory.regularTransactionState.init(
-                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(303L)))
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 303L, java.time.Month.DECEMBER, 2025
+                    tokenValue, bookletId, java.time.Month.DECEMBER, 2025
                 )
 
                 // Verify that regular transactions are returned
@@ -1010,11 +1026,12 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should not include regular transactions that started after the requested month`() {
             launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     labelAccount = "Future RT Account",
                     owner = user.toUser(),
-                    id = 304L
+                    id = bookletId
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
@@ -1030,11 +1047,11 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 FakeFactory.regularTransactionState.init(
-                    listOf(UserRegularTransaction(userId = user.id, transaction = futureRT, bookletIds = listOf(304L)))
+                    listOf(UserRegularTransaction(userId = user.id, transaction = futureRT, bookletIds = listOf(bookletId)))
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, 304L, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
                 )
 
                 result.assertTrue { this.regularTransactions.isEmpty() }

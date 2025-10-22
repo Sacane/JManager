@@ -38,14 +38,14 @@ class MonthlyStatsCalculatorImpl : MonthlyStatsCalculator {
 
     private fun calculateMonthData(month: Int, transactions: List<Transaction>): MonthlyData {
         val income = transactions
-            .filter { it.amount.value > BigDecimal.ZERO }
+            .filter { it.isIncome }
             .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value) }
 
         val expenses = transactions
-            .filter { it.amount.value < BigDecimal.ZERO }
+            .filter { !it.isIncome }
             .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value) }
 
-        val balance = income.add(expenses)
+        val balance = income.subtract(expenses)
 
         return MonthlyData(
             month = month,

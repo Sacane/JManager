@@ -32,15 +32,15 @@ class InMemoryTransactionRepository(
         return transaction
     }
 
-    override fun deleteAllSheetsById(sheetIds: List<Long>) {
+    override fun deleteAllSheetsById(sheetIds: List<UUID>) {
         inMemoryDatabase.removeAllTransactionsById(sheetIds)
     }
 
-    override fun findTransactionById(transactionId: Long): Transaction? {
+    override fun findTransactionById(transactionId: UUID): Transaction? {
         return inMemoryDatabase.findTransactionById(transactionId)
     }
 
-    override fun save(accountId: Long, transaction: Transaction): Transaction {
+    override fun save(accountId: UUID, transaction: Transaction): Transaction {
         inMemoryDatabase.saveTransaction(accountId, transaction)
         return transaction
     }
@@ -49,16 +49,16 @@ class InMemoryTransactionRepository(
         return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
     }
 
-    override fun findAccountWithTransactionById(id: Long): Booklet? {
+    override fun findAccountWithTransactionById(id: UUID): Booklet? {
         return inMemoryDatabase.findAccountById(id)
     }
 
-    override fun findTransactionsByBookletId(bookletId: Long): List<Transaction>? {
+    override fun findTransactionsByBookletId(bookletId: UUID): List<Transaction>? {
         return inMemoryDatabase.findAccountById(bookletId)?.transactions
     }
 
     override fun findTransactionsByBookletYearAndMonth(
-        bookletId: Long,
+        bookletId: UUID,
         year: Int,
         month: Month
     ): List<Transaction>? {
@@ -113,7 +113,7 @@ class InMemoryUserRepository (
     }
 
     override fun register(username: String, password: String, roles: Set<Role>): User {
-        val element = User(id = UserId(random.nextLong()), username = username, null, roles = roles)
+        val element = User(id = UserId(UUID.randomUUID()), username = username, null, roles = roles)
         inMemoryDatabase.users[element.id] = UserWithPassword(element, password, roles)
         return element
     }
@@ -142,7 +142,7 @@ data class AccountByOwner(
     val booklet: List<Booklet>,
     val userId: UserId
 ) {
-    fun existsById(accountId: Long): Booklet? {
+    fun existsById(accountId: UUID): Booklet? {
         return booklet.find { it.id == accountId }
     }
 }
@@ -160,7 +160,7 @@ class InMemoryBookletRepository(
         return booklet
     }
 
-    override fun findAccountByIdWithTransactions(accountId: Long): Booklet? {
+    override fun findAccountByIdWithTransactions(accountId: UUID): Booklet? {
         return inMemoryDatabase.findAccountById(accountId)
     }
 
@@ -168,7 +168,7 @@ class InMemoryBookletRepository(
         return inMemoryDatabase.findAccountByOwnerAndLabel(userId, accountLabel)
     }
 
-    override fun deleteAccountById(accountId: Long) {
+    override fun deleteAccountById(accountId: UUID) {
         inMemoryDatabase.removeAccountById(accountId)
     }
 
@@ -202,7 +202,7 @@ class InMemoryBookletRepository(
 
 data class IdUserAccount(
     val userId: UserId,
-    val accountId: Long
+    val accountId: UUID
 )
 
 

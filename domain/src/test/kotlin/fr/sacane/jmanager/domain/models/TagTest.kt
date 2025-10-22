@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.models
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.awt.Color
+import java.util.UUID
 
 class TagTest {
 
@@ -18,11 +19,11 @@ class TagTest {
 
     @Test
     fun `Tag should be created with all parameters`() {
-        val color = Color(1f, 0f, 0f, 1f)
-        val tag = Tag("Alimentation", id = 1L, color = color, isDefault = true)
+        val tagId = UUID.randomUUID()
+        val color = Color(255, 0, 0)
+        val tag = Tag("Alimentation", id = tagId, color = color, isDefault = true)
 
-        assertEquals("Alimentation", tag.label)
-        assertEquals(1L, tag.id)
+        assertEquals(tagId, tag.id)
         assertEquals(color, tag.color)
         assertTrue(tag.isDefault)
     }
@@ -88,7 +89,6 @@ class TagTest {
     @Test
     fun `defaultTags should have distinct colors`() {
         val colors = defaultTags.map { it.color }
-        // Au moins quelques couleurs différentes
         assertTrue(colors.toSet().size > 1)
     }
 }

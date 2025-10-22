@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 class PrevisionalTransactionFilterTest {
 
@@ -39,10 +40,10 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Regular", startDate.plusDays(5), 100.toAmount(), true, isPreview = false)
+            Transaction(UUID.randomUUID(), "Regular", startDate.plusDays(5), 100.toAmount(), true, isPreview = false)
         )
         booklet.addTransaction(
-            Transaction(2L, "Preview", startDate.plusDays(10), 200.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Preview", startDate.plusDays(10), 200.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -58,13 +59,13 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Before", LocalDate.of(2024, 5, 31), 100.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Before", LocalDate.of(2024, 5, 31), 100.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "During", LocalDate.of(2024, 6, 15), 200.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "During", LocalDate.of(2024, 6, 15), 200.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(3L, "After", LocalDate.of(2024, 7, 1), 300.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "After", LocalDate.of(2024, 7, 1), 300.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -80,10 +81,10 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "On start", startDate, 100.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "On start", startDate, 100.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "On end", endDate, 200.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "On end", endDate, 200.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -98,13 +99,13 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Later", startDate.plusDays(20), 100.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Later", startDate.plusDays(20), 100.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Earlier", startDate.plusDays(5), 200.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Earlier", startDate.plusDays(5), 200.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(3L, "Middle", startDate.plusDays(10), 300.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Middle", startDate.plusDays(10), 300.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -121,10 +122,10 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Income 1", startDate.plusDays(5), 500.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Income 1", startDate.plusDays(5), 500.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Income 2", startDate.plusDays(10), 300.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Income 2", startDate.plusDays(10), 300.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -139,10 +140,10 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Expense 1", startDate.plusDays(5), 200.toAmount(), false, isPreview = true)
+            Transaction(UUID.randomUUID(), "Expense 1", startDate.plusDays(5), 200.toAmount(), false, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Expense 2", startDate.plusDays(10), 150.toAmount(), false, isPreview = true)
+            Transaction(UUID.randomUUID(), "Expense 2", startDate.plusDays(10), 150.toAmount(), false, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -157,10 +158,10 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Income", startDate.plusDays(5), 1000.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Income", startDate.plusDays(5), 1000.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Expense", startDate.plusDays(10), 400.toAmount(), false, isPreview = true)
+            Transaction(UUID.randomUUID(), "Expense", startDate.plusDays(10), 400.toAmount(), false, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -178,10 +179,10 @@ class PrevisionalTransactionFilterTest {
         val booklet2 = Booklet(2000.toAmount(), "Account 2")
 
         booklet1.addTransaction(
-            Transaction(1L, "Transaction 1", startDate.plusDays(5), 100.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Transaction 1", startDate.plusDays(5), 100.toAmount(), true, isPreview = true)
         )
         booklet2.addTransaction(
-            Transaction(2L, "Transaction 2", startDate.plusDays(10), 200.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Transaction 2", startDate.plusDays(10), 200.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet1, booklet2), startDate, endDate)
@@ -201,10 +202,10 @@ class PrevisionalTransactionFilterTest {
         val booklet2 = Booklet(2000.toAmount(), "Without Preview")
 
         booklet1.addTransaction(
-            Transaction(1L, "Preview", startDate.plusDays(5), 100.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Preview", startDate.plusDays(5), 100.toAmount(), true, isPreview = true)
         )
         booklet2.addTransaction(
-            Transaction(2L, "Regular", startDate.plusDays(10), 200.toAmount(), true, isPreview = false)
+            Transaction(UUID.randomUUID(), "Regular", startDate.plusDays(10), 200.toAmount(), true, isPreview = false)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet1, booklet2), startDate, endDate)
@@ -221,10 +222,10 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Later", startDate.plusDays(20), 100.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Later", startDate.plusDays(20), 100.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Earlier", startDate.plusDays(5), 200.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Earlier", startDate.plusDays(5), 200.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -242,10 +243,10 @@ class PrevisionalTransactionFilterTest {
         val booklet2 = Booklet(2000.toAmount(), "Account 2")
 
         booklet1.addTransaction(
-            Transaction(1L, "Income 1", startDate.plusDays(5), 300.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Income 1", startDate.plusDays(5), 300.toAmount(), true, isPreview = true)
         )
         booklet2.addTransaction(
-            Transaction(2L, "Income 2", startDate.plusDays(10), 700.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Income 2", startDate.plusDays(10), 700.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet1, booklet2), startDate, endDate)
@@ -261,13 +262,13 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Income", startDate.plusDays(5), 2000.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Income", startDate.plusDays(5), 2000.toAmount(), true, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(2L, "Expense 1", startDate.plusDays(10), 500.toAmount(), false, isPreview = true)
+            Transaction(UUID.randomUUID(), "Expense 1", startDate.plusDays(10), 500.toAmount(), false, isPreview = true)
         )
         booklet.addTransaction(
-            Transaction(3L, "Expense 2", startDate.plusDays(15), 300.toAmount(), false, isPreview = true)
+            Transaction(UUID.randomUUID(), "Expense 2", startDate.plusDays(15), 300.toAmount(), false, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), startDate, endDate)
@@ -284,7 +285,7 @@ class PrevisionalTransactionFilterTest {
         val booklet = Booklet(1000.toAmount(), "Account")
 
         booklet.addTransaction(
-            Transaction(1L, "Same day", date, 100.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Same day", date, 100.toAmount(), true, isPreview = true)
         )
 
         val result = filter.filterPrevisionalTransactions(listOf(booklet), date, date)

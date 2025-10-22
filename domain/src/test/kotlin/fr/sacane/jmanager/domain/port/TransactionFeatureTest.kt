@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.Month
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
@@ -274,7 +275,7 @@ class TransactionFeatureTest: FeatureTest() {
         @Test
         fun `booking a preview transaction should not change the real amount of an account`() {
             launchWithConnectedUserInstance {
-                val transactionPreviewTest = Transaction(Random.nextLong(), "test#0", "01/01/2024".toDate(), 100.toAmount(), true, isPreview = true)
+                val transactionPreviewTest = Transaction(UUID.randomUUID(), "test#0", "01/01/2024".toDate(), 100.toAmount(), true, isPreview = true)
                 transactionFeature.bookTransaction(tokenValue, booklet.label, transactionPreviewTest)
                     .assertSuccess()
                 val actualAccount = accountState.getStates().find { it.userId == user.id }?.booklet?.find { it.id == booklet.id }
@@ -316,8 +317,8 @@ class TransactionFeatureTest: FeatureTest() {
         @Test
         fun `delete transaction with invalid account must return not found`() {
             launchWithConnectedUserInstance {
-                transactionFeature.deleteSheetsByIds(188, listOf(
-                    1029, 10291
+                transactionFeature.deleteSheetsByIds(UUID.randomUUID(), listOf(
+                    UUID.randomUUID(), UUID.randomUUID()
                 ), tokenValue)
                     .assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
@@ -365,7 +366,7 @@ class TransactionFeatureTest: FeatureTest() {
 
                 transactionFeature.confirmPreviewTransaction(
                     tokenValue,
-                    188,
+                    UUID.randomUUID(),
                     transactionPreviewTest.id!!
                 ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
@@ -376,7 +377,7 @@ class TransactionFeatureTest: FeatureTest() {
                 transactionFeature.confirmPreviewTransaction(
                     tokenValue,
                     booklet.id!!,
-                    188
+                    UUID.randomUUID()
                 ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
         }

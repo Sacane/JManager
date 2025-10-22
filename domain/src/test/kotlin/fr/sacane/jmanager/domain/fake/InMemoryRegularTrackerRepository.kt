@@ -4,13 +4,14 @@ import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionTrackerRepository
+import java.util.UUID
 
 class InMemoryRegularTrackerRepository(
     private val inMemoryDatabase: InMemoryDatabase
 ): RegularTransactionTrackerRepository {
     override fun findTracker(
         regularTransactionId: RegularTransactionId,
-        bookletId: Long
+        bookletId: UUID
     ): RegularTransactionTracker? {
         return inMemoryDatabase.findTrackerByBookletAndTransaction(bookletId, regularTransactionId)
     }
@@ -20,11 +21,11 @@ class InMemoryRegularTrackerRepository(
         return tracker
     }
 
-    override fun findAllTrackersForBooklet(bookletId: Long): List<RegularTransactionTracker> {
+    override fun findAllTrackersForBooklet(bookletId: UUID): List<RegularTransactionTracker> {
         return inMemoryDatabase.findTrackerByBooklet(bookletId) ?: emptyList()
     }
 
-    override fun deleteTrackerByBookletId(bookletId: Long) {
+    override fun deleteTrackerByBookletId(bookletId: UUID) {
         inMemoryDatabase.deleteTrackerByBookletId(bookletId)
     }
 

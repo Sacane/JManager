@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 class MonthlyStatsCalculatorTest {
 
@@ -30,9 +31,9 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should filter transactions by year`() {
         val transactions = listOf(
-            Transaction(1L, "2024", LocalDate.of(2024, 3, 15), 100.toAmount(), true),
-            Transaction(2L, "2023", LocalDate.of(2023, 3, 15), 200.toAmount(), true),
-            Transaction(3L, "2025", LocalDate.of(2025, 3, 15), 300.toAmount(), true)
+            Transaction(UUID.randomUUID(), "2024", LocalDate.of(2024, 3, 15), 100.toAmount(), true),
+            Transaction(UUID.randomUUID(), "2023", LocalDate.of(2023, 3, 15), 200.toAmount(), true),
+            Transaction(UUID.randomUUID(), "2025", LocalDate.of(2025, 3, 15), 300.toAmount(), true)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -44,8 +45,9 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should ignore preview transactions`() {
         val transactions = listOf(
-            Transaction(1L, "Regular", LocalDate.of(2024, 5, 15), 100.toAmount(), true, isPreview = false),
-            Transaction(2L, "Preview", LocalDate.of(2024, 5, 20), 200.toAmount(), true, isPreview = true)
+            Transaction(UUID.randomUUID(), "Regular", LocalDate.of(2024, 5, 15), 100.toAmount(), true, isPreview = false),
+            Transaction(UUID.randomUUID(), "Preview", LocalDate.of(2024, 5, 20), 200.toAmount(), true, isPreview = true),
+            Transaction(UUID.randomUUID(), "Preview", LocalDate.of(2024, 5, 20), 200.toAmount(), true, isPreview = true)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -57,25 +59,26 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should separate income and expenses`() {
         val transactions = listOf(
-            Transaction(1L, "Income", LocalDate.of(2024, 6, 15), 500.toAmount(), true),
-            Transaction(2L, "Expense", LocalDate.of(2024, 6, 20), (-200).toAmount(), false)
+            Transaction(UUID.randomUUID(), "Income", LocalDate.of(2024, 6, 15), 500.toAmount(), true),
+            Transaction(UUID.randomUUID(), "Expense", LocalDate.of(2024, 6, 20), (200).toAmount(), false),
+            Transaction(UUID.randomUUID(), "Expense", LocalDate.of(2024, 6, 20), (200).toAmount(), false)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
 
         val juneStats = monthlyStats[5] // June is index 5
         assertEquals(500.toAmount(), juneStats.income)
-        assertEquals(200.toAmount(), juneStats.expenses)
-        assertEquals(300.toAmount(), juneStats.balance)
+        assertEquals(400.toAmount(), juneStats.expenses)
+        assertEquals(100.toAmount(), juneStats.balance)
     }
 
     @Test
     fun `calculateMonthlyStats should calculate correct balance`() {
         val transactions = listOf(
-            Transaction(1L, "Income 1", LocalDate.of(2024, 7, 10), 1000.toAmount(), true),
-            Transaction(2L, "Income 2", LocalDate.of(2024, 7, 15), 500.toAmount(), true),
-            Transaction(3L, "Expense 1", LocalDate.of(2024, 7, 20), (-300).toAmount(), false),
-            Transaction(4L, "Expense 2", LocalDate.of(2024, 7, 25), (-200).toAmount(), false)
+            Transaction(UUID.randomUUID(), "Income 1", LocalDate.of(2024, 7, 10), 1000.toAmount(), true),
+            Transaction(UUID.randomUUID(), "Income 2", LocalDate.of(2024, 7, 15), 500.toAmount(), true),
+            Transaction(UUID.randomUUID(), "Expense 1", LocalDate.of(2024, 7, 20), (300).toAmount(), false),
+            Transaction(UUID.randomUUID(), "Expense 2", LocalDate.of(2024, 7, 25), (200).toAmount(), false)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -89,7 +92,7 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should return zero amounts for months without transactions`() {
         val transactions = listOf(
-            Transaction(1L, "Income", LocalDate.of(2024, 1, 15), 100.toAmount(), true)
+            Transaction(UUID.randomUUID(), "Income", LocalDate.of(2024, 1, 15), 100.toAmount(), true)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -103,21 +106,22 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should group transactions by month correctly`() {
         val transactions = listOf(
-            Transaction(1L, "Jan", LocalDate.of(2024, 1, 15), 100.toAmount(), true),
-            Transaction(2L, "Jan", LocalDate.of(2024, 1, 20), 50.toAmount(), true),
-            Transaction(3L, "Feb", LocalDate.of(2024, 2, 15), 200.toAmount(), true)
+            Transaction(UUID.randomUUID(), "Jan", LocalDate.of(2024, 1, 15), 100.toAmount(), true),
+            Transaction(UUID.randomUUID(), "Jan", LocalDate.of(2024, 1, 20), 50.toAmount(), false),
+            Transaction(UUID.randomUUID(), "Feb", LocalDate.of(2024, 2, 15), 200.toAmount(), true),
+            Transaction(UUID.randomUUID(), "Feb", LocalDate.of(2024, 2, 15), 200.toAmount(), true)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
 
-        assertEquals(150.toAmount(), monthlyStats[0].income) // January
-        assertEquals(200.toAmount(), monthlyStats[1].income) // February
+        assertEquals(100.toAmount(), monthlyStats[0].income) // January
+        assertEquals(400.toAmount(), monthlyStats[1].income) // February
     }
 
     @Test
     fun `calculateMonthlyStats should handle expenses as absolute values`() {
         val transactions = listOf(
-            Transaction(1L, "Expense", LocalDate.of(2024, 3, 15), (-250).toAmount(), false)
+            Transaction(UUID.randomUUID(), "Expense", LocalDate.of(2024, 3, 15), (-250).toAmount(), false)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -139,8 +143,8 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should handle only income transactions`() {
         val transactions = listOf(
-            Transaction(1L, "Income 1", LocalDate.of(2024, 4, 10), 300.toAmount(), true),
-            Transaction(2L, "Income 2", LocalDate.of(2024, 4, 20), 700.toAmount(), true)
+            Transaction(UUID.randomUUID(), "Income 1", LocalDate.of(2024, 4, 10), 300.toAmount(), true),
+            Transaction(UUID.randomUUID(), "Income 2", LocalDate.of(2024, 4, 20), 700.toAmount(), true)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -154,8 +158,8 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should handle only expense transactions`() {
         val transactions = listOf(
-            Transaction(1L, "Expense 1", LocalDate.of(2024, 8, 10), (-400).toAmount(), false),
-            Transaction(2L, "Expense 2", LocalDate.of(2024, 8, 20), (-600).toAmount(), false)
+            Transaction(UUID.randomUUID(), "Expense 1", LocalDate.of(2024, 8, 10), (400).toAmount(), false),
+            Transaction(UUID.randomUUID(), "Expense 2", LocalDate.of(2024, 8, 20), (600).toAmount(), false)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -169,8 +173,8 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should handle December transactions`() {
         val transactions = listOf(
-            Transaction(1L, "December income", LocalDate.of(2024, 12, 25), 5000.toAmount(), true),
-            Transaction(2L, "December expense", LocalDate.of(2024, 12, 31), (-1000).toAmount(), false)
+            Transaction(UUID.randomUUID(), "December income", LocalDate.of(2024, 12, 25), 5000.toAmount(), true),
+            Transaction(UUID.randomUUID(), "December expense", LocalDate.of(2024, 12, 31), (1000).toAmount(), false)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
@@ -184,7 +188,7 @@ class MonthlyStatsCalculatorTest {
     @Test
     fun `calculateMonthlyStats should handle leap year February`() {
         val transactions = listOf(
-            Transaction(1L, "Feb 29", LocalDate.of(2024, 2, 29), 100.toAmount(), true)
+            Transaction(UUID.randomUUID(), "Feb 29", LocalDate.of(2024, 2, 29), 100.toAmount(), true)
         )
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)

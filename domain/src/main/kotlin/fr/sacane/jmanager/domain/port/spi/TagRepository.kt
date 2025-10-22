@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain.port.spi
 
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
+import java.util.UUID
 
 interface TagRepository {
     fun save(userId: UserId, tag: Tag): Tag?
@@ -11,9 +12,9 @@ interface TagRepository {
     fun existsByLabelAndUserId(userId: UserId, tag: Tag): Boolean
     fun saveAll(defaultTags: List<Tag>)
     fun existsDefault(): Boolean
-    fun deleteById(tagId: Long): Boolean
+    fun deleteById(tagId: UUID): Boolean
     fun defaultTag(): Tag
     fun patch(tag: Tag): Tag?
     fun existsAnotherTagByLabel(userId: UserId, tag: Tag): Boolean
-    fun existsById(tagId: Long): Boolean
+    fun existsById(tagId: UUID): Boolean
 }

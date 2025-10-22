@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.weight
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.Result.Companion.unauthorized
 import fr.sacane.jmanager.domain.utils.timeout
+import java.util.UUID
 import java.util.logging.Logger
 
 interface SessionManager{
@@ -28,8 +29,8 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
         const val PURGE_DELAY = 1_800_000L // 30 minutes in milliseconds
     }
 
-    private val lock: Any = Any()
-    private val userSession: MutableMap<Long, MutableSet<AccessToken>> = mutableMapOf()
+    private val lock = Any()
+    private val userSession: MutableMap<UUID, MutableSet<AccessToken>> = mutableMapOf()
 
     override fun addSession(userId: UserId, session: AccessToken): Unit = synchronized(lock){
         val sessions = userSession.computeIfAbsent(userId.value!!) { mutableSetOf() }

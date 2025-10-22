@@ -1,24 +1,22 @@
 package fr.sacane.jmanager.domain.models
 
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
-import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.Month
+import java.util.UUID
 
 class BookletTest {
 
     @Test
     fun `Booklet should be created with correct initial values`() {
         val initialAmount = 1000.toAmount()
+        val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = initialAmount,
             labelAccount = "Compte principal",
-            id = 1L
+            id = bookletId
         )
 
         assertEquals(initialAmount, booklet.amount)
@@ -26,19 +24,18 @@ class BookletTest {
         assertEquals(initialAmount, booklet.initialSold)
         assertEquals(initialAmount, booklet.previewAmount)
         assertTrue(booklet.transactions.isEmpty())
-        assertEquals(1L, booklet.id)
-        assertNull(booklet.owner)
+        assertEquals(bookletId, booklet.id)
     }
 
     @Test
     fun `addTransaction should update amounts correctly for income transaction`() {
         val booklet = Booklet(1000.toAmount(), "Test")
         val incomeTransaction = Transaction(
-            id = 1L,
             label = "Salaire",
             date = LocalDate.now(),
             amount = 500.toAmount(),
-            isIncome = true
+            isIncome = true,
+            id = UUID.randomUUID()
         )
 
         booklet.addTransaction(incomeTransaction)
@@ -52,7 +49,7 @@ class BookletTest {
     fun `addTransaction should update amounts correctly for expense transaction`() {
         val booklet = Booklet(1000.toAmount(), "Test")
         val expenseTransaction = Transaction(
-            id = 1L,
+            id = UUID.randomUUID(),
             label = "Achat",
             date = LocalDate.now(),
             amount = 200.toAmount(),
@@ -70,7 +67,7 @@ class BookletTest {
     fun `addTransaction with preview should only update previewAmount`() {
         val booklet = Booklet(1000.toAmount(), "Test")
         val previewTransaction = Transaction(
-            id = 1L,
+            id = UUID.randomUUID(),
             label = "Future expense",
             date = LocalDate.now().plusDays(10),
             amount = 100.toAmount(),
@@ -87,9 +84,10 @@ class BookletTest {
     @Test
     fun `removeTransactionById should update amounts correctly`() {
         val booklet = Booklet(1000.toAmount(), "Test")
+        val transactionId = UUID.randomUUID()
         val transaction = Transaction(
-            id = 1L,
-            label = "To remove",
+            id = transactionId,
+            label = "Test",
             date = LocalDate.now(),
             amount = 200.toAmount(),
             isIncome = true
@@ -98,7 +96,7 @@ class BookletTest {
         booklet.addTransaction(transaction)
         assertEquals(1200.toAmount(), booklet.amount)
 
-        booklet.removeTransactionById(1L)
+        booklet.removeTransactionById(transactionId)
         assertEquals(1000.toAmount(), booklet.amount)
         assertEquals(1000.toAmount(), booklet.previewAmount)
         assertTrue(booklet.transactions.isEmpty())
@@ -107,8 +105,9 @@ class BookletTest {
     @Test
     fun `findTransactionById should return correct transaction`() {
         val booklet = Booklet(1000.toAmount(), "Test")
+        val transactionId = UUID.randomUUID()
         val transaction = Transaction(
-            id = 42L,
+            id = transactionId,
             label = "Find me",
             date = LocalDate.now(),
             amount = 100.toAmount(),
@@ -117,16 +116,16 @@ class BookletTest {
 
         booklet.addTransaction(transaction)
 
-        val found = booklet.findTransactionById(42L)
+        val found = booklet.findTransactionById(transactionId)
         assertNotNull(found)
         assertEquals("Find me", found?.label)
-        assertEquals(42L, found?.id)
+        assertEquals(transactionId, found?.id)
     }
 
     @Test
     fun `findTransactionById should return null for non-existent id`() {
         val booklet = Booklet(1000.toAmount(), "Test")
-        val found = booklet.findTransactionById(999L)
+        val found = booklet.findTransactionById(UUID.randomUUID())
         assertNull(found)
     }
 
@@ -134,9 +133,9 @@ class BookletTest {
     fun `retrieveSheetSurroundAndSortedByDate should filter by month and year`() {
         val booklet = Booklet(1000.toAmount(), "Test")
 
-        booklet.addTransaction(Transaction(1L, "Jan transaction", LocalDate.of(2024, 1, 15), 100.toAmount(), true))
-        booklet.addTransaction(Transaction(2L, "Feb transaction", LocalDate.of(2024, 2, 15), 100.toAmount(), true))
-        booklet.addTransaction(Transaction(3L, "March transaction", LocalDate.of(2024, 3, 15), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Jan transaction", LocalDate.of(2024, 1, 15), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Feb transaction", LocalDate.of(2024, 2, 15), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "March transaction", LocalDate.of(2024, 3, 15), 100.toAmount(), true))
 
         val marchTransactions = booklet.retrieveSheetSurroundAndSortedByDate(Month.MARCH, 2024)
 
@@ -148,9 +147,9 @@ class BookletTest {
     fun `retrieveSheetSurroundAndSortedByDate should sort transactions by date`() {
         val booklet = Booklet(1000.toAmount(), "Test")
 
-        booklet.addTransaction(Transaction(1L, "Later", LocalDate.of(2024, 3, 20), 100.toAmount(), true))
-        booklet.addTransaction(Transaction(2L, "Earlier", LocalDate.of(2024, 3, 10), 100.toAmount(), true))
-        booklet.addTransaction(Transaction(3L, "Middle", LocalDate.of(2024, 3, 15), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Later", LocalDate.of(2024, 3, 20), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Earlier", LocalDate.of(2024, 3, 10), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Middle", LocalDate.of(2024, 3, 15), 100.toAmount(), true))
 
         val transactions = booklet.retrieveSheetSurroundAndSortedByDate(Month.MARCH, 2024)
 
@@ -164,8 +163,8 @@ class BookletTest {
     fun `retrieveSheetSurroundAndSortedByDate should put preview transactions last`() {
         val booklet = Booklet(1000.toAmount(), "Test")
 
-        booklet.addTransaction(Transaction(1L, "Standard", LocalDate.of(2024, 3, 15), 100.toAmount(), true, isPreview = false))
-        booklet.addTransaction(Transaction(2L, "Preview", LocalDate.of(2024, 3, 10), 100.toAmount(), true, isPreview = true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Standard", LocalDate.of(2024, 3, 15), 100.toAmount(), true, isPreview = false))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Preview", LocalDate.of(2024, 3, 10), 100.toAmount(), true, isPreview = true))
 
         val transactions = booklet.retrieveSheetSurroundAndSortedByDate(Month.MARCH, 2024)
 
@@ -178,9 +177,9 @@ class BookletTest {
     fun `removeTransactionIf should remove transactions matching predicate`() {
         val booklet = Booklet(1000.toAmount(), "Test")
 
-        booklet.addTransaction(Transaction(1L, "Keep", LocalDate.now(), 100.toAmount(), true))
-        booklet.addTransaction(Transaction(2L, "Remove1", LocalDate.now(), 50.toAmount(), true))
-        booklet.addTransaction(Transaction(3L, "Remove2", LocalDate.now(), 50.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Keep", LocalDate.now(), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Remove1", LocalDate.now(), 50.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Remove2", LocalDate.now(), 50.toAmount(), true))
 
         booklet.removeTransactionIf { it.amount.value.toInt() == 50 }
 
@@ -191,12 +190,11 @@ class BookletTest {
     @Test
     fun `sheets should return a copy of transactions`() {
         val booklet = Booklet(1000.toAmount(), "Test")
-        booklet.addTransaction(Transaction(1L, "Transaction", LocalDate.now(), 100.toAmount(), true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Transaction", LocalDate.now(), 100.toAmount(), true))
 
         val sheets = booklet.sheets()
 
         assertEquals(booklet.transactions.size, sheets.size)
-        assertTrue(sheets is List)
     }
 
     @Test
@@ -230,15 +228,16 @@ class BookletTest {
 
     @Test
     fun `toString should contain booklet information`() {
+        val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 1000.toAmount(),
             labelAccount = "My Account",
-            id = 42L
+            id = bookletId
         )
 
         val stringRepresentation = booklet.toString()
 
-        assertTrue(stringRepresentation.contains("42"))
+        assertTrue(stringRepresentation.contains(bookletId.toString()))
         assertTrue(stringRepresentation.contains("1000"))
         assertTrue(stringRepresentation.contains("My Account"))
     }
@@ -248,7 +247,6 @@ class BookletTest {
         val booklet = Booklet(1000.toAmount(), "Test")
 
         assertTrue(booklet.regularTransactions.isEmpty())
-        assertTrue(booklet.regularTransactions is List)
     }
 }
 

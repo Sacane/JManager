@@ -11,29 +11,30 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
+import java.util.UUID
 
-data class RegularByBooklet(val transaction: RegularTransaction, val bookletIds: List<Long>)
+data class RegularByBooklet(val transaction: RegularTransaction, val bookletIds: List<UUID>)
 
 class InMemoryDatabase {
     val users = mutableMapOf<UserId, UserWithPassword>()
 
     private val userByBooklet = mutableMapOf<UserId, MutableList<Booklet>>()
-    private val bookletsByTransaction = mutableMapOf<Long, MutableList<Transaction>>()
+    private val bookletsByTransaction = mutableMapOf<UUID, MutableList<Transaction>>()
     private val tags = mutableMapOf<UserId, MutableList<Tag>>()
     val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
     val defaultTags = fr.sacane.jmanager.domain.models.defaultTags.mapIndexed { index, tag ->
         Tag(
-            id = index.toLong(),
+            id = UUID.randomUUID(),
             label = tag.label,
             isDefault = tag.isDefault,
             color = tag.color
         )
     }
-    private val trackers = mutableMapOf<Long, MutableList<RegularTransactionTracker>>()
+    private val trackers = mutableMapOf<UUID, MutableList<RegularTransactionTracker>>()
     private val regularBooklets = mutableListOf<RegularByBooklet>()
     private val regularTransactionsByUser = mutableMapOf<UserId, MutableList<RegularByBooklet>>()
 
-    fun addRegularBooklet(userId: UserId, transaction: RegularTransaction, bookletIds: List<Long>) {
+    fun addRegularBooklet(userId: UserId, transaction: RegularTransaction, bookletIds: List<UUID>) {
         val regularByBooklet = RegularByBooklet(transaction, bookletIds)
         regularBooklets.add(regularByBooklet)
         regularTransactionsByUser.computeIfAbsent(userId) { mutableListOf() }.add(regularByBooklet)
@@ -43,7 +44,7 @@ class InMemoryDatabase {
         return regularTransactionsByUser[userId]?.map { it.transaction } ?: emptyList()
     }
 
-    fun getAllRegularTransactionsByBooklet(userId: UserId, bookletId: Long): List<RegularTransaction> {
+    fun getAllRegularTransactionsByBooklet(userId: UserId, bookletId: UUID): List<RegularTransaction> {
         return regularTransactionsByUser[userId]
             ?.filter { it.bookletIds.contains(bookletId) }
             ?.map { it.transaction }
@@ -65,16 +66,16 @@ class InMemoryDatabase {
         regularTransactionsByUser[userId] = initialState.toMutableList()
         regularBooklets.addAll(initialState)
     }
-    fun addTrackerByBooklet(bookletId: Long, transactionTracker: RegularTransactionTracker) {
+    fun addTrackerByBooklet(bookletId: UUID, transactionTracker: RegularTransactionTracker) {
         trackers[bookletId]?.removeIf { it.regularTransactionId == transactionTracker.regularTransactionId }
         trackers.computeIfAbsent(bookletId) { mutableListOf() }.add(transactionTracker)
     }
 
-    fun  findTrackerByBooklet(bookletId: Long): List<RegularTransactionTracker>? = trackers[bookletId]
+    fun  findTrackerByBooklet(bookletId: UUID): List<RegularTransactionTracker>? = trackers[bookletId]
 
-    fun findTrackerByBookletAndTransaction(bookletId: Long, transactionId: RegularTransactionId): RegularTransactionTracker? = trackers[bookletId]?.find { it.regularTransactionId == transactionId }
+    fun findTrackerByBookletAndTransaction(bookletId: UUID, transactionId: RegularTransactionId): RegularTransactionTracker? = trackers[bookletId]?.find { it.regularTransactionId == transactionId }
 
-    fun deleteTrackerByBookletId(bookletId: Long) {
+    fun deleteTrackerByBookletId(bookletId: UUID) {
         trackers.remove(bookletId)
     }
 
@@ -85,7 +86,7 @@ class InMemoryDatabase {
         userByBooklet[ownerId]?.add(booklet)
         bookletsByTransaction[booklet.id!!] = mutableListOf()
     }
-    fun removeAccountById(accountId: Long) {
+    fun removeAccountById(accountId: UUID) {
         userByBooklet.forEach {
             it.value.removeIf { account -> account.id == accountId }
         }
@@ -98,7 +99,7 @@ class InMemoryDatabase {
         bookletsByTransaction.computeIfAbsent(accountId!!) { mutableListOf() }
     }
 
-    fun findAccountById(accountId: Long): Booklet? {
+    fun findAccountById(accountId: UUID): Booklet? {
 
         var targetBooklet: Booklet? = null
         userByBooklet.forEach {
@@ -141,7 +142,7 @@ class InMemoryDatabase {
     }
 
     fun addTransaction(userAccountId: IdUserAccount, transaction: Transaction) {
-        val account = userByBooklet[userAccountId.userId]?.find { it.id == userAccountId.accountId }
+        val account = userByBooklet[userAccountId.userId]?.find { it.id == userAccountId.accountId } ?: throw IllegalArgumentException("Account not found")
         account?.addTransaction(transaction)
         bookletsByTransaction[account!!.id]?.add(transaction)
     }
@@ -153,13 +154,13 @@ class InMemoryDatabase {
         }
     }
 
-    fun removeAllTransactionsById(transactionIds: List<Long>) {
+    fun removeAllTransactionsById(transactionIds: List<UUID>) {
         bookletsByTransaction.forEach { (_, transactions) ->
             println(transactions.removeAll { transactionIds.contains(it.id) })
         }
     }
 
-    fun findTransactionById(transactionId: Long): Transaction? {
+    fun findTransactionById(transactionId: UUID): Transaction? {
         return accountsWithTransactions().flatMap { it.transactions }
             .find { it.id == transactionId }
     }
@@ -173,7 +174,7 @@ class InMemoryDatabase {
     }
 
     fun findTransactions(): Collection<IdUserAccountByTransaction> {
-        val transactionsResult = mutableMapOf<Pair<IdUserAccount, Long>, Transaction>()
+        val transactionsResult = mutableMapOf<Pair<IdUserAccount, UUID>, Transaction>()
         userByBooklet.forEach { (key, value) ->
             value.forEach {
                 val id = IdUserAccount(key, it.id!!)
@@ -201,7 +202,7 @@ class InMemoryDatabase {
         bookletsByTransaction.clear()
     }
 
-    fun saveTransaction(accountId: Long, transaction: Transaction) {
+    fun saveTransaction(accountId: UUID, transaction: Transaction) {
         bookletsByTransaction[accountId]?.add(transaction)
     }
 

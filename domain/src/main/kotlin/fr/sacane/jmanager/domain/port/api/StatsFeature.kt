@@ -20,6 +20,7 @@ import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
@@ -33,7 +34,7 @@ sealed interface StatsFeature {
      * @return A Result object containing the monthly account statistics wrapped in
      *         MonthlyAccountStatsOutput if successful, or an appropriate error state otherwise.
      */
-    fun getMonthlyAccountStats(accountId: Long, year: Int, token: String): Result<MonthlyAccountStatsOutput>
+    fun getMonthlyAccountStats(accountId: UUID, year: Int, token: String): Result<MonthlyAccountStatsOutput>
 
     /**
      * Retrieves the distribution of expenses across various categories for the authenticated user.
@@ -83,7 +84,7 @@ class StatsFeatureImpl(
     }
 
     override fun getMonthlyAccountStats(
-        accountId: Long,
+        accountId: UUID,
         year: Int,
         token: String
     ): Result<MonthlyAccountStatsOutput> = session.authenticate(token) { userId ->

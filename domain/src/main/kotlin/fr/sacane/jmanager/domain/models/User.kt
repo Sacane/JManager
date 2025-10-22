@@ -1,8 +1,10 @@
 package fr.sacane.jmanager.domain.models
 
+import java.util.UUID
+
 
 @JvmInline
-value class UserId(val value: Long?)
+value class UserId(val value: UUID?)
 
 data class MinimalUserRepresentation(
     val id: UserId = UserId(null),
