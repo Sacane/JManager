@@ -1,62 +1,66 @@
 package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.BiState
-import fr.sacane.jmanager.domain.State
-import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.InMemoryDatabase
+import fr.sacane.jmanager.domain.RegularByBooklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
-import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
-import java.time.LocalDate
-import java.util.*
+import java.util.UUID
 
 data class UserRegularTransaction(
     val userId: UserId,
-    val transaction: RegularTransaction
+    val transaction: RegularTransaction,
+    val bookletIds: List<UUID> = emptyList()
 )
 
-class InMemoryRegularTransactionRepository: RegularTransactionRepository, BiState<List<UserRegularTransaction>, List<RegularTransaction>> {
-
-    private val transactions = mutableListOf<UserRegularTransaction>()
-    private val transactionsByAccount = mutableMapOf<Long, MutableList<UserRegularTransaction>>()
+class InMemoryRegularTransactionRepository(
+    private val inMemoryDatabase: InMemoryDatabase
+): RegularTransactionRepository, BiState<List<UserRegularTransaction>, List<RegularTransaction>> {
 
     override fun getStates(): List<RegularTransaction> {
-        return transactions.filter { it.transaction.id!!.value == UUID.randomUUID().toString() }.map { it.transaction }
+        return inMemoryDatabase.users.keys.flatMap { userId ->
+            inMemoryDatabase.getAllRegularTransactionsByUser(userId)
+        }
     }
 
     override fun clear() {
-        transactions.clear()
+        inMemoryDatabase.clearRegularTransactions()
     }
 
     override fun init(initialState: List<UserRegularTransaction>) {
-        transactions.addAll(initialState)
+        // Clear all existing regular transactions first
+        inMemoryDatabase.clearRegularTransactions()
+
+        // Then initialize with new state
+        val groupedByUser = initialState.groupBy { it.userId }
+        groupedByUser.forEach { (userId, userTransactions) ->
+            val regularByBooklets = userTransactions.map {
+                RegularByBooklet(it.transaction, it.bookletIds)
+            }
+            inMemoryDatabase.initRegularTransactions(userId, regularByBooklets)
+        }
     }
 
     override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
-        return transactions.filter { it.userId == userId }.map { it.transaction }
+        return inMemoryDatabase.getAllRegularTransactionsByUser(userId)
     }
 
     override fun getAllRegularUsedByAccount(
         userId: UserId,
-        accountID: Long
-    ): List<RegularTransaction>? {
-        return transactionsByAccount[accountID]?.filter { it.userId == userId }?.map { it.transaction }
+        accountID: UUID
+    ): List<RegularTransaction> {
+        return inMemoryDatabase.getAllRegularTransactionsByBooklet(userId, accountID)
     }
-
 
     override fun saveMonthlyRegularTransaction(
         userId: UserId,
         monthlyTransaction: MonthlyTransaction,
-        bookletIds: List<Long>
+        bookletIds: List<UUID>
     ): RegularTransaction {
-        transactions.add(UserRegularTransaction(userId, monthlyTransaction))
-        bookletIds.forEach {
-            transactionsByAccount.computeIfAbsent(it) { mutableListOf() }.add(UserRegularTransaction(userId, monthlyTransaction))
-        }
+        inMemoryDatabase.addRegularBooklet(userId, monthlyTransaction, bookletIds)
         return monthlyTransaction
     }
 
@@ -64,7 +68,7 @@ class InMemoryRegularTransactionRepository: RegularTransactionRepository, BiStat
         userId: UserId,
         transactionId: RegularTransactionId
     ): RegularTransaction? {
-        return transactions.find { it.userId == userId && it.transaction.id == transactionId }?.transaction
+        return inMemoryDatabase.getRegularTransactionById(userId, transactionId)
     }
 
 }

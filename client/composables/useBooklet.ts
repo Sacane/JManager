@@ -22,15 +22,15 @@ export default function useBooklet() {
     return post('account', booklet)
   }
 
-  async function deleteAccount(id: number): Promise<any> {
+  async function deleteAccount(id: string): Promise<any> {
     return deleteQuery(`account/${id}`, undefined)
   }
 
-  async function findById(accountId: number): Promise<BookletDTO> {
+  async function findById(accountId: string): Promise<BookletDTO> {
     return get(`account/${accountId}`)
   }
 
-  async function findByIdMonthAndYear(accountId: number, month: number, year: number): Promise<BookletReport> {
+  async function findByIdMonthAndYear(accountId: string, month: number, year: number): Promise<BookletReport> {
     return get(`account/report/${accountId}`, {
       month,
       year,

@@ -27,11 +27,11 @@ class SessionManagerTest {
 
         @Test
         fun `Add a session must return success`() {
-            val id = UserId(10)
+            val id = UserId(UUID.randomUUID())
             userState.init(listOf(
                 UserWithPassword(User(id, "test", email = "test"), "test")
             ))
-            val accessToken = AccessToken(id, "test","10||${UUID.randomUUID()}||${Role.USER.name}||test")
+            val accessToken = AccessToken(id, "test","${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
             sessionState.authenticate(accessToken.tokenValue) {
                 return@authenticate success("success")
@@ -40,11 +40,11 @@ class SessionManagerTest {
     }
     @Test
     fun `Remove a session must return success`() {
-        val id = UserId(10)
+        val id = UserId(UUID.randomUUID())
         userState.init(listOf(
             UserWithPassword(User(id, "test", email = "test"), "test")
         ))
-        val accessToken = AccessToken(id, "test","10||${UUID.randomUUID()}||${Role.USER.name}||test")
+        val accessToken = AccessToken(id, "test","${UUID.randomUUID()}||${UUID.randomUUID()}||${Role.USER.name}||test")
         sessionManager.addSession(id, accessToken)
         sessionManager.removeSession(id, accessToken.tokenValue)
         sessionManager.authenticate(accessToken.tokenValue) {
@@ -57,11 +57,11 @@ class SessionManagerTest {
 
         @Test
         fun `Authenticate a session must return success`() {
-            val id = UserId(10)
+            val id = UserId(UUID.randomUUID())
             userState.init(listOf(
                 UserWithPassword(User(id, "test", email = "test"), "test")
             ))
-            val accessToken = AccessToken(id, "test","10||${UUID.randomUUID()}||${Role.USER.name}||test")
+            val accessToken = AccessToken(id, "test","${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
             sessionManager.authenticate(accessToken.tokenValue) {
                 return@authenticate success("success")

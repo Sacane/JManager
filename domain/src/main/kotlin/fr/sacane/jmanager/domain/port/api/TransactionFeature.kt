@@ -15,16 +15,17 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDateTime
 import java.time.Month
+import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface TransactionFeature {
     fun bookTransaction(token: String, accountLabel: String, transaction: Transaction): Result<TransactionResumeResult>
     fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, account: String): Result<List<Transaction>>
-    fun editTransaction(accountID: Long, transaction: Transaction, token: String): Result<TransactionResumeResult>
-    fun findById(id: Long, token: String): Result<Transaction>
-    fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing>
-    fun confirmPreviewTransaction(token: String, accountID: Long, transactionId: Long): Result<TransactionResumeResult>
+    fun editTransaction(accountID: UUID, transaction: Transaction, token: String): Result<TransactionResumeResult>
+    fun findById(id: UUID, token: String): Result<Transaction>
+    fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<Nothing>
+    fun confirmPreviewTransaction(token: String, accountID: UUID, transactionId: UUID): Result<TransactionResumeResult>
 }
 
 @DomainService
@@ -40,7 +41,7 @@ class TransactionFeatureImpl(
     }
 
     override fun editTransaction(
-        accountID: Long,
+        accountID: UUID,
         transaction: Transaction,
         token: String
     ): Result<TransactionResumeResult> = session.authenticate(token, roleUser){
@@ -96,7 +97,7 @@ class TransactionFeatureImpl(
     }
 
     override fun findById(
-        id: Long,
+        id: UUID,
         token: String
     ): Result<Transaction> = session.authenticate(token, roleUser) {
         logger.info("Request for a transaction with id $id")
@@ -104,7 +105,7 @@ class TransactionFeatureImpl(
         success(sheet)
     }
 
-    override fun deleteSheetsByIds(accountID: Long, sheetIds: List<Long>, token: String): Result<Nothing> {
+    override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<Nothing> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
@@ -117,8 +118,8 @@ class TransactionFeatureImpl(
 
     override fun confirmPreviewTransaction(
         token: String,
-        accountID: Long,
-        transactionId: Long
+        accountID: UUID,
+        transactionId: UUID
     ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)

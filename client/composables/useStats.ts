@@ -3,7 +3,7 @@ import useQuery from './useQuery'
 export default function useStats() {
   const { get } = useQuery()
 
-  async function getMonthlyAccountStats(accountId: number, year: number): Promise<MonthlyAccountStatsDTO> {
+  async function getMonthlyAccountStats(accountId: string, year: number): Promise<MonthlyAccountStatsDTO> {
     return get(`stats/monthly/${accountId}/${year}`)
   }
 

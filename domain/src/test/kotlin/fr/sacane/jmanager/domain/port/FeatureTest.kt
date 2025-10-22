@@ -35,11 +35,11 @@ open class FeatureTest {
             return "${userId.value}||${UUID.randomUUID()}||${Role.USER.name}||$username"
         }
         fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), tag: Tag? = null, isPreview: Boolean = false): Transaction {
-            return Transaction(Random.nextLong(), label, localDate, amount, isIncome, isPreview = isPreview, tag = tag ?: tagRepository.defaultTag())
+            return Transaction(UUID.randomUUID(), label, localDate, amount, isIncome, isPreview = isPreview, tag = tag ?: tagRepository.defaultTag())
         }
     }
     fun createAccount(userId: User, label: String, amount: Amount): Booklet {
-        val id = Random.nextLong()
+        val id = UUID.randomUUID()
         val booklet = Booklet(id = id, amount = amount, labelAccount = label, owner = userId)
         accountState.init(
             AccountByOwner(booklet.asSingleton(), userId.id).asSingleton()
@@ -47,7 +47,7 @@ open class FeatureTest {
         return booklet
     }
     private fun createAndConnect(username: String): UserToken {
-        val userId = UserId(Random.nextLong())
+        val userId = UserId(UUID.randomUUID())
         val user = User(userId, username, "$username@test.fr")
         userState.init(listOf(UserWithPassword(user,"test")))
         val tokenValue = generateToken(user.id, user.username)

@@ -24,7 +24,6 @@ interface TrendCalculator {
 @UseCase
 class TrendCalculatorImpl : TrendCalculator {
     override fun calculateTrend(booklets: List<Booklet>): List<MonthlyTrend> {
-        println("Booklets size ${booklets.size}")
         val currentDate = LocalDate.now()
         val last12Months = generateLast12Months(currentDate)
 

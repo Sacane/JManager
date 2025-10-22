@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.models
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import java.time.Month
+import java.util.UUID
 
 class Booklet(
     var amount: Amount,
@@ -12,7 +13,7 @@ class Booklet(
     var owner : User? = null,
     val initialSold: Amount = amount.copy(),
     var previewAmount: Amount = amount.copy(),
-    val id: Long? = null
+    val id: UUID? = null
 ){
 
     val label: String
@@ -27,8 +28,7 @@ class Booklet(
     fun sheets(): List<Transaction>{
         return transactions.toList()
     }
-
-    fun findTransactionById(id : Long) : Transaction? {
+    fun findTransactionById(id : UUID) : Transaction? {
         return transactions.firstOrNull { it.id == id }
     }
 
@@ -69,17 +69,17 @@ class Booklet(
         if(transaction.isNotPreview) {
             this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
-        println("preview amount before calculation : $previewAmount")
         this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
     private fun removeTransaction(transaction: Transaction) {
         _transactions.removeIf { transaction.id == it.id }
-        this.previewAmount = this.previewAmount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
-        if(transaction.isNotPreview) {
-            this.amount = this.amount - if(transaction.isIncome) transaction.amount else transaction.amount.negate()
+        this.previewAmount =
+            this.previewAmount - if (transaction.isIncome) transaction.amount else transaction.amount.negate()
+        if (transaction.isNotPreview) {
+            this.amount = this.amount - if (transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
     }
-    fun removeTransactionById(transactionId: Long) {
+    fun removeTransactionById(transactionId: UUID) {
         transactions.find { it.id == transactionId }?.let {
             if(it.isNotPreview) {
                 this.amount = this.amount - if(it.isIncome) it.amount else it.amount.negate()

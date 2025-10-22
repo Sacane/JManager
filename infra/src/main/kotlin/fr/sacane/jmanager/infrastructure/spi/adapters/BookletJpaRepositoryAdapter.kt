@@ -3,14 +3,17 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.BookletRepositoryPort
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.AccountMapper
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
+import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 @Repository
 class BookletJpaRepositoryAdapter(
-    private val accountRepository: AccountJpaRepository,
+    private val accountRepository: BookletJpaRepository,
     private val userRepository: UserPostgresRepository,
     private val accountMapper: AccountMapper
 ): BookletRepositoryPort {
@@ -31,7 +34,7 @@ class BookletJpaRepositoryAdapter(
         return accountSaved.toModel()
     }
 
-    override fun findAccountByIdWithTransactions(accountId: Long): Booklet? {
+    override fun findAccountByIdWithTransactions(accountId: UUID): Booklet? {
         val accountResponse = accountRepository.findByIdWithSheets(accountId)
         return accountResponse?.toModel()
     }
@@ -41,7 +44,7 @@ class BookletJpaRepositoryAdapter(
         return accountRepository.findByOwnerAndLabelWithSheets(userId.value!!, accountLabel)?.toModel() ?: return null
     }
 
-    override fun deleteAccountById(accountId: Long) {
+    override fun deleteAccountById(accountId: UUID) {
         val account = accountRepository.findByIdWithMonthlyTransactions(accountId) ?: return
         account.clearAllMonthlyTransactions()
         accountRepository.deleteById(accountId)

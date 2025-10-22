@@ -18,6 +18,7 @@ sealed interface UserFeature {
     fun login(pseudonym: String, userPassword: String): Result<UserToken>
     fun logout(token: String): Result<Nothing>
     fun register(username: String, password: String, confirmPassword: String): Result<User>
+    fun createAdminIfNotExists(username: String, password: String): Result<User>
 }
 
 
@@ -39,7 +40,7 @@ class UserFeatureImpl(
         val user = userWithPassword.user
         if(hasher.verify(userPassword, userWithPassword.password)) {
             LOGGER.info("User ${userWithPassword.user.username} logged")
-            val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, Role.USER)
+            val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, userWithPassword.roles)
             session.addSession(user.id, accessToken)
             return success(user.withToken(accessToken.tokenValue))
         }
@@ -58,6 +59,22 @@ class UserFeatureImpl(
         val hashedPassword = hasher.hash(password)
         val userResult = userRepository.register(username, hashedPassword) ?: return invalid("Une erreur est survenue")
         return success(userResult)
+    }
+
+    override fun createAdminIfNotExists(
+        username: String,
+        password: String
+    ): Result<User> {
+        val existingAdmin = userRepository.findByPseudonym(username)
+        if(existingAdmin != null){
+            LOGGER.info("Admin user already exists with username $username")
+            return success(existingAdmin)
+        }
+        val hashedPassword = hasher.hash(password)
+        val adminUser = userRepository.register(username, hashedPassword, setOf(Role.USER, Role.ADMIN))
+            ?: return invalid("Une erreur est survenue lors de la création de l'administrateur")
+        LOGGER.info("Admin user created with username $username")
+        return success(adminUser)
     }
 
 }

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class TagFeatureTest: FeatureTest() {
 
@@ -47,16 +48,17 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Delete a tag must return success`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = 90))))
+                val uuid = UUID.randomUUID()
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
-                tagFeature.deleteTag(this.tokenValue, 90)
+                tagFeature.deleteTag(this.tokenValue, uuid)
                     .assertSuccess()
             }
         }
         @Test
         fun `Delete a tag that does not exist must return failure`() {
             launchWithConnectedUserInstance {
-                tagFeature.deleteTag(this.tokenValue, 10)
+                tagFeature.deleteTag(this.tokenValue, UUID.randomUUID())
                     .assertFailure()
             }
         }
@@ -66,7 +68,8 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Get all tags must return success`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = 90))))
+                val uuid = UUID.randomUUID()
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
                 tagFeature.getAllTags(this.tokenValue)
                     .assertSuccess()
@@ -95,16 +98,17 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Patch a tag must return success`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = 90))))
+                val uuid = UUID.randomUUID()
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
-                tagFeature.editTag(this.tokenValue, Tag("test2", id = 90))
+                tagFeature.editTag(this.tokenValue, Tag("test2", id = uuid))
                     .assertSuccess()
             }
         }
         @Test
         fun `Patch a tag that does not exist must return failure`() {
             launchWithConnectedUserInstance {
-                tagFeature.editTag(this.tokenValue, Tag("test2", id = 90))
+                tagFeature.editTag(this.tokenValue, Tag("test2", id = UUID.randomUUID()))
                     .assertFailure()
             }
         }

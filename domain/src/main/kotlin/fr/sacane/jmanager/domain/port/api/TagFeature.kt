@@ -8,13 +8,14 @@ import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TagRepository
 import fr.sacane.jmanager.domain.utils.*
+import java.util.UUID
 
 @Port(Side.APPLICATION)
 sealed interface TagFeature {
     fun addTag(token: String, tag: Tag): Result<Tag>
     fun getAllTags(token: String): Result<List<Tag>>
     fun addDefaultTags()
-    fun deleteTag(token: String, tagId: Long): Result<Nothing>
+    fun deleteTag(token: String, tagId: UUID): Result<Nothing>
     fun defaultTag(token: String): Result<Tag>
     fun editTag(token: String, tag: Tag): Result<Tag>
 }
@@ -43,7 +44,7 @@ class TagFeatureImpl(
         tagRepository.saveAll(defaultTags)
     }
 
-    override fun deleteTag(token: String, tagId: Long): Result<Nothing> = session.authenticate(token){
+    override fun deleteTag(token: String, tagId: UUID): Result<Nothing> = session.authenticate(token){
         if(!tagRepository.deleteById(tagId)) {
             return@authenticate notFound("Tag with id $tagId has not been found")
         }

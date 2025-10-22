@@ -43,7 +43,7 @@ class StatsFeatureTest : FeatureTest() {
     inner class StatsFeatureAuthTest : AuthenticationTest {
         override val action: List<Result<out Any>>
             get() = listOf(
-                statsFeature.getMonthlyAccountStats(50L, 2025, session.tokenValue),
+                statsFeature.getMonthlyAccountStats(UUID.randomUUID(), 2025, session.tokenValue),
                 statsFeature.getCategoryDistribution(session.tokenValue),
                 statsFeature.getTrendStats(session.tokenValue),
                 statsFeature.getPrevisionalTransactions(session.tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3))
@@ -105,7 +105,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should fail when account does not exist`() {
             launchWithConnectedUserInstance {
-                statsFeature.getMonthlyAccountStats(999L, 2025, tokenValue)
+                statsFeature.getMonthlyAccountStats(UUID.randomUUID(), 2025, tokenValue)
                     .assertFailure()
             }
         }
@@ -134,7 +134,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return category distribution for all user transactions`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag(id = 1L, label = "Food", isDefault = false)
+                val foodTag = Tag(id = UUID.randomUUID(), label = "Food", isDefault = false)
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
                 val transactions = listOf(
                     generateTransactionWithTag("Groceries", Amount(BigDecimal("-100")), LocalDate.of(2025, 1, 10), foodTag),
@@ -152,7 +152,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate correct amounts per category`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag(id = 1L, label = "Food", isDefault = false)
+                val foodTag = Tag(id = UUID.randomUUID(), label = "Food", isDefault = false)
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
 
                 val transactions = listOf(
@@ -172,8 +172,8 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate correct percentages for each category`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag("Food",1L,  isDefault = false)
-                val transportTag = Tag("Transport",2L, isDefault =  false)
+                val foodTag = Tag("Food", UUID.randomUUID(),  isDefault = false)
+                val transportTag = Tag("Transport",UUID.randomUUID(), isDefault =  false)
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag, transportTag))))
 
                 val transactions = listOf(
@@ -193,7 +193,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return empty distribution when no transactions exist`() {
             launchWithConnectedUserWithoutAccount {
-                val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = 50L)
+                val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
                 accountState.init(listOf(AccountByOwner(listOf(booklet), userId)))
 
                 statsFeature.getCategoryDistribution(tokenValue)
@@ -223,8 +223,10 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should only include expenses in category distribution`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag(id = 1L, label = "Food", isDefault = false)
-                val salaryTag = Tag(id = 2L, label = "Salary",  isDefault = false)
+                val foodTagId = UUID.randomUUID()
+                val salaryTagId = UUID.randomUUID()
+                val foodTag = Tag(id = foodTagId, label = "Food", isDefault = false)
+                val salaryTag = Tag(id = salaryTagId, label = "Salary",  isDefault = false)
 
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag, salaryTag))))
 
@@ -294,7 +296,7 @@ class StatsFeatureTest : FeatureTest() {
                     Amount.fromString("500", "€".asCurrency()),
                     "account2",
                     owner = user.toUser(),
-                    id = 51L
+                    id = UUID.randomUUID()
                 )
                 val transactions2 = listOf(
                     generateTransaction("Transaction 2", Amount(BigDecimal("200")), true, currentDate)
@@ -401,7 +403,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions1)
 
-                val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "account2", owner = user.toUser(), id = 51L)
+                val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "account2", owner = user.toUser(), id = UUID.randomUUID())
                 accountState.init(listOf(AccountByOwner(listOf(booklet2), user.id)))
                 transactionState.init(
                     listOf(IdUserAccountByTransaction(IdUserAccount(user.id, booklet2.id!!), mutableListOf(generateTransaction("Future Bill", Amount(BigDecimal("100")), false, startDate.plusMonths(1), isPreview = true))))
@@ -485,7 +487,7 @@ class StatsFeatureTest : FeatureTest() {
         tag: Tag
     ): Transaction {
         return Transaction(
-            id = kotlin.random.Random.nextLong(),
+            id = UUID.randomUUID(),
             label = label,
             date = date,
             amount = amount,

@@ -5,9 +5,10 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 data class Transaction(
-    val id: Long?,
+    val id: UUID?,
     override var label: String,
     var date: LocalDate,
     override var amount: Amount,

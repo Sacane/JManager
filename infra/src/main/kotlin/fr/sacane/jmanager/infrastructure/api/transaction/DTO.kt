@@ -11,14 +11,14 @@ import java.time.LocalDate
 
 @Serializable
 data class UserAccountIdsTransactionRequest(
-    val accountId: Long,
+    val accountId: String,
     val transaction: TransactionResult
 )
 
 
 @Serializable
 data class TransactionResult(
-    val id: Long?,
+    val id: String?,
     val label: String,
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
@@ -59,8 +59,8 @@ data class UserBookletResponse(
 
 @Serializable
 data class AccountTransactionsIdRequest(
-    val accountId: Long,
-    val transactionIds: List<Long>
+    val accountId: String,
+    val transactionIds: List<String>
 )
 
 @Serializable
@@ -98,7 +98,7 @@ data class MonthlyRegularTransactionRequest (
     val isIncome: Boolean,
     val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO,
-    val bookletIds: List<Long>,
+    val bookletIds: List<String>,
     val repeatDay: Int?,
 )
 
@@ -136,7 +136,7 @@ data class FrequencyPropertyDTO(
 
 data class RegularTransactionLinkRequest(
     val transactionId: String,
-    val bookletId: Long
+    val bookletId: String
 )
 
 

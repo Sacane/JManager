@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -31,9 +32,9 @@ class TagController(
 
     @DeleteMapping("{tagId}")
     fun deleteTag(
-        @PathVariable("tagId") tagId: Long
+        @PathVariable("tagId") tagId: String
     ): ResponseEntity<Nothing>
-       = tagFeature.deleteTag(currentUser.token, tagId)
+       = tagFeature.deleteTag(currentUser.token, tagId.toUUID())
            .toHttpResponse()
 
     @GetMapping("/default")

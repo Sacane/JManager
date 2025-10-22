@@ -33,14 +33,12 @@ class JwtCookieAuthenticationFilter(
 
             if (token != null) {
 
-                val user = userRepository.findUserById(token.userId)?.asAuthDetail(token.tokenValue, token.role)
+                val user = userRepository.findUserById(token.userId)?.asAuthDetail(token.tokenValue, token.roles)
                     ?: throw NotFoundException(1050, "User not found")
                 val authentication = UsernamePasswordAuthenticationToken(
                     user,
                     null,
-                    listOf(
-                        SimpleGrantedAuthority ("ROLE_${token.role.name}")
-                    )
+                    token.roles.map { SimpleGrantedAuthority("ROLE_${it.name}") }
                 )
                 authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
 

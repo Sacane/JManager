@@ -25,6 +25,8 @@ version = "1.0"
 val springBootVersion = "3.4.0"
 val restAssuredVersion = "5.5.0"
 val jwtVersion = "0.12.6"
+val flywayVersion = "11.14.1"
+val testcontainersVersion = "1.21.3"
 
 dependencies {
 
@@ -39,17 +41,26 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
     implementation("org.postgresql:postgresql")
     implementation("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
+    implementation("org.flywaydb:flyway-core:${flywayVersion}")
     implementation(project(mapOf("path" to ":domain")))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
+    implementation("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers:${springBootVersion}")
     testImplementation("org.hamcrest:hamcrest:2.2")
     testImplementation("com.h2database:h2")
     testImplementation("io.rest-assured:rest-assured:${restAssuredVersion}")
     testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-    implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
-    implementation("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
+    // Testcontainers for PostgreSQL
+    testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
+    testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
+    testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
+
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jwtVersion}")
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:${flywayVersion}")
 }
 
 jacoco {

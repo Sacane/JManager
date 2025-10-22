@@ -16,17 +16,18 @@ import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Month
+import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 sealed interface BookletFeature {
-    fun findAccountById(accountID: Long, token: String): Result<Booklet>
+    fun findAccountById(accountID: UUID, token: String): Result<Booklet>
     fun editAccount(booklet: Booklet, token: String): Result<Booklet>
-    fun deleteAccountById(accountID: Long, token: String): Result<Nothing>
+    fun deleteAccountById(accountID: UUID, token: String): Result<Nothing>
     fun findByLabelAndUserId(token: String, label: String): Result<Booklet>
     fun findAllRegisteredAccounts(token: String): Result<List<Booklet>>
     fun save(token: String, booklet: Booklet): Result<Booklet>
-    fun loadTransactionsForBookletForAMonth(token: String, bookletId: Long, month: Month, year: Int): Result<BookletLoadingResult>
+    fun loadTransactionsForBookletForAMonth(token: String, bookletId: UUID, month: Month, year: Int): Result<BookletLoadingResult>
 }
 
 @DomainService
@@ -43,7 +44,7 @@ class BookletFeatureImpl(
         private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
     }
     override fun findAccountById(
-        accountID: Long,
+        accountID: UUID,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
@@ -66,7 +67,7 @@ class BookletFeatureImpl(
     }
 
     override fun deleteAccountById(
-        accountID: Long,
+        accountID: UUID,
         token: String
     ): Result<Nothing> = session.authenticate(token) {
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
@@ -116,17 +117,18 @@ class BookletFeatureImpl(
 
     override fun loadTransactionsForBookletForAMonth(
         token: String,
-        bookletId: Long,
+        bookletId: UUID,
         month: Month,
         year: Int
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
-            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Regular transactions not found for this account")
 
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+                ?: emptyList()
 
             val currentDate = LocalDate.now()
             val currentMonth = currentDate.month
@@ -164,11 +166,17 @@ class BookletFeatureImpl(
                 year
             )
 
+            // Filter regular transactions to only include those that have started before or during the requested month
+            val requestedDate = LocalDate.of(year, month, 1)
+            val filteredRegularTransactions = regularTransactions.filter { rt ->
+                !rt.startDate.isAfter(requestedDate.withDayOfMonth(requestedDate.lengthOfMonth()))
+            }
+
             val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
                 currentTransactions = transactions.second,
                 previsionalTransactions = transactions.first,
-                regularTransactions = regularTransactions,
+                regularTransactions = filteredRegularTransactions,
                 realSold = booklet.amount,
                 previsionalSold = previsionalSold
             )
@@ -230,9 +238,8 @@ class BookletFeatureImpl(
         targetMonth: Month,
         targetYear: Int
     ): Amount {
-        val currentDate = LocalDate.now()
         val allTransactions = booklet.transactions
-        
+
         val relevantTransactions = allTransactions.filter { transaction ->
             val transactionDate = transaction.date
             val transactionYearMonth = transactionDate.year * 12 + transactionDate.monthValue
@@ -242,7 +249,7 @@ class BookletFeatureImpl(
             when {
                 transactionYearMonth < currentYearMonth -> false
                 transactionYearMonth == currentYearMonth -> {
-                    !transaction.isPreview || transactionDate.isAfter(currentDate) || transactionDate.isEqual(currentDate)
+                    transaction.isPreview
                 }
                 transactionYearMonth <= targetYearMonth -> true
                 else -> false

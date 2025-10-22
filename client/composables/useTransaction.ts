@@ -11,7 +11,7 @@ export default function useTransaction() {
       accountLabel,
     })
   }
-  async function findTransactionById(id: number): Promise<TransactionResultDTO> {
+  async function findTransactionById(id: string): Promise<TransactionResultDTO> {
     return get(`transaction/${id}`)
   }
 
@@ -25,14 +25,14 @@ export default function useTransaction() {
     })
   }
 
-  function deleteTransaction(accountId: number, ids: Array<number>): Promise<any> {
+  function deleteTransaction(accountId: string, ids: Array<string>): Promise<any> {
     return deleteQuery(`transaction`, {
       accountId,
       transactionIds: ids,
     })
   }
 
-  function editTransaction(transactionCreationDTO: TransactionCreationDTO, accountId: number): Promise<TransactionResultDTO> {
+  function editTransaction(transactionCreationDTO: TransactionCreationDTO, accountId: string): Promise<TransactionResultDTO> {
     return patch('transaction', {
       accountId,
       transaction: {

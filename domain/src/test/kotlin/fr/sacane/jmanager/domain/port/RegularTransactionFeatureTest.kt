@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.util.UUID
 
 class RegularTransactionFeatureTest : FeatureTest() {
 
@@ -211,7 +212,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
             val result = regularTransactionFeature.bookRegularTransaction(
                 "invalid-token",
                 monthlyTransaction,
-                listOf(1L)
+                listOf(UUID.randomUUID())
             )
 
             result.assertFailure(ResultState.UNAUTHORIZED)

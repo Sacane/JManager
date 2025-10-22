@@ -1,12 +1,13 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
 import jakarta.persistence.*
+import java.util.UUID
 
 @MappedSuperclass
 sealed class AbstractTagResource(
     @Id
-    @GeneratedValue
-    var idTag: Long? = null,
+    @GeneratedValue(strategy = GenerationType.UUID)
+    var idTag: UUID? = null,
     var name: String = "",
     @Embedded
     var color: Color = Color(0, 0, 0),
@@ -16,14 +17,14 @@ sealed class AbstractTagResource(
 
 @Entity
 class DefaultTagResource(
-   idTag: Long? = null,
+    idTag: UUID? = null,
     name: String = "",
     color: Color = Color(0, 0, 0)
 ) : AbstractTagResource(idTag, name, color)
 
 @Entity
 class TagPersonalResource(
-    idTag: Long? = null,
+    idTag: UUID? = null,
     name: String = "",
     color: Color = Color(0, 0, 0),
     @ManyToOne

@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TagDTO(
-    val tagId: Long,
+    val tagId: String?,
     val label: String,
     val colorDTO: ColorDTO,
     val isDefault: Boolean = false

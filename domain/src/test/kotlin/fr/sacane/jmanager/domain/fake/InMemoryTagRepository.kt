@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.TagRepository
+import java.util.UUID
 
 data class UserTag(
     val userId: UserId,
@@ -41,7 +42,7 @@ class InMemoryTagRepository(
         return inMemoryDatabase.defaultTags.isNotEmpty()
     }
 
-    override fun deleteById(tagId: Long): Boolean {
+    override fun deleteById(tagId: UUID): Boolean {
         var result = false
         inMemoryDatabase.userByTag.forEach { (_, tags) -> result = tags.removeIf { it.id == tagId } }
         return result
@@ -63,7 +64,7 @@ class InMemoryTagRepository(
         return inMemoryDatabase.userByTag[userId]?.any { it.label == tag.label && it.id != tag.id } ?: false
     }
 
-    override fun existsById(tagId: Long): Boolean {
+    override fun existsById(tagId: UUID): Boolean {
         return inMemoryDatabase.userByTag.values.flatten().any { it.id == tagId }
     }
 

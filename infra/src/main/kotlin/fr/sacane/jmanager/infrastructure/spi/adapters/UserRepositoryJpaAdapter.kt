@@ -2,10 +2,16 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asExistingResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithPasswords
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithSimpleAccounts
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
@@ -14,7 +20,7 @@ import java.util.logging.Logger
 
 @Service
 @Adapter(Side.INFRASTRUCTURE)
-class ServerUserAdapter (
+class UserRepositoryJpaAdapter (
     private val userPostgresRepository: UserPostgresRepository,
 ) : UserRepository {
     companion object{
@@ -55,8 +61,8 @@ class ServerUserAdapter (
         }
     }
     @Transactional
-    override fun register(username: String, password: String): User? {
-        val userResource = UserResource(username = username, password = password)
+    override fun register(username: String, password: String, roles: Set<Role>): User? {
+        val userResource = UserResource(username = username, password = password, roles = roles.toMutableSet())
         val userResponse = userPostgresRepository.save(
             userResource
         )

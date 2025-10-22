@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapter
 
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.infrastructure.spi.adapters.JwtTokenGenerator
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.JwtTokenGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -15,27 +15,27 @@ class JwtTokenGeneratorTest {
 
     @Test
     fun `token must be correctly generated`() {
-        val userId = UserId(1)
+        val userId = UserId(UUID.randomUUID())
         val role = Role.USER
-        val token = tokenGenerator.generateToken(userId, "test", role)
+        val token = tokenGenerator.generateToken(userId, "test", setOf(role))
 
         assertThat(token).isNotNull
         assertThat(token.userId).isEqualTo(userId)
-        assertThat(token.role).isEqualTo(role)
+        assertThat(token.roles).contains(role)
         assertThat(token.tokenValue).isNotEmpty
     }
 
     @Test
     fun `should read a generated token`() {
-        val userId = UserId(1)
+        val userId = UserId(UUID.randomUUID())
         val role = Role.USER
-        val token = tokenGenerator.generateToken(userId, "test", role)
+        val token = tokenGenerator.generateToken(userId, "test", setOf(role))
 
         val readToken = tokenGenerator.readToken(token.tokenValue)
 
         assertThat(readToken).isNotNull
         assertThat(readToken?.userId).isEqualTo(userId)
-        assertThat(readToken?.role).isEqualTo(role)
+        assertThat(readToken?.roles).contains(role)
         assertThat(readToken?.userName).isEqualTo("test")
         assertThat(readToken?.tokenValue).isEqualTo(token.tokenValue)
     }

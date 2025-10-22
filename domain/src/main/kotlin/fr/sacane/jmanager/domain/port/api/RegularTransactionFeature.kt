@@ -28,7 +28,7 @@ sealed interface RegularTransactionFeature {
     fun bookRegularTransaction(
         token: String,
         regularTransaction: RegularTransaction,
-        bookletIds: List<Long>
+        bookletIds: List<UUID>
     ): Result<RegularTransaction>
 
     fun getRegularTransactionById(token: String, transactionId: String): Result<RegularTransaction>
@@ -53,7 +53,7 @@ class RegularTransactionFeatureImpl(
     override fun bookRegularTransaction(
         token: String,
         regularTransaction: RegularTransaction,
-        bookletIds: List<Long>
+        bookletIds: List<UUID>
     ): Result<RegularTransaction> = session.authenticate(token = token){ userId ->
         return@authenticate unitOfWork.executeInTransaction(
             regularTransaction

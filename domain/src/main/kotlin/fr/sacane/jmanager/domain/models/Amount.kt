@@ -7,7 +7,7 @@ data class Amount(var value: BigDecimal, val currency: Currency = Currency.EUR) 
     constructor(longAmount: Long) : this(BigDecimal(longAmount), currency =  Currency.EUR)
 
     init{
-        if(value.scale() <= 2){
+        if(value.scale() != 2){
             value = value.setScale(2, RoundingMode.UP)
         }
     }

@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.stats
 
 import fr.sacane.jmanager.domain.port.api.StatsFeature
 import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.NotFoundException
 import fr.sacane.jmanager.infrastructure.api.currentUser
@@ -23,12 +24,12 @@ class StatsController(
 
     @GetMapping("/monthly/{accountId}/{year}")
     fun getMonthlyAccountStats(
-        @PathVariable accountId: Long,
+        @PathVariable accountId: String,
         @PathVariable year: Int
     ): ResponseEntity<MonthlyAccountStatsDTO> {
         LOGGER.info("Requesting monthly stats for account $accountId and year $year")
 
-        return statsFeature.getMonthlyAccountStats(accountId, year, currentUser.token)
+        return statsFeature.getMonthlyAccountStats(accountId.toUUID(), year, currentUser.token)
             .map { it.toDTO() }
             .toHttpResponse()
     }

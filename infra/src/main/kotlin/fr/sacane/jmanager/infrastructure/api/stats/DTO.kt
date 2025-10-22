@@ -4,9 +4,10 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.UUID
 
 data class MonthlyAccountStatsDTO(
-    val accountId: Long,
+    val accountId: UUID,
     val accountLabel: String,
     val year: Int,
     val monthlyData: List<MonthlyDataDTO>
@@ -26,7 +27,7 @@ data class CategoryDistributionDTO(
 
 data class CategoryDataDTO(
     val tagLabel: String,
-    val tagId: Long?,
+    val tagId: UUID?,
     val totalAmount: String,
     val percentage: BigDecimal,
     val transactionCount: Int
@@ -57,7 +58,7 @@ data class PrevisionalTransactionsDTO(
 )
 
 data class TransactionDTO(
-    val id: Long?,
+    val id: UUID?,
     val label: String,
     val amount: String,
     val isIncome: Boolean,

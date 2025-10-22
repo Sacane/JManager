@@ -5,10 +5,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.RegularTransactionRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
-import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -16,7 +14,7 @@ import java.util.*
 @Service
 class RegularTransactionRepositoryDataJpaAdapter(
     private val userPostgresRepository: UserPostgresRepository,
-    private val regularTransactionOperatorAdapter: RegularTransactionOperatorAdapter,
+    private val regularTransactionOperator: RegularTransactionOperator,
     private val monthlyRegularTransactionRepository: MonthlyTransactionResourceJpaRepository
 ): RegularTransactionRepository {
     companion object {
@@ -26,12 +24,12 @@ class RegularTransactionRepositoryDataJpaAdapter(
     override fun saveMonthlyRegularTransaction(
         userId: UserId,
         monthlyTransaction: MonthlyTransaction,
-        bookletIds: List<Long>
+        bookletIds: List<UUID>
     ): RegularTransaction{
         logger.info("Saving transaction {}", monthlyTransaction)
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
             ?: throw IllegalArgumentException("User not found")
-        return regularTransactionOperatorAdapter.save(user, monthlyTransaction, bookletIds).toDomain()
+        return regularTransactionOperator.save(user, monthlyTransaction, bookletIds).toDomain()
     }
 
     override fun getRegularTransactionById(
@@ -52,7 +50,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
         return monthlyOnes.map { it.toDomain() }
     }
 
-    override fun getAllRegularUsedByAccount(userId: UserId, accountID: Long): List<RegularTransaction>? {
+    override fun getAllRegularUsedByAccount(userId: UserId, accountID: UUID): List<RegularTransaction>? {
         val monthlyOnes = monthlyRegularTransactionRepository.findAll()
             .filter { it.owner?.idUser == userId.value }
             .filter { transaction -> transaction.accounts.any { it.idAccount == accountID } }

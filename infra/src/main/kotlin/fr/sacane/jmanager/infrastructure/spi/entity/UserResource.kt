@@ -1,9 +1,10 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
-import fr.sacane.jmanager.infrastructure.spi.entity.transaction.MonthlyRegularTransactionEntity
+import fr.sacane.jmanager.domain.models.Role
 import jakarta.persistence.*
+import java.util.UUID
 
-@Table(name="userResource")
+@Table(name="user_resource")
 @Entity
 class UserResource(
     @Column(unique = true, nullable = false)
@@ -13,19 +14,25 @@ class UserResource(
     @Column(unique = true, nullable = true)
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
-    var accounts: MutableList<AccountResource> = mutableListOf(),
+    var accounts: MutableList<BookletResource> = mutableListOf(),
     @OneToMany(mappedBy = "owner")
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
-    @OneToMany(mappedBy = "owner")
-    var monthlyTransactions: MutableList<MonthlyRegularTransactionEntity> = mutableListOf(),
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "user_role",
+        joinColumns = [JoinColumn(name = "id_user", referencedColumnName = "id_user")]
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    var roles: MutableSet<Role> = mutableSetOf(Role.USER),
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_user")
-    var idUser: Long? = null,
+    var idUser: UUID? = null,
 ) {
-    fun addAccount(accountResource: AccountResource) {
-        accountResource.owner = this
-        accounts.add(accountResource)
+    fun addAccount(bookletResource: BookletResource) {
+        bookletResource.owner = this
+        accounts.add(bookletResource)
     }
     fun addTag(tag: TagPersonalResource) {
         tag.owner = this

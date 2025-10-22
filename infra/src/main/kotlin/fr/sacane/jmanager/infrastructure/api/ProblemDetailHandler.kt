@@ -6,7 +6,6 @@ import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
-import org.springframework.web.ErrorResponse
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ControllerAdvice
@@ -70,6 +69,26 @@ class ProblemDetailHandler {
         problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"
         problemDetail.setProperty("code", 144)
         LOGGER.error("InvalidCurrencyException : {}", ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+    }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun onIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ProblemDetail> {
+        // Les erreurs de parsing UUID (Invalid UUID string) doivent retourner 404
+        if (ex.message?.contains("Invalid UUID string") == true) {
+            val problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND)
+            problemDetail.title = "Resource not found"
+            problemDetail.detail = "The requested resource does not exist"
+            problemDetail.setProperty("code", 404)
+            LOGGER.error("Invalid UUID provided : {}", ex.message)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail)
+        }
+        // Autres IllegalArgumentException retournent 400
+        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        problemDetail.title = "Bad Request"
+        problemDetail.detail = "Invalid argument : ${ex.message}"
+        problemDetail.setProperty("code", 65)
+        LOGGER.error("IllegalArgumentException : {}", ex.message)
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
     }
 

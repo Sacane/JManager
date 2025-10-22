@@ -11,6 +11,7 @@ import fr.sacane.jmanager.domain.port.spi.TransactionRepositoryPort
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
+import java.util.UUID
 
 interface RegularTransactionGenerator {
     /**
@@ -24,7 +25,7 @@ interface RegularTransactionGenerator {
      * @return A list of generated previsional transactions.
      */
     fun generateMissingPrevisionalTransactions(
-        bookletId: Long,
+        bookletId: UUID,
         regularTransactions: List<RegularTransaction>,
         targetMonth: Month,
         targetYear: Int
@@ -38,7 +39,7 @@ class RegularTransactionGeneratorService(
 ): RegularTransactionGenerator {
 
     override fun generateMissingPrevisionalTransactions(
-        bookletId: Long,
+        bookletId: UUID,
         regularTransactions: List<RegularTransaction>,
         targetMonth: Month,
         targetYear: Int
@@ -124,7 +125,7 @@ class RegularTransactionGeneratorService(
         regularTransaction: RegularTransaction,
         startDate: LocalDate,
         endDate: LocalDate,
-        bookletId: Long,
+        bookletId: UUID,
         untilDate: LocalDate? = null,
         currentMaxNumber: CurrentMaxNumber? = null
     ): List<Transaction> {
@@ -182,7 +183,7 @@ class RegularTransactionGeneratorService(
     private fun checkIfTransactionExists(
         regularTransaction: RegularTransaction,
         date: LocalDate,
-        bookletId: Long
+        bookletId: UUID
     ): Boolean {
 
         val yearMonth = YearMonth.from(date)

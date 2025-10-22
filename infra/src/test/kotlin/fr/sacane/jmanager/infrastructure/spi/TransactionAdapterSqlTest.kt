@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
-import fr.sacane.jmanager.infrastructure.spi.adapters.transaction.SqlTransactionAdapter
+import fr.sacane.jmanager.infrastructure.spi.adapters.transaction.TransactionRepositoryJpaAdapter
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
@@ -21,7 +21,7 @@ import java.time.LocalDate
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 @SpringBootTest
 class TransactionAdapterSqlTest(
-    @Autowired private val sqlTransactionAdapter: SqlTransactionAdapter,
+    @Autowired private val transactionRepositoryJpaAdapter: TransactionRepositoryJpaAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter
 ): AuthenticatedUserTest() {
 
@@ -44,7 +44,7 @@ class TransactionAdapterSqlTest(
                 owner = user,
             )
             accountStateTestAdapter.init(listOf(booklet))
-            val result = sqlTransactionAdapter.persist(userId = user!!.id, booklet.label, transaction)
+            val result = transactionRepositoryJpaAdapter.persist(userId = user!!.id, booklet.label, transaction)
             assertNotNull(result?.id)
         }
 
@@ -64,7 +64,7 @@ class TransactionAdapterSqlTest(
                 owner = user,
             )
             accountStateTestAdapter.init(listOf(booklet))
-            val result = sqlTransactionAdapter.persist(userId = UserId(null), booklet.label, transaction)
+            val result = transactionRepositoryJpaAdapter.persist(userId = UserId(null), booklet.label, transaction)
             assertNull(result)
         }
 
@@ -84,7 +84,7 @@ class TransactionAdapterSqlTest(
                 owner = user,
             )
             accountStateTestAdapter.init(listOf(booklet))
-            val result = sqlTransactionAdapter.persist(userId = UserId(null), "unknown", transaction)
+            val result = transactionRepositoryJpaAdapter.persist(userId = UserId(null), "unknown", transaction)
             assertNull(result)
         }
     }

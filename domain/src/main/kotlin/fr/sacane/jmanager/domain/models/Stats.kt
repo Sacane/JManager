@@ -2,10 +2,11 @@ package fr.sacane.jmanager.domain.models
 
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import java.math.BigDecimal
+import java.util.UUID
 
 
 data class MonthlyAccountStatsOutput(
-    val accountId: Long,
+    val accountId: UUID,
     val accountLabel: String,
     val year: Int,
     val monthlyData: List<MonthlyData>
@@ -26,7 +27,7 @@ data class CategoryDistributionOutput(
 
 data class CategoryData(
     val tagLabel: String,
-    val tagId: Long?,
+    val tagId: UUID?,
     val totalAmount: Amount,
     val percentage: BigDecimal,
     val transactionCount: Int

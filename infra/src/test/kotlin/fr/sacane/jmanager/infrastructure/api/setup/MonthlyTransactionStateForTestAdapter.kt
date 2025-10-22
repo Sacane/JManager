@@ -8,10 +8,11 @@ import fr.sacane.jmanager.infrastructure.spi.adapters.regular.RegularTransaction
 import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 data class BookletMonthlyTransactionInput(
     val userId: UserId,
-    val bookletID: Long,
+    val bookletID: String,
     val regularTransaction: MonthlyTransaction
 )
 
@@ -30,7 +31,7 @@ class MonthlyTransactionStateForTestAdapter(
             regularTransactionAdapter.saveMonthlyRegularTransaction(
                 it.userId,
                 it.regularTransaction,
-                listOf(it.bookletID)
+                listOf(UUID.fromString(it.bookletID))
             )
         }
     }

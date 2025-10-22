@@ -4,15 +4,16 @@ import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 
 @Entity
 @Table(name="sheet")
 class TransactionResource(
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(unique = true, name = "id_sheet", nullable = false)
-    var idSheet: Long? = null,
+    var idSheet: UUID? = null,
     @Column(name = "label_sheet")
     var label: String,
     @Column(name="date")
@@ -31,7 +32,7 @@ class TransactionResource(
     var lastModified: LocalDateTime? = null,
     var isPreview: Boolean = false,
     @ManyToOne(fetch = FetchType.LAZY)
-    var account: AccountResource? = null,
+    var account: BookletResource? = null,
     ){
     override fun toString(): String {
         return """
@@ -41,12 +42,5 @@ class TransactionResource(
             value: $value
             accountAmount: $accountAmount
         """.trimIndent()
-    }
-
-    fun linkPersonalTag(tag: TagPersonalResource) {
-        this.personalTag = tag
-    }
-    fun linkDefaultTag(tag: DefaultTagResource) {
-        this.tag = tag
     }
 }

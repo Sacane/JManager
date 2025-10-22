@@ -3,8 +3,8 @@ package fr.sacane.jmanager.infrastructure.api.setup
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.State
-import fr.sacane.jmanager.infrastructure.spi.adapters.toDomain
-import fr.sacane.jmanager.infrastructure.spi.adapters.toPersonalTag
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toPersonalTag
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository

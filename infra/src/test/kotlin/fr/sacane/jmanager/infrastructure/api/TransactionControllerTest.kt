@@ -26,11 +26,16 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.TestPropertySource
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.utility.DockerImageName
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.Month
+import java.util.UUID
 
 class LocalDateSerializer : JsonSerializer<LocalDate>() {
     override fun serialize(value: LocalDate, gen: JsonGenerator, serializers: SerializerProvider) {
@@ -123,7 +128,7 @@ class TransactionControllerTest(
 
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
                 body(objectMapper.writeValueAsString(body))
             } When {
@@ -186,7 +191,7 @@ class TransactionControllerTest(
         fun `Request for an unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
                 param("userID", "2")
             } When {
@@ -275,8 +280,8 @@ class TransactionControllerTest(
             )
             val ids = transactionStateTestAdapter.get().mapNotNull { it.id }
             val request = AccountTransactionsIdRequest(
-                account.id!!,
-                ids
+                account.id!!.toString(),
+                ids.map { it.toString() }
             )
             Given {
                 port(port)
@@ -294,7 +299,7 @@ class TransactionControllerTest(
         @Test
         fun `Request deletion for an non-existing account must send 404`() {
             val request = AccountTransactionsIdRequest(
-                1029,
+                UUID.randomUUID().toString(),
                 listOf()
             )
             Given {
@@ -335,7 +340,7 @@ class TransactionControllerTest(
             val transactionToPatch = transactionStateTestAdapter.get()
                 .find { it.label == "test2" }!!
             val body = UserAccountIdsTransactionRequest(
-                accountId = accountId!!,
+                accountId = accountId!!.toString(),
                 transaction = transactionToPatch.toDTO()
                     .copy(
                         label = "test4",
@@ -384,8 +389,8 @@ class TransactionControllerTest(
             val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
 
             val body = ConfirmPreviewCommand(
-                account.id!!,
-                transaction.id!!,
+                account.id!!.toString(),
+                transaction.id!!.toString(),
             )
 
             Given {

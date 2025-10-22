@@ -1,8 +1,8 @@
 package fr.sacane.jmanager.infrastructure.datasource
 
-import fr.sacane.jmanager.infrastructure.spi.entity.AccountResource
+import fr.sacane.jmanager.infrastructure.spi.entity.BookletResource
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
-import fr.sacane.jmanager.infrastructure.spi.repositories.AccountJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -11,7 +11,11 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.TestPropertySource
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.utility.DockerImageName
 import java.math.BigDecimal
 
 
@@ -20,11 +24,30 @@ import java.math.BigDecimal
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class InfraUserTest {
 
+    companion object {
+        private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:15-alpine"))
+            .withDatabaseName("test")
+            .withUsername("sa")
+            .withPassword("sa")
+
+        init {
+            postgresContainer.start()
+        }
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun configureProperties(registry: DynamicPropertyRegistry) {
+            registry.add("spring.datasource.url") { postgresContainer.jdbcUrl }
+            registry.add("spring.datasource.username") { postgresContainer.username }
+            registry.add("spring.datasource.password") { postgresContainer.password }
+        }
+    }
+
     @Autowired
     lateinit var userPostgresRepository: UserPostgresRepository
 
     @Autowired
-    lateinit var accountJpaRepository: AccountJpaRepository
+    lateinit var bookletJpaRepository: BookletJpaRepository
 
     fun basicUserTest(): UserResource {
         return UserResource("johan_test", "0101012000","johan.ramaroson@test.com")
@@ -56,7 +79,7 @@ class InfraUserTest {
         userPostgresRepository.save(user)
 
         val byName = userPostgresRepository.findByUsername(user.username)
-        val account = AccountResource(label = "test account")
+        val account = BookletResource(label = "test account")
         account.amount = BigDecimal(102)
 
         byName?.accounts!!.add(account)
@@ -65,7 +88,7 @@ class InfraUserTest {
 
         assertThat(userPostgresRepository.count()).isLessThan(2)
         assertThat(byName.accounts).isNotEmpty
-        assertThat(accountJpaRepository.count()).isGreaterThan(0)
+        assertThat(bookletJpaRepository.count()).isGreaterThan(0)
         userPostgresRepository.deleteByUsername("johan_test")
 
     }

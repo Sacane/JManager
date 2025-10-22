@@ -24,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.awt.Color
+import java.util.UUID
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -229,7 +230,7 @@ class TagControllerTest (
         @Test
         fun `Patch tag endpoint with non existing tag should return 404`() {
             val body = TagDTO(
-                tagId = 1,
+                tagId = UUID.randomUUID().toString(),
                 label = "test",
                 colorDTO = ColorDTO(10, 10, 10)
             )
@@ -247,7 +248,7 @@ class TagControllerTest (
         @Test
         fun `Patch tag endpoint with non existing tag should return 404 with empty body`() {
             val body = TagDTO(
-                tagId = 1,
+                tagId = UUID.randomUUID().toString(),
                 label = "test",
                 colorDTO = ColorDTO(10, 10, 10)
             )

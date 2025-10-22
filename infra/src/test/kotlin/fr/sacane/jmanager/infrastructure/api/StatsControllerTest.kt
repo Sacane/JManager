@@ -31,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.time.LocalDate
+import java.util.UUID
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -100,7 +101,7 @@ class StatsControllerTest(
             } Then {
                 statusCode(200)
                 body(
-                    "accountId", equalTo(booklet.id!!.toInt()),
+                    "accountId", equalTo(booklet.id!!.toString()),
                     "accountLabel", equalTo("Compte Principal"),
                     "year", equalTo(year),
                     "monthlyData", notNullValue()
@@ -117,7 +118,7 @@ class StatsControllerTest(
                 cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/stats/monthly/{accountId}/{year}", mapOf("accountId" to 999999L, "year" to year))
+                get("/api/stats/monthly/{accountId}/{year}", mapOf("accountId" to UUID.randomUUID(), "year" to year))
             } Then {
                 statusCode(404)
             }
@@ -129,7 +130,7 @@ class StatsControllerTest(
 
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/stats/monthly/{accountId}/{year}", mapOf("accountId" to booklet.id!!, "year" to year))
@@ -199,7 +200,7 @@ class StatsControllerTest(
         fun `Get category distribution with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/stats/category-distribution")
@@ -274,7 +275,7 @@ class StatsControllerTest(
         fun `Get trend stats with unauthenticated user must send 404`() {
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
                 get("/api/stats/trends")
@@ -339,7 +340,7 @@ class StatsControllerTest(
 
             Given {
                 port(port)
-                cookie(generateCookie(tokenGenerator.generateToken(UserId(10200328L), "test", Role.USER).tokenValue))
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
                 queryParam("startDate", startDate.toString())
                 queryParam("endDate", endDate.toString())

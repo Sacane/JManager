@@ -3,15 +3,19 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.TagRepository
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toPersonalTag
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
-class TagRepositoryAdapter(
+class TagRepositoryJpaAdapter(
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
     private val userPostgresRepository: UserPostgresRepository
@@ -58,7 +62,7 @@ class TagRepositoryAdapter(
         return defaultTagPostgresRepository.findAll().count() > 2
     }
     @Transactional
-    override fun deleteById(tagId: Long): Boolean {
+    override fun deleteById(tagId: UUID): Boolean {
         return tagPersonalPostgresRepository.existsById(tagId).also {
             if(it) tagPersonalPostgresRepository.deleteById(tagId)
         }
@@ -78,7 +82,7 @@ class TagRepositoryAdapter(
         }
     }
 
-    override fun existsById(tagId: Long): Boolean {
+    override fun existsById(tagId: UUID): Boolean {
         return tagPersonalPostgresRepository.existsById(tagId)
     }
 

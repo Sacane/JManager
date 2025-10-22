@@ -12,6 +12,7 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class UserFeatureTest: FeatureTest() {
 
@@ -31,7 +32,7 @@ class UserFeatureTest: FeatureTest() {
 
         @Test
         fun `Login a user must return success`() {
-            val user = User(UserId(1), "John", "john.doe@gmail.com")
+            val user = User(UserId(UUID.randomUUID()), "John", "john.doe@gmail.com")
             userState.init(listOf(
                 UserWithPassword(user, DefaultHasher.hash("test"))
             ))
@@ -40,7 +41,7 @@ class UserFeatureTest: FeatureTest() {
         }
         @Test
         fun `Login a user with incorrect password must lead to unauthorized user result`() {
-            val user = User(UserId(1), "John", "")
+            val user = User(UserId(UUID.randomUUID()), "John", "")
             userState.init(listOf(
                 UserWithPassword(user, DefaultHasher.hash("test"))
             ))
@@ -52,7 +53,7 @@ class UserFeatureTest: FeatureTest() {
     inner class LogoutFeatureTest {
         @Test
         fun `Logout a user must return success`() {
-            val user = User(UserId(1), "John", "")
+            val user = User(UserId(UUID.randomUUID()), "John", "")
             userState.init(
                 listOf(
                     UserWithPassword(user, DefaultHasher.hash("test"))

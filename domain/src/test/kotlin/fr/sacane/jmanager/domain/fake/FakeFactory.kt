@@ -24,7 +24,7 @@ object FakeFactory {
     private val fakeAccountRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
-    private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository()
+    private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository(inMemoryDatabase)
     private val manager: UnitOfWorkTransactionProviderPort = UnitOfWorkTransactionProviderPort.DEFAULT
     private val inMemoryRegularTransactionGenerator: RegularTransactionGenerator = RegularTransactionGeneratorService(
         transactionRepository, inMemoryTrackerRepository
@@ -32,17 +32,23 @@ object FakeFactory {
     val regularTransactionState: BiState<List<UserRegularTransaction>, List<RegularTransaction>> = inMemoryRegularTransactionRepository
 
     val tokenGenerator: TokenGenerator = object : TokenGenerator {
-        override fun generateToken(userId: UserId, username: String, role: Role): AccessToken {
-            return AccessToken(userId, username, "${userId.value}||${UUID.randomUUID()}||${role.name}||$username", role = role)
+        override fun generateToken(userId: UserId, username: String, roles: Set<Role>): AccessToken {
+            return AccessToken(userId, username, "${userId.value}||${UUID.randomUUID()}||$username||${roles.joinToString("|") { it.name }}", roles = roles)
         }
 
         override fun readToken(token: String): AccessToken? {
             val parts = token.split("||")
             if (parts.size != 4) return null
-            val userId = UserId(parts[0].toLong())
-            val role = Role.valueOf(parts[2])
+            val userId = UserId(UUID.fromString(parts[0]))
+            val roleStrings = parts[2].split("|").mapNotNull {
+                try {
+                    Role.valueOf(it)
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
+            }.toSet()
             val username = parts[3]
-            return AccessToken(userId, username, token, role = role)
+            return AccessToken(userId, username, token, roles = roleStrings)
         }
     }
 
