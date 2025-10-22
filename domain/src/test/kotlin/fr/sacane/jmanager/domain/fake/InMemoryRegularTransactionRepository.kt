@@ -6,7 +6,6 @@ import fr.sacane.jmanager.domain.RegularByBooklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import java.util.UUID
 
@@ -55,13 +54,13 @@ class InMemoryRegularTransactionRepository(
         return inMemoryDatabase.getAllRegularTransactionsByBooklet(userId, accountID)
     }
 
-    override fun saveMonthlyRegularTransaction(
+    override fun saveRegularTransaction(
         userId: UserId,
-        monthlyTransaction: MonthlyTransaction,
+        regularTransaction: RegularTransaction,
         bookletIds: List<UUID>
     ): RegularTransaction {
-        inMemoryDatabase.addRegularBooklet(userId, monthlyTransaction, bookletIds)
-        return monthlyTransaction
+        inMemoryDatabase.addRegularBooklet(userId, regularTransaction, bookletIds)
+        return regularTransaction
     }
 
     override fun getRegularTransactionById(
@@ -69,6 +68,28 @@ class InMemoryRegularTransactionRepository(
         transactionId: RegularTransactionId
     ): RegularTransaction? {
         return inMemoryDatabase.getRegularTransactionById(userId, transactionId)
+    }
+
+    override fun updateRegularTransaction(
+        userId: UserId,
+        regularTransaction: RegularTransaction
+    ): RegularTransaction? {
+        // Find and update the transaction
+        val existing = inMemoryDatabase.getRegularTransactionById(userId, regularTransaction.id)
+        if (existing == null) {
+            return null
+        }
+
+        // Update in database
+        inMemoryDatabase.updateRegularTransaction(userId, regularTransaction)
+        return regularTransaction
+    }
+
+    override fun deleteRegularTransaction(
+        userId: UserId,
+        transactionId: RegularTransactionId
+    ): Boolean {
+        return inMemoryDatabase.deleteRegularTransaction(userId, transactionId)
     }
 
 }
