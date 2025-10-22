@@ -35,7 +35,7 @@ jobs:
       - name: Clean Gradle cache
         run: ./gradlew clean --no-daemon
       - name: Run tests
-        run: ./gradlew :domain:test :infra:test jacocoTestReport --info  # Run Gradle tests
+        run: ./gradlew :domain:test :infra:test jacocoTestReport --info --stacktrace  # Run Gradle tests
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
