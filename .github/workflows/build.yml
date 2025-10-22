@@ -33,7 +33,9 @@ jobs:
       - name: allow permission
         run: chmod +x ./gradlew
       - name: Clean Gradle cache
-        run: ./gradlew clean --no-daemon
+        run: ./gradlew clean build --refresh-dependencies
+      - name: Delete caches
+        run: rm -rf ~/.gradle/caches
       - name: Run tests
         run: ./gradlew :domain:test :infra:test jacocoTestReport --info --stacktrace  # Run Gradle tests
       - name: Run SonarQube analysis
