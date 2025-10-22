@@ -6,14 +6,14 @@ import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.BookletMonthlyTransactionInput
-import fr.sacane.jmanager.infrastructure.api.setup.MonthlyTransactionStateForTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
+import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTrackerStateRepository
 import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyType
@@ -41,7 +41,7 @@ import java.util.UUID
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class RegularTransactionControllerTest(
     @LocalServerPort val port: Int,
-    @Autowired private val monthlyTransactionStateForTestAdapter: MonthlyTransactionStateForTestAdapter,
+    @Autowired private val regularTransactionStateForTestAdapter: RegularTransactionStateForTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
     @Autowired private val regularTrackerStateRepository: RegularTrackerStateRepository,
     @Autowired var objectMapper: ObjectMapper,
@@ -60,7 +60,7 @@ class RegularTransactionControllerTest(
 
     @AfterEach
     fun clear() {
-        monthlyTransactionStateForTestAdapter.clear()
+        regularTransactionStateForTestAdapter.clear()
         accountStateTestAdapter.clear()
         regularTrackerStateRepository.clear()
     }
@@ -106,7 +106,7 @@ class RegularTransactionControllerTest(
                 )
             }
 
-            val createdTransactions = monthlyTransactionStateForTestAdapter.get()
+            val createdTransactions = regularTransactionStateForTestAdapter.get()
             assertEquals(1, createdTransactions.size)
             assertEquals("Salaire", createdTransactions.first().label)
         }
@@ -300,7 +300,7 @@ class RegularTransactionControllerTest(
             )
             val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
 
-            val monthlyTransaction = MonthlyTransaction(
+            val regularTransaction = RegularTransaction(
                 id = RegularTransactionId(""),
                 label = "Salaire",
                 amount = 2000.00.toAmount(),
@@ -308,21 +308,21 @@ class RegularTransactionControllerTest(
                 tag = tagDTO.toDomain(),
                 frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(1),
                 startDate = LocalDate.now(),
-                monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                recurrenceRule = RecurrenceRule.Monthly(15)
             )
 
-            monthlyTransactionStateForTestAdapter.init(
+            regularTransactionStateForTestAdapter.init(
                 listOf(
-                    BookletMonthlyTransactionInput(
+                    BookletRegularTransactionInput(
                         userId = user!!.id,
                         bookletID = booklet.id!!.toString(),
-                        regularTransaction = monthlyTransaction
+                        regularTransaction = regularTransaction
                     )
                 )
             )
 
-            val createdTransaction = monthlyTransactionStateForTestAdapter.get().first()
-            val transactionId = (createdTransaction as MonthlyTransaction).id.value
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+            val transactionId = createdTransaction.id.value
 
             Given {
                 port(port)
@@ -377,8 +377,8 @@ class RegularTransactionControllerTest(
             )
             val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
 
-            val monthlyTransactions = listOf(
-                MonthlyTransaction(
+            val regularTransactions = listOf(
+                RegularTransaction(
                     id = RegularTransactionId(""),
                     label = "Salaire",
                     amount = 2000.00.toAmount(),
@@ -386,9 +386,9 @@ class RegularTransactionControllerTest(
                     tag = tagDTO.toDomain(),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(1),
                     startDate = LocalDate.now(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                    recurrenceRule = RecurrenceRule.Monthly(15)
                 ),
-                MonthlyTransaction(
+                RegularTransaction(
                     id = RegularTransactionId(""),
                     label = "Loyer",
                     amount = 800.00.toAmount(),
@@ -396,13 +396,13 @@ class RegularTransactionControllerTest(
                     tag = tagDTO.toDomain(),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(1),
                     startDate = LocalDate.now(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
             )
 
-            monthlyTransactionStateForTestAdapter.init(
-                monthlyTransactions.map {
-                    BookletMonthlyTransactionInput(
+            regularTransactionStateForTestAdapter.init(
+                regularTransactions.map {
+                    BookletRegularTransactionInput(
                         userId = user!!.id,
                         bookletID = booklet.id!!.toString(),
                         regularTransaction = it
@@ -424,7 +424,7 @@ class RegularTransactionControllerTest(
                 )
             }
 
-            val transactions = monthlyTransactionStateForTestAdapter.get()
+            val transactions = regularTransactionStateForTestAdapter.get()
             assertEquals(2, transactions.size)
         }
 

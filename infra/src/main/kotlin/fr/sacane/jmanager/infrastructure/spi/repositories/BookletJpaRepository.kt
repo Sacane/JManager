@@ -28,9 +28,9 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
     @Query("SELECT account FROM BookletResource account LEFT JOIN FETCH account.sheets WHERE account.idAccount = :id")
     fun findTransactionsById(id: UUID): BookletResource?
 
-    @Query("SELECT account FROM BookletResource account LEFT JOIN FETCH account.monthlyTransactions WHERE account.idAccount = :id")
-    fun findByIdWithMonthlyTransactions(id: UUID): BookletResource?
+    @Query("SELECT account FROM BookletResource account LEFT JOIN FETCH account.regularTransactions WHERE account.idAccount = :id")
+    fun findByIdWithRegularTransactions(id: UUID): BookletResource?
 
-    @Query("SELECT account FROM BookletResource account LEFT JOIN FETCH account.sheets LEFT JOIN FETCH account.monthlyTransactions WHERE account.owner.idUser = :userId")
+    @Query("SELECT account FROM BookletResource account LEFT JOIN FETCH account.sheets LEFT JOIN FETCH account.regularTransactions WHERE account.owner.idUser = :userId")
     fun findAllBookletsByUserId(userId: UUID): List<BookletResource>
 }

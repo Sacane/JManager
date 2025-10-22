@@ -45,8 +45,8 @@ class BookletJpaRepositoryAdapter(
     }
 
     override fun deleteAccountById(accountId: UUID) {
-        val account = accountRepository.findByIdWithMonthlyTransactions(accountId) ?: return
-        account.clearAllMonthlyTransactions()
+        val account = accountRepository.findByIdWithRegularTransactions(accountId) ?: return
+        account.clearAllRegularTransactions()
         accountRepository.deleteById(accountId)
     }
 

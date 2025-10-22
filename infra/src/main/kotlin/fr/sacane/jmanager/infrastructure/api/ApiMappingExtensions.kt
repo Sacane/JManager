@@ -3,7 +3,6 @@ package fr.sacane.jmanager.infrastructure.api
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.models.transaction.regular.Frequency
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.booklet.AccountDTO
@@ -69,13 +68,20 @@ internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id?.toString(), label = t
 internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId?.let { java.util.UUID.fromString(it) }, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))
 
 internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
+    val regularityType = when (this.recurrenceRule) {
+        is fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Monthly -> "MONTHLY"
+        is fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Yearly -> "YEARLY"
+        is fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Weekly -> "WEEKLY"
+        is fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Daily -> "DAILY"
+    }
+
     return RegularTransactionDTO(
-        id = this.id?.value!!,
+        id = this.id.value,
         label = this.label,
         startDate = this.startDate,
         value = this.amount.value,
         isIncome = this.isIncome,
-        regularity = Frequency.MONTHLY.toString(),
+        regularity = regularityType,
         tagDTO = this.tag!!.toDTO(),
         frequencyProperty = frequencyProperty.toDTO()
     )
