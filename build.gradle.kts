@@ -11,9 +11,7 @@ plugins {
 
 group = "fr.sacane"
 java.sourceCompatibility = JavaVersion.toVersion("21")
-dependencies{
-	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.0")
-}
+
 allprojects{
 	repositories {
 		mavenCentral()
