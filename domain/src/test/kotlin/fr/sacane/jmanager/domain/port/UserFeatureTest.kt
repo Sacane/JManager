@@ -79,4 +79,26 @@ class UserFeatureTest: FeatureTest() {
                 .assertFailure(ResultState.PASSWORD_NOT_MATCH)
         }
     }
+
+    @Nested
+    inner class CreateAdminFeatureTest {
+        @Test
+        fun `Create admin that doesn't exists must return success`() {
+            userFeature.createAdminIfNotExists("admin", "test")
+                .assertSuccess()
+        }
+
+        @Test
+        fun `Create admin that exists must return success`() {
+            userFeature.createAdminIfNotExists("admin", "test")
+            userFeature.createAdminIfNotExists("admin", "test")
+                .assertSuccess()
+        }
+        @Test
+        fun `Create admin with different password must return password not match`() {
+            userFeature.createAdminIfNotExists("admin", "test")
+            userFeature.createAdminIfNotExists("admin", "wrong")
+                .assertFailure(ResultState.PASSWORD_NOT_MATCH)
+        }
+    }
 }

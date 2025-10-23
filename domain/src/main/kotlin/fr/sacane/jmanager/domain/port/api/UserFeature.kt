@@ -65,12 +65,14 @@ class UserFeatureImpl(
         username: String,
         password: String
     ): Result<User> {
-        val existingAdmin = userRepository.findByPseudonym(username)
+        val existingAdmin = userRepository.findByPseudonymWithEncodedPassword(username)
+        val hashedPassword = hasher.hash(password)
         if(existingAdmin != null){
             LOGGER.info("Admin user already exists with username $username")
-            return success(existingAdmin)
+            return if (!hasher.verify(password, existingAdmin.password))
+                failure(ResultState.PASSWORD_NOT_MATCH, "admin password does not match the existing one")
+            else success(existingAdmin.user)
         }
-        val hashedPassword = hasher.hash(password)
         val adminUser = userRepository.register(username, hashedPassword, setOf(Role.USER, Role.ADMIN))
             ?: return invalid("Une erreur est survenue lors de la création de l'administrateur")
         LOGGER.info("Admin user created with username $username")
