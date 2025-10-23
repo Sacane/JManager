@@ -234,7 +234,6 @@ const categoryExpensesData = computed(() => {
     }
   }
 
-  // Sort by amount and take top 6
   const sortedCategories = [...categoryDistribution.value.categories]
     .sort((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
     .slice(0, 6)

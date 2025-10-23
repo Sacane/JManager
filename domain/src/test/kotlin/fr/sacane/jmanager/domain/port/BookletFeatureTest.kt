@@ -198,7 +198,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add income transactions via the database
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Salary",
@@ -221,7 +220,6 @@ class BookletFeatureTest: FeatureTest() {
                     .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, bookletId), mutableListOf(transaction2))))
 
 
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(

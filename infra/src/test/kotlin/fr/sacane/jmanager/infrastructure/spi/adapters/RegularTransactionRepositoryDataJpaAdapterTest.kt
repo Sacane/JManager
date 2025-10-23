@@ -410,7 +410,6 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
 
             assertTrue(result)
 
-            // Vérifier que la transaction n'existe plus
             val getResult = regularTransactionAdapter.getRegularTransactionById(user!!.id, saved.id)
             assertNull(getResult)
         }
