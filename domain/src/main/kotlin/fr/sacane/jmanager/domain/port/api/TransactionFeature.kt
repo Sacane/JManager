@@ -19,12 +19,72 @@ import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
+/**
+ * Application port: TransactionFeature
+ *
+ * High-level API to create, retrieve, update, and delete transactions for user booklets.
+ * All operations require an authentication token and return a domain Result<T> describing
+ * success or domain-specific failure states.
+ */
 sealed interface TransactionFeature {
+    /**
+     * Book (create) a transaction for the account identified by its label.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param accountLabel Label of the account (booklet) where the transaction will be added.
+     * @param transaction The Transaction to persist.
+     * @return Result containing a TransactionResumeResult on success, or an error state on failure.
+     */
     fun bookTransaction(token: String, accountLabel: String, transaction: Transaction): Result<TransactionResumeResult>
+
+    /**
+     * Retrieve transactions for a specific month and year for the given account label.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param month The month to retrieve transactions for.
+     * @param year The year to retrieve transactions for.
+     * @param account The label of the account to fetch transactions from.
+     * @return Result containing the list of Transaction objects on success, or a not found error.
+     */
     fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, account: String): Result<List<Transaction>>
+
+    /**
+     * Edit an existing transaction belonging to a specific account.
+     *
+     * @param accountID The UUID of the account containing the transaction.
+     * @param transaction The Transaction object with updated values (must include id).
+     * @param token Authentication token identifying the requester.
+     * @return Result containing a TransactionResumeResult on success, or an error state on failure.
+     */
     fun editTransaction(accountID: UUID, transaction: Transaction, token: String): Result<TransactionResumeResult>
+
+    /**
+     * Find a transaction by its unique identifier.
+     *
+     * @param id UUID of the transaction to find.
+     * @param token Authentication token identifying the requester.
+     * @return Result containing the Transaction on success, or TRANSACTION_NOT_FOUND on failure.
+     */
     fun findById(id: UUID, token: String): Result<Transaction>
+
+    /**
+     * Delete multiple transaction sheets by their identifiers for a given account.
+     *
+     * @param accountID The UUID of the account which owns the transaction sheets.
+     * @param sheetIds List of UUIDs corresponding to the transaction sheets to delete.
+     * @param token Authentication token identifying the requester.
+     * @return Result with no value on success, or an error state if the account or sheets are not found.
+     */
     fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<Nothing>
+
+    /**
+     * Confirm a provisional (preview) transaction, converting it into a real transaction.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param accountID UUID of the account containing the preview transaction.
+     * @param transactionId UUID of the preview transaction to confirm.
+     * @return Result containing a TransactionResumeResult on success, or an appropriate failure state.
+     */
     fun confirmPreviewTransaction(token: String, accountID: UUID, transactionId: UUID): Result<TransactionResumeResult>
 }
 

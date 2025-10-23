@@ -24,13 +24,78 @@ import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
+/**
+ * Application port: BookletFeature
+ *
+ * High-level API for managing booklets (accounts) exposed to the application layer.
+ * Implementations are responsible for authentication and returning domain Result<T>
+ * signalling success or failure states.
+ */
 sealed interface BookletFeature {
+    /**
+     * Find a booklet (account) by its unique identifier.
+     *
+     * @param accountID The UUID of the booklet to find.
+     * @param token Authentication token identifying the requester.
+     * @return Result containing the found Booklet on success, or a failure state (e.g. BOOKLET_NOT_FOUND).
+     */
     fun findAccountById(accountID: UUID, token: String): Result<Booklet>
+
+    /**
+     * Edit an existing booklet.
+     *
+     * @param booklet The Booklet object containing updated values (must include an id).
+     * @param token Authentication token identifying the requester.
+     * @return Result containing the updated Booklet on success, or failure states when validation or persistence fails.
+     */
     fun editAccount(booklet: Booklet, token: String): Result<Booklet>
+
+    /**
+     * Delete a booklet by its identifier.
+     *
+     * @param accountID The UUID of the booklet to delete.
+     * @param token Authentication token identifying the requester.
+     * @return Result with no value on success, or an error state if the booklet does not exist.
+     */
     fun deleteAccountById(accountID: UUID, token: String): Result<Nothing>
+
+    /**
+     * Find a booklet by its label for the authenticated user.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param label Label of the booklet to find.
+     * @return Result containing the Booklet on success, or BOOKLET_LABEL_NOT_EXIST when not found.
+     */
     fun findByLabelAndUserId(token: String, label: String): Result<Booklet>
+
+    /**
+     * Retrieve all booklets registered for the authenticated user.
+     *
+     * @param token Authentication token identifying the requester.
+     * @return Result containing the list of Booklet on success.
+     */
     fun findAllRegisteredAccounts(token: String): Result<List<Booklet>>
+
+    /**
+     * Save a new booklet for the authenticated user.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param booklet Booklet object to save.
+     * @return Result containing the saved Booklet on success, or a failure when the label already exists or persistence fails.
+     */
     fun save(token: String, booklet: Booklet): Result<Booklet>
+
+    /**
+     * Load transactions for a specific booklet for a given month and year.
+     * This may generate provisional (preview) transactions for missing regular transactions
+     * and compute provisional balances.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param bookletId UUID of the booklet to load.
+     * @param month Target month to load transactions for.
+     * @param year Target year to load transactions for.
+     * @return Result containing a BookletLoadingResult on success, or a failure state when the booklet is not found.
+     */
     fun loadTransactionsForBookletForAMonth(token: String, bookletId: UUID, month: Month, year: Int): Result<BookletLoadingResult>
 }
 

@@ -24,6 +24,13 @@ import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
+/**
+ * Application port: StatsFeature
+ *
+ * High-level API exposing statistical and reporting use-cases for the authenticated user.
+ * Implementations must authenticate requests and return domain Result<T> objects representing
+ * success or domain-specific failure states.
+ */
 sealed interface StatsFeature {
     /**
      * Retrieves the monthly account statistics for a specific account and year.

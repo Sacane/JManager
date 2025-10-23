@@ -16,20 +16,62 @@ import fr.sacane.jmanager.domain.utils.success
 import java.util.UUID
 
 @Port(Side.APPLICATION)
+/**
+ * Application port: RegularTransactionFeature
+ *
+ * High-level API for managing regular (recurring) transactions exposed to the application layer.
+ * Implementations are responsible for authentication and returning domain Result<T>
+ * objects that represent success or failure states.
+ */
 sealed interface RegularTransactionFeature {
 
+    /**
+     * Retrieve all regular transactions for the authenticated user.
+     *
+     * @param token Authentication token identifying the requester.
+     * @return Result containing a list of RegularTransaction on success.
+     */
     fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>>
 
+    /**
+     * Create (book) a new regular transaction and associate it with multiple booklets.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param regularTransaction The RegularTransaction to persist.
+     * @param bookletIds List of booklet UUIDs that will be associated with the created regular transaction.
+     * @return Result containing the persisted RegularTransaction on success, or an error state.
+     */
     fun bookRegularTransaction(
         token: String,
         regularTransaction: RegularTransaction,
         bookletIds: List<UUID>
     ): Result<RegularTransaction>
 
+    /**
+     * Retrieve a single regular transaction by its identifier.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param transactionId The identifier of the regular transaction to retrieve.
+     * @return Result containing the RegularTransaction on success, or TRANSACTION_NOT_FOUND when missing.
+     */
     fun getRegularTransactionById(token: String, transactionId: String): Result<RegularTransaction>
 
+    /**
+     * Update an existing regular transaction.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param regularTransaction RegularTransaction object containing updated values (must include id).
+     * @return Result containing the updated RegularTransaction on success, or an error state if not found.
+     */
     fun updateRegularTransaction(token: String, regularTransaction: RegularTransaction): Result<RegularTransaction>
 
+    /**
+     * Delete a regular transaction by its identifier.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param transactionId Identifier of the regular transaction to delete.
+     * @return Result containing a boolean indicating deletion success, or a failure when not found.
+     */
     fun deleteRegularTransaction(token: String, transactionId: String): Result<Boolean>
 }
 
