@@ -4,10 +4,11 @@ import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.UserRegularTransaction
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.Assertions.*
@@ -29,24 +30,24 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should retrieve all regular transactions for authenticated user`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction1 = MonthlyTransaction(
+                val monthlyTransaction1 = RegularTransaction(
                     label = "monthly salary",
                     amount = 2500.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id}-monthly-1"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val monthlyTransaction2 = MonthlyTransaction(
+                val monthlyTransaction2 = RegularTransaction(
                     label = "Rent",
                     amount = 800.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id}-monthly-2"),
                     startDate = LocalDate.of(2024, 1, 5),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(5)
+                    recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction1), UserRegularTransaction(user.id, monthlyTransaction2)))
@@ -87,14 +88,14 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should book a monthly transaction with Forever frequency`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Abonnement Netflix",
                     amount = 15.99.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id}-monthly-netflix"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val result = regularTransactionFeature.bookRegularTransaction(
@@ -117,14 +118,14 @@ class RegularTransactionFeatureTest : FeatureTest() {
         fun `should book a monthly transaction with UntilDate frequency`() {
             launchWithConnectedUserInstance {
                 val endDate = LocalDate.of(2024, 12, 31)
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Prêt temporaire",
                     amount = 200.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id}-monthly-loan"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.UntilDate(endDate),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                    recurrenceRule = RecurrenceRule.Monthly(15)
                 )
 
                 val result = regularTransactionFeature.bookRegularTransaction(
@@ -145,14 +146,14 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should book a monthly transaction with SpecificRepetitionTimes frequency`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Cours de yoga - 10 séances",
                     amount = 50.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user}-monthly-yoga"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(10),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(10)
+                    recurrenceRule = RecurrenceRule.Monthly(10)
                 )
 
                 val result = regularTransactionFeature.bookRegularTransaction(
@@ -175,14 +176,14 @@ class RegularTransactionFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val secondBooklet = createAccount(user.toUser(), "Compte épargne", 1000.toAmount())
 
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Épargne automatique",
                     amount = 300.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user}-monthly-savings"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val result = regularTransactionFeature.bookRegularTransaction(
@@ -200,13 +201,14 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail with unauthorized when token is invalid`() {
-            val monthlyTransaction = MonthlyTransaction(
+            val monthlyTransaction = RegularTransaction(
                 label = "Test",
                 amount = 100.toAmount(),
                 isIncome = true,
                 id = RegularTransactionId("test-id"),
                 startDate = LocalDate.now(),
-                frequencyProperty = FrequencyProperty.Forever()
+                frequencyProperty = FrequencyProperty.Forever(),
+                recurrenceRule = RecurrenceRule.Monthly(1)
             )
 
             val result = regularTransactionFeature.bookRegularTransaction(
@@ -225,14 +227,14 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should retrieve regular transaction by id`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Abonnement Spotify",
                     amount = 9.99.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user}-monthly-spotify"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction)))
@@ -272,5 +274,128 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
             result.assertFailure(ResultState.UNAUTHORIZED)
         }
+
+    }
+
+    @Nested
+    inner class DeleteRegularTransactionTest {
+
+        @Test
+        fun `should delete a regular transaction successfully`() {
+            launchWithConnectedUserInstance {
+                val monthlyTransaction = RegularTransaction(
+                    label = "Abonnement à supprimer",
+                    amount = 19.99.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id}-monthly-delete"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction)))
+
+                val result = regularTransactionFeature.deleteRegularTransaction(
+                    tokenValue,
+                    monthlyTransaction.id.value
+                )
+
+                result.assertSuccess()
+                result.onSuccess { deleted ->
+                    assertTrue(deleted)
+                }
+
+                val getResult = regularTransactionFeature.getRegularTransactionById(
+                    tokenValue,
+                    monthlyTransaction.id.value
+                )
+                getResult.assertFailure()
+            }
+        }
+
+        @Test
+        fun `should fail when deleting non-existing transaction`() {
+            launchWithConnectedUserInstance {
+                val result = regularTransactionFeature.deleteRegularTransaction(
+                    tokenValue,
+                    "non-existing-id"
+                )
+
+                result.assertFailure()
+            }
+        }
+
+        @Test
+        fun `should fail with unauthorized when token is invalid`() {
+            val result = regularTransactionFeature.deleteRegularTransaction(
+                "invalid-token",
+                "some-id"
+            )
+
+            result.assertFailure(ResultState.UNAUTHORIZED)
+        }
+
+        @Test
+        fun `should not delete transaction belonging to another user`() {
+            launchWithConnectedUserInstance {
+                val otherUserId = UserId(UUID.randomUUID())
+                val monthlyTransaction = RegularTransaction(
+                    label = "Transaction d'un autre utilisateur",
+                    amount = 25.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${otherUserId.value}-monthly-other"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                regularTransactionState.init(listOf(UserRegularTransaction(otherUserId, monthlyTransaction)))
+
+                val result = regularTransactionFeature.deleteRegularTransaction(
+                    tokenValue,
+                    monthlyTransaction.id.value
+                )
+
+                result.assertFailure()
+            }
+        }
+    }
+
+    @Nested
+    inner class UpdateRegularTransactionTest {
+        @Test
+        fun `should patch a regular transaction correctly`() {
+            launchWithConnectedUserInstance {
+                val originalTransaction = RegularTransaction(
+                    label = "Abonnement Gym",
+                    amount = 40.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user}-monthly-gym"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, originalTransaction)))
+
+                val updatedTransaction = originalTransaction.copy(
+                    amount = 45.toAmount(),
+                    label = "Abonnement Gym Premium"
+                )
+
+                val result = regularTransactionFeature.updateRegularTransaction(
+                    tokenValue,
+                    updatedTransaction
+                )
+
+                result.assertSuccess()
+                result.onSuccess { transaction ->
+                    assertEquals("Abonnement Gym Premium", transaction.label)
+                    assertEquals(45.toAmount(), transaction.amount)
+                    assertEquals(originalTransaction.id, transaction.id)
+                }
+            }
+        }
+//        }
     }
 }

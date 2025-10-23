@@ -49,7 +49,6 @@ class DatasourceMapperTest {
         assertEquals(LocalDate.of(2024, 6, 15), resource.date)
         assertEquals(BigDecimal("100.00"), resource.value)
         assertFalse(resource.isIncome!!)
-        // l'ID de la transaction doit être conservé dans la ressource
         assertEquals(txId, resource.idSheet)
         assertNotNull(resource.tag)
         assertEquals("Shopping", resource.tag?.name)

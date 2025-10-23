@@ -7,8 +7,8 @@ import fr.sacane.jmanager.domain.fake.InMemoryRegularTrackerRepository
 import fr.sacane.jmanager.domain.fake.InMemoryTransactionRepository
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.FeatureTest
 import org.junit.jupiter.api.AfterEach
@@ -47,14 +47,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should generate monthly transactions for a full year with Forever frequency`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Salaire",
                     amount = 3000.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-salary"),
                     startDate = LocalDate.of(2024, 1, 15),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                    recurrenceRule = RecurrenceRule.Monthly(15)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -81,24 +81,24 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should generate multiple monthly transactions for the same month`() {
             launchWithConnectedUserInstance {
-                val transaction1 = MonthlyTransaction(
+                val transaction1 = RegularTransaction(
                     label = "Loyer",
                     amount = 800.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-rent"),
                     startDate = LocalDate.of(2024, 1, 5),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(5)
+                    recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
-                val transaction2 = MonthlyTransaction(
+                val transaction2 = RegularTransaction(
                     label = "Facture internet",
                     amount = 50.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-internet"),
                     startDate = LocalDate.of(2024, 1, 10),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(10)
+                    recurrenceRule = RecurrenceRule.Monthly(10)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -129,14 +129,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should not generate duplicate transactions for already generated months`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Abonnement",
                     amount = 20.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-subscription"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val firstGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -172,14 +172,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         fun `should generate transactions only until the specified end date`() {
             launchWithConnectedUserInstance {
                 val endDate = LocalDate.of(2024, 6, 30)
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Prêt temporaire",
                     amount = 500.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-loan"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.UntilDate(endDate),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -205,14 +205,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         fun `should not generate any transaction when start date is after end date`() {
             launchWithConnectedUserInstance {
                 val endDate = LocalDate.of(2024, 3, 31)
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Prêt expiré",
                     amount = 200.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-expired-loan"),
                     startDate = LocalDate.of(2024, 5, 1),
                     frequencyProperty = FrequencyProperty.UntilDate(endDate),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -233,14 +233,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should generate only the specified number of transactions`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Formation - 5 mois",
                     amount = 100.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-training"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(5),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -260,14 +260,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should respect max repetition count across multiple generations`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Cours - 3 séances",
                     amount = 50.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-course"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(3),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val firstGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -297,14 +297,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should create tracker after first generation`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Test tracker",
                     amount = 100.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-tracker-test"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -327,14 +327,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should update tracker on subsequent generations`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Test update tracker",
                     amount = 100.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-update-tracker"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -367,14 +367,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should handle leap year correctly for February`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Test leap year",
                     amount = 100.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-leap"),
                     startDate = LocalDate.of(2024, 1, 29),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(29)
+                    recurrenceRule = RecurrenceRule.Monthly(29)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -393,14 +393,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should handle day 31 for months with only 30 days`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Test day 31",
                     amount = 100.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-day31"),
                     startDate = LocalDate.of(2024, 1, 31),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(31)
+                    recurrenceRule = RecurrenceRule.Monthly(31)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
@@ -433,14 +433,14 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `should not generate transactions before start date`() {
             launchWithConnectedUserInstance {
-                val monthlyTransaction = MonthlyTransaction(
+                val monthlyTransaction = RegularTransaction(
                     label = "Future transaction",
                     amount = 100.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-future"),
                     startDate = LocalDate.of(2024, 6, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(

@@ -234,7 +234,6 @@ const categoryExpensesData = computed(() => {
     }
   }
 
-  // Sort by amount and take top 6
   const sortedCategories = [...categoryDistribution.value.categories]
     .sort((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
     .slice(0, 6)
@@ -276,7 +275,6 @@ const monthlyComparisonData = computed(() => {
     t => t.month === prevMonth.getMonth() + 1 && t.year === prevMonth.getFullYear(),
   )
 
-  // Weekly breakdown (simplified, dividing by 4)
   const currentExpenses = currentMonthData ? Number.parseFloat(currentMonthData.expenses) : 0
   const previousExpenses = previousMonthData ? Number.parseFloat(previousMonthData.expenses) : 0
 

@@ -95,7 +95,6 @@ class CategoryDistributionCalculatorTest {
         assertEquals(2, categories.size)
         assertEquals(200.toAmount(), totalExpenses)
 
-        // Categories should be sorted by amount (descending)
         assertEquals("Shopping", categories[0].tagLabel)
         assertEquals(150.toAmount(), categories[0].totalAmount)
         assertEquals(BigDecimal("75.0000"), categories[0].percentage)
@@ -170,7 +169,6 @@ class CategoryDistributionCalculatorTest {
         assertEquals(100.toAmount(), totalExpenses)
     }
 
-    // Fake repository for testing
     private class FakeTagRepository : TagRepository {
         override fun save(userId: UserId, tag: Tag): Tag = tag
         override fun getAll(userId: UserId): List<Tag> = emptyList()

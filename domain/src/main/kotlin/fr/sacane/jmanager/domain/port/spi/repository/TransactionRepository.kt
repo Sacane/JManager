@@ -8,13 +8,81 @@ import java.time.Month
 import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
+/**
+ * SPI contract for transaction persistence and account-related retrievals.
+ *
+ * Implementations provide concrete storage operations for transactions and related
+ * account (booklet) reads. The domain depends on this abstraction to persist and
+ * query transaction sheets without coupling to a specific datastore.
+ */
 interface TransactionRepository {
+    /**
+     * Persist a transaction for the given user and account label.
+     *
+     * @param userId Domain user identifier
+     * @param accountLabel Label of the account (booklet) where the transaction is created
+     * @param transaction Transaction entity to persist
+     * @return Persisted Transaction with any assigned identifiers, or null on failure
+     */
     fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?
+
+    /**
+     * Delete multiple transaction sheets by their identifiers.
+     *
+     * @param sheetIds List of UUIDs corresponding to transaction sheets to delete
+     */
     fun deleteAllSheetsById(sheetIds: List<UUID>)
+
+    /**
+     * Find a transaction by its UUID.
+     *
+     * @param transactionId UUID of the transaction to retrieve
+     * @return Transaction if found, or null otherwise
+     */
     fun findTransactionById(transactionId: UUID): Transaction?
+
+    /**
+     * Save (update) a transaction for a given account id.
+     *
+     * @param accountId UUID of the account owning the transaction
+     * @param transaction Transaction to save
+     * @return Saved Transaction or null on failure
+     */
     fun save(accountId: UUID, transaction: Transaction): Transaction?
+
+    /**
+     * Retrieve a Booklet aggregate with its transaction sheets by account label and user.
+     *
+     * @param label Account label
+     * @param userId Domain user identifier
+     * @return Booklet aggregate or null when not found
+     */
     fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet?
+
+    /**
+     * Retrieve a Booklet aggregate with transactions by its id.
+     *
+     * @param id UUID of the booklet
+     * @return Booklet aggregate or null when not found
+     */
     fun findAccountWithTransactionById(id: UUID): Booklet?
+
+    /**
+     * Find all transactions for a given booklet id.
+     *
+     * @param bookletId UUID of the booklet
+     * @return List of Transaction or null if none exist
+     */
     fun findTransactionsByBookletId(bookletId: UUID): List<Transaction>?
+
+    /**
+     * Find transactions for a booklet filtered by year and month.
+     *
+     * @param bookletId UUID of the booklet
+     * @param year Target year
+     * @param month Target month
+     * @return List of Transaction for the specified period, or null if none
+     */
     fun findTransactionsByBookletYearAndMonth(bookletId: UUID, year: Int, month: Month): List<Transaction>?
+
 }

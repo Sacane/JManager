@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity.transaction
 
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import jakarta.persistence.Column
 import jakarta.persistence.DiscriminatorColumn
 import jakarta.persistence.DiscriminatorValue
@@ -20,22 +21,42 @@ abstract class FrequencyPropertyEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     open val id: Long? = null,
     @OneToOne(mappedBy = "frequencyProperty", orphanRemoval = true)
-    open val monthlyRegularTransaction: MonthlyRegularTransactionEntity? = null
-)
+    open val regularTransaction: RegularTransactionEntity? = null
+) {
+    abstract fun toDomain(): FrequencyProperty
+
+    companion object {
+        fun fromDomain(frequencyProperty: FrequencyProperty): FrequencyPropertyEntity {
+            return when (frequencyProperty) {
+                is FrequencyProperty.Forever -> ForeverEntity()
+                is FrequencyProperty.SpecificRepetitionTimes -> SpecificRepetitionTimesEntity(frequencyProperty.number)
+                is FrequencyProperty.UntilDate -> UntilDateEntity(frequencyProperty.date)
+            }
+        }
+    }
+}
+
 @Entity
 @DiscriminatorValue("FOREVER")
-class ForeverEntity() : FrequencyPropertyEntity()
+class ForeverEntity() : FrequencyPropertyEntity() {
+    override fun toDomain(): FrequencyProperty = FrequencyProperty.Forever()
+}
 
 @Entity
 @DiscriminatorValue("SPECIFIC_REPETITION_TIMES")
 class SpecificRepetitionTimesEntity(
     @Column
     val number: Int? = null,
-) : FrequencyPropertyEntity()
+) : FrequencyPropertyEntity() {
+    override fun toDomain(): FrequencyProperty = FrequencyProperty.SpecificRepetitionTimes(number!!)
+}
 
 @Entity
 @DiscriminatorValue("UNTIL_DATE")
 class UntilDateEntity(
     @Column
     val date: LocalDate? = null,
-) : FrequencyPropertyEntity()
+) : FrequencyPropertyEntity() {
+    override fun toDomain(): FrequencyProperty = FrequencyProperty.UntilDate(date!!)
+}
+

@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.RegularTransactionEntity
 import jakarta.persistence.*
 import java.util.UUID
 
@@ -11,7 +12,7 @@ sealed class AbstractTagResource(
     var name: String = "",
     @Embedded
     var color: Color = Color(0, 0, 0),
-    @OneToMany(cascade = [(CascadeType.ALL)])
+    @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY)
     var linkedTransaction: MutableSet<TransactionResource> = mutableSetOf(),
 )
 

@@ -1,11 +1,12 @@
-package fr.sacane.jmanager.infrastructure.spi.adapter
+package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.JwtTokenGenerator
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Base64
+import java.util.UUID
 
 class JwtTokenGeneratorTest {
     private val secret: String = "THIS-IS-A-TEST-JWT-SECRET-THAT-SHOULD-NOT-BE-USED-IN-PRODUCTION"
@@ -19,10 +20,10 @@ class JwtTokenGeneratorTest {
         val role = Role.USER
         val token = tokenGenerator.generateToken(userId, "test", setOf(role))
 
-        assertThat(token).isNotNull
-        assertThat(token.userId).isEqualTo(userId)
-        assertThat(token.roles).contains(role)
-        assertThat(token.tokenValue).isNotEmpty
+        Assertions.assertThat(token).isNotNull
+        Assertions.assertThat(token.userId).isEqualTo(userId)
+        Assertions.assertThat(token.roles).contains(role)
+        Assertions.assertThat(token.tokenValue).isNotEmpty
     }
 
     @Test
@@ -33,11 +34,11 @@ class JwtTokenGeneratorTest {
 
         val readToken = tokenGenerator.readToken(token.tokenValue)
 
-        assertThat(readToken).isNotNull
-        assertThat(readToken?.userId).isEqualTo(userId)
-        assertThat(readToken?.roles).contains(role)
-        assertThat(readToken?.userName).isEqualTo("test")
-        assertThat(readToken?.tokenValue).isEqualTo(token.tokenValue)
+        Assertions.assertThat(readToken).isNotNull
+        Assertions.assertThat(readToken?.userId).isEqualTo(userId)
+        Assertions.assertThat(readToken?.roles).contains(role)
+        Assertions.assertThat(readToken?.userName).isEqualTo("test")
+        Assertions.assertThat(readToken?.tokenValue).isEqualTo(token.tokenValue)
     }
 
 }

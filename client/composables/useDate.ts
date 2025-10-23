@@ -104,7 +104,7 @@ export default function useDate() {
     return `${year}-${month}-${day}`
   }
 
-  function frequencyToString(frequency: Frequency): string {
+  function frequencyToString(frequency: Frequency | string): string {
     switch (frequency) {
       case 'DAILY':
         return 'Tous les jours'
@@ -114,6 +114,8 @@ export default function useDate() {
         return 'Tous les mois'
       case 'YEARLY':
         return 'Chaque année'
+      default:
+        return frequency
     }
   }
   function strToFrequency(str: string): string | undefined {

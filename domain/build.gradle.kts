@@ -23,7 +23,7 @@ jacoco {
 
 tasks.jacocoTestReport {
     reports {
-        xml.required.set(true)  // Important pour SonarQube
+        xml.required.set(true)
         html.required.set(false)
         csv.required.set(false)
     }

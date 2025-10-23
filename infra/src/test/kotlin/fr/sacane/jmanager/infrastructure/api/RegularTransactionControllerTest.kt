@@ -6,14 +6,14 @@ import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.BookletMonthlyTransactionInput
-import fr.sacane.jmanager.infrastructure.api.setup.MonthlyTransactionStateForTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
+import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTrackerStateRepository
 import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyType
@@ -41,7 +41,7 @@ import java.util.UUID
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class RegularTransactionControllerTest(
     @LocalServerPort val port: Int,
-    @Autowired private val monthlyTransactionStateForTestAdapter: MonthlyTransactionStateForTestAdapter,
+    @Autowired private val regularTransactionStateForTestAdapter: RegularTransactionStateForTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
     @Autowired private val regularTrackerStateRepository: RegularTrackerStateRepository,
     @Autowired var objectMapper: ObjectMapper,
@@ -60,7 +60,7 @@ class RegularTransactionControllerTest(
 
     @AfterEach
     fun clear() {
-        monthlyTransactionStateForTestAdapter.clear()
+        regularTransactionStateForTestAdapter.clear()
         accountStateTestAdapter.clear()
         regularTrackerStateRepository.clear()
     }
@@ -106,7 +106,7 @@ class RegularTransactionControllerTest(
                 )
             }
 
-            val createdTransactions = monthlyTransactionStateForTestAdapter.get()
+            val createdTransactions = regularTransactionStateForTestAdapter.get()
             assertEquals(1, createdTransactions.size)
             assertEquals("Salaire", createdTransactions.first().label)
         }
@@ -300,7 +300,7 @@ class RegularTransactionControllerTest(
             )
             val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
 
-            val monthlyTransaction = MonthlyTransaction(
+            val regularTransaction = RegularTransaction(
                 id = RegularTransactionId(""),
                 label = "Salaire",
                 amount = 2000.00.toAmount(),
@@ -308,21 +308,21 @@ class RegularTransactionControllerTest(
                 tag = tagDTO.toDomain(),
                 frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(1),
                 startDate = LocalDate.now(),
-                monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                recurrenceRule = RecurrenceRule.Monthly(15)
             )
 
-            monthlyTransactionStateForTestAdapter.init(
+            regularTransactionStateForTestAdapter.init(
                 listOf(
-                    BookletMonthlyTransactionInput(
+                    BookletRegularTransactionInput(
                         userId = user!!.id,
                         bookletID = booklet.id!!.toString(),
-                        regularTransaction = monthlyTransaction
+                        regularTransaction = regularTransaction
                     )
                 )
             )
 
-            val createdTransaction = monthlyTransactionStateForTestAdapter.get().first()
-            val transactionId = (createdTransaction as MonthlyTransaction).id.value
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+            val transactionId = createdTransaction.id.value
 
             Given {
                 port(port)
@@ -377,8 +377,8 @@ class RegularTransactionControllerTest(
             )
             val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
 
-            val monthlyTransactions = listOf(
-                MonthlyTransaction(
+            val regularTransactions = listOf(
+                RegularTransaction(
                     id = RegularTransactionId(""),
                     label = "Salaire",
                     amount = 2000.00.toAmount(),
@@ -386,9 +386,9 @@ class RegularTransactionControllerTest(
                     tag = tagDTO.toDomain(),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(1),
                     startDate = LocalDate.now(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                    recurrenceRule = RecurrenceRule.Monthly(15)
                 ),
-                MonthlyTransaction(
+                RegularTransaction(
                     id = RegularTransactionId(""),
                     label = "Loyer",
                     amount = 800.00.toAmount(),
@@ -396,13 +396,13 @@ class RegularTransactionControllerTest(
                     tag = tagDTO.toDomain(),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(1),
                     startDate = LocalDate.now(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
             )
 
-            monthlyTransactionStateForTestAdapter.init(
-                monthlyTransactions.map {
-                    BookletMonthlyTransactionInput(
+            regularTransactionStateForTestAdapter.init(
+                regularTransactions.map {
+                    BookletRegularTransactionInput(
                         userId = user!!.id,
                         bookletID = booklet.id!!.toString(),
                         regularTransaction = it
@@ -424,7 +424,7 @@ class RegularTransactionControllerTest(
                 )
             }
 
-            val transactions = monthlyTransactionStateForTestAdapter.get()
+            val transactions = regularTransactionStateForTestAdapter.get()
             assertEquals(2, transactions.size)
         }
 
@@ -453,6 +453,356 @@ class RegularTransactionControllerTest(
             } Then {
                 statusCode(404)
             }
+        }
+    }
+
+    @Nested
+    inner class UpdateRegularTransactionEndpointTest {
+
+        @Test
+        fun `Update regular transaction must send 200 and return updated transaction`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+
+            val regularTransaction = RegularTransaction(
+                id = RegularTransactionId(""),
+                label = "Initial Label",
+                amount = 100.00.toAmount(),
+                isIncome = false,
+                tag = tagDTO.toDomain(),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
+                recurrenceRule = RecurrenceRule.Monthly(15)
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = booklet.id!!.toString(),
+                        regularTransaction = regularTransaction
+                    )
+                )
+            )
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+            val transactionId = createdTransaction.id.value
+
+            val updateRequest = mapOf(
+                "id" to transactionId,
+                "label" to "Updated Label",
+                "value" to 200.00,
+                "isIncome" to true,
+                "tagDTO" to mapOf(
+                    "tagId" to tagDTO.tagId,
+                    "label" to tagDTO.label,
+                    "colorDTO" to mapOf(
+                        "red" to tagDTO.colorDTO.red,
+                        "green" to tagDTO.colorDTO.green,
+                        "blue" to tagDTO.colorDTO.blue
+                    )
+                ),
+                "frequencyProperty" to mapOf(
+                    "type" to "FOREVER"
+                ),
+                "bookletIds" to listOf(booklet.id!!.toString()),
+                "recurrenceRule" to mapOf(
+                    "type" to "MONTHLY",
+                    "value" to 20
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(updateRequest))
+            } When {
+                patch("/api/transaction/regular")
+            } Then {
+                statusCode(200)
+                body(
+                    "label", equalTo("Updated Label"),
+                    "value", equalTo("200.00"),
+                    "isIncome", equalTo(true)
+                )
+            }
+        }
+
+        @Test
+        fun `Update non-existing regular transaction must send 404`() {
+            val updateRequest = mapOf(
+                "id" to UUID.randomUUID().toString(),
+                "label" to "Updated Label",
+                "value" to 200.00,
+                "isIncome" to true,
+                "tagDTO" to mapOf(
+                    "tagId" to tagDTO.tagId,
+                    "label" to tagDTO.label,
+                    "colorDTO" to mapOf(
+                        "red" to tagDTO.colorDTO.red,
+                        "green" to tagDTO.colorDTO.green,
+                        "blue" to tagDTO.colorDTO.blue
+                    )
+                ),
+                "frequencyProperty" to mapOf(
+                    "type" to "FOREVER"
+                ),
+                "bookletIds" to listOf(UUID.randomUUID().toString()),
+                "recurrenceRule" to mapOf(
+                    "type" to "MONTHLY",
+                    "value" to 20
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(updateRequest))
+            } When {
+                patch("/api/transaction/regular")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Update regular transaction with unauthenticated user must send 404`() {
+            val updateRequest = mapOf(
+                "id" to UUID.randomUUID().toString(),
+                "label" to "Updated Label",
+                "value" to 200.00,
+                "isIncome" to true,
+                "tagDTO" to mapOf(
+                    "tagId" to tagDTO.tagId,
+                    "label" to tagDTO.label,
+                    "colorDTO" to mapOf(
+                        "red" to tagDTO.colorDTO.red,
+                        "green" to tagDTO.colorDTO.green,
+                        "blue" to tagDTO.colorDTO.blue
+                    )
+                ),
+                "frequencyProperty" to mapOf(
+                    "type" to "FOREVER"
+                ),
+                "bookletIds" to listOf(UUID.randomUUID().toString()),
+                "recurrenceRule" to mapOf(
+                    "type" to "MONTHLY",
+                    "value" to 20
+                )
+            )
+
+            Given {
+                port(port)
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(updateRequest))
+            } When {
+                patch("/api/transaction/regular")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Update regular transaction changing only label must send 200`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+
+            val regularTransaction = RegularTransaction(
+                id = RegularTransactionId(""),
+                label = "Original",
+                amount = 100.00.toAmount(),
+                isIncome = false,
+                tag = tagDTO.toDomain(),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
+                recurrenceRule = RecurrenceRule.Monthly(15)
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = booklet.id!!.toString(),
+                        regularTransaction = regularTransaction
+                    )
+                )
+            )
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+
+            val updateRequest = mapOf(
+                "id" to createdTransaction.id.value,
+                "label" to "Modified Label",
+                "value" to 100.00,
+                "isIncome" to false,
+                "tagDTO" to mapOf(
+                    "tagId" to tagDTO.tagId,
+                    "label" to tagDTO.label,
+                    "colorDTO" to mapOf(
+                        "red" to tagDTO.colorDTO.red,
+                        "green" to tagDTO.colorDTO.green,
+                        "blue" to tagDTO.colorDTO.blue
+                    )
+                ),
+                "frequencyProperty" to mapOf(
+                    "type" to "FOREVER"
+                ),
+                "bookletIds" to listOf(booklet.id!!.toString()),
+                "recurrenceRule" to mapOf(
+                    "type" to "MONTHLY",
+                    "value" to 15
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(updateRequest))
+            } When {
+                patch("/api/transaction/regular")
+            } Then {
+                statusCode(200)
+                body("label", equalTo("Modified Label"))
+            }
+        }
+    }
+
+    @Nested
+    inner class DeleteRegularTransactionEndpointTest {
+
+        @Test
+        fun `Delete regular transaction must send 200`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+
+            val regularTransaction = RegularTransaction(
+                id = RegularTransactionId(""),
+                label = "To Delete",
+                amount = 100.00.toAmount(),
+                isIncome = false,
+                tag = tagDTO.toDomain(),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
+                recurrenceRule = RecurrenceRule.Monthly(15)
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = booklet.id!!.toString(),
+                        regularTransaction = regularTransaction
+                    )
+                )
+            )
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+            val transactionId = createdTransaction.id.value
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/transaction/regular/{id}", mapOf("id" to transactionId))
+            } Then {
+                statusCode(200)
+            }
+
+            val remainingTransactions = regularTransactionStateForTestAdapter.get()
+            assertEquals(0, remainingTransactions.size)
+        }
+
+        @Test
+        fun `Delete non-existing regular transaction must send 404`() {
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/transaction/regular/{id}", mapOf("id" to UUID.randomUUID().toString()))
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Delete regular transaction with unauthenticated user must send 404`() {
+            Given {
+                port(port)
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
+            } When {
+                delete("/api/transaction/regular/{id}", mapOf("id" to UUID.randomUUID().toString()))
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Delete regular transaction must not affect other transactions`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+
+            val regularTransactions = listOf(
+                RegularTransaction(
+                    id = RegularTransactionId(""),
+                    label = "Transaction 1",
+                    amount = 100.00.toAmount(),
+                    isIncome = false,
+                    tag = tagDTO.toDomain(),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    startDate = LocalDate.now(),
+                    recurrenceRule = RecurrenceRule.Monthly(15)
+                ),
+                RegularTransaction(
+                    id = RegularTransactionId(""),
+                    label = "Transaction 2",
+                    amount = 200.00.toAmount(),
+                    isIncome = true,
+                    tag = tagDTO.toDomain(),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    startDate = LocalDate.now(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                regularTransactions.map {
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = booklet.id!!.toString(),
+                        regularTransaction = it
+                    )
+                }
+            )
+
+            val allTransactions = regularTransactionStateForTestAdapter.get()
+            assertEquals(2, allTransactions.size)
+
+            val firstTransactionId = allTransactions.first().id.value
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/transaction/regular/{id}", mapOf("id" to firstTransactionId))
+            } Then {
+                statusCode(200)
+            }
+
+            val remainingTransactions = regularTransactionStateForTestAdapter.get()
+            assertEquals(1, remainingTransactions.size)
+            assertEquals("Transaction 2", remainingTransactions.first().label)
         }
     }
 }

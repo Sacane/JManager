@@ -57,6 +57,24 @@ class InMemoryDatabase {
             ?.find { it.id == transactionId }
     }
 
+    fun updateRegularTransaction(userId: UserId, regularTransaction: RegularTransaction) {
+        val userTransactions = regularTransactionsByUser[userId] ?: return
+        val index = userTransactions.indexOfFirst { it.transaction.id == regularTransaction.id }
+        if (index != -1) {
+            val oldBookletIds = userTransactions[index].bookletIds
+            userTransactions[index] = RegularByBooklet(regularTransaction, oldBookletIds)
+        }
+    }
+
+    fun deleteRegularTransaction(userId: UserId, transactionId: RegularTransactionId): Boolean {
+        val userTransactions = regularTransactionsByUser[userId] ?: return false
+        val removed = userTransactions.removeIf { it.transaction.id == transactionId }
+        if (removed) {
+            regularBooklets.removeIf { it.transaction.id == transactionId }
+        }
+        return removed
+    }
+
     fun clearRegularTransactions() {
         regularBooklets.clear()
         regularTransactionsByUser.clear()

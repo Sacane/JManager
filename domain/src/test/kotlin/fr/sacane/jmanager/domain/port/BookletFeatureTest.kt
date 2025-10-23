@@ -9,8 +9,8 @@ import fr.sacane.jmanager.domain.fake.UserRegularTransaction
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
@@ -198,7 +198,6 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                // Add income transactions via the database
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Salary",
@@ -221,7 +220,6 @@ class BookletFeatureTest: FeatureTest() {
                     .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, bookletId), mutableListOf(transaction2))))
 
 
-                // Initialize regular transactions (empty list is valid)
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
@@ -516,24 +514,24 @@ class BookletFeatureTest: FeatureTest() {
 
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                val regularTransaction1 = MonthlyTransaction(
+                val regularTransaction1 = RegularTransaction(
                     label = "Monthly Salary",
                     amount = 3000.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-salary"),
                     startDate = LocalDate.of(2025, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val regularTransaction2 = MonthlyTransaction(
+                val regularTransaction2 = RegularTransaction(
                     label = "Monthly Rent",
                     amount = 800.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-rent"),
                     startDate = LocalDate.of(2025, 1, 5),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(5)
+                    recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
                 FakeFactory.regularTransactionState.init(
@@ -755,14 +753,14 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 result.assertTrue { this.regularTransactions.isEmpty() }
 
-                val regular = MonthlyTransaction(
+                val regular = RegularTransaction(
                     label = "Monthly Income RT",
                     amount = 100.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-rt1"),
                     startDate = LocalDate.of(2025, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
                 FakeFactory.regularTransactionState.init(
                     listOf(
@@ -798,23 +796,23 @@ class BookletFeatureTest: FeatureTest() {
                     AccountByOwner(listOf(bookletOther), otherUser.id)
                 ))
 
-                val rtMine = MonthlyTransaction(
+                val rtMine = RegularTransaction(
                     label = "Mine RT",
                     amount = 50.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-mine"),
                     startDate = LocalDate.of(2025, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
-                val rtOther = MonthlyTransaction(
+                val rtOther = RegularTransaction(
                     label = "Other RT",
                     amount = 999.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${otherUser.id.value}-other"),
                     startDate = LocalDate.of(2025, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 FakeFactory.regularTransactionState.init(
@@ -846,14 +844,14 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                val regularIncome = MonthlyTransaction(
+                val regularIncome = RegularTransaction(
                     label = "Monthly Salary",
                     amount = 2000.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-salary"),
                     startDate = LocalDate.of(2025, 11, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 FakeFactory.regularTransactionState.init(
@@ -881,32 +879,32 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                val rt1 = MonthlyTransaction(
+                val rt1 = RegularTransaction(
                     label = "RT Start Day 1",
                     amount = 500.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-rt1"),
                     startDate = LocalDate.of(2025, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
-                val rt2 = MonthlyTransaction(
+                val rt2 = RegularTransaction(
                     label = "RT Start Day 15",
                     amount = 300.toAmount(),
                     isIncome = false,
                     id = RegularTransactionId("${user.id.value}-rt2"),
                     startDate = LocalDate.of(2025, 1, 15),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(15)
+                    recurrenceRule = RecurrenceRule.Monthly(15)
                 )
-                val rt3 = MonthlyTransaction(
+                val rt3 = RegularTransaction(
                     label = "RT Start Day 25",
                     amount = 200.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-rt3"),
                     startDate = LocalDate.of(2025, 1, 25),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(25)
+                    recurrenceRule = RecurrenceRule.Monthly(25)
                 )
 
                 FakeFactory.regularTransactionState.init(
@@ -966,14 +964,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                val regularTx = MonthlyTransaction(
+                val regularTx = RegularTransaction(
                     label = "Regular Income",
                     amount = 2000.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-regular"),
                     startDate = LocalDate.of(2025, 10, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 FakeFactory.regularTransactionState.init(
@@ -1005,14 +1003,14 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
 
-                val futureRT = MonthlyTransaction(
+                val futureRT = RegularTransaction(
                     label = "Future RT",
                     amount = 500.toAmount(),
                     isIncome = true,
                     id = RegularTransactionId("${user.id.value}-future"),
                     startDate = LocalDate.of(2025, 3, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
-                    monthlyRepeatProperty = MonthlyRepeatProperty(1)
+                    recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
                 FakeFactory.regularTransactionState.init(

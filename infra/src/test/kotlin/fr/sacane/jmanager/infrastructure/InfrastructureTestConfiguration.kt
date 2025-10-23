@@ -12,8 +12,6 @@ import java.time.format.DateTimeFormatter
 
 @TestConfiguration
 class InfrastructureTestConfiguration {
-    // Aucun bean DataSource ici : on laisse Spring Boot s'initialiser à partir
-    // des propriétés de datasource (définies par le bootstrap Testcontainers)
 }
 
 class TestLocalDateSerializer : JsonSerializer<LocalDate>() {

@@ -143,8 +143,8 @@ class JpaTagMapperAdapter(
     private val defaultTagPostgresRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
 ) {
-    fun mapToResource(tag: Tag): AbstractTagResource? {
-        return tag.id?.let {
+    fun mapToResource(tag: Tag?): AbstractTagResource? {
+        return tag?.id?.let {
             if(tag.isDefault) {
                 defaultTagPostgresRepository.findByIdNullable(it)
             } else {

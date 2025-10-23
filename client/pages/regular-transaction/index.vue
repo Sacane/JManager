@@ -7,13 +7,14 @@ definePageMeta({
 })
 
 const { fetch } = useBooklet()
-const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById } = useRegularTransaction()
+const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById, updateRegularTransaction, deleteRegularTransaction } = useRegularTransaction()
 const transactions = ref<RegularTransactionDTO[]>([])
 const { frequencyToString } = useDate()
 const jToast = useJToast()
 const booklets = ref<OnlyBookletInfo[]>([])
 const selectedTransactions = ref<RegularTransactionDTO[]>([])
 const isMobile = ref(false)
+const confirm = useConfirm()
 
 onMounted(() => {
   fetch()
@@ -64,12 +65,10 @@ function onSave(transaction: MonthlyTransactionCreationRequest) {
     })
 }
 
-// Gestion du dialog d'édition
 const isEditDialogVisible = ref(false)
 const selectedTransaction = ref<RegularTransactionDTO | null>(null)
 const loadingTransaction = ref(false)
 
-// Gestionnaire de double-clic sur une ligne
 async function handleRowDoubleClick(event: any) {
   const transactionId = event.data.id
 
@@ -91,17 +90,70 @@ async function handleRowDoubleClick(event: any) {
   }
 }
 
-// Sauvegarder les modifications
-function handleEditSave(updatedTransaction: RegularTransactionDTO) {
-  // TODO: Implémenter la méthode updateRegularTransaction dans useRegularTransaction
+async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
+  try {
+    const updateRequest: UpdateRegularTransactionRequest = {
+      id: updatedTransaction.id,
+      label: updatedTransaction.label,
+      value: updatedTransaction.value,
+      isIncome: updatedTransaction.isIncome,
+      tagDTO: updatedTransaction.tagDTO,
+      frequencyProperty: updatedTransaction.frequencyProperty,
+      bookletIds: [], // TODO: À gérer si vous voulez permettre la modification des booklets
+      recurrenceRule: {
+        type: updatedTransaction.regularity,
+        value: updatedTransaction.regularity === 'MONTHLY' ? 1 : undefined, // Valeur par défaut
+      },
+    }
 
-  // Mettre à jour la liste localement
-  const index = transactions.value.findIndex(t => t.id === updatedTransaction.id)
-  if (index !== -1) {
-    transactions.value[index] = updatedTransaction
+    const updated = await updateRegularTransaction(updateRequest)
+
+    const index = transactions.value.findIndex(t => t.id === updated.id)
+    if (index !== -1) {
+      transactions.value[index] = updated
+    }
+
+    isEditDialogVisible.value = false
+    jToast.success('Transaction régulière mise à jour avec succès')
+  } catch (error: any) {
+    console.error('Erreur lors de la mise à jour:', error)
+    jToast.errorAxios(error)
   }
+}
 
-  isEditDialogVisible.value = false
+function handleDelete(transactionId: string) {
+  confirm.require({
+    message: 'Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.',
+    header: '⚠️ Confirmation de suppression',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Annuler',
+    acceptLabel: 'Supprimer',
+    rejectProps: {
+      label: 'Annuler',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Supprimer',
+      severity: 'danger',
+    },
+    accept: async () => {
+      try {
+        await deleteRegularTransaction(transactionId)
+
+        transactions.value = transactions.value.filter(t => t.id !== transactionId)
+        isEditDialogVisible.value = false
+
+        jToast.success('Transaction régulière supprimée avec succès')
+      } catch (error: any) {
+        console.error('Erreur lors de la suppression:', error)
+        jToast.errorAxios(error)
+      }
+    },
+    reject: () => {
+
+    },
+  })
 }
 
 function isSelected(transaction: RegularTransactionDTO): boolean {
@@ -299,7 +351,10 @@ const transactionsCount = computed(() => transactions.value.length)
       :transaction="selectedTransaction"
       :loading="loadingTransaction"
       @save="handleEditSave"
+      @delete="handleDelete"
     />
+
+    <ConfirmDialog />
   </div>
 </template>
 

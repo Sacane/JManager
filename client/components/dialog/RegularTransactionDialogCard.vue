@@ -11,6 +11,7 @@ interface Props {
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
   (e: 'save', transaction: RegularTransactionDTO): void
+  (e: 'delete', transactionId: string): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,7 +34,7 @@ const formData = ref<RegularTransactionDTO>({
   value: 0,
   isIncome: false,
   regularity: '',
-  startDate: '',
+  startDate: '' as string | Date,
   frequencyProperty: {
     type: 'FOREVER',
     untilDate: undefined,
@@ -69,8 +70,8 @@ const frequencyTypeOptions = [
 
 const startDateValue = computed({
   get: () => formData.value.startDate ? new Date(formData.value.startDate) : null,
-  set: (value) => {
-    formData.value.startDate = value ? value.toISOString().split('T')[0] : ''
+  set: (value: Date | null) => {
+    formData.value.startDate = (value ? value.toISOString().split('T')[0] : '') as string | Date
   },
 })
 
@@ -135,6 +136,13 @@ function handleCancel() {
 function handleEdit() {
   if (hasChanges.value) {
     emit('save', { ...formData.value })
+  }
+}
+
+function handleDelete() {
+  if (formData.value.id) {
+    emit('delete', formData.value.id)
+    console.warn('Transaction régulière supprimée avec succès')
   }
 }
 </script>
@@ -357,21 +365,31 @@ function handleEdit() {
     </template>
 
     <template #footer>
-      <div class="flex justify-end gap-3">
+      <div class="flex justify-between items-center w-full">
         <Button
-          label="Annuler"
-          icon="pi pi-times"
-          severity="secondary"
+          label="Supprimer"
+          icon="pi pi-trash"
+          severity="danger"
           :disabled="loading"
           outlined
-          @click="handleCancel"
+          @click="handleDelete"
         />
-        <Button
-          label="Enregistrer"
-          icon="pi pi-check"
-          :disabled="!hasChanges || loading"
-          @click="handleEdit"
-        />
+        <div class="flex gap-3">
+          <Button
+            label="Annuler"
+            icon="pi pi-times"
+            severity="secondary"
+            :disabled="loading"
+            outlined
+            @click="handleCancel"
+          />
+          <Button
+            label="Enregistrer"
+            icon="pi pi-check"
+            :disabled="!hasChanges || loading"
+            @click="handleEdit"
+          />
+        </div>
       </div>
     </template>
   </Dialog>

@@ -4,8 +4,8 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyRepeatProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
@@ -125,7 +125,7 @@ class TransactionController(
         logger.info("Creating monthly transaction $request from userID ${currentUser.id}")
         return regularTransactionFeature.bookRegularTransaction(
             currentUser.token,
-            MonthlyTransaction(
+            RegularTransaction(
                 id = RegularTransactionId(""),
                 label = request.label,
                 amount = request.value.toAmount(),
@@ -133,13 +133,8 @@ class TransactionController(
                 tag = request.tagDTO.toDomain(),
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
                 startDate = LocalDate.now(),
-            ).run {
-                if(request.repeatDay != null) {
-                    copy(
-                        monthlyRepeatProperty = MonthlyRepeatProperty(request.repeatDay)
-                    )
-                } else this
-            },
+                recurrenceRule = RecurrenceRule.Monthly(request.repeatDay ?: 1)
+            ),
             request.bookletIds.map { java.util.UUID.fromString(it) }
         ).map {
             it.toDTO()
@@ -156,6 +151,41 @@ class TransactionController(
         }.toHttpResponse().also {
             logger.info("Regular transaction fetched successfully")
         }
+    }
+
+    @PatchMapping("/regular")
+    fun updateRegularTransaction(
+        @RequestBody request: UpdateRegularTransactionRequest
+    ): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Updating regular transaction ${request.id}")
+        return regularTransactionFeature.updateRegularTransaction(
+            currentUser.token,
+            RegularTransaction(
+                id = RegularTransactionId(request.id),
+                label = request.label,
+                amount = request.value.toAmount(),
+                isIncome = request.isIncome,
+                tag = request.tagDTO.toDomain(),
+                frequencyProperty = request.frequencyProperty.frequencyToDomain(),
+                startDate = LocalDate.now(), // Sera ignoré dans la logique métier
+                recurrenceRule = request.recurrenceRule.toDomain()
+            )
+        ).map {
+            it.toDTO()
+        }.toHttpResponse().also {
+            logger.info("Regular transaction updated successfully")
+        }
+    }
+
+    @DeleteMapping("/regular/{id}")
+    fun deleteRegularTransaction(@PathVariable id: String): ResponseEntity<Unit> {
+        logger.info("Deleting regular transaction $id")
+        return regularTransactionFeature.deleteRegularTransaction(currentUser.token, id)
+            .map { }
+            .toHttpResponse()
+            .also {
+                logger.info("Regular transaction deleted successfully")
+            }
     }
 }
 

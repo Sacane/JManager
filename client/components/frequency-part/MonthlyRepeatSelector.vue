@@ -23,7 +23,6 @@ const isDayValid = computed(() => {
   return selectedDay.value >= 1 && selectedDay.value <= 31
 })
 
-// Mise à jour du jour sélectionné
 function updateDay(value: number | null) {
   if (value === null || value === undefined) {
     selectedDay.value = 1
@@ -43,7 +42,6 @@ function updateDay(value: number | null) {
   }
 }
 
-// Activer/désactiver la sélection du jour
 function toggleEnabled(enabled: boolean) {
   isEnabled.value = enabled
 
@@ -54,7 +52,6 @@ function toggleEnabled(enabled: boolean) {
   }
 }
 
-// Synchroniser avec les changements externes
 watch(() => selectedDay, (newValue) => {
   if (newValue === null) {
     isEnabled.value = false
@@ -65,7 +62,6 @@ watch(() => selectedDay, (newValue) => {
   }
 })
 
-// Texte d'aide pour expliquer le comportement
 const helpText = computed(() => {
   if (!isEnabled.value) {
     return 'La transaction sera répétée le même jour que la date de début chaque mois'

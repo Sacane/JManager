@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.usecase
 import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
@@ -203,22 +203,24 @@ class RegularTransactionGeneratorService(
         regularTransaction: RegularTransaction,
         date: LocalDate
     ): Transaction {
-        return when (regularTransaction) {
-            is MonthlyTransaction -> {
-                val day = regularTransaction.monthlyRepeatProperty?.repeatDay
-                    ?: regularTransaction.startDate.dayOfMonth
-                val adjustedDay = if (day > date.lengthOfMonth()) date.lengthOfMonth() else day
-                Transaction(
-                    id = null,
-                    label = regularTransaction.label,
-                    amount = regularTransaction.amount,
-                    date = LocalDate.of(date.year, date.month, adjustedDay),
-                    isPreview = true,
-                    isIncome = regularTransaction.isIncome,
-                    regularTransactionId = regularTransaction.id
-                )
-            }
+        val day = when (val rule = regularTransaction.recurrenceRule) {
+            is RecurrenceRule.Monthly -> rule.dayOfMonth
+            is RecurrenceRule.Yearly -> rule.dayOfMonth
+            is RecurrenceRule.Weekly -> date.dayOfMonth
+            is RecurrenceRule.Daily -> date.dayOfMonth
         }
+
+        val adjustedDay = if (day > date.lengthOfMonth()) date.lengthOfMonth() else day
+
+        return Transaction(
+            id = null,
+            label = regularTransaction.label,
+            amount = regularTransaction.amount,
+            date = LocalDate.of(date.year, date.month, adjustedDay),
+            isPreview = true,
+            isIncome = regularTransaction.isIncome,
+            regularTransactionId = regularTransaction.id
+        )
     }
 
 
@@ -226,8 +228,11 @@ class RegularTransactionGeneratorService(
         currentDate: LocalDate,
         regularTransaction: RegularTransaction
     ): LocalDate {
-        return when (regularTransaction) {
-            is MonthlyTransaction -> currentDate.plusMonths(1)
+        return when (regularTransaction.recurrenceRule) {
+            is RecurrenceRule.Monthly -> currentDate.plusMonths(1)
+            is RecurrenceRule.Yearly -> currentDate.plusYears(1)
+            is RecurrenceRule.Weekly -> currentDate.plusWeeks(1)
+            is RecurrenceRule.Daily -> currentDate.plusDays(1)
         }
     }
 }

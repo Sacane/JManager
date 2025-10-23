@@ -4,7 +4,6 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
@@ -17,17 +16,63 @@ import fr.sacane.jmanager.domain.utils.success
 import java.util.UUID
 
 @Port(Side.APPLICATION)
+/**
+ * Application port: RegularTransactionFeature
+ *
+ * High-level API for managing regular (recurring) transactions exposed to the application layer.
+ * Implementations are responsible for authentication and returning domain Result<T>
+ * objects that represent success or failure states.
+ */
 sealed interface RegularTransactionFeature {
 
+    /**
+     * Retrieve all regular transactions for the authenticated user.
+     *
+     * @param token Authentication token identifying the requester.
+     * @return Result containing a list of RegularTransaction on success.
+     */
     fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>>
 
+    /**
+     * Create (book) a new regular transaction and associate it with multiple booklets.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param regularTransaction The RegularTransaction to persist.
+     * @param bookletIds List of booklet UUIDs that will be associated with the created regular transaction.
+     * @return Result containing the persisted RegularTransaction on success, or an error state.
+     */
     fun bookRegularTransaction(
         token: String,
         regularTransaction: RegularTransaction,
         bookletIds: List<UUID>
     ): Result<RegularTransaction>
 
+    /**
+     * Retrieve a single regular transaction by its identifier.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param transactionId The identifier of the regular transaction to retrieve.
+     * @return Result containing the RegularTransaction on success, or TRANSACTION_NOT_FOUND when missing.
+     */
     fun getRegularTransactionById(token: String, transactionId: String): Result<RegularTransaction>
+
+    /**
+     * Update an existing regular transaction.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param regularTransaction RegularTransaction object containing updated values (must include id).
+     * @return Result containing the updated RegularTransaction on success, or an error state if not found.
+     */
+    fun updateRegularTransaction(token: String, regularTransaction: RegularTransaction): Result<RegularTransaction>
+
+    /**
+     * Delete a regular transaction by its identifier.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param transactionId Identifier of the regular transaction to delete.
+     * @return Result containing a boolean indicating deletion success, or a failure when not found.
+     */
+    fun deleteRegularTransaction(token: String, transactionId: String): Result<Boolean>
 }
 
 @DomainService
@@ -54,13 +99,12 @@ class RegularTransactionFeatureImpl(
         return@authenticate unitOfWork.executeInTransaction(
             regularTransaction
         ) {
-            val transaction = when (it) {
-                is MonthlyTransaction ->  regularTransactionRepository.saveMonthlyRegularTransaction(
-                    userId = userId,
-                    monthlyTransaction = it.copy(id = RegularTransactionId(UUID.randomUUID().toString())),
-                    bookletIds = bookletIds
-                )
-            }
+            val transactionWithId = it.copy(id = RegularTransactionId(UUID.randomUUID().toString()))
+            val transaction = regularTransactionRepository.saveRegularTransaction(
+                userId = userId,
+                regularTransaction = transactionWithId,
+                bookletIds = bookletIds
+            )
             return@executeInTransaction success(transaction)
         }
     }
@@ -75,5 +119,27 @@ class RegularTransactionFeatureImpl(
             RegularTransactionId(transactionId)
         ) ?: return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $transactionId n'existe pas")
         return@authenticate success(result)
+    }
+
+    override fun updateRegularTransaction(
+        token: String,
+        regularTransaction: RegularTransaction
+    ): Result<RegularTransaction> = session.authenticate(token) { userId ->
+        return@authenticate unitOfWork.executeInTransaction(regularTransaction) {
+            val updated = regularTransactionRepository.updateRegularTransaction(userId, it)
+                ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction ${it.id} n'existe pas")
+            return@executeInTransaction success(updated)
+        }
+    }
+
+    override fun deleteRegularTransaction(
+        token: String,
+        transactionId: String
+    ): Result<Boolean> = session.authenticate(token) { userId ->
+        val deleted = regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(transactionId))
+        if (!deleted) {
+            return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $transactionId n'existe pas")
+        }
+        return@authenticate success(true)
     }
 }

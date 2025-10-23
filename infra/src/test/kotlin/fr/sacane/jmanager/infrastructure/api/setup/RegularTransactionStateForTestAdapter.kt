@@ -1,34 +1,33 @@
 package fr.sacane.jmanager.infrastructure.api.setup
 
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.models.transaction.regular.MonthlyTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.infrastructure.State
 import fr.sacane.jmanager.infrastructure.spi.adapters.regular.RegularTransactionRepositoryDataJpaAdapter
-import fr.sacane.jmanager.infrastructure.spi.repositories.MonthlyTransactionResourceJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 import java.util.UUID
 
-data class BookletMonthlyTransactionInput(
+data class BookletRegularTransactionInput(
     val userId: UserId,
     val bookletID: String,
-    val regularTransaction: MonthlyTransaction
+    val regularTransaction: RegularTransaction
 )
 
 @Component
-class MonthlyTransactionStateForTestAdapter(
+class RegularTransactionStateForTestAdapter(
     private val regularTransactionAdapter: RegularTransactionRepositoryDataJpaAdapter,
-    private val monthlyTransactionJpaRepository: MonthlyTransactionResourceJpaRepository
-): State<BookletMonthlyTransactionInput, RegularTransaction> {
+    private val regularTransactionJpaRepository: RegularTransactionResourceJpaRepository
+): State<BookletRegularTransactionInput, RegularTransaction> {
     override fun get(): Collection<RegularTransaction> {
-        return monthlyTransactionJpaRepository.findAll().map { it.toDomain() }
+        return regularTransactionJpaRepository.findAll().map { it.toDomain() }
     }
 
     @Transactional
-    override fun init(initialState: Collection<BookletMonthlyTransactionInput>) {
+    override fun init(initialState: Collection<BookletRegularTransactionInput>) {
         initialState.forEach {
-            regularTransactionAdapter.saveMonthlyRegularTransaction(
+            regularTransactionAdapter.saveRegularTransaction(
                 it.userId,
                 it.regularTransaction,
                 listOf(UUID.fromString(it.bookletID))
@@ -37,7 +36,7 @@ class MonthlyTransactionStateForTestAdapter(
     }
 
     override fun clear() {
-        monthlyTransactionJpaRepository.deleteAll()
+        regularTransactionJpaRepository.deleteAll()
     }
-
 }
+
