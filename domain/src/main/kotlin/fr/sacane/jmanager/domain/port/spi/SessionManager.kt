@@ -11,14 +11,52 @@ import fr.sacane.jmanager.domain.utils.timeout
 import java.util.UUID
 import java.util.logging.Logger
 
+/**
+ * SPI contract managing user sessions and token-based authentication used by the domain.
+ *
+ * Implementations are responsible for: storing active sessions, validating tokens,
+ * checking required roles, handling session lifecycle (expiration, removal) and
+ * exposing an `authenticate` helper to run domain use-cases inside an authenticated context.
+ */
 interface SessionManager{
+    /**
+     * Register a new active session for a user.
+     *
+     * @param userId Domain user identifier associated with the session.
+     * @param session AccessToken value object representing the session.
+     */
     fun addSession(userId: UserId, session: AccessToken)
+
+    /**
+     * Authenticate a token and execute the provided block with the authenticated UserId.
+     *
+     * Implementations should validate the token, check expiration and required roles.
+     * If authentication fails, a domain Result indicating an unauthorized or timeout state
+     * should be returned instead of throwing exceptions.
+     *
+     * @param token Raw token string provided by the caller.
+     * @param requiredRoles List of roles required to execute the block (defaults to Role.USER).
+     * @param block Function to execute when authentication succeeds; receives the authenticated UserId.
+     * @return Result<T> produced by the block when authentication succeeds or a domain error Result otherwise.
+     */
     fun <T> authenticate(
         token: String,
         requiredRoles: List<Role> = listOf(Role.USER),
         block: (UserId) -> Result<T>
     ): Result<T>
+
+    /**
+     * Removes an active session for the given user and token value.
+     *
+     * @param userId Domain user identifier.
+     * @param token Raw token string to invalidate/remove.
+     */
     fun removeSession(userId: UserId, token: String)
+
+    /**
+     * Purge expired tokens/sessions from the session store.
+     * Implementations may run this periodically.
+     */
     fun purgeExpiredToken()
 }
 
