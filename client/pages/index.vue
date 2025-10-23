@@ -47,7 +47,6 @@ function handleAccountCreation(account: { label: string, digit: number }) {
         accounts.value.push(acc)
       }
       toast.success('Le compte a bien été créé')
-      navigateTo(`/account/${acc.id}`)
     })
     .catch(err => toast.errorAxios(err))
 }
@@ -88,13 +87,44 @@ onMounted(() => {
             Gérez vos dépenses quotidiennes, visualisez vos budgets et planifiez votre avenir financier en toute simplicité
           </p>
           <div class="hero-cta">
-            <button class="cta-primary" @click="isAccountDialogOpen = true">
+            <button v-if="accounts.length === 0" class="cta-primary" @click="isAccountDialogOpen = true">
               <i class="pi pi-plus-circle" />
               <span>Créer mon premier livret</span>
             </button>
+            <div v-else class="booklets-list">
+              <div class="booklets-header">
+                <h3>Mes livrets</h3>
+                <button class="add-booklet-btn" title="Ajouter un livret" @click="isAccountDialogOpen = true">
+                  <i class="pi pi-plus" />
+                </button>
+              </div>
+              <div class="booklets-grid">
+                <div
+                  v-for="account in accounts"
+                  :key="account.id"
+                  class="booklet-card"
+                  @click="navigateTo(`/account/${account.id}`)"
+                >
+                  <div class="booklet-icon">
+                    <i class="pi pi-book" />
+                  </div>
+                  <div class="booklet-info">
+                    <h4 class="booklet-label">
+                      {{ account.labelAccount }}
+                    </h4>
+                    <p class="booklet-amount">
+                      {{ Number.parseFloat(account.amount.toString()).toFixed(2) }} {{ account.currency }}
+                    </p>
+                  </div>
+                  <div class="booklet-arrow">
+                    <i class="pi pi-arrow-right" />
+                  </div>
+                </div>
+              </div>
+            </div>
             <button v-if="accounts.length > 0" class="cta-secondary" @click="navigateTo('/dashboard')">
               <i class="pi pi-arrow-right" />
-              <span>Accéder à mon espace</span>
+              <span>Accéder à mon tableau de bord</span>
             </button>
             <div class="quick-stats">
               <div class="stat-item">
@@ -115,7 +145,7 @@ onMounted(() => {
             </div>
             <div class="card-content">
               <span class="card-label">Solde total</span>
-              <span class="card-value">{{ sum.toFixed(2) }} €</span>
+              <span class="card-value">{{ sum.toFixed(2) }} €</span>0
             </div>
           </div>
           <div class="floating-card card-2">
@@ -498,6 +528,182 @@ onMounted(() => {
 .stat-item.highlight {
   background: rgba(224, 216, 36, 0.2);
   border-color: rgba(224, 216, 36, 0.4);
+}
+
+/* ===== BOOKLETS LIST ===== */
+.booklets-list {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.booklets-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.booklets-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-booklet-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 18px;
+}
+
+.add-booklet-btn:hover {
+  background: rgba(224, 216, 36, 0.3);
+  border-color: rgba(224, 216, 36, 0.6);
+  transform: rotate(90deg) scale(1.1);
+}
+
+.booklets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Scrollbar personnalisée */
+.booklets-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.booklets-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.booklets-grid::-webkit-scrollbar-thumb {
+  background: rgba(224, 216, 36, 0.5);
+  border-radius: 10px;
+}
+
+.booklets-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(224, 216, 36, 0.7);
+}
+
+.booklet-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.booklet-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(224, 216, 36, 0.1), rgba(224, 216, 36, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.booklet-card:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(224, 216, 36, 0.6);
+  transform: translateX(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.booklet-card:hover::before {
+  opacity: 1;
+}
+
+.booklet-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #e0d824, #f5e84a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 24px;
+  color: #4a1575;
+  box-shadow: 0 4px 12px rgba(224, 216, 36, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.booklet-card:hover .booklet-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(224, 216, 36, 0.5);
+}
+
+.booklet-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1;
+}
+
+.booklet-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.booklet-amount {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #e0d824;
+  margin: 0;
+  line-height: 1;
+}
+
+.booklet-arrow {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.booklet-card:hover .booklet-arrow {
+  background: rgba(224, 216, 36, 0.4);
+  transform: translateX(4px);
 }
 
 /* ===== HERO VISUAL ===== */
@@ -973,12 +1179,47 @@ onMounted(() => {
   }
 
   .cta-primary,
+  .cta-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
   .quick-stats {
     justify-content: center;
   }
 
   .hero-cta {
     align-items: center;
+  }
+
+  .booklets-list {
+    width: 100%;
+  }
+
+  .booklets-header {
+    margin-bottom: 16px;
+  }
+
+  .booklets-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .booklet-card {
+    padding: 16px;
+  }
+
+  .booklet-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+
+  .booklet-label {
+    font-size: 1rem;
+  }
+
+  .booklet-amount {
+    font-size: 1.2rem;
   }
 }
 
@@ -1030,6 +1271,61 @@ onMounted(() => {
 
   .center-circle i {
     font-size: 60px;
+  }
+
+  .booklets-list {
+    width: 100%;
+  }
+
+  .booklets-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .add-booklet-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .booklets-grid {
+    max-height: 300px;
+    gap: 10px;
+  }
+
+  .booklet-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .booklet-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .booklet-label {
+    font-size: 0.95rem;
+  }
+
+  .booklet-amount {
+    font-size: 1.1rem;
+  }
+
+  .booklet-arrow {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .cta-primary,
+  .cta-secondary {
+    padding: 14px 28px;
+    font-size: 1rem;
+  }
+
+  .stat-item {
+    padding: 10px 16px;
+    font-size: 0.9rem;
   }
 
   .features-grid {
