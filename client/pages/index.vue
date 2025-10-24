@@ -268,7 +268,7 @@ onMounted(() => {
       <div class="cta-content">
         <h2>Prêt à prendre en main vos finances ?</h2>
         <p>Rejoignez les étudiants et professionnels qui font confiance à notre solution</p>
-        <button class="cta-button" @click="isAccountDialogOpen = true">
+        <button class="cta-button" @click="navigateTo('/dashboard')">
           <i class="pi pi-play" />
           <span>Commencer maintenant</span>
         </button>
