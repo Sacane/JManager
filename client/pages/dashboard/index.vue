@@ -445,22 +445,24 @@ onMounted(() => {
             Voici un aperçu de vos finances au {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
           </p>
         </div>
-        <div class="header-actions">
-          <button
-            class="period-toggle"
-            :class="{ active: selectedPeriod === 'month' }"
-            @click="selectedPeriod = 'month'"
-          >
-            Mois
-          </button>
-          <button
-            class="period-toggle"
-            :class="{ active: selectedPeriod === 'year' }"
-            @click="selectedPeriod = 'year'"
-          >
-            Année
-          </button>
-        </div>
+        <!--
+          <div class="header-actions">
+            <button
+              class="period-toggle"
+              :class="{ active: selectedPeriod === 'month' }"
+              @click="selectedPeriod = 'month'"
+            >
+              Mois
+            </button>
+            <button
+              class="period-toggle"
+              :class="{ active: selectedPeriod === 'year' }"
+              @click="selectedPeriod = 'year'"
+            >
+              Année
+            </button>
+          </div>
+        ! -->
       </div>
     </div>
 
@@ -507,7 +509,7 @@ onMounted(() => {
               {{ Math.abs(expensesGrowth).toFixed(1) }}%
             </span>
           </div>
-          <div class="kpi-content">
+          <div>
             <h3 class="kpi-label">
               Dépenses du mois
             </h3>
@@ -669,7 +671,7 @@ onMounted(() => {
               <i class="pi pi-calendar" />
               Prochaines transactions
             </h2>
-            <button class="add-button" @click="navigateTo('/regular-transactions')">
+            <button class="add-button" @click="navigateTo('/regular-transaction')">
               <i class="pi pi-cog" />
               Gérer
             </button>
@@ -678,7 +680,7 @@ onMounted(() => {
             <div v-if="upcomingPayments.length === 0" class="empty-state">
               <i class="pi pi-calendar-times" />
               <p>Aucune transaction prévue</p>
-              <button class="create-button" @click="navigateTo('/regular-transactions')">
+              <button class="create-button" @click="navigateTo('/regular-transaction')">
                 Configurer une mensualité
               </button>
             </div>
@@ -906,20 +908,6 @@ onMounted(() => {
   transform: translateY(0);
 }
 
-.kpi-card {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.kpi-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(130, 42, 204, 0.15);
-}
-
 .kpi-header {
   display: flex;
   justify-content: space-between;
@@ -1082,13 +1070,6 @@ onMounted(() => {
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.kpi-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(130, 42, 204, 0.15);
 }
 
 .kpi-header {
