@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import useAuth from '@/composables/useAuth'
 
-const { user, logout } = useAuth()
+const { user, logout, isAdmin } = useAuth()
 
 const username = computed(() => user.value?.username.charAt(0).toUpperCase().concat(user.value?.username.slice(1)) ?? '')
 const showDropdown = ref(false)
@@ -42,7 +42,7 @@ onBeforeUnmount(() => {
       <div>
         <p>{{ username }}</p>
         <p class="role">
-          Utilisateur
+          {{ isAdmin ? 'Administrateur' : 'Utilisateur' }}
         </p>
       </div>
     </div>

@@ -74,4 +74,8 @@ class UserRepositoryJpaAdapter (
         val userResponse = userPostgresRepository.save(userResource)
         return userResponse.toModel()
     }
+
+    override fun findAll(): List<User> {
+        return userPostgresRepository.findAll().map { it.toModel() }
+    }
 }

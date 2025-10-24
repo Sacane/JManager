@@ -98,7 +98,8 @@ internal fun UserResource.toModel()
     id = UserId(this.idUser),
     username = this.username,
     email = this.email,
-    roles = roles
+    roles = roles,
+    creationDate = creationDate
 )
 internal fun UserResource.toModelWithSimpleAccounts()
         : User = User(

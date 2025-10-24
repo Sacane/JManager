@@ -2,6 +2,9 @@ package fr.sacane.jmanager.infrastructure.spi.entity
 
 import fr.sacane.jmanager.domain.models.Role
 import jakarta.persistence.*
+import org.hibernate.annotations.CreationTimestamp
+import org.springframework.data.annotation.CreatedDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Table(name="user_resource")
@@ -17,6 +20,8 @@ class UserResource(
     var accounts: MutableList<BookletResource> = mutableListOf(),
     @OneToMany(mappedBy = "owner")
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
+    @Column(name = "creation_date", nullable = false, updatable = false)
+    val creationDate: LocalDateTime = LocalDateTime.now(),
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",

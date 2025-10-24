@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios'
-import axios from 'axios'
 import type { Ref } from 'vue'
+import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 
 export interface UserAuth {
@@ -11,7 +11,7 @@ interface User {
   id: string
   username: string
   email: string
-  role: string
+  roles: string[]
 }
 interface UserRegister {
   username: string
@@ -23,6 +23,7 @@ export default function useAuth() {
   const user: Ref<User | null> = ref(null)
   const storedUser: User | undefined = JSON.parse(localStorage.getItem('user') as string)
   const isAuthenticated = ref<boolean>(false)
+  const isAdmin = computed(() => user.value?.roles.includes('ADMIN'))
   const config = useRuntimeConfig()
   const host = config.public.apiUrl
   if (storedUser) {
@@ -38,11 +39,18 @@ export default function useAuth() {
       const response = await axios.post(`${host}user/auth`, userAuth, { withCredentials: true })
       // user.value = response.data
       const result = response.data.token
-      const decoded = jwtDecode<{ sub: string, username: string, role: string }>(result)
+      const decoded = jwtDecode<{ sub: string, username: string, role: string, ADMIN: boolean, USER: boolean }>(result)
+      const roles = []
+      if (decoded.ADMIN) {
+        roles.push('ADMIN')
+      }
+      if (decoded.USER) {
+        roles.push('USER')
+      }
       user.value = {
         id: decoded.sub,
         username: decoded.username,
-        role: decoded.role,
+        roles,
         email: '',
       }
       localStorage.setItem('user', JSON.stringify(user.value))
@@ -104,5 +112,5 @@ export default function useAuth() {
     throw error
   }
 
-  return { user: readonly(user), isAuthenticated, login, logout, register }
+  return { user: readonly(user), isAuthenticated, login, logout, register, isAdmin }
 }
