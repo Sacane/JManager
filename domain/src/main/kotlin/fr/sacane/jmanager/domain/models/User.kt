@@ -9,9 +9,7 @@ value class UserId(val value: UUID?)
 
 data class UserForAdmin(
     val user: User,
-    val roles: Set<Role>,
     val createdDate: LocalDateTime,
-    val email: String? = null
 )
 
 data class MinimalUserRepresentation(
@@ -29,7 +27,8 @@ class User(
     val booklets: MutableList<Booklet> = mutableListOf(),
     val tags: MutableSet<Tag> = mutableSetOf(),
     val roles: Set<Role> = setOf(Role.USER),
-    val creationDate: LocalDateTime = LocalDateTime.now()
+    val creationDate: LocalDateTime = LocalDateTime.now(),
+    val isEnabled: Boolean = true,
 ) {
 
     fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
@@ -39,8 +38,6 @@ class User(
         booklets.add(booklet)
         booklet.owner = this
     }
-
-    fun toModelForAdmin(): UserForAdmin = UserForAdmin(this, roles, creationDate, email)
 }
 
 data class UserWithPassword(

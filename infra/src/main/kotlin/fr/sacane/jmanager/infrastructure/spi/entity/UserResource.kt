@@ -22,6 +22,8 @@ class UserResource(
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
     @Column(name = "creation_date", nullable = false, updatable = false)
     val creationDate: LocalDateTime = LocalDateTime.now(),
+    @Column(name = "is_enabled", nullable = false)
+    val isEnabled: Boolean = true,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",
