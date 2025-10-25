@@ -125,6 +125,10 @@ class InMemoryUserRepository (
         return user
     }
 
+    override fun findAll(): List<User> {
+        return inMemoryDatabase.users.values.map { it.user }
+    }
+
     override fun getStates(): Collection<UserWithPassword> {
         return inMemoryDatabase.users.values
     }

@@ -49,6 +49,10 @@ class FakeUserRepository: UserRepository, State<User> {
         return user
     }
 
+    override fun findAll(): List<User> {
+        return users.map { it.user }
+    }
+
     override fun getStates(): Collection<User> {
         return users.map { it.user }
     }

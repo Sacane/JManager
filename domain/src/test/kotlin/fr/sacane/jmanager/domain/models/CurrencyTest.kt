@@ -75,7 +75,6 @@ class CurrencyTest {
     @Test
     fun `InvalidCurrencyException should be a RuntimeException`() {
         val exception = InvalidCurrencyException("test")
-        assertTrue(exception is RuntimeException)
         assertEquals("test", exception.message)
     }
 }

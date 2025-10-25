@@ -29,10 +29,10 @@ class AdminFeatureImpl(
 ) : AdminFeature {
 
     override fun getUsers(token: String, pageNumber: Int, pageSize: Int): Result<Page<User>> =
-        sessionManager.authenticate(token, requiredRoles = roleAdmin) {
+        sessionManager.authenticate(token, requiredRoles = roleAdmin) { userId ->
             val page = paginator.paginate(pageNumber, pageSize) {
                 val allUsers = userRepository.findAll()
-                allUsers.sortedByDescending { it.creationDate }
+                allUsers.filter { it.id != userId }.sortedByDescending { it.creationDate }
             }
 
             return@authenticate success(
