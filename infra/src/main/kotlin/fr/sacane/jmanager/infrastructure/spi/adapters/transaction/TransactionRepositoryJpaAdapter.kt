@@ -40,7 +40,10 @@ class TransactionRepositoryJpaAdapter(
             transactionResource = transaction.mapToRightTag()
         }
         return try{
+            // ensure the transaction is linked to the account in DB
+            transactionResource.account = account
             val saved = transactionJpaRepository.save(transactionResource)
+            // update the in-memory account representation
             account.sheets.add(saved)
             account.amount = if(transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
             saved.toModel()
@@ -69,6 +72,7 @@ class TransactionRepositoryJpaAdapter(
     }
 
 
+    @Transactional
     override fun save(accountId: java.util.UUID, transaction: Transaction): Transaction? {
         val tag = if(transaction.tag == null) {
             tagRepository.findUnknownTag()!!
