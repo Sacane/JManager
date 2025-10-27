@@ -4,10 +4,6 @@ import fr.sacane.jmanager.domain.fake.InMemoryRegularTrackerRepository
 import fr.sacane.jmanager.domain.fake.InMemoryTransactionRepository
 import fr.sacane.jmanager.domain.port.FeatureTest
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
-import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
-import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGeneratorService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
