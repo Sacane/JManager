@@ -73,4 +73,11 @@ interface UserRepository {
      * @return persisted User or null on failure
      */
     fun upsert(user: User): User?
+
+    /**
+     * Retrieves all user aggregates stored in the repository.
+     *
+     * @return a list of all users in the repository, or an empty list if none exist.
+     */
+    fun findAll(): List<User>
 }

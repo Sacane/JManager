@@ -19,7 +19,8 @@ class BookletJpaRepositoryAdapter(
 ): BookletRepository {
     @Transactional
     override fun editFromAnother(booklet: Booklet): Booklet? {
-        val accountFromDatabase = accountRepository.findByIdWithSheets(booklet.id!!) ?: return null
+        val id = booklet.id ?: return null
+        val accountFromDatabase = accountRepository.findByIdWithSheets(id) ?: return null
         accountFromDatabase.amount = booklet.amount.value
         return accountFromDatabase.toModel()
     }
@@ -30,26 +31,31 @@ class BookletJpaRepositoryAdapter(
         val user = userRepository.findByIdWithAccount(id) ?: return null
         val accountResource = accountMapper.asResource(booklet)
         val accountSaved = accountRepository.save(accountResource)
+        // attach the persisted account to the managed user entity
         user.addAccount(accountSaved)
         return accountSaved.toModel()
     }
 
+    @Transactional
     override fun findAccountByIdWithTransactions(accountId: UUID): Booklet? {
         val accountResponse = accountRepository.findByIdWithSheets(accountId)
         return accountResponse?.toModel()
     }
 
+    @Transactional
     override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Booklet? {
-        if(userId.value == null) return null
-        return accountRepository.findByOwnerAndLabelWithSheets(userId.value!!, accountLabel)?.toModel() ?: return null
+        val id = userId.value ?: return null
+        return accountRepository.findByOwnerAndLabelWithSheets(id, accountLabel)?.toModel()
     }
 
+    @Transactional
     override fun deleteAccountById(accountId: UUID) {
         val account = accountRepository.findByIdWithRegularTransactions(accountId) ?: return
         account.clearAllRegularTransactions()
         accountRepository.deleteById(accountId)
     }
 
+    @Transactional
     override fun upsert(booklet: Booklet): Booklet {
         return accountRepository.save(accountMapper.asResource(booklet)).also {
             for(transaction in it.sheets) {
@@ -57,11 +63,14 @@ class BookletJpaRepositoryAdapter(
             }
         }.toModel()
     }
+    @Transactional
     override fun update(booklet: Booklet) {
-        accountRepository.update(booklet.label, booklet.amount.value, booklet.previewAmount.value, booklet.id!!)
+        val id = booklet.id ?: return
+        accountRepository.update(booklet.label, booklet.amount.value, booklet.previewAmount.value, id)
     }
 
+    @Transactional
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
-        return userId.value?.let { userId -> accountRepository.findAllBookletsByUserId(userId).map { it.toModel() } } ?: emptyList()
+        return userId.value?.let { id -> accountRepository.findAllBookletsByUserId(id).map { it.toModel() } } ?: emptyList()
     }
 }

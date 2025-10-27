@@ -38,6 +38,7 @@ class SecurityConfig(
             authorizeHttpRequests {
                 authorize("/api/user/create", permitAll)
                 authorize("/api/user/auth", permitAll)
+                authorize("/api/admin/**", hasRole("ADMIN"))
                 authorize("/api/**", authenticated)
                 authorize(anyRequest, permitAll)
             }

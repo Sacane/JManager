@@ -31,7 +31,7 @@ tryOnBeforeMount(() => {
   --pink: #f13c69;
   --grey: #b1aeae;
   --grey-2: #a7a7a7;
-  --text-color: var(--grey-1);
+  --text-color: var(--primary-3);
   --primary-background: #8863eb;
   --primary-light: #66ccff;
   --secondary: #27282C

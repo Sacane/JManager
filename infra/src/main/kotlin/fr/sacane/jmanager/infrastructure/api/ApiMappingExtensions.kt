@@ -33,7 +33,15 @@ internal fun Transaction.toDTO(): TransactionResult {
 
 
 internal fun User.toDTO(): UserDTO
-= UserDTO(this.id.value?.toString() ?: "", this.username, this.email)
+= UserDTO(this.id.value?.toString() ?: "", this.username, this.email, creationDate.toString(), roles = this.roles.map { it.name })
+
+internal fun UserForAdmin.toDTO(): UserDTO
+= UserDTO(
+    this.user.id.value?.toString() ?: "",
+    this.user.username,
+    this.user.email,
+    this.createdDate.toString()
+)
 
 internal fun String.id(): UserId = UserId(java.util.UUID.fromString(this))
 

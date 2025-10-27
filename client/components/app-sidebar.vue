@@ -4,7 +4,7 @@ import Profile from '~/components/Profile.vue'
 import useAuth from '../composables/useAuth'
 import 'primeicons/primeicons.css'
 
-const { isAuthenticated } = useAuth()
+const { isAuthenticated, isAdmin } = useAuth()
 const isSidebarOpen = ref(false)
 const isMobileView = ref(false)
 
@@ -126,6 +126,17 @@ onUnmounted(() => {
             >
               <i class="pi pi-refresh" />
               <span>Transactions régulières</span>
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="isAdmin"
+              to="/admin"
+              class="nav-item admin-item"
+              active-class="nav-item-active"
+              @click="closeOnNavigateIfMobile()"
+            >
+              <i class="pi pi-shield" />
+              <span>Administration</span>
             </NuxtLink>
           </div>
         </nav>
@@ -394,6 +405,23 @@ onUnmounted(() => {
     background: white;
     color: var(--primary);
     transform: translateX(2px);
+  }
+}
+
+.admin-item {
+  margin-top: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  &.nav-item-active {
+    background: rgba(255, 200, 100, 0.95);
+    color: var(--primary);
+    border-color: rgba(255, 200, 100, 1);
   }
 }
 

@@ -74,20 +74,5 @@ data class RegularTransactionEntity(
     fun removeBooklet(account: BookletResource) {
         accounts.removeIf { it.idAccount == account.idAccount }
     }
-
-    companion object {
-        fun fromDomain(transaction: RegularTransaction, owner: UserResource): RegularTransactionEntity {
-            return RegularTransactionEntity(
-                transactionId = transaction.id.value.let { UUID.fromString(it) },
-                startDate = transaction.startDate,
-                label = transaction.label,
-                amount = transaction.amount.value.toDouble(),
-                isIncome = transaction.isIncome,
-                frequencyProperty = FrequencyPropertyEntity.fromDomain(transaction.frequencyProperty),
-                recurrenceRule = RecurrenceRuleEntity.fromDomain(transaction.recurrenceRule),
-                owner = owner
-            )
-        }
-    }
 }
 

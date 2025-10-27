@@ -179,8 +179,8 @@ fun RecurrenceRuleDTO.toDomain(): fr.sacane.jmanager.domain.models.transaction.r
     return when(type.uppercase()) {
         "MONTHLY" -> fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Monthly(value ?: 1)
         "YEARLY" -> {
-            val month = value?.div(100) ?: 1  // Les deux premiers chiffres représentent le mois
-            val day = value?.rem(100) ?: 1    // Les deux derniers chiffres représentent le jour
+            val month = value?.div(100) ?: 1
+            val day = value?.rem(100) ?: 1
             fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Yearly(month, day)
         }
         else -> throw IllegalArgumentException("Unknown recurrence rule type: $type")

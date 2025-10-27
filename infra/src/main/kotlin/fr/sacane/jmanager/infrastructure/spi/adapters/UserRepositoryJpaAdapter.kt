@@ -54,24 +54,37 @@ class UserRepositoryJpaAdapter (
     override fun create(user: UserWithPassword): User?{
         return try{
             val userAsResource = user.user.asResource(user.password)
-            userPostgresRepository.save(userAsResource).toModel()
+            val saved = userPostgresRepository.save(userAsResource)
+            saved.toModel()
         }catch(e: Exception){
-            LOGGER.severe("Failed to save user into database")
+            LOGGER.severe("Failed to save user into database: ${e.message}")
             null
         }
     }
     @Transactional
     override fun register(username: String, password: String, roles: Set<Role>): User? {
-        val userResource = UserResource(username = username, password = password, roles = roles.toMutableSet())
-        val userResponse = userPostgresRepository.save(
-            userResource
-        )
-        return userResponse.toModel()
+        return try {
+            val userResource = UserResource(username = username, password = password, roles = roles.toMutableSet())
+            val userResponse = userPostgresRepository.save(userResource)
+            userResponse.toModel()
+        } catch (e: Exception) {
+            LOGGER.severe("Failed to register user: ${e.message}")
+            null
+        }
     }
     @Transactional
     override fun upsert(user: User): User? {
         val userResource = user.asExistingResource()
-        val userResponse = userPostgresRepository.save(userResource)
-        return userResponse.toModel()
+        return try {
+            val userResponse = userPostgresRepository.save(userResource)
+            userResponse.toModel()
+        } catch (e: Exception) {
+            LOGGER.severe("Failed to upsert user: ${e.message}")
+            null
+        }
+    }
+
+    override fun findAll(): List<User> {
+        return userPostgresRepository.findAll().map { it.toModel() }
     }
 }

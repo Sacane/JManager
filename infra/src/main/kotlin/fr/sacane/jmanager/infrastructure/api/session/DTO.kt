@@ -6,7 +6,9 @@ import kotlinx.serialization.Serializable
 data class UserDTO(
     val id: String,
     val username: String,
-    val email: String? = null
+    val email: String? = null,
+    val createdDate: String? = null,
+    val roles: List<String> = emptyList()
 )
 
 @Serializable
