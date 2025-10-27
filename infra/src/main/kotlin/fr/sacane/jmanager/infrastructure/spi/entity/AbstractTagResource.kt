@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
-import fr.sacane.jmanager.infrastructure.spi.entity.transaction.RegularTransactionEntity
 import jakarta.persistence.*
 import java.util.UUID
 

@@ -2,8 +2,6 @@ package fr.sacane.jmanager.infrastructure.spi.entity
 
 import fr.sacane.jmanager.domain.models.Role
 import jakarta.persistence.*
-import org.hibernate.annotations.CreationTimestamp
-import org.springframework.data.annotation.CreatedDate
 import java.time.LocalDateTime
 import java.util.UUID
 

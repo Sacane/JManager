@@ -2,7 +2,6 @@ package fr.sacane.jmanager.infrastructure.configuration
 
 import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.domain.port.api.UserFeature
-import fr.sacane.jmanager.domain.port.spi.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationListener
@@ -24,8 +23,8 @@ class DataLoader (
         }
         tagFeature.addDefaultTags()
         val adminCreationResult = userFeature.createAdminIfNotExists(adminUsername, adminPassword)
-        if(adminCreationResult.isFailure()){
-            throw IllegalStateException("The admin user could not be created")
+        check(!adminCreationResult.isFailure()){
+            "The admin user could not be created"
         }
         isSetup = true
         log.info("The tags has been loaded successfully")
