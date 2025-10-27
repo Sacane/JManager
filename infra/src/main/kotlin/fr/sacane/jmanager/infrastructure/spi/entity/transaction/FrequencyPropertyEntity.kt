@@ -24,16 +24,6 @@ abstract class FrequencyPropertyEntity(
     open val regularTransaction: RegularTransactionEntity? = null
 ) {
     abstract fun toDomain(): FrequencyProperty
-
-    companion object {
-        fun fromDomain(frequencyProperty: FrequencyProperty): FrequencyPropertyEntity {
-            return when (frequencyProperty) {
-                is FrequencyProperty.Forever -> ForeverEntity()
-                is FrequencyProperty.SpecificRepetitionTimes -> SpecificRepetitionTimesEntity(frequencyProperty.number)
-                is FrequencyProperty.UntilDate -> UntilDateEntity(frequencyProperty.date)
-            }
-        }
-    }
 }
 
 @Entity
