@@ -4,7 +4,6 @@ import fr.sacane.jmanager.domain.Paginator
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.Page
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.models.UserForAdmin
 import fr.sacane.jmanager.domain.models.roleAdmin
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
