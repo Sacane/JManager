@@ -47,7 +47,7 @@ class RegularTransactionGeneratorService(
         val createdTransactions = mutableListOf<Transaction>()
 
         regularTransactions.forEach { regularTransaction ->
-            val regularTxId = regularTransaction.id ?: return@forEach
+            val regularTxId = regularTransaction.id
 
             val tracker = trackerRepository.findTracker(regularTxId, bookletId)
 
@@ -57,11 +57,8 @@ class RegularTransactionGeneratorService(
                 regularTransaction.startDate
             }
 
-            val targetDate = LocalDate.of(
-                targetYear,
-                targetMonth,
-                targetMonth.length(YearMonth.of(targetYear, targetMonth).isLeapYear)
-            )
+            val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
+            val targetDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
 
             val transactionsToCreate = when(val frequency = regularTransaction.frequencyProperty) {
                 is FrequencyProperty.Forever -> generateTransactionsBetween(
@@ -148,6 +145,25 @@ class RegularTransactionGeneratorService(
             return emptyList()
         }
 
+        // Align the initial currentDate for yearly recurrences to the first occurrence >= startDate
+        when (val rule = regularTransaction.recurrenceRule) {
+            is RecurrenceRule.Yearly -> {
+                val month = rule.month
+                val day = rule.dayOfMonth
+                // compute length of that month for the year of currentDate
+                val lengthOfMonth = YearMonth.of(currentDate.year, month).lengthOfMonth()
+                val dayForMonth = if (day > lengthOfMonth) lengthOfMonth else day
+                var first = LocalDate.of(currentDate.year, month, dayForMonth)
+                if (first.isBefore(currentDate)) {
+                    first = first.plusYears(1)
+                }
+                currentDate = first
+            }
+            else -> {
+                // keep startDate as currentDate
+            }
+        }
+
         while (!currentDate.isAfter(effectiveEndDate)) {
 
             if (currentMaxNumber != null && transactionCount >= currentMaxNumber.maxNumber) {
@@ -161,12 +177,21 @@ class RegularTransactionGeneratorService(
             )
 
             if (!existingTransaction) {
-                val transaction = createPrevisionalTransaction(
-                    regularTransaction,
-                    currentDate
-                )
-                transactions.add(transaction)
-                transactionCount++
+                // For weekly rules that specify multiple days, only create when dayOfWeek matches
+                val shouldCreate = when (val rule = regularTransaction.recurrenceRule) {
+                    is RecurrenceRule.Weekly -> rule.daysOfWeek.contains(currentDate.dayOfWeek)
+                    is RecurrenceRule.Yearly -> true
+                    else -> true
+                }
+
+                if (shouldCreate) {
+                    val transaction = createPrevisionalTransaction(
+                        regularTransaction,
+                        currentDate
+                    )
+                    transactions.add(transaction)
+                    transactionCount++
+                }
             }
 
             currentDate = calculateNextOccurrence(currentDate, regularTransaction)
@@ -195,7 +220,7 @@ class RegularTransactionGeneratorService(
 
         return monthTransactions?.any {
             it.label == regularTransaction.label &&
-                    it.date.year == date.year && it.date.month == date.month
+                    it.date.year == date.year && it.date.month == date.month && it.date.dayOfMonth == date.dayOfMonth
         } ?: false
     }
 
@@ -210,13 +235,19 @@ class RegularTransactionGeneratorService(
             is RecurrenceRule.Daily -> date.dayOfMonth
         }
 
-        val adjustedDay = if (day > date.lengthOfMonth()) date.lengthOfMonth() else day
+        val month = when (val rule = regularTransaction.recurrenceRule) {
+            is RecurrenceRule.Yearly -> rule.month
+            else -> date.monthValue
+        }
+
+        val monthLength = YearMonth.of(date.year, month).lengthOfMonth()
+        val adjustedDay = if (day > monthLength) monthLength else day
 
         return Transaction(
             id = null,
             label = regularTransaction.label,
             amount = regularTransaction.amount,
-            date = LocalDate.of(date.year, date.month, adjustedDay),
+            date = LocalDate.of(date.year, month, adjustedDay),
             isPreview = true,
             isIncome = regularTransaction.isIncome,
             regularTransactionId = regularTransaction.id
@@ -231,7 +262,7 @@ class RegularTransactionGeneratorService(
         return when (regularTransaction.recurrenceRule) {
             is RecurrenceRule.Monthly -> currentDate.plusMonths(1)
             is RecurrenceRule.Yearly -> currentDate.plusYears(1)
-            is RecurrenceRule.Weekly -> currentDate.plusWeeks(1)
+            is RecurrenceRule.Weekly -> currentDate.plusDays(1)
             is RecurrenceRule.Daily -> currentDate.plusDays(1)
         }
     }
