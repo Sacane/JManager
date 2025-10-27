@@ -38,7 +38,6 @@ class TransactionRepositoryJpaAdapter(
             val noneTag = tagRepository.findUnknownTag()
             transactionResource = transaction.asResource(noneTag)
         } else if (transaction.tag?.isDefault == true) {
-            // prefer lookup by name for default tags (handles no-id cases)
             val byName = tagRepository.findAll().firstOrNull { it.name == transaction.tag!!.label }
             transactionResource = if (byName != null) {
                 transaction.asResource(byName)
@@ -49,10 +48,8 @@ class TransactionRepositoryJpaAdapter(
             transactionResource = transaction.mapToRightTag()
         }
         return try {
-            // ensure the transaction is linked to the account in DB
             transactionResource.account = account
             val saved = transactionJpaRepository.save(transactionResource)
-            // update the in-memory account representation
             account.sheets.add(saved)
             account.amount = if (transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
             saved.toModel()
@@ -65,11 +62,9 @@ class TransactionRepositoryJpaAdapter(
         val tag = when {
             this.tag == null -> null
             this.tag!!.id != null -> {
-                // prefer lookup by id when provided
                 if (this.tag!!.isDefault) tagRepository.findByIdNullable(this.tag!!.id!!) else tagPersonalPostgresRepository.findByIdNullable(this.tag!!.id!!)
             }
             this.tag!!.isDefault -> {
-                // no id provided but default tag: lookup by name
                 tagRepository.findAll().firstOrNull { it.name == this.tag!!.label } ?: (this.tag!!.asResource() as DefaultTagResource)
             }
             else -> null
