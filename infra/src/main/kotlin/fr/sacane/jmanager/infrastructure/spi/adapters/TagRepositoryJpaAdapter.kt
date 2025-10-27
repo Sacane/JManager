@@ -22,22 +22,20 @@ class TagRepositoryJpaAdapter(
 ): TagRepository {
     @Transactional
     override fun save(userId: UserId, tag: Tag): Tag? {
-        val user = userPostgresRepository.findByIdWithTags(userId.value) ?: return null
+        val id = userId.value ?: return null
+        val user = userPostgresRepository.findByIdWithTags(id) ?: return null
         val tag1 = tag.toPersonalTag()
         val saved = tagPersonalPostgresRepository.save(tag1)
-        user.addTag(tag1)
+        // attach the persisted tag to the user
+        user.addTag(saved)
         return saved.toDomain()
     }
     @Transactional
     override fun getAll(userId: UserId)
     : List<Tag> {
-        if(userId.value == null) return emptyList()
-        return userId.value?.let { id ->
-            tagPersonalPostgresRepository.findAllByOwnerId(id)
-                .map { it.toDomain() }.plus(
-                    defaultTagPostgresRepository.findAll().map { it.toDomain() }
-                )
-        } ?: emptyList()
+        val id = userId.value ?: return emptyList()
+        return tagPersonalPostgresRepository.findAllByOwnerId(id)
+            .map { it.toDomain() }.plus(defaultTagPostgresRepository.findAll().map { it.toDomain() })
     }
     @Transactional
     override fun deleteByLabel(label: String) {
@@ -87,11 +85,8 @@ class TagRepositoryJpaAdapter(
     }
 
     override fun existsAnotherTagByLabel(userId: UserId, tag: Tag): Boolean {
-        val tagInBase = userId.value?.let {
-            tagPersonalPostgresRepository.findByNameAndOwnerId(tag.label,
-                it
-            )
-        }
+        val id = userId.value ?: return false
+        val tagInBase = tagPersonalPostgresRepository.findByNameAndOwnerId(tag.label, id)
         return tagInBase != null && tagInBase.idTag != tag.id
     }
 }
