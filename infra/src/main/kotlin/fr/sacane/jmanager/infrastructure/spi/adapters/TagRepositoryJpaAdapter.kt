@@ -67,7 +67,8 @@ class TagRepositoryJpaAdapter(
     }
 
     override fun defaultTag(): Tag {
-        return defaultTagPostgresRepository.findByName(Tag.noneTag().label)?.toDomain() ?: error("No default tag found")
+        val found = defaultTagPostgresRepository.findAll().firstOrNull { it.name == Tag.noneTag().label }
+        return found?.toDomain() ?: error("No default tag found")
     }
 
     @Transactional
@@ -75,7 +76,7 @@ class TagRepositoryJpaAdapter(
         try {
             tag.id?.let { tagPersonalPostgresRepository.patchTag(it, tag.label, tag.color.red, tag.color.green, tag.color.blue) } ?: return null
             return tag
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return null
         }
     }

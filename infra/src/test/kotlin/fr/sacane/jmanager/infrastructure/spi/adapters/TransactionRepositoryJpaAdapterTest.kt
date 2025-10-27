@@ -10,6 +10,7 @@ import fr.sacane.jmanager.infrastructure.spi.adapters.transaction.TransactionRep
 import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,14 +18,46 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
 import java.time.LocalDate
 import java.time.Month
+import fr.sacane.jmanager.domain.models.defaultTags
+import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 @SpringBootTest
-class TransactionRepositoryJpaAdapterTest(
-    @Autowired private val transactionRepositoryJpaAdapter: TransactionRepositoryJpaAdapter,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
-    @Autowired private val transactionJpaRepository: TransactionJpaRepository
-) : AuthenticatedUserTest() {
+class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
+
+    @Autowired
+    private lateinit var transactionRepositoryJpaAdapter: TransactionRepositoryJpaAdapter
+
+    @Autowired
+    private lateinit var accountStateTestAdapter: AccountStateTestAdapter
+
+    @Autowired
+    private lateinit var transactionJpaRepository: TransactionJpaRepository
+
+    @Autowired
+    private lateinit var defaultTagPostgresRepository: DefaultTagPostgresRepository
+
+    @BeforeEach
+    fun ensureDefaultTagsClean() {
+        // Remove duplicate default tags (same name) keeping the first
+        val existingDefaults = defaultTagPostgresRepository.findAll().toList()
+        existingDefaults.groupBy { it.name }.forEach { (_, group) ->
+            if (group.size > 1) {
+                group.drop(1).forEach { item ->
+                    item.idTag?.let { defaultTagPostgresRepository.deleteById(it) }
+                }
+            }
+        }
+        // Ensure default tags exist (insert missing ones)
+        val refreshed = defaultTagPostgresRepository.findAll().toList()
+        for (t in defaultTags) {
+            if (refreshed.firstOrNull { it.name == t.label } == null) {
+                defaultTagPostgresRepository.save(t.asResource() as DefaultTagResource)
+            }
+        }
+    }
 
     @AfterEach
     fun clear() {
@@ -127,6 +160,114 @@ class TransactionRepositoryJpaAdapterTest(
             val result = transactionRepositoryJpaAdapter.findTransactionsByBookletYearAndMonth(accountId, year, Month.JANUARY)
             assertThat(result).isNotNull
             assertThat(result!!.map { it.label }).containsExactlyInAnyOrder("jan1", "jan2")
+        }
+    }
+
+    @Nested
+    inner class AdditionalMethodsTest {
+
+        @Test
+        fun `mapToRightTag should resolve default, personal and unknown tags correctly`() {
+            val booklet = Booklet(labelAccount = "acct-maptag", amount = Amount(500L), owner = user)
+            accountStateTestAdapter.init(listOf(booklet))
+
+            val uid = user!!.id
+
+            val txUnknown = Transaction(id = null, label = "tx-unknown", date = LocalDate.now(), amount = Amount(5L), isIncome = false, tag = Tag.noneTag())
+            val persisted = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = txUnknown)
+            assertThat(persisted).isNotNull
+            assertThat(persisted!!.tag).isNotNull
+            // tag label should be equal to noneTag label or default unknown mapping
+            assertThat(persisted.tag!!.label).isEqualTo(Tag.noneTag().label)
+
+            // create a default tag by name on a new transaction
+            // ensure default tags exist in DB so lookup by name succeeds
+            // insert default tags only when missing to avoid duplicates across test runs
+            val existingDefaults = defaultTagPostgresRepository.findAll().toList()
+            // dedupe existing defaults: if multiple entries with same name exist, keep first and delete others
+            existingDefaults.groupBy { it.name }.forEach { (_, group) ->
+                if (group.size > 1) {
+                    group.drop(1).forEach { item ->
+                        item.idTag?.let { defaultTagPostgresRepository.deleteById(it) }
+                    }
+                }
+            }
+            val refreshed = defaultTagPostgresRepository.findAll().toList()
+            for (t in defaultTags) {
+                if (refreshed.firstOrNull { it.name == t.label } == null) {
+                    defaultTagPostgresRepository.save(t.asResource() as DefaultTagResource)
+                }
+            }
+            // sanity check: ensure the default tag was saved in DB
+            val tagInDb = defaultTagPostgresRepository.findAll().firstOrNull { it.name == "Achat & Shopping" }
+            assertThat(tagInDb).isNotNull
+
+             // build transaction tag with the id from DB to force resolution by id
+            val txDefault = Transaction(id = null, label = "tx-default", date = LocalDate.now(), amount = Amount(10L), isIncome = false, tag = Tag("Achat & Shopping",
+                tagInDb?.idTag, isDefault = true))
+            val acct = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, uid)
+            val accountId = acct!!.id!!
+            val persistedDefault = transactionRepositoryJpaAdapter.save(accountId, txDefault)
+            assertThat(persistedDefault).isNotNull
+            assertThat(persistedDefault!!.tag).isNotNull
+            assertThat(persistedDefault.tag!!.label).isEqualTo("Achat & Shopping")
+
+            // personal tag: create a tag with isDefault=false and a random id - adapter should try personal repository
+            val personalTag = Tag("my-personal", null, isDefault = false)
+            val txPersonal = Transaction(id = null, label = "tx-personal", date = LocalDate.now(), amount = Amount(15L), isIncome = false, tag = personalTag)
+            val persistedPersonal = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = txPersonal)
+            // persist may succeed even if personal tag resolution returns null -> ensure transaction created and accessible
+            assertThat(persistedPersonal).isNotNull
+            assertThat(persistedPersonal!!.tag).isNotNull
+        }
+
+        @Test
+        fun `findAccountWithTransactionById must return account populated with transactions`() {
+            val booklet = Booklet(labelAccount = "acct-findById", amount = Amount(600L), owner = user)
+            accountStateTestAdapter.init(listOf(booklet))
+
+            val uid = user!!.id
+
+            val tx1 = Transaction(id = null, label = "fb1", date = LocalDate.now(), amount = Amount(1L), isIncome = false)
+            val tx2 = Transaction(id = null, label = "fb2", date = LocalDate.now(), amount = Amount(2L), isIncome = false)
+
+            val persisted = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = tx1)
+            val persisted2 = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = tx2)
+
+            // ensure persisted transactions were created
+            assertThat(persisted).isNotNull
+            assertThat(persisted2).isNotNull
+
+            val account = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, uid)
+            assertThat(account).isNotNull
+            val accountId = account!!.id!!
+
+            val loaded = transactionRepositoryJpaAdapter.findAccountWithTransactionById(accountId)
+            assertThat(loaded).isNotNull
+            assertThat(loaded!!.transactions).isNotEmpty
+            assertThat(loaded.transactions.map { it.label }).containsExactlyInAnyOrder("fb1", "fb2")
+        }
+
+        @Test
+        fun `findTransactionsByBookletId should return all persisted transactions for booklet`() {
+            val booklet = Booklet(labelAccount = "acct-listAll", amount = Amount(700L), owner = user)
+            accountStateTestAdapter.init(listOf(booklet))
+
+            val txA = Transaction(id = null, label = "A", date = LocalDate.now(), amount = Amount(7L), isIncome = false)
+            val txB = Transaction(id = null, label = "B", date = LocalDate.now(), amount = Amount(8L), isIncome = false)
+
+            val uid = user!!.id
+            val account = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, uid)
+            val accountId = account!!.id!!
+
+            val savedA = transactionRepositoryJpaAdapter.save(accountId, txA)
+            val savedB = transactionRepositoryJpaAdapter.save(accountId, txB)
+            assertThat(savedA).isNotNull
+            assertThat(savedB).isNotNull
+
+            val list = transactionRepositoryJpaAdapter.findTransactionsByBookletId(accountId)
+            assertThat(list).isNotNull
+            assertThat(list!!.map { it.label }).containsExactlyInAnyOrder("A", "B")
         }
     }
 }

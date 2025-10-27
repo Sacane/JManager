@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
+import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
@@ -33,32 +34,45 @@ class TransactionRepositoryJpaAdapter(
         val id = userId.value ?: return null
         val account = bookletJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
         val transactionResource: TransactionResource
-        if(transaction.tag?.label == Tag.noneTag().label){
+        if (transaction.tag?.label == Tag.noneTag().label) {
             val noneTag = tagRepository.findUnknownTag()
             transactionResource = transaction.asResource(noneTag)
+        } else if (transaction.tag?.isDefault == true) {
+            // prefer lookup by name for default tags (handles no-id cases)
+            val byName = tagRepository.findAll().firstOrNull { it.name == transaction.tag!!.label }
+            transactionResource = if (byName != null) {
+                transaction.asResource(byName)
+            } else {
+                transaction.mapToRightTag()
+            }
         } else {
             transactionResource = transaction.mapToRightTag()
         }
-        return try{
+        return try {
             // ensure the transaction is linked to the account in DB
             transactionResource.account = account
             val saved = transactionJpaRepository.save(transactionResource)
             // update the in-memory account representation
             account.sheets.add(saved)
-            account.amount = if(transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
+            account.amount = if (transactionResource.isIncome!!) transactionResource.value + account.amount else account.amount - transactionResource.value
             saved.toModel()
-        }catch(e: Exception){
+        } catch (_: Exception) {
             null
         }
     }
 
     fun Transaction.mapToRightTag(): TransactionResource {
-        val tag = this.tag?.id?.let {
-            if(this.tag?.isDefault == true) {
-                tagRepository.findByIdNullable(it)
-            } else {
-                tagPersonalPostgresRepository.findByIdNullable(it)
+        val tag = when {
+            this.tag == null -> null
+            this.tag!!.id != null -> {
+                // prefer lookup by id when provided
+                if (this.tag!!.isDefault) tagRepository.findByIdNullable(this.tag!!.id!!) else tagPersonalPostgresRepository.findByIdNullable(this.tag!!.id!!)
             }
+            this.tag!!.isDefault -> {
+                // no id provided but default tag: lookup by name
+                tagRepository.findAll().firstOrNull { it.name == this.tag!!.label } ?: (this.tag!!.asResource() as DefaultTagResource)
+            }
+            else -> null
         }
         return this.asResource(tag)
     }
@@ -77,7 +91,7 @@ class TransactionRepositoryJpaAdapter(
         val tag = if (transaction.tag == null) {
             tagRepository.findUnknownTag()
         } else if (transaction.tag!!.isDefault) {
-            tagRepository.findByName(transaction.tag!!.label)
+            tagRepository.findAll().firstOrNull { it.name == transaction.tag!!.label }
         } else {
             tagPersonalPostgresRepository.findByIdNullable(transaction.tag?.id!!)
         }
