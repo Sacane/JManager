@@ -74,10 +74,9 @@ class TransactionRepositoryJpaAdapter(
 
     @Transactional
     override fun save(accountId: java.util.UUID, transaction: Transaction): Transaction? {
-        val tag = if(transaction.tag == null) {
-            tagRepository.findUnknownTag()!!
-        }
-        else if(transaction.tag!!.isDefault){
+        val tag = if (transaction.tag == null) {
+            tagRepository.findUnknownTag()
+        } else if (transaction.tag!!.isDefault) {
             tagRepository.findByName(transaction.tag!!.label)
         } else {
             tagPersonalPostgresRepository.findByIdNullable(transaction.tag?.id!!)

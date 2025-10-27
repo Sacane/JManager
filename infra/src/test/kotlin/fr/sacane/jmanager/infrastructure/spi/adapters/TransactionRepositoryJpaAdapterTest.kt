@@ -28,7 +28,6 @@ class TransactionRepositoryJpaAdapterTest(
 
     @AfterEach
     fun clear() {
-        // cleanup persisted data between tests
         transactionJpaRepository.deleteAll()
         accountStateTestAdapter.clear()
     }
