@@ -66,6 +66,22 @@ jacoco {
     toolVersion = "0.8.12"
 }
 
+tasks.test {
+    useJUnitPlatform()
+
+    // Paralléliser les tests pour améliorer les performances
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+
+    // Optimisations JVM pour les tests
+    jvmArgs(
+        "-XX:+UseParallelGC",
+        "-XX:MaxRAMPercentage=80.0"
+    )
+
+    // Réutilisation des conteneurs Testcontainers
+    systemProperty("testcontainers.reuse.enable", "true")
+}
+
 tasks.jacocoTestReport {
     reports {
         xml.required.set(true)  // Important pour SonarQube

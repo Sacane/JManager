@@ -21,6 +21,13 @@ jacoco {
     toolVersion = "0.8.12"
 }
 
+tasks.test {
+    useJUnitPlatform()
+
+    // Paralléliser les tests pour améliorer les performances
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+}
+
 tasks.jacocoTestReport {
     reports {
         xml.required.set(true)
