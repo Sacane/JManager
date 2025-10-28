@@ -39,7 +39,17 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: ./gradlew sonar --info  # Run SonarQube analysis
-
+      - name: Wait for SonarQube Quality Gate result
+        id: sonarqube-quality-gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      - name: Fail build if Quality Gate failed
+        if: steps.sonarqube-quality-gate.outputs.quality-gate-status != 'PASSED'
+        run: |
+          echo "❌ Quality Gate failed! Coverage or code quality is below threshold."
+          exit 1
   build:
     name: Build and deploy
     runs-on: self-hosted
@@ -82,4 +92,3 @@ jobs:
 
       - name: Copy JAR to VPS
         run: scp -P ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=no -r ./executables/Jmanager-1.0.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/jmanager/
-
