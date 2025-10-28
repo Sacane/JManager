@@ -69,13 +69,13 @@ jacoco {
 tasks.test {
     useJUnitPlatform()
 
-    // Paralléliser les tests pour améliorer les performances
-    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+    // Limiter la parallélisation pour éviter de surcharger le runner
+    maxParallelForks = 1
 
-    // Optimisations JVM pour les tests
+    // Optimisations JVM légères pour les tests
     jvmArgs(
-        "-XX:+UseParallelGC",
-        "-XX:MaxRAMPercentage=80.0"
+        "-Xmx512m",
+        "-XX:MaxMetaspaceSize=256m"
     )
 
     // Réutilisation des conteneurs Testcontainers

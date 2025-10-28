@@ -36,7 +36,7 @@ jobs:
       - name: allow permission
         run: chmod +x ./gradlew
       - name: Run tests
-        run: ./gradlew :domain:test :infra:test jacocoTestReport --info --stacktrace --parallel --build-cache  # Run Gradle tests with parallelization
+        run: ./gradlew :domain:test :infra:test jacocoTestReport --info --stacktrace  # Run Gradle tests sequentially
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

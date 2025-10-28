@@ -24,8 +24,11 @@ jacoco {
 tasks.test {
     useJUnitPlatform()
 
-    // Paralléliser les tests pour améliorer les performances
-    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+    // Limiter la parallélisation pour éviter de surcharger le runner
+    maxParallelForks = 1
+
+    // Optimisations JVM légères
+    jvmArgs("-Xmx256m")
 }
 
 tasks.jacocoTestReport {
