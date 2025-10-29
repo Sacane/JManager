@@ -7,7 +7,7 @@ plugins {
 
 group = "fr.sacane.jmanager"
 node {
-  version.set("20.13.1") // lts version
+  version.set("22.19.0")
   distBaseUrl.set("https://nodejs.org/dist")
   download.set(true)
   nodeProjectDir.set(file("${rootProject.projectDir}/client"))
