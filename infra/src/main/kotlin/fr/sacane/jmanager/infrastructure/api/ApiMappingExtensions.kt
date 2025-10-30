@@ -58,7 +58,19 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.BOOKLET_LABEL_EXIST,
     ResultState.TRANSACTION_ENTRY_ERROR,
     ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
-    ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR -> throw InvalidRequestException(this.status.code, this.message)
+    ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR,
+    ResultState.CSV_EMPTY_FILE,
+    ResultState.CSV_INVALID_HEADER,
+    ResultState.CSV_MISSING_COLUMNS,
+    ResultState.CSV_EXTRA_COLUMNS,
+    ResultState.CSV_MALFORMED_LINE,
+    ResultState.CSV_INVALID_DATE_FORMAT,
+    ResultState.CSV_INVALID_AMOUNT_FORMAT,
+    ResultState.CSV_MISSING_REQUIRED_FIELD,
+    ResultState.CSV_BOTH_AMOUNTS_FILLED,
+    ResultState.CSV_NO_AMOUNT_FILLED,
+    ResultState.CSV_NEGATIVE_AMOUNT,
+    ResultState.CSV_POSSIBLE_COLUMN_SWAP -> throw InvalidRequestException(this.status.code, this.message)
     ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.status.code, this.message)
     ResultState.TIMEOUT  -> throw TimeOutException(this.status.code, this.message)
     ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED,

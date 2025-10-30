@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.csv.CsvImportResult
 import fr.sacane.jmanager.domain.models.csv.CsvTransactionLine
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
+import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
 import fr.sacane.jmanager.domain.port.spi.CsvFileReader
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
@@ -13,6 +14,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionValidator
+import fr.sacane.jmanager.domain.usecase.csv.CsvFileValidator
 import fr.sacane.jmanager.domain.utils.*
 import java.util.*
 import java.util.logging.Logger
@@ -30,6 +32,20 @@ import java.util.logging.Logger
  * - tag
  */
 sealed interface CsvImportFeature {
+
+    /**
+     * Validates CSV content before import
+     *
+     * @param token Authentication token
+     * @param bookletId ID of the booklet to import transactions into
+     * @param csvContent CSV file content (raw text)
+     * @return Result containing CsvValidationReport with warnings or error with first critical issue
+     */
+    fun validateCsvFile(
+        token: String,
+        bookletId: UUID,
+        csvContent: String
+    ): Result<CsvValidationReport>
 
     /**
      * Imports transactions from CSV content for a given booklet
@@ -68,6 +84,42 @@ class CsvImportFeatureImpl(
     }
 
     private val validator = CsvTransactionValidator()
+    private val fileValidator = CsvFileValidator()
+
+    override fun validateCsvFile(
+        token: String,
+        bookletId: UUID,
+        csvContent: String
+    ): Result<CsvValidationReport> {
+        return sessionManager.authenticate(token) { userId ->
+            val booklet = bookletRepository.findAccountByIdWithTransactions(bookletId)
+                ?: return@authenticate notFound("Booklet with id '$bookletId' does not exist")
+
+            if (booklet.owner?.id?.value != userId.value) {
+                return@authenticate forbidden("You do not have access to this booklet")
+            }
+
+            val userTags = tagRepository.getAllDefault(userId)
+
+            try {
+                val rows = csvFileReader.readCsvContent(csvContent)
+                val validationResult = fileValidator.validate(rows, userTags)
+                
+                validationResult.mapNullable { report ->
+                    if (report != null) {
+                        logger.info("CSV validation completed: ${report.totalLines} lines, ${report.validLines} valid, ${report.warnings.size} warnings")
+                    } else {
+                        logger.warning("CSV validation failed: ${validationResult.message}")
+                    }
+                }
+
+                validationResult
+            } catch (e: Exception) {
+                logger.severe("Error during CSV validation: ${e.message}")
+                failure(ResultState.INTERNAL_SERVER_ERROR, "Error during validation: ${e.message}")
+            }
+        }
+    }
 
     override fun importTransactionsFromCsv(
         token: String,

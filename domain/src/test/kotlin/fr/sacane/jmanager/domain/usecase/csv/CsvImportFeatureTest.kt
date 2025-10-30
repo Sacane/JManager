@@ -6,10 +6,273 @@ import fr.sacane.jmanager.domain.port.FeatureTest
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.DisplayName
 
+@DisplayName("CsvImportFeature Tests")
 class CsvImportFeatureTest : FeatureTest() {
 
     private val csvImportFeature = FakeFactory.csvImportFeature
+
+    @Test
+    @DisplayName("Should fail validation when user is not authenticated")
+    fun `validateCsvFile should fail when user is not authenticated`() {
+        val invalidToken = "invalid-token"
+
+        val result = csvImportFeature.validateCsvFile(
+            invalidToken,
+            java.util.UUID.randomUUID(),
+            "csv content"
+        )
+
+        assertTrue(result.isFailure())
+        assertEquals(ResultState.UNAUTHORIZED, result.status)
+    }
+
+    @Test
+    @DisplayName("Should fail validation when booklet does not exist")
+    fun `validateCsvFile should fail when booklet does not exist`() {
+        launchWithConnectedUserInstance {
+            val nonExistentBookletId = java.util.UUID.randomUUID()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                nonExistentBookletId,
+                "csv content"
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.NOT_FOUND, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when user does not own the booklet")
+    fun `validateCsvFile should fail when user does not own the booklet`() {
+        launchWithConnectedUserInstance {
+            val otherUser = createAccount(
+                fr.sacane.jmanager.domain.models.User(
+                    fr.sacane.jmanager.domain.models.UserId(java.util.UUID.randomUUID()),
+                    "otherUser",
+                    "other@test.fr"
+                ),
+                "other account",
+                100.toAmount()
+            )
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                otherUser.id!!,
+                "csv content"
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.FORBIDDEN, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when CSV is empty")
+    fun `validateCsvFile should fail when CSV is empty`() {
+        launchWithConnectedUserInstance {
+            val csvContent = ""
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.CSV_EMPTY_FILE, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when CSV header is invalid")
+    fun `validateCsvFile should fail when CSV header is invalid`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,wrong_column,recette,tag
+                15-01-2025,Test,10.00,,
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.CSV_INVALID_HEADER, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when a line has invalid date format")
+    fun `validateCsvFile should fail when line has invalid date format`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                2025-01-15,Test,10.00,,
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.CSV_INVALID_DATE_FORMAT, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should succeed validation with valid CSV and no warnings")
+    fun `validateCsvFile should succeed with valid CSV`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Groceries,45.50,,Alimentation & Restaurant
+                16-01-2025,Salary,,2500.00,Aucune
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                assertEquals(2, report.totalLines)
+                assertEquals(2, report.validLines)
+                assertEquals(0, report.warnings.size)
+                assertEquals(0, report.suggestions.size)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should succeed validation with warnings for unknown tags")
+    fun `validateCsvFile should succeed with warnings when tag is unknown`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Groceries,45.50,,UnknownTag
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                assertEquals(1, report.totalLines)
+                assertEquals(1, report.validLines)
+                assertEquals(1, report.warnings.size)
+                assertTrue(report.warnings[0].message.contains("UnknownTag"))
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when both amounts are filled")
+    fun `validateCsvFile should fail when both depense and recette are filled`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Test,45.50,100.00,
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.CSV_BOTH_AMOUNTS_FILLED, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when no amount is filled")
+    fun `validateCsvFile should fail when neither amount is filled`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Test,,,
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.CSV_NO_AMOUNT_FILLED, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when amount is negative")
+    fun `validateCsvFile should fail when amount is negative`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Test,-45.50,,
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.CSV_NEGATIVE_AMOUNT, result.status)
+        }
+    }
+
+    @Test
+    @DisplayName("Should accept comma as decimal separator")
+    fun `validateCsvFile should accept comma as decimal separator`() {
+        launchWithConnectedUserInstance {
+            val csvContent = "date,label,depense,recette,tag\n15-01-2025,Test,\"45,50\",,\n"
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess(), "Expected success but got: ${result.status} - ${result.message}")
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when columns have wrong count")
+    fun `validateCsvFile should fail when line has wrong column count`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Test,45.50
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+            assertEquals(ResultState.CSV_MALFORMED_LINE, result.status)
+        }
+    }
 
     @Test
     fun `importTransactionsFromCsv should fail when user is not authenticated`() {
