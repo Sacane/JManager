@@ -22,7 +22,42 @@ class CsvTransactionValidator {
     }
 
     /**
+     * Converts a CSV line to Transaction without validation (assumes data is already validated)
+     * Use this method when the CSV has been validated by CsvFileValidator first
+     *
+     * @param line The CSV line to convert
+     * @param availableTags Available tags for the user
+     * @return CsvLineResult.Success with the transaction
+     */
+    fun convertToTransaction(line: CsvTransactionLine, availableTags: List<Tag>): CsvLineResult {
+        val date = LocalDate.parse(line.date.trim(), DATE_FORMATTER)
+        val label = line.label.trim()
+
+        val (amount, isIncome) = if (line.depense.isNotBlank()) {
+            val value = BigDecimal(line.depense.trim().replace(',', '.'))
+            Pair(Amount(value), false)
+        } else {
+            val value = BigDecimal(line.recette.trim().replace(',', '.'))
+            Pair(Amount(value), true)
+        }
+
+        val tag = findOrDefaultTag(line.tag, availableTags)
+
+        return CsvLineResult.Success(
+            Transaction(
+                id = null,
+                label = label,
+                date = date,
+                amount = amount,
+                isIncome = isIncome,
+                tag = tag
+            )
+        )
+    }
+
+    /**
      * Valide et convertit une ligne CSV en Transaction
+     * Use this when you need both validation and conversion (e.g., when not using CsvFileValidator first)
      *
      * @param line La ligne CSV à valider
      * @param availableTags Les tags disponibles pour l'utilisateur
@@ -31,16 +66,9 @@ class CsvTransactionValidator {
     fun validateAndConvert(line: CsvTransactionLine, availableTags: List<Tag>): CsvLineResult {
         val errors = mutableListOf<String>()
 
-        // Validation de la date
         val date = validateDate(line.date, errors)
-
-        // Validation du label
         val label = validateLabel(line.label, errors)
-
-        // Validation des montants (dépense et recette)
         val (amount, isIncome) = validateAmounts(line.depense, line.recette, errors)
-
-        // Validation du tag
         val tag = validateTag(line.tag, availableTags)
 
         return if (errors.isEmpty() && date != null && label != null && amount != null) {
@@ -57,6 +85,27 @@ class CsvTransactionValidator {
         } else {
             CsvLineResult.Error(line.lineNumber, errors)
         }
+    }
+
+    private fun findOrDefaultTag(tagStr: String, availableTags: List<Tag>): Tag {
+        if (tagStr.isBlank()) {
+            return Tag.noneTag()
+        }
+
+        val trimmedTag = tagStr.trim()
+        val matchingTag = availableTags.firstOrNull {
+            it.label.equals(trimmedTag, ignoreCase = true)
+        }
+
+        if (matchingTag != null) {
+            return matchingTag
+        }
+
+        val defaultTag = defaultTags.firstOrNull {
+            it.label.equals(trimmedTag, ignoreCase = true)
+        }
+
+        return defaultTag ?: Tag.noneTag()
     }
 
     private fun validateDate(dateStr: String, errors: MutableList<String>): LocalDate? {

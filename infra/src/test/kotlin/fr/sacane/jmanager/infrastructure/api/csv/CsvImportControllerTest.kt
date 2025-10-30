@@ -307,8 +307,8 @@ class CsvImportControllerTest(
         }
 
         @Test
-        @DisplayName("Should handle partial import with errors")
-        fun `should handle import with some errors`() {
+        @DisplayName("Should reject CSV with validation errors")
+        fun `should reject CSV with validation errors`() {
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Valid Transaction,45.50,,Alimentation & Restaurant\ninvalid-date,Invalid Transaction,30.00,,\n17-01-2025,Another Valid,25.00,,\n"
             val file = createTempCsvFile(csvContent)
 
@@ -319,10 +319,31 @@ class CsvImportControllerTest(
             } When {
                 post("/api/csv/import/$bookletId")
             } Then {
+                statusCode(400)
+                body("detail", containsString("CSV validation failed"))
+                body("detail", containsString("Invalid date format"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should import all valid transactions successfully")
+        fun `should import all valid transactions when CSV is valid`() {
+            val csvContent = "date,label,depense,recette,tag\n15-01-2025,Transaction 1,45.50,,Alimentation & Restaurant\n16-01-2025,Transaction 2,30.00,,Transport\n17-01-2025,Transaction 3,25.00,,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
                 statusCode(200)
-                body("successCount", greaterThan(0))
-                body("failedCount", greaterThan(0))
-                body("hasErrors", equalTo(true))
+                body("successCount", equalTo(3))
+                body("failedCount", equalTo(0))
+                body("totalProcessed", equalTo(3))
+                body("hasErrors", equalTo(false))
+                body("transactions.size()", equalTo(3))
             }
         }
     }
