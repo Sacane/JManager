@@ -7,22 +7,26 @@ import fr.sacane.jmanager.domain.models.csv.CsvLineResult
 import kotlinx.serialization.Serializable
 
 /**
- * DTO for CSV validation report (success case with warnings)
+ * DTO for CSV validation report
  */
 @Serializable
 data class CsvValidationReportDTO(
     val totalLines: Int,
     val validLines: Int,
-    val warnings: List<CsvValidationWarningDTO>,
-    val suggestions: List<String>
+    val errors: List<CsvValidationIssueDTO>,
+    val warnings: List<CsvValidationIssueDTO>,
+    val suggestions: List<String>,
+    val hasErrors: Boolean,
+    val canImport: Boolean
 )
 
 /**
- * DTO for CSV validation warning
+ * DTO for CSV validation issue (error or warning)
  */
 @Serializable
-data class CsvValidationWarningDTO(
+data class CsvValidationIssueDTO(
     val lineNumber: Int,
+    val type: String,
     val message: String,
     val detectedValue: String?
 )
@@ -66,14 +70,18 @@ fun CsvValidationReport.toDTO(): CsvValidationReportDTO {
     return CsvValidationReportDTO(
         totalLines = this.totalLines,
         validLines = this.validLines,
+        errors = this.errors.map { it.toDTO() },
         warnings = this.warnings.map { it.toDTO() },
-        suggestions = this.suggestions
+        suggestions = this.suggestions,
+        hasErrors = this.hasErrors,
+        canImport = this.canImport
     )
 }
 
-fun CsvValidationIssue.toDTO(): CsvValidationWarningDTO {
-    return CsvValidationWarningDTO(
+fun CsvValidationIssue.toDTO(): CsvValidationIssueDTO {
+    return CsvValidationIssueDTO(
         lineNumber = this.lineNumber,
+        type = this.type.name,
         message = this.message,
         detectedValue = this.detectedValue
     )

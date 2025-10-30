@@ -42,7 +42,7 @@ class CsvImportController(
         LOGGER.info("Validating CSV file for booklet $bookletId")
 
         if (file.isEmpty) {
-            return ResponseEntity.badRequest().build<CsvValidationReportDTO>()
+            return ResponseEntity.badRequest().build()
         }
 
         val csvContent = String(file.bytes, Charsets.UTF_8)

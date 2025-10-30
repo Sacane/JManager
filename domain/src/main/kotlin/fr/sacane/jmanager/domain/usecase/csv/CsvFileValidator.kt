@@ -8,7 +8,6 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.logging.Logger
 
 /**
  * Validator for CSV file analysis before import
@@ -19,7 +18,6 @@ import java.util.logging.Logger
 class CsvFileValidator {
 
     companion object {
-        private val logger = Logger.getLogger(CsvFileValidator::class.java.name)
         private val DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy")
         private const val EXPECTED_COLUMN_COUNT = 5
         private val EXPECTED_HEADERS = listOf("date", "label", "depense", "recette", "tag")
@@ -32,23 +30,31 @@ class CsvFileValidator {
     }
 
     /**
-     * Validates a CSV file content and returns Result with validation report or error
+     * Validates a CSV file content and returns Result with validation report
+     * Always returns success - errors are included in the report, not as Result failure
      *
      * @param rows List of CSV rows (including header)
      * @param availableTags Available tags for the user
-     * @return Result<CsvValidationReport> - Success with warnings or Failure with first critical error
+     * @return Result<CsvValidationReport> - Always success with errors/warnings in the report
      */
     fun validate(rows: List<Array<String>>, availableTags: List<Tag>): Result<CsvValidationReport> {
+        val errors = mutableListOf<CsvValidationIssue>()
         val warnings = mutableListOf<CsvValidationIssue>()
         val suggestions = mutableListOf<String>()
 
         if (rows.isEmpty()) {
-            return failure(ResultState.CSV_EMPTY_FILE, "CSV file is empty")
+            errors.add(CsvValidationIssue(
+                lineNumber = 0,
+                type = CsvReportType.EMPTY_FILE,
+                message = "CSV file is empty"
+            ))
+            return success(CsvValidationReport(0, 0, errors, warnings, suggestions))
         }
 
         val headerValidation = validateHeader(rows[0])
-        if (headerValidation.isFailure()) {
-            return headerValidation.map { CsvValidationReport(0, 0) }
+        if (headerValidation != null) {
+            errors.add(headerValidation)
+            return success(CsvValidationReport(0, 0, errors, warnings, suggestions))
         }
 
         val dataRows = rows.drop(1)
@@ -58,14 +64,12 @@ class CsvFileValidator {
             val lineNumber = index + 2
             val lineValidation = validateDataLine(row, lineNumber, availableTags)
 
-            if (lineValidation.isFailure()) {
-                return lineValidation.map { CsvValidationReport(dataRows.size, 0) }
+            if (lineValidation.error != null) {
+                errors.add(lineValidation.error)
+            } else {
+                lineValidation.warnings?.let { warnings.addAll(it) }
+                validLineCount++
             }
-
-            lineValidation.mapNullable { lineWarnings ->
-                lineWarnings?.let { warnings.addAll(it) }
-            }
-            validLineCount++
         }
 
         detectColumnSwapPatterns(dataRows, suggestions)
@@ -73,23 +77,26 @@ class CsvFileValidator {
         return success(CsvValidationReport(
             totalLines = dataRows.size,
             validLines = validLineCount,
+            errors = errors,
             warnings = warnings,
             suggestions = suggestions
         ))
     }
 
-    private fun validateHeader(header: Array<String>): Result<Unit> {
+    private fun validateHeader(header: Array<String>): CsvValidationIssue? {
         if (header.size < EXPECTED_COLUMN_COUNT) {
-            return failure(
-                ResultState.CSV_MISSING_COLUMNS,
-                "Expected $EXPECTED_COLUMN_COUNT columns but found ${header.size}. Expected: ${EXPECTED_HEADERS.joinToString(", ")}"
+            return CsvValidationIssue(
+                lineNumber = 1,
+                type = CsvReportType.MISSING_COLUMNS,
+                message = "Expected $EXPECTED_COLUMN_COUNT columns but found ${header.size}. Expected: ${EXPECTED_HEADERS.joinToString(", ")}"
             )
         }
 
         if (header.size > EXPECTED_COLUMN_COUNT) {
-            return failure(
-                ResultState.CSV_EXTRA_COLUMNS,
-                "Expected $EXPECTED_COLUMN_COUNT columns but found ${header.size}. Expected: ${EXPECTED_HEADERS.joinToString(", ")}"
+            return CsvValidationIssue(
+                lineNumber = 1,
+                type = CsvReportType.EXTRA_COLUMNS,
+                message = "Expected $EXPECTED_COLUMN_COUNT columns but found ${header.size}. Expected: ${EXPECTED_HEADERS.joinToString(", ")}"
             )
         }
 
@@ -108,111 +115,138 @@ class CsvFileValidator {
                 }
             }
 
-            return failure(ResultState.CSV_INVALID_HEADER, errorMessage)
+            return CsvValidationIssue(
+                lineNumber = 1,
+                type = CsvReportType.INVALID_HEADER,
+                message = errorMessage
+            )
         }
 
-        return success(Unit)
+        return null
     }
+
+    private data class LineValidationResult(
+        val error: CsvValidationIssue? = null,
+        val warnings: List<CsvValidationIssue>? = null
+    )
 
     private fun validateDataLine(
         row: Array<String>,
         lineNumber: Int,
         availableTags: List<Tag>
-    ): Result<List<CsvValidationIssue>> {
+    ): LineValidationResult {
         val warnings = mutableListOf<CsvValidationIssue>()
 
         if (row.size != EXPECTED_COLUMN_COUNT) {
-            return failure(
-                ResultState.CSV_MALFORMED_LINE,
-                "Line $lineNumber has ${row.size} columns instead of $EXPECTED_COLUMN_COUNT"
+            return LineValidationResult(
+                error = CsvValidationIssue(
+                    lineNumber = lineNumber,
+                    type = CsvReportType.MALFORMED_LINE,
+                    message = "Line $lineNumber has ${row.size} columns instead of $EXPECTED_COLUMN_COUNT"
+                )
             )
         }
 
-        val dateValidation = validateDateColumn(row[DATE_COLUMN], lineNumber)
-        if (dateValidation.isFailure()) return dateValidation.map { emptyList() }
+        val dateError = validateDateColumn(row[DATE_COLUMN], lineNumber)
+        if (dateError != null) return LineValidationResult(error = dateError)
 
-        val labelValidation = validateLabelColumn(row[LABEL_COLUMN], lineNumber)
-        if (labelValidation.isFailure()) return labelValidation.map { emptyList() }
+        val labelError = validateLabelColumn(row[LABEL_COLUMN], lineNumber)
+        if (labelError != null) return LineValidationResult(error = labelError)
 
-        val amountValidation = validateAmountColumns(row[DEPENSE_COLUMN], row[RECETTE_COLUMN], lineNumber)
-        if (amountValidation.isFailure()) return amountValidation.map { emptyList() }
-
-        amountValidation.mapNullable { amountWarnings ->
-            amountWarnings?.let { warnings.addAll(it) }
-        }
+        val amountResult = validateAmountColumns(row[DEPENSE_COLUMN], row[RECETTE_COLUMN], lineNumber)
+        if (amountResult.error != null) return LineValidationResult(error = amountResult.error)
+        amountResult.warnings?.let { warnings.addAll(it) }
 
         val tagWarning = validateTagColumn(row[TAG_COLUMN], lineNumber, availableTags)
         tagWarning?.let { warnings.add(it) }
 
-        return success(warnings)
+        return LineValidationResult(warnings = warnings)
     }
 
-    private fun validateDateColumn(dateStr: String, lineNumber: Int): Result<Unit> {
+    private fun validateDateColumn(dateStr: String, lineNumber: Int): CsvValidationIssue? {
         if (dateStr.isBlank()) {
-            return failure(ResultState.CSV_MISSING_REQUIRED_FIELD, "Line $lineNumber: Date is required")
+            return CsvValidationIssue(
+                lineNumber = lineNumber,
+                type = CsvReportType.MISSING_REQUIRED_FIELD,
+                message = "Line $lineNumber: Date is required"
+            )
         }
 
         if (looksLikeAmount(dateStr)) {
-            return failure(
-                ResultState.CSV_POSSIBLE_COLUMN_SWAP,
-                "Line $lineNumber: Date column contains what looks like an amount ($dateStr). Check for column swap"
+            return CsvValidationIssue(
+                lineNumber = lineNumber,
+                type = CsvReportType.POSSIBLE_COLUMN_SWAP,
+                message = "Line $lineNumber: Date column contains what looks like an amount ($dateStr). Check for column swap"
             )
         }
 
         try {
             LocalDate.parse(dateStr.trim(), DATE_FORMATTER)
         } catch (e: DateTimeParseException) {
-            return failure(
-                ResultState.CSV_INVALID_DATE_FORMAT,
-                "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025)"
+            return CsvValidationIssue(
+                lineNumber = lineNumber,
+                type = CsvReportType.INVALID_DATE_FORMAT,
+                message = "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025)"
             )
         }
 
-        return success(Unit)
+        return null
     }
 
-    private fun validateLabelColumn(labelStr: String, lineNumber: Int): Result<Unit> {
+    private fun validateLabelColumn(labelStr: String, lineNumber: Int): CsvValidationIssue? {
         if (labelStr.isBlank()) {
-            return failure(ResultState.CSV_MISSING_REQUIRED_FIELD, "Line $lineNumber: Label is required")
+            return CsvValidationIssue(
+                lineNumber = lineNumber,
+                type = CsvReportType.MISSING_REQUIRED_FIELD,
+                message = "Line $lineNumber: Label is required"
+            )
         }
 
         if (looksLikeAmount(labelStr)) {
-            return failure(
-                ResultState.CSV_POSSIBLE_COLUMN_SWAP,
-                "Line $lineNumber: Label looks like a numeric value ($labelStr). Check if columns are swapped"
+            return CsvValidationIssue(
+                lineNumber = lineNumber,
+                type = CsvReportType.POSSIBLE_COLUMN_SWAP,
+                message = "Line $lineNumber: Label looks like a numeric value ($labelStr). Check if columns are swapped"
             )
         }
 
         if (labelStr.trim().length > 200) {
-            return failure(
-                ResultState.CSV_MISSING_REQUIRED_FIELD,
-                "Line $lineNumber: Label exceeds maximum length of 200 characters"
+            return CsvValidationIssue(
+                lineNumber = lineNumber,
+                type = CsvReportType.MISSING_REQUIRED_FIELD,
+                message = "Line $lineNumber: Label exceeds maximum length of 200 characters"
             )
         }
 
-        return success(Unit)
+        return null
     }
 
     private fun validateAmountColumns(
         depenseStr: String,
         recetteStr: String,
         lineNumber: Int
-    ): Result<List<CsvValidationIssue>> {
+    ): LineValidationResult {
         val warnings = mutableListOf<CsvValidationIssue>()
         val depenseEmpty = depenseStr.isBlank()
         val recetteEmpty = recetteStr.isBlank()
 
         if (depenseEmpty && recetteEmpty) {
-            return failure(
-                ResultState.CSV_NO_AMOUNT_FILLED,
-                "Line $lineNumber: Either 'depense' or 'recette' must be filled"
+            return LineValidationResult(
+                error = CsvValidationIssue(
+                    lineNumber = lineNumber,
+                    type = CsvReportType.NO_AMOUNT_FILLED,
+                    message = "Line $lineNumber: Either 'depense' or 'recette' must be filled"
+                )
             )
         }
 
         if (!depenseEmpty && !recetteEmpty) {
-            return failure(
-                ResultState.CSV_BOTH_AMOUNTS_FILLED,
-                "Line $lineNumber: Only one of 'depense' or 'recette' should be filled, not both (depense: $depenseStr, recette: $recetteStr)"
+            return LineValidationResult(
+                error = CsvValidationIssue(
+                    lineNumber = lineNumber,
+                    type = CsvReportType.BOTH_AMOUNTS_FILLED,
+                    message = "Line $lineNumber: Only one of 'depense' or 'recette' should be filled, not both (depense: $depenseStr, recette: $recetteStr)"
+                )
             )
         }
 
@@ -222,6 +256,7 @@ class CsvFileValidator {
         if (looksLikeText(amountStr)) {
             warnings.add(CsvValidationIssue(
                 lineNumber = lineNumber,
+                type = CsvReportType.INVALID_AMOUNT_FORMAT,
                 message = "Amount column ($fieldName) contains what looks like text: '$amountStr'. Check for column swap",
                 detectedValue = amountStr
             ))
@@ -232,19 +267,25 @@ class CsvFileValidator {
             val value = BigDecimal(normalizedStr)
 
             if (value < BigDecimal.ZERO) {
-                return failure(
-                    ResultState.CSV_NEGATIVE_AMOUNT,
-                    "Line $lineNumber: Amount cannot be negative ($amountStr)"
+                return LineValidationResult(
+                    error = CsvValidationIssue(
+                        lineNumber = lineNumber,
+                        type = CsvReportType.NEGATIVE_AMOUNT,
+                        message = "Line $lineNumber: Amount cannot be negative ($amountStr)"
+                    )
                 )
             }
         } catch (e: NumberFormatException) {
-            return failure(
-                ResultState.CSV_INVALID_AMOUNT_FORMAT,
-                "Line $lineNumber: Invalid amount format for $fieldName: '$amountStr'. Use numbers with dot or comma (e.g., 123.45 or 123,45)"
+            return LineValidationResult(
+                error = CsvValidationIssue(
+                    lineNumber = lineNumber,
+                    type = CsvReportType.INVALID_AMOUNT_FORMAT,
+                    message = "Line $lineNumber: Invalid amount format for $fieldName: '$amountStr'. Use numbers with dot or comma (e.g., 123.45 or 123,45)"
+                )
             )
         }
 
-        return success(warnings)
+        return LineValidationResult(warnings = warnings)
     }
 
     private fun validateTagColumn(
@@ -264,6 +305,7 @@ class CsvFileValidator {
         if (!tagExists) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,
+                type = CsvReportType.UNKNOWN_TAG,
                 message = "Tag '$trimmedTag' not found. Will be replaced with 'Aucune'",
                 detectedValue = tagStr
             )

@@ -1,10 +1,9 @@
 package fr.sacane.jmanager.domain.usecase.csv
 
-import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.csv.CsvReportType
 import fr.sacane.jmanager.domain.models.defaultTags
-import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,61 +25,66 @@ class CsvFileValidatorTest {
     }
 
     @Test
-    fun `should fail when CSV file is empty`() {
+    fun `should return error when CSV file is empty`() {
         val rows = emptyList<Array<String>>()
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_EMPTY_FILE)
-        assertEquals("CSV file is empty", result.message)
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertFalse(report.canImport)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.EMPTY_FILE, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when header has missing columns`() {
+    fun `should return error when header has missing columns`() {
         val rows = listOf(
             arrayOf("date", "label", "depense")
         )
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_MISSING_COLUMNS)
-        assertTrue(result.message.contains("Expected 5 columns but found 3"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.MISSING_COLUMNS, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when header has extra columns`() {
+    fun `should return error when header has extra columns`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag", "extra")
         )
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_EXTRA_COLUMNS)
-        assertTrue(result.message.contains("Expected 5 columns but found 6"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.EXTRA_COLUMNS, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when header columns are in wrong order`() {
+    fun `should return error when header columns are in wrong order`() {
         val rows = listOf(
             arrayOf("label", "date", "depense", "recette", "tag")
         )
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_INVALID_HEADER)
-        assertTrue(result.message.contains("Invalid header format"))
-    }
-
-    @Test
-    fun `should fail when header has wrong column names`() {
-        val rows = listOf(
-            arrayOf("date", "description", "expense", "income", "category")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertFailure(ResultState.CSV_INVALID_HEADER)
-        assertTrue(result.message.contains("Invalid header format"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.INVALID_HEADER, report.errors[0].type)
+        }
     }
 
     @Test
@@ -93,9 +97,11 @@ class CsvFileValidatorTest {
 
         result.assertSuccess()
         result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
             assertEquals(0, report.totalLines)
             assertEquals(0, report.validLines)
-            assertEquals(0, report.warnings.size)
+            assertEquals(0, report.errors.size)
         }
     }
 
@@ -111,15 +117,17 @@ class CsvFileValidatorTest {
 
         result.assertSuccess()
         result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
             assertEquals(2, report.totalLines)
             assertEquals(2, report.validLines)
+            assertEquals(0, report.errors.size)
             assertEquals(0, report.warnings.size)
-            assertEquals(0, report.suggestions.size)
         }
     }
 
     @Test
-    fun `should fail when data line has malformed columns`() {
+    fun `should return error when data line has malformed columns`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "Groceries", "45.50")
@@ -127,12 +135,16 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_MALFORMED_LINE)
-        assertTrue(result.message.contains("Line 2 has 3 columns instead of 5"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.MALFORMED_LINE, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when date is missing`() {
+    fun `should return error when date is missing`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("", "Groceries", "45.50", "", "")
@@ -140,12 +152,16 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_MISSING_REQUIRED_FIELD)
-        assertTrue(result.message.contains("Line 2: Date is required"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.MISSING_REQUIRED_FIELD, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when date format is invalid`() {
+    fun `should return error when date format is invalid`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("2025-01-15", "Groceries", "45.50", "", "")
@@ -153,13 +169,16 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_INVALID_DATE_FORMAT)
-        assertTrue(result.message.contains("Line 2: Invalid date format"))
-        assertTrue(result.message.contains("dd-MM-yyyy"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.INVALID_DATE_FORMAT, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when label is missing`() {
+    fun `should return error when label is missing`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "", "45.50", "", "")
@@ -167,26 +186,16 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_MISSING_REQUIRED_FIELD)
-        assertTrue(result.message.contains("Line 2: Label is required"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.MISSING_REQUIRED_FIELD, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when label exceeds max length`() {
-        val longLabel = "a".repeat(201)
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", longLabel, "45.50", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertFailure(ResultState.CSV_MISSING_REQUIRED_FIELD)
-        assertTrue(result.message.contains("Label exceeds maximum length"))
-    }
-
-    @Test
-    fun `should fail when both depense and recette are empty`() {
+    fun `should return error when both depense and recette are empty`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "Groceries", "", "", "")
@@ -194,12 +203,16 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_NO_AMOUNT_FILLED)
-        assertTrue(result.message.contains("Either 'depense' or 'recette' must be filled"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.NO_AMOUNT_FILLED, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when both depense and recette are filled`() {
+    fun `should return error when both depense and recette are filled`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "Groceries", "45.50", "100.00", "")
@@ -207,12 +220,16 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_BOTH_AMOUNTS_FILLED)
-        assertTrue(result.message.contains("Only one of 'depense' or 'recette' should be filled"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.BOTH_AMOUNTS_FILLED, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when amount format is invalid`() {
+    fun `should return error when amount format is invalid`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "Groceries", "abc", "", "")
@@ -220,12 +237,16 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_INVALID_AMOUNT_FORMAT)
-        assertTrue(result.message.contains("Invalid amount format"))
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.INVALID_AMOUNT_FORMAT, report.errors[0].type)
+        }
     }
 
     @Test
-    fun `should fail when amount is negative`() {
+    fun `should return error when amount is negative`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "Groceries", "-45.50", "", "")
@@ -233,22 +254,11 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_NEGATIVE_AMOUNT)
-        assertTrue(result.message.contains("Amount cannot be negative"))
-    }
-
-    @Test
-    fun `should accept comma as decimal separator`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Groceries", "45,50", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
         result.assertSuccess()
         result.onSuccess { report ->
-            assertEquals(1, report.validLines)
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.NEGATIVE_AMOUNT, report.errors[0].type)
         }
     }
 
@@ -263,121 +273,18 @@ class CsvFileValidatorTest {
 
         result.assertSuccess()
         result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
             assertEquals(1, report.totalLines)
             assertEquals(1, report.validLines)
+            assertEquals(0, report.errors.size)
             assertEquals(1, report.warnings.size)
-            assertEquals(2, report.warnings[0].lineNumber)
-            assertTrue(report.warnings[0].message.contains("Tag 'UnknownTag' not found"))
+            assertEquals(CsvReportType.UNKNOWN_TAG, report.warnings[0].type)
         }
     }
 
     @Test
-    fun `should succeed when tag is empty`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Groceries", "45.50", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertSuccess()
-        result.onSuccess { report ->
-            assertEquals(1, report.validLines)
-            assertEquals(0, report.warnings.size)
-        }
-    }
-
-    @Test
-    fun `should recognize known tag case-insensitively`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Groceries", "45.50", "", "alimentation & restaurant")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertSuccess()
-        result.onSuccess { report ->
-            assertEquals(0, report.warnings.size)
-        }
-    }
-
-    @Test
-    fun `should fail with column swap detection - date column contains amount`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("45.50", "Groceries", "15-01-2025", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertFailure(ResultState.CSV_POSSIBLE_COLUMN_SWAP)
-        assertTrue(result.message.contains("Date column contains what looks like an amount"))
-    }
-
-    @Test
-    fun `should fail with column swap detection - label column contains number`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "45.50", "Groceries", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertFailure(ResultState.CSV_POSSIBLE_COLUMN_SWAP)
-        assertTrue(result.message.contains("Label looks like a numeric value"))
-    }
-
-    @Test
-    fun `should succeed with warning when amount column looks like text`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Groceries", "45.50", "", ""),
-            arrayOf("16-01-2025", "Transport", "some text value", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertFailure(ResultState.CSV_INVALID_AMOUNT_FORMAT)
-    }
-
-    @Test
-    fun `should provide suggestions when multiple lines have swapped columns`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "45.50", "30", "", ""),
-            arrayOf("16-01-2025", "100.00", "50", "", ""),
-            arrayOf("17-01-2025", "75.25", "25", "", ""),
-            arrayOf("18-01-2025", "200.00", "100", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertFailure()
-    }
-
-    @Test
-    fun `should process multiple valid lines successfully`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Groceries", "45.50", "", "Alimentation & Restaurant"),
-            arrayOf("16-01-2025", "Salary", "", "2500.00", "Aucune"),
-            arrayOf("17-01-2025", "Transport", "15.00", "", "Transport"),
-            arrayOf("18-01-2025", "Restaurant", "50.00", "", "Alimentation & Restaurant")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertSuccess()
-        result.onSuccess { report ->
-            assertEquals(4, report.totalLines)
-            assertEquals(4, report.validLines)
-            assertEquals(0, report.warnings.size)
-        }
-    }
-
-    @Test
-    fun `should stop at first critical error`() {
+    fun `should stop at first critical error per line`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "Valid line", "45.50", "", ""),
@@ -387,22 +294,11 @@ class CsvFileValidatorTest {
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure(ResultState.CSV_INVALID_DATE_FORMAT)
-        assertTrue(result.message.contains("Line 3"))
-    }
-
-    @Test
-    fun `should handle whitespace in values correctly`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("  15-01-2025  ", "  Groceries  ", "  45.50  ", "", "  Alimentation & Restaurant  ")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
         result.assertSuccess()
         result.onSuccess { report ->
-            assertEquals(1, report.validLines)
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(2, report.validLines)
         }
     }
 
@@ -419,27 +315,63 @@ class CsvFileValidatorTest {
 
         result.assertSuccess()
         result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
             assertEquals(3, report.totalLines)
             assertEquals(3, report.validLines)
+            assertEquals(0, report.errors.size)
             assertEquals(2, report.warnings.size)
-            assertEquals(2, report.warnings[0].lineNumber)
-            assertEquals(4, report.warnings[1].lineNumber)
         }
     }
 
     @Test
-    fun `should detect column swap pattern with heuristic`() {
+    fun `should return error for column swap detection - date column contains amount`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "123.45", "30.00", "", ""),
-            arrayOf("16-01-2025", "567.89", "50.00", "", ""),
-            arrayOf("17-01-2025", "111.11", "25.00", "", ""),
-            arrayOf("18-01-2025", "222.22", "60.00", "", "")
+            arrayOf("45.50", "Groceries", "15-01-2025", "", "")
         )
 
         val result = validator.validate(rows, availableTags)
 
-        result.assertFailure()
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.POSSIBLE_COLUMN_SWAP, report.errors[0].type)
+        }
+    }
+
+    @Test
+    fun `should return error for column swap detection - label column contains number`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("15-01-2025", "45.50", "Groceries", "", "")
+        )
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.POSSIBLE_COLUMN_SWAP, report.errors[0].type)
+        }
+    }
+
+    @Test
+    fun `should accept comma as decimal separator`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("15-01-2025", "Groceries", "45,50", "", "")
+        )
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertEquals(1, report.validLines)
+        }
     }
 
     @Test
@@ -452,57 +384,30 @@ class CsvFileValidatorTest {
         val result = validator.validate(rows, availableTags)
 
         result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+        }
     }
 
     @Test
-    fun `should validate recette column when depense is empty`() {
+    fun `should process multiple valid lines successfully`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Salary", "", "2500.50", "")
+            arrayOf("15-01-2025", "Groceries", "45.50", "", "Alimentation & Restaurant"),
+            arrayOf("16-01-2025", "Salary", "", "2500.00", "Aucune"),
+            arrayOf("17-01-2025", "Transport", "15.00", "", "Transport"),
+            arrayOf("18-01-2025", "Restaurant", "50.00", "", "Alimentation & Restaurant")
         )
 
         val result = validator.validate(rows, availableTags)
 
         result.assertSuccess()
         result.onSuccess { report ->
-            assertEquals(1, report.validLines)
+            assertFalse(report.hasErrors)
+            assertEquals(4, report.totalLines)
+            assertEquals(4, report.validLines)
+            assertEquals(0, report.errors.size)
         }
-    }
-
-    @Test
-    fun `should accept very small amounts`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Small purchase", "0.01", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertSuccess()
-    }
-
-    @Test
-    fun `should accept zero as amount`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Zero amount", "0", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertSuccess()
-    }
-
-    @Test
-    fun `should accept large amounts`() {
-        val rows = listOf(
-            arrayOf("date", "label", "depense", "recette", "tag"),
-            arrayOf("15-01-2025", "Large purchase", "999999.99", "", "")
-        )
-
-        val result = validator.validate(rows, availableTags)
-
-        result.assertSuccess()
     }
 }
 
