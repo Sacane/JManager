@@ -56,6 +56,7 @@ object FakeFactory {
 
     private val sessionManager = InMemorySessionManager(tokenGenerator)
     private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
+    private val csvFileReader = InMemoryCsvFileReader()
 
     val accountFeature = BookletFeatureImpl(userRepository, sessionManager, fakeAccountRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator, manager, inMemoryTrackerRepository)
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryTagRepository)
@@ -63,6 +64,14 @@ object FakeFactory {
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
     val regularTransactionFeature = RegularTransactionFeatureImpl(
         inMemoryRegularTransactionRepository,
+        inMemoryTagRepository,
+        sessionManager,
+        manager
+    )
+    val csvImportFeature = CsvImportFeatureImpl(
+        csvFileReader,
+        transactionRepository,
+        fakeAccountRepository,
         inMemoryTagRepository,
         sessionManager,
         manager
