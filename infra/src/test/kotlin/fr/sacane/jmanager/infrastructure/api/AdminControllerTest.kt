@@ -118,7 +118,7 @@ class AdminControllerTest(
         fun `Get users without admin token should return 403`() {
             Given {
                 port(port)
-                cookie("token", token) // Token d'utilisateur normal
+                cookie("token", token)
                 header("Content-Type", "application/json")
                 queryParam("page", 0)
                 queryParam("size", 10)

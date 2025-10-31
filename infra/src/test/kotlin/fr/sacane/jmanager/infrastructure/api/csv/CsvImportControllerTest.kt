@@ -350,7 +350,6 @@ class CsvImportControllerTest(
         @Test
         @DisplayName("Should update booklet amount after importing expense transactions")
         fun `should update booklet amount correctly after importing expense transactions`() {
-            // Récupérer le montant initial du livret
             val initialAmount = accountStateAdapter.get().first().amount
 
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Groceries,45.50,,Alimentation & Restaurant\n16-01-2025,Transport,30.00,,Transport\n"
@@ -368,7 +367,6 @@ class CsvImportControllerTest(
                 body("failedCount", equalTo(0))
             }
 
-            // Vérifier que le montant du livret a été mis à jour
             val updatedBooklet = accountStateAdapter.get().first()
             val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("75.50"))
             Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
@@ -377,7 +375,6 @@ class CsvImportControllerTest(
         @Test
         @DisplayName("Should update booklet amount after importing income transactions")
         fun `should update booklet amount correctly after importing income transactions`() {
-            // Récupérer le montant initial du livret
             val initialAmount = accountStateAdapter.get().first().amount
 
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Salary,,2500.00,Aucune\n16-01-2025,Bonus,,500.00,Aucune\n"
@@ -395,7 +392,6 @@ class CsvImportControllerTest(
                 body("failedCount", equalTo(0))
             }
 
-            // Vérifier que le montant du livret a été mis à jour
             val updatedBooklet = accountStateAdapter.get().first()
             val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3000.00"))
             Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
@@ -404,7 +400,6 @@ class CsvImportControllerTest(
         @Test
         @DisplayName("Should update booklet amount correctly with mixed transactions")
         fun `should update booklet amount correctly with mixed income and expense transactions`() {
-            // Récupérer le montant initial du livret
             val initialAmount = accountStateAdapter.get().first().amount
 
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Salary,,2500.00,Aucune\n16-01-2025,Groceries,45.50,,Alimentation & Restaurant\n17-01-2025,Transport,30.00,,Transport\n18-01-2025,Freelance,,800.00,Aucune\n"
@@ -422,10 +417,6 @@ class CsvImportControllerTest(
                 body("failedCount", equalTo(0))
             }
 
-            // Vérifier que le montant du livret a été mis à jour
-            // Recettes: 2500.00 + 800.00 = 3300.00
-            // Dépenses: 45.50 + 30.00 = 75.50
-            // Net: 3300.00 - 75.50 = 3224.50
             val updatedBooklet = accountStateAdapter.get().first()
             val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3224.50"))
             Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
@@ -450,7 +441,6 @@ class CsvImportControllerTest(
                 statusCode(400)
             }
 
-            // Vérifier que le montant du livret n'a pas changé
             val updatedBooklet = accountStateAdapter.get().first()
             Assertions.assertEquals(initialAmount.value, updatedBooklet.amount.value)
         }

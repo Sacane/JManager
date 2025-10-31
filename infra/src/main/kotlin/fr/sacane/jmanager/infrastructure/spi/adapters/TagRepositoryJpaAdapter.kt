@@ -26,7 +26,6 @@ class TagRepositoryJpaAdapter(
         val user = userPostgresRepository.findByIdWithTags(id) ?: return null
         val tag1 = tag.toPersonalTag()
         val saved = tagPersonalPostgresRepository.save(tag1)
-        // attach the persisted tag to the user
         user.addTag(saved)
         return saved.toDomain()
     }

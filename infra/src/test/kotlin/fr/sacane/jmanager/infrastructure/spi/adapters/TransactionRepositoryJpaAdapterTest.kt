@@ -177,14 +177,9 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             val persisted = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = txUnknown)
             assertThat(persisted).isNotNull
             assertThat(persisted!!.tag).isNotNull
-            // tag label should be equal to noneTag label or default unknown mapping
             assertThat(persisted.tag!!.label).isEqualTo(Tag.noneTag().label)
 
-            // create a default tag by name on a new transaction
-            // ensure default tags exist in DB so lookup by name succeeds
-            // insert default tags only when missing to avoid duplicates across test runs
             val existingDefaults = defaultTagPostgresRepository.findAll().toList()
-            // dedupe existing defaults: if multiple entries with same name exist, keep first and delete others
             existingDefaults.groupBy { it.name }.forEach { (_, group) ->
                 if (group.size > 1) {
                     group.drop(1).forEach { item ->
@@ -212,11 +207,9 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             assertThat(persistedDefault!!.tag).isNotNull
             assertThat(persistedDefault.tag!!.label).isEqualTo("Achat & Shopping")
 
-            // personal tag: create a tag with isDefault=false and a random id - adapter should try personal repository
             val personalTag = Tag("my-personal", null, isDefault = false)
             val txPersonal = Transaction(id = null, label = "tx-personal", date = LocalDate.now(), amount = Amount(15L), isIncome = false, tag = personalTag)
             val persistedPersonal = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = txPersonal)
-            // persist may succeed even if personal tag resolution returns null -> ensure transaction created and accessible
             assertThat(persistedPersonal).isNotNull
             assertThat(persistedPersonal!!.tag).isNotNull
         }
