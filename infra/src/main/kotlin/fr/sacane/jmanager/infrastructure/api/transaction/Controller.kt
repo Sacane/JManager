@@ -167,7 +167,7 @@ class TransactionController(
                 isIncome = request.isIncome,
                 tag = request.tagDTO.toDomain(),
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
-                startDate = LocalDate.now(), // Sera ignoré dans la logique métier
+                startDate = LocalDate.now(),
                 recurrenceRule = request.recurrenceRule.toDomain()
             )
         ).map {

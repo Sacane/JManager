@@ -24,10 +24,8 @@ jacoco {
 tasks.test {
     useJUnitPlatform()
 
-    // Limiter la parallélisation pour éviter de surcharger le runner
     maxParallelForks = 1
 
-    // Optimisations JVM légères
     jvmArgs("-Xmx256m")
 }
 

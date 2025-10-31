@@ -41,7 +41,7 @@ class CsvTransactionValidator {
             Pair(Amount(value), true)
         }
 
-        val tag = findOrDefaultTag(line.tag, availableTags)
+        val tag = validateTag(line.tag, availableTags)
 
         return CsvLineResult.Success(
             Transaction(
@@ -87,27 +87,6 @@ class CsvTransactionValidator {
         }
     }
 
-    private fun findOrDefaultTag(tagStr: String, availableTags: List<Tag>): Tag {
-        if (tagStr.isBlank()) {
-            return Tag.noneTag()
-        }
-
-        val trimmedTag = tagStr.trim()
-        val matchingTag = availableTags.firstOrNull {
-            it.label.equals(trimmedTag, ignoreCase = true)
-        }
-
-        if (matchingTag != null) {
-            return matchingTag
-        }
-
-        val defaultTag = defaultTags.firstOrNull {
-            it.label.equals(trimmedTag, ignoreCase = true)
-        }
-
-        return defaultTag ?: Tag.noneTag()
-    }
-
     private fun validateDate(dateStr: String, errors: MutableList<String>): LocalDate? {
         if (dateStr.isBlank()) {
             errors.add("La date est obligatoire")
@@ -145,32 +124,27 @@ class CsvTransactionValidator {
         val depenseEmpty = depenseStr.isBlank()
         val recetteEmpty = recetteStr.isBlank()
 
-        // Les deux sont vides
         if (depenseEmpty && recetteEmpty) {
             errors.add("Vous devez renseigner soit une dépense soit une recette")
             return Pair(null, false)
         }
 
-        // Les deux sont remplis
         if (!depenseEmpty && !recetteEmpty) {
             errors.add("Vous ne pouvez pas renseigner à la fois une dépense et une recette")
             return Pair(null, false)
         }
 
-        // Validation de la dépense
         if (!depenseEmpty) {
             val amount = parseAmount(depenseStr.trim(), errors, "dépense")
             return Pair(amount, false)
         }
 
-        // Validation de la recette
         val amount = parseAmount(recetteStr.trim(), errors, "recette")
         return Pair(amount, true)
     }
 
     private fun parseAmount(amountStr: String, errors: MutableList<String>, fieldName: String): Amount? {
         return try {
-            // Remplacer la virgule par un point pour le parsing
             val normalizedStr = amountStr.replace(',', '.')
             val value = BigDecimal(normalizedStr)
 
@@ -193,7 +167,6 @@ class CsvTransactionValidator {
 
         val trimmedTag = tagStr.trim()
 
-        // Chercher d'abord dans les tags disponibles (incluant les tags par défaut)
         val matchingTag = availableTags.firstOrNull {
             it.label.equals(trimmedTag, ignoreCase = true)
         }
@@ -202,12 +175,10 @@ class CsvTransactionValidator {
             return matchingTag
         }
 
-        // Si pas trouvé, chercher dans les tags par défaut
         val defaultTag = defaultTags.firstOrNull {
             it.label.equals(trimmedTag, ignoreCase = true)
         }
 
-        // Si toujours pas trouvé, retourner le tag "Aucune"
         return defaultTag ?: Tag.noneTag()
     }
 }

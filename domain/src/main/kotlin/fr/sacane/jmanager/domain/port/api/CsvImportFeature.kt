@@ -3,6 +3,9 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.Tag
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.csv.CsvImportResult
 import fr.sacane.jmanager.domain.models.csv.CsvTransactionLine
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
@@ -94,28 +97,25 @@ class CsvImportFeatureImpl(
         csvContent: String
     ): Result<CsvValidationReport> {
         return sessionManager.authenticate(token) { userId ->
-            val booklet = bookletRepository.findAccountByIdWithTransactions(bookletId)
-                ?: return@authenticate notFound("Booklet with id '$bookletId' does not exist")
-
-            if (booklet.owner?.id?.value != userId.value) {
-                return@authenticate forbidden("You do not have access to this booklet")
-            }
+            val bookletFindResult = findBookletAndCheckOwner(userId, bookletId)
 
             val userTags = tagRepository.getAllDefault(userId)
 
             try {
-                val rows = csvFileReader.readCsvContent(csvContent)
-                val validationResult = fileValidator.validate(rows, userTags)
-                
-                validationResult.mapNullable { report ->
-                    if (report != null) {
-                        logger.info("CSV validation completed: ${report.totalLines} lines, ${report.validLines} valid, ${report.warnings.size} warnings")
-                    } else {
-                        logger.warning("CSV validation failed: ${validationResult.message}")
-                    }
-                }
+                bookletFindResult.flatMap {
+                    val rows = csvFileReader.readCsvContent(csvContent)
+                    val validationResult = fileValidator.validate(rows, userTags)
 
-                validationResult
+                    validationResult.mapNullable { report ->
+                        if (report != null) {
+                            logger.info("CSV validation completed: ${report.totalLines} lines, ${report.validLines} valid, ${report.warnings.size} warnings")
+                        } else {
+                            logger.warning("CSV validation failed: ${validationResult.message}")
+                        }
+                    }
+
+                    validationResult
+                }
             } catch (e: Exception) {
                 logger.severe("Error during CSV validation: ${e.message}")
                 failure(ResultState.INTERNAL_SERVER_ERROR, "Error during validation: ${e.message}")
@@ -130,89 +130,106 @@ class CsvImportFeatureImpl(
         skipValidation: Boolean
     ): Result<CsvImportResult> {
         return sessionManager.authenticate(token) { userId ->
-            val booklet = bookletRepository.findAccountByIdWithTransactions(bookletId)
-                ?: return@authenticate notFound("Booklet with id '$bookletId' does not exist")
-
-            if (booklet.owner?.id?.value != userId.value) {
-                return@authenticate forbidden("You do not have access to this booklet")
-            }
+            val bookletFindResult = findBookletAndCheckOwner(userId, bookletId)
 
             val userTags = tagRepository.getAllDefault(userId)
 
             try {
                 val rows = csvFileReader.readCsvContent(csvContent)
 
-                // Validation conditionnelle : seulement si skipValidation = false
                 if (!skipValidation) {
-                    val validationResult = fileValidator.validate(rows, userTags)
-
-                    if (validationResult.isFailure()) {
-                        return@authenticate failure(validationResult.status, validationResult.message)
-                    }
-
-                    // Check for validation errors before proceeding
-                    val hasErrors = validationResult.mapNullable { report ->
-                        report?.hasErrors ?: false
-                    }
-
-                    if (hasErrors) {
-                        val errorMessages = validationResult.mapNullable { report ->
-                            report?.errors?.joinToString("; ") {
-                                "Line ${it.lineNumber}: ${it.message}"
-                            } ?: "Unknown validation errors"
-                        }
-                        return@authenticate invalid("CSV validation failed: $errorMessages")
-                    }
+                    val validationResult = bookletFindResult.flatMap { checkValidationErrors(rows, userTags) }
+                    if (validationResult.isFailure()) return@authenticate validationResult
                 }
 
-                // UnitOfWork utilisé ici car on sauvegarde potentiellement des centaines de transactions
-                // Si une erreur survient pendant la sauvegarde, on doit ROLLBACK toutes les transactions
-                // pour éviter un import partiel incohérent
-                unitOfWorkProvider.executeInTransaction(booklet) { bookletParam ->
-                    val dataRows = rows.drop(1)
-                    val results = dataRows.mapIndexed { index, row ->
-                        val lineNumber = index + 2
-                        parseCsvLine(row, lineNumber)?.let { line ->
-                            // Conversion simple si skipValidation = true, sinon on utilise la méthode sûre
-                            if (skipValidation) {
-                                validator.convertToTransaction(line, userTags)
-                            } else {
-                                validator.convertToTransaction(line, userTags)
-                            }
-                        } ?: CsvLineResult.Error(lineNumber, listOf("Malformed CSV line"))
-                    }
-
-                    val successResults = results.filterIsInstance<CsvLineResult.Success>()
-                    val errorResults = results.filterIsInstance<CsvLineResult.Error>()
-
-                    val savedTransactions = successResults.mapNotNull { result ->
-                        try {
-                            val bookletIdValue = bookletParam.id ?: run {
-                                logger.warning("Booklet ID is null, cannot save transaction")
-                                return@mapNotNull null
-                            }
-                            transactionRepository.save(bookletIdValue, result.transaction)
-                        } catch (e: Exception) {
-                            logger.warning("Error persisting transaction: ${e.message}")
-                            null
-                        }
-                    }
-
-                    val csvImportResult = CsvImportResult(
-                        successCount = savedTransactions.size,
-                        failedLines = errorResults,
-                        transactions = savedTransactions
-                    )
-
-                    logger.info("CSV import completed: ${csvImportResult.successCount} transactions imported, ${csvImportResult.failedLines.size} errors")
-
-                    success(csvImportResult)
-                }
+                bookletFindResult.flatMap { processImport(it, rows, userTags, skipValidation) }
             } catch (e: Exception) {
                 logger.severe("Error during CSV import: ${e.message}")
                 failure(ResultState.INTERNAL_SERVER_ERROR, "Error during import: ${e.message}")
             }
         }
+    }
+
+    private fun findBookletAndCheckOwner(userId: UserId, bookletId: UUID): Result<Booklet> {
+        val booklet =
+            bookletRepository.findAccountByIdWithTransactions(bookletId) ?: return notFound("Booklet not found")
+        if (booklet.owner?.id?.value != userId.value) {
+            return failure(ResultState.FORBIDDEN, "You are not the owner of this booklet")
+        }
+        return success(booklet)
+    }
+
+    private fun checkValidationErrors(rows: List<Array<String>>, userTags: List<Tag>): Result<CsvImportResult> {
+        val validationResult = fileValidator.validate(rows, userTags)
+
+        if (validationResult.isFailure()) {
+            return failure(validationResult.status, validationResult.message)
+        }
+
+        val hasErrors = validationResult.mapNullable { report -> report?.hasErrors ?: false }
+        if (hasErrors) {
+            val errorMessages = validationResult.mapNullable { report ->
+                report?.errors?.joinToString("; ") { "Line ${it.lineNumber}: ${it.message}" }
+                    ?: "Unknown validation errors"
+            }
+            return invalid("CSV validation failed: $errorMessages")
+        }
+
+        return failure(validationResult.status, validationResult.message)
+    }
+
+    private fun processImport(
+        booklet: Booklet,
+        rows: List<Array<String>>,
+        userTags: List<Tag>,
+        skipValidation: Boolean
+    ): Result<CsvImportResult> {
+        return unitOfWorkProvider.executeInTransaction(booklet) { bookletParam ->
+            val results = convertRowsToTransactions(rows, userTags, skipValidation)
+            val csvImportResult = saveTransactions(bookletParam, results)
+
+            logger.info("CSV import completed: ${csvImportResult.successCount} transactions imported, ${csvImportResult.failedLines.size} errors")
+            success(csvImportResult)
+        }
+    }
+
+    private fun convertRowsToTransactions(
+        rows: List<Array<String>>,
+        userTags: List<Tag>,
+        skipValidation: Boolean
+    ): List<CsvLineResult> {
+        val dataRows = rows.drop(1)
+        return dataRows.mapIndexed { index, row ->
+            val lineNumber = index + 2
+            parseCsvLine(row, lineNumber)?.let { line ->
+                if (skipValidation) validator.convertToTransaction(line, userTags)
+                else validator.validateAndConvert(line, userTags)
+            } ?: CsvLineResult.Error(lineNumber, listOf("Malformed CSV line"))
+        }
+    }
+
+    private fun saveTransactions(bookletParam: Booklet, results: List<CsvLineResult>): CsvImportResult {
+        val successResults = results.filterIsInstance<CsvLineResult.Success>()
+        val errorResults = results.filterIsInstance<CsvLineResult.Error>()
+
+        val savedTransactions = successResults.mapNotNull { result ->
+            try {
+                val bookletIdValue = bookletParam.id ?: run {
+                    logger.warning("Booklet ID is null, cannot save transaction")
+                    return@mapNotNull null
+                }
+                transactionRepository.save(bookletIdValue, result.transaction)
+            } catch (e: Exception) {
+                logger.warning("Error persisting transaction: ${e.message}")
+                null
+            }
+        }
+
+        return CsvImportResult(
+            successCount = savedTransactions.size,
+            failedLines = errorResults,
+            transactions = savedTransactions
+        )
     }
 
 
@@ -231,5 +248,6 @@ class CsvImportFeatureImpl(
             tag = row[TAG_COLUMN]
         )
     }
+
 }
 
