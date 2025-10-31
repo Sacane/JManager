@@ -6,7 +6,7 @@ package fr.sacane.jmanager.domain.port.spi
  * This interface must be implemented by the infrastructure layer
  * to provide file reading capabilities
  */
-interface CsvFileReader {
+fun interface CsvFileReader {
     /**
      * Reads a CSV file and returns its content as a list of string arrays
      * Each array represents a row, with each element being a column value
