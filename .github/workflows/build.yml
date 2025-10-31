@@ -1,5 +1,6 @@
 name: Build
-
+env:
+  GRADLE_OPTS: "-XX:MaxMetaspaceSize=512m -Xmx2g"
 on:
   push:
     branches:
