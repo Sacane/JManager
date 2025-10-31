@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.port.spi.CsvFileReader
 import org.springframework.stereotype.Component
 
 @Component
-class InMemoryCsvFileReader : CsvFileReader {
+class NativeCsvFileReader : CsvFileReader {
 
     override fun readCsvContent(fileContent: String): List<Array<String>> {
         if (fileContent.isBlank()) {
