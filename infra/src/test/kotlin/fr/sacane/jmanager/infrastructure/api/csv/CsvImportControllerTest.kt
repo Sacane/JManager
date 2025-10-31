@@ -346,6 +346,114 @@ class CsvImportControllerTest(
                 body("transactions.size()", equalTo(3))
             }
         }
+
+        @Test
+        @DisplayName("Should update booklet amount after importing expense transactions")
+        fun `should update booklet amount correctly after importing expense transactions`() {
+            // Récupérer le montant initial du livret
+            val initialAmount = accountStateAdapter.get().first().amount
+
+            val csvContent = "date,label,depense,recette,tag\n15-01-2025,Groceries,45.50,,Alimentation & Restaurant\n16-01-2025,Transport,30.00,,Transport\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(200)
+                body("successCount", equalTo(2))
+                body("failedCount", equalTo(0))
+            }
+
+            // Vérifier que le montant du livret a été mis à jour
+            val updatedBooklet = accountStateAdapter.get().first()
+            val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("75.50"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
+        }
+
+        @Test
+        @DisplayName("Should update booklet amount after importing income transactions")
+        fun `should update booklet amount correctly after importing income transactions`() {
+            // Récupérer le montant initial du livret
+            val initialAmount = accountStateAdapter.get().first().amount
+
+            val csvContent = "date,label,depense,recette,tag\n15-01-2025,Salary,,2500.00,Aucune\n16-01-2025,Bonus,,500.00,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(200)
+                body("successCount", equalTo(2))
+                body("failedCount", equalTo(0))
+            }
+
+            // Vérifier que le montant du livret a été mis à jour
+            val updatedBooklet = accountStateAdapter.get().first()
+            val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3000.00"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
+        }
+
+        @Test
+        @DisplayName("Should update booklet amount correctly with mixed transactions")
+        fun `should update booklet amount correctly with mixed income and expense transactions`() {
+            // Récupérer le montant initial du livret
+            val initialAmount = accountStateAdapter.get().first().amount
+
+            val csvContent = "date,label,depense,recette,tag\n15-01-2025,Salary,,2500.00,Aucune\n16-01-2025,Groceries,45.50,,Alimentation & Restaurant\n17-01-2025,Transport,30.00,,Transport\n18-01-2025,Freelance,,800.00,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(200)
+                body("successCount", equalTo(4))
+                body("failedCount", equalTo(0))
+            }
+
+            // Vérifier que le montant du livret a été mis à jour
+            // Recettes: 2500.00 + 800.00 = 3300.00
+            // Dépenses: 45.50 + 30.00 = 75.50
+            // Net: 3300.00 - 75.50 = 3224.50
+            val updatedBooklet = accountStateAdapter.get().first()
+            val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3224.50"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
+        }
+
+        @Test
+        @DisplayName("Should not change booklet amount when import fails due to validation errors")
+        fun `should not change booklet amount when import fails`() {
+            // Récupérer le montant initial du livret
+            val initialAmount = accountStateAdapter.get().first().amount
+
+            val csvContent = "date,label,depense,recette,tag\ninvalid-date,Test,45.50,,\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(400)
+            }
+
+            // Vérifier que le montant du livret n'a pas changé
+            val updatedBooklet = accountStateAdapter.get().first()
+            Assertions.assertEquals(initialAmount.value, updatedBooklet.amount.value)
+        }
     }
 }
 

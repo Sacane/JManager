@@ -391,5 +391,181 @@ class CsvImportFeatureTest : FeatureTest() {
             assertTrue(result.message.contains("header"))
         }
     }
+
+    @Test
+    @DisplayName("Should update booklet amount after importing expense transactions")
+    fun `importTransactionsFromCsv should update booklet amount after importing expense transactions`() {
+        launchWithConnectedUserInstance {
+            val initialAmount = booklet.amount
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Groceries,45.50,,Alimentation & Restaurant
+                16-01-2025,Transport,30.00,,Transport
+            """.trimIndent()
+
+            val result = csvImportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { importResult ->
+                assertEquals(2, importResult.successCount)
+                assertEquals(0, importResult.failedLines.size)
+
+                // Vérifier que le montant du livret a été mis à jour
+                val accountState = FakeFactory.accountState()
+                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                assertNotNull(updatedBooklets)
+                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                assertNotNull(updatedBooklet)
+
+                // Le montant initial moins les dépenses (45.50 + 30.00 = 75.50)
+                val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("75.50"))
+                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should update booklet amount after importing income transactions")
+    fun `importTransactionsFromCsv should update booklet amount after importing income transactions`() {
+        launchWithConnectedUserInstance {
+            val initialAmount = booklet.amount
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Salary,,2500.00,Aucune
+                16-01-2025,Bonus,,500.00,Aucune
+            """.trimIndent()
+
+            val result = csvImportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { importResult ->
+                assertEquals(2, importResult.successCount)
+                assertEquals(0, importResult.failedLines.size)
+
+                // Vérifier que le montant du livret a été mis à jour
+                val accountState = FakeFactory.accountState()
+                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                assertNotNull(updatedBooklets)
+                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                assertNotNull(updatedBooklet)
+
+                // Le montant initial plus les recettes (2500.00 + 500.00 = 3000.00)
+                val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3000.00"))
+                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should update booklet amount correctly with mixed transactions")
+    fun `importTransactionsFromCsv should update booklet amount with mixed income and expense transactions`() {
+        launchWithConnectedUserInstance {
+            val initialAmount = booklet.amount
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Salary,,2500.00,Aucune
+                16-01-2025,Groceries,45.50,,Alimentation & Restaurant
+                17-01-2025,Transport,30.00,,Transport
+                18-01-2025,Freelance,,800.00,Aucune
+            """.trimIndent()
+
+            val result = csvImportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { importResult ->
+                assertEquals(4, importResult.successCount)
+                assertEquals(0, importResult.failedLines.size)
+
+                // Vérifier que le montant du livret a été mis à jour
+                val accountState = FakeFactory.accountState()
+                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                assertNotNull(updatedBooklets)
+                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                assertNotNull(updatedBooklet)
+
+                // Recettes: 2500.00 + 800.00 = 3300.00
+                // Dépenses: 45.50 + 30.00 = 75.50
+                // Net: 3300.00 - 75.50 = 3224.50
+                val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3224.50"))
+                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should not change booklet amount when import fails")
+    fun `importTransactionsFromCsv should not change booklet amount when import fails`() {
+        launchWithConnectedUserInstance {
+            val initialAmount = booklet.amount
+            val csvContent = """
+                date,label,depense,recette,tag
+                invalid-date,Test,45.50,,
+            """.trimIndent()
+
+            val result = csvImportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isFailure())
+
+            // Vérifier que le montant du livret n'a pas changé
+            val accountState = FakeFactory.accountState()
+            val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+            assertNotNull(updatedBooklets)
+            val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+            assertNotNull(updatedBooklet)
+            assertEquals(initialAmount.value, updatedBooklet!!.amount.value)
+        }
+    }
+
+    @Test
+    @DisplayName("Should persist booklet with updated amount after successful import")
+    fun `importTransactionsFromCsv should persist booklet with updated amount in repository`() {
+        launchWithConnectedUserInstance {
+            val initialAmount = booklet.amount
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-01-2025,Purchase,100.00,,Aucune
+            """.trimIndent()
+
+            val result = csvImportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess())
+
+            // Vérifier que le montant a été persisté en base
+            val accountState = FakeFactory.accountState()
+            val persistedBooklets = accountState.getStates().find { it.userId == user.id }
+            assertNotNull(persistedBooklets)
+            val persistedBooklet = persistedBooklets!!.booklet.find { it.id == booklet.id }
+            assertNotNull(persistedBooklet)
+
+            val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("100.00"))
+            assertEquals(expectedAmount, persistedBooklet!!.amount.value)
+
+            // Vérifier que les transactions ont bien été importées
+            result.onSuccess { importResult ->
+                assertEquals(1, importResult.transactions.size)
+                assertEquals("Purchase", importResult.transactions.first().label)
+            }
+        }
+    }
 }
 

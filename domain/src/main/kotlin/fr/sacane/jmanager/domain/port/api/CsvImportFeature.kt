@@ -218,7 +218,12 @@ class CsvImportFeatureImpl(
                     logger.warning("Booklet ID is null, cannot save transaction")
                     return@mapNotNull null
                 }
-                transactionRepository.save(bookletIdValue, result.transaction)
+
+                val savedTr = transactionRepository.save(bookletIdValue, result.transaction) ?: return@mapNotNull null
+
+                bookletParam.addTransaction(savedTr)
+                bookletRepository.update(bookletParam)
+                savedTr
             } catch (e: Exception) {
                 logger.warning("Error persisting transaction: ${e.message}")
                 null
