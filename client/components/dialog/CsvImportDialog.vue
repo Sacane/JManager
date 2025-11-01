@@ -20,6 +20,7 @@ const validationReport = ref<CsvValidationReportDTO | null>(null)
 const importResult = ref<CsvImportResultDTO | null>(null)
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const showFormatHelper = ref(false)
 
 // Computed
 const canAnalyze = computed(() => selectedFile.value !== null && !isAnalyzing.value)
@@ -157,6 +158,33 @@ async function importFile() {
   }
 }
 
+function downloadTemplate() {
+  const headers = 'date,label,depense,recette,tag'
+  const exampleRows = [
+    '15-01-2025,Courses Carrefour,45.50,,Alimentation & Restaurant',
+    '16-01-2025,Salaire,,2500.00,Aucune',
+    '17-01-2025,Essence,60.00,,Transport',
+  ]
+  const csvContent = [headers, ...exampleRows].join('\n')
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+
+  link.setAttribute('href', url)
+  link.setAttribute('download', 'template_import_transactions.csv')
+  link.style.visibility = 'hidden'
+
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  URL.revokeObjectURL(url)
+
+  toast.success('Fichier template téléchargé avec succès !')
+}
+
 defineExpose({
   openDialog,
 })
@@ -172,6 +200,166 @@ defineExpose({
     @hide="closeDialog"
   >
     <div class="csv-import-container">
+      <!-- Format Helper Section -->
+      <div class="format-helper-section">
+        <div class="format-helper-header" @click="showFormatHelper = !showFormatHelper">
+          <div class="format-helper-title">
+            <i class="pi pi-question-circle" />
+            <span>Besoin d'aide sur le format CSV ?</span>
+          </div>
+          <i class="pi" :class="[showFormatHelper ? 'pi-chevron-up' : 'pi-chevron-down']" />
+        </div>
+
+        <!-- CSV Example - Always visible -->
+        <div class="format-example-standalone">
+          <div class="format-example-header">
+            <h4><i class="pi pi-file-edit" /> Exemple de fichier CSV valide</h4>
+            <Button
+              label="Télécharger le template"
+              icon="pi pi-download"
+              severity="secondary"
+              size="small"
+              outlined
+              @click="downloadTemplate"
+            />
+          </div>
+          <div class="csv-preview">
+            <pre><code>date,label,depense,recette,tag
+15-01-2025,Courses Carrefour,45.50,,Alimentation & Restaurant
+16-01-2025,Salaire,,2500.00,Aucune
+17-01-2025,Essence,60.00,,Transport
+18-01-2025,Restaurant,35.80,,Alimentation & Restaurant</code></pre>
+          </div>
+          <p class="template-hint">
+            <i class="pi pi-lightbulb" />
+            Téléchargez ce fichier template pour commencer rapidement. Il contient déjà les en-têtes et quelques exemples que vous pouvez modifier.
+          </p>
+        </div>
+
+        <Transition name="slide-fade">
+          <div v-show="showFormatHelper" class="format-helper-content">
+            <div class="format-intro">
+              <p>Votre fichier CSV doit respecter le format suivant pour être importé correctement :</p>
+            </div>
+
+            <!-- Column Structure -->
+            <div class="format-structure">
+              <h4><i class="pi pi-list" /> Structure des colonnes (ordre important)</h4>
+              <div class="columns-grid">
+                <div class="column-card">
+                  <div class="column-header">
+                    <i class="pi pi-calendar" />
+                    <span class="column-name">date</span>
+                    <span class="column-required">Obligatoire</span>
+                  </div>
+                  <p class="column-description">
+                    Format : <code>JJ-MM-AAAA</code>
+                  </p>
+                  <p class="column-example">
+                    Exemple : <code>15-01-2025</code>
+                  </p>
+                </div>
+
+                <div class="column-card">
+                  <div class="column-header">
+                    <i class="pi pi-tag" />
+                    <span class="column-name">label</span>
+                    <span class="column-required">Obligatoire</span>
+                  </div>
+                  <p class="column-description">
+                    Description de la transaction
+                  </p>
+                  <p class="column-example">
+                    Exemple : <code>Courses Carrefour</code>
+                  </p>
+                </div>
+
+                <div class="column-card">
+                  <div class="column-header">
+                    <i class="pi pi-arrow-down" />
+                    <span class="column-name">depense</span>
+                    <span class="column-optional">Optionnel*</span>
+                  </div>
+                  <p class="column-description">
+                    Montant de la dépense (positif)
+                  </p>
+                  <p class="column-example">
+                    Exemple : <code>45.50</code>
+                  </p>
+                </div>
+
+                <div class="column-card">
+                  <div class="column-header">
+                    <i class="pi pi-arrow-up" />
+                    <span class="column-name">recette</span>
+                    <span class="column-optional">Optionnel*</span>
+                  </div>
+                  <p class="column-description">
+                    Montant de la recette (positif)
+                  </p>
+                  <p class="column-example">
+                    Exemple : <code>2500.00</code>
+                  </p>
+                </div>
+
+                <div class="column-card">
+                  <div class="column-header">
+                    <i class="pi pi-bookmark" />
+                    <span class="column-name">tag</span>
+                    <span class="column-optional">Optionnel</span>
+                  </div>
+                  <p class="column-description">
+                    Catégorie de la transaction
+                  </p>
+                  <p class="column-example">
+                    Exemple : <code>Alimentation & Restaurant</code>
+                  </p>
+                </div>
+              </div>
+              <p class="columns-note">
+                <i class="pi pi-info-circle" />
+                * Vous devez remplir <strong>soit</strong> depense <strong>soit</strong> recette, mais pas les deux en même temps
+              </p>
+            </div>
+
+            <!-- Important Rules -->
+            <div class="format-rules">
+              <h4><i class="pi pi-exclamation-circle" /> Règles importantes</h4>
+              <ul class="rules-list">
+                <li><i class="pi pi-check-circle" /> La première ligne doit contenir les en-têtes de colonnes</li>
+                <li><i class="pi pi-check-circle" /> Les colonnes doivent être séparées par des virgules</li>
+                <li><i class="pi pi-check-circle" /> Les montants utilisent le point comme séparateur décimal</li>
+                <li><i class="pi pi-check-circle" /> Les montants doivent être positifs (pas de signe moins)</li>
+                <li><i class="pi pi-check-circle" /> Taille maximale du fichier : 5 Mo</li>
+                <li><i class="pi pi-check-circle" /> Maximum 10 000 lignes de transactions</li>
+                <li><i class="pi pi-check-circle" /> Si un tag n'existe pas, un avertissement sera affiché</li>
+              </ul>
+            </div>
+
+            <!-- Tags disponibles -->
+            <div class="format-tags">
+              <h4><i class="pi pi-bookmark" /> Tags disponibles</h4>
+              <p class="tags-intro">
+                Vous pouvez utiliser l'un des tags suivants (ou laisser vide) :
+              </p>
+              <div class="tags-list">
+                <span class="tag-chip">Aucune</span>
+                <span class="tag-chip">Alimentation & Restaurant</span>
+                <span class="tag-chip">Transport</span>
+                <span class="tag-chip">Loisirs</span>
+                <span class="tag-chip">Santé</span>
+                <span class="tag-chip">Logement</span>
+                <span class="tag-chip">Abonnements</span>
+              </div>
+              <p class="tags-note">
+                <i class="pi pi-info-circle" />
+                Si vous utilisez un tag qui n'existe pas, il sera créé automatiquement avec un avertissement.
+              </p>
+            </div>
+          </div>
+        </Transition>
+      </div>
+
       <!-- Étape 1: Analysis -->
       <div v-if="currentStep === 'analysis'" class="analysis-section">
         <!-- File Selection -->
@@ -378,6 +566,366 @@ defineExpose({
 <style scoped>
 .csv-import-container {
   padding: 1rem 0;
+}
+
+/* Format Helper Section */
+.format-helper-section {
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.format-helper-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.format-helper-header:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b3fa0 100%);
+}
+
+.format-helper-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.format-helper-title i {
+  font-size: 1.25rem;
+}
+
+.format-helper-header > i {
+  transition: transform 0.3s ease;
+}
+
+/* CSV Example Standalone - Always visible */
+.format-example-standalone {
+  padding: 1.25rem;
+  background: #fafafa;
+  border-top: 1px solid #e2e8f0;
+}
+
+.format-example-standalone .format-example-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.format-example-standalone .format-example-header h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.format-example-standalone .format-example-header h4 i {
+  color: #667eea;
+}
+
+.format-example-standalone .csv-preview {
+  background: #1e293b;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.format-example-standalone .csv-preview pre {
+  margin: 0;
+}
+
+.format-example-standalone .csv-preview code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+.format-example-standalone .template-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  color: #166534;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.format-example-standalone .template-hint i {
+  color: #16a34a;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.format-helper-content {
+  padding: 1.5rem;
+  background: #fafafa;
+}
+
+.format-intro {
+  margin-bottom: 1.5rem;
+}
+
+.format-intro p {
+  color: #475569;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Column Structure */
+.format-structure {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.format-structure h4,
+.format-example h4,
+.format-rules h4,
+.format-tags h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.format-structure h4 i,
+.format-example h4 i,
+.format-rules h4 i,
+.format-tags h4 i {
+  color: #667eea;
+}
+
+.columns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.column-card {
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.column-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  border-color: #667eea;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.column-header i {
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.column-name {
+  font-weight: 700;
+  color: #1e293b;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+}
+
+.column-required {
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.column-optional {
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.column-description {
+  margin: 0 0 0.5rem 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.column-example {
+  margin: 0;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.column-example code,
+.column-description code {
+  background: white;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  color: #667eea;
+  border: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+}
+
+.columns-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  color: #92400e;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.columns-note i {
+  color: #f59e0b;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+/* Format Rules */
+.format-rules {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rules-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rules-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.rules-list li i {
+  color: #10b981;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+/* Format Tags */
+.format-tags {
+  padding: 1.25rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tags-intro {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tag-chip {
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  transition: all 0.2s ease;
+}
+
+.tag-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.tags-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  color: #0c4a6e;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.tags-note i {
+  color: #0284c7;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+/* Slide Fade Transition */
+:deep(.slide-fade-enter-active),
+:deep(.slide-fade-leave-active) {
+  transition: all 0.3s ease;
+  max-height: 2000px;
+  overflow: hidden;
+}
+
+:deep(.slide-fade-enter-from),
+:deep(.slide-fade-leave-to) {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* File Selection */
