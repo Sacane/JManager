@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.models.csv
 
 enum class CsvReportType {
     EMPTY_FILE,
+    TOO_MANY_ROWS,
     INVALID_HEADER,
     MISSING_COLUMNS,
     EXTRA_COLUMNS,

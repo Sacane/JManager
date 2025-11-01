@@ -27,6 +27,10 @@ class CsvFileValidator {
         private const val DEPENSE_COLUMN = 2
         private const val RECETTE_COLUMN = 3
         private const val TAG_COLUMN = 4
+
+        // Security limits
+        private const val MAX_ROWS = 10000
+        private const val MAX_LINE_LENGTH = 5000
     }
 
     /**
@@ -47,6 +51,15 @@ class CsvFileValidator {
                 lineNumber = 0,
                 type = CsvReportType.EMPTY_FILE,
                 message = "CSV file is empty"
+            ))
+            return success(CsvValidationReport(0, 0, errors, warnings, suggestions))
+        }
+
+        if (rows.size > MAX_ROWS + 1) {
+            errors.add(CsvValidationIssue(
+                lineNumber = 0,
+                type = CsvReportType.TOO_MANY_ROWS,
+                message = "Le fichier contient trop de lignes (${rows.size - 1}). Maximum autorisé: $MAX_ROWS transactions"
             ))
             return success(CsvValidationReport(0, 0, errors, warnings, suggestions))
         }

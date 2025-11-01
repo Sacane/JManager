@@ -62,7 +62,40 @@ function resetDialog() {
 function onFileSelected(event: Event) {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0 && target.files[0]) {
-    selectedFile.value = target.files[0]
+    const file = target.files[0]
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      toast.error('Seuls les fichiers CSV sont acceptés (.csv)')
+      if (fileInputRef.value) {
+        fileInputRef.value.value = ''
+      }
+      return
+    }
+
+    const acceptedTypes = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel']
+    if (file.type && !acceptedTypes.includes(file.type)) {
+      console.warn(`Type MIME suspect: ${file.type}. Acceptation conditionnelle.`)
+    }
+
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2)
+      toast.error(`Le fichier est trop volumineux (${fileSizeMB} Mo). Taille maximale : 5 Mo`)
+      if (fileInputRef.value) {
+        fileInputRef.value.value = ''
+      }
+      return
+    }
+
+    if (file.size === 0) {
+      toast.error('Le fichier est vide')
+      if (fileInputRef.value) {
+        fileInputRef.value.value = ''
+      }
+      return
+    }
+
+    selectedFile.value = file
     validationReport.value = null
     importResult.value = null
   }
@@ -155,9 +188,17 @@ defineExpose({
             <i class="pi pi-cloud-upload upload-icon" />
             <h3>Sélectionnez un fichier CSV</h3>
             <p>Cliquez pour parcourir vos fichiers</p>
-            <p class="file-format-hint">
-              Format attendu: Date, Libellé, Montant
-            </p>
+            <div class="file-constraints">
+              <p class="file-format-hint">
+                <i class="pi pi-info-circle" /> Format: date, label, depense, recette, tag
+              </p>
+              <p class="file-limit-hint">
+                <i class="pi pi-exclamation-triangle" /> Taille max: 5 Mo | Max 10,000 lignes
+              </p>
+              <p class="file-type-hint">
+                <i class="pi pi-file" /> Uniquement des fichiers .csv
+              </p>
+            </div>
           </div>
 
           <div v-else class="file-selected">
@@ -376,10 +417,33 @@ defineExpose({
   color: #64748b;
 }
 
-.file-format-hint {
+.file-constraints {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-format-hint,
+.file-limit-hint,
+.file-type-hint {
   font-size: 0.875rem;
-  color: #94a3b8;
-  margin-top: 1rem !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.file-format-hint {
+  color: #3b82f6;
+}
+
+.file-limit-hint {
+  color: #f59e0b;
+}
+
+.file-type-hint {
+  color: #64748b;
 }
 
 .file-selected {

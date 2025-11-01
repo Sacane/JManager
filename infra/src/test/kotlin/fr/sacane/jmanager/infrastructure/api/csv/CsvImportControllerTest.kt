@@ -445,5 +445,193 @@ class CsvImportControllerTest(
             Assertions.assertEquals(initialAmount.value, updatedBooklet.amount.value)
         }
     }
+
+    @Nested
+    @DisplayName("Security Validation Tests - File Type and Size")
+    inner class SecurityValidationTests {
+
+        private fun createTempFileWithExtension(content: String, extension: String): File {
+            val tempFile = File.createTempFile("test_file_", extension)
+            tempFile.writeText(content, StandardCharsets.UTF_8)
+            tempFile.deleteOnExit()
+            return tempFile
+        }
+
+        @Test
+        @DisplayName("Should reject Excel (.xlsx) files")
+        fun `should reject xlsx files`() {
+            val excelContent = "PK fake excel content"
+            val file = createTempFileWithExtension(excelContent, ".xlsx")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("Extension de fichier non supportée"))
+                body("message", containsString(".csv"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject HTML files")
+        fun `should reject html files`() {
+            val htmlContent = "<html><body><table><tr><td>date</td></tr></table></body></html>"
+            val file = createTempFileWithExtension(htmlContent, ".html")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("Extension de fichier non supportée"))
+                body("message", containsString(".csv"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject JSON files")
+        fun `should reject json files`() {
+            val jsonContent = """{"transactions": [{"date": "15-01-2025"}]}"""
+            val file = createTempFileWithExtension(jsonContent, ".json")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("Extension de fichier non supportée"))
+                body("message", containsString(".csv"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject XML files")
+        fun `should reject xml files`() {
+            val xmlContent = """<?xml version="1.0"?><transactions></transactions>"""
+            val file = createTempFileWithExtension(xmlContent, ".xml")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("Extension de fichier non supportée"))
+                body("message", containsString(".csv"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject files larger than 5MB")
+        fun `should reject large files exceeding 5MB`() {
+            val header = "date,label,depense,recette,tag\n"
+            val line = "15-01-2025,Transaction with very long description to increase file size and make it larger than the allowed limit for testing purposes,45.50,,Aucune\n"
+            val sizeOfOneLine = line.toByteArray(Charsets.UTF_8).size
+            val targetSize = 5 * 1024 * 1024 + 1024
+            val repeatCount = targetSize / sizeOfOneLine + 1
+            val largeContent = header + line.repeat(repeatCount)
+            val file = createTempCsvFile(largeContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("trop volumineux"))
+                body("message", containsString("Mo"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject empty files")
+        fun `should reject empty files`() {
+            val file = createTempCsvFile("")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("vide"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should accept CSV files with correct extension")
+        fun `should accept csv files with correct extension`() {
+            val csvContent = "date,label,depense,recette,tag\n15-01-2025,Test,45.50,,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(200)
+                body("totalLines", equalTo(1))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject Excel files on import endpoint")
+        fun `should reject xlsx files on import endpoint`() {
+            val excelContent = "PK fake excel content"
+            val file = createTempFileWithExtension(excelContent, ".xlsx")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("Extension de fichier non supportée"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject large files on import endpoint")
+        fun `should reject large files on import endpoint`() {
+            val header = "date,label,depense,recette,tag\n"
+            val line = "15-01-2025,Transaction with very long description to increase file size and make it larger than the allowed limit,45.50,,Aucune\n"
+            val sizeOfOneLine = line.toByteArray(Charsets.UTF_8).size
+            val targetSize = 5 * 1024 * 1024 + 1024
+            val repeatCount = targetSize / sizeOfOneLine + 1
+            val largeContent = header + line.repeat(repeatCount)
+            val file = createTempCsvFile(largeContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(400)
+                body("message", containsString("trop volumineux"))
+            }
+        }
+    }
 }
 

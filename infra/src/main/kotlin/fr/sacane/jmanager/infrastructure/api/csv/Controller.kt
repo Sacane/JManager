@@ -22,6 +22,15 @@ class CsvImportController(
 ) {
     companion object {
         private val LOGGER: Logger = Logger.getLogger("CsvImportController")
+
+        private val ALLOWED_CONTENT_TYPES = listOf(
+            "text/csv",
+            "text/plain",
+            "application/csv",
+            "application/vnd.ms-excel"
+        )
+
+        private const val MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024L
     }
 
     /**
@@ -38,14 +47,22 @@ class CsvImportController(
     fun validateCsvFile(
         @PathVariable bookletId: String,
         @RequestParam("file") file: MultipartFile
-    ): ResponseEntity<CsvValidationReportDTO> {
-        LOGGER.info("Validating CSV file for booklet $bookletId")
+    ): ResponseEntity<*> {
+        LOGGER.info("Validating CSV file '${file.originalFilename}' for booklet $bookletId")
 
-        if (file.isEmpty) {
-            return ResponseEntity.badRequest().build()
+        val validationError = validateFileUpload(file)
+        if (validationError != null) {
+            return ResponseEntity.badRequest().body(mapOf("message" to validationError))
         }
 
-        val csvContent = String(file.bytes, Charsets.UTF_8)
+        val csvContent = try {
+            String(file.bytes, Charsets.UTF_8)
+        } catch (e: Exception) {
+            LOGGER.warning("Error reading CSV file: ${e.message}")
+            return ResponseEntity.badRequest().body(
+                mapOf("message" to "Erreur d'encodage du fichier. Assurez-vous que le fichier est encodé en UTF-8")
+            )
+        }
 
         return csvImportFeature.validateCsvFile(
             token = currentUser.token,
@@ -67,14 +84,22 @@ class CsvImportController(
         @PathVariable bookletId: String,
         @RequestParam("file") file: MultipartFile,
         @RequestParam("skipValidation", defaultValue = "false", required = false) skipValidation: Boolean = false
-    ): ResponseEntity<CsvImportResultDTO> {
-        LOGGER.info("Importing CSV file for booklet $bookletId")
+    ): ResponseEntity<*> {
+        LOGGER.info("Importing CSV file '${file.originalFilename}' for booklet $bookletId")
 
-        if (file.isEmpty) {
-            return ResponseEntity.badRequest().build()
+        val validationError = validateFileUpload(file)
+        if (validationError != null) {
+            return ResponseEntity.badRequest().body(mapOf("message" to validationError))
         }
 
-        val csvContent = String(file.bytes, Charsets.UTF_8)
+        val csvContent = try {
+            String(file.bytes, Charsets.UTF_8)
+        } catch (e: Exception) {
+            LOGGER.warning("Error reading CSV file: ${e.message}")
+            return ResponseEntity.badRequest().body(
+                mapOf("message" to "Erreur d'encodage du fichier. Assurez-vous que le fichier est encodé en UTF-8")
+            )
+        }
 
         return csvImportFeature.importTransactionsFromCsv(
             token = currentUser.token,
@@ -82,6 +107,35 @@ class CsvImportController(
             csvContent = csvContent,
             skipValidation = skipValidation
         ).map { it.toDTO() }.toHttpResponse()
+    }
+
+    /**
+     * Validates the uploaded file (type, extension, size)
+     *
+     * @param file The file to validate
+     * @return Error message if validation fails, null if valid
+     */
+    private fun validateFileUpload(file: MultipartFile): String? {
+        if (file.isEmpty) {
+            return "Le fichier est vide"
+        }
+
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            val maxSizeMb = MAX_FILE_SIZE_BYTES / (1024 * 1024)
+            return "Le fichier est trop volumineux (${file.size / (1024 * 1024)} Mo). Taille maximale: $maxSizeMb Mo"
+        }
+
+        val filename = file.originalFilename ?: ""
+        if (!filename.endsWith(".csv", ignoreCase = true)) {
+            return "Extension de fichier non supportée. Seuls les fichiers .csv sont acceptés"
+        }
+
+        val contentType = file.contentType
+        if (contentType != null && contentType !in ALLOWED_CONTENT_TYPES) {
+            LOGGER.warning("Suspicious content type: $contentType for file: $filename")
+        }
+
+        return null
     }
 }
 

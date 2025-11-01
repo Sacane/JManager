@@ -409,5 +409,76 @@ class CsvFileValidatorTest {
             assertEquals(0, report.errors.size)
         }
     }
+
+    @Test
+    @DisplayName("Should reject CSV files with more than 10,000 rows")
+    fun `should reject CSV files exceeding 10000 rows limit`() {
+        // Créer un header + 10,001 lignes de données (dépasse la limite)
+        val header = arrayOf("date", "label", "depense", "recette", "tag")
+        val dataLine = arrayOf("15-01-2025", "Transaction", "45.50", "", "Aucune")
+
+        val rows = mutableListOf(header)
+        repeat(10001) {
+            rows.add(dataLine)
+        }
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertFalse(report.canImport)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.TOO_MANY_ROWS, report.errors[0].type)
+            assertTrue(report.errors[0].message.contains("10001"))
+            assertTrue(report.errors[0].message.contains("10000"))
+        }
+    }
+
+    @Test
+    @DisplayName("Should accept CSV files with exactly 10,000 rows")
+    fun `should accept CSV files with exactly 10000 rows`() {
+        // Créer un header + exactement 10,000 lignes (limite exacte)
+        val header = arrayOf("date", "label", "depense", "recette", "tag")
+        val dataLine = arrayOf("15-01-2025", "Transaction", "45.50", "", "Aucune")
+
+        val rows = mutableListOf(header)
+        repeat(10000) {
+            rows.add(dataLine)
+        }
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
+            assertEquals(10000, report.totalLines)
+            assertEquals(0, report.errors.size)
+        }
+    }
+
+    @Test
+    @DisplayName("Should accept CSV files with less than 10,000 rows")
+    fun `should accept CSV files with 9999 rows`() {
+        // Créer un header + 9,999 lignes (sous la limite)
+        val header = arrayOf("date", "label", "depense", "recette", "tag")
+        val dataLine = arrayOf("15-01-2025", "Transaction", "45.50", "", "Aucune")
+
+        val rows = mutableListOf(header)
+        repeat(9999) {
+            rows.add(dataLine)
+        }
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
+            assertEquals(9999, report.totalLines)
+            assertEquals(9999, report.validLines)
+        }
+    }
 }
 
