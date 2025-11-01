@@ -18,7 +18,6 @@ import java.time.format.DateTimeParseException
 class CsvFileValidator {
 
     companion object {
-        private val DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy")
         private const val EXPECTED_COLUMN_COUNT = 5
         private val EXPECTED_HEADERS = listOf("date", "label", "depense", "recette", "tag")
 
@@ -185,7 +184,7 @@ class CsvFileValidator {
             )
         }
 
-        if (looksLikeAmount(dateStr)) {
+        if (CsvValidationUtils.looksLikeAmount(dateStr)) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,
                 type = CsvReportType.POSSIBLE_COLUMN_SWAP,
@@ -193,9 +192,8 @@ class CsvFileValidator {
             )
         }
 
-        try {
-            LocalDate.parse(dateStr.trim(), DATE_FORMATTER)
-        } catch (e: DateTimeParseException) {
+        val date = CsvValidationUtils.parseDate(dateStr)
+        if (date == null) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,
                 type = CsvReportType.INVALID_DATE_FORMAT,
@@ -215,7 +213,7 @@ class CsvFileValidator {
             )
         }
 
-        if (looksLikeAmount(labelStr)) {
+        if (CsvValidationUtils.looksLikeAmount(labelStr)) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,
                 type = CsvReportType.POSSIBLE_COLUMN_SWAP,
@@ -266,7 +264,7 @@ class CsvFileValidator {
         val amountStr = if (!depenseEmpty) depenseStr else recetteStr
         val fieldName = if (!depenseEmpty) "depense" else "recette"
 
-        if (looksLikeText(amountStr)) {
+        if (CsvValidationUtils.looksLikeText(amountStr)) {
             warnings.add(CsvValidationIssue(
                 lineNumber = lineNumber,
                 type = CsvReportType.INVALID_AMOUNT_FORMAT,
@@ -275,25 +273,23 @@ class CsvFileValidator {
             ))
         }
 
-        try {
-            val normalizedStr = amountStr.trim().replace(',', '.')
-            val value = BigDecimal(normalizedStr)
-
-            if (value < BigDecimal.ZERO) {
-                return LineValidationResult(
-                    error = CsvValidationIssue(
-                        lineNumber = lineNumber,
-                        type = CsvReportType.NEGATIVE_AMOUNT,
-                        message = "Line $lineNumber: Amount cannot be negative ($amountStr)"
-                    )
-                )
-            }
-        } catch (e: NumberFormatException) {
+        val value = CsvValidationUtils.parseAmountValue(amountStr.trim())
+        if (value == null) {
             return LineValidationResult(
                 error = CsvValidationIssue(
                     lineNumber = lineNumber,
                     type = CsvReportType.INVALID_AMOUNT_FORMAT,
                     message = "Line $lineNumber: Invalid amount format for $fieldName: '$amountStr'. Use numbers with dot or comma (e.g., 123.45 or 123,45)"
+                )
+            )
+        }
+
+        if (value < BigDecimal.ZERO) {
+            return LineValidationResult(
+                error = CsvValidationIssue(
+                    lineNumber = lineNumber,
+                    type = CsvReportType.NEGATIVE_AMOUNT,
+                    message = "Line $lineNumber: Amount cannot be negative ($amountStr)"
                 )
             )
         }
@@ -335,13 +331,13 @@ class CsvFileValidator {
 
         rows.take(10).forEach { row ->
             if (row.size >= EXPECTED_COLUMN_COUNT) {
-                if (looksLikeAmount(row[LABEL_COLUMN])) {
+                if (CsvValidationUtils.looksLikeAmount(row[LABEL_COLUMN])) {
                     labelLooksLikeAmountCount++
                 }
 
                 val depenseStr = row[DEPENSE_COLUMN]
                 val recetteStr = row[RECETTE_COLUMN]
-                if (looksLikeText(depenseStr) || looksLikeText(recetteStr)) {
+                if (CsvValidationUtils.looksLikeText(depenseStr) || CsvValidationUtils.looksLikeText(recetteStr)) {
                     amountLooksLikeTextCount++
                 }
             }
@@ -350,29 +346,6 @@ class CsvFileValidator {
         if (labelLooksLikeAmountCount >= 3 || amountLooksLikeTextCount >= 3) {
             suggestions.add("⚠️ Possible column swap detected: labels and amounts might be swapped. Please verify your CSV structure.")
         }
-    }
-
-    private fun looksLikeAmount(value: String): Boolean {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) return false
-
-        val normalized = trimmed.replace(',', '.')
-        return try {
-            BigDecimal(normalized)
-            true
-        } catch (e: NumberFormatException) {
-            false
-        }
-    }
-
-    private fun looksLikeText(value: String): Boolean {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) return false
-
-        val hasLetters = trimmed.any { it.isLetter() }
-        val hasMultipleWords = trimmed.contains(' ')
-
-        return hasLetters && (hasMultipleWords || trimmed.length > 5)
     }
 }
 

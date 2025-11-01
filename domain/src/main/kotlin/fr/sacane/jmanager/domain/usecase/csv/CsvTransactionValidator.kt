@@ -4,12 +4,9 @@ import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
 import fr.sacane.jmanager.domain.models.csv.CsvTransactionLine
-import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Validateur et convertisseur de lignes CSV en transactions
@@ -17,7 +14,6 @@ import java.time.format.DateTimeParseException
 class CsvTransactionValidator {
 
     companion object {
-        private val DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy")
         private const val MAX_LABEL_LENGTH = 200
     }
 
@@ -30,7 +26,7 @@ class CsvTransactionValidator {
      * @return CsvLineResult.Success with the transaction
      */
     fun convertToTransaction(line: CsvTransactionLine, availableTags: List<Tag>): CsvLineResult {
-        val date = LocalDate.parse(line.date.trim(), DATE_FORMATTER)
+        val date = LocalDate.parse(line.date.trim(), CsvValidationUtils.DATE_FORMATTER)
         val label = line.label.trim()
 
         val (amount, isIncome) = if (line.depense.isNotBlank()) {
@@ -41,7 +37,7 @@ class CsvTransactionValidator {
             Pair(Amount(value), true)
         }
 
-        val tag = validateTag(line.tag, availableTags)
+        val tag = CsvValidationUtils.validateTag(line.tag, availableTags)
 
         return CsvLineResult.Success(
             Transaction(
@@ -69,7 +65,7 @@ class CsvTransactionValidator {
         val date = validateDate(line.date, errors)
         val label = validateLabel(line.label, errors)
         val (amount, isIncome) = validateAmounts(line.depense, line.recette, errors)
-        val tag = validateTag(line.tag, availableTags)
+        val tag = CsvValidationUtils.validateTag(line.tag, availableTags)
 
         return if (errors.isEmpty() && date != null && label != null && amount != null) {
             CsvLineResult.Success(
@@ -93,12 +89,11 @@ class CsvTransactionValidator {
             return null
         }
 
-        return try {
-            LocalDate.parse(dateStr.trim(), DATE_FORMATTER)
-        } catch (e: DateTimeParseException) {
+        val date = CsvValidationUtils.parseDate(dateStr)
+        if (date == null) {
             errors.add("Format de date invalide. Format attendu: jj-MM-aaaa (exemple: 15-01-2025)")
-            null
         }
+        return date
     }
 
     private fun validateLabel(labelStr: String, errors: MutableList<String>): String? {
@@ -135,51 +130,12 @@ class CsvTransactionValidator {
         }
 
         if (!depenseEmpty) {
-            val amount = parseAmount(depenseStr.trim(), errors, "dépense")
+            val amount = CsvValidationUtils.parseAmount(depenseStr.trim(), errors, "dépense")
             return Pair(amount, false)
         }
 
-        val amount = parseAmount(recetteStr.trim(), errors, "recette")
+        val amount = CsvValidationUtils.parseAmount(recetteStr.trim(), errors, "recette")
         return Pair(amount, true)
-    }
-
-    private fun parseAmount(amountStr: String, errors: MutableList<String>, fieldName: String): Amount? {
-        return try {
-            val normalizedStr = amountStr.replace(',', '.')
-            val value = BigDecimal(normalizedStr)
-
-            if (value < BigDecimal.ZERO) {
-                errors.add("Le montant de la $fieldName ne peut pas être négatif")
-                return null
-            }
-
-            Amount(value)
-        } catch (e: NumberFormatException) {
-            errors.add("Format de montant invalide pour la $fieldName. Utilisez des nombres avec point ou virgule (exemple: 123.45 ou 123,45)")
-            null
-        }
-    }
-
-    private fun validateTag(tagStr: String, availableTags: List<Tag>): Tag {
-        if (tagStr.isBlank()) {
-            return Tag.noneTag()
-        }
-
-        val trimmedTag = tagStr.trim()
-
-        val matchingTag = availableTags.firstOrNull {
-            it.label.equals(trimmedTag, ignoreCase = true)
-        }
-
-        if (matchingTag != null) {
-            return matchingTag
-        }
-
-        val defaultTag = defaultTags.firstOrNull {
-            it.label.equals(trimmedTag, ignoreCase = true)
-        }
-
-        return defaultTag ?: Tag.noneTag()
     }
 }
 
