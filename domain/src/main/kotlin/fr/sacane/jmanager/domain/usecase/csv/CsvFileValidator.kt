@@ -1,13 +1,13 @@
 package fr.sacane.jmanager.domain.usecase.csv
 
 import fr.sacane.jmanager.domain.models.Tag
-import fr.sacane.jmanager.domain.models.csv.*
+import fr.sacane.jmanager.domain.models.csv.CsvReportType
+import fr.sacane.jmanager.domain.models.csv.CsvValidationIssue
+import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
 import fr.sacane.jmanager.domain.models.defaultTags
-import fr.sacane.jmanager.domain.utils.*
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Validator for CSV file analysis before import
