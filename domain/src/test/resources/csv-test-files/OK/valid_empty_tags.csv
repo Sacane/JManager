@@ -1,0 +1,5 @@
+date,label,depense,recette,tag
+10-06-2024,Transactions sans tag,100.00,,
+11-06-2024,Transaction avec tag vide,50.00,,Aucune
+12-06-2024,Virement bancaire,,500.00,
+

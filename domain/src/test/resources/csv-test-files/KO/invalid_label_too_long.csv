@@ -1,0 +1,3 @@
+date,label,depense,recette,tag
+15-01-2025,Achat livre avec description extrêmement longue qui dépasse largement la limite de deux cents caractères autorisés pour un label afin de tester la validation de cette contrainte importante du système et de vérifier que le message d'erreur approprié est bien retourné lors de l'import CSV avec un texte beaucoup trop long,25.00,,Achat & Shopping
+

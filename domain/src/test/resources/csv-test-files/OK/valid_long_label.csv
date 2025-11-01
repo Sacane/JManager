@@ -1,0 +1,3 @@
+date,label,depense,recette,tag
+10-10-2024,Achat livre avec description très longue qui contient beaucoup de mots pour tester la limite de caractères du label car il ne doit pas dépasser deux cents caractères exactement donc voici un texte,25.00,,Achat & Shopping
+

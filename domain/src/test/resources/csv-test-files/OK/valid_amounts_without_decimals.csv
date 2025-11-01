@@ -1,0 +1,7 @@
+date,label,depense,recette,tag
+15-01-2025,Simple depense,100,,Aucune
+16-01-2025,Simple recette,,200,Transport
+17-01-2025,Montant avec un zéro,50.0,,Santé
+,Pas de date,45.50,,Aucune
+15-01-2025,Date vide pour test 2,30.00,,Transport
+

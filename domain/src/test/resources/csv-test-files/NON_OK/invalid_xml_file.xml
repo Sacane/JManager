@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactions>
+    <transaction>
+        <date>15-01-2025</date>
+        <label>Test</label>
+        <depense>45.50</depense>
+        <recette></recette>
+        <tag>Aucune</tag>
+    </transaction>
+</transactions>
+
