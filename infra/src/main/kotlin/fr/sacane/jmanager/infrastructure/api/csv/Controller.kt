@@ -59,12 +59,14 @@ class CsvImportController(
      *
      * @param bookletId The booklet ID to import transactions into
      * @param file The CSV file to import
+     * @param skipValidation If true, skips CSV validation (assumes it was already validated). Default: false for safety
      * @return Import result with created transactions and potential errors
      */
     @PostMapping("import/{bookletId}")
     fun importTransactionsFromCsv(
         @PathVariable bookletId: String,
-        @RequestParam("file") file: MultipartFile
+        @RequestParam("file") file: MultipartFile,
+        @RequestParam("skipValidation", defaultValue = "false", required = false) skipValidation: Boolean = false
     ): ResponseEntity<CsvImportResultDTO> {
         LOGGER.info("Importing CSV file for booklet $bookletId")
 
@@ -77,7 +79,8 @@ class CsvImportController(
         return csvImportFeature.importTransactionsFromCsv(
             token = currentUser.token,
             bookletId = bookletId.toUUID(),
-            csvContent = csvContent
+            csvContent = csvContent,
+            skipValidation = skipValidation
         ).map { it.toDTO() }.toHttpResponse()
     }
 }

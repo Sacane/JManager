@@ -23,6 +23,7 @@ const tags = ref<TagDTO[]>([])
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
 const isMobile = ref(false)
+const csvImportDialogRef = ref<any>(null)
 
 const bookletData = reactive({
   id: '',
@@ -279,6 +280,16 @@ function checkMobile() {
   isMobile.value = window.innerWidth <= 768
 }
 
+function openCsvImportDialog() {
+  csvImportDialogRef.value?.openDialog()
+}
+
+function onCsvImportSuccess(result: CsvImportResultDTO) {
+  // Recharger les données du booklet après l'importation
+  loadBookletData()
+  toast.success(`${result.successCount} transactions importées avec succès !`)
+}
+
 onMounted(async () => {
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
   await loadBookletData()
@@ -383,6 +394,12 @@ onUnmounted(() => {
           icon="pi pi-clock"
           :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
           @click="openPreviewCreationDialog"
+        />
+        <Button
+          class="btn-csv-import"
+          icon="pi pi-file-import"
+          :label="isMobile ? 'CSV' : 'Importer CSV'"
+          @click="openCsvImportDialog"
         />
       </div>
 
@@ -596,6 +613,12 @@ onUnmounted(() => {
     button-title="Mettre à jour"
     @cancel-creation="isEditDialogVisible = false"
     @create-transaction="applyEditTransaction"
+  />
+
+  <CsvImportDialog
+    ref="csvImportDialogRef"
+    :booklet-id="bookletData.id"
+    @import-success="onCsvImportSuccess"
   />
 </template>
 
@@ -928,13 +951,27 @@ onUnmounted(() => {
   color: #d97706;
   border: 2px solid #f59e0b;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
   transition: all 0.3s ease;
 
   &:hover {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+    background: #fffbeb;
     border-color: #d97706;
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-csv-import {
+  background: white;
+  color: #0891b2;
+  border: 2px solid #06b6d4;
+  font-weight: 600;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #cffafe;
+    border-color: #0891b2;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.25);
     transform: translateY(-2px);
   }
 }
