@@ -38,9 +38,11 @@ class CsvFileValidator {
      *
      * @param rows List of CSV rows (including header)
      * @param availableTags Available tags for the user
+     * @param month Optional month (1-12) to use when date contains only day
+     * @param year Optional year to use when date contains only day
      * @return Result<CsvValidationReport> - Always success with errors/warnings in the report
      */
-    fun validate(rows: List<Array<String>>, availableTags: List<Tag>): Result<CsvValidationReport> {
+    fun validate(rows: List<Array<String>>, availableTags: List<Tag>, month: Int? = null, year: Int? = null): Result<CsvValidationReport> {
         val errors = mutableListOf<CsvValidationIssue>()
         val warnings = mutableListOf<CsvValidationIssue>()
         val suggestions = mutableListOf<String>()
@@ -74,7 +76,7 @@ class CsvFileValidator {
 
         for ((index, row) in dataRows.withIndex()) {
             val lineNumber = index + 2
-            val lineValidation = validateDataLine(row, lineNumber, availableTags)
+            val lineValidation = validateDataLine(row, lineNumber, availableTags, month, year)
 
             if (lineValidation.error != null) {
                 errors.add(lineValidation.error)
@@ -145,7 +147,9 @@ class CsvFileValidator {
     private fun validateDataLine(
         row: Array<String>,
         lineNumber: Int,
-        availableTags: List<Tag>
+        availableTags: List<Tag>,
+        month: Int?,
+        year: Int?
     ): LineValidationResult {
         val warnings = mutableListOf<CsvValidationIssue>()
 
@@ -159,7 +163,7 @@ class CsvFileValidator {
             )
         }
 
-        val dateError = validateDateColumn(row[DATE_COLUMN], lineNumber)
+        val dateError = validateDateColumn(row[DATE_COLUMN], lineNumber, month, year)
         if (dateError != null) return LineValidationResult(error = dateError)
 
         val labelError = validateLabelColumn(row[LABEL_COLUMN], lineNumber)
@@ -175,7 +179,7 @@ class CsvFileValidator {
         return LineValidationResult(warnings = warnings)
     }
 
-    private fun validateDateColumn(dateStr: String, lineNumber: Int): CsvValidationIssue? {
+    private fun validateDateColumn(dateStr: String, lineNumber: Int, month: Int?, year: Int?): CsvValidationIssue? {
         if (dateStr.isBlank()) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,
@@ -192,12 +196,17 @@ class CsvFileValidator {
             )
         }
 
-        val date = CsvValidationUtils.parseDate(dateStr)
+        val date = CsvValidationUtils.parseDate(dateStr, month, year)
         if (date == null) {
+            val errorMessage = if (month != null && year != null) {
+                "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025) or day only (e.g., 15)"
+            } else {
+                "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025)"
+            }
             return CsvValidationIssue(
                 lineNumber = lineNumber,
                 type = CsvReportType.INVALID_DATE_FORMAT,
-                message = "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025)"
+                message = errorMessage
             )
         }
 

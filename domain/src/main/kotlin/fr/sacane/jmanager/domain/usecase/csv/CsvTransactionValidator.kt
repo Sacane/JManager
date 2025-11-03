@@ -23,10 +23,12 @@ class CsvTransactionValidator {
      *
      * @param line The CSV line to convert
      * @param availableTags Available tags for the user
+     * @param month Optional month (1-12) to use when date contains only day
+     * @param year Optional year to use when date contains only day
      * @return CsvLineResult.Success with the transaction
      */
-    fun convertToTransaction(line: CsvTransactionLine, availableTags: List<Tag>): CsvLineResult {
-        val date = LocalDate.parse(line.date.trim(), CsvValidationUtils.DATE_FORMATTER)
+    fun convertToTransaction(line: CsvTransactionLine, availableTags: List<Tag>, month: Int? = null, year: Int? = null): CsvLineResult {
+        val date = CsvValidationUtils.parseDate(line.date.trim(), month, year)!!
         val label = line.label.trim()
 
         val (amount, isIncome) = if (line.depense.isNotBlank()) {
@@ -57,12 +59,14 @@ class CsvTransactionValidator {
      *
      * @param line La ligne CSV à valider
      * @param availableTags Les tags disponibles pour l'utilisateur
+     * @param month Optional month (1-12) to use when date contains only day
+     * @param year Optional year to use when date contains only day
      * @return CsvLineResult.Success avec la transaction ou CsvLineResult.Error avec les erreurs
      */
-    fun validateAndConvert(line: CsvTransactionLine, availableTags: List<Tag>): CsvLineResult {
+    fun validateAndConvert(line: CsvTransactionLine, availableTags: List<Tag>, month: Int? = null, year: Int? = null): CsvLineResult {
         val errors = mutableListOf<String>()
 
-        val date = validateDate(line.date, errors)
+        val date = validateDate(line.date, errors, month, year)
         val label = validateLabel(line.label, errors)
         val (amount, isIncome) = validateAmounts(line.depense, line.recette, errors)
         val tag = CsvValidationUtils.validateTag(line.tag, availableTags)
@@ -83,15 +87,19 @@ class CsvTransactionValidator {
         }
     }
 
-    private fun validateDate(dateStr: String, errors: MutableList<String>): LocalDate? {
+    private fun validateDate(dateStr: String, errors: MutableList<String>, month: Int?, year: Int?): LocalDate? {
         if (dateStr.isBlank()) {
             errors.add("La date est obligatoire")
             return null
         }
 
-        val date = CsvValidationUtils.parseDate(dateStr)
+        val date = CsvValidationUtils.parseDate(dateStr, month, year)
         if (date == null) {
-            errors.add("Format de date invalide. Format attendu: jj-MM-aaaa (exemple: 15-01-2025)")
+            if (month != null && year != null) {
+                errors.add("Format de date invalide. Formats acceptés: jj-MM-aaaa (exemple: 15-01-2025) ou jj seul (exemple: 15)")
+            } else {
+                errors.add("Format de date invalide. Format attendu: jj-MM-aaaa (exemple: 15-01-2025)")
+            }
         }
         return date
     }

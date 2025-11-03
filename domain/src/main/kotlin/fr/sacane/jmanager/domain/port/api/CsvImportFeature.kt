@@ -42,12 +42,16 @@ sealed interface CsvImportFeature {
      * @param token Authentication token
      * @param bookletId ID of the booklet to import transactions into
      * @param csvContent CSV file content (raw text)
+     * @param month Optional month (1-12) to use when CSV date contains only day
+     * @param year Optional year to use when CSV date contains only day
      * @return Result containing CsvValidationReport with warnings or error with first critical issue
      */
     fun validateCsvFile(
         token: String,
         bookletId: UUID,
-        csvContent: String
+        csvContent: String,
+        month: Int? = null,
+        year: Int? = null
     ): Result<CsvValidationReport>
 
     /**
@@ -57,13 +61,17 @@ sealed interface CsvImportFeature {
      * @param bookletId ID of the booklet to import transactions into
      * @param csvContent CSV file content (raw text)
      * @param skipValidation If true, skips CSV validation (assumes it was already validated). Default: false for safety
+     * @param month Optional month (1-12) to use when CSV date contains only day
+     * @param year Optional year to use when CSV date contains only day
      * @return Result containing CsvImportResult with created transactions and potential errors
      */
     fun importTransactionsFromCsv(
         token: String,
         bookletId: UUID,
         csvContent: String,
-        skipValidation: Boolean = false
+        skipValidation: Boolean = false,
+        month: Int? = null,
+        year: Int? = null
     ): Result<CsvImportResult>
 }
 
@@ -94,7 +102,9 @@ class CsvImportFeatureImpl(
     override fun validateCsvFile(
         token: String,
         bookletId: UUID,
-        csvContent: String
+        csvContent: String,
+        month: Int?,
+        year: Int?
     ): Result<CsvValidationReport> {
         return sessionManager.authenticate(token) { userId ->
             val bookletFindResult = findBookletAndCheckOwner(userId, bookletId)
@@ -104,7 +114,7 @@ class CsvImportFeatureImpl(
             try {
                 bookletFindResult.flatMap {
                     val rows = csvFileReader.readCsvContent(csvContent)
-                    val validationResult = fileValidator.validate(rows, userTags)
+                    val validationResult = fileValidator.validate(rows, userTags, month, year)
 
                     validationResult.mapNullable { report ->
                         if (report != null) {
@@ -127,7 +137,9 @@ class CsvImportFeatureImpl(
         token: String,
         bookletId: UUID,
         csvContent: String,
-        skipValidation: Boolean
+        skipValidation: Boolean,
+        month: Int?,
+        year: Int?
     ): Result<CsvImportResult> {
         return sessionManager.authenticate(token) { userId ->
             val bookletFindResult = findBookletAndCheckOwner(userId, bookletId)
@@ -138,11 +150,11 @@ class CsvImportFeatureImpl(
                 val rows = csvFileReader.readCsvContent(csvContent)
 
                 if (!skipValidation) {
-                    val validationResult = bookletFindResult.flatMap { checkValidationErrors(rows, userTags) }
+                    val validationResult = bookletFindResult.flatMap { checkValidationErrors(rows, userTags, month, year) }
                     if (validationResult.isFailure()) return@authenticate validationResult
                 }
 
-                bookletFindResult.flatMap { processImport(it, rows, userTags, skipValidation) }
+                bookletFindResult.flatMap { processImport(it, rows, userTags, skipValidation, month, year) }
             } catch (e: Exception) {
                 logger.severe("Error during CSV import: ${e.message}")
                 failure(ResultState.INTERNAL_SERVER_ERROR, "Error during import: ${e.message}")
@@ -159,8 +171,8 @@ class CsvImportFeatureImpl(
         return success(booklet)
     }
 
-    private fun checkValidationErrors(rows: List<Array<String>>, userTags: List<Tag>): Result<CsvImportResult> {
-        val validationResult = fileValidator.validate(rows, userTags)
+    private fun checkValidationErrors(rows: List<Array<String>>, userTags: List<Tag>, month: Int?, year: Int?): Result<CsvImportResult> {
+        val validationResult = fileValidator.validate(rows, userTags, month, year)
 
         if (validationResult.isFailure()) {
             return failure(validationResult.status, validationResult.message)
@@ -182,10 +194,12 @@ class CsvImportFeatureImpl(
         booklet: Booklet,
         rows: List<Array<String>>,
         userTags: List<Tag>,
-        skipValidation: Boolean
+        skipValidation: Boolean,
+        month: Int?,
+        year: Int?
     ): Result<CsvImportResult> {
         return unitOfWorkProvider.executeInTransaction(booklet) { bookletParam ->
-            val results = convertRowsToTransactions(rows, userTags, skipValidation)
+            val results = convertRowsToTransactions(rows, userTags, skipValidation, month, year)
             val csvImportResult = saveTransactions(bookletParam, results)
 
             logger.info("CSV import completed: ${csvImportResult.successCount} transactions imported, ${csvImportResult.failedLines.size} errors")
@@ -196,14 +210,16 @@ class CsvImportFeatureImpl(
     private fun convertRowsToTransactions(
         rows: List<Array<String>>,
         userTags: List<Tag>,
-        skipValidation: Boolean
+        skipValidation: Boolean,
+        month: Int?,
+        year: Int?
     ): List<CsvLineResult> {
         val dataRows = rows.drop(1)
         return dataRows.mapIndexed { index, row ->
             val lineNumber = index + 2
             parseCsvLine(row, lineNumber)?.let { line ->
-                if (skipValidation) validator.convertToTransaction(line, userTags)
-                else validator.validateAndConvert(line, userTags)
+                if (skipValidation) validator.convertToTransaction(line, userTags, month, year)
+                else validator.validateAndConvert(line, userTags, month, year)
             } ?: CsvLineResult.Error(lineNumber, listOf("Malformed CSV line"))
         }
     }

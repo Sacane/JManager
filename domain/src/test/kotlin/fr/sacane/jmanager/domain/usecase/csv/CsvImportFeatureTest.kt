@@ -567,5 +567,163 @@ class CsvImportFeatureTest : FeatureTest() {
             }
         }
     }
-}
 
+    @Test
+    @DisplayName("Should validate CSV with day-only dates when month and year are provided")
+    fun `validateCsvFile should accept day-only dates when month and year are provided`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                1,Groceries,45.50,,Alimentation & Restaurant
+                15,Transport,30.00,,Transport
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent,
+                month = 1, // January
+                year = 2026
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                assertFalse(report.hasErrors)
+                assertTrue(report.canImport)
+                assertEquals(2, report.totalLines)
+                assertEquals(2, report.validLines)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail validation when day-only date is provided without month and year")
+    fun `validateCsvFile should fail when day-only date without month and year`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                1,Groceries,45.50,,Alimentation & Restaurant
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                assertTrue(report.hasErrors)
+                assertFalse(report.canImport)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should import transactions with day-only dates when month and year are provided")
+    fun `importTransactionsFromCsv should import with day-only dates and month year`() {
+        launchWithConnectedUserInstance {
+            val initialAmount = booklet.amount
+            val csvContent = """
+                date,label,depense,recette,tag
+                1,Groceries,45.50,,Alimentation & Restaurant
+                15,Salary,,2500.00,Aucune
+            """.trimIndent()
+
+            val result = csvImportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent,
+                month = 1, // January
+                year = 2026
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { importResult ->
+                assertEquals(2, importResult.successCount)
+                assertEquals(0, importResult.failedLines.size)
+
+                // Vérifier les dates des transactions
+                val transaction1 = importResult.transactions.find { it.label == "Groceries" }
+                assertNotNull(transaction1)
+                assertEquals(java.time.LocalDate.of(2026, 1, 1), transaction1!!.date)
+
+                val transaction2 = importResult.transactions.find { it.label == "Salary" }
+                assertNotNull(transaction2)
+                assertEquals(java.time.LocalDate.of(2026, 1, 15), transaction2!!.date)
+
+                // Vérifier le montant du livret
+                val accountState = FakeFactory.accountState()
+                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                assertNotNull(updatedBooklets)
+                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                assertNotNull(updatedBooklet)
+
+                // +2500.00 - 45.50 = 2454.50
+                val expectedAmount = initialAmount.value.add(java.math.BigDecimal("2454.50"))
+                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should accept mixed full dates and day-only dates")
+    fun `importTransactionsFromCsv should accept mixed date formats`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                15-02-2026,Full Date Transaction,100.00,,Aucune
+                20,Day Only Transaction,50.00,,Aucune
+            """.trimIndent()
+
+            val result = csvImportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent,
+                month = 1, // January
+                year = 2026
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { importResult ->
+                assertEquals(2, importResult.successCount)
+                assertEquals(0, importResult.failedLines.size)
+
+                // Vérifier que la date complète est utilisée telle quelle
+                val fullDateTx = importResult.transactions.find { it.label == "Full Date Transaction" }
+                assertNotNull(fullDateTx)
+                assertEquals(java.time.LocalDate.of(2026, 2, 15), fullDateTx!!.date)
+
+                // Vérifier que le jour seul utilise month/year fournis
+                val dayOnlyTx = importResult.transactions.find { it.label == "Day Only Transaction" }
+                assertNotNull(dayOnlyTx)
+                assertEquals(java.time.LocalDate.of(2026, 1, 20), dayOnlyTx!!.date)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail when day-only date is invalid (e.g., 32)")
+    fun `validateCsvFile should fail when day-only date is out of range`() {
+        launchWithConnectedUserInstance {
+            val csvContent = """
+                date,label,depense,recette,tag
+                32,Invalid Day,45.50,,Aucune
+            """.trimIndent()
+
+            val result = csvImportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent,
+                month = 1,
+                year = 2026
+            )
+
+            assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                assertTrue(report.hasErrors)
+                assertFalse(report.canImport)
+            }
+        }
+    }
+}

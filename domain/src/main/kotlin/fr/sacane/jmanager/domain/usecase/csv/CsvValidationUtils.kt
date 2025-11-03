@@ -107,13 +107,31 @@ object CsvValidationUtils {
 
     /**
      * Parses a date string in dd-MM-yyyy format
+     * If month and year are provided and dateStr is only a day number, constructs full date
      * Returns null if parsing fails
      */
-    fun parseDate(dateStr: String): LocalDate? {
+    fun parseDate(dateStr: String, month: Int? = null, year: Int? = null): LocalDate? {
+        val trimmed = dateStr.trim()
+
+        // Try to parse as full date first (dd-MM-yyyy)
         return try {
-            LocalDate.parse(dateStr.trim(), DATE_FORMATTER)
+            LocalDate.parse(trimmed, DATE_FORMATTER)
         } catch (_: DateTimeParseException) {
-            null
+            // If full date parsing fails and we have month/year, try to parse as day only
+            if (month != null && year != null) {
+                try {
+                    val day = trimmed.toIntOrNull()
+                    if (day != null && day in 1..31) {
+                        LocalDate.of(year, month, day)
+                    } else {
+                        null
+                    }
+                } catch (_: Exception) {
+                    null
+                }
+            } else {
+                null
+            }
         }
     }
 }
