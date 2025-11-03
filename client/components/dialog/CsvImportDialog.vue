@@ -3,6 +3,8 @@ import useCsvImport from '~/composables/useCsvImport'
 
 const props = defineProps<{
   bookletId: string
+  month?: string // Mois au format anglais (JANUARY, FEBRUARY, etc.)
+  year?: number // Année
 }>()
 
 const emit = defineEmits(['visible', 'importSuccess'])
@@ -23,10 +25,8 @@ const importResult = ref<CsvImportResultDTO | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const showFormatHelper = ref(false)
 
-// Date options for day-only imports
-const selectedMonth = ref<string>('')
-const selectedYear = ref<number>(new Date().getFullYear())
-const useDayOnlyMode = ref(false)
+// Computed pour savoir si on a un mois et une année (mode jour seul possible)
+const hasDayOnlySupport = computed(() => props.month !== undefined && props.year !== undefined)
 
 // Computed
 const canAnalyze = computed(() => selectedFile.value !== null && !isAnalyzing.value)
@@ -61,9 +61,6 @@ function resetDialog() {
   importResult.value = null
   isAnalyzing.value = false
   isImporting.value = false
-  useDayOnlyMode.value = false
-  selectedMonth.value = ''
-  selectedYear.value = new Date().getFullYear()
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
@@ -128,20 +125,20 @@ async function analyzeFile() {
 
   isAnalyzing.value = true
   try {
-    // Convertir le mois sélectionné en numéro si le mode jour seul est activé
+    // Convertir le mois de props en numéro si disponible
     let monthNumber: number | undefined
     let yearNumber: number | undefined
 
-    if (useDayOnlyMode.value && selectedMonth.value && selectedYear.value) {
-      monthNumber = date.numberFromMonth(date.englishMonth(selectedMonth.value))
-      yearNumber = selectedYear.value
+    if (hasDayOnlySupport.value && props.month && props.year) {
+      monthNumber = date.numberFromMonth(props.month)
+      yearNumber = props.year
     }
 
     validationReport.value = await validateCsvFile(
       props.bookletId,
       selectedFile.value,
       monthNumber,
-      yearNumber
+      yearNumber,
     )
 
     if (validationReport.value && validationReport.value.hasErrors) {
@@ -164,13 +161,13 @@ async function importFile() {
 
   isImporting.value = true
   try {
-    // Convertir le mois sélectionné en numéro si le mode jour seul est activé
+    // Convertir le mois de props en numéro si disponible
     let monthNumber: number | undefined
     let yearNumber: number | undefined
 
-    if (useDayOnlyMode.value && selectedMonth.value && selectedYear.value) {
-      monthNumber = date.numberFromMonth(date.englishMonth(selectedMonth.value))
-      yearNumber = selectedYear.value
+    if (hasDayOnlySupport.value && props.month && props.year) {
+      monthNumber = date.numberFromMonth(props.month)
+      yearNumber = props.year
     }
 
     importResult.value = await importTransactionsFromCsv(
@@ -178,7 +175,7 @@ async function importFile() {
       selectedFile.value,
       true,
       monthNumber,
-      yearNumber
+      yearNumber,
     )
 
     if (importResult.value && importResult.value.hasErrors) {
@@ -445,63 +442,23 @@ defineExpose({
           </div>
         </div>
 
-        <!-- Day-Only Mode Selection -->
-        <div class="day-only-mode-section">
-          <div class="mode-toggle">
-            <label class="mode-toggle-label">
-              <input
-                v-model="useDayOnlyMode"
-                type="checkbox"
-                class="mode-checkbox"
-              >
-              <span class="mode-text">
-                <i class="pi pi-calendar" />
-                Mon CSV contient uniquement des jours (sans mois ni année)
-              </span>
-            </label>
-          </div>
-
-          <Transition name="slide-fade">
-            <div v-if="useDayOnlyMode" class="date-selectors">
-              <div class="date-info">
-                <i class="pi pi-info-circle" />
-                <p>Si votre fichier CSV contient seulement des jours (ex: 1, 15, 28), spécifiez le mois et l'année correspondants.</p>
-              </div>
-
-              <div class="date-inputs">
-                <div class="date-input-group">
-                  <label for="monthSelect">Mois :</label>
-                  <select
-                    id="monthSelect"
-                    v-model="selectedMonth"
-                    class="date-select"
-                  >
-                    <option value="" disabled>Sélectionnez un mois</option>
-                    <option v-for="(month, index) in date.months" :key="index" :value="date.translate(month)">
-                      {{ date.translate(month) }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="date-input-group">
-                  <label for="yearSelect">Année :</label>
-                  <input
-                    id="yearSelect"
-                    v-model.number="selectedYear"
-                    type="number"
-                    min="2000"
-                    :max="new Date().getFullYear() + 10"
-                    class="date-input"
-                  >
-                </div>
-              </div>
-
-              <div v-if="selectedMonth && selectedYear" class="date-example">
+        <!-- Day-Only Mode Info -->
+        <div v-if="hasDayOnlySupport" class="day-only-info-section">
+          <div class="info-card">
+            <i class="pi pi-calendar" />
+            <div class="info-content">
+              <h4>Support des dates avec jour seul</h4>
+              <p>
+                Votre fichier CSV peut contenir uniquement des jours (ex: 1, 15, 28).
+                Les dates seront automatiquement complétées avec
+                <strong>{{ date.translate(props.month!) }} {{ props.year }}</strong>.
+              </p>
+              <div class="info-example">
                 <i class="pi pi-lightbulb" />
-                <span>Exemple : "15" dans votre CSV deviendra le 15 {{ selectedMonth }} {{ selectedYear }}</span>
+                <span>Exemple : "15" dans votre CSV deviendra le 15 {{ date.translate(props.month!) }} {{ props.year }}</span>
               </div>
             </div>
-          </Transition>
+          </div>
         </div>
 
         <!-- Action Button -->
@@ -566,7 +523,7 @@ defineExpose({
                   {{ error.message }}
                 </p>
                 <p v-if="error.detectedValue" class="issue-value">
-                  Valeur: <code>{{ error.detectedValue }}</code>
+                  Valeur détectée : <code>{{ error.detectedValue }}</code>
                 </p>
               </div>
             </div>
@@ -589,7 +546,7 @@ defineExpose({
                   {{ warning.message }}
                 </p>
                 <p v-if="warning.detectedValue" class="issue-value">
-                  Valeur: <code>{{ warning.detectedValue }}</code>
+                  Valeur détectée : <code>{{ warning.detectedValue }}</code>
                 </p>
               </div>
             </div>
@@ -605,14 +562,13 @@ defineExpose({
             </ul>
           </div>
 
-          <!-- Import Button -->
+          <!-- Import Action -->
           <div v-if="canImport" class="import-action">
             <Button
               :label="isImporting ? 'Importation en cours...' : 'Importer les transactions'"
               :icon="isImporting ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
               :disabled="!canImport || isImporting"
               class="import-button"
-              severity="success"
               @click="importFile"
             />
           </div>
@@ -625,33 +581,31 @@ defineExpose({
             <h3>{{ importResult.hasErrors ? 'Importation terminée avec des erreurs' : 'Importation réussie !' }}</h3>
           </div>
 
-          <div class="import-summary">
+          <div class="import-stats">
             <div class="import-stat success">
-              <i class="pi pi-check" />
               <span>{{ importResult.successCount }} importées</span>
             </div>
             <div v-if="importResult.failedCount > 0" class="import-stat error">
-              <i class="pi pi-times" />
               <span>{{ importResult.failedCount }} échecs</span>
             </div>
           </div>
 
-          <!-- Import Errors -->
+          <!-- Failed lines -->
           <div v-if="importResult.errors.length > 0" class="import-errors">
             <h4>Détails des erreurs</h4>
-            <div class="import-errors-list">
-              <div
-                v-for="(error, index) in importResult.errors"
-                :key="index"
-                class="import-error-item"
-              >
-                <span class="error-line">Ligne {{ error.lineNumber }}</span>
-                <ul>
-                  <li v-for="(msg, msgIndex) in error.errors" :key="msgIndex">
-                    {{ msg }}
-                  </li>
-                </ul>
+            <div
+              v-for="(error, index) in importResult.errors"
+              :key="index"
+              class="import-error-item"
+            >
+              <div class="error-line">
+                Ligne {{ error.lineNumber }}
               </div>
+              <ul class="error-messages">
+                <li v-for="(msg, msgIndex) in error.errors" :key="msgIndex">
+                  {{ msg }}
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -662,38 +616,38 @@ defineExpose({
 
 <style scoped>
 .csv-import-container {
-  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 /* Format Helper Section */
 .format-helper-section {
-  margin-bottom: 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
 }
 
 .format-helper-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  justify-content: space-between;
   cursor: pointer;
-  transition: all 0.3s ease;
-  user-select: none;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
 
 .format-helper-header:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b3fa0 100%);
+  background: rgba(102, 126, 234, 0.05);
 }
 
 .format-helper-title {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  color: #667eea;
   font-weight: 600;
   font-size: 1rem;
 }
@@ -702,81 +656,72 @@ defineExpose({
   font-size: 1.25rem;
 }
 
-.format-helper-header > i {
-  transition: transform 0.3s ease;
-}
-
-/* CSV Example Standalone - Always visible */
 .format-example-standalone {
-  padding: 1.25rem;
-  background: #fafafa;
-  border-top: 1px solid #e2e8f0;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
-.format-example-standalone .format-example-header {
+.format-example-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 1rem;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.format-example-standalone .format-example-header h4 {
+.format-example-header h4 {
+  margin: 0;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.csv-preview {
+  background: #1e293b;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+}
+
+.csv-preview pre {
+  margin: 0;
+  color: #e2e8f0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.csv-preview code {
+  color: #e2e8f0;
+}
+
+.template-hint {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  color: #1e293b;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.format-example-standalone .format-example-header h4 i {
-  color: #667eea;
-}
-
-.format-example-standalone .csv-preview {
-  background: #1e293b;
-  border-radius: 6px;
-  padding: 1rem;
-  overflow-x: auto;
-  margin-bottom: 1rem;
-}
-
-.format-example-standalone .csv-preview pre {
-  margin: 0;
-}
-
-.format-example-standalone .csv-preview code {
-  font-family: 'Courier New', monospace;
-  font-size: 0.875rem;
-  color: #e2e8f0;
-  line-height: 1.6;
-}
-
-.format-example-standalone .template-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
   padding: 0.75rem;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: #fef3c7;
   border-radius: 6px;
-  color: #166534;
+  color: #92400e;
   font-size: 0.875rem;
-  margin: 0;
 }
 
-.format-example-standalone .template-hint i {
-  color: #16a34a;
-  margin-top: 0.15rem;
-  flex-shrink: 0;
+.template-hint i {
+  color: #f59e0b;
 }
 
 .format-helper-content {
-  padding: 1.5rem;
-  background: #fafafa;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .format-intro {
@@ -784,38 +729,21 @@ defineExpose({
 }
 
 .format-intro p {
+  margin: 0;
   color: #475569;
   font-size: 0.95rem;
-  margin: 0;
 }
 
-/* Column Structure */
 .format-structure {
   margin-bottom: 1.5rem;
-  padding: 1.25rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.format-structure h4,
-.format-example h4,
-.format-rules h4,
-.format-tags h4 {
+.format-structure h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 0 1rem 0;
-  color: #1e293b;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.format-structure h4 i,
-.format-example h4 i,
-.format-rules h4 i,
-.format-tags h4 i {
-  color: #667eea;
 }
 
 .columns-grid {
@@ -827,16 +755,9 @@ defineExpose({
 
 .column-card {
   padding: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
   background: #f8fafc;
-  transition: all 0.2s ease;
-}
-
-.column-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-  border-color: #667eea;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .column-header {
@@ -853,9 +774,9 @@ defineExpose({
 }
 
 .column-name {
-  font-weight: 700;
-  color: #1e293b;
   font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #1e293b;
   font-size: 0.95rem;
 }
 
@@ -899,7 +820,6 @@ defineExpose({
   font-family: 'Courier New', monospace;
   color: #667eea;
   border: 1px solid #e2e8f0;
-  font-size: 0.85rem;
 }
 
 .columns-note {
@@ -907,8 +827,7 @@ defineExpose({
   align-items: flex-start;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: #fef3c7;
   border-radius: 6px;
   color: #92400e;
   font-size: 0.875rem;
@@ -917,17 +836,19 @@ defineExpose({
 
 .columns-note i {
   color: #f59e0b;
-  margin-top: 0.15rem;
-  flex-shrink: 0;
+  margin-top: 0.125rem;
 }
 
-/* Format Rules */
 .format-rules {
   margin-bottom: 1.5rem;
-  padding: 1.25rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.format-rules h4 {
+  margin: 0 0 0.75rem 0;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .rules-list {
@@ -936,58 +857,55 @@ defineExpose({
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .rules-list li {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.5rem;
   color: #475569;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .rules-list li i {
   color: #10b981;
-  margin-top: 0.15rem;
-  flex-shrink: 0;
+  margin-top: 0.125rem;
 }
 
-/* Format Tags */
 .format-tags {
-  padding: 1.25rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+}
+
+.format-tags h4 {
+  margin: 0 0 0.75rem 0;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .tags-intro {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.75rem 0;
+  color: #475569;
+  font-size: 0.875rem;
 }
 
 .tags-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .tag-chip {
-  padding: 0.4rem 0.8rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.813rem;
   font-weight: 500;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-  transition: all 0.2s ease;
-}
-
-.tag-chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
 
 .tags-note {
@@ -995,59 +913,48 @@ defineExpose({
   align-items: flex-start;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  background: #dbeafe;
   border-radius: 6px;
-  color: #0c4a6e;
+  color: #1e40af;
   font-size: 0.875rem;
   margin: 0;
 }
 
 .tags-note i {
-  color: #0284c7;
-  margin-top: 0.15rem;
-  flex-shrink: 0;
+  color: #2563eb;
+  margin-top: 0.125rem;
 }
 
-/* Slide Fade Transition */
-:deep(.slide-fade-enter-active),
-:deep(.slide-fade-leave-active) {
-  transition: all 0.3s ease;
-  max-height: 2000px;
-  overflow: hidden;
+/* Analysis Section */
+.analysis-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-:deep(.slide-fade-enter-from),
-:deep(.slide-fade-leave-to) {
-  opacity: 0;
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-/* File Selection */
 .file-selection-zone {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .upload-area {
+  padding: 3rem 2rem;
   border: 2px dashed #cbd5e1;
   border-radius: 12px;
-  padding: 3rem 2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: #f8fafc;
+  transition: all 0.3s;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
 .upload-area:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+  transform: translateY(-2px);
 }
 
 .upload-icon {
   font-size: 3rem;
-  color: #64748b;
+  color: #667eea;
   margin-bottom: 1rem;
 }
 
@@ -1109,12 +1016,13 @@ defineExpose({
 
 .file-info i {
   font-size: 2rem;
-  color: #3b82f6;
+  color: #667eea;
 }
 
 .file-details {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 .file-name {
@@ -1127,36 +1035,95 @@ defineExpose({
   color: #64748b;
 }
 
+/* Day-Only Info Section */
+.day-only-info-section {
+  margin: 1.5rem 0;
+}
+
+.info-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.2);
+}
+
+.info-card > i {
+  font-size: 2rem;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.info-content p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.info-content strong {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.info-example {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.info-example i {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.info-example span {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 /* Action Zone */
 .action-zone {
   display: flex;
   justify-content: center;
-  margin-bottom: 2rem;
 }
 
 .analyze-button {
   padding: 0.75rem 2rem;
   font-size: 1rem;
   font-weight: 600;
-  background: #3b82f6;
-  border-color: #3b82f6;
-}
-
-.analyze-button:hover:enabled {
-  background: #2563eb;
-  border-color: #2563eb;
 }
 
 /* Validation Results */
 .validation-results {
-  margin-top: 2rem;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
 .results-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .summary-card {
@@ -1164,14 +1131,24 @@ defineExpose({
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  border-radius: 8px;
   background: #f8fafc;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
+}
+
+.summary-card.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.summary-card.warning {
+  background: #fefce8;
+  border-color: #fef08a;
 }
 
 .summary-card i {
   font-size: 1.5rem;
-  color: #3b82f6;
+  color: #667eea;
 }
 
 .summary-card.error i {
@@ -1182,16 +1159,15 @@ defineExpose({
   color: #f59e0b;
 }
 
-.summary-card > div {
+.summary-card div {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 .summary-label {
-  font-size: 0.75rem;
+  font-size: 0.813rem;
   color: #64748b;
-  text-transform: uppercase;
-  font-weight: 600;
 }
 
 .summary-value {
@@ -1203,18 +1179,6 @@ defineExpose({
 /* Issues Section */
 .issues-section {
   margin-bottom: 1.5rem;
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.error-section {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-}
-
-.warning-section {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
 }
 
 .issues-section h4 {
@@ -1222,7 +1186,6 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1rem;
 }
 
 .error-section h4 {
@@ -1230,7 +1193,7 @@ defineExpose({
 }
 
 .warning-section h4 {
-  color: #d97706;
+  color: #f59e0b;
 }
 
 .issues-list {
@@ -1240,24 +1203,28 @@ defineExpose({
 }
 
 .issue-item {
-  padding: 0.75rem;
-  border-radius: 6px;
-  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid;
 }
 
 .error-item {
-  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+  border-color: #ef4444;
 }
 
 .warning-item {
-  border-left: 4px solid #f59e0b;
+  background: #fefce8;
+  border-color: #f59e0b;
 }
 
 .issue-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .issue-line {
@@ -1269,35 +1236,33 @@ defineExpose({
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  background: #f1f5f9;
-  color: #64748b;
-  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+  font-family: 'Courier New', monospace;
 }
 
 .issue-message {
-  margin: 0.5rem 0;
+  margin: 0 0 0.5rem 0;
   color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .issue-value {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.875rem;
+  margin: 0;
+  font-size: 0.813rem;
   color: #64748b;
 }
 
 .issue-value code {
-  background: #f1f5f9;
+  background: rgba(0, 0, 0, 0.05);
   padding: 0.125rem 0.375rem;
   border-radius: 3px;
-  font-family: monospace;
+  font-family: 'Courier New', monospace;
 }
 
-/* Suggestions */
+/* Suggestions Section */
 .suggestions-section {
-  padding: 1rem;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
   margin-bottom: 1.5rem;
 }
 
@@ -1330,157 +1295,6 @@ defineExpose({
   padding: 0.75rem 2rem;
   font-size: 1rem;
   font-weight: 600;
-}
-
-/* Day-Only Mode Section */
-.day-only-mode-section {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.mode-toggle {
-  margin-bottom: 1rem;
-}
-
-.mode-toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.mode-checkbox {
-  width: 1.25rem;
-  height: 1.25rem;
-  cursor: pointer;
-}
-
-.mode-text {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  color: #1e293b;
-  font-weight: 500;
-}
-
-.mode-text i {
-  color: #667eea;
-}
-
-.date-selectors {
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.date-info {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: #dbeafe;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-}
-
-.date-info i {
-  color: #2563eb;
-  margin-top: 0.125rem;
-  flex-shrink: 0;
-}
-
-.date-info p {
-  margin: 0;
-  color: #1e40af;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.date-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.date-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.date-input-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #475569;
-}
-
-.date-select,
-.date-input {
-  padding: 0.625rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  background: white;
-  transition: all 0.2s;
-}
-
-.date-select:focus,
-.date-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.date-select:hover,
-.date-input:hover {
-  border-color: #94a3b8;
-}
-
-.date-example {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: #fef3c7;
-  border-radius: 6px;
-  border: 1px solid #fde047;
-}
-
-.date-example i {
-  color: #f59e0b;
-  flex-shrink: 0;
-}
-
-.date-example span {
-  color: #92400e;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Slide Fade Transition */
-.slide-fade-enter-active {
-  transition: all 0.3s ease-out;
-}
-
-.slide-fade-leave-active {
-  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
-}
-
-.slide-fade-enter-from {
-  transform: translateY(-10px);
-  opacity: 0;
-}
-
-.slide-fade-leave-to {
-  transform: translateY(-10px);
-  opacity: 0;
 }
 
 /* Import Results */
@@ -1519,34 +1333,27 @@ defineExpose({
   font-size: 1.25rem;
 }
 
-.import-summary {
+.import-stats {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .import-stat {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   font-weight: 600;
 }
 
 .import-stat.success {
-  background: #dcfce7;
-  color: #166534;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .import-stat.error {
-  background: #fef2f2;
+  background: #fee2e2;
   color: #991b1b;
-}
-
-/* Import Errors */
-.import-errors {
-  margin-top: 1rem;
 }
 
 .import-errors h4 {
@@ -1554,48 +1361,47 @@ defineExpose({
   color: #dc2626;
 }
 
-.import-errors-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
 .import-error-item {
-  padding: 0.75rem;
+  padding: 1rem;
   background: #fef2f2;
+  border-radius: 6px;
   border-left: 4px solid #ef4444;
-  border-radius: 4px;
+  margin-bottom: 0.75rem;
 }
 
 .error-line {
   font-weight: 600;
   color: #991b1b;
-  display: block;
   margin-bottom: 0.5rem;
 }
 
-.import-error-item ul {
+.error-messages {
   margin: 0;
-  padding-left: 1.5rem;
-}
-
-.import-error-item li {
+  padding-left: 1.25rem;
   color: #7f1d1d;
-  margin-bottom: 0.25rem;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .results-summary {
-    grid-template-columns: 1fr 1fr;
-  }
+.error-messages li {
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
 
-  .upload-area {
-    padding: 2rem 1rem;
-  }
+/* Slide Fade Transition */
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
 
-  .upload-icon {
-    font-size: 2rem;
-  }
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-enter-from {
+  transform: translateY(-10px);
+  opacity: 0;
+}
+
+.slide-fade-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
 }
 </style>

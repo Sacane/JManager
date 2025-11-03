@@ -618,6 +618,8 @@ onUnmounted(() => {
   <CsvImportDialog
     ref="csvImportDialogRef"
     :booklet-id="bookletData.id"
+    :month="bookletData.month"
+    :year="bookletData.year"
     @import-success="onCsvImportSuccess"
   />
 </template>
