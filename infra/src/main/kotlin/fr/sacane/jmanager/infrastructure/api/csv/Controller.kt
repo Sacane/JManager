@@ -41,14 +41,18 @@ class CsvImportController(
      *
      * @param bookletId The booklet ID to import transactions into
      * @param file The CSV file to validate
+     * @param month Optional month (1-12) to use when CSV date contains only day
+     * @param year Optional year to use when CSV date contains only day
      * @return Validation report with warnings (success) or error details (failure)
      */
     @PostMapping("validate/{bookletId}")
     fun validateCsvFile(
         @PathVariable bookletId: String,
-        @RequestParam("file") file: MultipartFile
+        @RequestParam("file") file: MultipartFile,
+        @RequestParam("month", required = false) month: Int?,
+        @RequestParam("year", required = false) year: Int?
     ): ResponseEntity<*> {
-        LOGGER.info("Validating CSV file '${file.originalFilename}' for booklet $bookletId")
+        LOGGER.info("Validating CSV file '${file.originalFilename}' for booklet $bookletId (month=$month, year=$year)")
 
         val validationError = validateFileUpload(file)
         if (validationError != null) {
@@ -67,7 +71,9 @@ class CsvImportController(
         return csvImportFeature.validateCsvFile(
             token = currentUser.token,
             bookletId = bookletId.toUUID(),
-            csvContent = csvContent
+            csvContent = csvContent,
+            month = month,
+            year = year
         ).map { it.toDTO() }.toHttpResponse()
     }
 
@@ -77,15 +83,19 @@ class CsvImportController(
      * @param bookletId The booklet ID to import transactions into
      * @param file The CSV file to import
      * @param skipValidation If true, skips CSV validation (assumes it was already validated). Default: false for safety
+     * @param month Optional month (1-12) to use when CSV date contains only day
+     * @param year Optional year to use when CSV date contains only day
      * @return Import result with created transactions and potential errors
      */
     @PostMapping("import/{bookletId}")
     fun importTransactionsFromCsv(
         @PathVariable bookletId: String,
         @RequestParam("file") file: MultipartFile,
-        @RequestParam("skipValidation", defaultValue = "false", required = false) skipValidation: Boolean = false
+        @RequestParam("skipValidation", defaultValue = "false", required = false) skipValidation: Boolean = false,
+        @RequestParam("month", required = false) month: Int?,
+        @RequestParam("year", required = false) year: Int?
     ): ResponseEntity<*> {
-        LOGGER.info("Importing CSV file '${file.originalFilename}' for booklet $bookletId")
+        LOGGER.info("Importing CSV file '${file.originalFilename}' for booklet $bookletId (month=$month, year=$year, skipValidation=$skipValidation)")
 
         val validationError = validateFileUpload(file)
         if (validationError != null) {
@@ -105,7 +115,9 @@ class CsvImportController(
             token = currentUser.token,
             bookletId = bookletId.toUUID(),
             csvContent = csvContent,
-            skipValidation = skipValidation
+            skipValidation = skipValidation,
+            month = month,
+            year = year
         ).map { it.toDTO() }.toHttpResponse()
     }
 

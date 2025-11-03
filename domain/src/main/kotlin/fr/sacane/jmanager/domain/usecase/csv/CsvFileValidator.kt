@@ -29,7 +29,6 @@ class CsvFileValidator {
 
         // Security limits
         private const val MAX_ROWS = 10000
-        private const val MAX_LINE_LENGTH = 5000
     }
 
     /**
@@ -188,6 +187,11 @@ class CsvFileValidator {
             )
         }
 
+        val date = CsvValidationUtils.parseDate(dateStr, month, year)
+        if (date != null) {
+            return null
+        }
+
         if (CsvValidationUtils.looksLikeAmount(dateStr)) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,
@@ -196,22 +200,18 @@ class CsvFileValidator {
             )
         }
 
-        val date = CsvValidationUtils.parseDate(dateStr, month, year)
-        if (date == null) {
-            val errorMessage = if (month != null && year != null) {
-                "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025) or day only (e.g., 15)"
-            } else {
-                "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025)"
-            }
-            return CsvValidationIssue(
-                lineNumber = lineNumber,
-                type = CsvReportType.INVALID_DATE_FORMAT,
-                message = errorMessage
-            )
+        val errorMessage = if (month != null && year != null) {
+            "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025) or day only (e.g., 15)"
+        } else {
+            "Line $lineNumber: Invalid date format '$dateStr'. Expected: dd-MM-yyyy (e.g., 15-01-2025)"
         }
-
-        return null
+        return CsvValidationIssue(
+            lineNumber = lineNumber,
+            type = CsvReportType.INVALID_DATE_FORMAT,
+            message = errorMessage
+        )
     }
+
 
     private fun validateLabelColumn(labelStr: String, lineNumber: Int): CsvValidationIssue? {
         if (labelStr.isBlank()) {

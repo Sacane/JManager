@@ -633,5 +633,168 @@ class CsvImportControllerTest(
             }
         }
     }
-}
 
+    @Nested
+    @DisplayName("POST /api/csv/validate/{bookletId} - Day-Only Date Tests")
+    inner class ValidateDayOnlyDateTests {
+
+        @Test
+        @DisplayName("Should validate CSV with day-only dates when month and year are provided")
+        fun `should validate CSV with day-only dates when month and year provided`() {
+            val csvContent = "date,label,depense,recette,tag\n1,Groceries,45.50,,Alimentation & Restaurant\n15,Transport,30.00,,Transport\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+                queryParam("month", 1)
+                queryParam("year", 2026)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(200)
+                body("hasErrors", equalTo(false))
+                body("canImport", equalTo(true))
+                body("totalLines", equalTo(2))
+                body("validLines", equalTo(2))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject day-only dates without month and year")
+        fun `should reject day-only dates when month and year not provided`() {
+            val csvContent = "date,label,depense,recette,tag\n1,Groceries,45.50,,Alimentation & Restaurant\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(200)
+                body("hasErrors", equalTo(true))
+                body("canImport", equalTo(false))
+            }
+        }
+
+        @Test
+        @DisplayName("Should accept mixed full dates and day-only dates")
+        fun `should accept mixed date formats with month and year`() {
+            val csvContent = "date,label,depense,recette,tag\n15-02-2026,Full Date Transaction,100.00,,Aucune\n20,Day Only Transaction,50.00,,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+                queryParam("month", 1)
+                queryParam("year", 2026)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(200)
+                body("hasErrors", equalTo(false))
+                body("canImport", equalTo(true))
+                body("totalLines", equalTo(2))
+                body("validLines", equalTo(2))
+            }
+        }
+
+        @Test
+        @DisplayName("Should reject invalid day-only date like 32")
+        fun `should reject invalid day-only date out of range`() {
+            val csvContent = "date,label,depense,recette,tag\n32,Invalid Day,45.50,,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+                queryParam("month", 1)
+                queryParam("year", 2026)
+            } When {
+                post("/api/csv/validate/$bookletId")
+            } Then {
+                statusCode(200)
+                body("hasErrors", equalTo(true))
+                body("canImport", equalTo(false))
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/csv/import/{bookletId} - Day-Only Date Import Tests")
+    inner class ImportDayOnlyDateTests {
+
+        @Test
+        @DisplayName("Should import transactions with day-only dates when month and year provided")
+        fun `should import transactions with day-only dates`() {
+            val initialAmount = accountStateAdapter.get().first().amount
+            val csvContent = "date,label,depense,recette,tag\n1,Groceries,45.50,,Alimentation & Restaurant\n15,Salary,,2500.00,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+                queryParam("month", 1)
+                queryParam("year", 2026)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(200)
+                body("successCount", equalTo(2))
+                body("failedCount", equalTo(0))
+                body("transactions.size()", equalTo(2))
+            }
+
+            // Verify the dates are correctly set
+            val updatedBooklet = accountStateAdapter.get().first()
+            val expectedAmount = initialAmount.value.add(java.math.BigDecimal("2454.50"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
+        }
+
+        @Test
+        @DisplayName("Should reject import of day-only dates without month and year")
+        fun `should reject import of day-only dates without month and year`() {
+            val csvContent = "date,label,depense,recette,tag\n1,Groceries,45.50,,Alimentation & Restaurant\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(400)
+                body("detail", containsString("CSV validation failed"))
+            }
+        }
+
+        @Test
+        @DisplayName("Should import mixed full dates and day-only dates correctly")
+        fun `should import mixed date formats correctly`() {
+            val csvContent = "date,label,depense,recette,tag\n15-02-2026,Full Date Transaction,100.00,,Aucune\n20,Day Only Transaction,50.00,,Aucune\n"
+            val file = createTempCsvFile(csvContent)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                multiPart("file", file)
+                queryParam("month", 1)
+                queryParam("year", 2026)
+            } When {
+                post("/api/csv/import/$bookletId")
+            } Then {
+                statusCode(200)
+                body("successCount", equalTo(2))
+                body("failedCount", equalTo(0))
+                body("transactions.size()", equalTo(2))
+            }
+        }
+    }
+}

@@ -414,14 +414,12 @@ class CsvImportFeatureTest : FeatureTest() {
                 assertEquals(2, importResult.successCount)
                 assertEquals(0, importResult.failedLines.size)
 
-                // Vérifier que le montant du livret a été mis à jour
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
                 assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
                 assertNotNull(updatedBooklet)
 
-                // Le montant initial moins les dépenses (45.50 + 30.00 = 75.50)
                 val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("75.50"))
                 assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
@@ -450,14 +448,12 @@ class CsvImportFeatureTest : FeatureTest() {
                 assertEquals(2, importResult.successCount)
                 assertEquals(0, importResult.failedLines.size)
 
-                // Vérifier que le montant du livret a été mis à jour
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
                 assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
                 assertNotNull(updatedBooklet)
 
-                // Le montant initial plus les recettes (2500.00 + 500.00 = 3000.00)
                 val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3000.00"))
                 assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
@@ -488,16 +484,12 @@ class CsvImportFeatureTest : FeatureTest() {
                 assertEquals(4, importResult.successCount)
                 assertEquals(0, importResult.failedLines.size)
 
-                // Vérifier que le montant du livret a été mis à jour
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
                 assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
                 assertNotNull(updatedBooklet)
 
-                // Recettes: 2500.00 + 800.00 = 3300.00
-                // Dépenses: 45.50 + 30.00 = 75.50
-                // Net: 3300.00 - 75.50 = 3224.50
                 val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3224.50"))
                 assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
@@ -522,7 +514,6 @@ class CsvImportFeatureTest : FeatureTest() {
 
             assertTrue(result.isFailure())
 
-            // Vérifier que le montant du livret n'a pas changé
             val accountState = FakeFactory.accountState()
             val updatedBooklets = accountState.getStates().find { it.userId == user.id }
             assertNotNull(updatedBooklets)
@@ -550,7 +541,6 @@ class CsvImportFeatureTest : FeatureTest() {
 
             assertTrue(result.isSuccess())
 
-            // Vérifier que le montant a été persisté en base
             val accountState = FakeFactory.accountState()
             val persistedBooklets = accountState.getStates().find { it.userId == user.id }
             assertNotNull(persistedBooklets)
@@ -560,7 +550,6 @@ class CsvImportFeatureTest : FeatureTest() {
             val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("100.00"))
             assertEquals(expectedAmount, persistedBooklet!!.amount.value)
 
-            // Vérifier que les transactions ont bien été importées
             result.onSuccess { importResult ->
                 assertEquals(1, importResult.transactions.size)
                 assertEquals("Purchase", importResult.transactions.first().label)
@@ -579,10 +568,10 @@ class CsvImportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = csvImportFeature.validateCsvFile(
-                tokenValue,
-                booklet.id!!,
-                csvContent,
-                month = 1, // January
+                token = tokenValue,
+                bookletId = booklet.id!!,
+                csvContent = csvContent,
+                month = 1,
                 year = 2026
             )
 
@@ -631,10 +620,11 @@ class CsvImportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = csvImportFeature.importTransactionsFromCsv(
-                tokenValue,
-                booklet.id!!,
-                csvContent,
-                month = 1, // January
+                token = tokenValue,
+                bookletId = booklet.id!!,
+                csvContent = csvContent,
+                skipValidation = false,
+                month = 1,
                 year = 2026
             )
 
@@ -643,7 +633,6 @@ class CsvImportFeatureTest : FeatureTest() {
                 assertEquals(2, importResult.successCount)
                 assertEquals(0, importResult.failedLines.size)
 
-                // Vérifier les dates des transactions
                 val transaction1 = importResult.transactions.find { it.label == "Groceries" }
                 assertNotNull(transaction1)
                 assertEquals(java.time.LocalDate.of(2026, 1, 1), transaction1!!.date)
@@ -652,14 +641,12 @@ class CsvImportFeatureTest : FeatureTest() {
                 assertNotNull(transaction2)
                 assertEquals(java.time.LocalDate.of(2026, 1, 15), transaction2!!.date)
 
-                // Vérifier le montant du livret
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
                 assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
                 assertNotNull(updatedBooklet)
 
-                // +2500.00 - 45.50 = 2454.50
                 val expectedAmount = initialAmount.value.add(java.math.BigDecimal("2454.50"))
                 assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
@@ -677,10 +664,11 @@ class CsvImportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = csvImportFeature.importTransactionsFromCsv(
-                tokenValue,
-                booklet.id!!,
-                csvContent,
-                month = 1, // January
+                token = tokenValue,
+                bookletId = booklet.id!!,
+                csvContent = csvContent,
+                skipValidation = false,
+                month = 1,
                 year = 2026
             )
 
@@ -689,12 +677,10 @@ class CsvImportFeatureTest : FeatureTest() {
                 assertEquals(2, importResult.successCount)
                 assertEquals(0, importResult.failedLines.size)
 
-                // Vérifier que la date complète est utilisée telle quelle
                 val fullDateTx = importResult.transactions.find { it.label == "Full Date Transaction" }
                 assertNotNull(fullDateTx)
                 assertEquals(java.time.LocalDate.of(2026, 2, 15), fullDateTx!!.date)
 
-                // Vérifier que le jour seul utilise month/year fournis
                 val dayOnlyTx = importResult.transactions.find { it.label == "Day Only Transaction" }
                 assertNotNull(dayOnlyTx)
                 assertEquals(java.time.LocalDate.of(2026, 1, 20), dayOnlyTx!!.date)
