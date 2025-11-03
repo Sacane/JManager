@@ -9,6 +9,7 @@ const emit = defineEmits(['visible', 'importSuccess'])
 
 const { validateCsvFile, importTransactionsFromCsv } = useCsvImport()
 const toast = useJToast()
+const date = useDate()
 
 const isVisible = ref(false)
 const currentStep = ref<'analysis' | 'import'>('analysis')
@@ -21,6 +22,11 @@ const importResult = ref<CsvImportResultDTO | null>(null)
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const showFormatHelper = ref(false)
+
+// Date options for day-only imports
+const selectedMonth = ref<string>('')
+const selectedYear = ref<number>(new Date().getFullYear())
+const useDayOnlyMode = ref(false)
 
 // Computed
 const canAnalyze = computed(() => selectedFile.value !== null && !isAnalyzing.value)
@@ -55,6 +61,9 @@ function resetDialog() {
   importResult.value = null
   isAnalyzing.value = false
   isImporting.value = false
+  useDayOnlyMode.value = false
+  selectedMonth.value = ''
+  selectedYear.value = new Date().getFullYear()
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
@@ -119,7 +128,21 @@ async function analyzeFile() {
 
   isAnalyzing.value = true
   try {
-    validationReport.value = await validateCsvFile(props.bookletId, selectedFile.value)
+    // Convertir le mois sélectionné en numéro si le mode jour seul est activé
+    let monthNumber: number | undefined
+    let yearNumber: number | undefined
+
+    if (useDayOnlyMode.value && selectedMonth.value && selectedYear.value) {
+      monthNumber = date.numberFromMonth(date.englishMonth(selectedMonth.value))
+      yearNumber = selectedYear.value
+    }
+
+    validationReport.value = await validateCsvFile(
+      props.bookletId,
+      selectedFile.value,
+      monthNumber,
+      yearNumber
+    )
 
     if (validationReport.value && validationReport.value.hasErrors) {
       toast.error('Le fichier contient des erreurs qui empêchent l\'importation')
@@ -141,7 +164,22 @@ async function importFile() {
 
   isImporting.value = true
   try {
-    importResult.value = await importTransactionsFromCsv(props.bookletId, selectedFile.value, true)
+    // Convertir le mois sélectionné en numéro si le mode jour seul est activé
+    let monthNumber: number | undefined
+    let yearNumber: number | undefined
+
+    if (useDayOnlyMode.value && selectedMonth.value && selectedYear.value) {
+      monthNumber = date.numberFromMonth(date.englishMonth(selectedMonth.value))
+      yearNumber = selectedYear.value
+    }
+
+    importResult.value = await importTransactionsFromCsv(
+      props.bookletId,
+      selectedFile.value,
+      true,
+      monthNumber,
+      yearNumber
+    )
 
     if (importResult.value && importResult.value.hasErrors) {
       toast.error(`Importation terminée avec des erreurs. ${importResult.value.successCount} transactions importées, ${importResult.value.failedCount} échecs`)
@@ -405,6 +443,65 @@ defineExpose({
               @click="removeFile"
             />
           </div>
+        </div>
+
+        <!-- Day-Only Mode Selection -->
+        <div class="day-only-mode-section">
+          <div class="mode-toggle">
+            <label class="mode-toggle-label">
+              <input
+                v-model="useDayOnlyMode"
+                type="checkbox"
+                class="mode-checkbox"
+              >
+              <span class="mode-text">
+                <i class="pi pi-calendar" />
+                Mon CSV contient uniquement des jours (sans mois ni année)
+              </span>
+            </label>
+          </div>
+
+          <Transition name="slide-fade">
+            <div v-if="useDayOnlyMode" class="date-selectors">
+              <div class="date-info">
+                <i class="pi pi-info-circle" />
+                <p>Si votre fichier CSV contient seulement des jours (ex: 1, 15, 28), spécifiez le mois et l'année correspondants.</p>
+              </div>
+
+              <div class="date-inputs">
+                <div class="date-input-group">
+                  <label for="monthSelect">Mois :</label>
+                  <select
+                    id="monthSelect"
+                    v-model="selectedMonth"
+                    class="date-select"
+                  >
+                    <option value="" disabled>Sélectionnez un mois</option>
+                    <option v-for="(month, index) in date.months" :key="index" :value="date.translate(month)">
+                      {{ date.translate(month) }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="date-input-group">
+                  <label for="yearSelect">Année :</label>
+                  <input
+                    id="yearSelect"
+                    v-model.number="selectedYear"
+                    type="number"
+                    min="2000"
+                    :max="new Date().getFullYear() + 10"
+                    class="date-input"
+                  >
+                </div>
+              </div>
+
+              <div v-if="selectedMonth && selectedYear" class="date-example">
+                <i class="pi pi-lightbulb" />
+                <span>Exemple : "15" dans votre CSV deviendra le 15 {{ selectedMonth }} {{ selectedYear }}</span>
+              </div>
+            </div>
+          </Transition>
         </div>
 
         <!-- Action Button -->
@@ -1233,6 +1330,157 @@ defineExpose({
   padding: 0.75rem 2rem;
   font-size: 1rem;
   font-weight: 600;
+}
+
+/* Day-Only Mode Section */
+.day-only-mode-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.mode-toggle {
+  margin-bottom: 1rem;
+}
+
+.mode-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mode-checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+.mode-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.mode-text i {
+  color: #667eea;
+}
+
+.date-selectors {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.date-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #dbeafe;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.date-info i {
+  color: #2563eb;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.date-info p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.date-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.date-input-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.date-select,
+.date-input {
+  padding: 0.625rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  transition: all 0.2s;
+}
+
+.date-select:focus,
+.date-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.date-select:hover,
+.date-input:hover {
+  border-color: #94a3b8;
+}
+
+.date-example {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fef3c7;
+  border-radius: 6px;
+  border: 1px solid #fde047;
+}
+
+.date-example i {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.date-example span {
+  color: #92400e;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Slide Fade Transition */
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.slide-fade-enter-from {
+  transform: translateY(-10px);
+  opacity: 0;
+}
+
+.slide-fade-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
 }
 
 /* Import Results */

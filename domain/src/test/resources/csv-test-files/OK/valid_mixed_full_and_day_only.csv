@@ -1,0 +1,7 @@
+date,label,depense,recette,tag
+15-02-2025,Transaction date complète,100.00,,Aucune
+1,Transaction jour seul début,50.00,,Transport
+20,Transaction jour seul milieu,75.50,,Alimentation & Restaurant
+28-02-2025,Autre date complète,120.00,,Loisirs
+5,Transaction jour seul,30.00,,Santé
+
