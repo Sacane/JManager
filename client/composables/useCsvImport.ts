@@ -5,12 +5,12 @@ export default function useCsvImport() {
   const host = config.public.apiUrl
 
   /**
-   * Valide un fichier CSV avant importation
+   * Validates a CSV file before import
    *
-   * @param bookletId - ID du livret cible
-   * @param file - Fichier CSV à valider
-   * @param month - Mois optionnel (1-12) pour les dates avec jour seul
-   * @param year - Année optionnelle pour les dates avec jour seul
+   * @param bookletId - Target booklet ID
+   * @param file - CSV file to validate
+   * @param month - Optional month (1-12) for dates with day only
+   * @param year - Optional year for dates with day only
    */
   async function validateCsvFile(
     bookletId: string,
@@ -41,19 +41,19 @@ export default function useCsvImport() {
       })
       return response.data
     } catch (error) {
-      console.error('Erreur lors de la validation:', error)
+      console.error('Error during validation:', error)
       throw error
     }
   }
 
   /**
-   * Importe les transactions d'un fichier CSV
+   * Imports transactions from a CSV file
    *
-   * @param bookletId - ID du livret cible
-   * @param file - Fichier CSV à importer
-   * @param skipValidation - Si true, saute la validation (assume qu'elle a déjà été faite)
-   * @param month - Mois optionnel (1-12) pour les dates avec jour seul
-   * @param year - Année optionnelle pour les dates avec jour seul
+   * @param bookletId - Target booklet ID
+   * @param file - CSV file to import
+   * @param skipValidation - If true, skips validation (assumes it has already been done)
+   * @param month - Optional month (1-12) for dates with day only
+   * @param year - Optional year for dates with day only
    */
   async function importTransactionsFromCsv(
     bookletId: string,
@@ -86,16 +86,16 @@ export default function useCsvImport() {
       })
       return response.data
     } catch (error) {
-      console.error('Erreur lors de l\'importation:', error)
+      console.error('Error during import:', error)
       throw error
     }
   }
 
   /**
-   * Exporte les transactions au format CSV
+   * Exports transactions to CSV format
    *
-   * @param transactionIds - Liste des IDs de transactions à exporter
-   * @returns Blob contenant le fichier CSV
+   * @param transactionIds - List of transaction IDs to export
+   * @returns Blob containing the CSV file
    */
   async function exportTransactionsToCsv(transactionIds: string[]): Promise<Blob> {
     const url = `${host}csv/export`
@@ -114,25 +114,23 @@ export default function useCsvImport() {
       )
       return response.data
     } catch (error) {
-      console.error('Erreur lors de l\'export:', error)
+      console.error('Error during export:', error)
       throw error
     }
   }
 
   /**
-   * Télécharge un fichier CSV d'export de transactions
+   * Downloads a CSV export file of transactions
    *
-   * @param transactionIds - Liste des IDs de transactions à exporter
-   * @param filename - Nom du fichier (optionnel, généré automatiquement si non fourni)
+   * @param transactionIds - List of transaction IDs to export
+   * @param filename - Filename (optional, auto-generated if not provided)
    */
   async function downloadCsvExport(transactionIds: string[], filename?: string): Promise<void> {
     try {
       const blob = await exportTransactionsToCsv(transactionIds)
 
-      // Générer un nom de fichier avec la date si non fourni
       const downloadFilename = filename || `transactions_export_${new Date().toISOString().slice(0, 10)}.csv`
 
-      // Créer un lien de téléchargement temporaire
       const downloadUrl = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = downloadUrl
@@ -140,11 +138,10 @@ export default function useCsvImport() {
       document.body.appendChild(link)
       link.click()
 
-      // Nettoyer
       document.body.removeChild(link)
       window.URL.revokeObjectURL(downloadUrl)
     } catch (error) {
-      console.error('Erreur lors du téléchargement:', error)
+      console.error('Error during download:', error)
       throw error
     }
   }
