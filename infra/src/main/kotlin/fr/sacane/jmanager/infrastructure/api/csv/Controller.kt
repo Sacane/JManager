@@ -3,22 +3,27 @@ package fr.sacane.jmanager.infrastructure.api.csv
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.FileImportExportFeature
+import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.nio.charset.StandardCharsets
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.logging.Logger
 
-/**
- * REST Controller for CSV import operations
- */
 @RestController
 @RequestMapping("api/csv")
 @Adapter(Side.APPLICATION)
 class CsvImportController(
-    private val fileImportExportFeature: FileImportExportFeature
+    private val fileImportExportFeature: FileImportExportFeature,
+    private val transactionRepository: TransactionRepository
 ) {
     companion object {
         private val LOGGER: Logger = Logger.getLogger("CsvImportController")
@@ -33,18 +38,6 @@ class CsvImportController(
         private const val MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024L
     }
 
-    /**
-     * Validates a CSV file before import
-     *
-     * This endpoint analyzes the CSV file structure and content to detect potential issues
-     * such as format errors, missing data, or swapped columns.
-     *
-     * @param bookletId The booklet ID to import transactions into
-     * @param file The CSV file to validate
-     * @param month Optional month (1-12) to use when CSV date contains only day
-     * @param year Optional year to use when CSV date contains only day
-     * @return Validation report with warnings (success) or error details (failure)
-     */
     @PostMapping("validate/{bookletId}")
     fun validateCsvFile(
         @PathVariable bookletId: String,
@@ -77,16 +70,6 @@ class CsvImportController(
         ).map { it.toDTO() }.toHttpResponse()
     }
 
-    /**
-     * Imports transactions from a validated CSV file
-     *
-     * @param bookletId The booklet ID to import transactions into
-     * @param file The CSV file to import
-     * @param skipValidation If true, skips CSV validation (assumes it was already validated). Default: false for safety
-     * @param month Optional month (1-12) to use when CSV date contains only day
-     * @param year Optional year to use when CSV date contains only day
-     * @return Import result with created transactions and potential errors
-     */
     @PostMapping("import/{bookletId}")
     fun importTransactionsFromCsv(
         @PathVariable bookletId: String,
@@ -121,12 +104,6 @@ class CsvImportController(
         ).map { it.toDTO() }.toHttpResponse()
     }
 
-    /**
-     * Validates the uploaded file (type, extension, size)
-     *
-     * @param file The file to validate
-     * @return Error message if validation fails, null if valid
-     */
     private fun validateFileUpload(file: MultipartFile): String? {
         if (file.isEmpty) {
             return "Le fichier est vide"
@@ -148,6 +125,92 @@ class CsvImportController(
         }
 
         return null
+    }
+
+    @PostMapping("export")
+    fun exportTransactionsToCsv(
+        @RequestBody request: CsvExportRequestDTO
+    ): ResponseEntity<*> {
+        LOGGER.info("Exporting ${request.transactionIds.size} transactions to CSV")
+
+        if (request.transactionIds.size > 10000) {
+            LOGGER.warning("Export request exceeds maximum allowed transactions: ${request.transactionIds.size}")
+            return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(mapOf("message" to "Le nombre de transactions à exporter ne peut pas dépasser 10 000"))
+        }
+
+        if (request.transactionIds.isEmpty()) {
+            LOGGER.warning("Export request with empty transaction list")
+            return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(mapOf("message" to "La liste des transactions à exporter ne peut pas être vide"))
+        }
+
+        try {
+            val transactionIds = request.transactionIds.mapNotNull {
+                try {
+                    it.toUUID()
+                } catch (e: Exception) {
+                    LOGGER.warning("Invalid transaction ID format: $it")
+                    null
+                }
+            }
+
+            if (transactionIds.isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(mapOf("message" to "Aucun ID de transaction valide fourni"))
+            }
+
+            val transactions = transactionIds.mapNotNull { id ->
+                transactionRepository.findTransactionById(id)
+            }
+
+            if (transactions.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(mapOf("message" to "Aucune transaction trouvée"))
+            }
+
+            val result = fileImportExportFeature.exportTransactionsToCsv(
+                token = currentUser.token,
+                transactions = transactions
+            )
+
+            return if (result.isSuccess()) {
+                val csvContent = result.map { it }.mapNotNullOrFailure()
+                if (csvContent != null) {
+                    val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                    val filename = "transactions_export_$timestamp.csv"
+
+                    LOGGER.info("CSV export successful: ${transactions.size} transactions exported to $filename")
+
+                    ResponseEntity.ok()
+                        .contentType(MediaType("text", "csv", StandardCharsets.UTF_8))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=$filename")
+                        .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                        .header(HttpHeaders.PRAGMA, "no-cache")
+                        .header(HttpHeaders.EXPIRES, "0")
+                        .body(csvContent.toByteArray(StandardCharsets.UTF_8))
+                } else {
+                    LOGGER.warning("CSV export returned null content")
+                    ResponseEntity.internalServerError()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(mapOf("message" to "Erreur lors de l'export: contenu vide"))
+                }
+            } else {
+                LOGGER.warning("CSV export failed: ${result.message}")
+                ResponseEntity.status(result.status.code)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(mapOf("message" to result.message))
+            }
+        } catch (e: Exception) {
+            LOGGER.severe("Unexpected error during CSV export: ${e.message}")
+            return ResponseEntity.internalServerError()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(mapOf("message" to "Erreur lors de l'export: ${e.message}"))
+        }
     }
 }
 
