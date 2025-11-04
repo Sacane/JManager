@@ -174,6 +174,46 @@ declare global {
     date: Date
     tag: string
   }
+
+  interface CsvValidationReportDTO {
+    totalLines: number
+    validLines: number
+    errors: CsvValidationIssueDTO[]
+    warnings: CsvValidationIssueDTO[]
+    suggestions: string[]
+    hasErrors: boolean
+    canImport: boolean
+  }
+
+  interface CsvValidationIssueDTO {
+    lineNumber: number
+    type: string
+    message: string
+    detectedValue: string | null
+  }
+
+  interface CsvImportResultDTO {
+    successCount: number
+    failedCount: number
+    totalProcessed: number
+    hasErrors: boolean
+    transactions: CsvTransactionDTO[]
+    errors: CsvLineErrorDTO[]
+  }
+
+  interface CsvLineErrorDTO {
+    lineNumber: number
+    errors: string[]
+  }
+
+  interface CsvTransactionDTO {
+    id: string | null
+    label: string
+    date: string
+    amount: string
+    isIncome: boolean
+    tag: string | null
+  }
 }
 
 export {}

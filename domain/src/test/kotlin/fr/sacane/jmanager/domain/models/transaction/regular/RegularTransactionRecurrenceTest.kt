@@ -64,7 +64,6 @@ class RegularTransactionRecurrenceTest : FeatureTest() {
                 targetYear = 2024
             )
 
-            // should generate one transaction for March 31, 2024
             assertEquals(1, generated.size)
             val tx = generated.first()
             assertEquals(31, tx.date.dayOfMonth)

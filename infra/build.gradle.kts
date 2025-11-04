@@ -69,22 +69,19 @@ jacoco {
 tasks.test {
     useJUnitPlatform()
 
-    // Limiter la parallélisation pour éviter de surcharger le runner
     maxParallelForks = 1
 
-    // Optimisations JVM légères pour les tests
     jvmArgs(
         "-Xmx512m",
         "-XX:MaxMetaspaceSize=256m"
     )
 
-    // Réutilisation des conteneurs Testcontainers
     systemProperty("testcontainers.reuse.enable", "true")
 }
 
 tasks.jacocoTestReport {
     reports {
-        xml.required.set(true)  // Important pour SonarQube
+        xml.required.set(true)
         html.required.set(false)
         csv.required.set(false)
     }

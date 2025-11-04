@@ -1,0 +1,7 @@
+date,label,depense,recette,tag
+15-01-2025,"Label avec, une virgule",45.50,,Aucune
+16-01-2025,"Description ""avec guillemets""",30.00,,Transport
+15-01-2025,Grandes dépenses,9999999.99,,Aucune
+16-01-2025,Petit montant,0.01,,Transport
+17-01-2025,Gros salaire,,999999.99,Aucune
+

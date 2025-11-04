@@ -10,9 +10,7 @@ import java.time.LocalDate
 @JvmInline
 value class RegularTransactionId(val value: String)
 
-/**
- * Represents a recurring transaction with a specific recurrence pattern.
- */
+
 data class RegularTransaction(
     override var label: String,
     override var amount: Amount,

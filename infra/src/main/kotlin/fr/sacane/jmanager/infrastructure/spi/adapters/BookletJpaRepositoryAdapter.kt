@@ -31,7 +31,6 @@ class BookletJpaRepositoryAdapter(
         val user = userRepository.findByIdWithAccount(id) ?: return null
         val accountResource = accountMapper.asResource(booklet)
         val accountSaved = accountRepository.save(accountResource)
-        // attach the persisted account to the managed user entity
         user.addAccount(accountSaved)
         return accountSaved.toModel()
     }

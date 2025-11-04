@@ -1,0 +1,5 @@
+date,label,depense,recette,tag
+35,Jour très invalide,45.50,,Aucune
+50,Jour hors limite,30.00,,Transport
+100,Jour complètement invalide,25.00,,Loisirs
+

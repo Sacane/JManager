@@ -23,7 +23,7 @@ class JwtTokenGenerator(
         }
 
     override fun generateToken(userId: UserId, username: String, roles: Set<Role>): AccessToken {
-        val expirationDate = Date(System.currentTimeMillis() + 60 * 60 * 1000) // 1 hour
+        val expirationDate = Date(System.currentTimeMillis() + 60 * 60 * 1000)
         var claim = Jwts.builder()
             .subject(userId.value.toString())
             .expiration(expirationDate)

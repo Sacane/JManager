@@ -362,5 +362,53 @@ class ResultTest {
             assertEquals(1001, result.status.code)
         }
     }
-}
 
+    @Nested
+    inner class FlatMapTests {
+        @Test
+        fun `flatMap should transform data when result is success`() {
+            val result = success(5)
+            val mapped = result.flatMap { value -> success(value * 2) }
+
+            assertTrue(mapped.isSuccess())
+            var final = 0
+            mapped.onSuccess { final = it }
+            assertEquals(10, final)
+        }
+
+        @Test
+        fun `flatMap should propagate original failure`() {
+            val message = "Original error"
+            val result = invalid<Int>(message)
+            val mapped = result.flatMap { success(it * 2) }
+
+            assertFalse(mapped.isSuccess())
+            assertTrue(mapped.isFailure())
+            assertEquals(ResultState.INVALID, mapped.status)
+            assertEquals(message, mapped.message)
+        }
+
+        @Test
+        fun `flatMap should preserve message when data is null`() {
+            val result = Result<Int>(ResultState.OK, data = null, error = "No data")
+            val mapped = result.flatMap { success(it * 2) }
+
+            assertTrue(mapped.isSuccess())
+            assertEquals("No data", mapped.message)
+            var executed = false
+            mapped.onSuccess { executed = true }
+            assertFalse(executed)
+        }
+
+        @Test
+        fun `flatMap should propagate mapper failure`() {
+            val result = success(3)
+            val mapped = result.flatMap { invalid<Int>("mapper error") }
+
+            assertFalse(mapped.isSuccess())
+            assertTrue(mapped.isFailure())
+            assertEquals(ResultState.INVALID, mapped.status)
+            assertEquals("mapper error", mapped.message)
+        }
+    }
+}

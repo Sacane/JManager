@@ -1,0 +1,5 @@
+date,label,depense,recette,tag
+15-01-2025,Line with missing column,45.50
+16-01-2025,Normal line,30.00,,Transport
+17-01-2025,Another incomplete line,25.00,
+

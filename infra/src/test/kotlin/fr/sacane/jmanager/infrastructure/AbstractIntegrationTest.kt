@@ -16,7 +16,7 @@ abstract class AbstractIntegrationTest {
             .withDatabaseName("test")
             .withUsername("sa")
             .withPassword("sa")
-            .withReuse(true) // Réutilise le conteneur entre les tests
+            .withReuse(true)
 
         init {
             postgresContainer.start()

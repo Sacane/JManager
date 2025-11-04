@@ -489,7 +489,6 @@ onMounted(() => {
   }
 }
 
-// Styles pour le DataTable
 .users-datatable {
   :deep(.p-datatable-wrapper) {
     border-radius: 12px;
@@ -643,7 +642,6 @@ onMounted(() => {
   }
 }
 
-// Mode sombre
 @media (prefers-color-scheme: dark) {
   .creation-card,
   .users-table-card {
