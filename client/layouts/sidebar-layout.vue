@@ -3,30 +3,10 @@ import AppSidebar from '~/components/app-sidebar.vue'
 </script>
 
 <template>
-  <div class="layout-wrapper">
+  <div class="flex min-h-screen w-full bg-gray-100">
     <AppSidebar />
-    <main class="main-content">
+    <main class="flex-1 min-h-screen w-full overflow-x-hidden">
       <slot />
     </main>
   </div>
 </template>
-
-<style scoped>
-.layout-wrapper {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-  background: #f5f5f7;
-}
-
-.main-content {
-  flex: 1;
-  min-height: 100vh;
-  width: 100%;
-  overflow-x: hidden;
-
-  @media (min-width: 769px) {
-    margin-left: 0;
-  }
-}
-</style>

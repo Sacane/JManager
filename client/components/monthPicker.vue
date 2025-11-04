@@ -31,17 +31,3 @@ function onMonthChange() {
     </div>
   </div>
 </template>
-
-<style scoped>
-option {
-  padding: 0.5rem 1rem;
-  background-color: #ffffff;
-  color: #333333;
-  transition: background-color 0.3s ease, color 0.3s ease;
-
-  &:hover {
-    background-color: #f0f0f0;
-    color: #000000;
-  }
-}
-  </style>

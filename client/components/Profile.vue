@@ -34,14 +34,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="header-content">
+  <div class="flex items-center justify-center flex-col gap-2.5 relative">
     <div class="flex flex-row gap-2 items-center">
-      <div class="circle" @click="toggleDropdown">
+      <div class="w-12.5 h-12.5 rounded-full bg-white flex items-center justify-center text-purple-600 text-3xl font-bold cursor-pointer" @click="toggleDropdown">
         {{ username.charAt(0) }}
       </div>
       <div>
-        <p>{{ username }}</p>
-        <p class="role">
+        <p class="m-0 text-white">
+          {{ username }}
+        </p>
+        <p class="text-xs text-white/80 mt--3 m-0">
           {{ isAdmin ? 'Administrateur' : 'Utilisateur' }}
         </p>
       </div>
@@ -51,51 +53,3 @@ onBeforeUnmount(() => {
     </Button>
   </div>
 </template>
-
-<style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 10px;
-  position: relative;
-}
-
-.circle {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  font-size: 30px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.role {
-  font-size: 12px;
-  color: var(--text-color);
-  font-family: 'Roboto', sans-serif;
-  margin-top: -12px;
-}
-
-.dropdown-menu button {
-  background: none;
-  border: none;
-  padding: 10px 20px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  font-family: 'Roboto', sans-serif;
-}
-
-.dropdown-menu button:hover {
-  background-color: #f0f0f0;
-}
-</style>

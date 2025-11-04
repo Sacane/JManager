@@ -53,7 +53,6 @@ const tags = ref<TagDTO[]>([])
 const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
 const trendStats = ref<TrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
-const selectedPeriod = ref<'month' | 'year'>('month')
 const isLoading = ref(true)
 
 // Animation refs
@@ -63,14 +62,14 @@ const isOverviewVisible = ref(false)
 const isChartsVisible = ref(false)
 
 // Setup intersection observers
-useIntersectionObserver(overviewRef, ([{ isIntersecting }]) => {
-  if (isIntersecting) {
+useIntersectionObserver(overviewRef, ([entry]) => {
+  if (entry?.isIntersecting) {
     isOverviewVisible.value = true
   }
 }, { threshold: 0.1 })
 
-useIntersectionObserver(chartsRef, ([{ isIntersecting }]) => {
-  if (isIntersecting) {
+useIntersectionObserver(chartsRef, ([entry]) => {
+  if (entry?.isIntersecting) {
     isChartsVisible.value = true
   }
 }, { threshold: 0.1 })
@@ -283,13 +282,13 @@ const monthlyComparisonData = computed(() => {
     datasets: [
       {
         label: 'Ce mois',
-        data: Array.from({ length: 4 }).fill(currentExpenses / 4),
+        data: Array.from({ length: 4 }).fill(currentExpenses / 4) as number[],
         backgroundColor: '#822acc',
         borderRadius: 8,
       },
       {
         label: 'Mois dernier',
-        data: Array.from({ length: 4 }).fill(previousExpenses / 4),
+        data: Array.from({ length: 4 }).fill(previousExpenses / 4) as number[],
         backgroundColor: '#b1aeae',
         borderRadius: 8,
       },
@@ -433,30 +432,30 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="dashboard-container">
+  <div class="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-5 relative">
     <!-- Header Section -->
-    <div class="dashboard-header">
-      <div class="header-content">
-        <div class="welcome-section">
-          <h1 class="dashboard-title">
+    <div class="mb-8">
+      <div class="flex justify-between items-center flex-wrap gap-5">
+        <div>
+          <h1 class="text-4xl font-extrabold text-gray-800 mb-2">
             Bonjour, {{ user?.username }} 👋
           </h1>
-          <p class="dashboard-subtitle">
+          <p class="text-base text-gray-500">
             Voici un aperçu de vos finances au {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
           </p>
         </div>
         <!--
-          <div class="header-actions">
+          <div class="flex gap-3 bg-white p-1 rounded-xl shadow-sm">
             <button
-              class="period-toggle"
-              :class="{ active: selectedPeriod === 'month' }"
+              class="px-6 py-2.5 border-none rounded-lg font-semibold text-gray-500 cursor-pointer transition-all"
+              :class="selectedPeriod === 'month' ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white' : 'bg-transparent'"
               @click="selectedPeriod = 'month'"
             >
               Mois
             </button>
             <button
-              class="period-toggle"
-              :class="{ active: selectedPeriod === 'year' }"
+              class="px-6 py-2.5 border-none rounded-lg font-semibold text-gray-500 cursor-pointer transition-all"
+              :class="selectedPeriod === 'year' ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white' : 'bg-transparent'"
               @click="selectedPeriod = 'year'"
             >
               Année
@@ -467,102 +466,104 @@ onMounted(() => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="loading-container">
-      <i class="pi pi-spin pi-spinner loading-icon" />
-      <p>Chargement de vos données...</p>
+    <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-4 min-h-60vh">
+      <i class="pi pi-spin pi-spinner text-5xl text-purple-600" />
+      <p class="text-gray-600">
+        Chargement de vos données...
+      </p>
     </div>
 
     <!-- Main Content -->
-    <div v-else class="dashboard-content">
+    <div v-else class="relative z-1 pb-10">
       <!-- KPI Cards -->
-      <section ref="overviewRef" class="kpi-section" :class="{ visible: isOverviewVisible }">
-        <div class="kpi-card balance-card">
-          <div class="kpi-header">
-            <div class="kpi-icon gradient-purple">
+      <section ref="overviewRef" class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-purple-600 to-purple-700">
               <i class="pi pi-wallet" />
             </div>
-            <span v-if="balanceGrowth !== 0" class="kpi-trend" :class="balanceGrowth > 0 ? 'positive' : 'negative'">
+            <span v-if="balanceGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="balanceGrowth > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
               <i :class="balanceGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(balanceGrowth).toFixed(1) }}%
             </span>
           </div>
-          <div class="kpi-content">
-            <h3 class="kpi-label">
+          <div>
+            <h3 class="text-sm text-gray-500 mb-2 font-medium">
               Solde total
             </h3>
-            <p class="kpi-value">
+            <p class="text-3xl font-extrabold text-gray-800 mb-2">
               {{ totalBalance.toFixed(2) }} €
             </p>
-            <p class="kpi-info">
+            <p class="text-xs text-gray-400">
               {{ accounts.length }} livret{{ accounts.length > 1 ? 's' : '' }} actif{{ accounts.length > 1 ? 's' : '' }}
             </p>
           </div>
         </div>
 
-        <div class="kpi-card expenses-card">
-          <div class="kpi-header">
-            <div class="kpi-icon gradient-red">
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-red-500 to-red-600">
               <i class="pi pi-arrow-down" />
             </div>
-            <span v-if="expensesGrowth !== 0" class="kpi-trend" :class="expensesGrowth > 0 ? 'negative' : 'positive'">
+            <span v-if="expensesGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="expensesGrowth > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'">
               <i :class="expensesGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(expensesGrowth).toFixed(1) }}%
             </span>
           </div>
           <div>
-            <h3 class="kpi-label">
+            <h3 class="text-sm text-gray-500 mb-2 font-medium">
               Dépenses du mois
             </h3>
-            <p class="kpi-value">
+            <p class="text-3xl font-extrabold text-gray-800 mb-2">
               {{ monthlyExpenses.toFixed(2) }} €
             </p>
-            <p class="kpi-info">
+            <p class="text-xs text-gray-400">
               Moy. journalière: {{ (monthlyExpenses / 30).toFixed(2) }} €
             </p>
           </div>
         </div>
 
-        <div class="kpi-card income-card">
-          <div class="kpi-header">
-            <div class="kpi-icon gradient-green">
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-green-500 to-green-600">
               <i class="pi pi-arrow-up" />
             </div>
-            <span v-if="incomeGrowth !== 0" class="kpi-trend" :class="incomeGrowth > 0 ? 'positive' : 'negative'">
+            <span v-if="incomeGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="incomeGrowth > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
               <i :class="incomeGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(incomeGrowth).toFixed(1) }}%
             </span>
           </div>
-          <div class="kpi-content">
-            <h3 class="kpi-label">
+          <div>
+            <h3 class="text-sm text-gray-500 mb-2 font-medium">
               Revenus du mois
             </h3>
-            <p class="kpi-value">
+            <p class="text-3xl font-extrabold text-gray-800 mb-2">
               {{ monthlyIncome.toFixed(2) }} €
             </p>
-            <p class="kpi-info">
+            <p class="text-xs text-gray-400">
               Épargne: {{ (monthlyIncome - monthlyExpenses).toFixed(2) }} €
             </p>
           </div>
         </div>
 
-        <div class="kpi-card savings-card">
-          <div class="kpi-header">
-            <div class="kpi-icon gradient-yellow">
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-yellow-400 to-yellow-500">
               <i class="pi pi-chart-line" />
             </div>
-            <span v-if="savingsRate !== 0" class="kpi-trend" :class="savingsRate > 0 ? 'positive' : 'negative'">
+            <span v-if="savingsRate !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="savingsRate > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
               <i :class="savingsRate > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(savingsRate).toFixed(1) }}%
             </span>
           </div>
-          <div class="kpi-content">
-            <h3 class="kpi-label">
+          <div>
+            <h3 class="text-sm text-gray-500 mb-2 font-medium">
               Taux d'épargne
             </h3>
-            <p class="kpi-value">
+            <p class="text-3xl font-extrabold text-gray-800 mb-2">
               {{ savingsRate.toFixed(1) }}%
             </p>
-            <p class="kpi-info">
+            <p class="text-xs text-gray-400">
               Objectif: 30%
             </p>
           </div>
@@ -570,134 +571,138 @@ onMounted(() => {
       </section>
 
       <!-- Charts Section -->
-      <section ref="chartsRef" class="charts-section" :class="{ visible: isChartsVisible }">
-        <div class="chart-card large-chart">
-          <div class="chart-header">
-            <h2 class="chart-title">
-              <i class="pi pi-chart-line" />
+      <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
+        <div class="bg-white rounded-2xl p-6 shadow-lg col-span-full">
+          <div class="mb-5">
+            <h2 class="text-xl font-bold text-gray-800 mb-1.5 flex items-center gap-2.5">
+              <i class="pi pi-chart-line text-purple-600" />
               Évolution des finances
             </h2>
-            <p class="chart-subtitle">
+            <p class="text-sm text-gray-500">
               Comparaison revenus vs dépenses sur 12 mois
             </p>
           </div>
-          <div class="chart-body">
+          <div class="h-75 relative">
             <Line :data="expensesTrendData" :options="chartOptions" />
           </div>
         </div>
 
-        <div class="chart-card">
-          <div class="chart-header">
-            <h2 class="chart-title">
-              <i class="pi pi-chart-pie" />
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="mb-5">
+            <h2 class="text-xl font-bold text-gray-800 mb-1.5 flex items-center gap-2.5">
+              <i class="pi pi-chart-pie text-purple-600" />
               Dépenses par catégorie
             </h2>
-            <p class="chart-subtitle">
+            <p class="text-sm text-gray-500">
               Répartition totale: {{ categoryDistribution?.totalExpenses || '0.00' }} €
             </p>
           </div>
-          <div class="chart-body doughnut-container">
+          <div class="h-70 relative">
             <Doughnut :data="categoryExpensesData" :options="doughnutOptions" />
           </div>
         </div>
 
-        <div class="chart-card">
-          <div class="chart-header">
-            <h2 class="chart-title">
-              <i class="pi pi-chart-bar" />
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="mb-5">
+            <h2 class="text-xl font-bold text-gray-800 mb-1.5 flex items-center gap-2.5">
+              <i class="pi pi-chart-bar text-purple-600" />
               Comparaison hebdomadaire
             </h2>
-            <p class="chart-subtitle">
+            <p class="text-sm text-gray-500">
               Ce mois vs mois dernier
             </p>
           </div>
-          <div class="chart-body">
+          <div class="h-75 relative">
             <Bar :data="monthlyComparisonData" :options="chartOptions" />
           </div>
         </div>
       </section>
 
       <!-- Quick Actions & Info Section -->
-      <section class="info-section">
-        <div class="info-card accounts-card">
-          <div class="info-header">
-            <h2 class="info-title">
-              <i class="pi pi-book" />
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 mb-8">
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2.5 m-0">
+              <i class="pi pi-book text-purple-600" />
               Mes livrets
             </h2>
-            <button class="add-button" @click="isAccountDialogOpen = true">
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isAccountDialogOpen = true">
               <i class="pi pi-plus" />
               Nouveau
             </button>
           </div>
-          <div class="info-body">
-            <div v-if="accounts.length === 0" class="empty-state">
-              <i class="pi pi-inbox" />
-              <p>Aucun livret créé</p>
-              <button class="create-button" @click="isAccountDialogOpen = true">
+          <div class="max-h-87.5 overflow-y-auto">
+            <div v-if="accounts.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+              <i class="pi pi-inbox text-5xl text-gray-300" />
+              <p class="text-gray-500 m-0">
+                Aucun livret créé
+              </p>
+              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isAccountDialogOpen = true">
                 Créer mon premier livret
               </button>
             </div>
-            <div v-else class="accounts-list">
+            <div v-else class="flex flex-col gap-3">
               <div
                 v-for="account in accounts.slice(0, 4)"
                 :key="account.id"
-                class="account-item"
+                class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl cursor-pointer transition-all hover:bg-purple-600/5 hover:translate-x-1.5"
                 @click="navigateTo(`/account/${account.id}`)"
               >
-                <div class="account-icon">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
                   <i class="pi pi-wallet" />
                 </div>
-                <div class="account-details">
-                  <p class="account-name">
+                <div class="flex-1">
+                  <p class="font-semibold text-gray-800 m-0 mb-1">
                     {{ account.labelAccount }}
                   </p>
-                  <p class="account-balance">
+                  <p class="text-sm text-gray-500 m-0">
                     {{ Number.parseFloat(account.amount.toString()).toFixed(2) }} €
                   </p>
                 </div>
-                <i class="pi pi-chevron-right" />
+                <i class="pi pi-chevron-right text-gray-400" />
               </div>
-              <button v-if="accounts.length > 4" class="view-all" @click="navigateTo('/accounts')">
+              <button v-if="accounts.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600 hover:bg-purple-600/5" @click="navigateTo('/accounts')">
                 Voir tous les livrets ({{ accounts.length }})
               </button>
             </div>
           </div>
         </div>
 
-        <div class="info-card upcoming-card">
-          <div class="info-header">
-            <h2 class="info-title">
-              <i class="pi pi-calendar" />
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2.5 m-0">
+              <i class="pi pi-calendar text-purple-600" />
               Prochaines transactions
             </h2>
-            <button class="add-button" @click="navigateTo('/regular-transaction')">
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
               <i class="pi pi-cog" />
               Gérer
             </button>
           </div>
-          <div class="info-body">
-            <div v-if="upcomingPayments.length === 0" class="empty-state">
-              <i class="pi pi-calendar-times" />
-              <p>Aucune transaction prévue</p>
-              <button class="create-button" @click="navigateTo('/regular-transaction')">
+          <div class="max-h-87.5 overflow-y-auto">
+            <div v-if="upcomingPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+              <i class="pi pi-calendar-times text-5xl text-gray-300" />
+              <p class="text-gray-500 m-0">
+                Aucune transaction prévue
+              </p>
+              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
                 Configurer une mensualité
               </button>
             </div>
-            <div v-else class="payments-list">
-              <div v-for="payment in upcomingPayments" :key="payment.id" class="payment-item">
-                <div class="payment-icon" :class="{ expense: !payment.isIncome, income: payment.isIncome }">
+            <div v-else class="flex flex-col gap-3">
+              <div v-for="payment in upcomingPayments" :key="payment.id ?? `payment-${Math.random()}`" class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
                   <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
                 </div>
-                <div class="payment-details">
-                  <p class="payment-label">
+                <div class="flex-1">
+                  <p class="font-semibold text-gray-800 m-0 mb-1 text-sm">
                     {{ payment.label }}
                   </p>
-                  <p class="payment-frequency">
+                  <p class="text-xs text-gray-500 m-0">
                     {{ new Date(payment.date).toLocaleDateString('fr-FR') }}
                   </p>
                 </div>
-                <p class="payment-amount" :class="{ expense: !payment.isIncome, income: payment.isIncome }">
+                <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
                   {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
                 </p>
               </div>
@@ -705,30 +710,32 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="info-card tags-card">
-          <div class="info-header">
-            <h2 class="info-title">
-              <i class="pi pi-tags" />
+        <div class="bg-white rounded-2xl p-6 shadow-lg">
+          <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2.5 m-0">
+              <i class="pi pi-tags text-purple-600" />
               Tags populaires
             </h2>
-            <button class="add-button" @click="navigateTo('/tag')">
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
               <i class="pi pi-plus" />
               Nouveau
             </button>
           </div>
-          <div class="info-body">
-            <div v-if="tags.length === 0" class="empty-state">
-              <i class="pi pi-tag" />
-              <p>Aucun tag créé</p>
-              <button class="create-button" @click="navigateTo('/tag')">
+          <div class="max-h-87.5 overflow-y-auto">
+            <div v-if="tags.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+              <i class="pi pi-tag text-5xl text-gray-300" />
+              <p class="text-gray-500 m-0">
+                Aucun tag créé
+              </p>
+              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
                 Créer un tag
               </button>
             </div>
-            <div v-else class="tags-list">
+            <div v-else class="flex flex-wrap gap-2.5">
               <div
                 v-for="tag in tags.slice(0, 6)"
                 :key="tag.tagId"
-                class="tag-chip"
+                class="inline-flex items-center gap-1.5 px-4 py-2 border-2 rounded-full text-xs font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
                 :style="{
                   backgroundColor: `${rgbToHex(tag.colorDTO)}20`,
                   borderColor: rgbToHex(tag.colorDTO),
@@ -738,7 +745,7 @@ onMounted(() => {
                 <i class="pi pi-tag" />
                 {{ tag.label }}
               </div>
-              <button v-if="tags.length > 6" class="view-all-tags" @click="navigateTo('/tag')">
+              <button v-if="tags.length > 6" class="px-4 py-2 bg-yellow-400/10 border-2 border-yellow-400 rounded-full text-yellow-600 text-xs font-semibold cursor-pointer transition-all hover:bg-yellow-400/20 hover:-translate-y-0.5" @click="navigateTo('/tag')">
                 +{{ tags.length - 6 }} autres
               </button>
             </div>
@@ -747,47 +754,47 @@ onMounted(() => {
       </section>
 
       <!-- Quick Stats Banner -->
-      <section class="stats-banner">
-        <div class="stat-item">
-          <i class="pi pi-calendar-plus" />
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 bg-white p-6 rounded-2xl shadow-lg mb-5">
+        <div class="flex items-center gap-4">
+          <i class="pi pi-calendar-plus text-4xl text-purple-600" />
           <div>
-            <p class="stat-value">
+            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
               {{ regularTransactions.length }}
             </p>
-            <p class="stat-label">
+            <p class="text-xs text-gray-500 m-0">
               Mensualités actives
             </p>
           </div>
         </div>
-        <div class="stat-item">
-          <i class="pi pi-tags" />
+        <div class="flex items-center gap-4">
+          <i class="pi pi-tags text-4xl text-purple-600" />
           <div>
-            <p class="stat-value">
+            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
               {{ tags.length }}
             </p>
-            <p class="stat-label">
+            <p class="text-xs text-gray-500 m-0">
               Tags créés
             </p>
           </div>
         </div>
-        <div class="stat-item">
-          <i class="pi pi-clock" />
+        <div class="flex items-center gap-4">
+          <i class="pi pi-clock text-4xl text-purple-600" />
           <div>
-            <p class="stat-value">
+            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
               {{ totalPrevisionalTransactions }}
             </p>
-            <p class="stat-label">
+            <p class="text-xs text-gray-500 m-0">
               Transactions prévisionnelles
             </p>
           </div>
         </div>
-        <div class="stat-item">
-          <i class="pi pi-chart-line" />
+        <div class="flex items-center gap-4">
+          <i class="pi pi-chart-line text-4xl text-purple-600" />
           <div>
-            <p class="stat-value">
+            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
               {{ categoryDistribution?.categories.length || 0 }}
             </p>
-            <p class="stat-label">
+            <p class="text-xs text-gray-500 m-0">
               Catégories actives
             </p>
           </div>
@@ -805,776 +812,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.dashboard-container {
-  width: 100%;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  padding: 20px;
-  position: relative;
-}
-
-/* Ensure background extends to full height */
-.dashboard-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  z-index: -1;
-}
-
-/* ===== HEADER ===== */
-.dashboard-header {
-  margin-bottom: 30px;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.dashboard-title {
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
-  font-weight: 800;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.dashboard-subtitle {
-  font-size: 1rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-  background: white;
-  padding: 4px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.period-toggle {
-  padding: 10px 24px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.period-toggle.active {
-  background: linear-gradient(135deg, #822acc, #651e9e);
-  color: white;
-}
-
-/* ===== LOADING ===== */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  gap: 16px;
-  min-height: 60vh;
-}
-
-.loading-icon {
-  font-size: 48px;
-  color: #822acc;
-}
-
-/* ===== KPI SECTION ===== */
-.kpi-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 30px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease;
-}
-
-.kpi-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.kpi-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.kpi-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
-}
-
-.gradient-purple {
-  background: linear-gradient(135deg, #822acc, #651e9e);
-}
-
-.gradient-red {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.gradient-green {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.gradient-yellow {
-  background: linear-gradient(135deg, #e0d824, #d4c91e);
-}
-
-.kpi-trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.kpi-trend.positive {
-  background: #10b98120;
-  color: #10b981;
-}
-
-.kpi-trend.negative {
-  background: #ef444420;
-  color: #ef4444;
-}
-
-.kpi-label {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0 0 8px 0;
-  font-weight: 500;
-}
-
-.kpi-value {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.kpi-info {
-  font-size: 13px;
-  color: #9ca3af;
-  margin: 0;
-}
-
-/* ===== CHARTS SECTION ===== */
-.charts-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-  margin-bottom: 30px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease 0.2s;
-}
-
-.charts-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.chart-card {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-.chart-card.large-chart {
-  grid-column: 1 / -1;
-}
-
-.chart-header {
-  margin-bottom: 20px;
-}
-
-.chart-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 6px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.chart-title i {
-  color: #822acc;
-}
-
-.chart-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.chart-body {
-  height: 300px;
-  position: relative;
-}
-
-.doughnut-container {
-  height: 280px;
-}
-
-/* ===== DASHBOARD CONTENT ===== */
-.dashboard-content {
-  position: relative;
-  z-index: 1;
-  padding-bottom: 40px;
-}
-
-/* ===== KPI SECTION ===== */
-.kpi-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 30px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease;
-}
-
-.kpi-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.kpi-card {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-.kpi-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.kpi-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
-}
-
-.gradient-purple {
-  background: linear-gradient(135deg, #822acc, #651e9e);
-}
-
-.gradient-red {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.gradient-green {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.gradient-yellow {
-  background: linear-gradient(135deg, #e0d824, #d4c91e);
-}
-
-.kpi-trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.kpi-trend.positive {
-  background: #10b98120;
-  color: #10b981;
-}
-
-.kpi-trend.negative {
-  background: #ef444420;
-  color: #ef4444;
-}
-
-.kpi-label {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0 0 8px 0;
-  font-weight: 500;
-}
-
-.kpi-value {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.kpi-info {
-  font-size: 13px;
-  color: #9ca3af;
-  margin: 0;
-}
-
-/* ===== CHARTS SECTION ===== */
-.charts-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-  margin-bottom: 30px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease 0.2s;
-}
-
-.charts-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.chart-card {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-.chart-card.large-chart {
-  grid-column: 1 / -1;
-}
-
-.chart-header {
-  margin-bottom: 20px;
-}
-
-.chart-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 6px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.chart-title i {
-  color: #822acc;
-}
-
-.chart-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.chart-body {
-  height: 300px;
-  position: relative;
-}
-
-.doughnut-container {
-  height: 280px;
-}
-
-/* ===== INFO SECTION ===== */
-.info-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-  margin-bottom: 30px;
-}
-
-.info-card {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-.info-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f3f4f6;
-}
-
-.info-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.info-title i {
-  color: #822acc;
-}
-
-.add-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #822acc, #651e9e);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.add-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(130, 42, 204, 0.3);
-}
-
-.info-body {
-  max-height: 350px;
-  overflow-y: auto;
-}
-
-/* Empty State */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-  gap: 16px;
-}
-
-.empty-state i {
-  font-size: 48px;
-  color: #d1d5db;
-}
-
-.empty-state p {
-  color: #6b7280;
-  margin: 0;
-}
-
-.create-button {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #822acc, #651e9e);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.create-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(130, 42, 204, 0.3);
-}
-
-/* Accounts List */
-.accounts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.account-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.account-item:hover {
-  background: #822acc10;
-  transform: translateX(5px);
-}
-
-.account-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #822acc, #651e9e);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.account-details {
-  flex: 1;
-}
-
-.account-name {
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 4px 0;
-}
-
-.account-balance {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.view-all {
-  width: 100%;
-  padding: 12px;
-  background: transparent;
-  border: 2px dashed #d1d5db;
-  border-radius: 10px;
-  color: #6b7280;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.view-all:hover {
-  border-color: #822acc;
-  color: #822acc;
-  background: #822acc05;
-}
-
-/* Payments List */
-.payments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.payment-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 12px;
-}
-
-.payment-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.payment-icon.expense {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.payment-icon.income {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.payment-details {
-  flex: 1;
-}
-
-.payment-label {
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 4px 0;
-  font-size: 14px;
-}
-
-.payment-frequency {
-  font-size: 12px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.payment-amount {
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.payment-amount.expense {
-  color: #ef4444;
-}
-
-.payment-amount.income {
-  color: #10b981;
-}
-
-/* Tags List */
-.tags-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 2px solid;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.tag-chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.view-all-tags {
-  padding: 8px 16px;
-  background: #e0d82420;
-  border: 2px solid #e0d824;
-  border-radius: 20px;
-  color: #b8a920;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.view-all-tags:hover {
-  background: #e0d82440;
-  transform: translateY(-2px);
-}
-
-/* ===== STATS BANNER ===== */
-.stats-banner {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  background: white;
-  padding: 24px;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  margin-bottom: 20px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-item i {
-  font-size: 32px;
-  color: #822acc;
-}
-
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: #1f2937;
-  margin: 0 0 4px 0;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 16px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .kpi-section,
-  .charts-section,
-  .info-section {
-    grid-template-columns: 1fr;
-  }
-
-  .chart-card.large-chart {
-    grid-column: 1;
-  }
-
-  .chart-body {
-    height: 250px;
-  }
-
-  .doughnut-container {
-    height: 230px;
-  }
-
-  .stats-banner {
-    grid-template-columns: 1fr;
-  }
-
-  .period-toggle {
-    padding: 8px 16px;
-    font-size: 14px;
-  }
-}
-
-/* Scrollbar Styling */
-.info-body::-webkit-scrollbar {
+/* Custom scrollbar styling */
+*::-webkit-scrollbar {
   width: 6px;
 }
 
-.info-body::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: #f3f4f6;
   border-radius: 10px;
 }
 
-.info-body::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: #822acc;
   border-radius: 10px;
 }
 
-.info-body::-webkit-scrollbar-thumb:hover {
+*::-webkit-scrollbar-thumb:hover {
   background: #651e9e;
 }
 </style>
