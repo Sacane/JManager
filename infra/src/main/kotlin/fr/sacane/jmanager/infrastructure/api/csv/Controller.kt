@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.csv
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.api.CsvImportFeature
+import fr.sacane.jmanager.domain.port.api.FileImportExportFeature
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
@@ -18,7 +18,7 @@ import java.util.logging.Logger
 @RequestMapping("api/csv")
 @Adapter(Side.APPLICATION)
 class CsvImportController(
-    private val csvImportFeature: CsvImportFeature
+    private val fileImportExportFeature: FileImportExportFeature
 ) {
     companion object {
         private val LOGGER: Logger = Logger.getLogger("CsvImportController")
@@ -68,7 +68,7 @@ class CsvImportController(
             )
         }
 
-        return csvImportFeature.validateCsvFile(
+        return fileImportExportFeature.validateCsvFile(
             token = currentUser.token,
             bookletId = bookletId.toUUID(),
             csvContent = csvContent,
@@ -111,7 +111,7 @@ class CsvImportController(
             )
         }
 
-        return csvImportFeature.importTransactionsFromCsv(
+        return fileImportExportFeature.importTransactionsFromCsv(
             token = currentUser.token,
             bookletId = bookletId.toUUID(),
             csvContent = csvContent,
