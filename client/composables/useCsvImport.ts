@@ -16,7 +16,7 @@ export default function useCsvImport() {
     bookletId: string,
     file: File,
     month?: number,
-    year?: number
+    year?: number,
   ): Promise<CsvValidationReportDTO> {
     const formData = new FormData()
     formData.append('file', file)
@@ -91,8 +91,67 @@ export default function useCsvImport() {
     }
   }
 
+  /**
+   * Exporte les transactions au format CSV
+   *
+   * @param transactionIds - Liste des IDs de transactions à exporter
+   * @returns Blob contenant le fichier CSV
+   */
+  async function exportTransactionsToCsv(transactionIds: string[]): Promise<Blob> {
+    const url = `${host}csv/export`
+
+    try {
+      const response = await axios.post(
+        url,
+        { transactionIds },
+        {
+          withCredentials: true,
+          responseType: 'blob',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      return response.data
+    } catch (error) {
+      console.error('Erreur lors de l\'export:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Télécharge un fichier CSV d'export de transactions
+   *
+   * @param transactionIds - Liste des IDs de transactions à exporter
+   * @param filename - Nom du fichier (optionnel, généré automatiquement si non fourni)
+   */
+  async function downloadCsvExport(transactionIds: string[], filename?: string): Promise<void> {
+    try {
+      const blob = await exportTransactionsToCsv(transactionIds)
+
+      // Générer un nom de fichier avec la date si non fourni
+      const downloadFilename = filename || `transactions_export_${new Date().toISOString().slice(0, 10)}.csv`
+
+      // Créer un lien de téléchargement temporaire
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = downloadFilename
+      document.body.appendChild(link)
+      link.click()
+
+      // Nettoyer
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(downloadUrl)
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error)
+      throw error
+    }
+  }
+
   return {
     validateCsvFile,
     importTransactionsFromCsv,
+    downloadCsvExport,
   }
 }
