@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.models.csv.CsvImportResult
 import fr.sacane.jmanager.domain.models.csv.CsvTransactionLine
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
 import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.CsvFileReader
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
@@ -18,23 +19,23 @@ import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionValidator
 import fr.sacane.jmanager.domain.usecase.csv.CsvFileValidator
+import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionExporter
 import fr.sacane.jmanager.domain.utils.*
 import java.util.*
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
 /**
- * Application port: CsvImportFeature
+ * Application port: FileImportExportFeature
  *
- * Allows importing transactions from a CSV file.
- * The CSV file must contain the following columns:
- * - date (format dd-MM-yyyy)
- * - label
- * - depense (expense)
- * - recette (income)
- * - tag
+ * Allows importing and exporting transactions from/to files.
+ * The file format (CSV, JSON, YAML, etc.) is an implementation detail handled by the infrastructure layer.
+ *
+ * Currently supports:
+ * - CSV import with columns: date, label, depense (expense), recette (income), tag
+ * - CSV export with the same format
  */
-sealed interface CsvImportFeature {
+sealed interface FileImportExportFeature {
 
     /**
      * Validates CSV content before import
@@ -73,20 +74,32 @@ sealed interface CsvImportFeature {
         month: Int? = null,
         year: Int? = null
     ): Result<CsvImportResult>
+
+    /**
+     * Exports non-preview transactions to CSV format
+     *
+     * @param token Authentication token
+     * @param transactions List of transactions to export (only non-preview transactions will be exported)
+     * @return Result containing CSV content as string with proper formatting
+     */
+    fun exportTransactionsToCsv(
+        token: String,
+        transactions: List<Transaction>
+    ): Result<String>
 }
 
 @DomainService
-class CsvImportFeatureImpl(
+class FileImportExportFeatureImpl(
     private val csvFileReader: CsvFileReader,
     private val transactionRepository: TransactionRepository,
     private val bookletRepository: BookletRepository,
     private val tagRepository: TagRepository,
     private val sessionManager: SessionManager,
     private val unitOfWorkProvider: UnitOfWorkTransactionProvider
-) : CsvImportFeature {
+) : FileImportExportFeature {
 
     companion object {
-        private val logger = Logger.getLogger(CsvImportFeatureImpl::class.java.name)
+        private val logger = Logger.getLogger(FileImportExportFeatureImpl::class.java.name)
 
         private const val DATE_COLUMN = 0
         private const val LABEL_COLUMN = 1
@@ -98,6 +111,7 @@ class CsvImportFeatureImpl(
 
     private val validator = CsvTransactionValidator()
     private val fileValidator = CsvFileValidator()
+    private val csvExporter = CsvTransactionExporter()
 
     override fun validateCsvFile(
         token: String,
@@ -268,6 +282,22 @@ class CsvImportFeatureImpl(
             recette = row[RECETTE_COLUMN],
             tag = row[TAG_COLUMN]
         )
+    }
+
+    override fun exportTransactionsToCsv(
+        token: String,
+        transactions: List<Transaction>
+    ): Result<String> {
+        return sessionManager.authenticate(token) { _ ->
+            try {
+                val csvContent = csvExporter.exportToCsv(transactions)
+                logger.info("CSV export completed: ${transactions.filter { !it.isPreview }.size} transactions exported")
+                success(csvContent)
+            } catch (e: Exception) {
+                logger.severe("Error during CSV export: ${e.message}")
+                failure(ResultState.INTERNAL_SERVER_ERROR, "Error during export: ${e.message}")
+            }
+        }
     }
 
 }

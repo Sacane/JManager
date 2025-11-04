@@ -68,7 +68,7 @@ object FakeFactory {
         sessionManager,
         manager
     )
-    val csvImportFeature = CsvImportFeatureImpl(
+    val fileImportExportFeature = FileImportExportFeatureImpl(
         csvFileReader,
         transactionRepository,
         fakeAccountRepository,

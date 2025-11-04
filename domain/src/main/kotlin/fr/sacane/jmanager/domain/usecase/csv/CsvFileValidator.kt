@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.usecase.csv
 
+import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.csv.CsvReportType
 import fr.sacane.jmanager.domain.models.csv.CsvValidationIssue
@@ -15,6 +16,7 @@ import java.math.BigDecimal
  * Detects structural issues, format problems, and potential data quality issues
  * such as swapped columns or invalid data
  */
+@UseCase
 class CsvFileValidator {
 
     companion object {

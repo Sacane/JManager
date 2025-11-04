@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
+import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
 import { getTagStyle } from '~/utils/util'
 
@@ -15,6 +16,7 @@ const confirm = useConfirm()
 const { englishMonth, translate, monthFromNumber, numberFromMonth } = useDate()
 const tag = useTag()
 const { deleteTransaction, confirmPreviewTransaction, saveTransaction, editTransaction, findTransactionById } = useTransaction()
+const { downloadCsvExport } = useCsvImport()
 
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 const actualSheets = ref<TransactionCreationDTO[]>([])
@@ -284,6 +286,39 @@ function openCsvImportDialog() {
   csvImportDialogRef.value?.openDialog()
 }
 
+function openCsvExportDialog() {
+  // Filtrer uniquement les transactions non prévisionnelles
+  const nonPreviewTransactions = actualSheets.value.filter(t => !t.isPreview)
+
+  if (nonPreviewTransactions.length === 0) {
+    toast.warn('Aucune transaction à exporter (les transactions prévisionnelles ne sont pas exportées)')
+    return
+  }
+
+  confirm.require({
+    message: `Voulez-vous télécharger le fichier CSV contenant ${nonPreviewTransactions.length} transaction${nonPreviewTransactions.length > 1 ? 's' : ''} non prévisionnelle${nonPreviewTransactions.length > 1 ? 's' : ''} pour ${displayMonth.value} ${bookletData.year} ?`,
+    header: 'Exporter au format CSV',
+    icon: 'pi pi-file-export',
+    acceptLabel: 'Télécharger',
+    rejectLabel: 'Annuler',
+    accept: async () => {
+      try {
+        const transactionIds = nonPreviewTransactions
+          .map(t => t.id)
+          .filter(id => id != null) as string[]
+
+        const filename = `transactions_${bookletData.label.replace(/\s+/g, '_')}_${bookletData.month}_${bookletData.year}.csv`
+
+        await downloadCsvExport(transactionIds, filename)
+        toast.success('Fichier CSV téléchargé avec succès !')
+      } catch (err) {
+        console.error('Erreur lors de l\'export CSV:', err)
+        toast.errorAxios(err)
+      }
+    },
+  })
+}
+
 function onCsvImportSuccess(result: CsvImportResultDTO) {
   // Recharger les données du booklet après l'importation
   loadBookletData()
@@ -400,6 +435,12 @@ onUnmounted(() => {
           icon="pi pi-file-import"
           :label="isMobile ? 'CSV' : 'Importer CSV'"
           @click="openCsvImportDialog"
+        />
+        <Button
+          class="btn-csv-export"
+          icon="pi pi-file-export"
+          :label="isMobile ? 'Export' : 'Exporter CSV'"
+          @click="openCsvExportDialog"
         />
       </div>
 
@@ -974,6 +1015,21 @@ onUnmounted(() => {
     background: #cffafe;
     border-color: #0891b2;
     box-shadow: 0 4px 12px rgba(8, 145, 178, 0.25);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-csv-export {
+  background: white;
+  color: #059669;
+  border: 2px solid #10b981;
+  font-weight: 600;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #d1fae5;
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
     transform: translateY(-2px);
   }
 }

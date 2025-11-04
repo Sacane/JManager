@@ -1,47 +1,51 @@
-package fr.sacane.jmanager.domain.usecase.csv
+package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.port.FeatureTest
 import fr.sacane.jmanager.domain.utils.ResultState
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.util.UUID
 
-@DisplayName("CsvImportFeature Tests")
-class CsvImportFeatureTest : FeatureTest() {
+@DisplayName("FileImportExportFeature Tests")
+class FileImportExportFeatureTest : FeatureTest() {
 
-    private val csvImportFeature = FakeFactory.csvImportFeature
+    private val fileImportExportFeature = FakeFactory.fileImportExportFeature
 
     @Test
     @DisplayName("Should fail when user is not authenticated")
     fun `validateCsvFile should fail when user is not authenticated`() {
         val invalidToken = "invalid-token"
 
-        val result = csvImportFeature.validateCsvFile(
+        val result = fileImportExportFeature.validateCsvFile(
             invalidToken,
-            java.util.UUID.randomUUID(),
+            UUID.randomUUID(),
             "csv content"
         )
 
-        assertTrue(result.isFailure())
-        assertEquals(ResultState.UNAUTHORIZED, result.status)
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.UNAUTHORIZED, result.status)
     }
 
     @Test
     @DisplayName("Should fail when booklet does not exist")
     fun `validateCsvFile should fail when booklet does not exist`() {
         launchWithConnectedUserInstance {
-            val nonExistentBookletId = java.util.UUID.randomUUID()
+            val nonExistentBookletId = UUID.randomUUID()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 nonExistentBookletId,
                 "csv content"
             )
 
-            assertTrue(result.isFailure())
-            assertEquals(ResultState.NOT_FOUND, result.status)
+            Assertions.assertTrue(result.isFailure())
+            Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
         }
     }
 
@@ -50,8 +54,8 @@ class CsvImportFeatureTest : FeatureTest() {
     fun `validateCsvFile should fail when user does not own the booklet`() {
         launchWithConnectedUserInstance {
             val otherUser = createAccount(
-                fr.sacane.jmanager.domain.models.User(
-                    fr.sacane.jmanager.domain.models.UserId(java.util.UUID.randomUUID()),
+                User(
+                    UserId(UUID.randomUUID()),
                     "otherUser",
                     "other@test.fr"
                 ),
@@ -59,14 +63,14 @@ class CsvImportFeatureTest : FeatureTest() {
                 100.toAmount()
             )
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 otherUser.id!!,
                 "csv content"
             )
 
-            assertTrue(result.isFailure())
-            assertEquals(ResultState.FORBIDDEN, result.status)
+            Assertions.assertTrue(result.isFailure())
+            Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
         }
     }
 
@@ -76,16 +80,16 @@ class CsvImportFeatureTest : FeatureTest() {
         launchWithConnectedUserInstance {
             val csvContent = ""
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -99,16 +103,16 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Test,10.00,,
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -122,16 +126,16 @@ class CsvImportFeatureTest : FeatureTest() {
                 2025-01-15,Test,10.00,,
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -146,20 +150,20 @@ class CsvImportFeatureTest : FeatureTest() {
                 16-01-2025,Salary,,2500.00,Aucune
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertFalse(report.hasErrors)
-                assertTrue(report.canImport)
-                assertEquals(2, report.totalLines)
-                assertEquals(2, report.validLines)
-                assertEquals(0, report.errors.size)
-                assertEquals(0, report.warnings.size)
+                Assertions.assertFalse(report.hasErrors)
+                Assertions.assertTrue(report.canImport)
+                Assertions.assertEquals(2, report.totalLines)
+                Assertions.assertEquals(2, report.validLines)
+                Assertions.assertEquals(0, report.errors.size)
+                Assertions.assertEquals(0, report.warnings.size)
             }
         }
     }
@@ -173,20 +177,20 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Groceries,45.50,,UnknownTag
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertFalse(report.hasErrors)
-                assertTrue(report.canImport)
-                assertEquals(1, report.totalLines)
-                assertEquals(1, report.validLines)
-                assertEquals(0, report.errors.size)
-                assertEquals(1, report.warnings.size)
+                Assertions.assertFalse(report.hasErrors)
+                Assertions.assertTrue(report.canImport)
+                Assertions.assertEquals(1, report.totalLines)
+                Assertions.assertEquals(1, report.validLines)
+                Assertions.assertEquals(0, report.errors.size)
+                Assertions.assertEquals(1, report.warnings.size)
             }
         }
     }
@@ -200,16 +204,16 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Test,45.50,100.00,
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -223,16 +227,16 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Test,,,
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -246,16 +250,16 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Test,-45.50,,
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -266,16 +270,16 @@ class CsvImportFeatureTest : FeatureTest() {
         launchWithConnectedUserInstance {
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Test,\"45,50\",,\n"
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertFalse(report.hasErrors)
-                assertTrue(report.canImport)
+                Assertions.assertFalse(report.hasErrors)
+                Assertions.assertTrue(report.canImport)
             }
         }
     }
@@ -289,16 +293,16 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Test,45.50
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -307,29 +311,29 @@ class CsvImportFeatureTest : FeatureTest() {
     fun `importTransactionsFromCsv should fail when user is not authenticated`() {
         val invalidToken = "invalid-token"
 
-        val result = csvImportFeature.importTransactionsFromCsv(
+        val result = fileImportExportFeature.importTransactionsFromCsv(
             invalidToken,
-            java.util.UUID.randomUUID(),
+            UUID.randomUUID(),
             "csv content"
         )
 
-        assertTrue(result.isFailure())
-        assertEquals(ResultState.UNAUTHORIZED, result.status)
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.UNAUTHORIZED, result.status)
     }
 
     @Test
     fun `importTransactionsFromCsv should fail when booklet does not exist`() {
         launchWithConnectedUserInstance {
-            val nonExistentBookletId = java.util.UUID.randomUUID()
+            val nonExistentBookletId = UUID.randomUUID()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 nonExistentBookletId,
                 "csv content"
             )
 
-            assertTrue(result.isFailure())
-            assertEquals(ResultState.NOT_FOUND, result.status)
+            Assertions.assertTrue(result.isFailure())
+            Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
         }
     }
 
@@ -337,8 +341,8 @@ class CsvImportFeatureTest : FeatureTest() {
     fun `importTransactionsFromCsv should fail when user does not own the booklet`() {
         launchWithConnectedUserInstance {
             val otherUser = createAccount(
-                fr.sacane.jmanager.domain.models.User(
-                    fr.sacane.jmanager.domain.models.UserId(java.util.UUID.randomUUID()),
+                User(
+                    UserId(UUID.randomUUID()),
                     "otherUser",
                     "other@test.fr"
                 ),
@@ -346,29 +350,29 @@ class CsvImportFeatureTest : FeatureTest() {
                 100.toAmount()
             )
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 otherUser.id!!,
                 "csv content"
             )
 
-            assertTrue(result.isFailure())
-            assertEquals(ResultState.FORBIDDEN, result.status)
+            Assertions.assertTrue(result.isFailure())
+            Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
         }
     }
 
     @Test
     fun `importTransactionsFromCsv should fail when CSV is empty`() {
         launchWithConnectedUserInstance {
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 ""
             )
 
-            assertTrue(result.isFailure())
-            assertEquals(ResultState.INVALID, result.status)
-            assertTrue(result.message.contains("empty"))
+            Assertions.assertTrue(result.isFailure())
+            Assertions.assertEquals(ResultState.INVALID, result.status)
+            Assertions.assertTrue(result.message.contains("empty"))
         }
     }
 
@@ -380,15 +384,15 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Test,10.00,,
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isFailure())
-            assertEquals(ResultState.INVALID, result.status)
-            assertTrue(result.message.contains("header"))
+            Assertions.assertTrue(result.isFailure())
+            Assertions.assertEquals(ResultState.INVALID, result.status)
+            Assertions.assertTrue(result.message.contains("header"))
         }
     }
 
@@ -403,25 +407,25 @@ class CsvImportFeatureTest : FeatureTest() {
                 16-01-2025,Transport,30.00,,Transport
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { importResult ->
-                assertEquals(2, importResult.successCount)
-                assertEquals(0, importResult.failedLines.size)
+                Assertions.assertEquals(2, importResult.successCount)
+                Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
-                assertNotNull(updatedBooklets)
+                Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
-                assertNotNull(updatedBooklet)
+                Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("75.50"))
-                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+                val expectedAmount = initialAmount.value.subtract(BigDecimal("75.50"))
+                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
         }
     }
@@ -437,25 +441,25 @@ class CsvImportFeatureTest : FeatureTest() {
                 16-01-2025,Bonus,,500.00,Aucune
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { importResult ->
-                assertEquals(2, importResult.successCount)
-                assertEquals(0, importResult.failedLines.size)
+                Assertions.assertEquals(2, importResult.successCount)
+                Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
-                assertNotNull(updatedBooklets)
+                Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
-                assertNotNull(updatedBooklet)
+                Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3000.00"))
-                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+                val expectedAmount = initialAmount.value.add(BigDecimal("3000.00"))
+                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
         }
     }
@@ -473,25 +477,25 @@ class CsvImportFeatureTest : FeatureTest() {
                 18-01-2025,Freelance,,800.00,Aucune
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { importResult ->
-                assertEquals(4, importResult.successCount)
-                assertEquals(0, importResult.failedLines.size)
+                Assertions.assertEquals(4, importResult.successCount)
+                Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
-                assertNotNull(updatedBooklets)
+                Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
-                assertNotNull(updatedBooklet)
+                Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3224.50"))
-                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+                val expectedAmount = initialAmount.value.add(BigDecimal("3224.50"))
+                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
         }
     }
@@ -506,20 +510,20 @@ class CsvImportFeatureTest : FeatureTest() {
                 invalid-date,Test,45.50,,
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isFailure())
+            Assertions.assertTrue(result.isFailure())
 
             val accountState = FakeFactory.accountState()
             val updatedBooklets = accountState.getStates().find { it.userId == user.id }
-            assertNotNull(updatedBooklets)
+            Assertions.assertNotNull(updatedBooklets)
             val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
-            assertNotNull(updatedBooklet)
-            assertEquals(initialAmount.value, updatedBooklet!!.amount.value)
+            Assertions.assertNotNull(updatedBooklet)
+            Assertions.assertEquals(initialAmount.value, updatedBooklet!!.amount.value)
         }
     }
 
@@ -533,26 +537,26 @@ class CsvImportFeatureTest : FeatureTest() {
                 15-01-2025,Purchase,100.00,,Aucune
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
 
             val accountState = FakeFactory.accountState()
             val persistedBooklets = accountState.getStates().find { it.userId == user.id }
-            assertNotNull(persistedBooklets)
+            Assertions.assertNotNull(persistedBooklets)
             val persistedBooklet = persistedBooklets!!.booklet.find { it.id == booklet.id }
-            assertNotNull(persistedBooklet)
+            Assertions.assertNotNull(persistedBooklet)
 
-            val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("100.00"))
-            assertEquals(expectedAmount, persistedBooklet!!.amount.value)
+            val expectedAmount = initialAmount.value.subtract(BigDecimal("100.00"))
+            Assertions.assertEquals(expectedAmount, persistedBooklet!!.amount.value)
 
             result.onSuccess { importResult ->
-                assertEquals(1, importResult.transactions.size)
-                assertEquals("Purchase", importResult.transactions.first().label)
+                Assertions.assertEquals(1, importResult.transactions.size)
+                Assertions.assertEquals("Purchase", importResult.transactions.first().label)
             }
         }
     }
@@ -567,7 +571,7 @@ class CsvImportFeatureTest : FeatureTest() {
                 15,Transport,30.00,,Transport
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 token = tokenValue,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
@@ -575,12 +579,12 @@ class CsvImportFeatureTest : FeatureTest() {
                 year = 2026
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertFalse(report.hasErrors)
-                assertTrue(report.canImport)
-                assertEquals(2, report.totalLines)
-                assertEquals(2, report.validLines)
+                Assertions.assertFalse(report.hasErrors)
+                Assertions.assertTrue(report.canImport)
+                Assertions.assertEquals(2, report.totalLines)
+                Assertions.assertEquals(2, report.validLines)
             }
         }
     }
@@ -594,16 +598,16 @@ class CsvImportFeatureTest : FeatureTest() {
                 1,Groceries,45.50,,Alimentation & Restaurant
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }
@@ -619,7 +623,7 @@ class CsvImportFeatureTest : FeatureTest() {
                 15,Salary,,2500.00,Aucune
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 token = tokenValue,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
@@ -628,27 +632,27 @@ class CsvImportFeatureTest : FeatureTest() {
                 year = 2026
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { importResult ->
-                assertEquals(2, importResult.successCount)
-                assertEquals(0, importResult.failedLines.size)
+                Assertions.assertEquals(2, importResult.successCount)
+                Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val transaction1 = importResult.transactions.find { it.label == "Groceries" }
-                assertNotNull(transaction1)
-                assertEquals(java.time.LocalDate.of(2026, 1, 1), transaction1!!.date)
+                Assertions.assertNotNull(transaction1)
+                Assertions.assertEquals(LocalDate.of(2026, 1, 1), transaction1!!.date)
 
                 val transaction2 = importResult.transactions.find { it.label == "Salary" }
-                assertNotNull(transaction2)
-                assertEquals(java.time.LocalDate.of(2026, 1, 15), transaction2!!.date)
+                Assertions.assertNotNull(transaction2)
+                Assertions.assertEquals(LocalDate.of(2026, 1, 15), transaction2!!.date)
 
                 val accountState = FakeFactory.accountState()
                 val updatedBooklets = accountState.getStates().find { it.userId == user.id }
-                assertNotNull(updatedBooklets)
+                Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
-                assertNotNull(updatedBooklet)
+                Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.add(java.math.BigDecimal("2454.50"))
-                assertEquals(expectedAmount, updatedBooklet!!.amount.value)
+                val expectedAmount = initialAmount.value.add(BigDecimal("2454.50"))
+                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
             }
         }
     }
@@ -663,7 +667,7 @@ class CsvImportFeatureTest : FeatureTest() {
                 20,Day Only Transaction,50.00,,Aucune
             """.trimIndent()
 
-            val result = csvImportFeature.importTransactionsFromCsv(
+            val result = fileImportExportFeature.importTransactionsFromCsv(
                 token = tokenValue,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
@@ -672,18 +676,18 @@ class CsvImportFeatureTest : FeatureTest() {
                 year = 2026
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { importResult ->
-                assertEquals(2, importResult.successCount)
-                assertEquals(0, importResult.failedLines.size)
+                Assertions.assertEquals(2, importResult.successCount)
+                Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val fullDateTx = importResult.transactions.find { it.label == "Full Date Transaction" }
-                assertNotNull(fullDateTx)
-                assertEquals(java.time.LocalDate.of(2026, 2, 15), fullDateTx!!.date)
+                Assertions.assertNotNull(fullDateTx)
+                Assertions.assertEquals(LocalDate.of(2026, 2, 15), fullDateTx!!.date)
 
                 val dayOnlyTx = importResult.transactions.find { it.label == "Day Only Transaction" }
-                assertNotNull(dayOnlyTx)
-                assertEquals(java.time.LocalDate.of(2026, 1, 20), dayOnlyTx!!.date)
+                Assertions.assertNotNull(dayOnlyTx)
+                Assertions.assertEquals(LocalDate.of(2026, 1, 20), dayOnlyTx!!.date)
             }
         }
     }
@@ -697,7 +701,7 @@ class CsvImportFeatureTest : FeatureTest() {
                 32,Invalid Day,45.50,,Aucune
             """.trimIndent()
 
-            val result = csvImportFeature.validateCsvFile(
+            val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent,
@@ -705,10 +709,10 @@ class CsvImportFeatureTest : FeatureTest() {
                 year = 2026
             )
 
-            assertTrue(result.isSuccess())
+            Assertions.assertTrue(result.isSuccess())
             result.onSuccess { report ->
-                assertTrue(report.hasErrors)
-                assertFalse(report.canImport)
+                Assertions.assertTrue(report.hasErrors)
+                Assertions.assertFalse(report.canImport)
             }
         }
     }

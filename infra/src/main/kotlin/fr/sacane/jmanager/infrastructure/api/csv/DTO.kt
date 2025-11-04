@@ -6,9 +6,12 @@ import fr.sacane.jmanager.domain.models.csv.CsvImportResult
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
 import kotlinx.serialization.Serializable
 
-/**
- * DTO for CSV validation report
- */
+
+@Serializable
+data class CsvExportRequestDTO(
+    val transactionIds: List<String>
+)
+
 @Serializable
 data class CsvValidationReportDTO(
     val totalLines: Int,
@@ -20,9 +23,6 @@ data class CsvValidationReportDTO(
     val canImport: Boolean
 )
 
-/**
- * DTO for CSV validation issue (error or warning)
- */
 @Serializable
 data class CsvValidationIssueDTO(
     val lineNumber: Int,
@@ -31,9 +31,6 @@ data class CsvValidationIssueDTO(
     val detectedValue: String?
 )
 
-/**
- * DTO for CSV import result
- */
 @Serializable
 data class CsvImportResultDTO(
     val successCount: Int,
@@ -44,18 +41,12 @@ data class CsvImportResultDTO(
     val errors: List<CsvLineErrorDTO>
 )
 
-/**
- * DTO for CSV line error
- */
 @Serializable
 data class CsvLineErrorDTO(
     val lineNumber: Int,
     val errors: List<String>
 )
 
-/**
- * DTO for transaction in CSV import result
- */
 @Serializable
 data class TransactionDTO(
     val id: String?,

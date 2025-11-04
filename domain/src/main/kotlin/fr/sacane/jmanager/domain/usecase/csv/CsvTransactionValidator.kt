@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.usecase.csv
 
+import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
@@ -11,6 +12,7 @@ import java.time.LocalDate
 /**
  * Validateur et convertisseur de lignes CSV en transactions
  */
+@UseCase
 class CsvTransactionValidator {
 
     companion object {
