@@ -323,7 +323,7 @@ onMounted(() => {
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--surface-ground);
+  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
 }
 
 .page-header {
@@ -341,25 +341,25 @@ onMounted(() => {
   .header-icon {
     width: 64px;
     height: 64px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
     border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 2rem;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 24px var(--shadow-purple);
   }
 
   .page-title {
     font-size: 2.5rem;
     font-weight: 700;
     margin: 0;
-    color: var(--text-color);
+    color: var(--text-primary);
   }
 
   .page-subtitle {
-    color: var(--text-color);
+    color: var(--text-secondary);
     font-size: 1.1rem;
     margin: 0.5rem 0 0 0;
   }
@@ -380,16 +380,17 @@ onMounted(() => {
 
 .creation-card,
 .users-table-card {
-  background: var(--surface-card);
+  background: var(--card-bg);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--surface-border);
+  box-shadow: 0 4px 24px var(--shadow-md);
+  border: 1px solid var(--card-border);
   transition: all 0.3s ease;
   width: 100%;
 
   &:hover {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 32px var(--shadow-lg);
+    border-color: var(--primary);
   }
 
   .card-header {
@@ -398,8 +399,7 @@ onMounted(() => {
     justify-content: space-between;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--surface-border);
-    color: var(--text-color);
+    border-bottom: 2px solid var(--border-color);
 
     .header-left {
       display: flex;
@@ -408,14 +408,14 @@ onMounted(() => {
 
       i {
         font-size: 1.5rem;
-        color: #667eea;
+        color: var(--primary);
       }
 
       h2 {
         margin: 0;
         font-size: 1.5rem;
         font-weight: 600;
-        color: var(--text-color);
+        color: var(--text-primary);
       }
     }
 
@@ -425,17 +425,17 @@ onMounted(() => {
       gap: 0.5rem;
 
       .count-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
         color: white;
         padding: 0.5rem 1rem;
         border-radius: 12px;
         font-weight: 700;
         font-size: 1.25rem;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 12px var(--shadow-purple);
       }
 
       .count-label {
-        color: var(--text-color-secondary);
+        color: var(--text-secondary);
         font-size: 0.95rem;
       }
     }
@@ -444,6 +444,7 @@ onMounted(() => {
 
 .creation-card {
   height: fit-content;
+  background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg-tertiary) 100%);
 }
 
 .user-form {
@@ -459,19 +460,19 @@ onMounted(() => {
 
   .form-label {
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.95rem;
 
     i {
-      color: #667eea;
+      color: var(--primary);
     }
   }
 
   .form-hint {
-    color: var(--text-color-secondary);
+    color: var(--text-tertiary);
     font-size: 0.875rem;
     margin-top: 0.25rem;
     font-style: italic;
@@ -489,13 +490,19 @@ onMounted(() => {
   }
 }
 
+.users-table-card {
+  background: var(--card-bg);
+}
+
 .users-datatable {
   :deep(.p-datatable-wrapper) {
     border-radius: 12px;
     overflow: hidden;
+    background: var(--card-bg);
   }
 
   :deep(.p-datatable-thead > tr > th) {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
     color: white;
     font-weight: 600;
     padding: 1rem;
@@ -504,15 +511,26 @@ onMounted(() => {
   }
 
   :deep(.p-datatable-tbody > tr) {
+    background: var(--card-bg);
     transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--card-hover-bg) !important;
+    }
+
     > td {
       padding: 1rem;
-      border-bottom: 1px solid var(--surface-border);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
     }
   }
 
   :deep(.p-datatable-striped .p-datatable-tbody > tr:nth-child(even)) {
-    background: var(--surface-50);
+    background: var(--bg-tertiary);
+
+    &:hover {
+      background: var(--card-hover-bg) !important;
+    }
   }
 }
 
@@ -525,19 +543,19 @@ onMounted(() => {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 0.875rem;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 8px var(--shadow-purple);
     flex-shrink: 0;
   }
 
   .username-text {
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--text-primary);
   }
 }
 
@@ -545,32 +563,36 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
   font-size: 0.9rem;
 
   i {
-    color: #667eea;
+    color: var(--primary);
     font-size: 0.875rem;
   }
 }
 
 .text-muted {
-  color: var(--text-color-secondary);
+  color: var(--text-tertiary);
   font-style: italic;
 }
 
 .role-badge {
   font-weight: 600;
   font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
 
   &.severity-danger {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
   }
 
   &.severity-info {
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
   }
 }
 
@@ -578,11 +600,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--text-color-secondary);
+  color: var(--text-secondary);
   font-size: 0.9rem;
 
   i {
-    color: #667eea;
+    color: var(--primary);
     font-size: 0.875rem;
   }
 }
@@ -596,6 +618,27 @@ onMounted(() => {
     background: transparent;
     border: none;
     padding: 1rem;
+
+    .p-paginator-page,
+    .p-paginator-next,
+    .p-paginator-prev,
+    .p-paginator-first,
+    .p-paginator-last {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+
+      &:hover {
+        background: var(--card-hover-bg);
+        border-color: var(--primary);
+      }
+
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+        color: white;
+        border-color: var(--primary);
+      }
+    }
   }
 }
 
@@ -608,7 +651,7 @@ onMounted(() => {
   gap: 1.5rem;
 
   .loading-text {
-    color: var(--text-color-secondary);
+    color: var(--text-secondary);
     font-size: 1.1rem;
     margin: 0;
   }
@@ -624,7 +667,7 @@ onMounted(() => {
 
   .empty-icon {
     font-size: 4rem;
-    color: var(--text-color-secondary);
+    color: var(--text-muted);
     opacity: 0.3;
     margin-bottom: 1rem;
   }
@@ -632,21 +675,13 @@ onMounted(() => {
   .empty-text {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--text-primary);
     margin: 0 0 0.5rem 0;
   }
 
   .empty-subtext {
-    color: var(--text-color-secondary);
+    color: var(--text-secondary);
     margin: 0;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .creation-card,
-  .users-table-card {
-    background: var(--surface-card);
-    border-color: var(--surface-border);
   }
 }
 
@@ -714,188 +749,29 @@ onMounted(() => {
       }
 
       .user-count {
+        width: 100%;
+        justify-content: flex-start;
+
         .count-badge {
-          padding: 0.375rem 0.75rem;
+          padding: 0.4rem 0.75rem;
           font-size: 1rem;
         }
 
         .count-label {
-          font-size: 0.875rem;
+          font-size: 0.85rem;
         }
       }
     }
   }
 
   .user-form {
-    gap: 1.25rem;
-
-    .form-group {
-      gap: 0.375rem;
-    }
-
-    .form-label {
-      font-size: 0.875rem;
-    }
-
     .form-actions {
-      margin-top: 0.5rem;
-      gap: 0.75rem;
-    }
-  }
-
-  .users-datatable {
-    font-size: 0.85rem;
-
-    :deep(.p-datatable-thead > tr > th) {
-      padding: 0.75rem 0.5rem;
-      font-size: 0.85rem;
-    }
-
-    :deep(.p-datatable-tbody > tr > td) {
-      padding: 0.75rem 0.5rem;
-    }
-  }
-
-  .user-cell {
-    .user-avatar-small {
-      width: 32px;
-      height: 32px;
-      font-size: 0.75rem;
-    }
-
-    .username-text {
-      font-size: 0.9rem;
-    }
-  }
-
-  .email-text,
-  .date-cell {
-    font-size: 0.85rem;
-
-    i {
-      font-size: 0.75rem;
-    }
-  }
-
-  .role-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-  }
-
-  .loading-container {
-    padding: 3rem 1.5rem;
-
-    .loading-text {
-      font-size: 1rem;
-    }
-  }
-
-  .empty-state {
-    padding: 3rem 1.5rem;
-
-    .empty-icon {
-      font-size: 3rem;
-    }
-
-    .empty-text {
-      font-size: 1.125rem;
-    }
-
-    .empty-subtext {
-      font-size: 0.9rem;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-page {
-    padding: 0.75rem;
-  }
-
-  .page-header {
-    margin-bottom: 1.25rem;
-
-    .page-title {
-      font-size: 1.5rem;
-    }
-
-    .page-subtitle {
-      font-size: 0.875rem;
-    }
-  }
-
-  .admin-content {
-    gap: 1.25rem;
-  }
-
-  .creation-card,
-  .users-table-card {
-    padding: 1rem;
-
-    .card-header {
       flex-direction: column;
-      align-items: flex-start;
-      gap: 0.75rem;
 
-      .user-count {
+      button {
         width: 100%;
-        justify-content: space-between;
       }
     }
-  }
-
-  .form-actions {
-    flex-direction: column;
-
-    button {
-      width: 100%;
-    }
-  }
-
-  .users-datatable {
-    font-size: 0.8rem;
-
-    :deep(.p-datatable-thead > tr > th) {
-      padding: 0.5rem 0.35rem;
-      font-size: 0.75rem;
-    }
-
-    :deep(.p-datatable-tbody > tr > td) {
-      padding: 0.5rem 0.35rem;
-    }
-
-    :deep(.p-datatable-wrapper) {
-      overflow-x: auto;
-    }
-  }
-
-  .user-cell {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-
-    .user-avatar-small {
-      width: 28px;
-      height: 28px;
-      font-size: 0.7rem;
-    }
-  }
-
-  .email-text,
-  .date-cell {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-    font-size: 0.8rem;
-
-    i {
-      display: none;
-    }
-  }
-
-  .role-badge {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
   }
 }
 </style>

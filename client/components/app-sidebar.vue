@@ -70,23 +70,20 @@ onUnmounted(() => {
       class="sidebar"
     >
       <div class="sidebar-content">
-        <!-- Header avec logo -->
         <div class="sidebar-header">
           <NuxtLink to="/" class="logo-container" @click="closeOnNavigateIfMobile()">
             <img src="@/public/favicon.ico" alt="icon" class="logo">
-            <span class="logo-text">Mon App</span>
+            <span class="logo-text">Jmanager</span>
           </NuxtLink>
 
           <div class="header-actions">
             <DarkModeToggle />
-            <!-- Bouton fermer pour mobile -->
             <button v-if="isMobileView" class="close-btn" @click="isSidebarOpen = false">
               <i class="pi pi-times" />
             </button>
           </div>
         </div>
 
-        <!-- Navigation -->
         <nav class="sidebar-nav">
           <div v-if="isAuthenticated" class="nav-section">
             <NuxtLink
@@ -142,7 +139,6 @@ onUnmounted(() => {
           </div>
         </nav>
 
-        <!-- Footer avec profil -->
         <div class="sidebar-footer">
           <Profile />
         </div>
