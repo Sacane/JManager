@@ -3,8 +3,8 @@ import useCsvImport from '~/composables/useCsvImport'
 
 const props = defineProps<{
   bookletId: string
-  month?: string // Mois au format anglais (JANUARY, FEBRUARY, etc.)
-  year?: number // Année
+  month?: string
+  year?: number
 }>()
 
 const emit = defineEmits(['visible', 'importSuccess'])
@@ -25,10 +25,8 @@ const importResult = ref<CsvImportResultDTO | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const showFormatHelper = ref(false)
 
-// Computed pour savoir si on a un mois et une année (mode jour seul possible)
 const hasDayOnlySupport = computed(() => props.month !== undefined && props.year !== undefined)
 
-// Computed
 const canAnalyze = computed(() => selectedFile.value !== null && !isAnalyzing.value)
 const canImport = computed(() =>
   validationReport.value?.canImport
@@ -277,7 +275,6 @@ defineExpose({
               <p>Votre fichier CSV doit respecter le format suivant pour être importé correctement :</p>
             </div>
 
-            <!-- Column Structure -->
             <div class="format-structure">
               <h4><i class="pi pi-list" /> Structure des colonnes (ordre important)</h4>
               <div class="columns-grid">
@@ -357,7 +354,6 @@ defineExpose({
               </p>
             </div>
 
-            <!-- Important Rules -->
             <div class="format-rules">
               <h4><i class="pi pi-exclamation-circle" /> Règles importantes</h4>
               <ul class="rules-list">
@@ -371,7 +367,6 @@ defineExpose({
               </ul>
             </div>
 
-            <!-- Tags disponibles -->
             <div class="format-tags">
               <h4><i class="pi pi-bookmark" /> Tags disponibles</h4>
               <p class="tags-intro">
@@ -395,9 +390,7 @@ defineExpose({
         </Transition>
       </div>
 
-      <!-- Étape 1: Analysis -->
       <div v-if="currentStep === 'analysis'" class="analysis-section">
-        <!-- File Selection -->
         <div class="file-selection-zone">
           <input
             ref="fileInputRef"
@@ -442,7 +435,6 @@ defineExpose({
           </div>
         </div>
 
-        <!-- Day-Only Mode Info -->
         <div v-if="hasDayOnlySupport" class="day-only-info-section">
           <div class="info-card">
             <i class="pi pi-calendar" />
@@ -461,7 +453,6 @@ defineExpose({
           </div>
         </div>
 
-        <!-- Action Button -->
         <div class="action-zone">
           <Button
             :label="isAnalyzing ? 'Analyse en cours...' : 'Analyser le fichier'"
@@ -472,9 +463,7 @@ defineExpose({
           />
         </div>
 
-        <!-- Validation Results -->
         <div v-if="validationReport" class="validation-results">
-          <!-- Summary -->
           <div class="results-summary">
             <div class="summary-card">
               <i class="pi pi-file" />

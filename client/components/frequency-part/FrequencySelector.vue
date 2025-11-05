@@ -52,9 +52,11 @@ function displayableType(type: FrequencyPropertyType): string {
 </script>
 
 <template>
-  <form class="freq-form" @submit.prevent>
-    <div class="form-group">
-      <h3>Type de fréquence</h3>
+  <form class="max-w-125 mx-auto" @submit.prevent>
+    <div class="mb-6">
+      <h3 class="mb-2 font-medium">
+        Type de fréquence
+      </h3>
       <Select
         :model-value="props.modelValue.type"
         :options="frequencyTypes"
@@ -65,8 +67,8 @@ function displayableType(type: FrequencyPropertyType): string {
       />
     </div>
 
-    <div v-if="isUntilDate" class="form-group">
-      <label for="untilDate">Date de fin</label>
+    <div v-if="isUntilDate" class="mb-6">
+      <label for="untilDate" class="block mb-2 font-medium">Date de fin</label>
       <DatePicker
         id="untilDate"
         v-model="props.modelValue.untilDate"
@@ -76,11 +78,11 @@ function displayableType(type: FrequencyPropertyType): string {
         class="w-full"
         @update:model-value="updateField('untilDate', formattedDateString(props.modelValue.untilDate))"
       />
-      <span v-if="errors.untilDate" class="error">{{ errors.untilDate }}</span>
+      <span v-if="errors.untilDate" class="text-red-500 text-sm mt-1 block">{{ errors.untilDate }}</span>
     </div>
 
-    <div v-if="isTimes" class="form-group">
-      <label for="times">Nombre de répétitions</label>
+    <div v-if="isTimes" class="mb-6">
+      <label for="times" class="block mb-2 font-medium">Nombre de répétitions</label>
       <InputNumber
         id="times"
         v-model="props.modelValue.times"
@@ -95,30 +97,7 @@ function displayableType(type: FrequencyPropertyType): string {
         class="w-full"
         @update:model-value="updateField('times', $event)"
       />
-      <span v-if="errors.times" class="error">{{ errors.times }}</span>
+      <span v-if="errors.times" class="text-red-500 text-sm mt-1 block">{{ errors.times }}</span>
     </div>
   </form>
 </template>
-
-<style scoped>
-.freq-form {
-  max-width: 500px;
-  margin: auto;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.error {
-  color: var(--red-500);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-</style>

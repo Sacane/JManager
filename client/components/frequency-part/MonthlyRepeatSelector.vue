@@ -2,10 +2,6 @@
 import InputNumber from 'primevue/inputnumber'
 import { computed, ref, watch } from 'vue'
 
-export interface MonthlyRepeatPropertyDTO {
-  repeatDay: number
-}
-
 const props = defineProps<{
   repeatDay: number | null
 }>()
@@ -18,10 +14,6 @@ const isEnabled = ref(props.repeatDay !== null)
 const selectedDay = ref(props?.repeatDay ?? 1)
 
 const errorMessage = ref<string | null>(null)
-
-const isDayValid = computed(() => {
-  return selectedDay.value >= 1 && selectedDay.value <= 31
-})
 
 function updateDay(value: number | null) {
   if (value === null || value === undefined) {
@@ -81,23 +73,23 @@ function getDaySuffix(day: number): string {
 </script>
 
 <template>
-  <div class="monthly-repeat-selector">
-    <div class="form-group">
-      <div class="toggle-section">
+  <div class="mt-4">
+    <div class="flex flex-col gap-4">
+      <div class="p-3 bg-gray-500 rounded-lg border border-gray-200">
         <div class="flex items-center gap-2">
           <ToggleSwitch
             id="enableDaySelection"
             :model-value="isEnabled"
             @update:model-value="toggleEnabled"
           />
-          <label for="enableDaySelection" class="font-medium">
+          <label for="enableDaySelection" class="font-medium cursor-pointer select-none">
             Définir un jour spécifique du mois
           </label>
         </div>
       </div>
 
       <Transition name="fade">
-        <div v-if="isEnabled" class="day-input-section">
+        <div v-if="isEnabled" class="p-4 rounded-lg border border-gray-200">
           <label for="repeatDay" class="block mb-2 font-medium">
             Jour de répétition
           </label>
@@ -118,20 +110,20 @@ function getDaySuffix(day: number): string {
             @update:model-value="updateDay"
           />
 
-          <div v-if="errorMessage" class="error-message">
+          <div v-if="errorMessage" class="flex items-center gap-2 mt-2 p-2 bg-red-50 border-l-3 border-red-500 rounded text-sm text-red-700">
             <i class="pi pi-exclamation-triangle" />
             {{ errorMessage }}
           </div>
 
-          <div class="help-text">
-            <i class="pi pi-info-circle" />
+          <div class="flex items-start gap-2 mt-3 p-3 bg-blue-50 border-l-3 border-blue-500 rounded text-sm text-blue-700 leading-relaxed">
+            <i class="pi pi-info-circle mt-0.5 flex-shrink-0" />
             {{ helpText }}
           </div>
         </div>
       </Transition>
 
-      <div v-if="!isEnabled" class="help-text">
-        <i class="pi pi-info-circle" />
+      <div v-if="!isEnabled" class="flex items-start gap-2 mt-3 p-3 bg-blue-50 border-l-3 border-blue-500 rounded text-sm text-blue-700 leading-relaxed">
+        <i class="pi pi-info-circle mt-0.5 flex-shrink-0" />
         {{ helpText }}
       </div>
     </div>
@@ -139,76 +131,13 @@ function getDaySuffix(day: number): string {
 </template>
 
 <style scoped>
-.monthly-repeat-selector {
-  margin-top: 1rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.toggle-section {
-  padding: 0.75rem;
-  background-color: var(--surface-50);
-  border-radius: 0.5rem;
-  border: 1px solid var(--surface-200);
-}
-
-.toggle-section label {
-  cursor: pointer;
-  user-select: none;
-}
-
-.day-input-section {
-  padding: 1rem;
-  background-color: var(--surface-0);
-  border-radius: 0.5rem;
-  border: 1px solid var(--surface-200);
-}
-
-.help-text {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background-color: var(--blue-50);
-  border-left: 3px solid var(--blue-500);
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--blue-700);
-  line-height: 1.4;
-}
-
-.help-text i {
-  margin-top: 0.125rem;
-  flex-shrink: 0;
-}
-
-.error-message {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background-color: var(--red-50);
-  border-left: 3px solid var(--red-500);
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--red-700);
-}
-
-/* Transition pour l'animation */
 .fade-enter-active,
 .fade-leave-active {
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
 }
 </style>

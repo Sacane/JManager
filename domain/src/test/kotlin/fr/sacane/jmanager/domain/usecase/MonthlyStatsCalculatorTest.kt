@@ -114,8 +114,8 @@ class MonthlyStatsCalculatorTest {
 
         val monthlyStats = calculator.calculateMonthlyStats(transactions, 2024)
 
-        assertEquals(100.toAmount(), monthlyStats[0].income) // January
-        assertEquals(400.toAmount(), monthlyStats[1].income) // February
+        assertEquals(100.toAmount(), monthlyStats[0].income)
+        assertEquals(400.toAmount(), monthlyStats[1].income)
     }
 
     @Test

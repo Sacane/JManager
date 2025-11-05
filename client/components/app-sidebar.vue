@@ -49,12 +49,10 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <!-- Overlay pour mobile -->
     <Transition name="fade">
       <div v-if="isSidebarOpen && isMobileView" class="overlay" @click="isSidebarOpen = false" />
     </Transition>
 
-    <!-- Bouton toggle pour mobile -->
     <button
       class="toggle-btn"
       :class="{ 'btn-hidden': isSidebarOpen && isMobileView }"
@@ -72,20 +70,20 @@ onUnmounted(() => {
       class="sidebar"
     >
       <div class="sidebar-content">
-        <!-- Header avec logo -->
         <div class="sidebar-header">
           <NuxtLink to="/" class="logo-container" @click="closeOnNavigateIfMobile()">
             <img src="@/public/favicon.ico" alt="icon" class="logo">
-            <span class="logo-text">Mon App</span>
+            <span class="logo-text">Jmanager</span>
           </NuxtLink>
 
-          <!-- Bouton fermer pour mobile -->
-          <button v-if="isMobileView" class="close-btn" @click="isSidebarOpen = false">
-            <i class="pi pi-times" />
-          </button>
+          <div class="header-actions">
+            <DarkModeToggle />
+            <button v-if="isMobileView" class="close-btn" @click="isSidebarOpen = false">
+              <i class="pi pi-times" />
+            </button>
+          </div>
         </div>
 
-        <!-- Navigation -->
         <nav class="sidebar-nav">
           <div v-if="isAuthenticated" class="nav-section">
             <NuxtLink
@@ -141,7 +139,6 @@ onUnmounted(() => {
           </div>
         </nav>
 
-        <!-- Footer avec profil -->
         <div class="sidebar-footer">
           <Profile />
         </div>
@@ -254,6 +251,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .logo-container {

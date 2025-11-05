@@ -406,7 +406,7 @@ function edit() {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  background-color: #f8fafc;
+  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
 
   @media (max-width: 768px) {
     padding: 1rem;
@@ -427,13 +427,13 @@ function edit() {
   font-size: 2rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
-  color: #1e293b;
+  color: var(--text-primary);
   letter-spacing: -0.025em;
 }
 
 .page-subtitle {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 0;
   font-weight: 400;
 }
@@ -466,7 +466,7 @@ function edit() {
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: var(--text-tertiary);
   z-index: 1;
 }
 
@@ -505,17 +505,17 @@ function edit() {
 /* Tag Card */
 .tag-card {
   position: relative;
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px var(--shadow-sm), 0 1px 2px var(--shadow-sm);
   transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--card-border);
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12), 0 4px 8px rgba(15, 23, 42, 0.06);
-    border-color: #cbd5e1;
+    box-shadow: 0 12px 24px var(--shadow-md), 0 4px 8px var(--shadow-sm);
+    border-color: var(--border-light);
   }
 
   &.tag-card-personal:hover {
@@ -567,7 +567,7 @@ function edit() {
   font-size: 1.125rem;
   font-weight: 600;
   margin: 0;
-  color: #1e293b;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -583,24 +583,24 @@ function edit() {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: #f8fafc;
+  background: var(--bg-tertiary);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
 }
 
 .color-circle {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-sm);
   flex-shrink: 0;
 }
 
 .color-label {
   font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--text-secondary);
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -610,7 +610,7 @@ function edit() {
   display: flex;
   gap: 0.5rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
   opacity: 0.7;
   transition: opacity 0.3s ease;
 
@@ -645,12 +645,12 @@ function edit() {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .empty-icon {
   font-size: 4rem;
-  color: #cbd5e1;
+  color: var(--text-muted);
   opacity: 0.6;
   margin-bottom: 1rem;
 }
@@ -658,14 +658,14 @@ function edit() {
 .empty-state h3 {
   font-size: 1.25rem;
   margin: 0 0 0.5rem 0;
-  color: #475569;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 .empty-state p {
   margin: 0;
   font-size: 0.95rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 /* Dialog Styles */
@@ -681,7 +681,7 @@ function edit() {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   font-size: 0.875rem;
   letter-spacing: 0.01em;
 }
@@ -700,7 +700,7 @@ function edit() {
 .color-picker {
   width: 60px;
   height: 42px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   cursor: pointer;
   background: none;
@@ -723,8 +723,8 @@ function edit() {
   width: 42px;
   height: 42px;
   border-radius: 6px;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-sm);
   flex-shrink: 0;
 }
 
@@ -739,6 +739,12 @@ function edit() {
   color: #1e40af;
   font-size: 0.875rem
 }
+
+.dark .alert-box {
+  background: rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+}
+
 /* Animations */
 .tag-list-move,
 .tag-list-enter-active,

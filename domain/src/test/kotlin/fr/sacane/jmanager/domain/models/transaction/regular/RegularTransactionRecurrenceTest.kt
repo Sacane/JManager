@@ -94,7 +94,6 @@ class RegularTransactionRecurrenceTest : FeatureTest() {
                 targetYear = 2024
             )
 
-            // Count Mondays and Wednesdays in January 2024 starting from startDate
             assertTrue(generated.size >= 1)
             generated.forEach {
                 assertTrue(it.date.dayOfWeek == DayOfWeek.MONDAY || it.date.dayOfWeek == DayOfWeek.WEDNESDAY)

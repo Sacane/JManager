@@ -13,7 +13,7 @@ function click() {
 </script>
 
 <template>
-  <div class="card rounded-lg shadow-lg bg-white p-6 mb-8 text-center" @click="click">
+  <div class="rounded-lg shadow-lg bg-white p-6 mb-8 text-center transition-transform duration-300 ease hover:-translate-y-1.5 cursor-pointer" @click="click">
     <h2 class="text-2xl mb-4">
       {{ title }}
     </h2>
@@ -22,18 +22,3 @@ function click() {
     </p>
   </div>
 </template>
-
-<style scoped>
-.card {
-  transition: transform 0.3s ease;
-}
-.create-container{
-  &:hover{
-    cursor: pointer;
-  }
-}
-
-.card:hover {
-  transform: translateY(-5px);
-}
-</style>
