@@ -3,8 +3,8 @@ import useCsvImport from '~/composables/useCsvImport'
 
 const props = defineProps<{
   bookletId: string
-  month?: string // Mois au format anglais (JANUARY, FEBRUARY, etc.)
-  year?: number // Année
+  month?: string
+  year?: number
 }>()
 
 const emit = defineEmits(['visible', 'importSuccess'])
@@ -25,10 +25,8 @@ const importResult = ref<CsvImportResultDTO | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const showFormatHelper = ref(false)
 
-// Computed pour savoir si on a un mois et une année (mode jour seul possible)
 const hasDayOnlySupport = computed(() => props.month !== undefined && props.year !== undefined)
 
-// Computed
 const canAnalyze = computed(() => selectedFile.value !== null && !isAnalyzing.value)
 const canImport = computed(() =>
   validationReport.value?.canImport

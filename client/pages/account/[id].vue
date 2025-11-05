@@ -576,8 +576,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
-/* Styles minimisés: on s'appuie principalement sur UnoCSS. */
-/* Harmoniser les Select/DatePicker (lisibles en clair/sombre) */
 :deep(.p-dropdown),
 :deep(.p-select),
 :deep(.p-calendar) {
@@ -590,7 +588,6 @@ onUnmounted(() => {
   background: transparent !important;
   color: var(--text-primary) !important;
 }
-/* S’assurer que l’input a bien la même bordure */
 :deep(.p-inputtext) {
   border: 1px solid var(--card-border) !important;
 }
@@ -601,7 +598,6 @@ onUnmounted(() => {
   color: var(--text-secondary) !important;
 }
 
-/* Désactive tout halo/outline de focus qui pourrait déborder */
 :deep(.p-inputtext:focus),
 :deep(.p-inputtext:focus-visible),
 :deep(.p-inputwrapper-focus .p-inputtext),
@@ -614,7 +610,6 @@ onUnmounted(() => {
   border-color: var(--card-border) !important;
 }
 
-/* DataTable aligné avec la DA (cf. page regular-transaction) */
 :deep(.p-datatable) .p-datatable-thead > tr > th {
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
   color: #fff;
@@ -638,10 +633,24 @@ onUnmounted(() => {
   border: none;
   color: var(--text-primary);
 }
+:deep(.p-datatable) .preview-row {
+  background: rgba(245, 158, 11, 0.08) !important;
+  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.45);
+}
+:deep(.p-datatable) .preview-row:hover {
+  background: rgba(245, 158, 11, 0.14) !important;
+}
+@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
+  :deep(.p-datatable) .preview-row {
+    background: color-mix(in oklab, #f59e0b 12%, var(--card-bg)) !important;
+  }
+  :deep(.p-datatable) .preview-row:hover {
+    background: color-mix(in oklab, #f59e0b 18%, var(--card-bg)) !important;
+  }
+}
 </style>
 
 <style lang="scss">
-/* Overlays PrimeVue (montés hors du composant) */
 .p-dropdown-panel, .p-select-panel, .p-datepicker {
   background: var(--card-bg) !important;
   border: 1px solid var(--card-border) !important;

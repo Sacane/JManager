@@ -284,7 +284,6 @@ class CsvValidationUtilsTest {
 
         @Test
         fun `should prioritize available tags over default tags`() {
-            // Create a custom tag with same label as a default tag
             val defaultTagLabel = if (defaultTags.isNotEmpty()) defaultTags.first().label else "Transport"
             val customTagWithDefaultLabel = Tag(defaultTagLabel, UUID.randomUUID())
             val tagsWithOverride = listOf(customTagWithDefaultLabel)
@@ -330,7 +329,6 @@ class CsvValidationUtilsTest {
         fun `should return null for invalid date values`() {
             assertNull(CsvValidationUtils.parseDate("32-01-2024"))
             assertNull(CsvValidationUtils.parseDate("15-13-2024"))
-            // Note: 29-02-2023 may be parsed lenient by LocalDate, so we test more obvious invalid dates
         }
 
         @Test

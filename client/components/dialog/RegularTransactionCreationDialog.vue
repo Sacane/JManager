@@ -62,7 +62,6 @@ function emitTransaction() {
       bookletIds: regularTrForm.selectedBooklets.map(b => b.id as string),
     }
     emit('createTransaction', regularTransactionCreationRequest)
-    // clear form values
     regularTrForm.label = ''
     regularTrForm.amount = undefined
     regularTrForm.date = new Date()

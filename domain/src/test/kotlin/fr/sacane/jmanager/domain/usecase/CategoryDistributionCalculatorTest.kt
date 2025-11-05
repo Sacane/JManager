@@ -134,7 +134,7 @@ class CategoryDistributionCalculatorTest {
 
         assertEquals(1, categories.size)
         assertEquals(100.toAmount(), totalExpenses)
-        assertEquals(1, categories[0].transactionCount) // Only expenses count
+        assertEquals(1, categories[0].transactionCount)
     }
 
     @Test

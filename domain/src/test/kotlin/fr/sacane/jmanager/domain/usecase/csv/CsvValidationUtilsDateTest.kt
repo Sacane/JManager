@@ -34,7 +34,6 @@ class CsvValidationUtilsDateTest {
     @Test
     @DisplayName("Should prioritize full date format over day only")
     fun `parseDate should prioritize full date format`() {
-        // Even if month/year provided, full date should be used
         val result = CsvValidationUtils.parseDate("15-02-2026", month = 1, year = 2025)
         assertNotNull(result)
         assertEquals(LocalDate.of(2026, 2, 15), result)

@@ -219,7 +219,6 @@ Fichier XML au lieu d'un fichier CSV.
 ## Utilisation dans les Tests
 
 ```kotlin
-// Exemple d'utilisation
 val validCsvContent = File("domain/src/test/resources/csv-test-files/OK/valid_basic.csv")
     .readText()
 
@@ -230,7 +229,7 @@ val invalidCsvContent = File("domain/src/test/resources/csv-test-files/NON_OK/in
     .readText()
 
 val result2 = csvImportFeature.validateCsvFile(token, bookletId, invalidCsvContent)
-assertTrue(result2.isSuccess()) // La validation retourne toujours Success
+assertTrue(result2.isSuccess())
 assertTrue(result2.getOrNull()!!.errors.isNotEmpty()) // Mais contient des erreurs
 ```
 

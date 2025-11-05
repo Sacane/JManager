@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// switch to preferred locale on load
 import 'primeicons/primeicons.css'
 
 const router = useRouter()
@@ -23,7 +22,6 @@ tryOnBeforeMount(() => {
 
 <style lang="scss">
 :root {
-  // Couleurs principales (identiques pour les deux modes)
   --primary: #822acc;
   --primary-2: #722aaa;
   --primary-3: #511e78;
@@ -32,7 +30,6 @@ tryOnBeforeMount(() => {
   --primary-lighter: #b88ee0;
   --yellow: #e0d824;
   --pink: #f13c69;
-  // Variables mode clair
   --bg-primary: #f5f7fa;
   --bg-secondary: #ffffff;
   --bg-tertiary: #f8fafc;
@@ -58,7 +55,6 @@ tryOnBeforeMount(() => {
   --secondary: #27282C;
 }
 
-// Mode sombre
 .dark {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
