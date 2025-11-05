@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
-import { getTagStyle } from '~/utils/util'
+import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({ layout: 'sidebar-layout' })
 
@@ -51,6 +51,8 @@ const displayMonth = computed(() => translate(bookletData.month))
 const transactionsCount = computed(() => actualSheets.value.length)
 const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedSheets.value.length > 0)
+
+const displayLabel = computed(() => capitalizeFirst(bookletData.label))
 
 function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
@@ -354,7 +356,7 @@ onUnmounted(() => {
             <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/account')" />
             <div class="flex-1 min-w-0">
               <h1 class="text-2xl font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 md:(text-xl mb-1)">
-                {{ bookletData.label }}
+                {{ displayLabel }}
               </h1>
               <div class="flex gap-4 flex-wrap md:gap-2.5">
                 <span class="inline-flex items-center text-sm font-semibold text-[var(--text-secondary)]">{{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}</span>
@@ -607,7 +609,6 @@ onUnmounted(() => {
         @import-success="onCsvImportSuccess"
       />
 
-      <!-- Bouton flottant mobile pour actions CSV -->
       <Transition name="fab">
         <button
           v-if="isMobile"
@@ -618,7 +619,6 @@ onUnmounted(() => {
         </button>
       </Transition>
 
-      <!-- Overlay menu mobile avec fond flou -->
       <Transition name="overlay">
         <div
           v-if="isMobile && isMobileMenuOpen"

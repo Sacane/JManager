@@ -26,3 +26,9 @@ export function getTagStyle(colorDTO: { red: number, green: number, blue: number
     color: textColor,
   }
 }
+
+export function capitalizeFirst(s: string | null | undefined) {
+  if (!s) return ''
+  const trimmed = s.toString().trim()
+  return trimmed.length ? trimmed.charAt(0).toUpperCase() + trimmed.slice(1) : ''
+}
