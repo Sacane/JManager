@@ -333,7 +333,7 @@ onUnmounted(() => {
 
   <div class="flex flex-col min-h-screen bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-5 md:(py-3 pb-8)">
     <div class="w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8">
-      <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
+      <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-8">
           <div class="flex items-center gap-4 flex-1 min-w-0 md:gap-3">
             <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/account')" />
@@ -347,8 +347,9 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-          <div class="flex flex-col items-stretch gap-3 shrink-0 md:flex-row md:items-center md:gap-6">
-            <div class="flex items-center gap-6 p-3 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] md:(p-2.5 gap-4)">
+          <!-- Right: balances + filters -->
+          <div class="flex flex-col items-stretch gap-3 shrink-0 w-full md:(w-auto flex-row items-center gap-6)">
+            <div class="flex items-center justify-between w-full md:w-auto gap-4 p-3 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--card-border)] md:(p-2.5 gap-4)">
               <div class="flex flex-col gap-1">
                 <span class="text-[0.69rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] md:text-2xs">Réel</span><span class="text-xl font-extrabold text-[var(--primary)] md:text-lg">{{ bookletData.realSold.toFixed(2) }} €</span>
               </div>
@@ -358,19 +359,19 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="flex gap-3 md:gap-2">
+            <div class="flex w-full md:w-auto gap-3 md:gap-2">
               <Select
                 v-model="displayMonth"
                 :options="useDate().months.map(u => translate(u))"
                 placeholder="Mois"
-                class="min-w-[120px] border border-[var(--border-color)] rounded-lg bg-transparent"
+                class="flex-1 min-w-0 w-full md:(flex-none min-w-[140px] w-auto) border rounded-lg bg-transparent"
                 @change="onMonthChange($event)"
               />
               <DatePicker
                 v-model="bookletData.dateYear"
                 view="year"
                 date-format="yy"
-                class="min-w-[130px] rounded-[14px] min-h-[44px] cursor-pointer border border-[var(--border-color)] bg-transparent"
+                class="flex-1 min-w-0 w-full md:(flex-none min-w-[140px] w-auto) rounded-[14px] min-h-[46px] cursor-pointer bg-transparent"
                 placeholder="Année"
                 :show-icon="true"
                 icon-display="input"
@@ -381,32 +382,35 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="flex justify-between items-center gap-4 flex-wrap mb-5 md:(gap-3 mb-4)">
-        <div class="flex gap-3 flex-wrap md:(w-full gap-2)">
-          <Button class="btn-primary" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
+      <!-- Actions principales -->
+      <div class="flex flex-col md:flex-row justify-between items-stretch gap-4 mb-5 md:(gap-3 mb-4)">
+        <div class="flex flex-col gap-2 md:(flex-row gap-3 w-full)">
+          <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
           <Button
             outlined
-            class="border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(245,158,11,0.15)] hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)]"
+            class="w-full md:w-auto border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(245,158,11,0.15)] hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)]"
             icon="pi pi-clock"
             :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
             @click="openPreviewCreationDialog"
           />
           <Button
             outlined
-            class="border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
+            class="w-full md:w-auto border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
             icon="pi pi-file-import"
             :label="isMobile ? 'CSV' : 'Importer CSV'"
             @click="openCsvImportDialog"
           />
           <Button
             outlined
-            class="border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
+            class="w-full md:w-auto border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
             icon="pi pi-file-export"
             :label="isMobile ? 'Export' : 'Exporter CSV'"
             @click="openCsvExportDialog"
           />
         </div>
-        <Button v-if="hasSelection" class="w-full md:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" @click="confirmDeleteButton" />
+        <div class="md:self-center">
+          <Button v-if="hasSelection" class="w-full md:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" @click="confirmDeleteButton" />
+        </div>
       </div>
 
       <div v-if="!isMobile" class="flex-1 bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
@@ -578,7 +582,7 @@ onUnmounted(() => {
 :deep(.p-select),
 :deep(.p-calendar) {
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--card-border);
 }
 :deep(.p-inputtext),
 :deep(.p-dropdown-label),
@@ -586,11 +590,28 @@ onUnmounted(() => {
   background: transparent !important;
   color: var(--text-primary) !important;
 }
+/* S’assurer que l’input a bien la même bordure */
+:deep(.p-inputtext) {
+  border: 1px solid var(--card-border) !important;
+}
 :deep(.p-dropdown-trigger),
 :deep(.p-datepicker-trigger),
 :deep(.p-select-trigger),
 :deep(.p-icon) {
   color: var(--text-secondary) !important;
+}
+
+/* Désactive tout halo/outline de focus qui pourrait déborder */
+:deep(.p-inputtext:focus),
+:deep(.p-inputtext:focus-visible),
+:deep(.p-inputwrapper-focus .p-inputtext),
+:deep(.p-dropdown.p-focus),
+:deep(.p-calendar.p-focus),
+:deep(.p-calendar:focus-within),
+:deep(.p-focus) {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--card-border) !important;
 }
 
 /* DataTable aligné avec la DA (cf. page regular-transaction) */
@@ -623,7 +644,7 @@ onUnmounted(() => {
 /* Overlays PrimeVue (montés hors du composant) */
 .p-dropdown-panel, .p-select-panel, .p-datepicker {
   background: var(--card-bg) !important;
-  border: 1px solid var(--border-color) !important;
+  border: 1px solid var(--card-border) !important;
   box-shadow: 0 4px 16px var(--shadow-md) !important;
 }
 .p-dropdown-items .p-dropdown-item,
@@ -646,7 +667,7 @@ onUnmounted(() => {
 .p-datepicker .p-datepicker-header {
   background: var(--bg-tertiary) !important;
   color: var(--text-primary) !important;
-  border-bottom: 1px solid var(--border-color) !important;
+  border-bottom: 1px solid var(--card-border) !important;
 }
 .p-datepicker .p-yearpicker .p-yearpicker-year:hover,
 .p-monthpicker .p-monthpicker-month:hover,
