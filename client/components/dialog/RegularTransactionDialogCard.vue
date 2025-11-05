@@ -162,7 +162,6 @@ function handleDelete() {
 
     <template v-else-if="transaction">
       <div class="flex flex-col gap-5 py-4">
-        <!-- Section Informations générales -->
         <div class="section-card">
           <div class="section-header">
             <i class="pi pi-info-circle" />
@@ -232,7 +231,6 @@ function handleDelete() {
           </div>
         </div>
 
-        <!-- Section Fréquence -->
         <div class="section-card">
           <div class="section-header">
             <i class="pi pi-clock" />
@@ -324,7 +322,6 @@ function handleDelete() {
           </div>
         </div>
 
-        <!-- Section Tag -->
         <div class="section-card">
           <div class="section-header">
             <i class="pi pi-bookmark" />

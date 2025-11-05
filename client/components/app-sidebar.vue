@@ -49,12 +49,10 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <!-- Overlay pour mobile -->
     <Transition name="fade">
       <div v-if="isSidebarOpen && isMobileView" class="overlay" @click="isSidebarOpen = false" />
     </Transition>
 
-    <!-- Bouton toggle pour mobile -->
     <button
       class="toggle-btn"
       :class="{ 'btn-hidden': isSidebarOpen && isMobileView }"

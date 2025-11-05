@@ -168,7 +168,6 @@ const transactionsCount = computed(() => transactions.value.length)
 
 <template>
   <div class="flex flex-col h-screen p-8 gap-5 bg-gradient-to-br from-gray-50 to-gray-100 md:p-2.5 md:h-auto md:min-h-screen md:gap-3.75 md:pb-7.5 lg:p-15 xl:p-10">
-    <!-- Header -->
     <div class="bg-white rounded-5 p-6 shadow-lg shadow-purple-500/8 border border-purple-500/10 md:p-4 md:rounded-4">
       <div class="flex items-center gap-4">
         <div class="flex-1">
@@ -185,7 +184,6 @@ const transactionsCount = computed(() => transactions.value.length)
       </div>
     </div>
 
-    <!-- Actions principales -->
     <div class="flex justify-start gap-3 md:flex-row">
       <Button
         class="bg-gradient-to-br from-purple-600 to-purple-800 border-none font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:from-purple-700 hover:to-purple-900 hover:shadow-xl hover:shadow-purple-500/35 hover:-translate-y-0.5 md:w-auto md:text-3.5 md:px-4 md:py-2.5"
@@ -195,7 +193,6 @@ const transactionsCount = computed(() => transactions.value.length)
       />
     </div>
 
-    <!-- Table des transactions (Desktop) -->
     <div v-if="!isMobile" class="flex-1 bg-white rounded-5 overflow-hidden shadow-lg shadow-purple-500/8 border border-purple-500/10">
       <DataTable
         v-model:selection="selectedTransactions"
@@ -301,7 +298,6 @@ const transactionsCount = computed(() => transactions.value.length)
           :class="{ 'border-purple-600 bg-gradient-to-br from-purple-50 to-purple-50 shadow-lg shadow-purple-500/20 before:w-1.5 md:shadow-xl md:shadow-purple-500/25': isSelected(transaction) }"
           @click="handleRowDoubleClick({ data: transaction })"
         >
-          <!-- Header de la carte -->
           <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-100 md:mb-3.5 md:pb-3.5">
             <div class="flex items-center gap-3">
               <Tag
@@ -312,7 +308,6 @@ const transactionsCount = computed(() => transactions.value.length)
             </div>
           </div>
 
-          <!-- Corps de la carte -->
           <div class="flex flex-col gap-3 md:gap-3.5">
             <div class="flex items-center justify-between gap-2">
               <span class="text-1.1rem font-bold text-gray-800 flex-1 break-words leading-1.4 md:text-1.15rem">{{ transaction.label }}</span>
