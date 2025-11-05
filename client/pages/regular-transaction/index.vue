@@ -99,10 +99,10 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
       isIncome: updatedTransaction.isIncome,
       tagDTO: updatedTransaction.tagDTO,
       frequencyProperty: updatedTransaction.frequencyProperty,
-      bookletIds: [], // TODO: À gérer si vous voulez permettre la modification des booklets
+      bookletIds: [],
       recurrenceRule: {
         type: updatedTransaction.regularity,
-        value: updatedTransaction.regularity === 'MONTHLY' ? 1 : undefined, // Valeur par défaut
+        value: updatedTransaction.regularity === 'MONTHLY' ? 1 : undefined,
       },
     }
 
@@ -159,7 +159,6 @@ function handleDelete(transactionId: string) {
 function isSelected(transaction: RegularTransactionDTO): boolean {
   return selectedTransactions.value.some(t => t.id === transaction.id)
 }
-
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768
 }
@@ -168,15 +167,17 @@ const transactionsCount = computed(() => transactions.value.length)
 </script>
 
 <template>
-  <div class="regular-transactions-page">
+  <div class="flex flex-col h-screen p-8 gap-5 bg-gradient-to-br from-gray-50 to-gray-100 md:p-2.5 md:h-auto md:min-h-screen md:gap-3.75 md:pb-7.5 lg:p-15 xl:p-10">
     <!-- Header -->
-    <div class="page-header">
-      <div class="header-top">
-        <div class="page-title">
-          <h1>💰 Mes transactions régulières</h1>
-          <div class="page-stats">
-            <span class="stat-badge">
-              <i class="pi pi-sync" />
+    <div class="bg-white rounded-5 p-6 shadow-lg shadow-purple-500/8 border border-purple-500/10 md:p-4 md:rounded-4">
+      <div class="flex items-center gap-4">
+        <div class="flex-1">
+          <h1 class="text-5 font-extrabold bg-gradient-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent m-0 mb-1.5 md:text-9 md:mb-2" style="background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            💰 Mes transactions régulières
+          </h1>
+          <div class="flex gap-2 flex-wrap md:gap-3">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-br from-purple-600/6 to-purple-800/6 border border-purple-500/20 rounded-full text-3 font-semibold text-purple-600 md:px-3 md:py-1.5 md:text-4">
+              <i class="pi pi-sync text-2.8 md:text-3.5" />
               {{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}
             </span>
           </div>
@@ -185,9 +186,9 @@ const transactionsCount = computed(() => transactions.value.length)
     </div>
 
     <!-- Actions principales -->
-    <div class="main-actions">
+    <div class="flex justify-start gap-3 md:flex-row">
       <Button
-        class="btn-primary"
+        class="bg-gradient-to-br from-purple-600 to-purple-800 border-none font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:from-purple-700 hover:to-purple-900 hover:shadow-xl hover:shadow-purple-500/35 hover:-translate-y-0.5 md:w-auto md:text-3.5 md:px-4 md:py-2.5"
         icon="pi pi-plus"
         :label="isMobile ? 'Créer' : 'Créer une transaction régulière'"
         @click="openCreationRegularTransactionDialog"
@@ -195,7 +196,7 @@ const transactionsCount = computed(() => transactions.value.length)
     </div>
 
     <!-- Table des transactions (Desktop) -->
-    <div v-if="!isMobile" class="transactions-table">
+    <div v-if="!isMobile" class="flex-1 bg-white rounded-5 overflow-hidden shadow-lg shadow-purple-500/8 border border-purple-500/10">
       <DataTable
         v-model:selection="selectedTransactions"
         :value="transactions"
@@ -205,12 +206,16 @@ const transactionsCount = computed(() => transactions.value.length)
         @row-dblclick="handleRowDoubleClick"
       >
         <template #empty>
-          <div class="empty-state">
-            <i class="pi pi-sync" />
-            <h3>Aucune transaction régulière</h3>
-            <p>Commencez par créer votre première transaction régulière</p>
+          <div class="flex flex-col items-center justify-center p-15 text-center md:p-10">
+            <i class="pi pi-sync text-4rem text-gray-300 mb-4" />
+            <h3 class="text-1.25rem font-bold text-gray-700 m-0 mb-2">
+              Aucune transaction régulière
+            </h3>
+            <p class="text-1rem text-gray-500 m-0 mb-6">
+              Commencez par créer votre première transaction régulière
+            </p>
             <Button
-              class="btn-primary"
+              class="bg-gradient-to-br from-purple-600 to-purple-800 border-none font-semibold shadow-lg shadow-purple-500/25"
               icon="pi pi-plus"
               label="Créer une transaction"
               @click="openCreationRegularTransactionDialog"
@@ -220,8 +225,8 @@ const transactionsCount = computed(() => transactions.value.length)
 
         <Column field="label" header="Libellé" :style="{ minWidth: '200px' }">
           <template #body="{ data }">
-            <div class="label-cell">
-              <span class="transaction-label">{{ data.label }}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-gray-800">{{ data.label }}</span>
             </div>
           </template>
         </Column>
@@ -238,7 +243,7 @@ const transactionsCount = computed(() => transactions.value.length)
 
         <Column field="value" header="Montant" :style="{ minWidth: '150px' }">
           <template #body="slotProps">
-            <span class="amount" :class="slotProps.data.isIncome ? 'income' : 'expense'">
+            <span class="font-extrabold text-1.1rem font-mono" :class="slotProps.data.isIncome ? 'text-green-500 before:content-[\'+_\']' : 'text-red-500 before:content-[\'-_\']'">
               {{ Math.abs(slotProps.data.value).toFixed(2) }} €
             </span>
           </template>
@@ -246,8 +251,8 @@ const transactionsCount = computed(() => transactions.value.length)
 
         <Column field="regularity" header="Fréquence" :style="{ minWidth: '130px' }">
           <template #body="slotProps">
-            <div class="frequency-cell">
-              <i class="pi pi-clock" />
+            <div class="flex items-center gap-2 text-gray-500 font-medium">
+              <i class="pi pi-clock text-0.875rem text-purple-600" />
               <span>{{ frequencyToString(slotProps.data.regularity) }}</span>
             </div>
           </template>
@@ -255,8 +260,8 @@ const transactionsCount = computed(() => transactions.value.length)
 
         <Column field="startDate" header="Date de début" :style="{ minWidth: '140px' }">
           <template #body="{ data }">
-            <div class="date-cell">
-              <i class="pi pi-calendar" />
+            <div class="flex items-center gap-2 text-gray-500 font-medium">
+              <i class="pi pi-calendar text-0.875rem text-purple-600" />
               <span>{{ data.startDate }}</span>
             </div>
           </template>
@@ -271,30 +276,34 @@ const transactionsCount = computed(() => transactions.value.length)
     </div>
 
     <!-- Liste des transactions (Mobile) -->
-    <div v-else class="transactions-mobile">
-      <div v-if="transactions.length === 0" class="empty-state-mobile">
-        <i class="pi pi-sync" />
-        <h3>Aucune transaction régulière</h3>
-        <p>Commencez par créer votre première transaction régulière</p>
+    <div v-else class="flex-1 overflow-hidden flex flex-col md:overflow-visible md:flex-none">
+      <div v-if="transactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-white rounded-4 shadow-lg shadow-purple-500/8 md:p-5">
+        <i class="pi pi-sync text-3rem text-gray-300 mb-4" />
+        <h3 class="text-1.125rem font-bold text-gray-700 m-0 mb-2">
+          Aucune transaction régulière
+        </h3>
+        <p class="text-0.875rem text-gray-500 m-0 mb-5">
+          Commencez par créer votre première transaction régulière
+        </p>
         <Button
-          class="btn-primary"
+          class="bg-gradient-to-br from-purple-600 to-purple-800 border-none font-semibold shadow-lg shadow-purple-500/25"
           icon="pi pi-plus"
           label="Créer"
           @click="openCreationRegularTransactionDialog"
         />
       </div>
 
-      <div v-else class="transaction-cards">
+      <div v-else class="flex-1 overflow-y-auto p-1 flex flex-col gap-3 md:overflow-y-visible md:flex-none md:gap-4 md:p-0">
         <div
           v-for="transaction in transactions"
           :key="transaction.id"
-          class="transaction-card"
-          :class="{ 'selected-card': isSelected(transaction) }"
+          class="bg-white rounded-4 p-4 shadow-md shadow-purple-500/8 border-2 border-transparent transition-all duration-300 cursor-pointer relative overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-purple-600 before:to-purple-800 before:transition-width before:duration-300 hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-50 hover:shadow-lg hover:shadow-purple-500/20 hover:before:w-1.5 active:scale-98 md:p-4.5 md:rounded-4.5 md:shadow-lg md:shadow-purple-500/12 md:before:w-1.25"
+          :class="{ 'border-purple-600 bg-gradient-to-br from-purple-50 to-purple-50 shadow-lg shadow-purple-500/20 before:w-1.5 md:shadow-xl md:shadow-purple-500/25': isSelected(transaction) }"
           @click="handleRowDoubleClick({ data: transaction })"
         >
           <!-- Header de la carte -->
-          <div class="card-header">
-            <div class="card-header-left">
+          <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-100 md:mb-3.5 md:pb-3.5">
+            <div class="flex items-center gap-3">
               <Tag
                 :value="transaction.isIncome ? 'Recette' : 'Dépense'"
                 :severity="transaction.isIncome ? 'success' : 'danger'"
@@ -304,34 +313,35 @@ const transactionsCount = computed(() => transactions.value.length)
           </div>
 
           <!-- Corps de la carte -->
-          <div class="card-body">
-            <div class="card-label">
-              <span class="label-text">{{ transaction.label }}</span>
+          <div class="flex flex-col gap-3 md:gap-3.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-1.1rem font-bold text-gray-800 flex-1 break-words leading-1.4 md:text-1.15rem">{{ transaction.label }}</span>
             </div>
 
-            <div class="card-info-grid">
-              <div class="info-item">
-                <i class="pi pi-euro" />
-                <span class="card-amount" :class="transaction.isIncome ? 'income' : 'expense'">
+            <div class="flex flex-col gap-2.5 md:gap-3">
+              <div class="flex items-center gap-2.5 text-0.95rem text-gray-500 md:text-1rem md:gap-3">
+                <i class="pi pi-euro text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
+                <span class="text-1.4rem font-extrabold font-mono md:text-1.6rem" :class="transaction.isIncome ? 'text-green-500' : 'text-red-500'">
                   {{ transaction.isIncome ? '+' : '-' }}{{ Math.abs(transaction.value).toFixed(2) }} €
                 </span>
               </div>
 
-              <div class="info-item">
-                <i class="pi pi-clock" />
+              <div class="flex items-center gap-2.5 text-0.95rem text-gray-500 md:text-1rem md:gap-3">
+                <i class="pi pi-clock text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span>{{ frequencyToString(transaction.regularity) }}</span>
               </div>
 
-              <div class="info-item">
-                <i class="pi pi-calendar" />
+              <div class="flex items-center gap-2.5 text-0.95rem text-gray-500 md:text-1rem md:gap-3">
+                <i class="pi pi-calendar text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span>{{ transaction.startDate }}</span>
               </div>
             </div>
 
-            <div class="card-tag-section">
+            <div class="flex justify-start pt-2 border-t border-gray-100 md:pt-2.5">
               <Tag
                 :value="transaction.tagDTO.label"
                 :style="getTagStyle(transaction.tagDTO.colorDTO)"
+                class="text-0.8rem px-3 py-1.5 md:text-0.85rem md:px-3.5 md:py-1.75"
               />
             </div>
           </div>
@@ -358,252 +368,32 @@ const transactionsCount = computed(() => transactions.value.length)
   </div>
 </template>
 
-<style scoped lang="scss">
-.regular-transactions-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  padding: 20px;
-  gap: 20px;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-
-  @media (max-width: 768px) {
-    height: auto;
-    min-height: 100vh;
-    padding: 10px;
-    gap: 15px;
-    padding-bottom: 30px;
-  }
-}
-
-// ===== HEADER =====
-.page-header {
-  background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(130, 42, 204, 0.08);
-  border: 1px solid rgba(130, 42, 204, 0.1);
-
-  @media (max-width: 768px) {
-    padding: 16px;
-    border-radius: 16px;
-  }
-}
-
-.header-top {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.page-title {
-  flex: 1;
-
-  h1 {
-    font-size: 1.75rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #822acc, #651e9e);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 8px 0;
-
-    @media (max-width: 768px) {
-      font-size: 1.25rem;
-      margin-bottom: 6px;
-    }
-  }
-}
-
-.page-stats {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    gap: 8px;
-  }
-}
-
-.stat-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #822acc10, #651e9e10);
-  border: 1px solid rgba(130, 42, 204, 0.2);
-  border-radius: 50px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #822acc;
-
-  @media (max-width: 768px) {
-    padding: 4px 10px;
-    font-size: 0.75rem;
-  }
-
-  i {
-    font-size: 0.75rem;
-
-    @media (max-width: 768px) {
-      font-size: 0.7rem;
-    }
-  }
-}
-
-// ===== ACTIONS =====
-.main-actions {
-  display: flex;
-  justify-content: flex-start;
-  gap: 12px;
-
-  @media (max-width: 768px) {
-    button {
-      flex: 1;
-      font-size: 0.875rem;
-      padding: 0.625rem 1rem;
-    }
-  }
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #822acc, #651e9e);
+<style scoped>
+:deep(.p-datatable) .p-datatable-thead > tr > th {
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  padding: 16px;
   border: none;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(130, 42, 204, 0.25);
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: linear-gradient(135deg, #6a22aa, #541a82);
-    box-shadow: 0 6px 16px rgba(130, 42, 204, 0.35);
-    transform: translateY(-2px);
-  }
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
 }
 
-// ===== TABLE (DESKTOP) =====
-.transactions-table {
-  flex: 1;
+:deep(.p-datatable) .p-datatable-tbody > tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
   background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(130, 42, 204, 0.08);
-  border: 1px solid rgba(130, 42, 204, 0.1);
-
-  :deep(.p-datatable) {
-    .p-datatable-thead > tr > th {
-      background: var(--primary);
-      color: white;
-      font-weight: 700;
-      padding: 16px;
-      border: none;
-      text-transform: uppercase;
-      font-size: 0.875rem;
-      letter-spacing: 0.05em;
-    }
-
-    .p-datatable-tbody > tr {
-      transition: all 0.2s ease;
-      border-bottom: 1px solid #f3f4f6;
-      background: white;
-      cursor: pointer;
-
-      &:hover {
-        background: linear-gradient(135deg, #faf5ff, #f9f5ff);
-      }
-
-      > td {
-        padding: 16px;
-        border: none;
-      }
-    }
-  }
+  cursor: pointer;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-
-  i {
-    font-size: 4rem;
-    color: #d1d5db;
-    margin-bottom: 16px;
-  }
-
-  h3 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #374151;
-    margin: 0 0 8px 0;
-  }
-
-  p {
-    font-size: 1rem;
-    color: #6b7280;
-    margin: 0 0 24px 0;
-  }
+:deep(.p-datatable) .p-datatable-tbody > tr:hover {
+  background: linear-gradient(135deg, #faf5ff, #f9f5ff);
 }
 
-.label-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.transaction-label {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.amount {
-  font-weight: 800;
-  font-size: 1.1rem;
-  font-family: 'Courier New', monospace;
-
-  &.expense {
-    color: #ef4444;
-
-    &::before {
-      content: '- ';
-    }
-  }
-
-  &.income {
-    color: #10b981;
-
-    &::before {
-      content: '+ ';
-    }
-  }
-}
-
-.frequency-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #6b7280;
-  font-weight: 500;
-
-  i {
-    font-size: 0.875rem;
-    color: #822acc;
-  }
-}
-
-.date-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #6b7280;
-  font-weight: 500;
-
-  i {
-    font-size: 0.875rem;
-    color: #822acc;
-  }
+:deep(.p-datatable) .p-datatable-tbody > tr > td {
+  padding: 16px;
+  border: none;
 }
 
 :deep(.p-tag) {
@@ -611,258 +401,5 @@ const transactionsCount = computed(() => transactions.value.length)
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 0.875rem;
-}
-
-// ===== MOBILE TRANSACTIONS =====
-.transactions-mobile {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  @media (max-width: 768px) {
-    overflow: visible;
-    flex: none;
-  }
-}
-
-.empty-state-mobile {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(130, 42, 204, 0.08);
-
-  i {
-    font-size: 3rem;
-    color: #d1d5db;
-    margin-bottom: 16px;
-  }
-
-  h3 {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #374151;
-    margin: 0 0 8px 0;
-  }
-
-  p {
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin: 0 0 20px 0;
-  }
-}
-
-.transaction-cards {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  @media (max-width: 768px) {
-    overflow-y: visible;
-    flex: none;
-    gap: 16px;
-    padding: 0;
-  }
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(130, 42, 204, 0.2);
-    border-radius: 3px;
-
-    &:hover {
-      background: rgba(130, 42, 204, 0.4);
-    }
-  }
-}
-
-.transaction-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 12px rgba(130, 42, 204, 0.08);
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    padding: 18px;
-    border-radius: 18px;
-    box-shadow: 0 3px 15px rgba(130, 42, 204, 0.12);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: linear-gradient(180deg, #822acc, #651e9e);
-    transition: width 0.3s ease;
-
-    @media (max-width: 768px) {
-      width: 5px;
-    }
-  }
-
-  &.selected-card {
-    border-color: #822acc;
-    background: linear-gradient(135deg, #faf5ff, #f9f5ff);
-    box-shadow: 0 4px 16px rgba(130, 42, 204, 0.2);
-
-    &::before {
-      width: 6px;
-    }
-
-    @media (max-width: 768px) {
-      box-shadow: 0 5px 20px rgba(130, 42, 204, 0.25);
-    }
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f3f4f6;
-
-  @media (max-width: 768px) {
-    margin-bottom: 14px;
-    padding-bottom: 14px;
-  }
-}
-
-.card-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  @media (max-width: 768px) {
-    gap: 14px;
-  }
-}
-
-.card-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.label-text {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1f2937;
-  flex: 1;
-  word-break: break-word;
-  line-height: 1.4;
-
-  @media (max-width: 768px) {
-    font-size: 1.15rem;
-  }
-}
-
-.card-info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  @media (max-width: 768px) {
-    gap: 12px;
-  }
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.95rem;
-  color: #6b7280;
-
-  @media (max-width: 768px) {
-    font-size: 1rem;
-    gap: 12px;
-  }
-
-  i {
-    font-size: 1rem;
-    color: #822acc;
-    width: 20px;
-    text-align: center;
-
-    @media (max-width: 768px) {
-      font-size: 1.1rem;
-      width: 22px;
-    }
-  }
-}
-
-.card-amount {
-  font-size: 1.4rem;
-  font-weight: 800;
-  font-family: 'Courier New', monospace;
-
-  @media (max-width: 768px) {
-    font-size: 1.6rem;
-  }
-
-  &.expense {
-    color: #ef4444;
-  }
-
-  &.income {
-    color: #10b981;
-  }
-}
-
-.card-tag-section {
-  display: flex;
-  justify-content: flex-start;
-  padding-top: 8px;
-  border-top: 1px solid #f3f4f6;
-
-  @media (max-width: 768px) {
-    padding-top: 10px;
-  }
-
-  :deep(.p-tag) {
-    font-size: 0.8rem;
-    padding: 6px 12px;
-
-    @media (max-width: 768px) {
-      font-size: 0.85rem;
-      padding: 7px 14px;
-    }
-  }
 }
 </style>

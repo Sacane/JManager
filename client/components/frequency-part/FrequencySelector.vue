@@ -101,7 +101,3 @@ function displayableType(type: FrequencyPropertyType): string {
     </div>
   </form>
 </template>
-
-  margin-top: 0.25rem;
-}
-</style>
