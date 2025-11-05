@@ -69,7 +69,9 @@ function resetTransaction() {
   currentTransaction.date = new Date()
   currentTransaction.isPreview = false
   currentTransaction.isIncome = false
-  tag.getDefaultTag().then((tagDTO) => { currentTransaction.tagDTO = tagDTO })
+  tag.getDefaultTag().then((tagDTO) => {
+    currentTransaction.tagDTO = tagDTO
+  })
 }
 
 async function loadBookletData() {
