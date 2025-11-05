@@ -25,6 +25,7 @@ const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
 const isMobile = ref(false)
 const csvImportDialogRef = ref<any>(null)
+const isMobileMenuOpen = ref(false)
 
 const bookletData = reactive({
   id: '',
@@ -277,6 +278,20 @@ function checkMobile() {
   isMobile.value = window.innerWidth <= 768
 }
 
+function toggleMobileMenu() {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+function openCsvImportFromMenu() {
+  isMobileMenuOpen.value = false
+  openCsvImportDialog()
+}
+
+function openCsvExportFromMenu() {
+  isMobileMenuOpen.value = false
+  openCsvExportDialog()
+}
+
 function openCsvImportDialog() {
   csvImportDialogRef.value?.openDialog()
 }
@@ -382,9 +397,8 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Actions principales -->
       <div class="flex flex-col md:flex-row justify-between items-stretch gap-4 mb-5 md:(gap-3 mb-4)">
-        <div class="flex flex-col gap-2 md:(flex-row gap-3 w-full)">
+        <div class="flex flex-col gap-2 md:(flex-row gap-3 flex-wrap)">
           <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
           <Button
             outlined
@@ -395,14 +409,14 @@ onUnmounted(() => {
           />
           <Button
             outlined
-            class="w-full md:w-auto border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
+            class="hidden md:inline-flex border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
             icon="pi pi-file-import"
             :label="isMobile ? 'CSV' : 'Importer CSV'"
             @click="openCsvImportDialog"
           />
           <Button
             outlined
-            class="w-full md:w-auto border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
+            class="hidden md:inline-flex border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
             icon="pi pi-file-export"
             :label="isMobile ? 'Export' : 'Exporter CSV'"
             @click="openCsvExportDialog"
@@ -571,6 +585,84 @@ onUnmounted(() => {
         :year="bookletData.year"
         @import-success="onCsvImportSuccess"
       />
+
+      <!-- Bouton flottant mobile pour actions CSV -->
+      <Transition name="fab">
+        <button
+          v-if="isMobile"
+          class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-lg flex items-center justify-center z-40 transition-all duration-300 hover:shadow-xl hover:scale-110 active:scale-95"
+          @click="toggleMobileMenu"
+        >
+          <i :class="isMobileMenuOpen ? 'pi pi-times text-xl' : 'pi pi-ellipsis-h text-xl'" />
+        </button>
+      </Transition>
+
+      <!-- Overlay menu mobile avec fond flou -->
+      <Transition name="overlay">
+        <div
+          v-if="isMobile && isMobileMenuOpen"
+          class="fixed inset-0 z-50 flex items-end justify-center backdrop-blur-md bg-black/30"
+          @click="toggleMobileMenu"
+        >
+          <Transition name="menu-slide">
+            <div
+              v-if="isMobileMenuOpen"
+              class="w-full max-w-md bg-[var(--card-bg)] rounded-t-3xl shadow-2xl p-6 mb-0"
+              @click.stop
+            >
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-[var(--text-primary)] m-0">
+                  Actions CSV
+                </h3>
+                <button
+                  class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] transition-colors"
+                  @click="toggleMobileMenu"
+                >
+                  <i class="pi pi-times" />
+                </button>
+              </div>
+
+              <div class="flex flex-col gap-3">
+                <button
+                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-2 border-cyan-500/20 text-left transition-all hover:border-cyan-500/40 hover:shadow-lg active:scale-98"
+                  @click="openCsvImportFromMenu"
+                >
+                  <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0">
+                    <i class="pi pi-file-import text-xl text-cyan-600" />
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-semibold text-[var(--text-primary)] mb-1">
+                      Importer CSV
+                    </div>
+                    <div class="text-sm text-[var(--text-secondary)]">
+                      Importer des transactions depuis un fichier
+                    </div>
+                  </div>
+                  <i class="pi pi-chevron-right text-[var(--text-secondary)]" />
+                </button>
+
+                <button
+                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-2 border-emerald-500/20 text-left transition-all hover:border-emerald-500/40 hover:shadow-lg active:scale-98"
+                  @click="openCsvExportFromMenu"
+                >
+                  <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <i class="pi pi-file-export text-xl text-emerald-600" />
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-semibold text-[var(--text-primary)] mb-1">
+                      Exporter CSV
+                    </div>
+                    <div class="text-sm text-[var(--text-secondary)]">
+                      Télécharger vos transactions en CSV
+                    </div>
+                  </div>
+                  <i class="pi pi-chevron-right text-[var(--text-secondary)]" />
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
@@ -647,6 +739,37 @@ onUnmounted(() => {
   :deep(.p-datatable) .preview-row:hover {
     background: color-mix(in oklab, #f59e0b 18%, var(--card-bg)) !important;
   }
+}
+
+/* Animations pour le menu mobile */
+.fab-enter-active,
+.fab-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fab-enter-from,
+.fab-leave-to {
+  opacity: 0;
+  transform: scale(0.5) rotate(180deg);
+}
+
+.overlay-enter-active,
+.overlay-leave-active {
+  transition: all 0.3s ease;
+}
+.overlay-enter-from,
+.overlay-leave-to {
+  opacity: 0;
+  backdrop-filter: blur(0);
+}
+
+.menu-slide-enter-active,
+.menu-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.menu-slide-enter-from,
+.menu-slide-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
 }
 </style>
 
