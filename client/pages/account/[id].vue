@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
@@ -43,7 +44,12 @@ const currentTransaction = reactive<TransactionCreationDTO>({
   value: null,
   isIncome: false,
   date: new Date(),
-  tagDTO: {},
+  tagDTO: {
+    tagId: undefined,
+    label: '',
+    colorDTO: { red: 0, green: 0, blue: 0 },
+    isDefault: false,
+  },
   isPreview: false,
 })
 
@@ -77,13 +83,13 @@ function resetTransaction() {
 
 async function loadBookletData() {
   try {
-    const accountId = route.params?.id as string
+    const accountId = (route.params as any)?.id as string
     const month = numberFromMonth(bookletData.month) as number
 
     const result: BookletReport = await findByIdMonthAndYear(accountId, month, bookletData.year)
 
     bookletData.label = result.label
-    bookletData.id = route.params?.id
+    bookletData.id = (route.params as any)?.id as string
     bookletData.realSold = Number.parseFloat(result.realSold)
     bookletData.previewSold = Number.parseFloat(result.previewSold)
 
@@ -91,7 +97,7 @@ async function loadBookletData() {
       .map(asDisplayableTransaction)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   } catch (err) {
-    toast.errorAxios(err)
+    toast.errorAxios(err as AxiosError)
     console.error(err)
   }
 }
@@ -100,7 +106,7 @@ async function retrieveTags() {
   try {
     tags.value = await tag.getAllTags()
   } catch (err) {
-    toast.errorAxios(err)
+    toast.errorAxios(err as AxiosError)
   }
 }
 
@@ -152,14 +158,14 @@ async function onEditTransaction(event: any) {
     currentTransaction.id = event.data.id
     currentTransaction.label = transaction.label
     currentTransaction.value = transaction.value
-    currentTransaction.date = transaction.date
+    currentTransaction.date = new Date(transaction.date)
     currentTransaction.tagDTO = transaction.tagDTO
     currentTransaction.isPreview = transaction.isPreview
     currentTransaction.isIncome = transaction.isIncome
 
     isEditDialogVisible.value = true
   } catch (err) {
-    toast.errorAxios(err)
+    toast.errorAxios(err as AxiosError)
   }
 }
 
@@ -179,7 +185,7 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
     resetTransaction()
     toast.success('Transaction mise à jour avec succès')
   } catch (err) {
-    toast.errorAxios(err)
+    toast.errorAxios(err as AxiosError)
   }
 }
 
@@ -211,7 +217,7 @@ async function confirmDelete() {
     selectedSheets.value = []
     toast.success('Transactions supprimées avec succès')
   } catch (err) {
-    toast.errorAxios(err)
+    toast.errorAxios(err as AxiosError)
   }
 }
 
@@ -245,7 +251,7 @@ async function confirmPreview(transaction: TransactionCreationDTO) {
 
     toast.success('Transaction validée avec succès')
   } catch (err) {
-    toast.errorAxios(err)
+    toast.errorAxios(err as AxiosError)
   }
 }
 
@@ -313,7 +319,7 @@ function openCsvExportDialog() {
         toast.success('Fichier CSV téléchargé avec succès !')
       } catch (err) {
         console.error('Erreur lors de l\'export CSV:', err)
-        toast.errorAxios(err)
+        toast.errorAxios(err as AxiosError)
       }
     },
   })
@@ -330,8 +336,7 @@ onMounted(async () => {
   await loadBookletData()
   await retrieveTags()
 
-  const defaultTag = await tag.getDefaultTag()
-  currentTransaction.tagDTO = defaultTag
+  currentTransaction.tagDTO = await tag.getDefaultTag()
 
   checkMobile()
   window.addEventListener('resize', checkMobile)
@@ -346,70 +351,61 @@ onUnmounted(() => {
   <ConfirmDialog />
 
   <div class="booklet-page">
-    <!-- Header -->
+    <!-- Header Compact -->
     <div class="page-header">
-      <div class="header-top">
-        <Button
-          class="back-button"
-          icon="pi pi-arrow-left"
-          text
-          rounded
-          @click="navigateTo('/account')"
-        />
-
-        <div class="booklet-title">
-          <h1>{{ bookletData.label }}</h1>
-          <div class="booklet-stats">
-            <span class="stat-badge">
-              <i class="pi pi-list" />
-              {{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}
-            </span>
-            <span v-if="previewTransactionsCount > 0" class="stat-badge preview">
-              <i class="pi pi-clock" />
-              {{ previewTransactionsCount }} en attente
-            </span>
+      <div class="header-main">
+        <div class="header-left">
+          <Button
+            class="back-button"
+            icon="pi pi-arrow-left"
+            text
+            rounded
+            @click="navigateTo('/account')"
+          />
+          <div class="booklet-info">
+            <h1>{{ bookletData.label }}</h1>
+            <div class="meta-info">
+              <span class="meta-item">
+                {{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}
+              </span>
+              <span v-if="previewTransactionsCount > 0" class="meta-item preview">
+                {{ previewTransactionsCount }} en attente
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Filtres et soldes -->
-      <div class="header-controls">
-        <div class="date-filters">
-          <Select
-            v-model="displayMonth"
-            :options="useDate().months.map(u => translate(u))"
-            placeholder="Mois"
-            class="month-dropdown"
-            @change="onMonthChange($event)"
-          />
-          <DatePicker
-            v-model="bookletData.dateYear"
-            view="year"
-            date-format="yy"
-            class="year-picker"
-            @date-select="onYearChange"
-          />
-        </div>
-
-        <div class="balance-cards">
-          <div class="balance-card real">
-            <div class="balance-label">
-              <i class="pi pi-wallet" />
-              <span>Solde réel</span>
+        <div class="header-right">
+          <div class="balance-compact">
+            <div class="balance-item">
+              <span class="balance-label-compact">Réel</span>
+              <span class="balance-value-compact real">{{ bookletData.realSold.toFixed(2) }} €</span>
             </div>
-            <div class="balance-amount">
-              {{ bookletData.realSold.toFixed(2) }} €
+            <div class="balance-divider" />
+            <div class="balance-item">
+              <span class="balance-label-compact">Prévisionnel</span>
+              <span class="balance-value-compact preview">{{ bookletData.previewSold.toFixed(2) }} €</span>
             </div>
           </div>
 
-          <div class="balance-card preview">
-            <div class="balance-label">
-              <i class="pi pi-chart-line" />
-              <span>Solde prévisionnel</span>
-            </div>
-            <div class="balance-amount">
-              {{ bookletData.previewSold.toFixed(2) }} €
-            </div>
+          <div class="date-filters-compact">
+            <Select
+              v-model="displayMonth"
+              :options="useDate().months.map(u => translate(u))"
+              placeholder="Mois"
+              class="month-dropdown-compact"
+              @change="onMonthChange($event)"
+            />
+            <DatePicker
+              v-model="bookletData.dateYear"
+              view="year"
+              date-format="yy"
+              class="year-picker-compact"
+              placeholder="Année"
+              :show-icon="true"
+              icon-display="input"
+              @date-select="onYearChange"
+            />
           </div>
         </div>
       </div>
@@ -483,7 +479,7 @@ onUnmounted(() => {
 
         <Column selection-mode="multiple" :style="{ width: '3rem' }" />
 
-        <Column field="date" header="Date" sortable :style="{ minWidth: '120px' }">
+        <Column field="date" header="Date" :sortable="true" :style="{ minWidth: '120px' }">
           <template #body="{ data }">
             <div class="date-cell">
               <i class="pi pi-calendar" />
@@ -558,8 +554,8 @@ onUnmounted(() => {
 
       <div v-else class="transaction-cards">
         <div
-          v-for="transaction in actualSheets"
-          :key="transaction.id"
+          v-for="(transaction, tIndex) in actualSheets"
+          :key="transaction.id || `t-${tIndex}`"
           class="transaction-card" :class="[{
             'preview-card': transaction.isPreview,
             'selected-card': isSelected(transaction),
@@ -670,279 +666,450 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding: 20px;
-  gap: 20px;
+  padding: 1.25rem;
+  gap: 0;
   background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
 
   @media (max-width: 768px) {
     height: auto;
     min-height: 100vh;
-    padding: 10px;
-    gap: 15px;
-    padding-bottom: 30px;
+    padding: 0.75rem;
+    padding-bottom: 2rem;
   }
 }
 
 // ===== HEADER =====
 .page-header {
   background: var(--card-bg);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 20px var(--shadow-purple);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow-md);
   border: 1px solid var(--card-border);
+  margin-bottom: 1.25rem;
+
+  @media (max-width: 1024px) {
+    padding: 1rem;
+    border-radius: 14px;
+  }
 
   @media (max-width: 768px) {
-    padding: 16px;
-    border-radius: 16px;
+    padding: 0.875rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
   }
 }
 
-.header-top {
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+}
+
+.header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
 
   @media (max-width: 768px) {
-    margin-bottom: 16px;
+    gap: 0.75rem;
   }
 }
 
 .back-button {
   color: var(--primary);
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
 
   &:hover {
     background: rgba(130, 42, 204, 0.1);
   }
+
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+  }
 }
 
-.booklet-title {
+.booklet-info {
   flex: 1;
+  min-width: 0;
 
   h1 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 800;
     background: linear-gradient(135deg, var(--primary), var(--primary-2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin: 0 0 8px 0;
+    margin: 0 0 0.375rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     @media (max-width: 768px) {
       font-size: 1.25rem;
-      margin-bottom: 6px;
+      margin-bottom: 0.25rem;
     }
   }
 }
 
-.booklet-stats {
+.meta-info {
   display: flex;
-  gap: 12px;
+  gap: 1rem;
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
-    gap: 8px;
+    gap: 0.625rem;
   }
 }
 
-.stat-badge {
+.meta-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, rgba(130, 42, 204, 0.1), rgba(101, 30, 158, 0.1));
-  border: 1px solid rgba(130, 42, 204, 0.2);
-  border-radius: 50px;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--text-secondary);
+  position: relative;
 
   @media (max-width: 768px) {
-    padding: 4px 10px;
     font-size: 0.75rem;
+  }
+
+  &:not(:last-child)::after {
+    content: '•';
+    margin-left: 1rem;
+    color: var(--text-muted);
+
+    @media (max-width: 768px) {
+      margin-left: 0.625rem;
+    }
   }
 
   &.preview {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
-    border-color: rgba(245, 158, 11, 0.3);
     color: #d97706;
   }
-
-  i {
-    font-size: 0.75rem;
-
-    @media (max-width: 768px) {
-      font-size: 0.7rem;
-    }
-  }
 }
 
-.header-controls {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 24px;
+.header-right {
+  display: flex;
   align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
 
   @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
   }
 }
 
-.date-filters {
+.balance-compact {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+
+  @media (max-width: 1024px) {
+    justify-content: space-around;
+  }
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 8px;
+    padding: 0.625rem 1rem;
+    gap: 1rem;
+  }
+}
+
+.balance-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  @media (max-width: 768px) {
+    flex: 1;
+  }
+}
+
+.balance-label-compact {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+
+  @media (max-width: 768px) {
+    font-size: 0.625rem;
+  }
+}
+
+.balance-value-compact {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+
+  @media (max-width: 768px) {
+    font-size: 1.125rem;
+  }
+
+  &.real {
+    color: var(--primary);
+  }
+
+  &.preview {
+    color: #d97706;
+  }
+}
+
+.balance-divider {
+  width: 1px;
+  height: 2.5rem;
+  background: linear-gradient(to bottom, transparent, var(--border-color), transparent);
+
+  @media (max-width: 768px) {
+    height: 2.25rem;
+  }
+}
+
+.date-filters-compact {
+  display: flex;
+  gap: 0.75rem;
+
+  @media (max-width: 768px) {
+    gap: 0.5rem;
   }
 
   :deep(.p-dropdown),
+  :deep(.p-select),
   :deep(.p-calendar) {
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: transparent; // hérite de var(--card-bg) de l'en-tête
+    min-height: 38px;
 
     @media (max-width: 768px) {
-      border-radius: 10px;
+      border-radius: 8px;
+      min-height: 36px;
     }
 
     &:hover {
       border-color: var(--primary);
+      background: var(--card-hover-bg);
     }
 
     &:focus-within {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(130, 42, 204, 0.1);
+      box-shadow: 0 0 0 2px rgba(130, 42, 204, 0.1);
+      background: transparent;
+    }
+
+    .p-inputtext {
+      background: transparent !important;
+      color: var(--text-primary) !important;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+      border: none !important;
+    }
+
+    .p-dropdown-label,
+    .p-select-label {
+      color: var(--text-primary) !important;
+      background: transparent !important;
+    }
+
+    .p-dropdown-trigger,
+    .p-datepicker-trigger,
+    .p-select-trigger {
+      color: var(--text-secondary) !important;
+      background: transparent !important;
+    }
+
+    .p-icon {
+      color: var(--text-secondary) !important;
+    }
+  }
+
+  // Styles spécifiques pour les panneaux dropdown/calendar
+  :deep(.p-dropdown-panel),
+  :deep(.p-select-panel),
+  :deep(.p-datepicker) {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 16px var(--shadow-md) !important;
+
+    .p-dropdown-items .p-dropdown-item {
+      color: var(--text-primary) !important;
+
+      &:hover {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2)) !important;
+        color: white !important;
+      }
+    }
+
+    // Items du Select (PrimeVue v4)
+    .p-select-list .p-select-option {
+      color: var(--text-primary) !important;
+
+      &:hover,
+      &.p-focus {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      &.p-selected,
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2)) !important;
+        color: white !important;
+      }
+    }
+
+    .p-yearpicker .p-yearpicker-year {
+      color: var(--text-primary) !important;
+
+      &:hover {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2)) !important;
+        color: white !important;
+      }
+    }
+
+    .p-datepicker-header {
+      background: var(--bg-tertiary) !important;
+      color: var(--text-primary) !important;
+      border-bottom: 1px solid var(--border-color) !important;
+
+      .p-datepicker-title {
+        color: var(--text-primary) !important;
+      }
+
+      button {
+        color: var(--text-primary) !important;
+
+        &:hover {
+          background: var(--card-hover-bg) !important;
+        }
+      }
     }
   }
 }
 
-.month-dropdown,
-.year-picker {
-  min-width: 150px;
+.month-dropdown-compact {
+  min-width: 120px;
 
   @media (max-width: 768px) {
-    width: 100%;
+    flex: 1;
     min-width: unset;
   }
-}
 
-.balance-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-
-.balance-card {
-  padding: 20px;
-  border-radius: 16px;
-  border: 2px solid;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    padding: 16px;
-    border-radius: 12px;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-  }
-
-  &.real {
-    background: linear-gradient(135deg, rgba(130, 42, 204, 0.05), rgba(101, 30, 158, 0.05));
-    border-color: var(--primary);
-
-    &::before {
-      background: linear-gradient(90deg, var(--primary), var(--primary-2));
-    }
-
-    .balance-label {
-      color: var(--primary);
-
-      i {
-        color: var(--primary);
-      }
-    }
-
-    .balance-amount {
-      color: var(--primary);
-    }
+  :deep(.p-dropdown),
+  :deep(.p-select) {
+    background: transparent !important; // hérite du fond de la carte
+    border: 1px solid var(--border-color) !important;
 
     &:hover {
-      background: linear-gradient(135deg, rgba(130, 42, 204, 0.08), rgba(101, 30, 158, 0.08));
-      box-shadow: 0 4px 12px var(--shadow-purple);
+      background: var(--card-hover-bg) !important;
+      border-color: var(--primary) !important;
+    }
+
+    &:focus,
+    &:focus-within {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 2px rgba(130, 42, 204, 0.1) !important;
+      background: transparent !important;
     }
   }
 
-  &.preview {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(217, 119, 6, 0.05));
-    border-color: #f59e0b;
-
-    &::before {
-      background: linear-gradient(90deg, #f59e0b, #d97706);
-    }
-
-    .balance-label {
-      color: #d97706;
-
-      i {
-        color: #f59e0b;
-      }
-    }
-
-    .balance-amount {
-      color: #d97706;
-    }
-
-    &:hover {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.08));
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
-    }
-  }
-}
-
-.balance-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-
-  @media (max-width: 768px) {
-    font-size: 0.8rem;
-    gap: 6px;
+  :deep(.p-inputtext),
+  :deep(input) {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    border: none !important;
   }
 
-  i {
-    font-size: 1rem;
+  :deep(.p-dropdown-label),
+  :deep(.p-select-label) {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+  }
 
-    @media (max-width: 768px) {
-      font-size: 0.9rem;
+  :deep(.p-dropdown-trigger),
+  :deep(.p-select-trigger) {
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+  }
+
+  :deep(.p-icon) {
+    color: var(--text-secondary) !important;
+  }
+
+  // Cibler spécifiquement tous les éléments enfants
+  :deep(*) {
+    &:not(.p-dropdown-items):not(.p-dropdown-item):not(.p-select-list):not(.p-select-option) {
+      background: transparent;
     }
   }
 }
 
-.balance-amount {
-  font-size: 1.75rem;
-  font-weight: 800;
+.year-picker-compact {
+  min-width: 130px;
 
   @media (max-width: 768px) {
-    font-size: 1.5rem;
+    flex: 1;
+    min-width: unset;
+  }
+
+  // rendre l'input et le conteneur clairement cliquables
+  :deep(.p-calendar) {
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    border-radius: 14px !important; // plus arrondi
+    min-height: 44px; // un peu plus haut
+  }
+
+  :deep(.p-inputtext) {
+    font-size: 0.95rem; // légèrement plus grand
+    padding: 0.6rem 0.75rem; // plus de padding
+    text-align: center;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+    font-weight: 700; // contraste perçu et affordance
+    cursor: pointer;
+
+    &::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.9;
+      font-weight: 600;
+    }
+  }
+
+  :deep(.p-datepicker-trigger) {
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+    cursor: pointer;
   }
 }
 
@@ -951,27 +1118,33 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
   flex-wrap: wrap;
+  margin-bottom: 1.25rem;
 
   @media (max-width: 768px) {
-    gap: 12px;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
   }
 }
 
 .action-buttons {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
     width: 100%;
-    gap: 8px;
+    gap: 0.5rem;
 
     button {
       flex: 1;
-      font-size: 0.875rem;
-      padding: 0.625rem 1rem;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.875rem;
+
+      :deep(.p-button-label) {
+        font-weight: 600;
+      }
     }
   }
 }
@@ -980,68 +1153,78 @@ onUnmounted(() => {
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
   border: none;
   font-weight: 600;
-  box-shadow: 0 4px 12px var(--shadow-purple);
+  box-shadow: 0 2px 8px var(--shadow-purple);
   transition: all 0.3s ease;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
 
   &:hover {
     background: linear-gradient(135deg, var(--primary-2), var(--primary-3));
-    box-shadow: 0 6px 16px var(--shadow-purple);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-purple);
+    transform: translateY(-1px);
   }
 }
 
 .btn-secondary {
   background: var(--card-bg);
   color: #d97706;
-  border: 2px solid #f59e0b;
+  border: 1.5px solid #f59e0b;
   font-weight: 600;
   transition: all 0.3s ease;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
 
   &:hover {
-    background: #fffbeb;
+    background: rgba(245, 158, 11, 0.1);
     border-color: #d97706;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+    transform: translateY(-1px);
   }
 }
 
 .btn-csv-import {
   background: var(--card-bg);
   color: #0891b2;
-  border: 2px solid #06b6d4;
+  border: 1.5px solid #06b6d4;
   font-weight: 600;
   transition: all 0.3s ease;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
 
   &:hover {
-    background: #cffafe;
+    background: rgba(8, 145, 178, 0.1);
     border-color: #0891b2;
-    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.25);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.2);
+    transform: translateY(-1px);
   }
 }
 
 .btn-csv-export {
   background: var(--card-bg);
   color: #059669;
-  border: 2px solid #10b981;
+  border: 1.5px solid #10b981;
   font-weight: 600;
   transition: all 0.3s ease;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
 
   &:hover {
-    background: #d1fae5;
+    background: rgba(5, 150, 105, 0.1);
     border-color: #059669;
-    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+    transform: translateY(-1px);
   }
 }
 
 .delete-button {
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
   transition: all 0.3s ease;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 
   @media (max-width: 768px) {
@@ -1563,7 +1746,6 @@ onUnmounted(() => {
   i {
     color: white;
     font-size: 0.875rem;
-    font-weight: bold;
 
     @media (max-width: 768px) {
       font-size: 1rem;
@@ -1592,6 +1774,129 @@ onUnmounted(() => {
     &.p-highlight {
       background: linear-gradient(135deg, var(--primary), var(--primary-2));
       border-color: var(--primary);
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+// Styles globaux pour les panneaux dropdown et calendar (non-scoped car montés hors du composant)
+.p-dropdown-panel,
+.p-select-panel {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 4px 16px var(--shadow-md) !important;
+
+  .p-dropdown-header {
+    background: var(--bg-tertiary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+  }
+
+  .p-dropdown-items {
+    background: var(--card-bg) !important;
+
+    .p-dropdown-item {
+      color: var(--text-primary) !important;
+      background: transparent !important;
+
+      &:hover {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2)) !important;
+        color: white !important;
+      }
+
+      &.p-focus {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+    }
+  }
+
+  // Liste du Select
+  .p-select-list {
+    background: var(--card-bg) !important;
+
+    .p-select-option {
+      color: var(--text-primary) !important;
+      background: transparent !important;
+
+      &:hover,
+      &.p-focus {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      &.p-selected,
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2)) !important;
+        color: white !important;
+      }
+    }
+  }
+
+  .p-dropdown-empty-message {
+    color: var(--text-secondary) !important;
+    background: var(--card-bg) !important;
+  }
+}
+
+// Styles globaux pour le datepicker/calendar
+.p-datepicker {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 4px 16px var(--shadow-md) !important;
+
+  .p-datepicker-header {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+
+    .p-datepicker-title {
+      color: var(--text-primary) !important;
+    }
+
+    button {
+      color: var(--text-primary) !important;
+
+      &:hover {
+        background: var(--card-hover-bg) !important;
+      }
+    }
+  }
+
+  .p-yearpicker {
+    .p-yearpicker-year {
+      color: var(--text-primary) !important;
+
+      &:hover {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2)) !important;
+        color: white !important;
+      }
+    }
+  }
+
+  .p-monthpicker {
+    .p-monthpicker-month {
+      color: var(--text-primary) !important;
+
+      &:hover {
+        background: var(--card-hover-bg) !important;
+        color: var(--text-primary) !important;
+      }
+
+      &.p-highlight {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2)) !important;
+        color: white !important;
+      }
     }
   }
 }
