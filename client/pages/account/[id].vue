@@ -331,10 +331,8 @@ onUnmounted(() => {
 
   <div class="flex flex-col min-h-screen bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-5 md:(py-3 pb-8)">
     <div class="w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8">
-      <!-- Header -->
       <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-8">
-          <!-- Left: back + title -->
           <div class="flex items-center gap-4 flex-1 min-w-0 md:gap-3">
             <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/account')" />
             <div class="flex-1 min-w-0">
@@ -347,8 +345,6 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-
-          <!-- Right: balances + filters -->
           <div class="flex flex-col items-stretch gap-3 shrink-0 md:flex-row md:items-center md:gap-6">
             <div class="flex items-center gap-6 p-3 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] md:(p-2.5 gap-4)">
               <div class="flex flex-col gap-1">
@@ -383,18 +379,34 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Actions principales -->
       <div class="flex justify-between items-center gap-4 flex-wrap mb-5 md:(gap-3 mb-4)">
         <div class="flex gap-3 flex-wrap md:(w-full gap-2)">
           <Button class="btn-primary" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
-          <Button class="btn-secondary" icon="pi pi-clock" :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'" @click="openPreviewCreationDialog" />
-          <Button class="btn-csv-import" icon="pi pi-file-import" :label="isMobile ? 'CSV' : 'Importer CSV'" @click="openCsvImportDialog" />
-          <Button class="btn-csv-export" icon="pi pi-file-export" :label="isMobile ? 'Export' : 'Exporter CSV'" @click="openCsvExportDialog" />
+          <Button
+            outlined
+            class="border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(245,158,11,0.15)] hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)]"
+            icon="pi pi-clock"
+            :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
+            @click="openPreviewCreationDialog"
+          />
+          <Button
+            outlined
+            class="border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
+            icon="pi pi-file-import"
+            :label="isMobile ? 'CSV' : 'Importer CSV'"
+            @click="openCsvImportDialog"
+          />
+          <Button
+            outlined
+            class="border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
+            icon="pi pi-file-export"
+            :label="isMobile ? 'Export' : 'Exporter CSV'"
+            @click="openCsvExportDialog"
+          />
         </div>
         <Button v-if="hasSelection" class="w-full md:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" @click="confirmDeleteButton" />
       </div>
 
-      <!-- Table des transactions (Desktop) -->
       <div v-if="!isMobile" class="flex-1 bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <DataTable
           v-model:selection="selectedSheets"
@@ -468,7 +480,6 @@ onUnmounted(() => {
         </DataTable>
       </div>
 
-      <!-- Liste des transactions (Mobile) -->
       <div v-else class="flex-1 overflow-hidden flex flex-col md:(overflow-visible flex-none)">
         <div v-if="actualSheets.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
           <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
@@ -528,12 +539,11 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Dialogs -->
       <TransactionCreationDialog
         :visible="isCreationDialogVisible"
-        title="Nouvelle transaction"
         :digit-placeholder="currentTransaction.value"
         :transaction-placeholder="currentTransaction"
+        :title="isCreationDialogVisible ? (currentTransaction.isPreview ? 'Nouvelle transaction prévisionnelle' : 'Nouvelle transaction') : ''"
         @cancel-creation="isCreationDialogVisible = false"
         @create-transaction="bookTransaction"
       />
