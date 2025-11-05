@@ -552,7 +552,7 @@ onUnmounted(() => {
 
       <TransactionCreationDialog
         :visible="isEditDialogVisible"
-        title="Modifier la transaction"
+        :title="isEditDialogVisible ? (currentTransaction.isPreview ? 'Modifier la transaction prévisionnelle' : 'Modifier la transaction') : ''"
         :digit-placeholder="currentTransaction.value"
         :transaction-placeholder="currentTransaction"
         button-title="Mettre à jour"
