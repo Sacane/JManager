@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
-import { getTagStyle } from '~/utils/util'
+import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({ layout: 'sidebar-layout' })
 
@@ -51,6 +51,8 @@ const displayMonth = computed(() => translate(bookletData.month))
 const transactionsCount = computed(() => actualSheets.value.length)
 const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedSheets.value.length > 0)
+
+const displayLabel = computed(() => capitalizeFirst(bookletData.label))
 
 function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
@@ -354,7 +356,7 @@ onUnmounted(() => {
             <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/account')" />
             <div class="flex-1 min-w-0">
               <h1 class="text-2xl font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 md:(text-xl mb-1)">
-                {{ bookletData.label }}
+                {{ displayLabel }}
               </h1>
               <div class="flex gap-4 flex-wrap md:gap-2.5">
                 <span class="inline-flex items-center text-sm font-semibold text-[var(--text-secondary)]">{{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}</span>
@@ -492,9 +494,30 @@ onUnmounted(() => {
             </template>
           </Column>
 
-          <Column :style="{ width: '100px', textAlign: 'center' }">
+          <Column header="Actions" :style="{ width: '140px', textAlign: 'center' }">
             <template #body="{ data }">
-              <Button v-if="data.isPreview" class="text-emerald-500 hover:bg-emerald/15" icon="pi pi-check" text rounded severity="success" title="Valider la transaction" @click="onConfirmPreview(data)" />
+              <div class="flex items-center justify-center gap-1">
+                <Button
+                  class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  size="small"
+                  title="Modifier la transaction"
+                  @click="onEditTransaction({ data })"
+                />
+                <Button
+                  v-if="data.isPreview"
+                  class="text-emerald-500 hover:bg-emerald/15"
+                  icon="pi pi-check"
+                  text
+                  rounded
+                  size="small"
+                  severity="success"
+                  title="Valider la transaction prévisionnel"
+                  @click="onConfirmPreview(data)"
+                />
+              </div>
             </template>
           </Column>
         </DataTable>
@@ -586,7 +609,6 @@ onUnmounted(() => {
         @import-success="onCsvImportSuccess"
       />
 
-      <!-- Bouton flottant mobile pour actions CSV -->
       <Transition name="fab">
         <button
           v-if="isMobile"
@@ -597,7 +619,6 @@ onUnmounted(() => {
         </button>
       </Transition>
 
-      <!-- Overlay menu mobile avec fond flou -->
       <Transition name="overlay">
         <div
           v-if="isMobile && isMobileMenuOpen"
@@ -725,6 +746,34 @@ onUnmounted(() => {
   border: none;
   color: var(--text-primary);
 }
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded {
+  width: 2.5rem;
+  height: 2.5rem;
+  transition: all 0.2s ease;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 2px 8px currentColor;
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\] {
+  border-color: rgba(130, 42, 204, 0.4);
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]:hover {
+  border-color: rgba(130, 42, 204, 0.8);
+  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-emerald-500 {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-emerald-500:hover {
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
 :deep(.p-datatable) .preview-row {
   background: rgba(245, 158, 11, 0.08) !important;
   box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.45);
@@ -800,7 +849,6 @@ onUnmounted(() => {
   transform: translateY(-1px);
 }
 
-/* Masquer les boutons CSV en mobile */
 .csv-action-btn {
   display: none;
 }
@@ -811,7 +859,30 @@ onUnmounted(() => {
   }
 }
 
-/* Animations pour le menu mobile */
+.p-button.p-button-text.p-button-rounded {
+  border: 2px solid currentColor;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+.p-button.p-button-text.p-button-rounded:hover {
+  opacity: 1;
+  box-shadow: 0 2px 8px currentColor;
+}
+.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\] {
+  border-color: rgba(130, 42, 204, 0.4);
+}
+.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]:hover {
+  border-color: rgba(130, 42, 204, 0.8);
+  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
+}
+.p-button.p-button-text.p-button-rounded.text-emerald-500 {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.p-button.p-button-text.p-button-rounded.text-emerald-500:hover {
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
 .fab-enter-active,
 .fab-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
