@@ -740,6 +740,42 @@ onUnmounted(() => {
     background: color-mix(in oklab, #f59e0b 18%, var(--card-bg)) !important;
   }
 }
+.dark :deep(.p-datatable) .preview-row {
+  background: rgba(245, 158, 11, 0.15) !important;
+  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.6);
+}
+.dark :deep(.p-datatable) .preview-row:hover {
+  background: rgba(245, 158, 11, 0.22) !important;
+}
+
+:deep(.p-button.p-button-outlined) {
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+:deep(.p-button.p-button-outlined.border-amber-500) {
+  border-color: rgb(245 158 11) !important;
+  color: rgb(217 119 6) !important;
+}
+:deep(.p-button.p-button-outlined.border-amber-500:hover) {
+  background: rgba(245, 158, 11, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
+}
+:deep(.p-button.p-button-outlined.border-cyan-500) {
+  border-color: rgb(6 182 212) !important;
+  color: rgb(8 145 178) !important;
+}
+:deep(.p-button.p-button-outlined.border-cyan-500:hover) {
+  background: rgba(6, 182, 212, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
+}
+:deep(.p-button.p-button-outlined.border-emerald-500) {
+  border-color: rgb(16 185 129) !important;
+  color: rgb(5 150 105) !important;
+}
+:deep(.p-button.p-button-outlined.border-emerald-500:hover) {
+  background: rgba(16, 185, 129, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
 
 /* Animations pour le menu mobile */
 .fab-enter-active,
