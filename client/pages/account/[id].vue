@@ -409,14 +409,14 @@ onUnmounted(() => {
           />
           <Button
             outlined
-            class="hidden md:inline-flex border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
+            class="csv-action-btn w-full md:w-auto border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
             icon="pi pi-file-import"
             :label="isMobile ? 'CSV' : 'Importer CSV'"
             @click="openCsvImportDialog"
           />
           <Button
             outlined
-            class="hidden md:inline-flex border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
+            class="csv-action-btn w-full md:w-auto border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
             icon="pi pi-file-export"
             :label="isMobile ? 'Export' : 'Exporter CSV'"
             @click="openCsvExportDialog"
@@ -748,6 +748,23 @@ onUnmounted(() => {
   background: rgba(245, 158, 11, 0.22) !important;
 }
 
+:deep(.p-button.btn-primary) {
+  background: transparent !important;
+  border: 2px solid var(--primary) !important;
+  color: var(--primary) !important;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.15);
+}
+:deep(.p-button.btn-primary:hover) {
+  background: rgba(130, 42, 204, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(130, 42, 204, 0.25) !important;
+  transform: translateY(-1px);
+}
+:deep(.p-button.btn-primary:active) {
+  transform: translateY(0);
+}
+
 :deep(.p-button.p-button-outlined) {
   font-weight: 600;
   transition: all 0.2s ease;
@@ -755,26 +772,43 @@ onUnmounted(() => {
 :deep(.p-button.p-button-outlined.border-amber-500) {
   border-color: rgb(245 158 11) !important;
   color: rgb(217 119 6) !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
 }
 :deep(.p-button.p-button-outlined.border-amber-500:hover) {
   background: rgba(245, 158, 11, 0.1) !important;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
+  transform: translateY(-1px);
 }
 :deep(.p-button.p-button-outlined.border-cyan-500) {
   border-color: rgb(6 182 212) !important;
   color: rgb(8 145 178) !important;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
 }
 :deep(.p-button.p-button-outlined.border-cyan-500:hover) {
   background: rgba(6, 182, 212, 0.1) !important;
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
+  transform: translateY(-1px);
 }
 :deep(.p-button.p-button-outlined.border-emerald-500) {
   border-color: rgb(16 185 129) !important;
   color: rgb(5 150 105) !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
 :deep(.p-button.p-button-outlined.border-emerald-500:hover) {
   background: rgba(16, 185, 129, 0.1) !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+  transform: translateY(-1px);
+}
+
+/* Masquer les boutons CSV en mobile */
+.csv-action-btn {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .csv-action-btn {
+    display: inline-flex;
+  }
 }
 
 /* Animations pour le menu mobile */
