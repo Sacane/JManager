@@ -75,7 +75,7 @@ function getDaySuffix(day: number): string {
 <template>
   <div class="mt-4">
     <div class="flex flex-col gap-4">
-      <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+      <div class="p-3 bg-gray-500 rounded-lg border border-gray-200">
         <div class="flex items-center gap-2">
           <ToggleSwitch
             id="enableDaySelection"
@@ -89,7 +89,7 @@ function getDaySuffix(day: number): string {
       </div>
 
       <Transition name="fade">
-        <div v-if="isEnabled" class="p-4 bg-white rounded-lg border border-gray-200">
+        <div v-if="isEnabled" class="p-4 rounded-lg border border-gray-200">
           <label for="repeatDay" class="block mb-2 font-medium">
             Jour de répétition
           </label>
