@@ -179,7 +179,7 @@ function formatAmount(amount: string) {
 .booklets-page {
   min-height: 100%;
   padding: 2rem;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
 
   @media (max-width: 768px) {
     padding: 1rem;
@@ -206,7 +206,7 @@ function formatAmount(amount: string) {
 .page-title {
   font-size: 2.5rem;
   font-weight: 900;
-  color: var(--grey-2);
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
   background: linear-gradient(135deg, var(--primary) 0%, var(--pink) 100%);
   -webkit-background-clip: text;
@@ -220,7 +220,7 @@ function formatAmount(amount: string) {
 
 .page-subtitle {
   font-size: 1.1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 0;
 
   @media (max-width: 768px) {
@@ -233,12 +233,12 @@ function formatAmount(amount: string) {
   border: none;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--shadow-md);
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px var(--shadow-lg);
   }
 
   @media (max-width: 768px) {
@@ -253,9 +253,9 @@ function formatAmount(amount: string) {
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 24px var(--shadow-md);
   text-align: center;
   max-width: 500px;
   margin: 0 auto;
@@ -271,13 +271,13 @@ function formatAmount(amount: string) {
 .empty-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--grey-2);
+  color: var(--text-primary);
   margin: 0 0 0.75rem 0;
 }
 
 .empty-description {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 0 0 2rem 0;
 }
 
@@ -304,17 +304,18 @@ function formatAmount(amount: string) {
 // Booklet Card
 .booklet-card {
   position: relative;
-  background: white;
+  background: var(--card-bg);
   border-radius: 20px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-md);
   min-height: 240px;
+  border: 1px solid var(--card-border);
 
   &:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 40px var(--shadow-lg);
 
     .card-background {
       transform: scale(1.1);
@@ -383,7 +384,7 @@ function formatAmount(amount: string) {
 .account-label {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--grey-2);
+  color: var(--text-primary);
   margin: 0 0 1rem 0;
   word-break: break-word;
 }
@@ -408,7 +409,7 @@ function formatAmount(amount: string) {
 .currency {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .positive {
@@ -422,7 +423,7 @@ function formatAmount(amount: string) {
 .card-footer {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .view-details {
@@ -443,8 +444,8 @@ function formatAmount(amount: string) {
 
 // Add Card
 .add-card {
-  border: 3px dashed #cbd5e1;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 3px dashed var(--border-color);
+  background: var(--bg-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -452,7 +453,7 @@ function formatAmount(amount: string) {
 
   &:hover {
     border-color: var(--primary);
-    background: linear-gradient(135deg, #fef3f8 0%, #f0f9ff 100%);
+    background: var(--card-hover-bg);
 
     .add-icon-wrapper {
       background: linear-gradient(135deg, var(--primary) 0%, var(--pink) 100%);
@@ -480,12 +481,12 @@ function formatAmount(amount: string) {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: white;
+  background: var(--card-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-md);
 
   i {
     font-size: 1.75rem;
@@ -497,7 +498,7 @@ function formatAmount(amount: string) {
 .add-text {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-secondary);
   transition: color 0.3s ease;
 }
 </style>

@@ -77,10 +77,13 @@ onUnmounted(() => {
             <span class="logo-text">Mon App</span>
           </NuxtLink>
 
-          <!-- Bouton fermer pour mobile -->
-          <button v-if="isMobileView" class="close-btn" @click="isSidebarOpen = false">
-            <i class="pi pi-times" />
-          </button>
+          <div class="header-actions">
+            <DarkModeToggle />
+            <!-- Bouton fermer pour mobile -->
+            <button v-if="isMobileView" class="close-btn" @click="isSidebarOpen = false">
+              <i class="pi pi-times" />
+            </button>
+          </div>
         </div>
 
         <!-- Navigation -->
@@ -252,6 +255,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .logo-container {

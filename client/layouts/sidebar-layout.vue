@@ -3,9 +3,9 @@ import AppSidebar from '~/components/app-sidebar.vue'
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full bg-gray-100">
+  <div class="flex min-h-screen w-full" style="background-color: var(--bg-primary);">
     <AppSidebar />
-    <main class="flex-1 min-h-screen w-full overflow-x-hidden">
+    <main class="flex-1 min-h-screen w-full overflow-x-hidden" style="background-color: var(--bg-primary);">
       <slot />
     </main>
   </div>

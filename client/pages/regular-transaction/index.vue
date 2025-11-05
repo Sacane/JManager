@@ -167,8 +167,8 @@ const transactionsCount = computed(() => transactions.value.length)
 </script>
 
 <template>
-  <div class="flex flex-col h-screen p-8 gap-5 bg-gradient-to-br from-gray-50 to-gray-100 md:p-2.5 md:h-auto md:min-h-screen md:gap-3.75 md:pb-7.5 lg:p-15 xl:p-10">
-    <div class="bg-white rounded-5 p-6 shadow-lg shadow-purple-500/8 border border-purple-500/10 md:p-4 md:rounded-4">
+  <div class="flex flex-col h-screen p-8 gap-5 md:p-2.5 md:h-auto md:min-h-screen md:gap-3.75 md:pb-7.5 lg:p-15 xl:p-10" style="background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);">
+    <div class="rounded-5 p-6 shadow-lg border md:p-4 md:rounded-4" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
       <div class="flex items-center gap-4">
         <div class="flex-1">
           <h1 class="text-5 font-extrabold bg-gradient-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent m-0 mb-1.5 md:text-9 md:mb-2" style="background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -193,7 +193,7 @@ const transactionsCount = computed(() => transactions.value.length)
       />
     </div>
 
-    <div v-if="!isMobile" class="flex-1 bg-white rounded-5 overflow-hidden shadow-lg shadow-purple-500/8 border border-purple-500/10">
+    <div v-if="!isMobile" class="flex-1 rounded-5 overflow-hidden shadow-lg border" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
       <DataTable
         v-model:selection="selectedTransactions"
         :value="transactions"
@@ -204,11 +204,11 @@ const transactionsCount = computed(() => transactions.value.length)
       >
         <template #empty>
           <div class="flex flex-col items-center justify-center p-15 text-center md:p-10">
-            <i class="pi pi-sync text-4rem text-gray-300 mb-4" />
-            <h3 class="text-1.25rem font-bold text-gray-700 m-0 mb-2">
+            <i class="pi pi-sync text-4rem mb-4" style="color: var(--text-muted);" />
+            <h3 class="text-1.25rem font-bold m-0 mb-2" style="color: var(--text-primary);">
               Aucune transaction régulière
             </h3>
-            <p class="text-1rem text-gray-500 m-0 mb-6">
+            <p class="text-1rem m-0 mb-6" style="color: var(--text-secondary);">
               Commencez par créer votre première transaction régulière
             </p>
             <Button
@@ -223,7 +223,7 @@ const transactionsCount = computed(() => transactions.value.length)
         <Column field="label" header="Libellé" :style="{ minWidth: '200px' }">
           <template #body="{ data }">
             <div class="flex items-center gap-2">
-              <span class="font-semibold text-gray-800">{{ data.label }}</span>
+              <span class="font-semibold" style="color: var(--text-primary);">{{ data.label }}</span>
             </div>
           </template>
         </Column>
@@ -248,7 +248,7 @@ const transactionsCount = computed(() => transactions.value.length)
 
         <Column field="regularity" header="Fréquence" :style="{ minWidth: '130px' }">
           <template #body="slotProps">
-            <div class="flex items-center gap-2 text-gray-500 font-medium">
+            <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
               <i class="pi pi-clock text-0.875rem text-purple-600" />
               <span>{{ frequencyToString(slotProps.data.regularity) }}</span>
             </div>
@@ -257,7 +257,7 @@ const transactionsCount = computed(() => transactions.value.length)
 
         <Column field="startDate" header="Date de début" :style="{ minWidth: '140px' }">
           <template #body="{ data }">
-            <div class="flex items-center gap-2 text-gray-500 font-medium">
+            <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
               <i class="pi pi-calendar text-0.875rem text-purple-600" />
               <span>{{ data.startDate }}</span>
             </div>
@@ -274,12 +274,12 @@ const transactionsCount = computed(() => transactions.value.length)
 
     <!-- Liste des transactions (Mobile) -->
     <div v-else class="flex-1 overflow-hidden flex flex-col md:overflow-visible md:flex-none">
-      <div v-if="transactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-white rounded-4 shadow-lg shadow-purple-500/8 md:p-5">
-        <i class="pi pi-sync text-3rem text-gray-300 mb-4" />
-        <h3 class="text-1.125rem font-bold text-gray-700 m-0 mb-2">
+      <div v-if="transactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center rounded-4 shadow-lg md:p-5" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple);">
+        <i class="pi pi-sync text-3rem mb-4" style="color: var(--text-muted);" />
+        <h3 class="text-1.125rem font-bold m-0 mb-2" style="color: var(--text-primary);">
           Aucune transaction régulière
         </h3>
-        <p class="text-0.875rem text-gray-500 m-0 mb-5">
+        <p class="text-0.875rem m-0 mb-5" style="color: var(--text-secondary);">
           Commencez par créer votre première transaction régulière
         </p>
         <Button
@@ -294,11 +294,12 @@ const transactionsCount = computed(() => transactions.value.length)
         <div
           v-for="transaction in transactions"
           :key="transaction.id"
-          class="bg-white rounded-4 p-4 shadow-md shadow-purple-500/8 border-2 border-transparent transition-all duration-300 cursor-pointer relative overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-purple-600 before:to-purple-800 before:transition-width before:duration-300 hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-50 hover:shadow-lg hover:shadow-purple-500/20 hover:before:w-1.5 active:scale-98 md:p-4.5 md:rounded-4.5 md:shadow-lg md:shadow-purple-500/12 md:before:w-1.25"
-          :class="{ 'border-purple-600 bg-gradient-to-br from-purple-50 to-purple-50 shadow-lg shadow-purple-500/20 before:w-1.5 md:shadow-xl md:shadow-purple-500/25': isSelected(transaction) }"
+          class="rounded-4 p-4 shadow-md border-2 border-transparent transition-all duration-300 cursor-pointer relative overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-purple-600 before:to-purple-800 before:transition-width before:duration-300 hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-50 hover:shadow-lg hover:shadow-purple-500/20 hover:before:w-1.5 active:scale-98 md:p-4.5 md:rounded-4.5 md:shadow-lg md:before:w-1.25 dark:hover:from-purple-950/30 dark:hover:to-purple-950/30"
+          style="background-color: var(--card-bg); box-shadow: 0 4px 12px var(--shadow-purple); border-color: var(--card-border);"
+          :class="{ 'border-purple-600 bg-gradient-to-br from-purple-50 to-purple-50 shadow-lg shadow-purple-500/20 before:w-1.5 md:shadow-xl md:shadow-purple-500/25 dark:from-purple-950/30 dark:to-purple-950/30': isSelected(transaction) }"
           @click="handleRowDoubleClick({ data: transaction })"
         >
-          <div class="flex justify-between items-center mb-3 pb-3 border-b border-gray-100 md:mb-3.5 md:pb-3.5">
+          <div class="flex justify-between items-center mb-3 pb-3 md:mb-3.5 md:pb-3.5" style="border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center gap-3">
               <Tag
                 :value="transaction.isIncome ? 'Recette' : 'Dépense'"
@@ -310,29 +311,29 @@ const transactionsCount = computed(() => transactions.value.length)
 
           <div class="flex flex-col gap-3 md:gap-3.5">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-1.1rem font-bold text-gray-800 flex-1 break-words leading-1.4 md:text-1.15rem">{{ transaction.label }}</span>
+              <span class="text-1.1rem font-bold flex-1 break-words leading-1.4 md:text-1.15rem" style="color: var(--text-primary);">{{ transaction.label }}</span>
             </div>
 
             <div class="flex flex-col gap-2.5 md:gap-3">
-              <div class="flex items-center gap-2.5 text-0.95rem text-gray-500 md:text-1rem md:gap-3">
+              <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
                 <i class="pi pi-euro text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span class="text-1.4rem font-extrabold font-mono md:text-1.6rem" :class="transaction.isIncome ? 'text-green-500' : 'text-red-500'">
                   {{ transaction.isIncome ? '+' : '-' }}{{ Math.abs(transaction.value).toFixed(2) }} €
                 </span>
               </div>
 
-              <div class="flex items-center gap-2.5 text-0.95rem text-gray-500 md:text-1rem md:gap-3">
+              <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
                 <i class="pi pi-clock text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span>{{ frequencyToString(transaction.regularity) }}</span>
               </div>
 
-              <div class="flex items-center gap-2.5 text-0.95rem text-gray-500 md:text-1rem md:gap-3">
+              <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
                 <i class="pi pi-calendar text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span>{{ transaction.startDate }}</span>
               </div>
             </div>
 
-            <div class="flex justify-start pt-2 border-t border-gray-100 md:pt-2.5">
+            <div class="flex justify-start pt-2 md:pt-2.5" style="border-top: 1px solid var(--border-color);">
               <Tag
                 :value="transaction.tagDTO.label"
                 :style="getTagStyle(transaction.tagDTO.colorDTO)"
@@ -377,18 +378,19 @@ const transactionsCount = computed(() => transactions.value.length)
 
 :deep(.p-datatable) .p-datatable-tbody > tr {
   transition: all 0.2s ease;
-  border-bottom: 1px solid #f3f4f6;
-  background: white;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
   cursor: pointer;
 }
 
 :deep(.p-datatable) .p-datatable-tbody > tr:hover {
-  background: linear-gradient(135deg, #faf5ff, #f9f5ff);
+  background: var(--card-hover-bg);
 }
 
 :deep(.p-datatable) .p-datatable-tbody > tr > td {
   padding: 16px;
   border: none;
+  color: var(--text-primary);
 }
 
 :deep(.p-tag) {

@@ -432,43 +432,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-5 relative">
+  <div class="w-full min-h-screen p-5 relative" style="background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);">
     <!-- Header Section -->
     <div class="mb-8">
       <div class="flex justify-between items-center flex-wrap gap-5">
         <div>
-          <h1 class="text-4xl font-extrabold text-gray-800 mb-2">
+          <h1 class="text-4xl font-extrabold mb-2" style="color: var(--text-primary);">
             Bonjour, {{ user?.username }} 👋
           </h1>
-          <p class="text-base text-gray-500">
+          <p class="text-base" style="color: var(--text-secondary);">
             Voici un aperçu de vos finances au {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
           </p>
         </div>
-        <!--
-          <div class="flex gap-3 bg-white p-1 rounded-xl shadow-sm">
-            <button
-              class="px-6 py-2.5 border-none rounded-lg font-semibold text-gray-500 cursor-pointer transition-all"
-              :class="selectedPeriod === 'month' ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white' : 'bg-transparent'"
-              @click="selectedPeriod = 'month'"
-            >
-              Mois
-            </button>
-            <button
-              class="px-6 py-2.5 border-none rounded-lg font-semibold text-gray-500 cursor-pointer transition-all"
-              :class="selectedPeriod === 'year' ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white' : 'bg-transparent'"
-              @click="selectedPeriod = 'year'"
-            >
-              Année
-            </button>
-          </div>
-        ! -->
       </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-4 min-h-60vh">
       <i class="pi pi-spin pi-spinner text-5xl text-purple-600" />
-      <p class="text-gray-600">
+      <p style="color: var(--text-secondary);">
         Chargement de vos données...
       </p>
     </div>
@@ -477,7 +459,7 @@ onMounted(() => {
     <div v-else class="relative z-1 pb-10">
       <!-- KPI Cards -->
       <section ref="overviewRef" class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-purple-600 to-purple-700">
               <i class="pi pi-wallet" />
@@ -488,19 +470,19 @@ onMounted(() => {
             </span>
           </div>
           <div>
-            <h3 class="text-sm text-gray-500 mb-2 font-medium">
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
               Solde total
             </h3>
-            <p class="text-3xl font-extrabold text-gray-800 mb-2">
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
               {{ totalBalance.toFixed(2) }} €
             </p>
-            <p class="text-xs text-gray-400">
+            <p class="text-xs" style="color: var(--text-tertiary);">
               {{ accounts.length }} livret{{ accounts.length > 1 ? 's' : '' }} actif{{ accounts.length > 1 ? 's' : '' }}
             </p>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-red-500 to-red-600">
               <i class="pi pi-arrow-down" />
@@ -511,19 +493,19 @@ onMounted(() => {
             </span>
           </div>
           <div>
-            <h3 class="text-sm text-gray-500 mb-2 font-medium">
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
               Dépenses du mois
             </h3>
-            <p class="text-3xl font-extrabold text-gray-800 mb-2">
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
               {{ monthlyExpenses.toFixed(2) }} €
             </p>
-            <p class="text-xs text-gray-400">
+            <p class="text-xs" style="color: var(--text-tertiary);">
               Moy. journalière: {{ (monthlyExpenses / 30).toFixed(2) }} €
             </p>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-green-500 to-green-600">
               <i class="pi pi-arrow-up" />
@@ -534,19 +516,19 @@ onMounted(() => {
             </span>
           </div>
           <div>
-            <h3 class="text-sm text-gray-500 mb-2 font-medium">
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
               Revenus du mois
             </h3>
-            <p class="text-3xl font-extrabold text-gray-800 mb-2">
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
               {{ monthlyIncome.toFixed(2) }} €
             </p>
-            <p class="text-xs text-gray-400">
+            <p class="text-xs" style="color: var(--text-tertiary);">
               Épargne: {{ (monthlyIncome - monthlyExpenses).toFixed(2) }} €
             </p>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-yellow-400 to-yellow-500">
               <i class="pi pi-chart-line" />
@@ -557,13 +539,13 @@ onMounted(() => {
             </span>
           </div>
           <div>
-            <h3 class="text-sm text-gray-500 mb-2 font-medium">
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
               Taux d'épargne
             </h3>
-            <p class="text-3xl font-extrabold text-gray-800 mb-2">
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
               {{ savingsRate.toFixed(1) }}%
             </p>
-            <p class="text-xs text-gray-400">
+            <p class="text-xs" style="color: var(--text-tertiary);">
               Objectif: 30%
             </p>
           </div>
@@ -572,13 +554,13 @@ onMounted(() => {
 
       <!-- Charts Section -->
       <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
-        <div class="bg-white rounded-2xl p-6 shadow-lg col-span-full">
+        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
           <div class="mb-5">
-            <h2 class="text-xl font-bold text-gray-800 mb-1.5 flex items-center gap-2.5">
+            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
               <i class="pi pi-chart-line text-purple-600" />
               Évolution des finances
             </h2>
-            <p class="text-sm text-gray-500">
+            <p class="text-sm" style="color: var(--text-secondary);">
               Comparaison revenus vs dépenses sur 12 mois
             </p>
           </div>
@@ -587,13 +569,13 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
           <div class="mb-5">
-            <h2 class="text-xl font-bold text-gray-800 mb-1.5 flex items-center gap-2.5">
+            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
               <i class="pi pi-chart-pie text-purple-600" />
               Dépenses par catégorie
             </h2>
-            <p class="text-sm text-gray-500">
+            <p class="text-sm" style="color: var(--text-secondary);">
               Répartition totale: {{ categoryDistribution?.totalExpenses || '0.00' }} €
             </p>
           </div>
@@ -602,13 +584,13 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
           <div class="mb-5">
-            <h2 class="text-xl font-bold text-gray-800 mb-1.5 flex items-center gap-2.5">
+            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
               <i class="pi pi-chart-bar text-purple-600" />
               Comparaison hebdomadaire
             </h2>
-            <p class="text-sm text-gray-500">
+            <p class="text-sm" style="color: var(--text-secondary);">
               Ce mois vs mois dernier
             </p>
           </div>
@@ -620,9 +602,9 @@ onMounted(() => {
 
       <!-- Quick Actions & Info Section -->
       <section class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 mb-8">
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
-          <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
-            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2.5 m-0">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
+            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-book text-purple-600" />
               Mes livrets
             </h2>
@@ -633,8 +615,8 @@ onMounted(() => {
           </div>
           <div class="max-h-87.5 overflow-y-auto">
             <div v-if="accounts.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
-              <i class="pi pi-inbox text-5xl text-gray-300" />
-              <p class="text-gray-500 m-0">
+              <i class="pi pi-inbox text-5xl" style="color: var(--text-muted);" />
+              <p class="m-0" style="color: var(--text-secondary);">
                 Aucun livret créé
               </p>
               <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isAccountDialogOpen = true">
@@ -645,32 +627,33 @@ onMounted(() => {
               <div
                 v-for="account in accounts.slice(0, 4)"
                 :key="account.id"
-                class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl cursor-pointer transition-all hover:bg-purple-600/5 hover:translate-x-1.5"
+                class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all hover:translate-x-1.5"
+                style="background-color: var(--bg-tertiary);"
                 @click="navigateTo(`/account/${account.id}`)"
               >
                 <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
                   <i class="pi pi-wallet" />
                 </div>
                 <div class="flex-1">
-                  <p class="font-semibold text-gray-800 m-0 mb-1">
+                  <p class="font-semibold m-0 mb-1" style="color: var(--text-primary);">
                     {{ account.labelAccount }}
                   </p>
-                  <p class="text-sm text-gray-500 m-0">
+                  <p class="text-sm m-0" style="color: var(--text-secondary);">
                     {{ Number.parseFloat(account.amount.toString()).toFixed(2) }} €
                   </p>
                 </div>
-                <i class="pi pi-chevron-right text-gray-400" />
+                <i class="pi pi-chevron-right" style="color: var(--text-tertiary);" />
               </div>
-              <button v-if="accounts.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600 hover:bg-purple-600/5" @click="navigateTo('/accounts')">
+              <button v-if="accounts.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed rounded-lg font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600" style="border-color: var(--border-color); color: var(--text-secondary);" @click="navigateTo('/accounts')">
                 Voir tous les livrets ({{ accounts.length }})
               </button>
             </div>
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
-          <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
-            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2.5 m-0">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
+            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-calendar text-purple-600" />
               Prochaines transactions
             </h2>
@@ -681,8 +664,8 @@ onMounted(() => {
           </div>
           <div class="max-h-87.5 overflow-y-auto">
             <div v-if="upcomingPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
-              <i class="pi pi-calendar-times text-5xl text-gray-300" />
-              <p class="text-gray-500 m-0">
+              <i class="pi pi-calendar-times text-5xl" style="color: var(--text-muted);" />
+              <p class="m-0" style="color: var(--text-secondary);">
                 Aucune transaction prévue
               </p>
               <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
@@ -690,15 +673,15 @@ onMounted(() => {
               </button>
             </div>
             <div v-else class="flex flex-col gap-3">
-              <div v-for="payment in upcomingPayments" :key="payment.id ?? `payment-${Math.random()}`" class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+              <div v-for="payment in upcomingPayments" :key="payment.id ?? `payment-${Math.random()}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--bg-tertiary);">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
                   <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
                 </div>
                 <div class="flex-1">
-                  <p class="font-semibold text-gray-800 m-0 mb-1 text-sm">
+                  <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
                     {{ payment.label }}
                   </p>
-                  <p class="text-xs text-gray-500 m-0">
+                  <p class="text-xs m-0" style="color: var(--text-secondary);">
                     {{ new Date(payment.date).toLocaleDateString('fr-FR') }}
                   </p>
                 </div>
@@ -710,9 +693,9 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-lg">
-          <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
-            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2.5 m-0">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
+            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-tags text-purple-600" />
               Tags populaires
             </h2>
@@ -723,8 +706,8 @@ onMounted(() => {
           </div>
           <div class="max-h-87.5 overflow-y-auto">
             <div v-if="tags.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
-              <i class="pi pi-tag text-5xl text-gray-300" />
-              <p class="text-gray-500 m-0">
+              <i class="pi pi-tag text-5xl" style="color: var(--text-muted);" />
+              <p class="m-0" style="color: var(--text-secondary);">
                 Aucun tag créé
               </p>
               <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
@@ -754,14 +737,14 @@ onMounted(() => {
       </section>
 
       <!-- Quick Stats Banner -->
-      <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 bg-white p-6 rounded-2xl shadow-lg mb-5">
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 p-6 rounded-2xl shadow-lg mb-5" style="background-color: var(--card-bg);">
         <div class="flex items-center gap-4">
           <i class="pi pi-calendar-plus text-4xl text-purple-600" />
           <div>
-            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
               {{ regularTransactions.length }}
             </p>
-            <p class="text-xs text-gray-500 m-0">
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
               Mensualités actives
             </p>
           </div>
@@ -769,10 +752,10 @@ onMounted(() => {
         <div class="flex items-center gap-4">
           <i class="pi pi-tags text-4xl text-purple-600" />
           <div>
-            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
               {{ tags.length }}
             </p>
-            <p class="text-xs text-gray-500 m-0">
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
               Tags créés
             </p>
           </div>
@@ -780,10 +763,10 @@ onMounted(() => {
         <div class="flex items-center gap-4">
           <i class="pi pi-clock text-4xl text-purple-600" />
           <div>
-            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
               {{ totalPrevisionalTransactions }}
             </p>
-            <p class="text-xs text-gray-500 m-0">
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
               Transactions prévisionnelles
             </p>
           </div>
@@ -791,10 +774,10 @@ onMounted(() => {
         <div class="flex items-center gap-4">
           <i class="pi pi-chart-line text-4xl text-purple-600" />
           <div>
-            <p class="text-2xl font-extrabold text-gray-800 m-0 mb-1">
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
               {{ categoryDistribution?.categories.length || 0 }}
             </p>
-            <p class="text-xs text-gray-500 m-0">
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
               Catégories actives
             </p>
           </div>
@@ -818,7 +801,7 @@ onMounted(() => {
 }
 
 *::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: var(--bg-tertiary);
   border-radius: 10px;
 }
 
