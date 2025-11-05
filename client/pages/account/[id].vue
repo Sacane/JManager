@@ -492,9 +492,30 @@ onUnmounted(() => {
             </template>
           </Column>
 
-          <Column :style="{ width: '100px', textAlign: 'center' }">
+          <Column header="Actions" :style="{ width: '140px', textAlign: 'center' }">
             <template #body="{ data }">
-              <Button v-if="data.isPreview" class="text-emerald-500 hover:bg-emerald/15" icon="pi pi-check" text rounded severity="success" title="Valider la transaction" @click="onConfirmPreview(data)" />
+              <div class="flex items-center justify-center gap-1">
+                <Button
+                  class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  size="small"
+                  title="Modifier la transaction"
+                  @click="onEditTransaction({ data })"
+                />
+                <Button
+                  v-if="data.isPreview"
+                  class="text-emerald-500 hover:bg-emerald/15"
+                  icon="pi pi-check"
+                  text
+                  rounded
+                  size="small"
+                  severity="success"
+                  title="Valider la transaction prévisionnel"
+                  @click="onConfirmPreview(data)"
+                />
+              </div>
             </template>
           </Column>
         </DataTable>
@@ -725,6 +746,34 @@ onUnmounted(() => {
   border: none;
   color: var(--text-primary);
 }
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded {
+  width: 2.5rem;
+  height: 2.5rem;
+  transition: all 0.2s ease;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 2px 8px currentColor;
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\] {
+  border-color: rgba(130, 42, 204, 0.4);
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]:hover {
+  border-color: rgba(130, 42, 204, 0.8);
+  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-emerald-500 {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-emerald-500:hover {
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
 :deep(.p-datatable) .preview-row {
   background: rgba(245, 158, 11, 0.08) !important;
   box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.45);
@@ -800,7 +849,6 @@ onUnmounted(() => {
   transform: translateY(-1px);
 }
 
-/* Masquer les boutons CSV en mobile */
 .csv-action-btn {
   display: none;
 }
@@ -811,7 +859,30 @@ onUnmounted(() => {
   }
 }
 
-/* Animations pour le menu mobile */
+.p-button.p-button-text.p-button-rounded {
+  border: 2px solid currentColor;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+.p-button.p-button-text.p-button-rounded:hover {
+  opacity: 1;
+  box-shadow: 0 2px 8px currentColor;
+}
+.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\] {
+  border-color: rgba(130, 42, 204, 0.4);
+}
+.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]:hover {
+  border-color: rgba(130, 42, 204, 0.8);
+  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
+}
+.p-button.p-button-text.p-button-rounded.text-emerald-500 {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.p-button.p-button-text.p-button-rounded.text-emerald-500:hover {
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
 .fab-enter-active,
 .fab-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
