@@ -672,7 +672,7 @@ onUnmounted(() => {
   height: 100vh;
   padding: 20px;
   gap: 20px;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
 
   @media (max-width: 768px) {
     height: auto;
@@ -685,11 +685,11 @@ onUnmounted(() => {
 
 // ===== HEADER =====
 .page-header {
-  background: white;
+  background: var(--card-bg);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(130, 42, 204, 0.08);
-  border: 1px solid rgba(130, 42, 204, 0.1);
+  box-shadow: 0 4px 20px var(--shadow-purple);
+  border: 1px solid var(--card-border);
 
   @media (max-width: 768px) {
     padding: 16px;
@@ -709,7 +709,7 @@ onUnmounted(() => {
 }
 
 .back-button {
-  color: #822acc;
+  color: var(--primary);
 
   &:hover {
     background: rgba(130, 42, 204, 0.1);
@@ -722,7 +722,7 @@ onUnmounted(() => {
   h1 {
     font-size: 1.75rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #822acc, #651e9e);
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -750,12 +750,12 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #822acc10, #651e9e10);
+  background: linear-gradient(135deg, rgba(130, 42, 204, 0.1), rgba(101, 30, 158, 0.1));
   border: 1px solid rgba(130, 42, 204, 0.2);
   border-radius: 50px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #822acc;
+  color: var(--primary);
 
   @media (max-width: 768px) {
     padding: 4px 10px;
@@ -763,7 +763,7 @@ onUnmounted(() => {
   }
 
   &.preview {
-    background: linear-gradient(135deg, #f59e0b10, #d9770610);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
     border-color: rgba(245, 158, 11, 0.3);
     color: #d97706;
   }
@@ -800,19 +800,20 @@ onUnmounted(() => {
 
   :deep(.p-dropdown),
   :deep(.p-calendar) {
-    border: 2px solid #e5e7eb;
+    border: 2px solid var(--border-color);
     border-radius: 12px;
+    background: var(--card-bg);
 
     @media (max-width: 768px) {
       border-radius: 10px;
     }
 
     &:hover {
-      border-color: #822acc;
+      border-color: var(--primary);
     }
 
     &:focus-within {
-      border-color: #822acc;
+      border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(130, 42, 204, 0.1);
     }
   }
@@ -863,27 +864,27 @@ onUnmounted(() => {
 
   &.real {
     background: linear-gradient(135deg, rgba(130, 42, 204, 0.05), rgba(101, 30, 158, 0.05));
-    border-color: #822acc;
+    border-color: var(--primary);
 
     &::before {
-      background: linear-gradient(90deg, #822acc, #651e9e);
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
     }
 
     .balance-label {
-      color: #822acc;
+      color: var(--primary);
 
       i {
-        color: #822acc;
+        color: var(--primary);
       }
     }
 
     .balance-amount {
-      color: #822acc;
+      color: var(--primary);
     }
 
     &:hover {
       background: linear-gradient(135deg, rgba(130, 42, 204, 0.08), rgba(101, 30, 158, 0.08));
-      box-shadow: 0 4px 12px rgba(130, 42, 204, 0.15);
+      box-shadow: 0 4px 12px var(--shadow-purple);
     }
   }
 
@@ -976,21 +977,21 @@ onUnmounted(() => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #822acc, #651e9e);
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
   border: none;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(130, 42, 204, 0.25);
+  box-shadow: 0 4px 12px var(--shadow-purple);
   transition: all 0.3s ease;
 
   &:hover {
-    background: linear-gradient(135deg, #6a22aa, #541a82);
-    box-shadow: 0 6px 16px rgba(130, 42, 204, 0.35);
+    background: linear-gradient(135deg, var(--primary-2), var(--primary-3));
+    box-shadow: 0 6px 16px var(--shadow-purple);
     transform: translateY(-2px);
   }
 }
 
 .btn-secondary {
-  background: white;
+  background: var(--card-bg);
   color: #d97706;
   border: 2px solid #f59e0b;
   font-weight: 600;
@@ -1005,7 +1006,7 @@ onUnmounted(() => {
 }
 
 .btn-csv-import {
-  background: white;
+  background: var(--card-bg);
   color: #0891b2;
   border: 2px solid #06b6d4;
   font-weight: 600;
@@ -1020,7 +1021,7 @@ onUnmounted(() => {
 }
 
 .btn-csv-export {
-  background: white;
+  background: var(--card-bg);
   color: #059669;
   border: 2px solid #10b981;
   font-weight: 600;
@@ -1051,15 +1052,15 @@ onUnmounted(() => {
 // ===== TABLE (DESKTOP) =====
 .transactions-table {
   flex: 1;
-  background: white;
+  background: var(--card-bg);
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(130, 42, 204, 0.08);
-  border: 1px solid rgba(130, 42, 204, 0.1);
+  box-shadow: 0 4px 20px var(--shadow-purple);
+  border: 1px solid var(--card-border);
 
   :deep(.p-datatable) {
     .p-datatable-thead > tr > th {
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
       color: white;
       font-weight: 700;
       padding: 16px;
@@ -1071,28 +1072,28 @@ onUnmounted(() => {
 
     .p-datatable-tbody > tr {
       transition: all 0.2s ease;
-      border-bottom: 1px solid #f3f4f6;
-      background: white;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--card-bg);
 
       &:hover {
-        background: linear-gradient(135deg, #faf5ff, #f9f5ff);
+        background: var(--card-hover-bg);
       }
 
       &.p-highlight {
-        background: linear-gradient(135deg, #f3e8ff, #ede9fe);
-        border-left: 3px solid #822acc;
+        background: linear-gradient(135deg, rgba(130, 42, 204, 0.1), rgba(101, 30, 158, 0.1));
+        border-left: 3px solid var(--primary);
       }
 
       &.preview-row {
-        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
         border-left: 4px solid #f59e0b;
 
         &:hover {
-          background: linear-gradient(135deg, #fef9c3, #fef08a);
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
         }
 
         &.p-highlight {
-          background: linear-gradient(135deg, #fef3c7, #fde68a);
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.15));
           border-left: 4px solid #d97706;
         }
       }
@@ -1100,16 +1101,17 @@ onUnmounted(() => {
       > td {
         padding: 16px;
         border: none;
+        color: var(--text-primary);
       }
     }
 
     .p-checkbox {
       .p-checkbox-box {
-        border-color: #822acc;
+        border-color: var(--primary);
 
         &.p-highlight {
-          background: linear-gradient(135deg, #822acc, #651e9e);
-          border-color: #822acc;
+          background: linear-gradient(135deg, var(--primary), var(--primary-2));
+          border-color: var(--primary);
         }
       }
     }
@@ -1126,20 +1128,20 @@ onUnmounted(() => {
 
   i {
     font-size: 4rem;
-    color: #d1d5db;
+    color: var(--text-muted);
     margin-bottom: 16px;
   }
 
   h3 {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #374151;
+    color: var(--text-primary);
     margin: 0 0 8px 0;
   }
 
   p {
     font-size: 1rem;
-    color: #6b7280;
+    color: var(--text-secondary);
     margin: 0 0 24px 0;
   }
 }
@@ -1148,12 +1150,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-weight: 500;
 
   i {
     font-size: 0.875rem;
-    color: #822acc;
+    color: var(--primary);
   }
 }
 
@@ -1165,7 +1167,7 @@ onUnmounted(() => {
 
 .transaction-label {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .preview-icon {
@@ -1206,7 +1208,7 @@ onUnmounted(() => {
 }
 
 .amount-placeholder {
-  color: #e5e7eb;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -1248,26 +1250,27 @@ onUnmounted(() => {
   justify-content: center;
   padding: 40px 20px;
   text-align: center;
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(130, 42, 204, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-purple);
+  border: 1px solid var(--card-border);
 
   i {
     font-size: 3rem;
-    color: #d1d5db;
+    color: var(--text-muted);
     margin-bottom: 16px;
   }
 
   h3 {
     font-size: 1.125rem;
     font-weight: 700;
-    color: #374151;
+    color: var(--text-primary);
     margin: 0 0 8px 0;
   }
 
   p {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--text-secondary);
     margin: 0 0 20px 0;
   }
 }
@@ -1306,11 +1309,11 @@ onUnmounted(() => {
 }
 
 .transaction-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 0 2px 12px rgba(130, 42, 204, 0.08);
-  border: 2px solid transparent;
+  box-shadow: 0 2px 12px var(--shadow-purple);
+  border: 2px solid var(--card-border);
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -1319,7 +1322,7 @@ onUnmounted(() => {
   @media (max-width: 768px) {
     padding: 18px;
     border-radius: 18px;
-    box-shadow: 0 3px 15px rgba(130, 42, 204, 0.12);
+    box-shadow: 0 3px 15px var(--shadow-md);
   }
 
   &::before {
@@ -1329,7 +1332,7 @@ onUnmounted(() => {
     top: 0;
     bottom: 0;
     width: 4px;
-    background: linear-gradient(180deg, #822acc, #651e9e);
+    background: linear-gradient(180deg, var(--primary), var(--primary-2));
     transition: width 0.3s ease;
 
     @media (max-width: 768px) {
@@ -1338,7 +1341,7 @@ onUnmounted(() => {
   }
 
   &.preview-card {
-    background: linear-gradient(135deg, #fffbeb, #fefce8);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
     border-color: rgba(245, 158, 11, 0.2);
 
     &::before {
@@ -1353,16 +1356,16 @@ onUnmounted(() => {
   }
 
   &.selected-card {
-    border-color: #822acc;
-    background: linear-gradient(135deg, #faf5ff, #f9f5ff);
-    box-shadow: 0 4px 16px rgba(130, 42, 204, 0.2);
+    border-color: var(--primary);
+    background: var(--card-hover-bg);
+    box-shadow: 0 4px 16px var(--shadow-purple);
 
     &::before {
       width: 6px;
     }
 
     @media (max-width: 768px) {
-      box-shadow: 0 5px 20px rgba(130, 42, 204, 0.25);
+      box-shadow: 0 5px 20px var(--shadow-purple);
     }
   }
 
@@ -1377,7 +1380,7 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border-color);
 
   @media (max-width: 768px) {
     margin-bottom: 14px;
@@ -1399,7 +1402,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
 
@@ -1410,7 +1413,7 @@ onUnmounted(() => {
 
   i {
     font-size: 0.875rem;
-    color: #822acc;
+    color: var(--primary);
 
     @media (max-width: 768px) {
       font-size: 0.95rem;
@@ -1442,7 +1445,7 @@ onUnmounted(() => {
 }
 
 .edit-button-mobile {
-  color: #822acc;
+  color: var(--primary);
 
   &:hover {
     background: rgba(130, 42, 204, 0.15);
@@ -1475,7 +1478,7 @@ onUnmounted(() => {
 .label-text {
   font-size: 1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-primary);
   flex: 1;
   word-break: break-word;
 
@@ -1542,12 +1545,12 @@ onUnmounted(() => {
   right: 12px;
   width: 28px;
   height: 28px;
-  background: linear-gradient(135deg, #822acc, #651e9e);
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
+  box-shadow: 0 2px 8px var(--shadow-purple);
   animation: scaleIn 0.2s ease;
 
   @media (max-width: 768px) {
@@ -1582,13 +1585,13 @@ onUnmounted(() => {
 // Checkbox customization
 :deep(.p-checkbox) {
   .p-checkbox-box {
-    border-color: #822acc;
+    border-color: var(--primary);
     width: 22px;
     height: 22px;
 
     &.p-highlight {
-      background: linear-gradient(135deg, #822acc, #651e9e);
-      border-color: #822acc;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      border-color: var(--primary);
     }
   }
 }
