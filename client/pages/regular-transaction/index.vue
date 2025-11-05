@@ -167,7 +167,7 @@ const transactionsCount = computed(() => transactions.value.length)
 </script>
 
 <template>
-  <div class="flex flex-col h-screen p-8 gap-5 md:p-2.5 md:h-auto md:min-h-screen md:gap-3.75 md:pb-7.5 lg:p-15 xl:p-10" style="background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);">
+  <div class="flex flex-col min-h-screen gap-5 bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-6 md:(py-4 pb-8) px-5 md:px-6 lg:px-8 max-w-7xl mx-auto">
     <div class="rounded-5 p-6 shadow-lg border md:p-4 md:rounded-4" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
       <div class="flex items-center gap-4">
         <div class="flex-1">
@@ -365,8 +365,22 @@ const transactionsCount = computed(() => transactions.value.length)
 </template>
 
 <style scoped>
+/* Couleurs lisibles pour Select/DatePicker en clair et sombre */
+:deep(.p-dropdown), :deep(.p-select), :deep(.p-calendar) {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+}
+:deep(.p-inputtext), :deep(.p-dropdown-label), :deep(.p-select-label) {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+:deep(.p-dropdown-trigger), :deep(.p-datepicker-trigger), :deep(.p-select-trigger), :deep(.p-icon) {
+  color: var(--text-secondary) !important;
+}
+
+/* DataTable stylé selon la DA */
 :deep(.p-datatable) .p-datatable-thead > tr > th {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
   color: white;
   font-weight: 700;
   padding: 16px;
