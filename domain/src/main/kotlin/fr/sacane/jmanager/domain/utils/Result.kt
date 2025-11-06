@@ -21,7 +21,9 @@ enum class ResultState (val code: Int){
     PASSWORD_NOT_MATCH(3003),
 
     TRANSACTION_ENTRY_ERROR(5000),
-    REGISTRATION_ERROR(5001);
+    REGISTRATION_ERROR(5001),
+
+    BOOKLET_MAXIMUM_SIZE_REACHED(2004);
 
     fun isSuccess(): Boolean = this == OK
     fun isFailure(): Boolean = !isSuccess()

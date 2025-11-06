@@ -58,7 +58,8 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.BOOKLET_LABEL_EXIST,
     ResultState.TRANSACTION_ENTRY_ERROR,
     ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
-    ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR -> throw InvalidRequestException(this.status.code, this.message)
+    ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR,
+    ResultState.BOOKLET_MAXIMUM_SIZE_REACHED -> throw InvalidRequestException(this.status.code, this.message)
     ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.status.code, this.message)
     ResultState.TIMEOUT  -> throw TimeOutException(this.status.code, this.message)
     ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED,

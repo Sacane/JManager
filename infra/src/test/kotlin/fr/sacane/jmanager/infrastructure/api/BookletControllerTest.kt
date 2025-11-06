@@ -53,6 +53,32 @@ class BookletControllerTest(
                 body("label", equalTo("test"), "amount", equalTo("1000.00"), "currency", equalTo("€"))
             }
         }
+        @Test
+        fun `Should return invalid request 400 when trying to save more than 6 booklets`() {
+            val body = BookletBookingRequest("test7", 1000.toDouble(), "€")
+            val booklets = mutableListOf<Booklet>()
+            repeat(6) {
+                booklets.add(
+                    Booklet(
+                        id = null,
+                        amount = Amount.fromString("100.00"),
+                        labelAccount = "test$it",
+                        owner = user,
+                    )
+                )
+            }
+            accountStateAdapter.init(booklets)
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/account")
+            } Then {
+                statusCode(400)
+            }
+        }
 
         @Test
         fun `Should send 400 with bad currency request`() {
