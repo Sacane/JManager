@@ -1,45 +1,149 @@
-# 💰 JManager - Simplify Your Personal Finance Management 🏦
+# 💰 JManager — Simplified Personal Finance Management
 
-Welcome to **JManager**, a modern and intuitive application designed to help you manage your daily finances. Whether you want to track your transactions, plan future expenses, or analyze your financial habits with advanced metrics, **JManager** is the tool for you! 🚀
+JManager is a modern and user-friendly application designed to help individuals manage their personal finances: transaction tracking, forecasts, multiple booklets, custom tags and analytical visualizations.
 
-
-
-## 🌟 Key Features
-
-✔️ Transaction Management: Add, edit, and track all your financial transactions.  
-✔️ Forecasted Transactions: Plan your future expenses or revenues with distinct **current** and **forecasted** balances.  
-✔️ Multi-Booklets: Organize your finances across multiple booklets.  
-✔️ Custom Tags: Assign tags to your transactions for intelligent categorization and detailed tracking.  
-✔️ Data Analysis: Generate metrics and charts to visualize your financial habits. 📊
-
-
-## ⚙️ Tech Stack
-
-Here's the technology stack used to build **JManager**:
-
-### Backend 🛠️
-- **Language**: [Kotlin](https://kotlinlang.org/)
-- **Framework**: [Spring](https://spring.io/)
-- **Database**: [PostgreSQL](https://www.postgresql.org/)
-- **Architecture**: Hexagonal 🛑, with complete separation of business logic and infrastructure.
-
-### Frontend 🎨
-- **Framework**: [Nuxt.js (Vue 3)](https://nuxt.com/)
-- **CSS Library**: [UnoCSS](https://unocss.dev/)
-
-### Code Quality ✅
-- **Static Analysis**: [SonarQube](https://www.sonarsource.com/) for monitoring code quality, detecting potential issues, and ensuring the code remains clean and maintainable.
-
-### Architecture
-✔️ **Hexagonal Architecture**: A robust and maintainable application thanks to a clear separation of business logic and infrastructure.
+This README provides an overview for developers and users, describes the architecture and lists commands to run the project locally.
 
 ---
 
-## 🚀 Installation and Startup
+## 🌟 Key Features
 
-### Prerequisites
-Before starting, ensure you have the following installed on your machine:
-- **JDK 21** (or higher)
-- **Gradle (v8.5 or higher)**
-- **Node.js** and **pnpm**
-- **Docker** (optional for PostgreSQL and SonarQube)
+- Transaction management: create, update and delete transactions.
+- Forecasted transactions: differentiate current balances from forecasted balances.
+- Multi-booklets: separate accounts/registers independently.
+- Custom tags and search: fine-grained categorization of transactions.
+- Recurring rules: scheduling of regular transactions.
+- CSV import and batch processing.
+- Dashboards and metrics: charts and reports to analyze financial history.
+
+---
+
+## 🏗️ Project Architecture
+
+The project follows a hexagonal architecture (clear separation between domain, infrastructure and UI) and is organized into Gradle modules:
+
+- `client/`: Nuxt 3 (Vue 3) frontend
+- `domain/`: business logic (Kotlin)
+- `infra/`: infrastructure and Spring Boot application
+
+---
+
+## ⚙️ Technical Stack (extracted from project configs)
+
+Backend
+- Language: Kotlin (Kotlin plugin v2.0.0)
+- Framework: Spring Boot 3.4.0
+- Build: Gradle (wrapper included)
+- DB migrations: Flyway (11.14.1)
+- Auth: JJWT (0.12.6)
+- Tests: JUnit / Spring Boot Test / Testcontainers (1.21.3)
+- Coverage: JaCoCo (0.8.12)
+
+Frontend
+- Framework: Nuxt 3 (Vue 3)
+- Package manager: pnpm (see `client/package.json`)
+- Styling: UnoCSS, PrimeVue
+
+Infra & quality tools
+- SonarQube (Gradle plugin configured)
+- ShadowJar (to build a standalone executable)
+- Testcontainers for integration tests
+- Actuator, Micrometer, Springdoc OpenAPI for observability and docs (added in infra)
+
+---
+
+## 📦 Prerequisites
+
+Install the following tools on your machine:
+
+- JDK 21 (or newer)
+- Git
+- Node.js (recommended: 18+)
+- pnpm
+- Docker (optional — recommended for PostgreSQL and SonarQube locally)
+- Gradle wrapper (provided in the repo; use the included `gradlew` or `gradlew.bat`)
+
+---
+
+## 🚀 Run the project locally
+
+1) Clone the repository
+
+```bash
+git clone <repo-url>
+cd JManager
+```
+
+2) Start PostgreSQL locally
+
+- Option A — Docker (recommended):
+
+```bash
+docker run --rm -e POSTGRES_USER=jmanager -e POSTGRES_PASSWORD=jmanager -e POSTGRES_DB=jmanager -p 5432:5432 postgres:15
+```
+
+- Option B — local DB: configure a PostgreSQL instance and update configuration files accordingly.
+
+3) Build and run the backend (`infra`)
+
+```bash
+# from the project root (Unix/macOS)
+./gradlew :infra:bootRun
+# on Windows (cmd.exe / PowerShell)
+gradlew.bat :infra:bootRun
+
+# or to create a standalone JAR
+./gradlew :infra:shadowJar
+java -jar executables/Jmanager-1.0.jar
+```
+
+4) Start the frontend (`client`)
+
+```bash
+cd client
+pnpm install
+pnpm run dev
+```
+
+The frontend is configured to call the backend API by default — adjust `client/env.dev.config.json` / `client/env.config.json` if needed.
+
+---
+
+## 🧪 Tests
+
+- Run all unit and integration tests:
+
+```bash
+# use gradle wrapper
+./gradlew test
+# or on Windows
+gradlew.bat test
+```
+
+- Integration tests that rely on Testcontainers require Docker to be running.
+
+---
+
+## 🛠️ Infrastructure tools & dependencies (see `infra/build.gradle.kts`)
+
+The `infra` module uses several libraries to support operation and development:
+
+- Spring Boot Starter Web / Data JPA / Security
+- Flyway for schema migrations
+- JJWT for JWT handling
+- Testcontainers, H2 and Rest-Assured for tests
+- JaCoCo for coverage
+- ShadowJar to package the application
+- Actuator, DevTools, Validation, Micrometer Prometheus and Springdoc OpenAPI for monitoring and documentation
+
+---
+
+## 🧩 Contributing
+
+Contributions are welcome — open an issue to discuss a feature or bug.
+
+- Fork the repository
+- Create a branch feature/your-feature
+- Submit a merge request with tests and a clear description
+
+---
