@@ -26,6 +26,7 @@ const isEditDialogVisible = ref(false)
 const isMobile = ref(false)
 const csvImportDialogRef = ref<any>(null)
 const isMobileMenuOpen = ref(false)
+const transactionFilter = ref<'all' | 'preview' | 'confirmed'>('all')
 
 const bookletData = reactive({
   id: '',
@@ -53,6 +54,15 @@ const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t
 const hasSelection = computed(() => selectedSheets.value.length > 0)
 
 const displayLabel = computed(() => capitalizeFirst(bookletData.label))
+
+const filteredTransactions = computed(() => {
+  if (transactionFilter.value === 'preview') {
+    return actualSheets.value.filter(t => t.isPreview)
+  } else if (transactionFilter.value === 'confirmed') {
+    return actualSheets.value.filter(t => !t.isPreview)
+  }
+  return actualSheets.value
+})
 
 function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
@@ -399,6 +409,41 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- Filtres de transactions -->
+      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2 md:gap-3">
+        <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1">Afficher :</span>
+        <button
+          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
+          :class="transactionFilter === 'all'
+            ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
+            : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--primary)]'"
+          @click="transactionFilter = 'all'"
+        >
+          <i class="pi pi-list mr-2" />
+          Tout ({{ transactionsCount }})
+        </button>
+        <button
+          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
+          :class="transactionFilter === 'confirmed'
+            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
+            : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-emerald-600'"
+          @click="transactionFilter = 'confirmed'"
+        >
+          <i class="pi pi-check-circle mr-2" />
+          Confirmées ({{ transactionsCount - previewTransactionsCount }})
+        </button>
+        <button
+          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
+          :class="transactionFilter === 'preview'
+            ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
+            : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-amber-600'"
+          @click="transactionFilter = 'preview'"
+        >
+          <i class="pi pi-clock mr-2" />
+          Prévisionnelles ({{ previewTransactionsCount }})
+        </button>
+      </div>
+
       <div class="flex flex-col md:flex-row justify-between items-stretch gap-4 mb-5 md:(gap-3 mb-4)">
         <div class="flex flex-col gap-2 md:(flex-row gap-3 flex-wrap)">
           <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
@@ -432,7 +477,7 @@ onUnmounted(() => {
       <div v-if="!isMobile" class="flex-1 bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <DataTable
           v-model:selection="selectedSheets"
-          :value="actualSheets"
+          :value="filteredTransactions"
           :row-class="rowClass"
           scrollable
           scroll-height="flex"
@@ -523,20 +568,20 @@ onUnmounted(() => {
       </div>
 
       <div v-else class="flex-1 overflow-hidden flex flex-col md:(overflow-visible flex-none)">
-        <div v-if="actualSheets.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
+        <div v-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
           <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
           <h3 class="text-lg font-bold text-[var(--text-primary)] mt-4 mb-2">
             Aucune transaction
           </h3>
           <p class="text-[var(--text-secondary)] mb-4">
-            Commencez par créer votre première transaction
+            {{ transactionFilter === 'preview' ? 'Aucune transaction prévisionnelle' : transactionFilter === 'confirmed' ? 'Aucune transaction confirmée' : 'Commencez par créer votre première transaction' }}
           </p>
           <Button class="btn-primary" icon="pi pi-plus" label="Créer" @click="openCreationDialog" />
         </div>
 
         <div v-else class="flex-1 overflow-y-auto p-1 flex flex-col gap-3 md:(overflow-visible flex-none gap-4 p-0)">
           <div
-            v-for="(transaction, tIndex) in actualSheets"
+            v-for="(transaction, tIndex) in filteredTransactions"
             :key="transaction.id || `t-${tIndex}`"
             class="relative bg-[var(--card-bg)] rounded-xl p-4 shadow border-2 border-[var(--card-border)] transition-all overflow-hidden hover:shadow-lg active:scale-[0.98]"
             :class="[
