@@ -32,7 +32,7 @@ class BookletController (
     fun saveBooklet(
         @RequestBody userAccount: BookletBookingRequest
     ): ResponseEntity<AccountInfoDTO> {
-        LOGGER.info("Booking a new Booklet...")
+        LOGGER.info("Booking a new Booklet ${userAccount.labelAccount} starting at ${userAccount.amount}${userAccount.currency} for user ${currentUser.id}")
         return feature.save(
             currentUser.token,
             Booklet(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)

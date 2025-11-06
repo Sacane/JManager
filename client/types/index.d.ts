@@ -101,7 +101,7 @@ declare global {
   interface UpdateRegularTransactionRequest {
     id: string
     label: string
-    value: number
+    value: string
     isIncome: boolean
     tagDTO: TagDTO
     frequencyProperty: FrequencyPropertyDTO

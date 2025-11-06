@@ -27,6 +27,6 @@ data class AccountInfoDTO(
 @Serializable
 data class BookletBookingRequest(
     val labelAccount: String,
-    val amount: Double,
+    val amount: String,
     val currency: String
 )

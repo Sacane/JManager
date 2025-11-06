@@ -95,7 +95,7 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
     const updateRequest: UpdateRegularTransactionRequest = {
       id: updatedTransaction.id,
       label: updatedTransaction.label,
-      value: updatedTransaction.value,
+      value: typeof updatedTransaction.value === 'number' ? updatedTransaction.value.toFixed(2) : updatedTransaction.value,
       isIncome: updatedTransaction.isIncome,
       tagDTO: updatedTransaction.tagDTO,
       frequencyProperty: updatedTransaction.frequencyProperty,

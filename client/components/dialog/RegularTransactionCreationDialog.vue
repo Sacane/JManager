@@ -3,7 +3,7 @@ import type { FrequencyPropertyDTOClient, FrequencyPropertyType } from '~/compon
 import useDate from '~/composables/useDate'
 import { getTagStyle } from '~/utils/util'
 
-const props = defineProps<{
+defineProps<{
   booklets: OnlyBookletInfo[]
 }>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
@@ -11,7 +11,23 @@ const tag = useTag()
 const tags = ref<TagDTO[]>([])
 const { formattedDateString, frequencyToString, strToFrequency } = useDate()
 
-const regularTrForm = reactive({
+interface RegularTrFormType {
+  label: string
+  amount: number | undefined
+  date: Date
+  frequency: string
+  monthlyFrequency: {
+    type: FrequencyPropertyType
+    untilDate: Date | undefined
+    times: number | undefined
+  }
+  repeatDay: number | null
+  isIncome: boolean
+  tagDTO: TagDTO
+  selectedBooklets: OnlyBookletInfo[]
+}
+
+const regularTrForm: RegularTrFormType = reactive({
   label: '',
   amount: undefined,
   date: new Date(),
@@ -21,10 +37,10 @@ const regularTrForm = reactive({
     untilDate: undefined,
     times: undefined,
   },
-  repeatDay: null as number | null,
+  repeatDay: null,
   isIncome: false,
   tagDTO: {
-    tagId: undefined as string | undefined,
+    tagId: undefined,
     label: '',
     colorDTO: {
       red: 0,
@@ -33,14 +49,15 @@ const regularTrForm = reactive({
     },
     isDefault: false,
   },
-  selectedBooklets: [] as OnlyBookletInfo[],
+  selectedBooklets: [],
 })
 
 onMounted(() => {
-  console.log(props.booklets)
   tag.getAllTags().then((tagsResult) => {
     tags.value = tagsResult
-    regularTrForm.tagDTO = tagsResult[0]
+    if (tagsResult.length > 0) {
+      regularTrForm.tagDTO = tagsResult[0]
+    }
   })
 })
 
@@ -51,15 +68,16 @@ function emitTransaction() {
   const frequency = strToFrequency(regularTrForm.frequency)
   if (frequency === 'MONTHLY') {
     const formattedStartDate = formattedDateString(regularTrForm.date)
+    const amount = regularTrForm.amount // TypeScript narrowing
     const regularTransactionCreationRequest: MonthlyTransactionCreationRequest = {
       label: regularTrForm.label,
-      value: regularTrForm.amount,
+      value: amount.toFixed(2),
       isIncome: regularTrForm.isIncome,
-      startDate: formattedStartDate,
+      startDate: formattedStartDate as any as Date,
       tagDTO: regularTrForm.tagDTO,
-      frequencyProperty: regularTrForm.monthlyFrequency,
+      frequencyProperty: regularTrForm.monthlyFrequency as any,
       repeatDay: regularTrForm.repeatDay,
-      bookletIds: regularTrForm.selectedBooklets.map(b => b.id as string),
+      bookletIds: regularTrForm.selectedBooklets.map(b => String(b.id)),
     }
     emit('createTransaction', regularTransactionCreationRequest)
     regularTrForm.label = ''
@@ -76,6 +94,8 @@ function emitTransaction() {
 }
 
 const isVisibleData = ref(false)
+const inputNumberRef = ref(null)
+
 function closeDialog() {
   emit('visible', false)
   emit('cancelCreation')
@@ -83,10 +103,29 @@ function closeDialog() {
 }
 
 function updateMonthlyFrequencyValue(value: FrequencyPropertyDTOClient) {
-  regularTrForm.monthlyFrequency = value
+  regularTrForm.monthlyFrequency = value as any
 }
 function updateMonthlyRepeatValue(value: number | null) {
   regularTrForm.repeatDay = value
+}
+
+function handleTabKey(event: KeyboardEvent) {
+  if (event.key === 'Tab') {
+    event.preventDefault()
+    const input = (inputNumberRef.value as any)?.$el?.querySelector('input')
+    if (input && input.value.includes(',')) {
+      const cursorPosition = input.selectionStart
+      const decimalPosition = input.value.indexOf(',')
+      if (cursorPosition <= decimalPosition) {
+        input.setSelectionRange(decimalPosition + 1, decimalPosition + 1)
+      } else {
+        const nextInput = input.nextElementSibling
+        if (nextInput) {
+          nextInput.focus()
+        }
+      }
+    }
+  }
 }
 </script>
 
@@ -120,7 +159,7 @@ function updateMonthlyRepeatValue(value: number | null) {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber ref="inputNumberRef" v-model="regularTrForm.amount" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="value => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
+        <InputNumber ref="inputNumberRef" v-model="regularTrForm.amount" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="(value: number) => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
       </div>
       <div class="flex flex-col gap-3 w-50%">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>

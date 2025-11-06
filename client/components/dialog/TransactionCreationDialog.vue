@@ -8,6 +8,16 @@ export interface TransactionCreationProps {
   buttonTitle?: string
 }
 
+interface InternalTransactionForm {
+  id: string | null
+  label: string
+  value: number | null
+  isIncome: boolean
+  date: Date
+  tagDTO: TagDTO
+  isPreview: boolean
+}
+
 const { title, digitPlaceholder, transactionPlaceholder, buttonTitle } = defineProps<TransactionCreationProps>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
@@ -15,7 +25,10 @@ const digits = reactive({
   placeholder: digitPlaceholder,
 })
 
-const transactionResult = reactive(transactionPlaceholder)
+const transactionResult = reactive<InternalTransactionForm>({
+  ...transactionPlaceholder,
+  value: transactionPlaceholder.value !== null ? Number.parseFloat(transactionPlaceholder.value) : null,
+})
 const isVisibleData = ref(false)
 const inputNumberRef = ref(null)
 
@@ -38,7 +51,7 @@ function emitTransaction() {
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
-    value: transactionResult.value,
+    value: transactionResult.value !== null ? transactionResult.value.toFixed(2) : null,
     isIncome: transactionResult.isIncome,
     date: transactionResult.date,
     tagDTO: transactionResult.tagDTO,
@@ -101,7 +114,7 @@ function handleTabKey(event: KeyboardEvent) {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="value => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
+        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="(value: number) => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
       </div>
       <div class="flex flex-col gap-3 w-50%">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
