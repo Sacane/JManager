@@ -381,7 +381,7 @@ onUnmounted(() => {
                 v-model="displayMonth"
                 :options="useDate().months.map(u => translate(u))"
                 placeholder="Mois"
-                class="flex-1 min-w-0 w-full md:(flex-none min-w-[140px] w-auto) border rounded-lg bg-transparent"
+                class="flex-1 min-w-0 w-full md:(flex-none min-w-[140px] w-auto) border-1 rounded-lg bg-transparent"
                 @change="onMonthChange($event)"
               />
               <DatePicker
@@ -438,7 +438,6 @@ onUnmounted(() => {
           scroll-height="flex"
           selection-mode="multiple"
           :meta-key-selection="false"
-          striped-rows
           @row-dblclick="onEditTransaction"
         >
           <template #empty>
@@ -508,7 +507,7 @@ onUnmounted(() => {
                 />
                 <Button
                   v-if="data.isPreview"
-                  class="text-emerald-500 hover:bg-emerald/15"
+                  class="text-emerald-500 hover:bg-emerald-500/15"
                   icon="pi pi-check"
                   text
                   rounded
@@ -539,7 +538,7 @@ onUnmounted(() => {
           <div
             v-for="(transaction, tIndex) in actualSheets"
             :key="transaction.id || `t-${tIndex}`"
-            class="relative bg-[var(--card-bg)] rounded-xl p-4 shadow border-2 border-[var(--card-border)] transition-all overflow-hidden hover:shadow-lg active:scale-98"
+            class="relative bg-[var(--card-bg)] rounded-xl p-4 shadow border-2 border-[var(--card-border)] transition-all overflow-hidden hover:shadow-lg active:scale-[0.98]"
             :class="[
               transaction.isPreview ? 'bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-400/20' : '',
               isSelected(transaction) ? 'border-[var(--primary)] bg-[var(--card-hover-bg)] shadow-lg' : '',
@@ -555,7 +554,7 @@ onUnmounted(() => {
                 </div>
               </div>
               <div class="flex gap-1.5 md:gap-1.5">
-                <Button v-if="transaction.isPreview" class="text-emerald-500 hover:bg-emerald/15" icon="pi pi-check" text rounded severity="success" size="small" title="Valider" @click.stop="onConfirmPreview(transaction)" />
+                <Button v-if="transaction.isPreview" class="text-emerald-500 hover:bg-emerald-500/15" icon="pi pi-check" text rounded severity="success" size="small" title="Valider" @click.stop="onConfirmPreview(transaction)" />
                 <Button class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]" icon="pi pi-pencil" text rounded size="small" title="Modifier" @click.stop="onEditTransaction({ data: transaction })" />
               </div>
             </div>
@@ -645,7 +644,7 @@ onUnmounted(() => {
 
               <div class="flex flex-col gap-3">
                 <button
-                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-2 border-cyan-500/20 text-left transition-all hover:border-cyan-500/40 hover:shadow-lg active:scale-98"
+                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-2 border-cyan-500/20 text-left transition-all hover:border-cyan-500/40 hover:shadow-lg active:scale-[0.98]"
                   @click="openCsvImportFromMenu"
                 >
                   <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0">
@@ -663,7 +662,7 @@ onUnmounted(() => {
                 </button>
 
                 <button
-                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-2 border-emerald-500/20 text-left transition-all hover:border-emerald-500/40 hover:shadow-lg active:scale-98"
+                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-2 border-emerald-500/20 text-left transition-all hover:border-emerald-500/40 hover:shadow-lg active:scale-[0.98]"
                   @click="openCsvExportFromMenu"
                 >
                   <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
@@ -738,8 +737,14 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--border-color);
   background: var(--card-bg);
 }
+:deep(.p-datatable) .p-datatable-tbody > tr:nth-child(even) {
+  background: rgba(130, 42, 204, 0.03);
+}
+.dark :deep(.p-datatable) .p-datatable-tbody > tr:nth-child(even) {
+  background: rgba(130, 42, 204, 0.08);
+}
 :deep(.p-datatable) .p-datatable-tbody > tr:hover {
-  background: var(--card-hover-bg);
+  background: var(--card-hover-bg) !important;
 }
 :deep(.p-datatable) .p-datatable-tbody > tr > td {
   padding: 16px;
@@ -778,23 +783,32 @@ onUnmounted(() => {
   background: rgba(245, 158, 11, 0.08) !important;
   box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.45);
 }
+:deep(.p-datatable) .preview-row:nth-child(even) {
+  background: rgba(245, 158, 11, 0.15) !important;
+}
 :deep(.p-datatable) .preview-row:hover {
-  background: rgba(245, 158, 11, 0.14) !important;
+  background: rgba(245, 158, 11, 0.20) !important;
 }
 @supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
   :deep(.p-datatable) .preview-row {
     background: color-mix(in oklab, #f59e0b 12%, var(--card-bg)) !important;
   }
-  :deep(.p-datatable) .preview-row:hover {
+  :deep(.p-datatable) .preview-row:nth-child(even) {
     background: color-mix(in oklab, #f59e0b 18%, var(--card-bg)) !important;
+  }
+  :deep(.p-datatable) .preview-row:hover {
+    background: color-mix(in oklab, #f59e0b 24%, var(--card-bg)) !important;
   }
 }
 .dark :deep(.p-datatable) .preview-row {
   background: rgba(245, 158, 11, 0.15) !important;
   box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.6);
 }
-.dark :deep(.p-datatable) .preview-row:hover {
+.dark :deep(.p-datatable) .preview-row:nth-child(even) {
   background: rgba(245, 158, 11, 0.22) !important;
+}
+.dark :deep(.p-datatable) .preview-row:hover {
+  background: rgba(245, 158, 11, 0.28) !important;
 }
 
 :deep(.p-button.btn-primary) {
@@ -859,30 +873,6 @@ onUnmounted(() => {
   }
 }
 
-.p-button.p-button-text.p-button-rounded {
-  border: 2px solid currentColor;
-  transition: all 0.2s ease;
-  opacity: 0.6;
-}
-.p-button.p-button-text.p-button-rounded:hover {
-  opacity: 1;
-  box-shadow: 0 2px 8px currentColor;
-}
-.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\] {
-  border-color: rgba(130, 42, 204, 0.4);
-}
-.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]:hover {
-  border-color: rgba(130, 42, 204, 0.8);
-  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
-}
-.p-button.p-button-text.p-button-rounded.text-emerald-500 {
-  border-color: rgba(16, 185, 129, 0.4);
-}
-.p-button.p-button-text.p-button-rounded.text-emerald-500:hover {
-  border-color: rgba(16, 185, 129, 0.8);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
 .fab-enter-active,
 .fab-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -912,9 +902,7 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(100%);
 }
-</style>
 
-<style lang="scss">
 .p-dropdown-panel, .p-select-panel, .p-datepicker {
   background: var(--card-bg) !important;
   border: 1px solid var(--card-border) !important;
