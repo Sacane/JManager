@@ -3,12 +3,10 @@ package fr.sacane.jmanager.infrastructure.configuration
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Primary
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.math.BigDecimal
 
 /**
@@ -31,17 +29,13 @@ class StringToDoubleDeserializer : JsonDeserializer<Double>() {
 class JacksonConfig {
 
     @Bean
-    @Primary
-    fun objectMapper(builder: Jackson2ObjectMapperBuilder): ObjectMapper {
-        val objectMapper = builder.build<ObjectMapper>()
-
-        val module = SimpleModule()
-        module.addDeserializer(Double::class.java, StringToDoubleDeserializer())
-        module.addDeserializer(Double::class.javaObjectType, StringToDoubleDeserializer())
-
-        objectMapper.registerModule(module)
-
-        return objectMapper
+    fun jacksonCustomizer(): Jackson2ObjectMapperBuilderCustomizer {
+        return Jackson2ObjectMapperBuilderCustomizer { builder ->
+            val module = SimpleModule()
+            module.addDeserializer(Double::class.java, StringToDoubleDeserializer())
+            module.addDeserializer(Double::class.javaObjectType, StringToDoubleDeserializer())
+            builder.modules(module)
+        }
     }
 }
 
