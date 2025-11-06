@@ -67,6 +67,12 @@ fun BigDecimal.toAmount(currency: Currency = Currency.EUR): Amount {
 fun Int.toAmount(currency: Currency = Currency.EUR): Amount {
     return Amount(BigDecimal(this), currency)
 }
+
 fun Double.toAmount(currency: Currency = Currency.EUR): Amount {
     return Amount(BigDecimal(this), currency)
 }
+
+fun String.toAmount(currency: Currency = Currency.EUR): Amount {
+    return Amount(BigDecimal(this), currency)
+}
+
