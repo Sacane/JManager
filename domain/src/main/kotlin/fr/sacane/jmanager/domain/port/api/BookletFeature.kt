@@ -179,6 +179,9 @@ class BookletFeatureImpl(
         if(user.hasAccount(booklet.label)) {
             return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le profil contient déjà un compte avec le label ${booklet.label}")
         }
+        if (user.booklets.size >= 6) {
+            return@authenticate failure(ResultState.BOOKLET_MAXIMUM_SIZE_REACHED, "Le profil ne peut pas contenir plus de 6 comptes")
+        }
         val accountSaved = accountRepository.save(it, booklet)
             ?: return@authenticate failure(ResultState.INFRASTRUCTURE_ERROR,"Erreur lors de la sauvegarde du compte")
         success(accountSaved)

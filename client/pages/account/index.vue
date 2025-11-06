@@ -157,7 +157,7 @@ function formatAmount(amount: string) {
                   <i class="pi pi-wallet" />
                 </div>
                 <h3 class="booklet-name">
-                  {{ account.labelAccount }}
+                  {{ capitalizeFirst(account.labelAccount) }}
                 </h3>
               </div>
               <Button

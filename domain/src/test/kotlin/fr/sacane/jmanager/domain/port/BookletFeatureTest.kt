@@ -15,6 +15,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
@@ -54,7 +55,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `Should find account by its Id`() {
+    fun `Should find booklet by its Id`() {
         connectUser(user)
         val id = UUID.randomUUID()
         val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id= id)
@@ -68,7 +69,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `Given an existing account it could be edit`() {
+    fun `Given an existing booklet it could be edit`() {
         connectUser(user)
         val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         accountState.init(listOf(
@@ -89,7 +90,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As an owner of an account, I can delete it`() {
+    fun `As an owner of an booklet, I can delete it`() {
         val otherUser = userRepository.register("jojo",  "test") as User
         connectUser(otherUser)
         val element = Booklet( Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
@@ -112,7 +113,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As an account's owner, I can retrieve it by its label`() {
+    fun `As an booklet's owner, I can retrieve it by its label`() {
         launchWithConnectedUserInstance {
             val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = Companion.user, id = UUID.randomUUID())
             accountState.init(listOf(
@@ -126,7 +127,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As an account's owner,  I can retrieve All of my Registered Accounts`() {
+    fun `As an account's owner,  I can retrieve All of my Registered Booklets`() {
         launchWithConnectedUserWithoutAccount {
 
             val booklet = Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
@@ -153,7 +154,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As a Jmanager user, I can create new account`() {
+    fun `As a Jmanager user, I can create new booklet`() {
         launchWithConnectedUserWithoutAccount {
             val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
 
@@ -164,12 +165,27 @@ class BookletFeatureTest: FeatureTest() {
                     this.amount == expectedAmount && this.label == expectedLabelAccount
                 }
         }
-
-
     }
 
     @Test
-    fun `As an account's owner, I cannot register an existing account with the same label`() {
+    fun `As a simple user, I cannot create more than six booklets`() {
+        launchWithConnectedUserWithoutAccount {
+            val bookletLists = mutableListOf<Booklet>()
+            repeat(6) {
+                val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test$it", owner = user, id = UUID.randomUUID())
+                bookletLists.add(bookletToSave)
+            }
+            accountState.init(listOf(
+                AccountByOwner(bookletLists, userId)
+            ))
+
+            bookletFeature.save(tokenValue, Booklet( Amount.fromString("100", "€".asCurrency()), "test7", owner = user, id = UUID.randomUUID()))
+                .assertFailure(ResultState.BOOKLET_MAXIMUM_SIZE_REACHED)
+        }
+    }
+
+    @Test
+    fun `As an account's owner, I cannot register an existing booklet with the same label`() {
         val otherUser = userRepository.register("jojo","test") as User
         connectUser(otherUser)
 
