@@ -2,6 +2,19 @@ import type { AxiosError } from 'axios'
 import axios from 'axios'
 import useAuth from './useAuth'
 
+function serializeWithPrecision(data: any): string {
+  return JSON.stringify(data, (key, value) => {
+    if (typeof value === 'number' && !Number.isNaN(value) && Number.isFinite(value)) {
+      const isMonetaryKey = /amount|value|digit|price|cost/i.test(key)
+      const hasDecimals = value % 1 !== 0
+      if (isMonetaryKey || hasDecimals) {
+        return value.toFixed(2)
+      }
+    }
+    return value
+  })
+}
+
 export default function useQuery() {
   const config = useRuntimeConfig()
   const host = config.public.apiUrl
@@ -30,6 +43,7 @@ export default function useQuery() {
           'Content-Type': 'application/json',
         },
         data: body,
+        transformRequest: [serializeWithPrecision],
       })
       return response.data
     } catch (error: any) {
@@ -44,6 +58,7 @@ export default function useQuery() {
         headers: {
           'Content-Type': 'application/json',
         },
+        transformRequest: [serializeWithPrecision],
       })
       return response.data
     } catch (error: any) {
@@ -57,6 +72,7 @@ export default function useQuery() {
         headers: {
           'Content-Type': 'application/json',
         },
+        transformRequest: [serializeWithPrecision],
       })
       return response.data
     } catch (error: any) {

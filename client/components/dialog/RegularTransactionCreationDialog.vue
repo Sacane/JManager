@@ -68,10 +68,9 @@ function emitTransaction() {
   const frequency = strToFrequency(regularTrForm.frequency)
   if (frequency === 'MONTHLY') {
     const formattedStartDate = formattedDateString(regularTrForm.date)
-    const amount = regularTrForm.amount // TypeScript narrowing
     const regularTransactionCreationRequest: MonthlyTransactionCreationRequest = {
       label: regularTrForm.label,
-      value: amount.toFixed(2),
+      value: regularTrForm.amount,
       isIncome: regularTrForm.isIncome,
       startDate: formattedStartDate as any as Date,
       tagDTO: regularTrForm.tagDTO,

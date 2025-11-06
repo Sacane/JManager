@@ -8,16 +8,6 @@ export interface TransactionCreationProps {
   buttonTitle?: string
 }
 
-interface InternalTransactionForm {
-  id: string | null
-  label: string
-  value: number | null
-  isIncome: boolean
-  date: Date
-  tagDTO: TagDTO
-  isPreview: boolean
-}
-
 const { title, digitPlaceholder, transactionPlaceholder, buttonTitle } = defineProps<TransactionCreationProps>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
@@ -25,10 +15,7 @@ const digits = reactive({
   placeholder: digitPlaceholder,
 })
 
-const transactionResult = reactive<InternalTransactionForm>({
-  ...transactionPlaceholder,
-  value: transactionPlaceholder.value !== null ? Number.parseFloat(transactionPlaceholder.value) : null,
-})
+const transactionResult = reactive(transactionPlaceholder)
 const isVisibleData = ref(false)
 const inputNumberRef = ref(null)
 
@@ -51,7 +38,7 @@ function emitTransaction() {
   const transaction: TransactionCreationDTO = {
     id: transactionResult.id,
     label: transactionResult.label,
-    value: transactionResult.value !== null ? transactionResult.value.toFixed(2) : null,
+    value: transactionResult.value,
     isIncome: transactionResult.isIncome,
     date: transactionResult.date,
     tagDTO: transactionResult.tagDTO,

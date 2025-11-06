@@ -16,7 +16,7 @@ export default function useBooklet() {
   async function createBooklet(labelAccount: string, amount: number, currency: string): Promise<any> {
     const booklet: BookletCreationRequest = {
       labelAccount,
-      amount: amount.toFixed(2),
+      amount,
       currency,
     }
     return post('account', booklet)
