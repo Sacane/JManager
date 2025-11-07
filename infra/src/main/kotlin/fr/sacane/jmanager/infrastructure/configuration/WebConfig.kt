@@ -15,7 +15,6 @@ import java.time.Duration
 class WebConfig: WebMvcConfigurer{
 
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
-        // Ressources statiques avec priorité haute
         registry.addResourceHandler("/**")
             .addResourceLocations("classpath:/static/")
             .setCacheControl(CacheControl.maxAge(Duration.ofDays(1)))

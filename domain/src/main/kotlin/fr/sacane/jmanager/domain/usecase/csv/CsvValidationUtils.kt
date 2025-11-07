@@ -88,7 +88,6 @@ object CsvValidationUtils {
 
         val trimmedTag = tagStr.trim()
 
-        // Check in available tags first
         val matchingTag = availableTags.firstOrNull {
             it.label.equals(trimmedTag, ignoreCase = true)
         }
@@ -97,7 +96,6 @@ object CsvValidationUtils {
             return matchingTag
         }
 
-        // Check in default tags
         val defaultTag = defaultTags.firstOrNull {
             it.label.equals(trimmedTag, ignoreCase = true)
         }

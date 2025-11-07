@@ -40,7 +40,6 @@ const hasValidationWarnings = computed(() =>
   validationReport.value && validationReport.value.warnings.length > 0,
 )
 
-// Methods
 function openDialog() {
   isVisible.value = true
   resetDialog()
@@ -123,7 +122,6 @@ async function analyzeFile() {
 
   isAnalyzing.value = true
   try {
-    // Convertir le mois de props en numéro si disponible
     let monthNumber: number | undefined
     let yearNumber: number | undefined
 
@@ -159,7 +157,6 @@ async function importFile() {
 
   isImporting.value = true
   try {
-    // Convertir le mois de props en numéro si disponible
     let monthNumber: number | undefined
     let yearNumber: number | undefined
 

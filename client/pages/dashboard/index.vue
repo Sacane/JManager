@@ -45,7 +45,6 @@ const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
 const toast = useJToast()
 
-// Refs
 const isAccountDialogOpen = ref(false)
 const accounts = ref<BookletDTO[]>([])
 const regularTransactions = ref<RegularTransactionDTO[]>([])
@@ -55,13 +54,11 @@ const trendStats = ref<TrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const isLoading = ref(true)
 
-// Animation refs
 const overviewRef = ref(null)
 const chartsRef = ref(null)
 const isOverviewVisible = ref(false)
 const isChartsVisible = ref(false)
 
-// Setup intersection observers
 useIntersectionObserver(overviewRef, ([entry]) => {
   if (entry?.isIntersecting) {
     isOverviewVisible.value = true
@@ -74,7 +71,6 @@ useIntersectionObserver(chartsRef, ([entry]) => {
   }
 }, { threshold: 0.1 })
 
-// Computed values
 const totalBalance = computed(() =>
   accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount.toString()), 0.00),
 )
@@ -178,7 +174,6 @@ const totalPrevisionalTransactions = computed(() =>
   previsionalTransactions.value?.transactions.length || 0,
 )
 
-// Chart data
 const expensesTrendData = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
     return {
@@ -187,7 +182,6 @@ const expensesTrendData = computed(() => {
     }
   }
 
-  // Get last 12 months
   const sortedTrends = [...trendStats.value.monthlyTrends]
     .sort((a, b) => {
       if (a.year !== b.year) {
@@ -371,7 +365,6 @@ const doughnutOptions = {
   cutout: '65%',
 }
 
-// Functions
 function handleAccountCreation(account: { label: string, digit: number }) {
   createAccount(account.label, account.digit, '€')
     .then((acc) => {
@@ -391,7 +384,6 @@ function cancel() {
 async function loadDashboardData() {
   isLoading.value = true
   try {
-    // Load basic data
     const [accountsData, regularTransData, tagsData] = await Promise.all([
       fetchBooklets(),
       getRegularTransaction().catch(() => []),
@@ -402,7 +394,6 @@ async function loadDashboardData() {
     regularTransactions.value = regularTransData
     tags.value = tagsData
 
-    // Load stats data
     const now = new Date()
     const startDate = format(startOfMonth(now), 'yyyy-MM-dd')
     const endDate = format(endOfMonth(addMonths(now, 3)), 'yyyy-MM-dd')

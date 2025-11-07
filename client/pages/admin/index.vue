@@ -685,7 +685,6 @@ onMounted(() => {
   }
 }
 
-// Responsive
 @media (max-width: 1024px) {
   .admin-content {
     max-width: 100%;

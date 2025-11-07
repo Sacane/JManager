@@ -29,7 +29,6 @@ class CsvFileValidator {
         private const val RECETTE_COLUMN = 3
         private const val TAG_COLUMN = 4
 
-        // Security limits
         private const val MAX_ROWS = 10000
     }
 

@@ -21,7 +21,7 @@ const tags = ref<DataDisplay[]>([])
 const addTagDialog = ref<boolean>(false)
 const editTagDialog = ref<boolean>(false)
 const searchQuery = ref<string>('')
-const filterType = ref<string>('all') // 'all', 'default', 'personal'
+const filterType = ref<string>('all')
 
 const tagToEdit = reactive({
   id: '',
@@ -56,14 +56,12 @@ function formattedData(tagDTO: TagDTO): DataDisplay {
 const filteredTags = computed(() => {
   let filtered = tags.value
 
-  // Filter by type
   if (filterType.value === 'default') {
     filtered = filtered.filter(t => t.isDefault)
   } else if (filterType.value === 'personal') {
     filtered = filtered.filter(t => !t.isDefault)
   }
 
-  // Filter by search
   if (searchQuery.value) {
     filtered = filtered.filter(t =>
       t.label.toLowerCase().includes(searchQuery.value.toLowerCase()),

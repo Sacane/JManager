@@ -5,6 +5,6 @@ export default function useGlobalLayout() {
   const { isAuthenticated } = useAuth()
   watch(isAuthenticated, (val) => {
     globalLayout.value = (val ? 'sidebar-layout' : 'default') as LayoutKey
-  }, { immediate: true }) // applique le bon layout dès le premier rendu
+  }, { immediate: true })
   return globalLayout as Ref<LayoutKey>
 }

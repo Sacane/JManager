@@ -40,11 +40,9 @@ class BookletJpaRepositoryAdapterTest(
     @Test
     fun `editFromAnother should return null when booklet id is null and update when present`() {
         val booklet = Booklet(labelAccount = "acct-edit", amount = Amount(50L), owner = user)
-        // id null -> should return null
         val resNull = bookletJpaRepositoryAdapter.editFromAnother(booklet)
         assertThat(resNull).isNull()
 
-        // now persist then edit
         val saved = bookletJpaRepositoryAdapter.save(user!!.id, booklet)
         assertThat(saved).isNotNull
         val toEdit = Booklet(amount = fr.sacane.jmanager.domain.models.Amount(999L), labelAccount = saved!!.label, owner = user, id = saved.id)

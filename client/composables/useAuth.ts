@@ -37,7 +37,6 @@ export default function useAuth() {
   async function login(userAuth: UserAuth, onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
       const response = await axios.post(`${host}user/auth`, userAuth, { withCredentials: true })
-      // user.value = response.data
       const result = response.data.token
       const decoded = jwtDecode<{ sub: string, username: string, role: string, ADMIN: boolean, USER: boolean }>(result)
       const roles = []
@@ -107,7 +106,6 @@ export default function useAuth() {
         navigateTo('/login')
         return
       }
-      // toast.error(axiosError.response?.data.message)
     }
     throw error
   }
