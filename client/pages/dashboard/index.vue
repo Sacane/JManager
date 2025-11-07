@@ -786,7 +786,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Custom scrollbar styling */
 *::-webkit-scrollbar {
   width: 6px;
 }

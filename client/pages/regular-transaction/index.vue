@@ -272,7 +272,6 @@ const transactionsCount = computed(() => transactions.value.length)
       </DataTable>
     </div>
 
-    <!-- Liste des transactions (Mobile) -->
     <div v-else class="flex-1 overflow-hidden flex flex-col md:overflow-visible md:flex-none">
       <div v-if="transactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center rounded-4 shadow-lg md:p-5" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple);">
         <i class="pi pi-sync text-3rem mb-4" style="color: var(--text-muted);" />
@@ -365,7 +364,6 @@ const transactionsCount = computed(() => transactions.value.length)
 </template>
 
 <style scoped>
-/* Couleurs lisibles pour Select/DatePicker en clair et sombre */
 :deep(.p-dropdown), :deep(.p-select), :deep(.p-calendar) {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -378,7 +376,6 @@ const transactionsCount = computed(() => transactions.value.length)
   color: var(--text-secondary) !important;
 }
 
-/* DataTable stylé selon la DA */
 :deep(.p-datatable) .p-datatable-thead > tr > th {
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
   color: white;

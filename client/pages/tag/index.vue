@@ -201,7 +201,6 @@ function edit() {
       </div>
     </div>
 
-    <!-- Tags Grid -->
     <div class="tags-container">
       <TransitionGroup name="tag-list" tag="div" class="tags-grid">
         <div
@@ -211,10 +210,8 @@ function edit() {
           :class="{ 'tag-card-personal': !tag.isDefault }"
           :style="{ '--tag-color': tag.color }"
         >
-          <!-- Color Band -->
           <div class="tag-color-band" :style="{ backgroundColor: tag.color }" />
 
-          <!-- Card Content -->
           <div class="tag-content">
             <div class="tag-info">
               <div class="tag-label-wrapper">
@@ -228,14 +225,12 @@ function edit() {
                 />
               </div>
 
-              <!-- Color Preview -->
               <div class="color-preview">
                 <div class="color-circle" :style="{ backgroundColor: tag.color }" />
                 <span class="color-label">{{ tag.color }}</span>
               </div>
             </div>
 
-            <!-- Actions (only for personal tags) -->
             <div v-if="!tag.isDefault" class="tag-actions">
               <Button
                 v-tooltip.top="'Modifier'"
@@ -260,7 +255,6 @@ function edit() {
         </div>
       </TransitionGroup>
 
-      <!-- Empty State -->
       <div v-if="filteredTags.length === 0" class="empty-state">
         <i class="pi pi-tag empty-icon" />
         <h3>Aucun tag trouvé</h3>
@@ -273,7 +267,6 @@ function edit() {
       </div>
     </div>
 
-    <!-- Floating Action Button -->
     <Button
       v-tooltip.left="'Créer un nouveau tag'"
       icon="pi pi-plus"
@@ -284,7 +277,6 @@ function edit() {
       @click="addTagDialog = true"
     />
 
-    <!-- Add Tag Dialog -->
     <Dialog
       v-model:visible="addTagDialog"
       modal
@@ -338,7 +330,6 @@ function edit() {
       </div>
     </Dialog>
 
-    <!-- Edit Tag Dialog -->
     <Dialog
       v-model:visible="editTagDialog"
       modal

@@ -64,14 +64,12 @@ onMounted(() => {
 
 <template>
   <div class="landing-container">
-    <!-- Navigation Button -->
     <div class="dashboard-nav">
       <button class="dashboard-button" @click="navigateTo('/dashboard')">
         <i class="pi pi-home" />
         <span>Retour au Dashboard</span>
       </button>
     </div>
-    <!-- Hero Section -->
     <section ref="heroRef" class="hero-section" :class="{ visible: isHeroVisible }">
       <div class="hero-content">
         <div class="hero-text">
@@ -203,7 +201,6 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Features Section -->
     <section ref="featuresRef" class="features-section" :class="{ visible: isFeaturesVisible }">
       <h2 class="section-title">
         Tout ce dont vous avez besoin pour
@@ -293,7 +290,6 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="cta-section">
       <div class="cta-content">
         <h2>Prêt à prendre en main vos finances ?</h2>
@@ -584,7 +580,6 @@ onMounted(() => {
   padding-right: 8px;
 }
 
-/* Scrollbar personnalisée */
 .booklets-grid::-webkit-scrollbar {
   width: 6px;
 }
