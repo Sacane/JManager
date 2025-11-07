@@ -32,6 +32,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
@@ -53,6 +54,7 @@ dependencies {
     testImplementation("com.h2database:h2")
     testImplementation("io.rest-assured:rest-assured:${restAssuredVersion}")
     testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
 
     testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
     testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
