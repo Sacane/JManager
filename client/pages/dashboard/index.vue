@@ -19,7 +19,7 @@ import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import useStats from '~/composables/useStats'
-import { rgbToHex } from '~/utils/util'
+import { capitalizeFirst, rgbToHex } from '~/utils/util'
 
 ChartJS.register(
   CategoryScale,
@@ -438,7 +438,7 @@ onMounted(() => {
       <div class="flex justify-between items-center flex-wrap gap-5">
         <div>
           <h1 class="text-4xl font-extrabold mb-2" style="color: var(--text-primary);">
-            Bonjour, {{ user?.username }} 👋
+            Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
           <p class="text-base" style="color: var(--text-secondary);">
             Voici un aperçu de vos finances au {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
