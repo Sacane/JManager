@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -34,7 +35,7 @@ class JacksonConfig {
             val module = SimpleModule()
             module.addDeserializer(Double::class.java, StringToDoubleDeserializer())
             module.addDeserializer(Double::class.javaObjectType, StringToDoubleDeserializer())
-            builder.modules(module)
+            builder.modules(module, JavaTimeModule())
         }
     }
 }
