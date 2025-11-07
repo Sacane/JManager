@@ -15,6 +15,7 @@ import {
 } from 'chart.js'
 import { addMonths, endOfMonth, format, startOfMonth } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
@@ -371,6 +372,50 @@ const doughnutOptions = {
   cutout: '65%',
 }
 
+// Responsive behavior for legends and chart sizing
+const isSmallScreen = ref(false)
+
+function updateIsSmallScreen() {
+  if (typeof window !== 'undefined') {
+    isSmallScreen.value = window.innerWidth <= 640
+  }
+}
+
+// computed options so we can change legend position for doughnut on small screens
+const chartOptionsComputed = computed(() => {
+  // shallow clone
+  const opts = JSON.parse(JSON.stringify(chartOptions))
+  // keep legend at bottom for small screens (line/bar already bottom)
+  opts.plugins = opts.plugins || {}
+  opts.plugins.legend = opts.plugins.legend || {}
+  opts.plugins.legend.position = 'bottom'
+  return opts
+})
+
+const doughnutOptionsComputed = computed(() => {
+  const opts = JSON.parse(JSON.stringify(doughnutOptions))
+  opts.plugins = opts.plugins || {}
+  opts.plugins.legend = opts.plugins.legend || {}
+  // put legend under chart on small screens to avoid horizontal overflow
+  opts.plugins.legend.position = isSmallScreen.value ? 'bottom' : 'right'
+  // reduce label size on small screens
+  opts.plugins.legend.labels = opts.plugins.legend.labels || {}
+  opts.plugins.legend.labels.font = opts.plugins.legend.labels.font || {}
+  opts.plugins.legend.labels.font.size = isSmallScreen.value ? 11 : 12
+  return opts
+})
+
+if (typeof window !== 'undefined') {
+  updateIsSmallScreen()
+  window.addEventListener('resize', updateIsSmallScreen)
+}
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateIsSmallScreen)
+  }
+})
+
 // Functions
 function handleAccountCreation(account: { label: string, digit: number }) {
   createAccount(account.label, account.digit, '€')
@@ -553,7 +598,7 @@ onMounted(() => {
       </section>
 
       <!-- Charts Section -->
-      <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
+      <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
         <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
           <div class="mb-5">
             <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
@@ -564,8 +609,8 @@ onMounted(() => {
               Comparaison revenus vs dépenses sur 12 mois
             </p>
           </div>
-          <div class="h-75 relative">
-            <Line :data="expensesTrendData" :options="chartOptions" />
+          <div class="chart-container h-75 relative">
+            <Line :data="expensesTrendData" :options="chartOptionsComputed" />
           </div>
         </div>
 
@@ -579,8 +624,8 @@ onMounted(() => {
               Répartition totale: {{ categoryDistribution?.totalExpenses || '0.00' }} €
             </p>
           </div>
-          <div class="h-70 relative">
-            <Doughnut :data="categoryExpensesData" :options="doughnutOptions" />
+          <div class="chart-container h-70 relative">
+            <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
           </div>
         </div>
 
@@ -594,8 +639,8 @@ onMounted(() => {
               Ce mois vs mois dernier
             </p>
           </div>
-          <div class="h-75 relative">
-            <Bar :data="monthlyComparisonData" :options="chartOptions" />
+          <div class="chart-container h-75 relative">
+            <Bar :data="monthlyComparisonData" :options="chartOptionsComputed" />
           </div>
         </div>
       </section>
@@ -812,5 +857,31 @@ onMounted(() => {
 
 *::-webkit-scrollbar-thumb:hover {
   background: #651e9e;
+}
+
+/* Chart container responsive heights */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .chart-container.h-70 {
+    height: 18rem;
+  }
+
+  .chart-container.h-75 {
+    height: 20rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .chart-container.h-70 {
+    height: 15rem;
+  }
+
+  .chart-container.h-75 {
+    height: 18rem;
+  }
 }
 </style>
