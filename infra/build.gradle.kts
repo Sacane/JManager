@@ -27,7 +27,7 @@ val restAssuredVersion = "5.5.0"
 val jwtVersion = "0.12.6"
 val flywayVersion = "11.14.1"
 val testcontainersVersion = "1.21.3"
-
+val mockitoVersion = "5.1.0"
 dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
@@ -54,7 +54,7 @@ dependencies {
     testImplementation("com.h2database:h2")
     testImplementation("io.rest-assured:rest-assured:${restAssuredVersion}")
     testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:${mockitoVersion}")
 
     testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
     testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
