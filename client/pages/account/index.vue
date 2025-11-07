@@ -8,6 +8,8 @@ definePageMeta({
   layout: 'sidebar-layout',
 })
 
+const confirm = useConfirm()
+
 const { fetch, deleteAccount, createAccount } = useBooklet()
 const isAccountFilled = ref<boolean>(false)
 const data = ref<Array<{
@@ -50,6 +52,18 @@ function applyDelete(accountId: string) {
   })
 }
 
+function openConfirmDeleteDialog(id: string, bookletLabel: string) {
+  confirm.require({
+    message: `Êtes-vous sûr de vouloir supprimer le livret "${bookletLabel}" ? \n Cette action et irréversible et supprimera définitivement toutes les transactions enregistrés dessus.`,
+    header: 'Confirmation de suppression',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Supprimer',
+    rejectLabel: 'Annuler',
+    acceptClass: 'p-button-danger',
+    accept: () => applyDelete(id),
+  })
+}
+
 const isAddAccountDialogOpen = ref<boolean>(false)
 
 function handleAccountCreation(account: { label: string, digit: number }) {
@@ -86,6 +100,7 @@ function formatAmount(amount: string) {
 </script>
 
 <template>
+  <ConfirmDialog ref="confirm" />
   <div class="booklets-page">
     <!-- Header Section -->
     <div class="page-header">
@@ -166,7 +181,7 @@ function formatAmount(amount: string) {
                 text
                 rounded
                 severity="danger"
-                @click.stop="applyDelete(account.id)"
+                @click.stop="openConfirmDeleteDialog(account.id, account.labelAccount)"
               />
             </div>
 

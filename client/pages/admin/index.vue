@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import useAdmin from '~/composables/useAdmin'
 import useAuth from '~/composables/useAuth'
 
@@ -22,6 +22,7 @@ const newUser = ref({
 })
 
 const isCreating = ref(false)
+const isMobileWidth = ref(false)
 
 function resetForm() {
   newUser.value = {
@@ -108,8 +109,24 @@ function getRoleLabel(roles: string[]) {
   return 'Utilisateur'
 }
 
+function updateIsMobile() {
+  if (typeof window !== 'undefined') {
+    isMobileWidth.value = window.innerWidth <= 1024
+  }
+}
+
 onMounted(() => {
   loadUsers()
+  updateIsMobile()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateIsMobile)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateIsMobile)
+  }
 })
 </script>
 
@@ -213,13 +230,66 @@ onMounted(() => {
             <i class="pi pi-users" />
             <h2>Utilisateurs enregistrés</h2>
           </div>
-          <div class="user-count">
+          <div v-if="!isMobileWidth" class="user-count">
             <span class="count-badge">{{ totalUsers }}</span>
             <span class="count-label">utilisateurs</span>
           </div>
         </div>
 
+        <!-- Mobile list view: shown only on small screens -->
+        <div v-if="isMobileWidth" class="users-mobile-list">
+          <div class="users-mobile-count">
+            {{ users.length }} utilisateur(s)
+          </div>
+          <div v-for="user in users" :key="user.id" class="user-mobile-card">
+            <div class="user-mobile-row">
+              <div class="user-avatar-small">
+                <i class="pi pi-user" />
+              </div>
+
+              <div class="user-mobile-info">
+                <div class="user-mobile-top">
+                  <div class="user-mobile-title">
+                    <span class="username-text">{{ user.username }}</span>
+                    <Tag
+                      :value="getRoleLabel(user.roles)"
+                      :class="getRoleBadgeClass(user.roles)"
+                      class="role-badge-mobile"
+                    />
+                  </div>
+                </div>
+
+                <div class="user-mobile-meta">
+                  <div v-if="user.email" class="email-text">
+                    <i class="pi pi-envelope" />
+                    <span class="email-val">{{ user.email }}</span>
+                  </div>
+                  <div v-else class="text-muted">
+                    N/A
+                  </div>
+
+                  <div class="created-date-inline">
+                    {{ formatDateTime(user.createdDate) }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="user-mobile-actions">
+                <Button
+                  class="user-action-btn"
+                  icon="pi pi-ellipsis-v"
+                  severity="secondary"
+                  text
+                  rounded
+                  aria-label="Actions"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <DataTable
+          v-else
           :value="users"
           :loading="isLoading"
           striped-rows
@@ -685,11 +755,22 @@ onMounted(() => {
   }
 }
 
-// Responsive
+.users-mobile-list {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .admin-content {
     max-width: 100%;
     grid-template-columns: 1fr;
+  }
+
+  .users-datatable {
+    display: none !important;
+  }
+
+  .users-mobile-list {
+    display: block !important;
   }
 }
 
@@ -772,6 +853,106 @@ onMounted(() => {
         width: 100%;
       }
     }
+
+    .form-label {
+      font-size: 0.92rem;
+
+      i {
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+  /* Mobile users list: hide DataTable, show stacked cards */
+  .users-datatable {
+    display: none !important;
+  }
+
+  /* Force show mobile list on small screens */
+  .users-mobile-list {
+    display: block !important;
+    width: 100%;
+  }
+
+  .user-mobile-card {
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--card-bg) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 0.9rem;
+    margin-bottom: 0.9rem;
+    box-shadow: 0 2px 10px var(--shadow-sm);
+    color: var(--text-primary);
+  }
+
+  .user-mobile-row {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .user-mobile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .user-mobile-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .user-mobile-top {
+    display: block;
+  }
+
+  .user-mobile-meta {
+    color: var(--text-secondary);
+    font-size: 0.92rem; /* fallback will be fixed below */
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-start;
+  }
+
+  /* correct mis-typed font-size fallback */
+  .user-mobile-meta { font-size: 0.92rem; }
+
+  .created-date-inline {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+  }
+
+  .user-mobile-card .user-avatar-small {
+    min-width: 48px;
+    min-height: 48px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.05rem;
+  }
+
+  .user-action-btn {
+    min-width: 40px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+  }
+
+  .users-mobile-count {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
   }
 }
 </style>

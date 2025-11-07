@@ -200,6 +200,16 @@ function edit() {
           option-value="value"
           class="filter-buttons"
         />
+
+        <!-- Modern action button moved into toolbar and aligned right -->
+        <Button
+          v-tooltip.left="'Créer un nouveau tag'"
+          icon="pi pi-plus"
+          label="Nouveau tag"
+          class="modern-fab header"
+          aria-label="Ajouter un tag"
+          @click="addTagDialog = true"
+        />
       </div>
     </div>
 
@@ -275,24 +285,13 @@ function edit() {
       </div>
     </div>
 
-    <!-- Floating Action Button -->
-    <Button
-      v-tooltip.left="'Créer un nouveau tag'"
-      icon="pi pi-plus"
-      rounded
-      size="large"
-      class="fab-button"
-      aria-label="Ajouter un tag"
-      @click="addTagDialog = true"
-    />
-
-    <!-- Add Tag Dialog -->
     <Dialog
       v-model:visible="addTagDialog"
       modal
       header="Créer un nouveau tag"
-      :style="{ width: '450px' }"
       class="tag-dialog"
+      :breakpoints="{ '960px': '90vw', '640px': '95vw' }"
+      style="width:450px"
     >
       <div class="dialog-content">
         <div class="form-field">
@@ -345,8 +344,9 @@ function edit() {
       v-model:visible="editTagDialog"
       modal
       header="Modifier le tag"
-      :style="{ width: '450px' }"
       class="tag-dialog"
+      :breakpoints="{ '960px': '90vw', '640px': '95vw' }"
+      style="width:450px"
     >
       <div class="dialog-content">
         <div class="form-field">
@@ -620,24 +620,46 @@ function edit() {
 }
 
 /* FAB Button */
-.fab-button {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 56px;
-  height: 56px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3), 0 2px 4px rgba(99, 102, 241, 0.2);
-  z-index: 100;
-  background: #6366f1;
+.modern-fab {
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(90deg, rgba(99,102,241,1) 0%, rgba(79,70,229,1) 100%);
+  color: white;
+  box-shadow: 0 6px 14px rgba(79,70,229,0.18), 0 2px 6px rgba(16,24,40,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  min-height: 44px;
 
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4), 0 4px 8px rgba(99, 102, 241, 0.3);
+  .p-button-icon {
+    font-size: 1.05rem;
   }
 
-  @media (max-width: 768px) {
-    bottom: 5rem;
-    right: 1rem;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(79,70,229,0.22), 0 4px 10px rgba(16,24,40,0.09);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  /* Header variant: align to right inside toolbar */
+  &.header {
+    margin-left: auto;
+    align-self: center;
+  }
+
+  @media (max-width: 640px) {
+    padding: 0.45rem;
+    min-width: 44px;
+
+    /* Hide the label on small screens to remain compact */
+    .p-button-label {
+      display: none;
+    }
   }
 }
 
@@ -764,5 +786,61 @@ function edit() {
 
 .tag-list-leave-active {
   position: absolute;
+}
+
+/* Dialog sizing and responsive adjustments for PrimeVue Dialog */
+:deep(.tag-dialog) {
+  /* PrimeVue may apply inline styles; ensure our size rules are prioritized */
+  width: 450px !important;
+  max-width: 95vw !important;
+  box-sizing: border-box !important;
+}
+
+/* Content inside the dialog */
+:deep(.tag-dialog .p-dialog-content) {
+  padding: 1rem !important;
+}
+
+/* Titlebar tweaks */
+:deep(.tag-dialog .p-dialog-header) {
+  padding: 0.75rem 1rem !important;
+}
+
+/* Make form elements more compact on small screens */
+@media (max-width: 640px) {
+  :deep(.tag-dialog) {
+    width: 95vw !important;
+    margin: 1.2rem !important;
+  }
+
+  :deep(.tag-dialog .p-dialog-content) {
+    padding: 0.75rem !important;
+  }
+
+  .dialog-content {
+    padding: 0.25rem 0 !important;
+  }
+
+  .form-field {
+    margin-bottom: 1rem;
+  }
+
+  .color-picker {
+    width: 48px !important;
+    height: 36px !important;
+  }
+
+  .color-preview-large {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .form-label {
+    font-size: 0.85rem !important;
+  }
+
+  .p-button {
+    font-size: 0.95rem !important;
+  }
 }
 </style>
