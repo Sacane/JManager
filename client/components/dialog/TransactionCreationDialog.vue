@@ -8,41 +8,60 @@ export interface TransactionCreationProps {
   buttonTitle?: string
 }
 
-const { title, digitPlaceholder, transactionPlaceholder, buttonTitle } = defineProps<TransactionCreationProps>()
+const props = defineProps<TransactionCreationProps>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
 const digits = reactive({
-  placeholder: digitPlaceholder,
+  placeholder: props.digitPlaceholder,
 })
 
-const transactionResult = reactive(transactionPlaceholder)
+// Create a local copy instead of wrapping the prop with reactive
+const transactionResult = ref<TransactionCreationDTO>({
+  id: null,
+  label: '',
+  value: null,
+  isIncome: false,
+  date: new Date(),
+  tagDTO: { tagId: undefined, label: '', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false },
+  isPreview: false,
+})
+
 const isVisibleData = ref(false)
 const inputNumberRef = ref(null)
 
 const tags = ref<TagDTO[]>([])
 
+watch(() => props.transactionPlaceholder, (newValue) => {
+  if (newValue) {
+    transactionResult.value = { ...newValue }
+  }
+}, { immediate: true, deep: true })
+
+watch(() => props.digitPlaceholder, (newValue) => {
+  digits.placeholder = newValue
+})
+
 onMounted(() => {
   tag.getAllTags().then((tagsResult) => {
     tags.value = tagsResult
   })
-  digits.placeholder = digitPlaceholder
 })
 
 const jToast = useJToast()
 
 function emitTransaction() {
-  if (transactionResult.value === null || (transactionResult.value <= 0) || transactionResult.label === '') {
+  if (transactionResult.value.value === null || (transactionResult.value.value <= 0) || transactionResult.value.label === '') {
     jToast.warn('Veuillez saisir un montant supérieur à 0')
     return
   }
   const transaction: TransactionCreationDTO = {
-    id: transactionResult.id,
-    label: transactionResult.label,
-    value: transactionResult.value,
-    isIncome: transactionResult.isIncome,
-    date: transactionResult.date,
-    tagDTO: transactionResult.tagDTO,
-    isPreview: transactionResult.isPreview,
+    id: transactionResult.value.id,
+    label: transactionResult.value.label,
+    value: transactionResult.value.value,
+    isIncome: transactionResult.value.isIncome,
+    date: transactionResult.value.date,
+    tagDTO: transactionResult.value.tagDTO,
+    isPreview: transactionResult.value.isPreview,
   }
   emit('createTransaction', transaction)
 }

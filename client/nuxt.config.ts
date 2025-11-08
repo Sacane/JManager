@@ -218,5 +218,19 @@ export default defineNuxtConfig({
   },
 
   ssr: false,
+
+  router: {
+    options: {
+      hashMode: false,
+    },
+  },
+
+  nitro: {
+    prerender: {
+      crawlLinks: false,
+      routes: ['/'],
+    },
+  },
+
   compatibilityDate: '2024-09-09',
 })

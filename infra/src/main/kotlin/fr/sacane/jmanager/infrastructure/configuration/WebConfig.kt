@@ -15,11 +15,14 @@ import java.time.Duration
 class WebConfig: WebMvcConfigurer{
 
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
-        // Ressources statiques avec priorité haute
-        registry.addResourceHandler("/**")
-            .addResourceLocations("classpath:/static/")
-            .setCacheControl(CacheControl.maxAge(Duration.ofDays(1)))
+        registry.addResourceHandler("/_nuxt/**", "/assets/**", "/*.ico", "/*.png", "/*.jpg", "/*.svg")
+            .addResourceLocations("classpath:/static/_nuxt/", "classpath:/static/assets/", "classpath:/static/")
+            .setCacheControl(CacheControl.maxAge(Duration.ofDays(365)))
             .resourceChain(true)
+
+        registry.addResourceHandler("/index.html")
+            .addResourceLocations("classpath:/static/")
+            .setCacheControl(CacheControl.noCache())
     }
 }
 
