@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import useBooklet from '../../composables/useBooklet'
 
@@ -9,6 +7,7 @@ definePageMeta({
 })
 
 const confirm = useConfirm()
+const router = useRouter()
 
 const { fetch, deleteAccount, createAccount } = useBooklet()
 const isAccountFilled = ref<boolean>(false)
@@ -36,8 +35,6 @@ function format(accounts: Array<BookletDTO>) {
     }
   })
 }
-
-const router = useRouter()
 
 function onCardClick(accountId: string) {
   router.push(`/account/${accountId}`)
@@ -100,7 +97,7 @@ function formatAmount(amount: string) {
 </script>
 
 <template>
-  <ConfirmDialog ref="confirm" />
+  <ConfirmDialog />
   <div class="booklets-page">
     <!-- Header Section -->
     <div class="page-header">
