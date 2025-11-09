@@ -13,6 +13,7 @@ import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.toUUIDs
 import fr.sacane.jmanager.infrastructure.api.*
+import kotlinx.serialization.Serializable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
@@ -96,7 +97,7 @@ class TransactionController(
 
     @PatchMapping("/confirm")
     fun confirmPreviewTransaction(
-        @RequestBody command: ConfirmPreviewCommand
+        @RequestBody command: ConfirmPreviewRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Confirming preview Transaction...")
         return transactionFeature.confirmPreviewTransaction(
@@ -203,8 +204,8 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
     )
 }
 
-
-data class ConfirmPreviewCommand(
+@Serializable
+data class ConfirmPreviewRequest(
     val accountID: String,
     val transactionID: String
 )
