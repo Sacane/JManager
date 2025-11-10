@@ -114,7 +114,7 @@ class InMemoryDatabase {
     fun upsert(booklet: Booklet) {
         val accountId = booklet.id
         userByBooklet[booklet.owner?.id]?.find { it.id == accountId }?.updateFrom(booklet)
-        bookletsByTransaction.computeIfAbsent(accountId!!) { mutableListOf() }
+        bookletsByTransaction[accountId!!] = booklet.transactions.toMutableList()
     }
 
     fun findAccountById(accountId: UUID): Booklet? {

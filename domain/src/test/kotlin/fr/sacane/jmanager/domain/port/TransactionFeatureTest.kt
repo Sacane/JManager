@@ -200,7 +200,7 @@ class TransactionFeatureTest: FeatureTest() {
         fun `Giving existing transactions, when one is edited with a older date, all the position after should still be coherent`() {
             val t1 = generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate())
             val t2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
-            val t3 = generateTransaction("tes3", 100.toAmount(), true, "02/01/2024".toDate())
+            val t3 = generateTransaction("test3", 100.toAmount(), true, "02/01/2024".toDate())
             val t4 = generateTransaction("test4", 100.toAmount(), true, "03/01/2024".toDate())
             val t5 = generateTransaction("test5", 100.toAmount(), true, "03/01/2024".toDate())
             launchWithConnectedUserInstance {
@@ -345,7 +345,8 @@ class TransactionFeatureTest: FeatureTest() {
                 transactionFeature.confirmPreviewTransaction(
                     tokenValue,
                     booklet.id!!,
-                    transactionPreviewTest.id!!
+                    transactionPreviewTest.id!!,
+                    null
                 )
                     .assertSuccess()
             }
@@ -367,7 +368,8 @@ class TransactionFeatureTest: FeatureTest() {
                 transactionFeature.confirmPreviewTransaction(
                     tokenValue,
                     UUID.randomUUID(),
-                    transactionPreviewTest.id!!
+                    transactionPreviewTest.id!!,
+                    null
                 ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
         }
@@ -377,8 +379,44 @@ class TransactionFeatureTest: FeatureTest() {
                 transactionFeature.confirmPreviewTransaction(
                     tokenValue,
                     booklet.id!!,
-                    UUID.randomUUID()
+                    UUID.randomUUID(),
+                    null
                 ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            }
+        }
+
+        @Test
+        fun `confirm preview with new amount should update transaction and account amount`() {
+            launchWithConnectedUserInstance {
+                val transactionPreviewTest = generateTransaction("test#1", 100.toAmount(), true, "01/01/2024".toDate(), isPreview = true)
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, booklet.id!!),
+                            mutableListOf(transactionPreviewTest)
+                        )
+                    )
+                )
+
+                val newAmount = 150.toAmount()
+
+                transactionFeature.confirmPreviewTransaction(
+                    tokenValue,
+                    booklet.id,
+                    transactionPreviewTest.id!!,
+                    newAmount
+                ).assertSuccess()
+
+                val transactions = transactionState.getStates().find { it.id.userId == user.id && it.id.accountId == booklet.id }
+                    ?.transactions
+                val updated = transactions?.find { it.id == transactionPreviewTest.id }
+                assertNotNull(updated)
+                assertFalse(updated!!.isPreview)
+                assertEquals(newAmount, updated.amount)
+
+                val actualAccount = accountState.getStates().find { it.userId == user.id }?.booklet?.find { it.id == booklet.id }
+                assertEquals(newAmount, actualAccount?.amount)
+                assertEquals(150.toAmount(), actualAccount?.previewAmount)
             }
         }
     }
