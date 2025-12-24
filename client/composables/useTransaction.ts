@@ -42,10 +42,11 @@ export default function useTransaction() {
     })
   }
 
-  function confirmPreviewTransaction(accountId: string, transactionId: string): Promise<TransactionResultDTO> {
+  function confirmPreviewTransaction(accountId: string, transactionId: string, amount: number | null): Promise<TransactionResultDTO> {
     return patch(`transaction/confirm`, {
       transactionID: transactionId,
       accountID: accountId,
+      newAmount: amount,
     })
   }
 
