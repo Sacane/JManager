@@ -365,7 +365,6 @@ const transactionsCount = computed(() => transactions.value.length)
 </template>
 
 <style scoped>
-/* Couleurs lisibles pour Select/DatePicker en clair et sombre */
 :deep(.p-dropdown), :deep(.p-select), :deep(.p-calendar) {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -378,7 +377,6 @@ const transactionsCount = computed(() => transactions.value.length)
   color: var(--text-secondary) !important;
 }
 
-/* DataTable stylé selon la DA */
 :deep(.p-datatable) .p-datatable-thead > tr > th {
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
   color: white;
