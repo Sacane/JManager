@@ -242,7 +242,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.realSold == 3500.toAmount() } // 1000 + 2000 + 500
@@ -296,7 +298,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.realSold == 300.toAmount() } // 1000 - 500 - 200
@@ -368,7 +372,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.FEBRUARY,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.FEBRUARY,
+                    startingYear = 2025
                 )
                 result.assertTrue { this.realSold == 2500.toAmount() } // 1000 + 1500 - 300 + 800 - 500 = 2500
             }
@@ -426,7 +432,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.NOVEMBER,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.NOVEMBER,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.realSold == 1500.toAmount() } // 1000 + 500 (only current)
@@ -507,7 +515,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.APRIL,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.APRIL,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.currentTransactions.size == 3 }
@@ -561,7 +571,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.regularTransactions.size == 2 }
@@ -589,7 +601,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.MAY,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.MAY,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.currentTransactions.isEmpty() }
@@ -606,7 +620,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     UUID.randomUUID(), // Non-existent booklet ID
                     java.time.Month.JUNE,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.JUNE,
+                    startingYear = 2025
                 )
 
                 result.assertFailure()
@@ -676,7 +692,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.FEBRUARY,
-                    2025
+                    2025,
+                    startingMonth = java.time.Month.FEBRUARY,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.currentTransactions.size == 2 }
@@ -742,7 +760,9 @@ class BookletFeatureTest: FeatureTest() {
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
-                    2026
+                    2026,
+                    startingMonth = java.time.Month.NOVEMBER,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.realSold == 1500.toAmount() } // 1000 + 500
@@ -765,7 +785,9 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.regularTransactionState.init(emptyList())
 
                 var result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
                 result.assertTrue { this.regularTransactions.isEmpty() }
 
@@ -785,14 +807,18 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Monthly Income RT" } }
 
                 FakeFactory.regularTransactionState.init(emptyList())
                 result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
                 result.assertTrue { this.regularTransactions.isEmpty() }
             }
@@ -839,7 +865,9 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, bookletIdMine, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletIdMine, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.regularTransactions.size == 1 }
@@ -875,9 +903,11 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, bookletId, java.time.Month.NOVEMBER, 2025
+                    tokenValue, bookletId, java.time.Month.NOVEMBER, 2025,
+                    startingMonth = java.time.Month.NOVEMBER,
+                    startingYear = 2025
                 )
-
+                println(result.mapNotNullOrFailure())
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.previsionalSold.value >= BigDecimal(3000) }
             }
@@ -932,7 +962,9 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, bookletId, java.time.Month.JANUARY, 2025
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.regularTransactions.size == 3 }
@@ -995,7 +1027,9 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
-                    tokenValue, bookletId, java.time.Month.DECEMBER, 2025
+                    tokenValue, bookletId, java.time.Month.DECEMBER, 2025,
+                    startingMonth = java.time.Month.DECEMBER,
+                    startingYear = 2025
                 )
 
                 result.assertTrue { this.regularTransactions.size == 1 }

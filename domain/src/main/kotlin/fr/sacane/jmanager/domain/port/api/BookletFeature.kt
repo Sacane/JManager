@@ -94,9 +94,18 @@ sealed interface BookletFeature {
      * @param bookletId UUID of the booklet to load.
      * @param month Target month to load transactions for.
      * @param year Target year to load transactions for.
+     * @param startingMonth Starting month for calculation (defaults to current month if null).
+     * @param startingYear Starting year for calculation (defaults to current year if null).
      * @return Result containing a BookletLoadingResult on success, or a failure state when the booklet is not found.
      */
-    fun loadTransactionsForBookletForAMonth(token: String, bookletId: UUID, month: Month, year: Int): Result<BookletLoadingResult>
+    fun loadTransactionsForBookletForAMonth(
+        token: String,
+        bookletId: UUID,
+        month: Month,
+        year: Int,
+        startingMonth: Month? = null,
+        startingYear: Int? = null
+    ): Result<BookletLoadingResult>
 }
 
 @DomainService
@@ -191,7 +200,9 @@ class BookletFeatureImpl(
         token: String,
         bookletId: UUID,
         month: Month,
-        year: Int
+        year: Int,
+        startingMonth: Month?,
+        startingYear: Int?
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
@@ -203,9 +214,9 @@ class BookletFeatureImpl(
                 ?: emptyList()
 
             val currentDate = LocalDate.now()
-            val currentMonth = currentDate.month
-            val currentYear = currentDate.year
-            
+            val currentMonth = startingMonth ?: currentDate.month
+            val currentYear = startingYear ?: currentDate.year
+
             val monthsToGenerate = generateMonthRange(currentMonth, currentYear, month, year)
             val allGeneratedTransactions = mutableListOf<Transaction>()
             
