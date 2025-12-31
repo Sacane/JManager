@@ -43,6 +43,7 @@ dependencies {
     implementation("org.postgresql:postgresql")
     implementation("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
     implementation("org.flywaydb:flyway-core:${flywayVersion}")
+    implementation("org.flywaydb:flyway-database-postgresql:${flywayVersion}")
     implementation(project(mapOf("path" to ":domain")))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
     implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")

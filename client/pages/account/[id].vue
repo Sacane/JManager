@@ -27,6 +27,9 @@ const isMobile = ref(false)
 const csvImportDialogRef = ref<any>(null)
 const isMobileMenuOpen = ref(false)
 const transactionFilter = ref<'all' | 'preview' | 'confirmed'>('all')
+const isConfirmPreviewDialogVisible = ref(false)
+const newAmountForPreview = ref<number | null>(null)
+const transactionToConfirm = ref<TransactionCreationDTO | null>(null)
 
 const bookletData = reactive({
   id: '',
@@ -240,9 +243,11 @@ function confirmDeleteButton() {
   })
 }
 
-async function confirmPreview(transaction: TransactionCreationDTO) {
+async function confirmPreview() {
+  const transaction = transactionToConfirm.value
+  if (!transaction) return
   try {
-    const result = await confirmPreviewTransaction(bookletData.id, transaction.id as string)
+    const result = await confirmPreviewTransaction(bookletData.id, transaction.id as string, newAmountForPreview.value)
 
     bookletData.realSold = Number.parseFloat(result.accountAmount)
     bookletData.previewSold = Number.parseFloat(result.accountPreviewAmount)
@@ -257,18 +262,16 @@ async function confirmPreview(transaction: TransactionCreationDTO) {
     toast.success('Transaction validée avec succès')
   } catch (err) {
     toast.errorAxios(err as AxiosError)
+  } finally {
+    isConfirmPreviewDialogVisible.value = false
+    newAmountForPreview.value = null
+    transactionToConfirm.value = null
   }
 }
 
 function onConfirmPreview(transaction: TransactionCreationDTO) {
-  confirm.require({
-    message: 'Voulez-vous valider cette transaction prévisionnelle ?',
-    header: 'Validation de transaction',
-    icon: 'pi pi-check',
-    acceptLabel: 'Valider',
-    rejectLabel: 'Annuler',
-    accept: () => confirmPreview(transaction),
-  })
+  transactionToConfirm.value = transaction
+  isConfirmPreviewDialogVisible.value = true
 }
 
 function rowClass(row: TransactionCreationDTO): string {
@@ -644,6 +647,37 @@ onUnmounted(() => {
         @cancel-creation="isEditDialogVisible = false"
         @create-transaction="applyEditTransaction"
       />
+
+      <Dialog v-model:visible="isConfirmPreviewDialogVisible" modal header="Valider la transaction prévisionnelle" :style="{ width: '25rem' }">
+        <div v-if="transactionToConfirm" class="flex flex-col gap-4">
+          <p>Voulez-vous valider cette transaction prévisionnelle ?</p>
+
+          <div class="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center text-sm">
+              <span class="font-semibold text-gray-600 dark:text-gray-400">Transaction</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200">{{ transactionToConfirm.label }}</span>
+            </div>
+            <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <span class="font-semibold text-gray-600 dark:text-gray-400">Montant de base</span>
+              <span class="font-bold text-lg" :class="transactionToConfirm.isIncome ? 'text-emerald-500' : 'text-red-500'">
+                {{ transactionToConfirm.isIncome ? '+' : '-' }} {{ transactionToConfirm.value }} €
+              </span>
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Vous pouvez optionnellement spécifier un nouveau montant ci-dessous.
+          </p>
+          <div class="flex flex-col gap-2">
+            <label for="newAmount" class="font-semibold">Nouveau montant</label>
+            <InputNumber id="newAmount" v-model="newAmountForPreview" mode="currency" currency="EUR" locale="fr-FR" placeholder="0.00" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6">
+          <Button type="button" label="Annuler" severity="secondary" @click="isConfirmPreviewDialogVisible = false" />
+          <Button type="button" label="Valider" @click="confirmPreview" />
+        </div>
+      </Dialog>
 
       <CsvImportDialog
         ref="csvImportDialogRef"

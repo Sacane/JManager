@@ -387,6 +387,7 @@ class TransactionControllerTest(
             val body = ConfirmPreviewRequest(
                 account.id!!.toString(),
                 transaction.id!!.toString(),
+                null
             )
 
             Given {

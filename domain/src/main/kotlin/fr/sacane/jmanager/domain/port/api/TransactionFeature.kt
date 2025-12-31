@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.roleUser
@@ -85,7 +86,7 @@ sealed interface TransactionFeature {
      * @param transactionId UUID of the preview transaction to confirm.
      * @return Result containing a TransactionResumeResult on success, or an appropriate failure state.
      */
-    fun confirmPreviewTransaction(token: String, accountID: UUID, transactionId: UUID): Result<TransactionResumeResult>
+    fun confirmPreviewTransaction(token: String, accountID: UUID, transactionId: UUID, newAmount: Amount?): Result<TransactionResumeResult>
 }
 
 @DomainService
@@ -179,15 +180,20 @@ class TransactionFeatureImpl(
     override fun confirmPreviewTransaction(
         token: String,
         accountID: UUID,
-        transactionId: UUID
+        transactionId: UUID,
+        newAmount: Amount?
     ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Booklet $accountID not found")
             val transaction = transactionRepository.findTransactionById(transactionId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Transaction not found")
-            transaction.isPreview = false
+
             account.removeTransactionById(transactionId)
+            if (newAmount != null) {
+                transaction.amount = newAmount
+            }
+            transaction.isPreview = false
             account.addTransaction(transaction)
             accountRepository.upsert(account)
             return@executeInTransaction success(TransactionResumeResult(transaction, account.amount, account.previewAmount))

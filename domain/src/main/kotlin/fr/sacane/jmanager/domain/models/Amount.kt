@@ -8,7 +8,7 @@ data class Amount(var value: BigDecimal, val currency: Currency = Currency.EUR) 
 
     init{
         if(value.scale() != 2){
-            value = value.setScale(2, RoundingMode.UP)
+            value = value.setScale(2, RoundingMode.HALF_UP)
         }
     }
     operator fun plusAssign(other: Amount) {
