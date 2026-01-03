@@ -330,9 +330,6 @@ class BookletFeatureImpl(
 
             when {
                 transactionYearMonth < currentYearMonth -> false
-                transactionYearMonth == currentYearMonth -> {
-                    transaction.isPreview
-                }
                 transactionYearMonth <= targetYearMonth -> true
                 else -> false
             }
