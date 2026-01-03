@@ -30,6 +30,25 @@ interface RegularTransactionGenerator {
         targetMonth: Month,
         targetYear: Int
     ): List<Transaction>
+
+    /**
+     * Calculates virtual transactions from regular transactions for a date range without persisting them.
+     * This is used for calculating provisional balance without generating physical transactions.
+     *
+     * @param regularTransactions The list of regular transactions to compute.
+     * @param startMonth The starting month of the calculation.
+     * @param startYear The starting year of the calculation.
+     * @param endMonth The ending month of the calculation.
+     * @param endYear The ending year of the calculation.
+     * @return A list of virtual transactions that would occur in the specified date range.
+     */
+    fun calculateVirtualTransactions(
+        regularTransactions: List<RegularTransaction>,
+        startMonth: Month,
+        startYear: Int,
+        endMonth: Month,
+        endYear: Int
+    ): List<Transaction>
 }
 
 @UseCase
@@ -51,39 +70,53 @@ class RegularTransactionGeneratorService(
 
             val tracker = trackerRepository.findTracker(regularTxId, bookletId)
 
-            val startDate = if (tracker != null) {
-                tracker.lastGeneratedDate.plusMonths(1)
-            } else {
-                regularTransaction.startDate
+            // Check if this month has already been generated
+            if (tracker != null) {
+                val trackerYearMonth = YearMonth.of(tracker.lastGeneratedDate.year, tracker.lastGeneratedDate.month)
+                val targetYearMonth = YearMonth.of(targetYear, targetMonth)
+
+                if (trackerYearMonth >= targetYearMonth) {
+                    // This month has already been generated, skip it
+                    return@forEach
+                }
             }
 
+            // Only generate transactions for the target month, not all months in between
+            val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
             val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
-            val targetDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
+            val targetStartDate = firstDayOfTargetMonth
+            val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
+
+            // Check if this month should have transactions based on the regular transaction start date
+            if (targetEndDate.isBefore(regularTransaction.startDate)) {
+                return@forEach
+            }
 
             val transactionsToCreate = when(val frequency = regularTransaction.frequencyProperty) {
                 is FrequencyProperty.Forever -> generateTransactionsBetween(
                     regularTransaction,
-                    startDate,
-                    targetDate,
+                    targetStartDate,
+                    targetEndDate,
                     bookletId,
                 )
                 is FrequencyProperty.UntilDate -> generateTransactionsBetween(
                     regularTransaction,
-                    startDate,
-                    targetDate,
+                    targetStartDate,
+                    targetEndDate,
                     bookletId,
                     untilDate = frequency.date
                 )
-                is FrequencyProperty.SpecificRepetitionTimes -> generateTransactionsBetween(
-                    regularTransaction,
-                    startDate,
-                    targetDate,
-                    bookletId,
-                    currentMaxNumber = CurrentMaxNumber(
-                        tracker?.numberOfGeneratedTransaction ?: 0,
-                        frequency.number
+                is FrequencyProperty.SpecificRepetitionTimes -> {
+                    // For specific repetitions, we need to track the count globally
+                    val currentCount = tracker?.numberOfGeneratedTransaction ?: 0
+                    generateTransactionsBetween(
+                        regularTransaction,
+                        targetStartDate,
+                        targetEndDate,
+                        bookletId,
+                        currentMaxNumber = CurrentMaxNumber(currentCount, frequency.number)
                     )
-                )
+                }
             }
 
             transactionsToCreate.forEach { transaction ->
@@ -98,7 +131,7 @@ class RegularTransactionGeneratorService(
                     id = tracker?.id,
                     regularTransactionId = regularTxId,
                     bookletId = bookletId,
-                    lastGeneratedDate = targetDate,
+                    lastGeneratedDate = targetEndDate,
                     numberOfGeneratedTransaction = tracker?.numberOfGeneratedTransaction?.plus(transactionsToCreate.size) ?: transactionsToCreate.size
                 )
                 trackerRepository.upsertTracker(newTracker)
@@ -106,6 +139,99 @@ class RegularTransactionGeneratorService(
         }
 
         return createdTransactions
+    }
+
+    override fun calculateVirtualTransactions(
+        regularTransactions: List<RegularTransaction>,
+        startMonth: Month,
+        startYear: Int,
+        endMonth: Month,
+        endYear: Int
+    ): List<Transaction> {
+        val virtualTransactions = mutableListOf<Transaction>()
+
+        val startDate = LocalDate.of(startYear, startMonth, 1)
+        val lastDayOfEndMonth = YearMonth.of(endYear, endMonth).lengthOfMonth()
+        val endDate = LocalDate.of(endYear, endMonth, lastDayOfEndMonth)
+
+        regularTransactions.forEach { regularTransaction ->
+            // Skip if the regular transaction hasn't started yet
+            if (regularTransaction.startDate.isAfter(endDate)) {
+                return@forEach
+            }
+
+            val effectiveStartDate = if (regularTransaction.startDate.isAfter(startDate)) {
+                regularTransaction.startDate
+            } else {
+                startDate
+            }
+
+            val transactions = when(val frequency = regularTransaction.frequencyProperty) {
+                is FrequencyProperty.Forever -> generateVirtualTransactionsBetween(
+                    regularTransaction,
+                    effectiveStartDate,
+                    endDate
+                )
+                is FrequencyProperty.UntilDate -> {
+                    val effectiveEndDate = if (frequency.date.isBefore(endDate)) frequency.date else endDate
+                    generateVirtualTransactionsBetween(
+                        regularTransaction,
+                        effectiveStartDate,
+                        effectiveEndDate
+                    )
+                }
+                is FrequencyProperty.SpecificRepetitionTimes -> generateVirtualTransactionsBetween(
+                    regularTransaction,
+                    effectiveStartDate,
+                    endDate,
+                    maxCount = frequency.number
+                )
+            }
+
+            virtualTransactions.addAll(transactions)
+        }
+
+        return virtualTransactions
+    }
+
+    /**
+     * Generate virtual transactions without checking if they exist in the database.
+     * Used for provisional balance calculation only.
+     */
+    private fun generateVirtualTransactionsBetween(
+        regularTransaction: RegularTransaction,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        maxCount: Int? = null
+    ): List<Transaction> {
+        val transactions = mutableListOf<Transaction>()
+        var currentDate = alignInitialDateForYearlyRecurrence(startDate, regularTransaction)
+        var count = 0
+
+        if (currentDate.isAfter(endDate)) {
+            return emptyList()
+        }
+
+        while (!currentDate.isAfter(endDate)) {
+            if (maxCount != null && count >= maxCount) {
+                break
+            }
+
+            val shouldCreate = when (val rule = regularTransaction.recurrenceRule) {
+                is RecurrenceRule.Weekly -> rule.daysOfWeek.contains(currentDate.dayOfWeek)
+                else -> true
+            }
+
+            if (shouldCreate) {
+                val transaction = createPrevisionalTransaction(regularTransaction, currentDate)
+                transactions.add(transaction)
+                count++
+            }
+
+            currentDate = calculateNextOccurrence(currentDate, regularTransaction)
+        }
+
+        return transactions
     }
 
     /**
