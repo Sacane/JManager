@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.fake.InMemoryRegularTrackerRepository
 import fr.sacane.jmanager.domain.fake.InMemoryTransactionRepository
 import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
@@ -57,16 +58,21 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(15)
                 )
 
-                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
-                    bookletId = booklet.id!!,
-                    regularTransactions = listOf(monthlyTransaction),
-                    targetMonth = Month.DECEMBER,
-                    targetYear = 2024
-                )
+                // Generate transactions month by month (new behavior: only generates for target month)
+                val allGeneratedTransactions = mutableListOf<Transaction>()
+                for (month in 1..12) {
+                    val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                        bookletId = booklet.id!!,
+                        regularTransactions = listOf(monthlyTransaction),
+                        targetMonth = Month.of(month),
+                        targetYear = 2024
+                    )
+                    allGeneratedTransactions.addAll(generatedTransactions)
+                }
 
-                assertEquals(12, generatedTransactions.size)
+                assertEquals(12, allGeneratedTransactions.size)
 
-                generatedTransactions.forEachIndexed { index, transaction ->
+                allGeneratedTransactions.forEachIndexed { index, transaction ->
                     assertEquals("Salaire", transaction.label)
                     assertEquals(3000.toAmount(), transaction.amount)
                     assertTrue(transaction.isIncome)
@@ -101,6 +107,7 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(10)
                 )
 
+                // Only generates transactions for June
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = listOf(transaction1, transaction2),
@@ -108,20 +115,23 @@ class RegularTransactionComputerTest : FeatureTest() {
                     targetYear = 2024
                 )
 
-                assertEquals(12, generatedTransactions.size)
+                // Should generate 2 transactions: 1 for rent and 1 for internet in June
+                assertEquals(2, generatedTransactions.size)
 
                 val rentTransactions = generatedTransactions.filter { it.label == "Loyer" }
                 val internetTransactions = generatedTransactions.filter { it.label == "Facture internet" }
 
-                assertEquals(6, rentTransactions.size)
-                assertEquals(6, internetTransactions.size)
+                assertEquals(1, rentTransactions.size)
+                assertEquals(1, internetTransactions.size)
 
                 rentTransactions.forEach {
                     assertEquals(5, it.date.dayOfMonth)
+                    assertEquals(6, it.date.monthValue)
                 }
 
                 internetTransactions.forEach {
                     assertEquals(10, it.date.dayOfMonth)
+                    assertEquals(6, it.date.monthValue)
                 }
             }
         }
@@ -139,6 +149,7 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
+                // Generate for March (only March will be generated)
                 val firstGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = listOf(monthlyTransaction),
@@ -146,8 +157,10 @@ class RegularTransactionComputerTest : FeatureTest() {
                     targetYear = 2024
                 )
 
-                assertEquals(3, firstGeneration.size)
+                assertEquals(1, firstGeneration.size)
+                assertEquals(Month.MARCH, firstGeneration[0].date.month)
 
+                // Generate for June (only June will be generated, not March again)
                 val secondGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = listOf(monthlyTransaction),
@@ -155,12 +168,18 @@ class RegularTransactionComputerTest : FeatureTest() {
                     targetYear = 2024
                 )
 
-                assertEquals(3, secondGeneration.size)
+                assertEquals(1, secondGeneration.size)
+                assertEquals(Month.JUNE, secondGeneration[0].date.month)
 
-                val allMonths = secondGeneration.map { it.date.month }
-                assertTrue(allMonths.contains(Month.APRIL))
-                assertTrue(allMonths.contains(Month.MAY))
-                assertTrue(allMonths.contains(Month.JUNE))
+                // Try to generate March again - should return empty because it's already generated
+                val thirdGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2024
+                )
+
+                assertEquals(0, thirdGeneration.size)
             }
         }
     }
@@ -182,20 +201,26 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
-                    bookletId = booklet.id!!,
-                    regularTransactions = listOf(monthlyTransaction),
-                    targetMonth = Month.DECEMBER,
-                    targetYear = 2024
-                )
+                // Generate transactions month by month
+                val allGeneratedTransactions = mutableListOf<Transaction>()
+                for (month in 1..12) {
+                    val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                        bookletId = booklet.id!!,
+                        regularTransactions = listOf(monthlyTransaction),
+                        targetMonth = Month.of(month),
+                        targetYear = 2024
+                    )
+                    allGeneratedTransactions.addAll(generatedTransactions)
+                }
 
-                assertEquals(6, generatedTransactions.size)
+                // Should only generate until June (6 months)
+                assertEquals(6, allGeneratedTransactions.size)
 
-                generatedTransactions.forEach { transaction ->
+                allGeneratedTransactions.forEach { transaction ->
                     assertTrue(transaction.date.isBefore(endDate) || transaction.date.isEqual(endDate))
                 }
 
-                val lastTransaction = generatedTransactions.maxByOrNull { it.date }
+                val lastTransaction = allGeneratedTransactions.maxByOrNull { it.date }
                 assertNotNull(lastTransaction)
                 assertEquals(Month.JUNE, lastTransaction?.date?.month)
             }
@@ -243,16 +268,22 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
-                    bookletId = booklet.id!!,
-                    regularTransactions = listOf(monthlyTransaction),
-                    targetMonth = Month.DECEMBER,
-                    targetYear = 2024
-                )
+                // Generate transactions month by month
+                val allGeneratedTransactions = mutableListOf<Transaction>()
+                for (month in 1..12) {
+                    val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                        bookletId = booklet.id!!,
+                        regularTransactions = listOf(monthlyTransaction),
+                        targetMonth = Month.of(month),
+                        targetYear = 2024
+                    )
+                    allGeneratedTransactions.addAll(generatedTransactions)
+                }
 
-                assertEquals(5, generatedTransactions.size)
+                // Should only generate 5 transactions total
+                assertEquals(5, allGeneratedTransactions.size)
 
-                val months = generatedTransactions.map { it.date.month }
+                val months = allGeneratedTransactions.map { it.date.month }
                 assertEquals(listOf(Month.JANUARY, Month.FEBRUARY, Month.MARCH, Month.APRIL, Month.MAY), months)
             }
         }
@@ -270,23 +301,45 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
+                // Generate January
                 val firstGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.JANUARY,
+                    targetYear = 2024
+                )
+
+                assertEquals(1, firstGeneration.size)
+
+                // Generate February
+                val secondGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = listOf(monthlyTransaction),
                     targetMonth = Month.FEBRUARY,
                     targetYear = 2024
                 )
 
-                assertEquals(2, firstGeneration.size)
+                assertEquals(1, secondGeneration.size)
 
-                val secondGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                // Generate March
+                val thirdGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = listOf(monthlyTransaction),
-                    targetMonth = Month.JUNE,
+                    targetMonth = Month.MARCH,
                     targetYear = 2024
                 )
 
-                assertEquals(1, secondGeneration.size)
+                assertEquals(1, thirdGeneration.size)
+
+                // Try to generate April - should return 0 because max is 3
+                val fourthGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.APRIL,
+                    targetYear = 2024
+                )
+
+                assertEquals(0, fourthGeneration.size)
             }
         }
     }
@@ -307,6 +360,7 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
+                // Generate only for March
                 regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = listOf(monthlyTransaction),
@@ -319,7 +373,8 @@ class RegularTransactionComputerTest : FeatureTest() {
                 assertNotNull(tracker)
                 assertEquals(monthlyTransaction.id, tracker?.regularTransactionId)
                 assertEquals(booklet.id, tracker?.bookletId)
-                assertEquals(3, tracker?.numberOfGeneratedTransaction)
+                // Only 1 transaction generated (March only)
+                assertEquals(1, tracker?.numberOfGeneratedTransaction)
                 assertEquals(LocalDate.of(2024, 3, 31), tracker?.lastGeneratedDate)
             }
         }
@@ -337,6 +392,7 @@ class RegularTransactionComputerTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
+                // Generate March (only March)
                 regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = listOf(monthlyTransaction),
@@ -345,8 +401,10 @@ class RegularTransactionComputerTest : FeatureTest() {
                 )
 
                 val trackerAfterFirst = trackerRepository.findTracker(monthlyTransaction.id, booklet.id)
-                assertEquals(3, trackerAfterFirst?.numberOfGeneratedTransaction)
+                assertEquals(1, trackerAfterFirst?.numberOfGeneratedTransaction)
+                assertEquals(LocalDate.of(2024, 3, 31), trackerAfterFirst?.lastGeneratedDate)
 
+                // Generate June (only June)
                 regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id,
                     regularTransactions = listOf(monthlyTransaction),
@@ -355,7 +413,7 @@ class RegularTransactionComputerTest : FeatureTest() {
                 )
 
                 val trackerAfterSecond = trackerRepository.findTracker(monthlyTransaction.id!!, booklet.id!!)
-                assertEquals(6, trackerAfterSecond?.numberOfGeneratedTransaction)
+                assertEquals(2, trackerAfterSecond?.numberOfGeneratedTransaction)
                 assertEquals(LocalDate.of(2024, 6, 30), trackerAfterSecond?.lastGeneratedDate)
             }
         }
