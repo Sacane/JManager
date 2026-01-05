@@ -204,23 +204,9 @@ async function confirmDelete() {
       selectedSheets.value.map(sheet => sheet.id as string),
     )
 
-    selectedSheets.value.forEach((sheet) => {
-      const index = actualSheets.value.findIndex(item => item?.id === sheet!.id)
-      if (index !== -1) {
-        actualSheets.value.splice(index, 1)
-        const value = Number.parseFloat(sheet?.value?.toString() ?? '0')
-
-        if (sheet.isPreview) {
-          bookletData.previewSold = sheet.isIncome
-            ? bookletData.previewSold - value
-            : bookletData.previewSold + value
-        } else {
-          bookletData.realSold = sheet.isIncome
-            ? bookletData.realSold - value
-            : bookletData.realSold + value
-        }
-      }
-    })
+    // Reload booklet data to recalculate the previsional balance correctly
+    // The backend will recalculate previsionalSold including virtual transactions
+    await loadBookletData()
 
     selectedSheets.value = []
     toast.success('Transactions supprimées avec succès')
@@ -247,17 +233,10 @@ async function confirmPreview() {
   const transaction = transactionToConfirm.value
   if (!transaction) return
   try {
-    const result = await confirmPreviewTransaction(bookletData.id, transaction.id as string, newAmountForPreview.value)
+    await confirmPreviewTransaction(bookletData.id, transaction.id as string, newAmountForPreview.value)
 
-    bookletData.realSold = Number.parseFloat(result.accountAmount)
-    bookletData.previewSold = Number.parseFloat(result.accountPreviewAmount)
-
-    const index = actualSheets.value.findIndex(v => v.id === transaction.id)
-    if (index !== -1) {
-      actualSheets.value.splice(index, 1)
-      actualSheets.value.push(asDisplayableTransaction(result))
-      actualSheets.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    }
+    // Reload booklet data to ensure all calculations are up-to-date
+    await loadBookletData()
 
     toast.success('Transaction validée avec succès')
   } catch (err) {
