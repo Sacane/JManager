@@ -70,16 +70,6 @@ class RegularTransactionGeneratorService(
 
             val tracker = trackerRepository.findTracker(regularTxId, bookletId)
 
-            // Check if this month has already been generated
-            if (tracker != null) {
-                val trackerYearMonth = YearMonth.of(tracker.lastGeneratedDate.year, tracker.lastGeneratedDate.month)
-                val targetYearMonth = YearMonth.of(targetYear, targetMonth)
-
-                if (trackerYearMonth >= targetYearMonth) {
-                    // This month has already been generated, skip it
-                    return@forEach
-                }
-            }
 
             // Only generate transactions for the target month, not all months in between
             val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
