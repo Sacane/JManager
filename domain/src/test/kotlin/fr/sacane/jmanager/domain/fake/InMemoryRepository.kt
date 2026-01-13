@@ -41,8 +41,13 @@ class InMemoryTransactionRepository(
     }
 
     override fun save(accountId: UUID, transaction: Transaction): Transaction {
-        inMemoryDatabase.saveTransaction(accountId, transaction)
-        return transaction
+        val transactionWithId = if (transaction.id == null) {
+            transaction.copy(id = UUID.randomUUID())
+        } else {
+            transaction
+        }
+        inMemoryDatabase.saveTransaction(accountId, transactionWithId)
+        return transactionWithId
     }
 
     override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet? {

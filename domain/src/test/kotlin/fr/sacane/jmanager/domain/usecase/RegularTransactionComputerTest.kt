@@ -12,6 +12,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.FeatureTest
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -23,18 +24,15 @@ import java.time.Month
 class RegularTransactionComputerTest : FeatureTest() {
 
     private lateinit var transactionRepository: InMemoryTransactionRepository
-    private lateinit var trackerRepository: InMemoryRegularTrackerRepository
+    private lateinit var trackerRepository: RegularTransactionTrackerRepository
     private lateinit var regularTransactionGenerator: RegularTransactionGenerator
     private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
 
     @BeforeEach
     fun setup() {
-        transactionRepository = InMemoryTransactionRepository(fr.sacane.jmanager.domain.InMemoryDatabase())
-        trackerRepository = InMemoryRegularTrackerRepository(fr.sacane.jmanager.domain.InMemoryDatabase())
-        regularTransactionGenerator = RegularTransactionGeneratorService(
-            transactionRepository,
-            trackerRepository
-        )
+        transactionRepository = FakeFactory.transactionRepository()
+        trackerRepository = FakeFactory.trackerRepository()
+        regularTransactionGenerator = FakeFactory.regularTransactionGenerator()
     }
 
     @AfterEach

@@ -506,20 +506,18 @@ class RegularTransactionGeneratorService(
             yearMonth.month,
         )
 
-        return monthTransactions?.any {
+        return monthTransactions?.any { transaction ->
+            val sameDate = transaction.date == date
+
             // Check by regularTransactionId if available (more precise)
-            if (it.regularTransactionId != null && regularTransaction.id != null) {
-                it.regularTransactionId == regularTransaction.id &&
-                    it.date.year == date.year &&
-                    it.date.month == date.month &&
-                    it.date.dayOfMonth == date.dayOfMonth
+            val sameRegularId = if (transaction.regularTransactionId != null && regularTransaction.id != null) {
+                transaction.regularTransactionId == regularTransaction.id
             } else {
                 // Fallback to label matching if no regularTransactionId
-                it.label == regularTransaction.label &&
-                    it.date.year == date.year &&
-                    it.date.month == date.month &&
-                    it.date.dayOfMonth == date.dayOfMonth
+                transaction.label == regularTransaction.label
             }
+
+            sameDate && sameRegularId && transaction.isPreview
         } ?: false
     }
 

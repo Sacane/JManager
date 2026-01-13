@@ -110,6 +110,18 @@ object FakeFactory {
         return transactionRepository
     }
 
+    fun transactionRepository(): InMemoryTransactionRepository {
+        return transactionRepository
+    }
+
+    fun trackerRepository(): RegularTransactionTrackerRepository {
+        return inMemoryTrackerRepository
+    }
+
+    fun regularTransactionGenerator(): RegularTransactionGenerator {
+        return inMemoryRegularTransactionGenerator
+    }
+
     fun sessionManager(): SessionManager {
         return sessionManager
     }
