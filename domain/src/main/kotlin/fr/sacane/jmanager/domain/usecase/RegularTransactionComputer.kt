@@ -88,13 +88,10 @@ class RegularTransactionGeneratorService(
             val tracker = trackerRepository.findTracker(regularTxId, bookletId)
 
 
-            // Only generate transactions for the target month, not all months in between
             val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
             val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
-            val targetStartDate = firstDayOfTargetMonth
             val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
 
-            // Check if this month should have transactions based on the regular transaction start date
             if (targetEndDate.isBefore(regularTransaction.startDate)) {
                 return@forEach
             }
@@ -102,13 +99,13 @@ class RegularTransactionGeneratorService(
             val transactionsToCreate = when(val frequency = regularTransaction.frequencyProperty) {
                 is FrequencyProperty.Forever -> generateTransactionsBetween(
                     regularTransaction,
-                    targetStartDate,
+                    firstDayOfTargetMonth,
                     targetEndDate,
                     bookletId,
                 )
                 is FrequencyProperty.UntilDate -> generateTransactionsBetween(
                     regularTransaction,
-                    targetStartDate,
+                    firstDayOfTargetMonth,
                     targetEndDate,
                     bookletId,
                     untilDate = frequency.date
@@ -118,7 +115,7 @@ class RegularTransactionGeneratorService(
                     val currentCount = tracker?.numberOfGeneratedTransaction ?: 0
                     generateTransactionsBetween(
                         regularTransaction,
-                        targetStartDate,
+                        firstDayOfTargetMonth,
                         targetEndDate,
                         bookletId,
                         currentMaxNumber = CurrentMaxNumber(currentCount, frequency.number)
@@ -320,7 +317,6 @@ class RegularTransactionGeneratorService(
     ): Int {
         val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
         val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
-        val targetStartDate = firstDayOfTargetMonth
         val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
 
         if (targetEndDate.isBefore(regularTransaction.startDate)) {
@@ -329,7 +325,7 @@ class RegularTransactionGeneratorService(
 
         val virtualTransactions = generateVirtualTransactionsBetween(
             regularTransaction,
-            targetStartDate,
+            firstDayOfTargetMonth,
             targetEndDate
         )
 
@@ -509,11 +505,9 @@ class RegularTransactionGeneratorService(
         return monthTransactions?.any { transaction ->
             val sameDate = transaction.date == date
 
-            // Check by regularTransactionId if available (more precise)
-            val sameRegularId = if (transaction.regularTransactionId != null && regularTransaction.id != null) {
+            val sameRegularId = if (transaction.regularTransactionId != null) {
                 transaction.regularTransactionId == regularTransaction.id
             } else {
-                // Fallback to label matching if no regularTransactionId
                 transaction.label == regularTransaction.label
             }
 
