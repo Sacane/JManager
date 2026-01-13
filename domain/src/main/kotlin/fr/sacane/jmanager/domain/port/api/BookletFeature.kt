@@ -226,6 +226,7 @@ class BookletFeatureImpl(
             val generatedTransactions = if (targetYearMonth.equals(currentYearMonth)) {
                 // Generate missing previsional transactions for current month only
                 // This checks for existing transactions and only creates what's missing
+                // The transactions are automatically saved by the generator
                 val transactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
                     bookletId,
                     regularTransactions,

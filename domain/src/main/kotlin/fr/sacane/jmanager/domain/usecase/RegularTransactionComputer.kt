@@ -87,7 +87,6 @@ class RegularTransactionGeneratorService(
 
             val tracker = trackerRepository.findTracker(regularTxId, bookletId)
 
-
             val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
             val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
             val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
@@ -123,13 +122,15 @@ class RegularTransactionGeneratorService(
                 }
             }
 
+            // Save each transaction to the repository
             transactionsToCreate.forEach { transaction ->
-                val saved = transactionRepository.save(transaction = transaction, accountId = bookletId)
+                val saved = transactionRepository.save(bookletId, transaction)
                 if (saved != null) {
                     createdTransactions.add(saved)
                 }
             }
 
+            // Update tracker if we have created transactions
             if (transactionsToCreate.isNotEmpty()) {
                 val newTracker = RegularTransactionTracker(
                     id = tracker?.id,
