@@ -204,133 +204,16 @@ class RegularTransactionGeneratorService(
         targetMonth: Month,
         targetYear: Int
     ): List<Transaction> {
-        val regeneratedTransactions = mutableListOf<Transaction>()
-
-        regularTransactions.forEach { regularTransaction ->
-            val regularTxId = regularTransaction.id
-
-            // Check if this month should have transactions based on the regular transaction start date
-            val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
-            val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
-            val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
-
-            if (targetEndDate.isBefore(regularTransaction.startDate)) {
-                return@forEach
-            }
-
-            // Count how many transactions should exist for this month
-            val expectedCount = countExpectedTransactionsForMonth(
-                regularTransaction,
-                targetMonth,
-                targetYear
-            )
-
-            // Count how many actually exist
-            val existingCount = countExistingTransactionsForMonth(
-                regularTransaction,
-                targetMonth,
-                targetYear,
-                bookletId
-            )
-
-            // If there are missing transactions, delete all existing ones and regenerate
-            if (existingCount < expectedCount) {
-                // Delete existing previsional transactions from this regular transaction for this month
-                val monthTransactions = transactionRepository.findTransactionsByBookletYearAndMonth(
-                    bookletId,
-                    targetYear,
-                    targetMonth,
-                )
-
-                monthTransactions?.filter {
-                    it.isPreview &&
-                    it.regularTransactionId == regularTransaction.id &&
-                    it.date.month == targetMonth &&
-                    it.date.year == targetYear
-                }?.forEach { existingTx ->
-                    existingTx.id?.let { txId ->
-                        transactionRepository.deleteAllSheetsById(listOf(txId))
-                    }
-                }
-
-                // Generate new transactions
-                val targetStartDate = firstDayOfTargetMonth
-                val transactionsToCreate = when(val frequency = regularTransaction.frequencyProperty) {
-                    is FrequencyProperty.Forever -> generateTransactionsBetween(
-                        regularTransaction,
-                        targetStartDate,
-                        targetEndDate,
-                        bookletId,
-                    )
-                    is FrequencyProperty.UntilDate -> generateTransactionsBetween(
-                        regularTransaction,
-                        targetStartDate,
-                        targetEndDate,
-                        bookletId,
-                        untilDate = frequency.date
-                    )
-                    is FrequencyProperty.SpecificRepetitionTimes -> {
-                        val tracker = trackerRepository.findTracker(regularTxId, bookletId)
-                        val currentCount = tracker?.numberOfGeneratedTransaction ?: 0
-                        generateTransactionsBetween(
-                            regularTransaction,
-                            targetStartDate,
-                            targetEndDate,
-                            bookletId,
-                            currentMaxNumber = CurrentMaxNumber(currentCount, frequency.number)
-                        )
-                    }
-                }
-
-                transactionsToCreate.forEach { transaction ->
-                    val saved = transactionRepository.save(transaction = transaction, accountId = bookletId)
-                    if (saved != null) {
-                        regeneratedTransactions.add(saved)
-                    }
-                }
-
-                // Update tracker if needed
-                if (transactionsToCreate.isNotEmpty()) {
-                    val tracker = trackerRepository.findTracker(regularTxId, bookletId)
-                    val newTracker = RegularTransactionTracker(
-                        id = tracker?.id,
-                        regularTransactionId = regularTxId,
-                        bookletId = bookletId,
-                        lastGeneratedDate = targetEndDate,
-                        numberOfGeneratedTransaction = tracker?.numberOfGeneratedTransaction?.plus(transactionsToCreate.size) ?: transactionsToCreate.size
-                    )
-                    trackerRepository.upsertTracker(newTracker)
-                }
-            }
-        }
-
-        return regeneratedTransactions
-    }
-
-    /**
-     * Count how many transactions should exist for a regular transaction in a specific month
-     */
-    private fun countExpectedTransactionsForMonth(
-        regularTransaction: RegularTransaction,
-        targetMonth: Month,
-        targetYear: Int
-    ): Int {
-        val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
-        val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
-        val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
-
-        if (targetEndDate.isBefore(regularTransaction.startDate)) {
-            return 0
-        }
-
-        val virtualTransactions = generateVirtualTransactionsBetween(
-            regularTransaction,
-            firstDayOfTargetMonth,
-            targetEndDate
+        // This method simply delegates to generateMissingPrevisionalTransactions
+        // which already handles checking for existing transactions and only creating missing ones
+        return generateMissingPrevisionalTransactions(
+            bookletId,
+            regularTransactions,
+            targetMonth,
+            targetYear
         )
-
-        return virtualTransactions.size
     }
+
 
     /**
      * Generate virtual transactions without checking if they exist in the database.
@@ -503,38 +386,23 @@ class RegularTransactionGeneratorService(
         )
 
         return monthTransactions?.any { transaction ->
-            val sameDate = transaction.date == date
+            // Transaction must be previsional
+            if (!transaction.isPreview) return@any false
 
-            val sameRegularId = if (transaction.regularTransactionId != null) {
-                transaction.regularTransactionId == regularTransaction.id
-            } else {
-                transaction.label == regularTransaction.label
+            // Transaction must have the same date
+            if (transaction.date.isEqual(date).not()) return@any false
+
+            // Check if it matches by regularTransactionId (preferred method)
+            if (transaction.regularTransactionId != null) {
+                return@any transaction.regularTransactionId == regularTransaction.id
             }
 
-            sameDate && sameRegularId && transaction.isPreview
+            // Fallback: check by label and amount if regularTransactionId is not set
+            return@any transaction.label == regularTransaction.label &&
+                       transaction.amount == regularTransaction.amount
         } ?: false
     }
 
-    private fun countExistingTransactionsForMonth(
-        regularTransaction: RegularTransaction,
-        targetMonth: Month,
-        targetYear: Int,
-        bookletId: UUID
-    ): Int {
-        val monthTransactions = transactionRepository.findTransactionsByBookletYearAndMonth(
-            bookletId,
-            targetYear,
-            targetMonth,
-        )
-
-        return monthTransactions?.count {
-            it.label == regularTransaction.label &&
-                    it.date.year == targetYear && 
-                    it.date.month == targetMonth &&
-                    it.isPreview &&
-                    it.regularTransactionId == regularTransaction.id
-        } ?: 0
-    }
 
     private fun createPrevisionalTransaction(
         regularTransaction: RegularTransaction,

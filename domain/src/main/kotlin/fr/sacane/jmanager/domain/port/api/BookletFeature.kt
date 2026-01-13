@@ -224,16 +224,8 @@ class BookletFeatureImpl(
             val currentYearMonth = YearMonth.of(currentYear, currentMonth)
 
             val generatedTransactions = if (targetYearMonth.equals(currentYearMonth)) {
-                // First, regenerate any missing transactions (e.g., if they were deleted)
-                val regenerated = regularTransactionGeneratorService.regenerateMissingPrevisionalTransactions(
-                    bookletId,
-                    regularTransactions,
-                    month,
-                    year
-                )
-                LOGGER.info("Regenerated ${regenerated.size} missing transactions for current month $month/$year")
-
-                // Then generate any new missing transactions
+                // Generate missing previsional transactions for current month only
+                // This checks for existing transactions and only creates what's missing
                 val transactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
                     bookletId,
                     regularTransactions,
@@ -241,7 +233,7 @@ class BookletFeatureImpl(
                     year
                 )
                 LOGGER.info("Generated ${transactions.size} physical transactions for current month $month/$year")
-                regenerated + transactions
+                transactions
             } else {
                 LOGGER.info("Skipping physical transaction generation for non-current month $month/$year")
                 emptyList()
