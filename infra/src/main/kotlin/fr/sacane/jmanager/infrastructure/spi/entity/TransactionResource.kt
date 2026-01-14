@@ -32,7 +32,7 @@ class TransactionResource(
     var lastModified: LocalDateTime? = null,
     var isPreview: Boolean = false,
     @Column(name="regular_transaction_id")
-    var regularTransactionId: String? = null,
+    var regularTransactionId: UUID? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     var account: BookletResource? = null,
     ){
