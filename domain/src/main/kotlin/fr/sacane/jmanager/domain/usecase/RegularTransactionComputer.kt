@@ -378,8 +378,11 @@ class RegularTransactionGeneratorService(
         date: LocalDate,
         bookletId: UUID
     ): Boolean {
+        // Calculate the ACTUAL date that would be used for the transaction
+        // This is important for Monthly/Yearly transactions where the day might be different
+        val actualTransactionDate = calculateActualTransactionDate(regularTransaction, date)
 
-        val yearMonth = YearMonth.from(date)
+        val yearMonth = YearMonth.from(actualTransactionDate)
         val monthTransactions = transactionRepository.findTransactionsByBookletYearAndMonth(
             bookletId,
             yearMonth.year,
@@ -390,8 +393,8 @@ class RegularTransactionGeneratorService(
             // Transaction must be previsional
             if (!transaction.isPreview) return@any false
 
-            // Transaction must have the same date
-            if (!transaction.date.isEqual(date)) return@any false
+            // Transaction must have the same date (using the ACTUAL date)
+            if (!transaction.date.isEqual(actualTransactionDate)) return@any false
 
             // STRICT CHECK: If the existing transaction has a regularTransactionId, use it for comparison
             // regularTransaction.id is never null (non-nullable field in RegularTransaction)
@@ -410,6 +413,33 @@ class RegularTransactionGeneratorService(
             return@any transaction.label == regularTransaction.label &&
                        transaction.amount == regularTransaction.amount
         } ?: false
+    }
+
+    /**
+     * Calculates the actual date that will be used for a transaction.
+     * For Monthly/Yearly transactions, this adjusts the day according to the recurrence rule.
+     * This must match the logic in createPrevisionalTransaction().
+     */
+    private fun calculateActualTransactionDate(
+        regularTransaction: RegularTransaction,
+        date: LocalDate
+    ): LocalDate {
+        val day = when (val rule = regularTransaction.recurrenceRule) {
+            is RecurrenceRule.Monthly -> rule.dayOfMonth
+            is RecurrenceRule.Yearly -> rule.dayOfMonth
+            is RecurrenceRule.Weekly -> date.dayOfMonth
+            is RecurrenceRule.Daily -> date.dayOfMonth
+        }
+
+        val month = when (val rule = regularTransaction.recurrenceRule) {
+            is RecurrenceRule.Yearly -> rule.month
+            else -> date.monthValue
+        }
+
+        val monthLength = YearMonth.of(date.year, month).lengthOfMonth()
+        val adjustedDay = if (day > monthLength) monthLength else day
+
+        return LocalDate.of(date.year, month, adjustedDay)
     }
 
 
