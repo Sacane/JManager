@@ -391,14 +391,21 @@ class RegularTransactionGeneratorService(
             if (!transaction.isPreview) return@any false
 
             // Transaction must have the same date
-            if (transaction.date.isEqual(date).not()) return@any false
+            if (!transaction.date.isEqual(date)) return@any false
 
-            // Check if it matches by regularTransactionId (preferred method)
-            if (transaction.regularTransactionId != null) {
+            // STRICT CHECK: If both have regularTransactionId, they must match
+            // This is the primary and most reliable way to detect duplicates
+            if (transaction.regularTransactionId != null && regularTransaction.id != null) {
                 return@any transaction.regularTransactionId == regularTransaction.id
             }
 
-            // Fallback: check by label and amount if regularTransactionId is not set
+            // If transaction has regularTransactionId but doesn't match, it's a different regular transaction
+            if (transaction.regularTransactionId != null) {
+                return@any false
+            }
+
+            // Legacy fallback: only for old transactions without regularTransactionId
+            // Check by label and amount if regularTransactionId is not set
             return@any transaction.label == regularTransaction.label &&
                        transaction.amount == regularTransaction.amount
         } ?: false

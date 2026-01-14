@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters.utils
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.infrastructure.api.asAwtColor
 import fr.sacane.jmanager.infrastructure.spi.entity.*
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.ForeverEntity
@@ -43,6 +44,7 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
     resource.isIncome = isIncome
     resource.idSheet = this.id
     resource.lastModified = this.lastModified
+    resource.regularTransactionId = this.regularTransactionId?.value
     if(tagResource != null) {
         when(tagResource) {
             is DefaultTagResource -> resource.tag = tagResource
@@ -78,7 +80,8 @@ internal fun TransactionResource.toModel(): Transaction
     this.isIncome!!,
     tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
     lastModified = this.lastModified ?: LocalDateTime.now(),
-    isPreview = isPreview
+    isPreview = isPreview,
+    regularTransactionId = this.regularTransactionId?.let { RegularTransactionId(it) }
 )
 
 internal fun BookletResource.toModel(): Booklet

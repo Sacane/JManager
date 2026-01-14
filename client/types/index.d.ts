@@ -9,6 +9,7 @@ declare global {
     color: ColorDTO
     tagDTO: TagDTO
     isPreview: boolean
+    regularTransactionId?: string | null
   }
   interface TransactionResultDTO {
     id: string
@@ -21,6 +22,7 @@ declare global {
     isPreview: boolean
     accountAmount: string
     accountPreviewAmount: string
+    regularTransactionId?: string | null
   }
 
   interface BookletDTO {
@@ -58,6 +60,7 @@ declare global {
     date: Date
     tagDTO: TagDTO
     isPreview: boolean
+    regularTransactionId?: string | null
   }
 
   interface BookletCreationRequest {
