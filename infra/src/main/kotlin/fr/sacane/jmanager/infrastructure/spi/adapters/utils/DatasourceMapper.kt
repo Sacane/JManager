@@ -44,7 +44,14 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
     resource.isIncome = isIncome
     resource.idSheet = this.id
     resource.lastModified = this.lastModified
-    resource.regularTransactionId = this.regularTransactionId?.value
+    // Convertir RegularTransactionId (String) vers UUID pour la base de données
+    resource.regularTransactionId = this.regularTransactionId?.value?.let {
+        try {
+            java.util.UUID.fromString(it)
+        } catch (e: IllegalArgumentException) {
+            null // Si la conversion échoue, on met null
+        }
+    }
     if(tagResource != null) {
         when(tagResource) {
             is DefaultTagResource -> resource.tag = tagResource
@@ -81,7 +88,8 @@ internal fun TransactionResource.toModel(): Transaction
     tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
     lastModified = this.lastModified ?: LocalDateTime.now(),
     isPreview = isPreview,
-    regularTransactionId = this.regularTransactionId?.let { RegularTransactionId(it) }
+    // Convertir UUID de la base de données vers RegularTransactionId (String)
+    regularTransactionId = this.regularTransactionId?.let { RegularTransactionId(it.toString()) }
 )
 
 internal fun BookletResource.toModel(): Booklet
