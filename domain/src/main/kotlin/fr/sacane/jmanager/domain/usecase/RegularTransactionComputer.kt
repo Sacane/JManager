@@ -393,19 +393,20 @@ class RegularTransactionGeneratorService(
             // Transaction must have the same date
             if (!transaction.date.isEqual(date)) return@any false
 
-            // STRICT CHECK: If both have regularTransactionId, they must match
-            // This is the primary and most reliable way to detect duplicates
-            if (transaction.regularTransactionId != null && regularTransaction.id != null) {
-                return@any transaction.regularTransactionId == regularTransaction.id
-            }
-
-            // If transaction has regularTransactionId but doesn't match, it's a different regular transaction
+            // STRICT CHECK: If the existing transaction has a regularTransactionId, use it for comparison
+            // regularTransaction.id is never null (non-nullable field in RegularTransaction)
             if (transaction.regularTransactionId != null) {
+                // If IDs match, it's a duplicate
+                if (transaction.regularTransactionId == regularTransaction.id) {
+                    return@any true
+                }
+                // If IDs don't match, it's a different regular transaction on the same date
+                // Don't fall back to legacy check - these are two different transactions
                 return@any false
             }
 
-            // Legacy fallback: only for old transactions without regularTransactionId
-            // Check by label and amount if regularTransactionId is not set
+            // Legacy fallback: for old transactions created before regularTransactionId field
+            // These old transactions don't have regularTransactionId, so we check by label and amount
             return@any transaction.label == regularTransaction.label &&
                        transaction.amount == regularTransaction.amount
         } ?: false
