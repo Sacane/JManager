@@ -31,6 +31,8 @@ class TransactionResource(
     @Column(name="last_modified")
     var lastModified: LocalDateTime? = null,
     var isPreview: Boolean = false,
+    @Column(name="regular_transaction_id")
+    var regularTransactionId: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     var account: BookletResource? = null,
     ){

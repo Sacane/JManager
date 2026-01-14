@@ -123,7 +123,8 @@ class InMemoryDatabase {
         userByBooklet.forEach {
             val account = it.value.find { acc -> acc.id == accountId }
             if(account != null) {
-                targetBooklet = Booklet(account.amount, account.label, bookletsByTransaction[accountId]!!, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner, id = accountId)
+                val transactions = bookletsByTransaction[accountId] ?: mutableListOf()
+                targetBooklet = Booklet(account.amount, account.label, transactions, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner, id = accountId)
             }
         }
         return targetBooklet
@@ -221,6 +222,9 @@ class InMemoryDatabase {
     }
 
     fun saveTransaction(accountId: UUID, transaction: Transaction) {
+        if (bookletsByTransaction[accountId] == null) {
+            bookletsByTransaction[accountId] = mutableListOf()
+        }
         bookletsByTransaction[accountId]?.add(transaction)
     }
 

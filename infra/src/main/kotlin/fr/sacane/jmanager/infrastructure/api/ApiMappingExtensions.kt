@@ -25,10 +25,10 @@ internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
 )
 
 internal fun TransactionResult.toModel(): Transaction
-= Transaction(this.id?.let { java.util.UUID.fromString(it) }, this.label, this.date, Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId?.let { java.util.UUID.fromString(it) }, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview)
+= Transaction(this.id?.let { java.util.UUID.fromString(it) }, this.label, this.date, Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId?.let { java.util.UUID.fromString(it) }, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview, regularTransactionId = this.regularTransactionId?.let { fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId(it) })
 
 internal fun Transaction.toDTO(): TransactionResult {
-    return TransactionResult(id?.toString(), label, amount.value, amount.currency.symbol, isIncome, date, tagDTO = tag?.toDTO(), isPreview)
+    return TransactionResult(id?.toString(), label, amount.value, amount.currency.symbol, isIncome, date, tagDTO = tag?.toDTO(), isPreview, regularTransactionId = regularTransactionId?.value)
 }
 
 

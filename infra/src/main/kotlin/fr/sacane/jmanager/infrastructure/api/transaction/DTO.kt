@@ -27,7 +27,8 @@ data class TransactionResult(
     @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
     val tagDTO: TagDTO? = null,
-    val isPreview: Boolean
+    val isPreview: Boolean,
+    val regularTransactionId: String? = null
 )
 
 @Serializable
