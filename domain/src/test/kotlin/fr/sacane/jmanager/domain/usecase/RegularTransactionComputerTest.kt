@@ -2,8 +2,8 @@ package fr.sacane.jmanager.domain.usecase
 
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.fake.IdUserAccount
 import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
-import fr.sacane.jmanager.domain.fake.InMemoryRegularTrackerRepository
 import fr.sacane.jmanager.domain.fake.InMemoryTransactionRepository
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -507,6 +507,88 @@ class RegularTransactionComputerTest : FeatureTest() {
                 )
 
                 assertEquals(0, generatedTransactions.size)
+            }
+        }
+
+        @Test
+        fun `should not generate previsional transaction when a real transaction already exists with same regularTransactionId`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
+
+                val monthlyTransaction = RegularTransaction(
+                    label = "Salaire",
+                    amount = 3000.toAmount(),
+                    isIncome = true,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2024, 1, 15),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(15)
+                )
+
+                // Create a real (confirmed) transaction with the same regularTransactionId
+                val confirmedTransaction = Transaction(
+                    id = null,
+                    label = "Salaire",
+                    amount = 3000.toAmount(),
+                    date = LocalDate.of(2024, 3, 15),
+                    isIncome = true,
+                    isPreview = false,
+                    regularTransactionId = regularTransactionId
+                )
+
+                // Save the confirmed transaction in the repository
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            id = IdUserAccount(user.id, booklet.id!!),
+                            transactions = mutableListOf(confirmedTransaction)
+                        )
+                    )
+                )
+
+                // Try to generate previsional transactions for March 2024
+                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2024
+                )
+
+                // Should not generate any transaction because a real one already exists
+                assertEquals(0, generatedTransactions.size)
+            }
+        }
+
+        @Test
+        fun `should generate previsional transaction when no real transaction exists for this regularTransactionId`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
+
+                val monthlyTransaction = RegularTransaction(
+                    label = "Salaire",
+                    amount = 3000.toAmount(),
+                    isIncome = true,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2024, 1, 15),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(15)
+                )
+
+                // Try to generate previsional transactions for March 2024
+                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2024
+                )
+
+                // Should generate exactly one transaction
+                assertEquals(1, generatedTransactions.size)
+
+                val transaction = generatedTransactions[0]
+                assertTrue(transaction.isPreview)
+                assertEquals(regularTransactionId, transaction.regularTransactionId)
+                assertEquals(LocalDate.of(2024, 3, 15), transaction.date)
             }
         }
     }

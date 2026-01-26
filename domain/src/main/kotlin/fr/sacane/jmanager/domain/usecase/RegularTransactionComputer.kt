@@ -357,6 +357,8 @@ class RegularTransactionGeneratorService(
         currentDate: LocalDate,
         bookletId: UUID
     ): Boolean {
+        // Check if a transaction already exists for this regular transaction at this date
+        // This includes both preview and real transactions to avoid duplicates
         val transactionExists = checkIfTransactionExists(regularTransaction, currentDate, bookletId)
         if (transactionExists) {
             return false
@@ -390,7 +392,15 @@ class RegularTransactionGeneratorService(
         )
 
         return monthTransactions?.any { transaction ->
-            // Transaction must be previsional
+            // Check if a real transaction already exists for this regular transaction
+            // If a real transaction exists with the same regularTransactionId, don't generate the previsional one
+            if (transaction.isNotPreview &&
+                transaction.regularTransactionId != null &&
+                transaction.regularTransactionId == regularTransaction.id) {
+                return@any true
+            }
+
+            // Transaction must be previsional for the rest of the checks
             if (!transaction.isPreview) return@any false
 
             // Transaction must have the same date (using the ACTUAL date)
