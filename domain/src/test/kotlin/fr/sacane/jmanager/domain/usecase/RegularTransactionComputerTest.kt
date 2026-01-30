@@ -591,5 +591,68 @@ class RegularTransactionComputerTest : FeatureTest() {
                 assertEquals(LocalDate.of(2024, 3, 15), transaction.date)
             }
         }
+
+        @Test
+        fun `should not regenerate transaction for a month where it was deleted after confirmation`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
+
+                val monthlyTransaction = RegularTransaction(
+                    label = "Salaire",
+                    amount = 3000.toAmount(),
+                    isIncome = true,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2026, 1, 15),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(15)
+                )
+
+                // 1. Generate previsional transaction for January 2026
+                val firstGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.JANUARY,
+                    targetYear = 2026
+                )
+
+                assertEquals(1, firstGeneration.size)
+                assertTrue(firstGeneration[0].isPreview)
+
+                // 2. Simulate confirmation: user confirms the transaction (it becomes real)
+                val confirmedTransaction = firstGeneration[0].copy(isPreview = false)
+                transactionRepository.save(booklet.id!!, confirmedTransaction)
+
+                // 3. Simulate deletion: user deletes the confirmed transaction
+                // This should mark January 2026 as excluded for this regular transaction
+                trackerRepository.markMonthAsExcluded(
+                    regularTransactionId = regularTransactionId,
+                    bookletId = booklet.id!!,
+                    year = 2026,
+                    month = Month.JANUARY
+                )
+
+                // 4. Try to generate again for January 2026
+                val secondGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.JANUARY,
+                    targetYear = 2026
+                )
+
+                // Should NOT generate because this month was excluded
+                assertEquals(0, secondGeneration.size)
+
+                // 5. Generate for February 2026 - should still work
+                val februaryGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.FEBRUARY,
+                    targetYear = 2026
+                )
+
+                assertEquals(1, februaryGeneration.size)
+                assertEquals(Month.FEBRUARY, februaryGeneration[0].date.month)
+            }
+        }
     }
 }

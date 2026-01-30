@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
@@ -95,7 +96,8 @@ class TransactionFeatureImpl(
     private val session: SessionManager,
     private val accountRepository: BookletRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider,
-    private val tagRepository: TagRepository
+    private val tagRepository: TagRepository,
+    private val trackerRepository: RegularTransactionTrackerRepository
 ): TransactionFeature{
     companion object {
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
@@ -134,12 +136,12 @@ class TransactionFeatureImpl(
             if(transaction.amount.isNegative()) {
                 return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Le montant de la transaction ne peut pas être négatif")
             }
-            if (newTr.tag == null) {
+            val toSaveTransaction = if (newTr.tag == null) {
                 newTr.copy(
                     tag = tagRepository.defaultTag()
                 )
-            }
-            account.addTransaction(newTr)
+            } else newTr
+            account.addTransaction(toSaveTransaction)
             accountRepository.update(account)
             logger.info("Transaction $newTr has been created, the booklet sold has been updated : $account")
             success(TransactionResumeResult(newTr, account.amount, account.previewAmount))
@@ -168,7 +170,26 @@ class TransactionFeatureImpl(
 
     override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<Nothing> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
-            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
+                ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+
+            // Find transactions to delete and mark months as excluded if they are confirmed regular transactions
+            val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
+
+            transactionsToDelete.forEach { transaction ->
+                // If the transaction is confirmed (not preview) and has a regularTransactionId,
+                // mark this month as excluded to prevent regeneration
+                if (!transaction.isPreview && transaction.regularTransactionId != null) {
+                    trackerRepository.markMonthAsExcluded(
+                        regularTransactionId = transaction.regularTransactionId!!,
+                        bookletId = accountID,
+                        year = transaction.date.year,
+                        month = transaction.date.month
+                    )
+                    logger.info("Marked month ${transaction.date.month}/${transaction.date.year} as excluded for regular transaction ${transaction.regularTransactionId}")
+                }
+            }
+
             val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
             booklet.removeTransactionIf(isSheetOnList)
             accountRepository.upsert(booklet)
