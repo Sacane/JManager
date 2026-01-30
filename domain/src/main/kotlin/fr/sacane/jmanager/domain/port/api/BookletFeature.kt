@@ -327,6 +327,7 @@ class BookletFeatureImpl(
         // Calculate virtual transactions from regular transactions for the date range
         // These are transactions that would be generated but haven't been physically created yet
         val virtualTransactions = regularTransactionGeneratorService.calculateVirtualTransactions(
+            booklet.id!!,
             regularTransactions,
             currentMonth,
             currentYear,

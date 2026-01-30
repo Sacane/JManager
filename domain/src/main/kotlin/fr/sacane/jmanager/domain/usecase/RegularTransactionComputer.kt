@@ -35,6 +35,7 @@ interface RegularTransactionGenerator {
      * Calculates virtual transactions from regular transactions for a date range without persisting them.
      * This is used for calculating provisional balance without generating physical transactions.
      *
+     * @param bookletId The booklet ID to check for excluded months.
      * @param regularTransactions The list of regular transactions to compute.
      * @param startMonth The starting month of the calculation.
      * @param startYear The starting year of the calculation.
@@ -43,6 +44,7 @@ interface RegularTransactionGenerator {
      * @return A list of virtual transactions that would occur in the specified date range.
      */
     fun calculateVirtualTransactions(
+        bookletId: UUID,
         regularTransactions: List<RegularTransaction>,
         startMonth: Month,
         startYear: Int,
@@ -153,6 +155,7 @@ class RegularTransactionGeneratorService(
     }
 
     override fun calculateVirtualTransactions(
+        bookletId: UUID,
         regularTransactions: List<RegularTransaction>,
         startMonth: Month,
         startYear: Int,
@@ -170,6 +173,10 @@ class RegularTransactionGeneratorService(
             if (regularTransaction.startDate.isAfter(endDate)) {
                 return@forEach
             }
+
+            // Check excluded months for this regular transaction
+            val tracker = trackerRepository.findTracker(regularTransaction.id, bookletId)
+            val excludedMonths = tracker?.excludedMonths ?: emptySet()
 
             val effectiveStartDate = if (regularTransaction.startDate.isAfter(startDate)) {
                 regularTransaction.startDate
@@ -199,7 +206,13 @@ class RegularTransactionGeneratorService(
                 )
             }
 
-            virtualTransactions.addAll(transactions)
+            // Filter out transactions that fall in excluded months
+            val filteredTransactions = transactions.filter { transaction ->
+                val transactionYearMonth = YearMonth.from(transaction.date)
+                !excludedMonths.contains(transactionYearMonth)
+            }
+
+            virtualTransactions.addAll(filteredTransactions)
         }
 
         return virtualTransactions
