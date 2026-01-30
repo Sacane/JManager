@@ -654,5 +654,49 @@ class RegularTransactionComputerTest : FeatureTest() {
                 assertEquals(Month.FEBRUARY, februaryGeneration[0].date.month)
             }
         }
+
+        @Test
+        fun `virtual transactions should also respect excluded months`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = RegularTransactionId("${user.id.value}-rent")
+
+                val monthlyTransaction = RegularTransaction(
+                    label = "Loyer",
+                    amount = 800.toAmount(),
+                    isIncome = false,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2026, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                // Mark February 2026 as excluded
+                trackerRepository.markMonthAsExcluded(
+                    regularTransactionId = regularTransactionId,
+                    bookletId = booklet.id!!,
+                    year = 2026,
+                    month = Month.FEBRUARY
+                )
+
+                // Calculate virtual transactions from January to April 2026
+                val virtualTransactions = regularTransactionGenerator.calculateVirtualTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    startMonth = Month.JANUARY,
+                    startYear = 2026,
+                    endMonth = Month.APRIL,
+                    endYear = 2026
+                )
+
+                // Should generate for January, March, and April (not February)
+                assertEquals(3, virtualTransactions.size)
+
+                val months = virtualTransactions.map { it.date.month }.toSet()
+                assertTrue(months.contains(Month.JANUARY))
+                assertFalse(months.contains(Month.FEBRUARY), "February should be excluded")
+                assertTrue(months.contains(Month.MARCH))
+                assertTrue(months.contains(Month.APRIL))
+            }
+        }
     }
 }
