@@ -247,7 +247,31 @@ class BookletFeatureImpl(
                 accountRepository.update(booklet)
             }
 
-            val transactions = booklet.retrieveSheetSurroundAndSortedByDate(month, year).partition { it.isPreview }
+            // Retrieve all transactions and partition them by preview status
+            val allTransactionsForMonth = booklet.retrieveSheetSurroundAndSortedByDate(month, year)
+
+            // Filter out preview transactions that fall in excluded months
+            // This handles the case where a transaction was generated before being excluded
+            val filteredTransactions = allTransactionsForMonth.filter { transaction ->
+                if (!transaction.isPreview) {
+                    // Keep all real (confirmed) transactions
+                    true
+                } else if (transaction.regularTransactionId == null) {
+                    // Keep preview transactions without regularTransactionId (manual previews)
+                    true
+                } else {
+                    // For preview transactions with regularTransactionId, check if the month is excluded
+                    val tracker = trackerRepository.findTracker(
+                        transaction.regularTransactionId,
+                        bookletId
+                    )
+                    val transactionYearMonth = YearMonth.from(transaction.date)
+                    val isExcluded = tracker?.excludedMonths?.contains(transactionYearMonth) == true
+                    !isExcluded
+                }
+            }
+
+            val transactions = filteredTransactions.partition { it.isPreview }
 
             val previsionalSold = calculatePrevisionalSold(
                 booklet,
