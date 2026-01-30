@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.Month
+import java.time.YearMonth
 import java.util.UUID
 
 @Entity
@@ -26,6 +28,10 @@ data class RegularTransactionTrackerEntity(
 
     @Column(name = "number_of_generated_transaction", nullable = false)
     val numberOfGeneratedTransaction: Int = 0,
+
+    @Column(name = "excluded_months", columnDefinition = "TEXT")
+    val excludedMonths: String? = null,
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -35,7 +41,8 @@ data class RegularTransactionTrackerEntity(
         regularTransactionId = RegularTransactionId(regularTransactionId),
         bookletId = bookletId,
         lastGeneratedDate = lastGeneratedDate,
-        numberOfGeneratedTransaction = numberOfGeneratedTransaction
+        numberOfGeneratedTransaction = numberOfGeneratedTransaction,
+        excludedMonths = parseExcludedMonths(excludedMonths)
     )
 
     companion object {
@@ -45,8 +52,22 @@ data class RegularTransactionTrackerEntity(
                 regularTransactionId = tracker.regularTransactionId.value,
                 bookletId = tracker.bookletId,
                 lastGeneratedDate = tracker.lastGeneratedDate,
-                numberOfGeneratedTransaction = tracker.numberOfGeneratedTransaction
+                numberOfGeneratedTransaction = tracker.numberOfGeneratedTransaction,
+                excludedMonths = serializeExcludedMonths(tracker.excludedMonths)
             )
+
+        private fun serializeExcludedMonths(months: Set<YearMonth>): String? {
+            if (months.isEmpty()) return null
+            return months.joinToString(",") { it.toString() }
+        }
+
+        private fun parseExcludedMonths(serialized: String?): Set<YearMonth> {
+            if (serialized.isNullOrBlank()) return emptySet()
+            return serialized.split(",")
+                .filter { it.isNotBlank() }
+                .map { YearMonth.parse(it) }
+                .toSet()
+        }
     }
 }
 
@@ -83,4 +104,30 @@ class RegularTransactionTrackerRepositoryAdapter(
     override fun deleteTrackerByBookletId(bookletId: UUID) {
         jpaRepository.deleteAllByBookletId(bookletId)
     }
+
+    override fun markMonthAsExcluded(
+        regularTransactionId: RegularTransactionId,
+        bookletId: UUID,
+        year: Int,
+        month: Month
+    ) {
+        val tracker = findTracker(regularTransactionId, bookletId)
+        if (tracker != null) {
+            val updatedTracker = tracker.copy(
+                excludedMonths = tracker.excludedMonths + YearMonth.of(year, month)
+            )
+            upsertTracker(updatedTracker)
+        } else {
+            // If no tracker exists, create one with the excluded month
+            val newTracker = RegularTransactionTracker(
+                regularTransactionId = regularTransactionId,
+                bookletId = bookletId,
+                lastGeneratedDate = LocalDate.of(year, month, 1),
+                numberOfGeneratedTransaction = 0,
+                excludedMonths = setOf(YearMonth.of(year, month))
+            )
+            upsertTracker(newTracker)
+        }
+    }
 }
+

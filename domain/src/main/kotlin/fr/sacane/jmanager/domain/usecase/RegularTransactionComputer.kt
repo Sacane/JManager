@@ -87,6 +87,12 @@ class RegularTransactionGeneratorService(
 
             val tracker = trackerRepository.findTracker(regularTxId, bookletId)
 
+            // Check if this month is excluded
+            val targetYearMonth = YearMonth.of(targetYear, targetMonth)
+            if (tracker?.excludedMonths?.contains(targetYearMonth) == true) {
+                return@forEach
+            }
+
             val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
             val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
             val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)

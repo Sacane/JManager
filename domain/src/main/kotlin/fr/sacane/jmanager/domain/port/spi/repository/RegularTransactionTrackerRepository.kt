@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
+import java.time.Month
 import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
@@ -40,4 +41,20 @@ interface RegularTransactionTrackerRepository {
      * @param bookletId The identifier of the booklet for which the trackers are deleted.
      */
     fun deleteTrackerByBookletId(bookletId: UUID)
+
+    /**
+     * Marks a specific month and year as excluded for a regular transaction in a booklet.
+     * This prevents the transaction from being regenerated for that month.
+     *
+     * @param regularTransactionId The identifier of the regular transaction.
+     * @param bookletId The identifier of the booklet.
+     * @param year The year to exclude.
+     * @param month The month to exclude.
+     */
+    fun markMonthAsExcluded(
+        regularTransactionId: RegularTransactionId,
+        bookletId: UUID,
+        year: Int,
+        month: Month
+    )
 }
