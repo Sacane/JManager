@@ -390,6 +390,90 @@ class CsvFileValidatorTest {
     }
 
     @Test
+    @DisplayName("Should NOT detect column swap when day-only date looks like amount but month/year provided")
+    fun `should not detect swap for day-only dates that look like amounts when context provided`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("30", "Transaction", "5.99", "", "Aucune")
+        )
+
+        // Le "30" ressemble à un montant, mais avec month=1 et year=2026 c'est une date valide
+        val result = validator.validate(rows, availableTags, month = 1, year = 2026)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors, "Le jour '30' ne devrait PAS être détecté comme un swap quand month/year sont fournis. Errors: ${report.errors.joinToString { it.message }}")
+            assertTrue(report.canImport)
+            assertEquals(1, report.validLines)
+        }
+    }
+
+    @Test
+    @DisplayName("Should detect invalid day for month - day 30 invalid for February")
+    fun `should return error when day is invalid for given month`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("30", "Transaction", "5.99", "", "Aucune")
+        )
+
+        // Le jour 30 n'existe pas en février (qui n'a que 28 jours en 2026)
+        val result = validator.validate(rows, availableTags, month = 2, year = 2026)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors, "Le jour '30' devrait être invalide pour février")
+            assertFalse(report.canImport)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.INVALID_DATE_FORMAT, report.errors[0].type)
+            assertTrue(report.errors[0].message.contains("30"))
+            assertTrue(report.errors[0].message.contains("février") || report.errors[0].message.contains("February"))
+        }
+    }
+
+    @Test
+    @DisplayName("Should accept day 29 for February in leap year")
+    fun `should accept day 29 for February in leap year`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("29", "Transaction", "5.99", "", "Aucune")
+        )
+
+        // 2024 est une année bissextile, donc le 29 février existe
+        val result = validator.validate(rows, availableTags, month = 2, year = 2024)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors, "Le jour '29' devrait être valide pour février 2024 (année bissextile)")
+            assertTrue(report.canImport)
+            assertEquals(1, report.validLines)
+        }
+    }
+
+    @Test
+    @DisplayName("Should show clear error when using wrong month for January CSV file")
+    fun `should show clear error message when importing January file with February as month`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("30", "Salaire mensuel", "", "2941.83", "Aucune"),
+            arrayOf("31", "Autre transaction", "50.00", "", "Aucune")
+        )
+
+        val result = validator.validate(rows, availableTags, month = 2, year = 2026)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors, "Les jours 30 et 31 devraient être invalides pour février")
+            assertFalse(report.canImport)
+            assertEquals(2, report.errors.size)
+            // Les deux erreurs devraient être INVALID_DATE_FORMAT, pas POSSIBLE_COLUMN_SWAP
+            report.errors.forEach { error ->
+                assertEquals(CsvReportType.INVALID_DATE_FORMAT, error.type, "Error should be INVALID_DATE_FORMAT")
+                assertTrue(error.message.contains("février") || error.message.contains("February"))
+            }
+        }
+    }
+
+    @Test
     fun `should process multiple valid lines successfully`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
@@ -478,6 +562,29 @@ class CsvFileValidatorTest {
             assertTrue(report.canImport)
             assertEquals(9999, report.totalLines)
             assertEquals(9999, report.validLines)
+        }
+    }
+
+    @Test
+    @DisplayName("Should handle CSV files with UTF-8 BOM correctly")
+    fun `should handle CSV files with UTF-8 BOM correctly`() {
+        // Le BOM UTF-8 est le caractère invisible \uFEFF
+        val bomChar = '\uFEFF'
+        val csvContent = "${bomChar}date,label,depense,recette,tag\n15-01-2025,Test,45.50,,Aucune"
+
+        val csvReader = fr.sacane.jmanager.domain.fake.InMemoryCsvFileReader()
+        val rows = csvReader.readCsvContent(csvContent)
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors, "Le fichier avec BOM UTF-8 ne devrait pas générer d'erreur")
+            assertTrue(report.canImport)
+            assertEquals(1, report.totalLines)
+            assertEquals(1, report.validLines)
+            // Vérifier que le header a été correctement reconnu (pas de "missing: date")
+            assertTrue(report.errors.isEmpty())
         }
     }
 }

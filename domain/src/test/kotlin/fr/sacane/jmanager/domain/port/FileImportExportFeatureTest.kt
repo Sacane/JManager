@@ -716,4 +716,151 @@ class FileImportExportFeatureTest : FeatureTest() {
             }
         }
     }
+
+    @Test
+    @DisplayName("Should successfully validate CSV file with UTF-8 BOM")
+    fun `validateCsvFile should successfully validate CSV file with UTF-8 BOM`() {
+        launchWithConnectedUserInstance {
+            // Simuler un fichier CSV avec BOM UTF-8 (comme celui exporté depuis Excel)
+            val bomChar = '\uFEFF'
+            val csvContent = """${bomChar}date,label,depense,recette,tag
+                1,Test transaction,10.50,,Aucune
+                2,Another transaction,,50.00,Aucune
+            """.trimIndent()
+
+            val result = fileImportExportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent,
+                month = 1,
+                year = 2026
+            )
+
+            Assertions.assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                Assertions.assertFalse(report.hasErrors, "Le fichier CSV avec BOM UTF-8 ne devrait pas avoir d'erreurs")
+                Assertions.assertTrue(report.canImport)
+                Assertions.assertEquals(2, report.totalLines)
+                Assertions.assertEquals(2, report.validLines)
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should successfully validate real CSV file with UTF-8 BOM and 100+ transactions")
+    fun `validateCsvFile should successfully validate real CSV file with BOM`() {
+        launchWithConnectedUserInstance {
+            val csvContent = this::class.java.classLoader
+                .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
+                ?.readText(Charsets.UTF_8)
+
+            Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
+
+            val result = fileImportExportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent!!,
+                month = 1,
+                year = 2026
+            )
+
+            Assertions.assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                // Debug: afficher toutes les erreurs pour investigation
+                if (report.errors.isNotEmpty()) {
+                    println("=== ERRORS FOUND ===")
+                    report.errors.forEach { error ->
+                        println("Line ${error.lineNumber}: ${error.message}")
+                    }
+                }
+                if (report.warnings.isNotEmpty()) {
+                    println("=== WARNINGS FOUND ===")
+                    report.warnings.forEach { warning ->
+                        println("Line ${warning.lineNumber}: ${warning.message}")
+                    }
+                }
+                if (report.suggestions.isNotEmpty()) {
+                    println("=== SUGGESTIONS ===")
+                    report.suggestions.forEach { suggestion ->
+                        println(suggestion)
+                    }
+                }
+
+                Assertions.assertFalse(report.hasErrors, "Le fichier CSV réel avec BOM UTF-8 ne devrait pas avoir d'erreurs. Errors: ${report.errors.joinToString { it.message }}")
+                Assertions.assertTrue(report.canImport)
+                Assertions.assertEquals(101, report.totalLines, "Le fichier contient 101 lignes de données valides")
+                Assertions.assertEquals(101, report.validLines, "Toutes les lignes devraient être valides")
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should fail with clear error when validating January file with February month")
+    fun `validateCsvFile should show clear error when using wrong month for January file`() {
+        launchWithConnectedUserInstance {
+            val csvContent = this::class.java.classLoader
+                .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
+                ?.readText(Charsets.UTF_8)
+
+            Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
+
+            // Tentative de validation avec month=2 (février) alors que le fichier est pour janvier
+            val result = fileImportExportFeature.validateCsvFile(
+                tokenValue,
+                booklet.id!!,
+                csvContent!!,
+                month = 2,  // ERREUR: février au lieu de janvier
+                year = 2026
+            )
+
+            Assertions.assertTrue(result.isSuccess())
+            result.onSuccess { report ->
+                // Le fichier contient des jours 30 et 31 qui sont invalides pour février
+                Assertions.assertTrue(report.hasErrors, "Le fichier devrait avoir des erreurs car février n'a pas 30-31 jours")
+                Assertions.assertFalse(report.canImport)
+
+                // Vérifier que les erreurs sont du bon type et ont des messages clairs
+                val invalidDayErrors = report.errors.filter {
+                    it.message.contains("Day 30") || it.message.contains("Day 31")
+                }
+                Assertions.assertTrue(invalidDayErrors.isNotEmpty(),
+                    "Il devrait y avoir des erreurs pour les jours 30 et 31 invalides pour février")
+
+                // Vérifier que ce ne sont PAS des erreurs de swap
+                val swapErrors = report.errors.filter {
+                    it.message.contains("swap", ignoreCase = true) || it.message.contains("amount")
+                }
+                Assertions.assertTrue(swapErrors.isEmpty(),
+                    "Il ne devrait PAS y avoir d'erreurs de swap de colonnes. Found: ${swapErrors.joinToString { it.message }}")
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Should successfully import real CSV file with UTF-8 BOM and 100+ transactions")
+    fun `importTransactionsFromCsv should successfully import real CSV file with BOM`() {
+        launchWithConnectedUserInstance {
+            val csvContent = this::class.java.classLoader
+                .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
+                ?.readText(Charsets.UTF_8)
+
+            Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
+
+            val result = fileImportExportFeature.importTransactionsFromCsv(
+                tokenValue,
+                booklet.id!!,
+                csvContent!!,
+                skipValidation = false,
+                month = 1,
+                year = 2026
+            )
+
+            Assertions.assertTrue(result.isSuccess())
+            result.onSuccess { importResult ->
+                Assertions.assertEquals(101, importResult.successCount, "Les 101 transactions devraient être importées")
+                Assertions.assertEquals(0, importResult.failedLines.size, "Aucune ligne ne devrait échouer")
+                Assertions.assertFalse(importResult.hasErrors)
+            }
+        }
+    }
 }

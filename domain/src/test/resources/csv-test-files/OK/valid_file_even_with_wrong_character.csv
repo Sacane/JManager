@@ -1,0 +1,102 @@
+﻿date,label,depense,recette,tag
+1,Virement ami,,9.9,Aucune
+2,Abonnement service A,1,,Aucune
+2,Abonnement service B,4.79,,Aucune
+2,Achat vetements,52.5,,Aucune
+5,Allocation familiale,,287.78,Aucune
+5,Remboursement ami,,5,Aucune
+2,Transport urbain,9.45,,Aucune
+2,Supermarché,26.57,,Aucune
+2,Pharmacie,23.99,,Aucune
+3,Bricolage magasin,59.97,,Aucune
+3,Electronique magasin,19.99,,Aucune
+4,Veste noire,23.33,,Aucune
+4,Veste beige,33,,Aucune
+5,Achat en ligne vetements,52.25,,Aucune
+5,Formation en ligne,32.92,,Aucune
+5,Facture energie,135,,Aucune
+3,Materiel informatique,104.79,,Aucune
+3,Supermarché,63.24,,Aucune
+6,Assurance auto,94.88,,Aucune
+6,Amende stationnement,45,,Aucune
+5,Transport VTC,7.2,,Aucune
+5,Achat en ligne,9.29,,Aucune
+6,Consultation medicale,9,,Aucune
+6,Laboratoire analyses,21.8,,Aucune
+6,Bricolage magasin,10,,Aucune
+6,Supermarché,10.54,,Aucune
+6,Magasin discount,2.78,,Aucune
+7,Internet box,39.99,,Aucune
+6,Transport VTC,5.99,,Aucune
+8,Supermarché,31.3,,Aucune
+8,Frais bancaires,0.03,,Aucune
+9,Cadeau famille,,15,Aucune
+9,Assurance annuelle,407.99,,Aucune
+9,Test en ligne,1.95,,Aucune
+11,Frais carte bancaire,6,,Aucune
+9,Achat vetements,42.6,,Aucune
+9,Supermarché,40.12,,Aucune
+11,Abonnement streaming video,29.99,,Aucune
+11,Achat vetements,27.8,,Aucune
+11,Boulangerie,22.9,,Aucune
+13,Remboursement mutuelle,,9,Aucune
+13,Essence station,25.03,,Aucune
+12,Supermarché,55.43,,Aucune
+13,Pharmacie,22.46,,Aucune
+13,Supermarché,3.6,,Aucune
+14,Abonnement mobile,25.98,,Aucune
+15,Pass transport mensuel,28.37,,Aucune
+16,Virement epargne,,100,Aucune
+16,Mutuelle sante,10.01,,Aucune
+15,Magasin vetements A,32.28,,Aucune
+15,Magasin vetements B,14.99,,Aucune
+15,Magasin vetements C,19.9,,Aucune
+17,Remboursement achat,81,,Aucune
+18,Hebergement web,,100,Aucune
+19,Virement urgent,,150,Aucune
+15,Retrait distributeur,1.3,,Aucune
+17,Hypermarche,4.15,,Aucune
+17,Restaurant,35.3,,Aucune
+18,Supermarché,11.25,,Aucune
+20,Complement hebergement,,50,Aucune
+19,Drive supermarché,69.25,,Aucune
+19,Achat occasion en ligne,14.04,,Aucune
+20,Avoir supermarché,,1.75,Aucune
+19,Achat occasion site,7.89,,Aucune
+20,Remboursement consultation,,9,Aucune
+19,Achat en ligne jeux,14.37,,Aucune
+21,Abonnement streaming series,9.99,,Aucune
+21,Supermarché,22.31,,Aucune
+22,Hebergement serveur,143.28,,Aucune
+24,Remboursement pret,,12,Aucune
+24,Restaurant repas,,30,Aucune
+26,Courses alimentaires,,25,Aucune
+26,Courses diverses,,20,Aucune
+26,Supermarché,29.9,,Aucune
+26,Ticket transport,,10,Aucune
+27,Courses alimentaires,,30,Aucune
+27,Courses diverses,,30,Aucune
+27,Supermarché,4.05,,Aucune
+27,Supermarché,16.76,,Aucune
+27,Pharmacie,22.46,,Aucune
+27,Examen medical,,70,Aucune
+28,Examen medical complement,,20,Aucune
+27,Consultation specialiste,9,,Aucune
+27,Recharge pass transport,3.9,,Aucune
+27,Recharge pass transport,3.9,,Aucune
+27,Supermarché,5.5,,Aucune
+28,Remboursement mutuelle,,21.8,Aucune
+27,Restaurant,51.1,,Aucune
+28,Fast food,2.95,,Aucune
+28,Examen medical,90.5,,Aucune
+29,Remboursement achat,,9.29,Aucune
+28,Abonnement developpeur,8.44,,Aucune
+28,Supermarché,5.11,,Aucune
+30,Salaire mensuel,,2941.83,Aucune
+30,Loyer appartement,907.32,,Aucune
+30,Epargne mensuelle,300,,Aucune
+30,Remboursement pret,111.5,,Aucune
+30,Achat balance,11,,Aucune
+30,Abonnement developpeur,11,,Aucune
+30,Abonnement streaming anime,5.99,,Aucune
+30,Supermarché,40.46,,Aucune
