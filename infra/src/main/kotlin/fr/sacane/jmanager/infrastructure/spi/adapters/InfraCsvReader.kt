@@ -6,12 +6,23 @@ import org.springframework.stereotype.Component
 @Component
 class NativeCsvFileReader : CsvFileReader {
 
+    companion object {
+        private const val UTF8_BOM = '\uFEFF'
+    }
+
     override fun readCsvContent(fileContent: String): List<Array<String>> {
         if (fileContent.isBlank()) {
             return emptyList()
         }
 
-        return fileContent.lines()
+        // Remove UTF-8 BOM if present
+        val cleanContent = if (fileContent.isNotEmpty() && fileContent[0] == UTF8_BOM) {
+            fileContent.substring(1)
+        } else {
+            fileContent
+        }
+
+        return cleanContent.lines()
             .filter { it.isNotBlank() }
             .map { line ->
                 parseCsvLine(line)
