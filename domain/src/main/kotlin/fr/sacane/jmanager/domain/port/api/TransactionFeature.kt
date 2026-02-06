@@ -113,12 +113,12 @@ class TransactionFeatureImpl(
             val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction notFound("Le compte $accountID n'existe pas")
             val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy() ?: return@executeInTransaction notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
             transactionFromDatabase.updateFromOther(transaction)
-            transaction.lastModified = LocalDateTime.now()
-            transactionRepository.save(registeredAccount.id!!, transaction) ?: return@executeInTransaction invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
+            transactionFromDatabase.lastModified = LocalDateTime.now()
+            transactionRepository.save(registeredAccount.id!!, transactionFromDatabase) ?: return@executeInTransaction invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
             registeredAccount.removeTransactionById(transaction.id)
-            registeredAccount.addTransaction(transaction)
+            registeredAccount.addTransaction(transactionFromDatabase)
             accountRepository.update(registeredAccount)
-            success(TransactionResumeResult(transaction, registeredAccount.amount, registeredAccount.previewAmount))
+            success(TransactionResumeResult(transactionFromDatabase, registeredAccount.amount, registeredAccount.previewAmount))
         }
     }
 
@@ -180,7 +180,7 @@ class TransactionFeatureImpl(
                 // If the transaction has a regularTransactionId, mark this month as excluded to prevent regeneration
                 if (transaction.regularTransactionId != null) {
                     trackerRepository.markMonthAsExcluded(
-                        regularTransactionId = transaction.regularTransactionId!!,
+                        regularTransactionId = transaction.regularTransactionId,
                         bookletId = accountID,
                         year = transaction.date.year,
                         month = transaction.date.month
