@@ -31,6 +31,7 @@ class InMemoryCsvFileReader : CsvFileReader {
         val result = mutableListOf<String>()
         val currentField = StringBuilder()
         var insideQuotes = false
+        val separator = detectSeparator(line)
 
         for (i in line.indices) {
             val char = line[i]
@@ -39,7 +40,7 @@ class InMemoryCsvFileReader : CsvFileReader {
                 char == '"' -> {
                     insideQuotes = !insideQuotes
                 }
-                char == ',' && !insideQuotes -> {
+                char == separator && !insideQuotes -> {
                     result.add(currentField.toString())
                     currentField.clear()
                 }
@@ -53,5 +54,21 @@ class InMemoryCsvFileReader : CsvFileReader {
 
         return result.toTypedArray()
     }
-}
 
+    private fun detectSeparator(line: String): Char {
+        var insideQuotes = false
+        var commaCount = 0
+        var semicolonCount = 0
+
+        for (i in line.indices) {
+            val char = line[i]
+            when {
+                char == '"' -> insideQuotes = !insideQuotes
+                !insideQuotes && char == ',' -> commaCount++
+                !insideQuotes && char == ';' -> semicolonCount++
+            }
+        }
+
+        return if (semicolonCount > commaCount) ';' else ','
+    }
+}

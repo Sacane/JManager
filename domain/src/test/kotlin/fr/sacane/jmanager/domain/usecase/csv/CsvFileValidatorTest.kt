@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import java.awt.Color
+import java.nio.charset.StandardCharsets
 
 @DisplayName("CsvFileValidator Tests")
 class CsvFileValidatorTest {
@@ -587,5 +588,29 @@ class CsvFileValidatorTest {
             assertTrue(report.errors.isEmpty())
         }
     }
-}
 
+    private fun readResource(path: String): String {
+        val stream = javaClass.classLoader.getResourceAsStream(path)
+            ?: throw IllegalArgumentException("Resource not found: $path")
+        return stream.use { String(it.readBytes(), StandardCharsets.UTF_8) }
+    }
+
+    @Test
+    @DisplayName("Should accept CSV files with semicolon separator")
+    fun `should accept CSV files with semicolon separator`() {
+        val csvContent = readResource("csv-test-files/OK/valid_semicolon.csv")
+        val csvReader = fr.sacane.jmanager.domain.fake.InMemoryCsvFileReader()
+        val rows = csvReader.readCsvContent(csvContent)
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
+            assertEquals(2, report.totalLines)
+            assertEquals(2, report.validLines)
+            assertTrue(report.errors.isEmpty())
+        }
+    }
+}
