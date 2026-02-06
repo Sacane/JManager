@@ -177,9 +177,8 @@ class TransactionFeatureImpl(
             val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
 
             transactionsToDelete.forEach { transaction ->
-                // If the transaction is confirmed (not preview) and has a regularTransactionId,
-                // mark this month as excluded to prevent regeneration
-                if (!transaction.isPreview && transaction.regularTransactionId != null) {
+                // If the transaction has a regularTransactionId, mark this month as excluded to prevent regeneration
+                if (transaction.regularTransactionId != null) {
                     trackerRepository.markMonthAsExcluded(
                         regularTransactionId = transaction.regularTransactionId!!,
                         bookletId = accountID,

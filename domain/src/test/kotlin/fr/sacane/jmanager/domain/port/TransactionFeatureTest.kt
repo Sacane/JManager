@@ -324,6 +324,23 @@ class TransactionFeatureTest: FeatureTest() {
             }
 
         }
+        @Test
+        fun `delete preview regular transaction should exclude month for regular transaction`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-1")
+                val previewTransaction = generateTransaction("test-preview", 100.toAmount(), true, "02/01/2024".toDate(), isPreview = true)
+                    .copy(regularTransactionId = regularTransactionId)
+
+                initTransactions(listOf(previewTransaction))
+
+                transactionFeature.deleteSheetsByIds(booklet.id!!, listOf(previewTransaction.id!!), tokenValue)
+                    .assertSuccess()
+
+                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                assertNotNull(tracker)
+                assertTrue(tracker!!.excludedMonths.contains(java.time.YearMonth.of(2024, java.time.Month.JANUARY)))
+            }
+        }
     }
 
     @Nested
