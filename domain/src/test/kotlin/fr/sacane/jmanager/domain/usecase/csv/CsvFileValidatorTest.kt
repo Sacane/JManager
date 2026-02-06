@@ -613,4 +613,43 @@ class CsvFileValidatorTest {
             assertTrue(report.errors.isEmpty())
         }
     }
+
+    @Test
+    @DisplayName("Should return error when decimal separators are inconsistent")
+    fun `should return error when decimal separators are inconsistent`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("15-01-2025", "Groceries", "45.50", "", "Aucune"),
+            arrayOf("16-01-2025", "Salary", "", "2500,00", "Aucune")
+        )
+
+        val result = validator.validate(rows, availableTags, csvSeparator = ';')
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.DECIMAL_SEPARATOR_INCONSISTENT, report.errors[0].type)
+            assertEquals(3, report.errors[0].lineNumber)
+        }
+    }
+
+    @Test
+    @DisplayName("Should return error when decimal separator equals CSV separator")
+    fun `should return error when decimal separator equals CSV separator`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("15-01-2025", "Groceries", "45,50", "", "Aucune")
+        )
+
+        val result = validator.validate(rows, availableTags, csvSeparator = ',')
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.DECIMAL_SEPARATOR_EQUALS_CSV_SEPARATOR, report.errors[0].type)
+            assertEquals(2, report.errors[0].lineNumber)
+        }
+    }
 }

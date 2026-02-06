@@ -43,7 +43,7 @@ class CsvFileValidator {
      * @param year Optional year to use when date contains only day
      * @return Result<CsvValidationReport> - Always success with errors/warnings in the report
      */
-    fun validate(rows: List<Array<String>>, availableTags: List<Tag>, month: Int? = null, year: Int? = null): Result<CsvValidationReport> {
+    fun validate(rows: List<Array<String>>, availableTags: List<Tag>, month: Int? = null, year: Int? = null, csvSeparator: Char? = null): Result<CsvValidationReport> {
         val errors = mutableListOf<CsvValidationIssue>()
         val warnings = mutableListOf<CsvValidationIssue>()
         val suggestions = mutableListOf<String>()
@@ -74,15 +74,19 @@ class CsvFileValidator {
 
         val dataRows = rows.drop(1)
         var validLineCount = 0
+        var decimalSeparator: Char? = null
 
         for ((index, row) in dataRows.withIndex()) {
             val lineNumber = index + 2
-            val lineValidation = validateDataLine(row, lineNumber, availableTags, month, year)
+            val lineValidation = validateDataLine(row, lineNumber, availableTags, month, year, decimalSeparator, csvSeparator)
 
             if (lineValidation.error != null) {
                 errors.add(lineValidation.error)
             } else {
                 lineValidation.warnings?.let { warnings.addAll(it) }
+                if (decimalSeparator == null && lineValidation.decimalSeparator != null) {
+                    decimalSeparator = lineValidation.decimalSeparator
+                }
                 validLineCount++
             }
         }
@@ -142,7 +146,8 @@ class CsvFileValidator {
 
     private data class LineValidationResult(
         val error: CsvValidationIssue? = null,
-        val warnings: List<CsvValidationIssue>? = null
+        val warnings: List<CsvValidationIssue>? = null,
+        val decimalSeparator: Char? = null
     )
 
     private fun validateDataLine(
@@ -150,7 +155,9 @@ class CsvFileValidator {
         lineNumber: Int,
         availableTags: List<Tag>,
         month: Int?,
-        year: Int?
+        year: Int?,
+        expectedDecimalSeparator: Char?,
+        csvSeparator: Char?
     ): LineValidationResult {
         val warnings = mutableListOf<CsvValidationIssue>()
 
@@ -170,14 +177,14 @@ class CsvFileValidator {
         val labelError = validateLabelColumn(row[LABEL_COLUMN], lineNumber)
         if (labelError != null) return LineValidationResult(error = labelError)
 
-        val amountResult = validateAmountColumns(row[DEPENSE_COLUMN], row[RECETTE_COLUMN], lineNumber)
+        val amountResult = validateAmountColumns(row[DEPENSE_COLUMN], row[RECETTE_COLUMN], lineNumber, expectedDecimalSeparator, csvSeparator)
         if (amountResult.error != null) return LineValidationResult(error = amountResult.error)
         amountResult.warnings?.let { warnings.addAll(it) }
 
         val tagWarning = validateTagColumn(row[TAG_COLUMN], lineNumber, availableTags)
         tagWarning?.let { warnings.add(it) }
 
-        return LineValidationResult(warnings = warnings)
+        return LineValidationResult(warnings = warnings, decimalSeparator = amountResult.decimalSeparator)
     }
 
     private fun validateDateColumn(dateStr: String, lineNumber: Int, month: Int?, year: Int?): CsvValidationIssue? {
@@ -263,17 +270,25 @@ class CsvFileValidator {
         return null
     }
 
+    private data class AmountValidationResult(
+        val error: CsvValidationIssue? = null,
+        val warnings: List<CsvValidationIssue>? = null,
+        val decimalSeparator: Char? = null
+    )
+
     private fun validateAmountColumns(
         depenseStr: String,
         recetteStr: String,
-        lineNumber: Int
-    ): LineValidationResult {
+        lineNumber: Int,
+        expectedDecimalSeparator: Char?,
+        csvSeparator: Char?
+    ): AmountValidationResult {
         val warnings = mutableListOf<CsvValidationIssue>()
         val depenseEmpty = depenseStr.isBlank()
         val recetteEmpty = recetteStr.isBlank()
 
         if (depenseEmpty && recetteEmpty) {
-            return LineValidationResult(
+            return AmountValidationResult(
                 error = CsvValidationIssue(
                     lineNumber = lineNumber,
                     type = CsvReportType.NO_AMOUNT_FILLED,
@@ -283,7 +298,7 @@ class CsvFileValidator {
         }
 
         if (!depenseEmpty && !recetteEmpty) {
-            return LineValidationResult(
+            return AmountValidationResult(
                 error = CsvValidationIssue(
                     lineNumber = lineNumber,
                     type = CsvReportType.BOTH_AMOUNTS_FILLED,
@@ -304,9 +319,31 @@ class CsvFileValidator {
             ))
         }
 
+        val detectedDecimalSeparator = detectDecimalSeparator(amountStr)
+        if (detectedDecimalSeparator != null) {
+            if (csvSeparator != null && detectedDecimalSeparator == csvSeparator) {
+                return AmountValidationResult(
+                    error = CsvValidationIssue(
+                        lineNumber = lineNumber,
+                        type = CsvReportType.DECIMAL_SEPARATOR_EQUALS_CSV_SEPARATOR,
+                        message = "Line $lineNumber: Le separateur decimal '$detectedDecimalSeparator' ne peut pas etre le meme que le separateur CSV '$csvSeparator'"
+                    )
+                )
+            }
+            if (expectedDecimalSeparator != null && detectedDecimalSeparator != expectedDecimalSeparator) {
+                return AmountValidationResult(
+                    error = CsvValidationIssue(
+                        lineNumber = lineNumber,
+                        type = CsvReportType.DECIMAL_SEPARATOR_INCONSISTENT,
+                        message = "Line $lineNumber: Les separateurs decimaux sont incoherents. Utilisez uniquement '$expectedDecimalSeparator' dans tout le fichier"
+                    )
+                )
+            }
+        }
+
         val value = CsvValidationUtils.parseAmountValue(amountStr.trim())
         if (value == null) {
-            return LineValidationResult(
+            return AmountValidationResult(
                 error = CsvValidationIssue(
                     lineNumber = lineNumber,
                     type = CsvReportType.INVALID_AMOUNT_FORMAT,
@@ -316,7 +353,7 @@ class CsvFileValidator {
         }
 
         if (value < BigDecimal.ZERO) {
-            return LineValidationResult(
+            return AmountValidationResult(
                 error = CsvValidationIssue(
                     lineNumber = lineNumber,
                     type = CsvReportType.NEGATIVE_AMOUNT,
@@ -325,7 +362,19 @@ class CsvFileValidator {
             )
         }
 
-        return LineValidationResult(warnings = warnings)
+        return AmountValidationResult(warnings = warnings, decimalSeparator = detectedDecimalSeparator)
+    }
+
+    private fun detectDecimalSeparator(amountStr: String): Char? {
+        val trimmed = amountStr.trim()
+        val hasComma = trimmed.contains(',')
+        val hasDot = trimmed.contains('.')
+
+        return when {
+            hasComma && !hasDot -> ','
+            hasDot && !hasComma -> '.'
+            else -> null
+        }
     }
 
     private fun validateTagColumn(
@@ -379,4 +428,3 @@ class CsvFileValidator {
         }
     }
 }
-

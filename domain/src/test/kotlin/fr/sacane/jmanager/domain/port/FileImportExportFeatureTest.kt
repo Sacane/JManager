@@ -268,7 +268,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @DisplayName("Should accept comma as decimal separator")
     fun `validateCsvFile should accept comma as decimal separator`() {
         launchWithConnectedUserInstance {
-            val csvContent = "date,label,depense,recette,tag\n15-01-2025,Test,\"45,50\",,\n"
+            val csvContent = "date;label;depense;recette;tag\n15-01-2025;Test;\"45,50\";;\n"
 
             val result = fileImportExportFeature.validateCsvFile(
                 tokenValue,
@@ -506,7 +506,6 @@ class FileImportExportFeatureTest : FeatureTest() {
         launchWithConnectedUserInstance {
             val initialAmount = booklet.amount
             val csvContent = """
-                date,label,depense,recette,tag
                 invalid-date,Test,45.50,,
             """.trimIndent()
 
