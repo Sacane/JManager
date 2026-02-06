@@ -132,5 +132,27 @@ object CsvValidationUtils {
             }
         }
     }
-}
 
+    /**
+     * Detects the CSV separator used in the content
+     * Analyzes the first non-empty line to determine if ',' or ';' is used as a separator
+     * Returns null if no valid separator can be detected
+     */
+    fun detectCsvSeparator(csvContent: String): Char? {
+        val firstLine = csvContent.lineSequence().firstOrNull { it.isNotBlank() } ?: return null
+        var insideQuotes = false
+        var commaCount = 0
+        var semicolonCount = 0
+
+        for (i in firstLine.indices) {
+            val char = firstLine[i]
+            when {
+                char == '"' -> insideQuotes = !insideQuotes
+                !insideQuotes && char == ',' -> commaCount++
+                !insideQuotes && char == ';' -> semicolonCount++
+            }
+        }
+
+        return if (semicolonCount > commaCount) ';' else ','
+    }
+}

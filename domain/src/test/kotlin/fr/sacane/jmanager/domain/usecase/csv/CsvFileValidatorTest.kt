@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import java.awt.Color
+import java.nio.charset.StandardCharsets
 
 @DisplayName("CsvFileValidator Tests")
 class CsvFileValidatorTest {
@@ -587,5 +588,68 @@ class CsvFileValidatorTest {
             assertTrue(report.errors.isEmpty())
         }
     }
-}
 
+    private fun readResource(path: String): String {
+        val stream = javaClass.classLoader.getResourceAsStream(path)
+            ?: throw IllegalArgumentException("Resource not found: $path")
+        return stream.use { String(it.readBytes(), StandardCharsets.UTF_8) }
+    }
+
+    @Test
+    @DisplayName("Should accept CSV files with semicolon separator")
+    fun `should accept CSV files with semicolon separator`() {
+        val csvContent = readResource("csv-test-files/OK/valid_semicolon.csv")
+        val csvReader = fr.sacane.jmanager.domain.fake.InMemoryCsvFileReader()
+        val rows = csvReader.readCsvContent(csvContent)
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors)
+            assertTrue(report.canImport)
+            assertEquals(2, report.totalLines)
+            assertEquals(2, report.validLines)
+            assertTrue(report.errors.isEmpty())
+        }
+    }
+
+    @Test
+    @DisplayName("Should return error when decimal separators are inconsistent")
+    fun `should return error when decimal separators are inconsistent`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("15-01-2025", "Groceries", "45.50", "", "Aucune"),
+            arrayOf("16-01-2025", "Salary", "", "2500,00", "Aucune")
+        )
+
+        val result = validator.validate(rows, availableTags, csvSeparator = ';')
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.DECIMAL_SEPARATOR_INCONSISTENT, report.errors[0].type)
+            assertEquals(3, report.errors[0].lineNumber)
+        }
+    }
+
+    @Test
+    @DisplayName("Should return error when decimal separator equals CSV separator")
+    fun `should return error when decimal separator equals CSV separator`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("15-01-2025", "Groceries", "45,50", "", "Aucune")
+        )
+
+        val result = validator.validate(rows, availableTags, csvSeparator = ',')
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertTrue(report.hasErrors)
+            assertEquals(1, report.errors.size)
+            assertEquals(CsvReportType.DECIMAL_SEPARATOR_EQUALS_CSV_SEPARATOR, report.errors[0].type)
+            assertEquals(2, report.errors[0].lineNumber)
+        }
+    }
+}

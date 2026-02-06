@@ -124,11 +124,12 @@ class FileImportExportFeatureImpl(
             val bookletFindResult = findBookletAndCheckOwner(userId, bookletId)
 
             val userTags = tagRepository.getAllDefault(userId)
+            val csvSeparator = fr.sacane.jmanager.domain.usecase.csv.CsvValidationUtils.detectCsvSeparator(csvContent)
 
             try {
                 bookletFindResult.flatMap {
                     val rows = csvFileReader.readCsvContent(csvContent)
-                    val validationResult = fileValidator.validate(rows, userTags, month, year)
+                    val validationResult = fileValidator.validate(rows, userTags, month, year, csvSeparator)
 
                     validationResult.mapNullable { report ->
                         if (report != null) {
@@ -159,12 +160,13 @@ class FileImportExportFeatureImpl(
             val bookletFindResult = findBookletAndCheckOwner(userId, bookletId)
 
             val userTags = tagRepository.getAllDefault(userId)
+            val csvSeparator = fr.sacane.jmanager.domain.usecase.csv.CsvValidationUtils.detectCsvSeparator(csvContent)
 
             try {
                 val rows = csvFileReader.readCsvContent(csvContent)
 
                 if (!skipValidation) {
-                    val validationResult = bookletFindResult.flatMap { checkValidationErrors(rows, userTags, month, year) }
+                    val validationResult = bookletFindResult.flatMap { checkValidationErrors(rows, userTags, month, year, csvSeparator) }
                     if (validationResult.isFailure()) return@authenticate validationResult
                 }
 
@@ -185,8 +187,8 @@ class FileImportExportFeatureImpl(
         return success(booklet)
     }
 
-    private fun checkValidationErrors(rows: List<Array<String>>, userTags: List<Tag>, month: Int?, year: Int?): Result<CsvImportResult> {
-        val validationResult = fileValidator.validate(rows, userTags, month, year)
+    private fun checkValidationErrors(rows: List<Array<String>>, userTags: List<Tag>, month: Int?, year: Int?, csvSeparator: Char?): Result<CsvImportResult> {
+        val validationResult = fileValidator.validate(rows, userTags, month, year, csvSeparator)
 
         if (validationResult.isFailure()) {
             return failure(validationResult.status, validationResult.message)
