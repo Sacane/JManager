@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.spi.*
+import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
@@ -60,6 +61,17 @@ object FakeFactory {
     private val inMemoryTagRepository = InMemoryTagRepository(inMemoryDatabase)
     private val csvFileReader = InMemoryCsvFileReader()
 
+    private val bookletBalanceQueryRepository: BookletBalanceQueryRepository = object : BookletBalanceQueryRepository {
+        override fun findPersistedBalances(bookletId: UUID): BookletBalanceQueryRepository.PersistedBalances? {
+            val booklet = inMemoryDatabase.findAccountById(bookletId) ?: return null
+            return BookletBalanceQueryRepository.PersistedBalances(
+                label = booklet.label,
+                amount = booklet.amount.value,
+                previewAmount = booklet.previewAmount.value
+            )
+        }
+    }
+
     val accountFeature = BookletFeatureImpl(
         userRepository,
         sessionManager,
@@ -68,7 +80,8 @@ object FakeFactory {
         inMemoryRegularTransactionGenerator,
         manager,
         inMemoryTrackerRepository,
-        transactionQueryRepository
+        transactionQueryRepository,
+        bookletBalanceQueryRepository
     )
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
     val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)

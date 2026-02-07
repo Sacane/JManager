@@ -438,14 +438,14 @@ async function loadDashboardData() {
   try {
     // Load basic data
     const [accountsData, regularTransData, tagsData] = await Promise.all([
-      fetchBooklets(),
+      fetchBooklets().catch(() => []),
       getRegularTransaction().catch(() => []),
       getAllTags().catch(() => []),
     ])
 
-    accounts.value = accountsData
-    regularTransactions.value = regularTransData
-    tags.value = tagsData
+    accounts.value = Array.isArray(accountsData) ? accountsData : []
+    regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
+    tags.value = Array.isArray(tagsData) ? tagsData : []
 
     // Load stats data
     const now = new Date()

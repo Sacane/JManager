@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.BookletBalances
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.*
+import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
@@ -143,7 +144,8 @@ class BookletFeatureImpl(
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository,
-    private val transactionQueryRepository: TransactionQueryRepository
+    private val transactionQueryRepository: TransactionQueryRepository,
+    private val bookletBalanceQueryRepository: BookletBalanceQueryRepository
 ): BookletFeature {
     companion object {
         private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
@@ -355,19 +357,75 @@ class BookletFeatureImpl(
         year: Int,
         startingMonth: Month?,
         startingYear: Int?
-    ): Result<BookletBalances> = session.authenticate(token) {
-        loadTransactionsForBookletForAMonth(
-            token = token,
-            bookletId = bookletId,
-            month = month,
-            year = year,
-            startingMonth = startingMonth,
-            startingYear = startingYear
-        ).map { res ->
-            BookletBalances(
-                label = res.label,
-                realSold = res.realSold,
-                previewSold = res.previsionalSold
+    ): Result<BookletBalances> = session.authenticate(token) { userId ->
+        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+            val persisted = bookletBalanceQueryRepository.findPersistedBalances(bookletId)
+                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+
+            val currentDate = LocalDate.now()
+            val currentMonth = startingMonth ?: currentDate.month
+            val currentYear = startingYear ?: currentDate.year
+
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+                ?: emptyList()
+
+            // Only generate physical previsional transactions for the CURRENT month
+            val targetYearMonth = YearMonth.of(year, month)
+            val currentYearMonth = YearMonth.of(currentYear, currentMonth)
+            if (targetYearMonth == currentYearMonth) {
+                // side-effect: generator persists missing preview tx; doesn't require loading all sheets
+                regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                    bookletId,
+                    regularTransactions,
+                    month,
+                    year
+                )
+            }
+
+            // Build a minimal booklet carrying only what calculatePrevisionalSold needs
+            // (transactions are still needed for physical previews between current and target).
+            val baseBooklet = Booklet(
+                amount = Amount(persisted.amount),
+                labelAccount = persisted.label,
+                previewAmount = Amount(persisted.previewAmount),
+                id = bookletId
+            )
+
+            val previewStart = YearMonth.of(currentYear, currentMonth)
+            val previewEnd = YearMonth.of(year, month)
+            val (from, to) = if (previewStart <= previewEnd) {
+                val fromDate = LocalDate.of(currentYear, currentMonth, 1)
+                val endDate = LocalDate.of(year, month, 1).withDayOfMonth(YearMonth.of(year, month).lengthOfMonth())
+                fromDate to endDate
+            } else {
+                val fromDate = LocalDate.of(year, month, 1)
+                val endDate = LocalDate.of(currentYear, currentMonth, 1).withDayOfMonth(YearMonth.of(currentYear, currentMonth).lengthOfMonth())
+                fromDate to endDate
+            }
+
+            // Load only the physical preview transactions needed for the previewSold computation.
+            // This stays a bounded range (current..target) instead of "all historie".
+            val physicalPreviewTransactions = transactionQueryRepository
+                .findByBookletIdAndDateBetween(bookletId, from, to)
+                .filter { it.isPreview }
+
+            physicalPreviewTransactions.forEach { baseBooklet.addTransaction(it) }
+
+            val previsionalSold = calculatePrevisionalSold(
+                baseBooklet,
+                regularTransactions,
+                currentMonth,
+                currentYear,
+                month,
+                year
+            )
+
+            return@executeInTransaction success(
+                BookletBalances(
+                    label = persisted.label,
+                    realSold = Amount(persisted.amount),
+                    previewSold = previsionalSold
+                )
             )
         }
     }
