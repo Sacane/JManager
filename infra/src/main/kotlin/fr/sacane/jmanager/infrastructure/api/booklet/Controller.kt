@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.api.booklet
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.BookletBalances
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.BookletFeature
@@ -87,6 +88,36 @@ class BookletController (
         }
         return report.toHttpResponse()
     }
+
+    @GetMapping("{accountID}/balances")
+    fun findBookletBalancesByMonthAndYear(
+        @PathVariable("accountID") accountID: String,
+        @RequestParam("month") month: Int,
+        @RequestParam("year") year: Int
+    ): ResponseEntity<BookletBalancesResponse> {
+        LOGGER.info("Requesting account balances for booklet $accountID")
+        return feature
+            .loadBalancesForBookletForAMonth(currentUser.token, accountID.toUUID(), Month.of(month), year)
+            .map { it.toDTO() }
+            .toHttpResponse()
+    }
+
+    @GetMapping("{accountID}/transactions")
+    fun findBookletTransactionsByMonthAndYear(
+        @PathVariable("accountID") accountID: String,
+        @RequestParam("month") month: Int,
+        @RequestParam("year") year: Int
+    ): ResponseEntity<BookletTransactionsResponse> {
+        LOGGER.info("Requesting account transactions for booklet $accountID")
+        return feature
+            .loadTransactionsForBookletForAMonth(currentUser.token, accountID.toUUID(), Month.of(month), year)
+            .map { res ->
+                BookletTransactionsResponse(
+                    transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() }
+                )
+            }
+            .toHttpResponse()
+    }
 }
 
 @Serializable
@@ -95,4 +126,22 @@ data class BookletReport(
     val transactions: List<TransactionResult>,
     val realSold: String,
     val previewSold: String,
+)
+
+@Serializable
+data class BookletBalancesResponse(
+    val label: String,
+    val realSold: String,
+    val previewSold: String
+)
+
+@Serializable
+data class BookletTransactionsResponse(
+    val transactions: List<TransactionResult>
+)
+
+private fun BookletBalances.toDTO(): BookletBalancesResponse = BookletBalancesResponse(
+    label = label,
+    realSold = realSold.value.toString(),
+    previewSold = previewSold.value.toString()
 )

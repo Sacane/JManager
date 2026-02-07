@@ -7,7 +7,7 @@ import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({ layout: 'sidebar-layout' })
 
-const { findByIdMonthAndYear } = useBooklet()
+const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear } = useBooklet()
 const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
@@ -94,14 +94,18 @@ async function loadBookletData() {
   try {
     const accountId = (route.params as any)?.id as string
     const month = numberFromMonth(bookletData.month) as number
-    const result: BookletReport = await findByIdMonthAndYear(accountId, month, bookletData.year)
 
-    bookletData.label = result.label
-    bookletData.id = (route.params as any)?.id as string
-    bookletData.realSold = Number.parseFloat(result.realSold)
-    bookletData.previewSold = Number.parseFloat(result.previewSold)
+    const [balances, transactionsRes] = await Promise.all([
+      findBalancesByIdMonthAndYear(accountId, month, bookletData.year),
+      findTransactionsByIdMonthAndYear(accountId, month, bookletData.year),
+    ])
 
-    actualSheets.value = result.transactions
+    bookletData.label = balances.label
+    bookletData.id = accountId
+    bookletData.realSold = Number.parseFloat(balances.realSold)
+    bookletData.previewSold = Number.parseFloat(balances.previewSold)
+
+    actualSheets.value = transactionsRes.transactions
       .map(asDisplayableTransaction)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   } catch (err) {
@@ -199,16 +203,20 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
 
 async function confirmDelete() {
   try {
-    await deleteTransaction(
+    const res = await deleteTransaction(
       bookletData.id,
       selectedSheets.value.map(sheet => sheet.id as string),
     )
 
-    // Reload booklet data to recalculate the previsional balance correctly
-    // The backend will recalculate previsionalSold including virtual transactions
-    await loadBookletData()
-
+    // Update list locally (no reload)
+    const deleted = new Set(res.deletedIds)
+    actualSheets.value = actualSheets.value.filter(t => !deleted.has(t.id as string))
     selectedSheets.value = []
+
+    // Update soldes locally
+    bookletData.realSold = Number.parseFloat(res.amount)
+    bookletData.previewSold = Number.parseFloat(res.previewAmount)
+
     toast.success('Transactions supprimées avec succès')
   } catch (err) {
     toast.errorAxios(err as AxiosError)
@@ -233,10 +241,17 @@ async function confirmPreview() {
   const transaction = transactionToConfirm.value
   if (!transaction) return
   try {
-    await confirmPreviewTransaction(bookletData.id, transaction.id as string, newAmountForPreview.value)
+    const result = await confirmPreviewTransaction(bookletData.id, transaction.id as string, newAmountForPreview.value)
 
-    // Reload booklet data to ensure all calculations are up-to-date
-    await loadBookletData()
+    // Update locally: replace the transaction (now confirmed)
+    const index = actualSheets.value.findIndex(item => item?.id === result.id)
+    if (index !== -1) {
+      actualSheets.value[index] = asDisplayableTransaction(result)
+    }
+
+    // Update soldes from response
+    bookletData.realSold = Number.parseFloat(result.accountAmount)
+    bookletData.previewSold = Number.parseFloat(result.accountPreviewAmount)
 
     toast.success('Transaction validée avec succès')
   } catch (err) {

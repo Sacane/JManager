@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
+import fr.sacane.jmanager.domain.port.api.TransactionDeletionResult
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.toUUIDs
@@ -52,9 +53,11 @@ class TransactionController(
     @DeleteMapping
     fun deleteByIds(
         @RequestBody sheetIds: AccountTransactionsIdRequest
-    ): ResponseEntity<Nothing>
-        = transactionFeature.deleteSheetsByIds(sheetIds.accountId.toUUID(), sheetIds.transactionIds.toUUIDs(), currentUser.token)
-        .toHttpResponse()
+    ): ResponseEntity<TransactionDeletionResponse> =
+        transactionFeature
+            .deleteSheetsByIds(sheetIds.accountId.toUUID(), sheetIds.transactionIds.toUUIDs(), currentUser.token)
+            .map { it.toDTO() }
+            .toHttpResponse()
 
 
     @GetMapping
@@ -213,4 +216,17 @@ data class ConfirmPreviewRequest(
     val transactionID: String,
     @Serializable(with = BigDecimalSerializer::class)
     val newAmount: BigDecimal?
+)
+
+@Serializable
+data class TransactionDeletionResponse(
+    val deletedIds: List<String>,
+    val amount: String,
+    val previewAmount: String
+)
+
+private fun TransactionDeletionResult.toDTO(): TransactionDeletionResponse = TransactionDeletionResponse(
+    deletedIds = deletedIds.map { it.toString() },
+    amount = accountAmount.value.toString(),
+    previewAmount = accountPreviewAmount.value.toString()
 )

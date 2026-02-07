@@ -5,6 +5,16 @@ export interface AccountFormatted {
   amount: string
 }
 
+export interface BookletBalancesDTO {
+  label: string
+  realSold: string
+  previewSold: string
+}
+
+export interface BookletTransactionsDTO {
+  transactions: TransactionResultDTO[]
+}
+
 export default function useBooklet() {
   const { get, post, deleteQuery } = useQuery()
   const accountFormatted = ref<AccountFormatted[]>([])
@@ -36,5 +46,23 @@ export default function useBooklet() {
       year,
     })
   }
-  return { createAccount: createBooklet, fetch: findAllBooklet, deleteAccount, accountFormatted, findById, findByIdMonthAndYear }
+
+  async function findBalancesByIdMonthAndYear(accountId: string, month: number, year: number): Promise<BookletBalancesDTO> {
+    return get(`account/${accountId}/balances`, { month, year })
+  }
+
+  async function findTransactionsByIdMonthAndYear(accountId: string, month: number, year: number): Promise<BookletTransactionsDTO> {
+    return get(`account/${accountId}/transactions`, { month, year })
+  }
+
+  return {
+    createAccount: createBooklet,
+    fetch: findAllBooklet,
+    deleteAccount,
+    accountFormatted,
+    findById,
+    findByIdMonthAndYear,
+    findBalancesByIdMonthAndYear,
+    findTransactionsByIdMonthAndYear,
+  }
 }

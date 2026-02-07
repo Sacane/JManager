@@ -77,7 +77,7 @@ sealed interface TransactionFeature {
      * @param token Authentication token identifying the requester.
      * @return Result with no value on success, or an error state if the account or sheets are not found.
      */
-    fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<Nothing>
+    fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult>
 
     /**
      * Confirm a provisional (preview) transaction, converting it into a real transaction.
@@ -168,10 +168,10 @@ class TransactionFeatureImpl(
         success(sheet)
     }
 
-    override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<Nothing> {
+    override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
-                ?: return@executeInTransaction failure<Nothing>(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
 
             // Find transactions to delete and mark months as excluded if they are confirmed regular transactions
             val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
@@ -193,7 +193,14 @@ class TransactionFeatureImpl(
             booklet.removeTransactionIf(isSheetOnList)
             accountRepository.upsert(booklet)
             transactionRepository.deleteAllSheetsById(sheetIds)
-            return@executeInTransaction success()
+
+            return@executeInTransaction success(
+                TransactionDeletionResult(
+                    deletedIds = sheetIds,
+                    accountAmount = booklet.amount,
+                    accountPreviewAmount = booklet.previewAmount
+                )
+            )
         }
     }
 
@@ -221,3 +228,9 @@ class TransactionFeatureImpl(
     }
 
 }
+
+data class TransactionDeletionResult(
+    val deletedIds: List<UUID>,
+    val accountAmount: Amount,
+    val accountPreviewAmount: Amount
+)
