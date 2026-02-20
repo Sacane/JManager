@@ -5,12 +5,15 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.BookletBalances
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.*
+import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.utils.Result
@@ -18,6 +21,7 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
+import java.time.Duration
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
@@ -107,6 +111,28 @@ sealed interface BookletFeature {
         startingMonth: Month? = null,
         startingYear: Int? = null
     ): Result<BookletLoadingResult>
+
+    /**
+     * Load only the balances (soldes) for a specific booklet for a given month and year.
+     * This uses the existing transaction loading logic but filters the result to return only
+     * the balances information.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param bookletId UUID of the booklet to load balances for.
+     * @param month Target month to load balances for.
+     * @param year Target year to load balances for.
+     * @param startingMonth Starting month for calculation (defaults to current month if null).
+     * @param startingYear Starting year for calculation (defaults to current year if null).
+     * @return Result containing the BookletBalances on success, or a failure state when the booklet is not found.
+     */
+    fun loadBalancesForBookletForAMonth(
+        token: String,
+        bookletId: UUID,
+        month: Month,
+        year: Int,
+        startingMonth: Month? = null,
+        startingYear: Int? = null
+    ): Result<BookletBalances>
 }
 
 @DomainService
@@ -117,7 +143,9 @@ class BookletFeatureImpl(
     private val regularTransactionRepository: RegularTransactionRepository,
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
-    private val trackerRepository: RegularTransactionTrackerRepository
+    private val trackerRepository: RegularTransactionTrackerRepository,
+    private val transactionQueryRepository: TransactionQueryRepository,
+    private val bookletBalanceQueryRepository: BookletBalanceQueryRepository
 ): BookletFeature {
     companion object {
         private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
@@ -206,13 +234,18 @@ class BookletFeatureImpl(
         startingYear: Int?
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+            val totalStartNs = System.nanoTime()
             LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
 
+            val fetchBookletStartNs = System.nanoTime()
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+            val fetchBookletMs = Duration.ofNanos(System.nanoTime() - fetchBookletStartNs).toMillis()
 
+            val fetchRegularStartNs = System.nanoTime()
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
                 ?: emptyList()
+            val fetchRegularMs = Duration.ofNanos(System.nanoTime() - fetchRegularStartNs).toMillis()
 
             val currentDate = LocalDate.now()
             val currentMonth = startingMonth ?: currentDate.month
@@ -223,10 +256,8 @@ class BookletFeatureImpl(
             val targetYearMonth = YearMonth.of(year, month)
             val currentYearMonth = YearMonth.of(currentYear, currentMonth)
 
+            val generationStartNs = System.nanoTime()
             val generatedTransactions = if (targetYearMonth.equals(currentYearMonth)) {
-                // Generate missing previsional transactions for current month only
-                // This checks for existing transactions and only creates what's missing
-                // The transactions are automatically saved by the generator
                 val transactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
                     bookletId,
                     regularTransactions,
@@ -239,40 +270,47 @@ class BookletFeatureImpl(
                 LOGGER.info("Skipping physical transaction generation for non-current month $month/$year")
                 emptyList()
             }
+            val generationMs = Duration.ofNanos(System.nanoTime() - generationStartNs).toMillis()
 
+            val updateBookletStartNs = System.nanoTime()
             if (generatedTransactions.isNotEmpty()) {
-                generatedTransactions.forEach {
-                    booklet.addTransaction(it)
-                }
+                generatedTransactions.forEach { booklet.addTransaction(it) }
                 accountRepository.update(booklet)
             }
+            val updateBookletMs = Duration.ofNanos(System.nanoTime() - updateBookletStartNs).toMillis()
 
-            // Retrieve all transactions and partition them by preview status
-            val allTransactionsForMonth = booklet.retrieveSheetSurroundAndSortedByDate(month, year)
+            // Read-optimized monthly fetch (DB side filtering/sorting)
+            val monthSheetStartNs = System.nanoTime()
+            val rangeStart = LocalDate.of(year, month, 1)
+            val rangeEnd = rangeStart.withDayOfMonth(rangeStart.lengthOfMonth())
+            val allTransactionsForMonth = transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, rangeStart, rangeEnd)
+            val monthSheetMs = Duration.ofNanos(System.nanoTime() - monthSheetStartNs).toMillis()
+
+            // P0: avoid N+1 trackerRepository.findTracker(...) calls by preloading once
+            val preloadTrackersStartNs = System.nanoTime()
+            val trackersByRegularId = trackerRepository.findAllTrackersForBooklet(bookletId)
+                .associateBy { it.regularTransactionId }
+            val preloadTrackersMs = Duration.ofNanos(System.nanoTime() - preloadTrackersStartNs).toMillis()
 
             // Filter out preview transactions that fall in excluded months
-            // This handles the case where a transaction was generated before being excluded
+            val filterExcludedStartNs = System.nanoTime()
             val filteredTransactions = allTransactionsForMonth.filter { transaction ->
-                if (!transaction.isPreview) {
-                    // Keep all real (confirmed) transactions
-                    true
-                } else if (transaction.regularTransactionId == null) {
-                    // Keep preview transactions without regularTransactionId (manual previews)
-                    true
-                } else {
-                    // For preview transactions with regularTransactionId, check if the month is excluded
-                    val tracker = trackerRepository.findTracker(
-                        transaction.regularTransactionId,
-                        bookletId
-                    )
-                    val transactionYearMonth = YearMonth.from(transaction.date)
-                    val isExcluded = tracker?.excludedMonths?.contains(transactionYearMonth) == true
-                    !isExcluded
+                when {
+                    !transaction.isPreview -> true
+                    transaction.regularTransactionId == null -> true
+                    else -> {
+                        val tracker = trackersByRegularId[transaction.regularTransactionId]
+                        val transactionYearMonth = YearMonth.from(transaction.date)
+                        val isExcluded = tracker?.excludedMonths?.contains(transactionYearMonth) == true
+                        !isExcluded
+                    }
                 }
             }
+            val filterExcludedMs = Duration.ofNanos(System.nanoTime() - filterExcludedStartNs).toMillis()
 
             val transactions = filteredTransactions.partition { it.isPreview }
 
+            val previsionalStartNs = System.nanoTime()
             val previsionalSold = calculatePrevisionalSold(
                 booklet,
                 regularTransactions,
@@ -281,6 +319,7 @@ class BookletFeatureImpl(
                 month,
                 year
             )
+            val previsionalMs = Duration.ofNanos(System.nanoTime() - previsionalStartNs).toMillis()
 
             val requestedDate = LocalDate.of(year, month, 1)
             val filteredRegularTransactions = regularTransactions.filter { rt ->
@@ -295,16 +334,99 @@ class BookletFeatureImpl(
                 realSold = booklet.amount,
                 previsionalSold = previsionalSold
             )
-            LOGGER.info("""
-                Booklet loaded successfully :
-                Label: ${booklet.label}
-                Current transactions: ${transactions.second.size}
-                Previsional transactions: ${transactions.first.size}
-                Regular transactions: ${regularTransactions.size}
-                Real sold: ${booklet.amount}
-                Previsional sold: $previsionalSold
-            """.trimIndent())
+
+            val totalMs = Duration.ofNanos(System.nanoTime() - totalStartNs).toMillis()
+            LOGGER.info(
+                """
+                Booklet loaded successfully:
+                - bookletId: $bookletId
+                - period: $month/$year
+                - sizes: monthTransactions=${allTransactionsForMonth.size}, current=${transactions.second.size}, preview=${transactions.first.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
+                - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs, updateBooklet=$updateBookletMs, monthQuery=$monthSheetMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
+                """.trimIndent()
+            )
+
             return@executeInTransaction success(bookletLoadingResult)
+        }
+    }
+
+    override fun loadBalancesForBookletForAMonth(
+        token: String,
+        bookletId: UUID,
+        month: Month,
+        year: Int,
+        startingMonth: Month?,
+        startingYear: Int?
+    ): Result<BookletBalances> = session.authenticate(token) { userId ->
+        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+            val persisted = bookletBalanceQueryRepository.findPersistedBalances(bookletId)
+                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+
+            val currentDate = LocalDate.now()
+            val currentMonth = startingMonth ?: currentDate.month
+            val currentYear = startingYear ?: currentDate.year
+
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+                ?: emptyList()
+
+            // Only generate physical previsional transactions for the CURRENT month
+            val targetYearMonth = YearMonth.of(year, month)
+            val currentYearMonth = YearMonth.of(currentYear, currentMonth)
+            if (targetYearMonth == currentYearMonth) {
+                // side-effect: generator persists missing preview tx; doesn't require loading all sheets
+                regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                    bookletId,
+                    regularTransactions,
+                    month,
+                    year
+                )
+            }
+
+            // Build a minimal booklet carrying only what calculatePrevisionalSold needs
+            // (transactions are still needed for physical previews between current and target).
+            val baseBooklet = Booklet(
+                amount = Amount(persisted.amount),
+                labelAccount = persisted.label,
+                previewAmount = Amount(persisted.previewAmount),
+                id = bookletId
+            )
+
+            val previewStart = YearMonth.of(currentYear, currentMonth)
+            val previewEnd = YearMonth.of(year, month)
+            val (from, to) = if (previewStart <= previewEnd) {
+                val fromDate = LocalDate.of(currentYear, currentMonth, 1)
+                val endDate = LocalDate.of(year, month, 1).withDayOfMonth(YearMonth.of(year, month).lengthOfMonth())
+                fromDate to endDate
+            } else {
+                val fromDate = LocalDate.of(year, month, 1)
+                val endDate = LocalDate.of(currentYear, currentMonth, 1).withDayOfMonth(YearMonth.of(currentYear, currentMonth).lengthOfMonth())
+                fromDate to endDate
+            }
+
+            // Load only the physical preview transactions needed for the previewSold computation.
+            // This stays a bounded range (current..target) instead of "all historie".
+            val physicalPreviewTransactions = transactionQueryRepository
+                .findByBookletIdAndDateBetween(bookletId, from, to)
+                .filter { it.isPreview }
+
+            physicalPreviewTransactions.forEach { baseBooklet.addTransaction(it) }
+
+            val previsionalSold = calculatePrevisionalSold(
+                baseBooklet,
+                regularTransactions,
+                currentMonth,
+                currentYear,
+                month,
+                year
+            )
+
+            return@executeInTransaction success(
+                BookletBalances(
+                    label = persisted.label,
+                    realSold = Amount(persisted.amount),
+                    previewSold = previsionalSold
+                )
+            )
         }
     }
 

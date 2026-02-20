@@ -1,5 +1,11 @@
 import { format } from 'date-fns'
 
+export interface TransactionDeletionDTO {
+  deletedIds: string[]
+  amount: string
+  previewAmount: string
+}
+
 export default function useTransaction() {
   const { deleteQuery, post, get, patch } = useQuery()
   const dateUse = useDate()
@@ -25,7 +31,7 @@ export default function useTransaction() {
     })
   }
 
-  function deleteTransaction(accountId: string, ids: Array<string>): Promise<any> {
+  function deleteTransaction(accountId: string, ids: Array<string>): Promise<TransactionDeletionDTO> {
     return deleteQuery(`transaction`, {
       accountId,
       transactionIds: ids,
