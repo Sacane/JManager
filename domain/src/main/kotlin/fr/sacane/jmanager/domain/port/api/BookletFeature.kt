@@ -288,6 +288,17 @@ class BookletFeatureImpl(
             val allTransactionsForMonth = transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, rangeStart, rangeEnd)
             val monthSheetMs = Duration.ofNanos(System.nanoTime() - monthSheetStartNs).toMillis()
 
+            // Load ALL physical transactions in the current→target window for deduplication.
+            // allTransactionsForMonth only covers the target month, so previews from intermediate
+            // months (e.g. February when viewing March) would not be deduplicated against virtual
+            // transactions, causing double-counting in calculatePrevisionalSold.
+            val dedupRangeStart = LocalDate.of(currentYear, currentMonth, 1)
+            val allPhysicalTransactionsForDedup = if (dedupRangeStart < rangeStart) {
+                transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, dedupRangeStart, rangeEnd)
+            } else {
+                allTransactionsForMonth
+            }
+
             // P0: avoid N+1 trackerRepository.findTracker(...) calls by preloading once
             val preloadTrackersStartNs = System.nanoTime()
             val trackersByRegularId = trackerRepository.findAllTrackersForBooklet(bookletId)
@@ -313,9 +324,9 @@ class BookletFeatureImpl(
             val transactions = filteredTransactions.partition { it.isPreview }
 
             val previsionalStartNs = System.nanoTime()
-            // Pass allTransactionsForMonth as dedup reference so that transactions generated
-            // during this request (not yet in booklet.transactions) are also excluded from
-            // virtual generation. This avoids double-counting for the current month.
+            // Pass allPhysicalTransactionsForDedup (current→target window) so that physical previews
+            // from intermediate months (e.g. February when viewing March) are properly excluded
+            // from virtual generation and not double-counted.
             val previsionalSold = calculatePrevisionalSold(
                 booklet,
                 regularTransactions,
@@ -323,7 +334,7 @@ class BookletFeatureImpl(
                 currentYear,
                 month,
                 year,
-                allPhysicalTransactionsForDedup = allTransactionsForMonth
+                allPhysicalTransactionsForDedup = allPhysicalTransactionsForDedup
             )
             val previsionalMs = Duration.ofNanos(System.nanoTime() - previsionalStartNs).toMillis()
 
@@ -485,18 +496,26 @@ class BookletFeatureImpl(
         }
 
         // Calculate virtual transactions from regular transactions for the date range.
-        // Pass allPhysicalTransactionsForDedup (which may include confirmed transactions not loaded
-        // into the booklet object) so that any occurrence already materialised as a physical
-        // transaction — whether preview OR confirmed — is not double-counted.
-        val virtualTransactions = regularTransactionGeneratorService.calculateVirtualTransactions(
-            booklet.id!!,
-            regularTransactions,
-            currentMonth,
-            currentYear,
-            targetMonth,
-            targetYear,
-            existingPhysicalTransactions = allPhysicalTransactionsForDedup
-        )
+        // We start from the month AFTER currentMonth because:
+        // - booklet.amount already includes all confirmed transactions up to and including currentMonth
+        // - relevantPreviewTransactions already covers physical previews from currentMonth onward
+        // Starting from currentMonth would double-count any regular transaction of currentMonth
+        // that has not yet been confirmed (it would appear in both relevantPreviewTransactions
+        // and virtualTransactions).
+        val virtualStartYearMonth = YearMonth.of(currentYear, currentMonth).plusMonths(1)
+        val virtualTransactions = if (virtualStartYearMonth <= YearMonth.of(targetYear, targetMonth)) {
+            regularTransactionGeneratorService.calculateVirtualTransactions(
+                booklet.id!!,
+                regularTransactions,
+                virtualStartYearMonth.month,
+                virtualStartYearMonth.year,
+                targetMonth,
+                targetYear,
+                existingPhysicalTransactions = allPhysicalTransactionsForDedup
+            )
+        } else {
+            emptyList()
+        }
 
         // Combine: physical preview transactions + virtual (non-duplicate) transactions.
         // Real (confirmed) transactions are already baked into booklet.amount — do not add them again.
