@@ -71,9 +71,10 @@ class TransactionRepositoryJpaAdapter(
         }
         return this.asResource(tag)
     }
-
+    @Transactional
     override fun deleteAllSheetsById(sheetIds: List<java.util.UUID>) {
-        transactionJpaRepository.deleteAllById(sheetIds)
+        if (sheetIds.isEmpty()) return
+        transactionJpaRepository.deleteByIdSheetIn(sheetIds)
     }
 
     override fun findTransactionById(transactionId: java.util.UUID): Transaction? {
@@ -114,9 +115,10 @@ class TransactionRepositoryJpaAdapter(
         bookletId: java.util.UUID,
         year: Int,
         month: Month
-    ): List<Transaction>? {
-        return bookletJpaRepository.findTransactionsById(bookletId)?.sheets?.filter {
-            it.date.year == year && it.date.month == month
-        }?.map { it.toModel()}
+    ): List<Transaction> {
+        val from = java.time.LocalDate.of(year, month, 1)
+        val to = from.withDayOfMonth(from.lengthOfMonth())
+        return transactionJpaRepository.findByBookletIdAndDateBetween(bookletId, from, to)
+            .map { it.toModel() }
     }
 }

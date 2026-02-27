@@ -189,11 +189,13 @@ class TransactionFeatureImpl(
                 }
             }
 
-            val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
-            booklet.removeTransactionIf(isSheetOnList)
-            accountRepository.upsert(booklet)
+            booklet.removeTransactionIf { sheetIds.contains(it.id) }
+            logger.info("Removed transactions with ids ${booklet.transactions}")
             transactionRepository.deleteAllSheetsById(sheetIds)
-
+            // Use update (amount/previewAmount columns only) instead of upsert (full JPA save)
+            // to avoid re-persisting all sheets which can create duplicates.
+            accountRepository.update(booklet)
+            logger.info("Deleted transactions with ids $sheetIds from account $accountID. Updated booklet: $booklet")
             return@executeInTransaction success(
                 TransactionDeletionResult(
                     deletedIds = sheetIds,
@@ -216,14 +218,22 @@ class TransactionFeatureImpl(
             val transaction = transactionRepository.findTransactionById(transactionId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Transaction not found")
 
+            // IMPORTANT: removeTransactionById must be called BEFORE mutating transaction.isPreview.
+            // The transaction object may be the same reference as the one held inside account.transactions
+            // (depending on the repository implementation). If isPreview is set to false before the removal,
+            // removeTransactionById would see it as a real (non-preview) transaction and incorrectly
+            // subtract its amount from booklet.amount (the real balance), corrupting both balances.
             account.removeTransactionById(transactionId)
-            if (newAmount != null) {
-                transaction.amount = newAmount
-            }
-            transaction.isPreview = false
-            account.addTransaction(transaction)
-            accountRepository.upsert(account)
-            return@executeInTransaction success(TransactionResumeResult(transaction, account.amount, account.previewAmount))
+
+            // Build the confirmed copy with the (optionally updated) amount and isPreview = false.
+            val confirmedTransaction = transaction.copy(
+                amount = newAmount ?: transaction.amount,
+                isPreview = false
+            )
+            transactionRepository.save(accountID, confirmedTransaction)
+            account.addTransaction(confirmedTransaction)
+            accountRepository.update(account)
+            return@executeInTransaction success(TransactionResumeResult(confirmedTransaction, account.amount, account.previewAmount))
         }
     }
 

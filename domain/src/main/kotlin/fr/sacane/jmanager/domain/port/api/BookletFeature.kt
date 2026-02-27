@@ -240,6 +240,7 @@ class BookletFeatureImpl(
             val fetchBookletStartNs = System.nanoTime()
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+            LOGGER.info { "Fetched booklet: ${booklet.label} (${booklet.id})" }
             val fetchBookletMs = Duration.ofNanos(System.nanoTime() - fetchBookletStartNs).toMillis()
 
             val fetchRegularStartNs = System.nanoTime()
@@ -257,7 +258,7 @@ class BookletFeatureImpl(
             val currentYearMonth = YearMonth.of(currentYear, currentMonth)
 
             val generationStartNs = System.nanoTime()
-            val generatedTransactions = if (targetYearMonth.equals(currentYearMonth)) {
+            val generatedCount: Int = if (targetYearMonth.equals(currentYearMonth)) {
                 val transactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
                     bookletId,
                     regularTransactions,
@@ -265,19 +266,20 @@ class BookletFeatureImpl(
                     year
                 )
                 LOGGER.info("Generated ${transactions.size} physical transactions for current month $month/$year")
-                transactions
+                transactions.size
             } else {
                 LOGGER.info("Skipping physical transaction generation for non-current month $month/$year")
-                emptyList()
+                0
             }
             val generationMs = Duration.ofNanos(System.nanoTime() - generationStartNs).toMillis()
 
-            val updateBookletStartNs = System.nanoTime()
-            if (generatedTransactions.isNotEmpty()) {
-                generatedTransactions.forEach { booklet.addTransaction(it) }
-                accountRepository.update(booklet)
-            }
-            val updateBookletMs = Duration.ofNanos(System.nanoTime() - updateBookletStartNs).toMillis()
+            // NOTE: generated transactions are already persisted by transactionRepository.save()
+            // inside generateMissingPrevisionalTransactions. We must NOT call booklet.addTransaction()
+            // + accountRepository.update() here, because that would write the same transactions a
+            // second time into the persistence store, causing duplicates.
+            // The read query below (transactionQueryRepository.findByBookletIdAndDateBetween)
+            // picks them up directly from the persistence store.
+            val updateBookletMs = 0L
 
             // Read-optimized monthly fetch (DB side filtering/sorting)
             val monthSheetStartNs = System.nanoTime()
@@ -311,13 +313,17 @@ class BookletFeatureImpl(
             val transactions = filteredTransactions.partition { it.isPreview }
 
             val previsionalStartNs = System.nanoTime()
+            // Pass allTransactionsForMonth as dedup reference so that transactions generated
+            // during this request (not yet in booklet.transactions) are also excluded from
+            // virtual generation. This avoids double-counting for the current month.
             val previsionalSold = calculatePrevisionalSold(
                 booklet,
                 regularTransactions,
                 currentMonth,
                 currentYear,
                 month,
-                year
+                year,
+                allPhysicalTransactionsForDedup = allTransactionsForMonth
             )
             val previsionalMs = Duration.ofNanos(System.nanoTime() - previsionalStartNs).toMillis()
 
@@ -342,7 +348,7 @@ class BookletFeatureImpl(
                 - bookletId: $bookletId
                 - period: $month/$year
                 - sizes: monthTransactions=${allTransactionsForMonth.size}, current=${transactions.second.size}, preview=${transactions.first.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
-                - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs, updateBooklet=$updateBookletMs, monthQuery=$monthSheetMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
+                - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs (generated=$generatedCount), updateBooklet=$updateBookletMs, monthQuery=$monthSheetMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
                 """.trimIndent()
             )
 
@@ -369,18 +375,11 @@ class BookletFeatureImpl(
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
                 ?: emptyList()
 
-            // Only generate physical previsional transactions for the CURRENT month
-            val targetYearMonth = YearMonth.of(year, month)
-            val currentYearMonth = YearMonth.of(currentYear, currentMonth)
-            if (targetYearMonth == currentYearMonth) {
-                // side-effect: generator persists missing preview tx; doesn't require loading all sheets
-                regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
-                    bookletId,
-                    regularTransactions,
-                    month,
-                    year
-                )
-            }
+            // NOTE: physical preview transaction generation is intentionally NOT done here.
+            // loadTransactionsForBookletForAMonth (always called alongside this endpoint) already
+            // handles generateMissingPrevisionalTransactions for the current month.
+            // Calling it here too would race with that call and cause a unique-constraint violation
+            // on the (regularTransactionId, bookletId) tracker when both requests run concurrently.
 
             // Build a minimal booklet carrying only what calculatePrevisionalSold needs
             // (transactions are still needed for physical previews between current and target).
@@ -403,21 +402,31 @@ class BookletFeatureImpl(
                 fromDate to endDate
             }
 
-            // Load only the physical preview transactions needed for the previewSold computation.
-            // This stays a bounded range (current..target) instead of "all historie".
-            val physicalPreviewTransactions = transactionQueryRepository
+            // Load ALL physical transactions in the current→target window (preview AND confirmed).
+            // - Preview ones are needed by calculatePrevisionalSold to avoid re-adding them as virtual.
+            // - Confirmed ones are needed so calculateVirtualTransactions won't re-count a regular
+            //   transaction that has already been confirmed (isPreview = false).
+            val allPhysicalTransactionsInRange = transactionQueryRepository
                 .findByBookletIdAndDateBetween(bookletId, from, to)
-                .filter { it.isPreview }
 
+            // Build a minimal booklet that only carries the preview transactions so that
+            // calculatePrevisionalSold starts from booklet.amount (real balance) and adds only
+            // the preview delta. Do NOT use addTransaction for confirmed ones — they are already
+            // baked into persisted.amount.
+            val physicalPreviewTransactions = allPhysicalTransactionsInRange.filter { it.isPreview }
             physicalPreviewTransactions.forEach { baseBooklet.addTransaction(it) }
 
+            // calculatePrevisionalSold will use baseBooklet.transactions (= previews only) for the
+            // physical-preview part, and pass allPhysicalTransactionsInRange to
+            // calculateVirtualTransactions for full deduplication (including confirmed ones).
             val previsionalSold = calculatePrevisionalSold(
                 baseBooklet,
                 regularTransactions,
                 currentMonth,
                 currentYear,
                 month,
-                year
+                year,
+                allPhysicalTransactionsForDedup = allPhysicalTransactionsInRange
             )
 
             return@executeInTransaction success(
@@ -435,12 +444,16 @@ class BookletFeatureImpl(
      * Calculates the provisional balance (sold) for a booklet between the current month and year
      * and a target month and year, considering all relevant transactions in the specified date range.
      *
-     * @param booklet the booklet object containing the current balance, transactions, and other details
+     * @param booklet the booklet object containing the current balance and preview transactions
      * @param regularTransactions the list of regular transactions to include as virtual transactions
      * @param currentMonth the current month used as the starting point of the calculation
      * @param currentYear the current year used as the starting point of the calculation
      * @param targetMonth the target month up to which the balance is calculated
      * @param targetYear the target year up to which the balance is calculated
+     * @param allPhysicalTransactionsForDedup when provided, used instead of booklet.transactions for
+     *        deduplication inside calculateVirtualTransactions. Useful when the booklet only carries
+     *        a subset of physical transactions (e.g. preview-only in loadBalancesForBookletForAMonth)
+     *        but we still want to exclude confirmed occurrences from virtual generation.
      * @return the provisional balance as an `Amount` object
      */
     private fun calculatePrevisionalSold(
@@ -449,12 +462,13 @@ class BookletFeatureImpl(
         currentMonth: Month,
         currentYear: Int,
         targetMonth: Month,
-        targetYear: Int
+        targetYear: Int,
+        allPhysicalTransactionsForDedup: List<Transaction> = booklet.transactions
     ): Amount {
         val allTransactions = booklet.transactions
 
-        // Get only PREVIEW (previsional) physical transactions in the date range
-        // Real transactions are already counted in booklet.amount, so we must not count them again
+        // Get only PREVIEW (previsional) physical transactions in the date range.
+        // Real transactions are already counted in booklet.amount, so we must not count them again.
         val relevantPreviewTransactions = allTransactions.filter { transaction ->
             if (!transaction.isPreview) return@filter false
 
@@ -470,32 +484,23 @@ class BookletFeatureImpl(
             }
         }
 
-        // Calculate virtual transactions from regular transactions for the date range
-        // These are transactions that would be generated but haven't been physically created yet
+        // Calculate virtual transactions from regular transactions for the date range.
+        // Pass allPhysicalTransactionsForDedup (which may include confirmed transactions not loaded
+        // into the booklet object) so that any occurrence already materialised as a physical
+        // transaction — whether preview OR confirmed — is not double-counted.
         val virtualTransactions = regularTransactionGeneratorService.calculateVirtualTransactions(
             booklet.id!!,
             regularTransactions,
             currentMonth,
             currentYear,
             targetMonth,
-            targetYear
+            targetYear,
+            existingPhysicalTransactions = allPhysicalTransactionsForDedup
         )
 
-        // Filter out virtual transactions that already exist as physical preview transactions
-        // to avoid double-counting. We check both the regularTransactionId and date match
-        // to properly identify existing preview transactions
-        val existingPreviewKeys = relevantPreviewTransactions
-            .filter { it.regularTransactionId != null }
-            .map { "${it.regularTransactionId}-${it.date}" }
-            .toSet()
-
-        val nonDuplicateVirtualTransactions = virtualTransactions.filter { vt ->
-            "${vt.regularTransactionId}-${vt.date}" !in existingPreviewKeys
-        }
-
-        // Combine preview physical transactions and virtual transactions for calculation
-        // Real transactions are already in booklet.amount
-        val allRelevantTransactions = relevantPreviewTransactions + nonDuplicateVirtualTransactions
+        // Combine: physical preview transactions + virtual (non-duplicate) transactions.
+        // Real (confirmed) transactions are already baked into booklet.amount — do not add them again.
+        val allRelevantTransactions = relevantPreviewTransactions + virtualTransactions
 
         val totalAmount = allRelevantTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
             val value = transaction.amount.value.abs()
@@ -505,7 +510,7 @@ class BookletFeatureImpl(
                 acc.subtract(value)
             }
         }
-        
+
         return Amount(booklet.amount.value.add(totalAmount))
     }
 }

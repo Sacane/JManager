@@ -41,7 +41,11 @@ interface RegularTransactionGenerator {
      * @param startYear The starting year of the calculation.
      * @param endMonth The ending month of the calculation.
      * @param endYear The ending year of the calculation.
-     * @return A list of virtual transactions that would occur in the specified date range.
+     * @param existingPhysicalTransactions Physical transactions already present in the booklet for the
+     *        date range. Virtual occurrences whose (regularTransactionId, date) key matches an existing
+     *        physical transaction (whether preview or confirmed) are excluded to avoid double-counting.
+     * @return A list of virtual transactions that would occur in the specified date range,
+     *         deduplicated against existingPhysicalTransactions.
      */
     fun calculateVirtualTransactions(
         bookletId: UUID,
@@ -49,7 +53,8 @@ interface RegularTransactionGenerator {
         startMonth: Month,
         startYear: Int,
         endMonth: Month,
-        endYear: Int
+        endYear: Int,
+        existingPhysicalTransactions: List<Transaction> = emptyList()
     ): List<Transaction>
 
     /**
@@ -160,7 +165,8 @@ class RegularTransactionGeneratorService(
         startMonth: Month,
         startYear: Int,
         endMonth: Month,
-        endYear: Int
+        endYear: Int,
+        existingPhysicalTransactions: List<Transaction>
     ): List<Transaction> {
         val virtualTransactions = mutableListOf<Transaction>()
 
@@ -168,14 +174,26 @@ class RegularTransactionGeneratorService(
         val lastDayOfEndMonth = YearMonth.of(endYear, endMonth).lengthOfMonth()
         val endDate = LocalDate.of(endYear, endMonth, lastDayOfEndMonth)
 
+        // Bulk-load all trackers for this booklet once — avoids N+1 queries
+        val trackersByRegularId = trackerRepository.findAllTrackersForBooklet(bookletId)
+            .associateBy { it.regularTransactionId }
+
+        // Build a set of (regularTransactionId, date) keys for ALL physical transactions
+        // (both preview and confirmed/real) so that we never double-count a regular occurrence
+        // that has already been materialised — whether it was confirmed or is still a preview.
+        val existingPhysicalKeys = existingPhysicalTransactions
+            .filter { it.regularTransactionId != null }
+            .map { "${it.regularTransactionId}-${it.date}" }
+            .toSet()
+
         regularTransactions.forEach { regularTransaction ->
             // Skip if the regular transaction hasn't started yet
             if (regularTransaction.startDate.isAfter(endDate)) {
                 return@forEach
             }
 
-            // Check excluded months for this regular transaction
-            val tracker = trackerRepository.findTracker(regularTransaction.id, bookletId)
+            // O(1) lookup instead of a per-iteration DB query
+            val tracker = trackersByRegularId[regularTransaction.id]
             val excludedMonths = tracker?.excludedMonths ?: emptySet()
 
             val effectiveStartDate = if (regularTransaction.startDate.isAfter(startDate)) {
@@ -206,10 +224,13 @@ class RegularTransactionGeneratorService(
                 )
             }
 
-            // Filter out transactions that fall in excluded months
+            // Filter out occurrences in excluded months OR already covered by a physical transaction
             val filteredTransactions = transactions.filter { transaction ->
                 val transactionYearMonth = YearMonth.from(transaction.date)
-                !excludedMonths.contains(transactionYearMonth)
+                if (excludedMonths.contains(transactionYearMonth)) return@filter false
+                // Skip virtual occurrence if a physical transaction (preview OR confirmed) already exists
+                val key = "${transaction.regularTransactionId}-${transaction.date}"
+                key !in existingPhysicalKeys
             }
 
             virtualTransactions.addAll(filteredTransactions)
