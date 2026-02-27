@@ -69,7 +69,6 @@ class Booklet(
         if(transaction.isNotPreview) {
             this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
-        println(transaction.amount)
         this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
     private fun removeTransaction(transaction: Transaction) {
@@ -93,6 +92,24 @@ class Booklet(
     fun removeTransactionIf(sheetOnList: (s: Transaction) -> Boolean) {
         _transactions.filter(sheetOnList).forEach {
             removeTransaction(it)
+        }
+    }
+
+    /**
+     * Recalculates previewAmount from scratch based on the real balance (amount) plus
+     * all preview transactions currently in memory.
+     *
+     * The persisted previewAmount can be stale when generateMissingPrevisionalTransactions
+     * has saved new preview transactions directly via the repository without going through
+     * addTransaction(). Call this after reloading the booklet from DB to resync.
+     *
+     * [month] and [year] indicate which month triggered the resync (informational only —
+     * previewAmount is a running total so we must recompute it globally).
+     */
+    fun recalculatePreviewAmountForMonth(month: Month, year: Int) {
+        previewAmount = _transactions.fold(amount.copy()) { acc, t ->
+            if (!t.isPreview) return@fold acc
+            if (t.isIncome) acc + t.amount else acc - t.amount
         }
     }
 }

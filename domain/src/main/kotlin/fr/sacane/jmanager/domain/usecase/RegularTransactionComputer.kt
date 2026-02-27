@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import java.time.LocalDate
@@ -78,7 +79,8 @@ interface RegularTransactionGenerator {
 @UseCase
 class RegularTransactionGeneratorService(
     private val transactionRepository: TransactionRepository,
-    private val trackerRepository: RegularTransactionTrackerRepository
+    private val trackerRepository: RegularTransactionTrackerRepository,
+    private val bookletRepository: BookletRepository
 ): RegularTransactionGenerator {
 
     override fun generateMissingPrevisionalTransactions(
@@ -135,13 +137,20 @@ class RegularTransactionGeneratorService(
                 }
             }
 
+            val booklet = bookletRepository.findAccountByIdWithTransactions(bookletId)
+
             // Save each transaction to the repository
             transactionsToCreate.forEach { transaction ->
                 val saved = transactionRepository.save(bookletId, transaction)
                 if (saved != null) {
                     createdTransactions.add(saved)
+                    booklet?.addTransaction(saved)
                 }
             }
+            if (booklet != null) {
+                bookletRepository.update(booklet)
+            }
+
 
             // Update tracker if we have created transactions
             if (transactionsToCreate.isNotEmpty()) {
