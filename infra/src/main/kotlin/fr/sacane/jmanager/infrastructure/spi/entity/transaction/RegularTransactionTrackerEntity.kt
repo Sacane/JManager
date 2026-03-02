@@ -14,7 +14,10 @@ import java.time.YearMonth
 import java.util.UUID
 
 @Entity
-@Table(name = "regular_transaction_tracker")
+@Table(
+    name = "regular_transaction_tracker",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["regular_transaction_id", "booklet_id"])]
+)
 data class RegularTransactionTrackerEntity(
 
     @Column(name = "regular_transaction_id", nullable = false)
@@ -72,7 +75,7 @@ data class RegularTransactionTrackerEntity(
 }
 
 @Repository
-interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransactionTrackerEntity, UUID> {
+interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransactionTrackerEntity, Long> {
 
     @Query("SELECT r FROM RegularTransactionTrackerEntity r WHERE r.regularTransactionId = :regularTransactionId AND r.bookletId = :bookletId")
     fun findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId: String, bookletId: UUID): RegularTransactionTrackerEntity?
@@ -89,11 +92,21 @@ class RegularTransactionTrackerRepositoryAdapter(
         regularTransactionId: RegularTransactionId,
         bookletId: UUID
     ): RegularTransactionTracker? {
-        return jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId.value, bookletId)?.toDomain()
+        return jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(
+            regularTransactionId.value, bookletId
+        )?.toDomain()
     }
 
     override fun upsertTracker(tracker: RegularTransactionTracker): RegularTransactionTracker {
-        val entity = RegularTransactionTrackerEntity.fromDomain(tracker)
+        // Always resolve the existing row's id before saving.
+        // Without this, save() with id=null always does INSERT instead of UPDATE,
+        // creating duplicate rows for the same (regularTransactionId, bookletId) pair —
+        // which then causes NonUniqueResultException on the next findTracker call.
+        val resolvedId = tracker.id
+            ?: jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(
+                tracker.regularTransactionId.value, tracker.bookletId
+            )?.id
+        val entity = RegularTransactionTrackerEntity.fromDomain(tracker.copy(id = resolvedId))
         return jpaRepository.save(entity).toDomain()
     }
 
@@ -118,7 +131,6 @@ class RegularTransactionTrackerRepositoryAdapter(
             )
             upsertTracker(updatedTracker)
         } else {
-            // If no tracker exists, create one with the excluded month
             val newTracker = RegularTransactionTracker(
                 regularTransactionId = regularTransactionId,
                 bookletId = bookletId,
@@ -130,4 +142,3 @@ class RegularTransactionTrackerRepositoryAdapter(
         }
     }
 }
-

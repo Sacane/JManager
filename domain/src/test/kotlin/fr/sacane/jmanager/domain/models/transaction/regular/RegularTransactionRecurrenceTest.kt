@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.models.transaction.regular
 
+import fr.sacane.jmanager.domain.fake.InMemoryBookletRepository
 import fr.sacane.jmanager.domain.fake.InMemoryRegularTrackerRepository
 import fr.sacane.jmanager.domain.fake.InMemoryTransactionRepository
 import fr.sacane.jmanager.domain.port.FeatureTest
@@ -43,9 +44,11 @@ class RegularTransactionRecurrenceTest : FeatureTest() {
 
         @Test
         fun `should generate yearly transaction on specified month and day`() {
-            val transactionRepository = InMemoryTransactionRepository(fr.sacane.jmanager.domain.InMemoryDatabase())
-            val trackerRepository = InMemoryRegularTrackerRepository(fr.sacane.jmanager.domain.InMemoryDatabase())
-            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository)
+            val db = fr.sacane.jmanager.domain.InMemoryDatabase()
+            val transactionRepository = InMemoryTransactionRepository(db)
+            val trackerRepository = InMemoryRegularTrackerRepository(db)
+            val bookletRepository = InMemoryBookletRepository(db)
+            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository, bookletRepository)
 
             val yearly = RegularTransaction(
                 label = "Assurance",
@@ -73,9 +76,11 @@ class RegularTransactionRecurrenceTest : FeatureTest() {
 
         @Test
         fun `should generate weekly transactions for specified days`() {
-            val transactionRepository = InMemoryTransactionRepository(fr.sacane.jmanager.domain.InMemoryDatabase())
-            val trackerRepository = InMemoryRegularTrackerRepository(fr.sacane.jmanager.domain.InMemoryDatabase())
-            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository)
+            val db = fr.sacane.jmanager.domain.InMemoryDatabase()
+            val transactionRepository = InMemoryTransactionRepository(db)
+            val trackerRepository = InMemoryRegularTrackerRepository(db)
+            val bookletRepository = InMemoryBookletRepository(db)
+            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository, bookletRepository)
 
             val weekly = RegularTransaction(
                 label = "Gym",

@@ -1,7 +1,9 @@
 package fr.sacane.jmanager.infrastructure.spi.repositories
 
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
+import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.Repository
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Component
@@ -17,9 +19,13 @@ import java.util.UUID
 @Component
 interface TransactionQueryJpaRepository : Repository<TransactionResource, UUID> {
 
+    // DISTINCT prevents duplicate TransactionResource rows that would result from the
+    // cartesian product of LEFT JOIN FETCH s.personalTag and LEFT JOIN FETCH s.tag.
+    // passDistinctThrough=false tells Hibernate to strip the DISTINCT from the SQL
+    // (unnecessary at DB level for a single-entity query) while keeping it at the JPA level.
     @Query(
         """
-        SELECT s
+        SELECT DISTINCT s
         FROM TransactionResource s
         LEFT JOIN FETCH s.personalTag
         LEFT JOIN FETCH s.tag
@@ -29,10 +35,10 @@ interface TransactionQueryJpaRepository : Repository<TransactionResource, UUID> 
         ORDER BY s.date, s.lastModified
         """
     )
+    @QueryHints(QueryHint(name = "hibernate.query.passDistinctThrough", value = "false"))
     fun findByBookletIdAndDateBetween(
         @Param("bookletId") bookletId: UUID,
         @Param("from") from: LocalDate,
         @Param("to") to: LocalDate
     ): List<TransactionResource>
 }
-
