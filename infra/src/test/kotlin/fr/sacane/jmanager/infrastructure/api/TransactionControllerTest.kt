@@ -14,12 +14,15 @@ import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.*
 import fr.sacane.jmanager.infrastructure.generateCookie
+import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -60,7 +63,8 @@ class TransactionControllerTest(
     @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
     @Autowired var objectMapper: ObjectMapper,
-    @Autowired val tokenGenerator: TokenGenerator
+    @Autowired val tokenGenerator: TokenGenerator,
+    @Autowired private val transactionJpaRepository: TransactionJpaRepository
 ): AuthenticatedUserTest() {
 
 
@@ -311,6 +315,55 @@ class TransactionControllerTest(
             } Then {
                 statusCode(404)
             }
+        }
+        @Test
+        fun `delete should remove targeted transaction from database`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+
+            val transactions = listOf(
+                Transaction(null, "to-delete", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false),
+                Transaction(null, "to-keep", LocalDate.of(2024, Month.JUNE, 2), Amount.fromString("50.00"), true)
+            )
+
+            transactionStateTestAdapter.init(
+                listOf(
+                    AccountTransaction(
+                        user!!.id,
+                        "test",
+                        transactions,
+                        token.asTokenUUID()
+                    )
+                )
+            )
+
+            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val transactionToDelete = transactionStateTestAdapter.get().first { it.label == "to-delete" }
+            val transactionToKeep = transactionStateTestAdapter.get().first { it.label == "to-keep" }
+
+            assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToDelete.id!!))
+            assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToKeep.id!!))
+
+            val request = AccountTransactionsIdRequest(
+                account.id!!.toString(),
+                listOf(transactionToDelete.id!!.toString())
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(request))
+            } When {
+                delete("/api/transaction")
+            } Then {
+                statusCode(200)
+                body("deletedIds.size()", equalTo(1))
+            }
+
+            assertNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToDelete.id!!))
+            assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToKeep.id!!))
         }
     }
     @Nested

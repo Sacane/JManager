@@ -169,38 +169,47 @@ class TransactionFeatureImpl(
     }
 
     override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
-        return infraTransactionManager.executeInTransaction(transactionRepository) {
-            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+        return session.authenticate(token) {
+            infraTransactionManager.executeInTransaction(transactionRepository) {
+                val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
+                    ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
 
-            // Find transactions to delete and mark months as excluded if they are confirmed regular transactions
-            val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
-
-            transactionsToDelete.forEach { transaction ->
-                // If the transaction has a regularTransactionId, mark this month as excluded to prevent regeneration
-                if (transaction.regularTransactionId != null) {
-                    trackerRepository.markMonthAsExcluded(
-                        regularTransactionId = transaction.regularTransactionId,
-                        bookletId = accountID,
-                        year = transaction.date.year,
-                        month = transaction.date.month
-                    )
-                    logger.info("Marked month ${transaction.date.month}/${transaction.date.year} as excluded for regular transaction ${transaction.regularTransactionId}")
+                if (sheetIds.isEmpty()) {
+                    return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Aucune transaction à supprimer")
                 }
-            }
 
-            val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
-            booklet.removeTransactionIf(isSheetOnList)
-            accountRepository.upsert(booklet)
-            transactionRepository.deleteAllSheetsById(sheetIds)
+                // Ensure all requested ids belong to this booklet before mutating balances.
+                val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
+                if (transactionsToDelete.size != sheetIds.size) {
+                    return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Certaines transactions à supprimer sont introuvables pour le compte $accountID")
+                }
 
-            return@executeInTransaction success(
-                TransactionDeletionResult(
-                    deletedIds = sheetIds,
-                    accountAmount = booklet.amount,
-                    accountPreviewAmount = booklet.previewAmount
+                transactionsToDelete.forEach { transaction ->
+                    if (transaction.regularTransactionId != null) {
+                        trackerRepository.markMonthAsExcluded(
+                            regularTransactionId = transaction.regularTransactionId,
+                            bookletId = accountID,
+                            year = transaction.date.year,
+                            month = transaction.date.month
+                        )
+                        logger.info("Marked month ${transaction.date.month}/${transaction.date.year} as excluded for regular transaction ${transaction.regularTransactionId}")
+                    }
+                }
+
+                transactionRepository.deleteAllSheetsById(sheetIds)
+
+                val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
+                booklet.removeTransactionIf(isSheetOnList)
+                accountRepository.update(booklet)
+
+                return@executeInTransaction success(
+                    TransactionDeletionResult(
+                        deletedIds = sheetIds,
+                        accountAmount = booklet.amount,
+                        accountPreviewAmount = booklet.previewAmount
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -213,16 +222,25 @@ class TransactionFeatureImpl(
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Booklet $accountID not found")
-            val transaction = transactionRepository.findTransactionById(transactionId)
+            val transaction = account.findTransactionById(transactionId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Transaction not found")
+
+            if (transaction.isNotPreview) {
+                return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Transaction $transactionId is not preview")
+            }
 
             account.removeTransactionById(transactionId)
             if (newAmount != null) {
                 transaction.amount = newAmount
             }
             transaction.isPreview = false
+
+            transactionRepository.save(accountID, transaction)
+                ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Could not confirm transaction $transactionId")
+
             account.addTransaction(transaction)
-            accountRepository.upsert(account)
+            // Update only account balances/label to avoid JPA collection merge side-effects.
+            accountRepository.update(account)
             return@executeInTransaction success(TransactionResumeResult(transaction, account.amount, account.previewAmount))
         }
     }

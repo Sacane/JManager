@@ -34,7 +34,7 @@ import java.util.logging.Logger
  *
  * High-level API for managing booklets (accounts) exposed to the application layer.
  * Implementations are responsible for authentication and returning domain Result<T>
- * signalling success or failure states.
+ * signaling success or failure states.
  */
 sealed interface BookletFeature {
     /**
@@ -403,11 +403,13 @@ class BookletFeatureImpl(
                 fromDate to endDate
             }
 
-            // Load only the physical preview transactions needed for the previewSold computation.
-            // This stays a bounded range (current..target) instead of "all historie".
-            val physicalPreviewTransactions = transactionQueryRepository
+            // Load physical transactions in the bounded range once:
+            // - previews are needed for amount computation
+            // - all physical transactions are needed for virtual deduplication
+            val allPhysicalTransactionsInRange = transactionQueryRepository
                 .findByBookletIdAndDateBetween(bookletId, from, to)
-                .filter { it.isPreview }
+
+            val physicalPreviewTransactions = allPhysicalTransactionsInRange.filter { it.isPreview }
 
             physicalPreviewTransactions.forEach { baseBooklet.addTransaction(it) }
 
@@ -417,7 +419,8 @@ class BookletFeatureImpl(
                 currentMonth,
                 currentYear,
                 month,
-                year
+                year,
+                allPhysicalTransactionsForDedup = allPhysicalTransactionsInRange
             )
 
             return@executeInTransaction success(
@@ -449,7 +452,8 @@ class BookletFeatureImpl(
         currentMonth: Month,
         currentYear: Int,
         targetMonth: Month,
-        targetYear: Int
+        targetYear: Int,
+        allPhysicalTransactionsForDedup: List<Transaction> = booklet.transactions
     ): Amount {
         val allTransactions = booklet.transactions
 
@@ -470,32 +474,36 @@ class BookletFeatureImpl(
             }
         }
 
+        // Use all physical transactions in range (preview + confirmed) for deduplication.
+        // This prevents generating virtual occurrences when the month already has a physical counterpart.
+        val relevantPhysicalTransactionsForDedup = allPhysicalTransactionsForDedup.filter { transaction ->
+            val transactionDate = transaction.date
+            val transactionYearMonth = transactionDate.year * 12 + transactionDate.monthValue
+            val currentYearMonth = currentYear * 12 + currentMonth.value
+            val targetYearMonth = targetYear * 12 + targetMonth.value
+
+            when {
+                transactionYearMonth < currentYearMonth -> false
+                transactionYearMonth <= targetYearMonth -> true
+                else -> false
+            }
+        }
+
         // Calculate virtual transactions from regular transactions for the date range
-        // These are transactions that would be generated but haven't been physically created yet
+        // while excluding all occurrences already materialized physically.
         val virtualTransactions = regularTransactionGeneratorService.calculateVirtualTransactions(
             booklet.id!!,
             regularTransactions,
             currentMonth,
             currentYear,
             targetMonth,
-            targetYear
+            targetYear,
+            existingPhysicalTransactions = relevantPhysicalTransactionsForDedup
         )
 
-        // Filter out virtual transactions that already exist as physical preview transactions
-        // to avoid double-counting. We check both the regularTransactionId and date match
-        // to properly identify existing preview transactions
-        val existingPreviewKeys = relevantPreviewTransactions
-            .filter { it.regularTransactionId != null }
-            .map { "${it.regularTransactionId}-${it.date}" }
-            .toSet()
-
-        val nonDuplicateVirtualTransactions = virtualTransactions.filter { vt ->
-            "${vt.regularTransactionId}-${vt.date}" !in existingPreviewKeys
-        }
-
-        // Combine preview physical transactions and virtual transactions for calculation
+        // Combine preview physical transactions and non-duplicate virtual transactions for calculation
         // Real transactions are already in booklet.amount
-        val allRelevantTransactions = relevantPreviewTransactions + nonDuplicateVirtualTransactions
+        val allRelevantTransactions = relevantPreviewTransactions + virtualTransactions
 
         val totalAmount = allRelevantTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
             val value = transaction.amount.value.abs()
@@ -505,7 +513,7 @@ class BookletFeatureImpl(
                 acc.subtract(value)
             }
         }
-        
+
         return Amount(booklet.amount.value.add(totalAmount))
     }
 }

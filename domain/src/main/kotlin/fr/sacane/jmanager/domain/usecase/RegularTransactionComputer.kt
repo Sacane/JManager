@@ -41,7 +41,11 @@ interface RegularTransactionGenerator {
      * @param startYear The starting year of the calculation.
      * @param endMonth The ending month of the calculation.
      * @param endYear The ending year of the calculation.
-     * @return A list of virtual transactions that would occur in the specified date range.
+     * @param existingPhysicalTransactions Physical transactions already present in the booklet for the
+     *        date range. Virtual occurrences whose (regularTransactionId, date) key matches an existing
+     *        physical transaction (whether preview or confirmed) are excluded to avoid double-counting.
+     * @return A list of virtual transactions that would occur in the specified date range,
+     *         deduplicated against existingPhysicalTransactions.
      */
     fun calculateVirtualTransactions(
         bookletId: UUID,
@@ -49,7 +53,8 @@ interface RegularTransactionGenerator {
         startMonth: Month,
         startYear: Int,
         endMonth: Month,
-        endYear: Int
+        endYear: Int,
+        existingPhysicalTransactions: List<Transaction> = emptyList()
     ): List<Transaction>
 
     /**
@@ -160,13 +165,19 @@ class RegularTransactionGeneratorService(
         startMonth: Month,
         startYear: Int,
         endMonth: Month,
-        endYear: Int
+        endYear: Int,
+        existingPhysicalTransactions: List<Transaction>
     ): List<Transaction> {
         val virtualTransactions = mutableListOf<Transaction>()
 
         val startDate = LocalDate.of(startYear, startMonth, 1)
         val lastDayOfEndMonth = YearMonth.of(endYear, endMonth).lengthOfMonth()
         val endDate = LocalDate.of(endYear, endMonth, lastDayOfEndMonth)
+
+        val existingPhysicalKeys = existingPhysicalTransactions
+            .filter { it.regularTransactionId != null }
+            .map { "${it.regularTransactionId}-${it.date}" }
+            .toSet()
 
         regularTransactions.forEach { regularTransaction ->
             // Skip if the regular transaction hasn't started yet
@@ -206,10 +217,12 @@ class RegularTransactionGeneratorService(
                 )
             }
 
-            // Filter out transactions that fall in excluded months
+            // Filter out excluded months and already materialized physical occurrences.
             val filteredTransactions = transactions.filter { transaction ->
                 val transactionYearMonth = YearMonth.from(transaction.date)
-                !excludedMonths.contains(transactionYearMonth)
+                if (excludedMonths.contains(transactionYearMonth)) return@filter false
+                val key = "${transaction.regularTransactionId}-${transaction.date}"
+                key !in existingPhysicalKeys
             }
 
             virtualTransactions.addAll(filteredTransactions)

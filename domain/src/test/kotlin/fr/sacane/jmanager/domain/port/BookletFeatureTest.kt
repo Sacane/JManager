@@ -1075,5 +1075,132 @@ class BookletFeatureTest: FeatureTest() {
             }
         }
 
+        @Test
+        fun `Should not double count virtual regular transactions when months already have confirmed physical transactions`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 2000.toAmount(),
+                    labelAccount = "No Double Count",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
+                val regularIncome = RegularTransaction(
+                    label = "Monthly Salary",
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2026, 1, 5),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(bookletId)))
+                )
+
+                val febConfirmed = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "Monthly Salary",
+                    date = LocalDate.of(2026, 2, 5),
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    isPreview = false,
+                    regularTransactionId = regularTransactionId
+                )
+                val marConfirmed = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "Monthly Salary",
+                    date = LocalDate.of(2026, 3, 5),
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    isPreview = false,
+                    regularTransactionId = regularTransactionId
+                )
+
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, bookletId),
+                            mutableListOf(febConfirmed, marConfirmed)
+                        )
+                    )
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue,
+                    bookletId,
+                    java.time.Month.MARCH,
+                    2026,
+                    startingMonth = java.time.Month.FEBRUARY,
+                    startingYear = 2026
+                )
+
+                result.assertTrue { this.previsionalSold == this.realSold }
+            }
+        }
+
+        @Test
+        fun `Balances endpoint should not double count virtual regular transactions when confirmed physical already exists`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 2000.toAmount(),
+                    labelAccount = "No Double Count Balances",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val regularTransactionId = RegularTransactionId("${user.id.value}-salary-balances")
+                val regularIncome = RegularTransaction(
+                    label = "Monthly Salary",
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2026, 1, 5),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(bookletId)))
+                )
+
+                val marConfirmed = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "Monthly Salary",
+                    date = LocalDate.of(2026, 3, 5),
+                    amount = 500.toAmount(),
+                    isIncome = true,
+                    isPreview = false,
+                    regularTransactionId = regularTransactionId
+                )
+
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, bookletId),
+                            mutableListOf(marConfirmed)
+                        )
+                    )
+                )
+
+                val result = bookletFeature.loadBalancesForBookletForAMonth(
+                    tokenValue,
+                    bookletId,
+                    java.time.Month.MARCH,
+                    2026,
+                    startingMonth = java.time.Month.MARCH,
+                    startingYear = 2026
+                )
+
+                result.assertTrue { this.previewSold == this.realSold }
+            }
+        }
+
     }
 }

@@ -73,7 +73,8 @@ class TransactionRepositoryJpaAdapter(
     }
 
     override fun deleteAllSheetsById(sheetIds: List<java.util.UUID>) {
-        transactionJpaRepository.deleteAllById(sheetIds)
+        if (sheetIds.isEmpty()) return
+        transactionJpaRepository.deleteAllByIdSheetIn(sheetIds)
     }
 
     override fun findTransactionById(transactionId: java.util.UUID): Transaction? {

@@ -8,13 +8,22 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
+import org.springframework.dao.DataIntegrityViolationException
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
 import java.util.UUID
 
 @Entity
-@Table(name = "regular_transaction_tracker")
+@Table(
+    name = "regular_transaction_tracker",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_regular_transaction_tracker_regular_booklet",
+            columnNames = ["regular_transaction_id", "booklet_id"]
+        )
+    ]
+)
 data class RegularTransactionTrackerEntity(
 
     @Column(name = "regular_transaction_id", nullable = false)
@@ -94,7 +103,19 @@ class RegularTransactionTrackerRepositoryAdapter(
 
     override fun upsertTracker(tracker: RegularTransactionTracker): RegularTransactionTracker {
         val entity = RegularTransactionTrackerEntity.fromDomain(tracker)
-        return jpaRepository.save(entity).toDomain()
+        return try {
+            jpaRepository.save(entity).toDomain()
+        } catch (_: DataIntegrityViolationException) {
+            // Concurrent creation may hit the unique constraint; reload and update instead.
+            val existing = jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(
+                tracker.regularTransactionId.value,
+                tracker.bookletId
+            )
+            if (existing == null) {
+                throw IllegalStateException("Tracker conflict detected but no existing row found")
+            }
+            jpaRepository.save(entity.copy(id = existing.id)).toDomain()
+        }
     }
 
     override fun findAllTrackersForBooklet(bookletId: UUID): List<RegularTransactionTracker> {
@@ -130,4 +151,3 @@ class RegularTransactionTrackerRepositoryAdapter(
         }
     }
 }
-
