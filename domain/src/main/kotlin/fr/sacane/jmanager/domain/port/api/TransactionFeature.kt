@@ -169,40 +169,47 @@ class TransactionFeatureImpl(
     }
 
     override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
-        return infraTransactionManager.executeInTransaction(transactionRepository) {
-            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+        return session.authenticate(token) {
+            infraTransactionManager.executeInTransaction(transactionRepository) {
+                val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
+                    ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
 
-            // Find transactions to delete and mark months as excluded if they are confirmed regular transactions
-            val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
-
-            transactionsToDelete.forEach { transaction ->
-                // If the transaction has a regularTransactionId, mark this month as excluded to prevent regeneration
-                if (transaction.regularTransactionId != null) {
-                    trackerRepository.markMonthAsExcluded(
-                        regularTransactionId = transaction.regularTransactionId,
-                        bookletId = accountID,
-                        year = transaction.date.year,
-                        month = transaction.date.month
-                    )
-                    logger.info("Marked month ${transaction.date.month}/${transaction.date.year} as excluded for regular transaction ${transaction.regularTransactionId}")
+                if (sheetIds.isEmpty()) {
+                    return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Aucune transaction à supprimer")
                 }
-            }
 
-            booklet.removeTransactionIf { sheetIds.contains(it.id) }
-            logger.info("Removed transactions with ids ${booklet.transactions}")
-            transactionRepository.deleteAllSheetsById(sheetIds)
-            // Use update (amount/previewAmount columns only) instead of upsert (full JPA save)
-            // to avoid re-persisting all sheets which can create duplicates.
-            accountRepository.update(booklet)
-            logger.info("Deleted transactions with ids $sheetIds from account $accountID. Updated booklet: $booklet")
-            return@executeInTransaction success(
-                TransactionDeletionResult(
-                    deletedIds = sheetIds,
-                    accountAmount = booklet.amount,
-                    accountPreviewAmount = booklet.previewAmount
+                // Ensure all requested ids belong to this booklet before mutating balances.
+                val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
+                if (transactionsToDelete.size != sheetIds.size) {
+                    return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Certaines transactions à supprimer sont introuvables pour le compte $accountID")
+                }
+
+                transactionsToDelete.forEach { transaction ->
+                    if (transaction.regularTransactionId != null) {
+                        trackerRepository.markMonthAsExcluded(
+                            regularTransactionId = transaction.regularTransactionId,
+                            bookletId = accountID,
+                            year = transaction.date.year,
+                            month = transaction.date.month
+                        )
+                        logger.info("Marked month ${transaction.date.month}/${transaction.date.year} as excluded for regular transaction ${transaction.regularTransactionId}")
+                    }
+                }
+
+                transactionRepository.deleteAllSheetsById(sheetIds)
+
+                val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
+                booklet.removeTransactionIf(isSheetOnList)
+                accountRepository.update(booklet)
+
+                return@executeInTransaction success(
+                    TransactionDeletionResult(
+                        deletedIds = sheetIds,
+                        accountAmount = booklet.amount,
+                        accountPreviewAmount = booklet.previewAmount
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -215,25 +222,26 @@ class TransactionFeatureImpl(
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Booklet $accountID not found")
-            val transaction = transactionRepository.findTransactionById(transactionId)
+            val transaction = account.findTransactionById(transactionId)
                 ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Transaction not found")
 
-            // IMPORTANT: removeTransactionById must be called BEFORE mutating transaction.isPreview.
-            // The transaction object may be the same reference as the one held inside account.transactions
-            // (depending on the repository implementation). If isPreview is set to false before the removal,
-            // removeTransactionById would see it as a real (non-preview) transaction and incorrectly
-            // subtract its amount from booklet.amount (the real balance), corrupting both balances.
-            account.removeTransactionById(transactionId)
+            if (transaction.isNotPreview) {
+                return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Transaction $transactionId is not preview")
+            }
 
-            // Build the confirmed copy with the (optionally updated) amount and isPreview = false.
-            val confirmedTransaction = transaction.copy(
-                amount = newAmount ?: transaction.amount,
-                isPreview = false
-            )
-            transactionRepository.save(accountID, confirmedTransaction)
-            account.addTransaction(confirmedTransaction)
+            account.removeTransactionById(transactionId)
+            if (newAmount != null) {
+                transaction.amount = newAmount
+            }
+            transaction.isPreview = false
+
+            transactionRepository.save(accountID, transaction)
+                ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Could not confirm transaction $transactionId")
+
+            account.addTransaction(transaction)
+            // Update only account balances/label to avoid JPA collection merge side-effects.
             accountRepository.update(account)
-            return@executeInTransaction success(TransactionResumeResult(confirmedTransaction, account.amount, account.previewAmount))
+            return@executeInTransaction success(TransactionResumeResult(transaction, account.amount, account.previewAmount))
         }
     }
 

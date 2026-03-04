@@ -6,7 +6,6 @@ import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
-import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import java.time.LocalDate
@@ -79,8 +78,7 @@ interface RegularTransactionGenerator {
 @UseCase
 class RegularTransactionGeneratorService(
     private val transactionRepository: TransactionRepository,
-    private val trackerRepository: RegularTransactionTrackerRepository,
-    private val bookletRepository: BookletRepository
+    private val trackerRepository: RegularTransactionTrackerRepository
 ): RegularTransactionGenerator {
 
     override fun generateMissingPrevisionalTransactions(
@@ -137,20 +135,13 @@ class RegularTransactionGeneratorService(
                 }
             }
 
-            val booklet = bookletRepository.findAccountByIdWithTransactions(bookletId)
-
             // Save each transaction to the repository
             transactionsToCreate.forEach { transaction ->
                 val saved = transactionRepository.save(bookletId, transaction)
                 if (saved != null) {
                     createdTransactions.add(saved)
-                    booklet?.addTransaction(saved)
                 }
             }
-            if (booklet != null) {
-                bookletRepository.update(booklet)
-            }
-
 
             // Update tracker if we have created transactions
             if (transactionsToCreate.isNotEmpty()) {
@@ -183,13 +174,6 @@ class RegularTransactionGeneratorService(
         val lastDayOfEndMonth = YearMonth.of(endYear, endMonth).lengthOfMonth()
         val endDate = LocalDate.of(endYear, endMonth, lastDayOfEndMonth)
 
-        // Bulk-load all trackers for this booklet once — avoids N+1 queries
-        val trackersByRegularId = trackerRepository.findAllTrackersForBooklet(bookletId)
-            .associateBy { it.regularTransactionId }
-
-        // Build a set of (regularTransactionId, date) keys for ALL physical transactions
-        // (both preview and confirmed/real) so that we never double-count a regular occurrence
-        // that has already been materialised — whether it was confirmed or is still a preview.
         val existingPhysicalKeys = existingPhysicalTransactions
             .filter { it.regularTransactionId != null }
             .map { "${it.regularTransactionId}-${it.date}" }
@@ -201,8 +185,8 @@ class RegularTransactionGeneratorService(
                 return@forEach
             }
 
-            // O(1) lookup instead of a per-iteration DB query
-            val tracker = trackersByRegularId[regularTransaction.id]
+            // Check excluded months for this regular transaction
+            val tracker = trackerRepository.findTracker(regularTransaction.id, bookletId)
             val excludedMonths = tracker?.excludedMonths ?: emptySet()
 
             val effectiveStartDate = if (regularTransaction.startDate.isAfter(startDate)) {
@@ -233,11 +217,10 @@ class RegularTransactionGeneratorService(
                 )
             }
 
-            // Filter out occurrences in excluded months OR already covered by a physical transaction
+            // Filter out excluded months and already materialized physical occurrences.
             val filteredTransactions = transactions.filter { transaction ->
                 val transactionYearMonth = YearMonth.from(transaction.date)
                 if (excludedMonths.contains(transactionYearMonth)) return@filter false
-                // Skip virtual occurrence if a physical transaction (preview OR confirmed) already exists
                 val key = "${transaction.regularTransactionId}-${transaction.date}"
                 key !in existingPhysicalKeys
             }
@@ -470,7 +453,7 @@ class RegularTransactionGeneratorService(
             // Legacy fallback: for old transactions created before regularTransactionId field
             // These old transactions don't have regularTransactionId, so we check by label and amount
             return@any transaction.label == regularTransaction.label &&
-                       transaction.amount == regularTransaction.amount
+                    transaction.amount == regularTransaction.amount
         } ?: false
     }
 

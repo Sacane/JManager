@@ -32,7 +32,7 @@ object FakeFactory {
     private val inMemoryRegularTransactionRepository: InMemoryRegularTransactionRepository = InMemoryRegularTransactionRepository(inMemoryDatabase)
     private val manager: UnitOfWorkTransactionProvider = UnitOfWorkTransactionProvider.DEFAULT
     private val inMemoryRegularTransactionGenerator: RegularTransactionGenerator = RegularTransactionGeneratorService(
-        transactionRepository, inMemoryTrackerRepository, fakeAccountRepository
+        transactionRepository, inMemoryTrackerRepository
     )
     val regularTransactionState: BiState<List<UserRegularTransaction>, List<RegularTransaction>> = inMemoryRegularTransactionRepository
 

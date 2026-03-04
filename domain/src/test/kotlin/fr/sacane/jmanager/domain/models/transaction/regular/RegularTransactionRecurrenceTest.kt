@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.domain.models.transaction.regular
 
-import fr.sacane.jmanager.domain.fake.InMemoryBookletRepository
 import fr.sacane.jmanager.domain.fake.InMemoryRegularTrackerRepository
 import fr.sacane.jmanager.domain.fake.InMemoryTransactionRepository
 import fr.sacane.jmanager.domain.port.FeatureTest
@@ -47,8 +46,7 @@ class RegularTransactionRecurrenceTest : FeatureTest() {
             val db = fr.sacane.jmanager.domain.InMemoryDatabase()
             val transactionRepository = InMemoryTransactionRepository(db)
             val trackerRepository = InMemoryRegularTrackerRepository(db)
-            val bookletRepository = InMemoryBookletRepository(db)
-            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository, bookletRepository)
+            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository)
 
             val yearly = RegularTransaction(
                 label = "Assurance",
@@ -79,8 +77,7 @@ class RegularTransactionRecurrenceTest : FeatureTest() {
             val db = fr.sacane.jmanager.domain.InMemoryDatabase()
             val transactionRepository = InMemoryTransactionRepository(db)
             val trackerRepository = InMemoryRegularTrackerRepository(db)
-            val bookletRepository = InMemoryBookletRepository(db)
-            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository, bookletRepository)
+            val generator = RegularTransactionGeneratorService(transactionRepository, trackerRepository)
 
             val weekly = RegularTransaction(
                 label = "Gym",

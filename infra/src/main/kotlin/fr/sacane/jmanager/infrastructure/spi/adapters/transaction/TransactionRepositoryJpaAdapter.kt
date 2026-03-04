@@ -15,6 +15,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionQueryJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -24,6 +25,7 @@ import java.time.Month
 @Adapter(Side.INFRASTRUCTURE)
 class TransactionRepositoryJpaAdapter(
     private val transactionJpaRepository: TransactionJpaRepository,
+    private val transactionQueryJpaRepository: TransactionQueryJpaRepository,
     private val bookletJpaRepository: BookletJpaRepository,
     private val tagRepository: DefaultTagPostgresRepository,
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository
@@ -74,7 +76,7 @@ class TransactionRepositoryJpaAdapter(
     @Transactional
     override fun deleteAllSheetsById(sheetIds: List<java.util.UUID>) {
         if (sheetIds.isEmpty()) return
-        transactionJpaRepository.deleteByIdSheetIn(sheetIds)
+        transactionJpaRepository.deleteAllByIdSheetIn(sheetIds)
     }
 
     override fun findTransactionById(transactionId: java.util.UUID): Transaction? {
@@ -118,7 +120,7 @@ class TransactionRepositoryJpaAdapter(
     ): List<Transaction> {
         val from = java.time.LocalDate.of(year, month, 1)
         val to = from.withDayOfMonth(from.lengthOfMonth())
-        return transactionJpaRepository.findByBookletIdAndDateBetween(bookletId, from, to)
+        return transactionQueryJpaRepository.findByBookletIdAndDateBetween(bookletId, from, to)
             .map { it.toModel() }
     }
 }

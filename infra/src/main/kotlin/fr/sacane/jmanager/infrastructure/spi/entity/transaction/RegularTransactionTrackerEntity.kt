@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
+import org.springframework.dao.DataIntegrityViolationException
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
@@ -16,7 +17,12 @@ import java.util.UUID
 @Entity
 @Table(
     name = "regular_transaction_tracker",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["regular_transaction_id", "booklet_id"])]
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_regular_transaction_tracker_regular_booklet",
+            columnNames = ["regular_transaction_id", "booklet_id"]
+        )
+    ]
 )
 data class RegularTransactionTrackerEntity(
 
@@ -98,16 +104,20 @@ class RegularTransactionTrackerRepositoryAdapter(
     }
 
     override fun upsertTracker(tracker: RegularTransactionTracker): RegularTransactionTracker {
-        // Always resolve the existing row's id before saving.
-        // Without this, save() with id=null always does INSERT instead of UPDATE,
-        // creating duplicate rows for the same (regularTransactionId, bookletId) pair —
-        // which then causes NonUniqueResultException on the next findTracker call.
-        val resolvedId = tracker.id
-            ?: jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(
-                tracker.regularTransactionId.value, tracker.bookletId
-            )?.id
-        val entity = RegularTransactionTrackerEntity.fromDomain(tracker.copy(id = resolvedId))
-        return jpaRepository.save(entity).toDomain()
+        val entity = RegularTransactionTrackerEntity.fromDomain(tracker)
+        return try {
+            jpaRepository.save(entity).toDomain()
+        } catch (_: DataIntegrityViolationException) {
+            // Concurrent creation may hit the unique constraint; reload and update instead.
+            val existing = jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(
+                tracker.regularTransactionId.value,
+                tracker.bookletId
+            )
+            if (existing == null) {
+                throw IllegalStateException("Tracker conflict detected but no existing row found")
+            }
+            jpaRepository.save(entity.copy(id = existing.id)).toDomain()
+        }
     }
 
     override fun findAllTrackersForBooklet(bookletId: UUID): List<RegularTransactionTracker> {
