@@ -98,7 +98,9 @@ class RegularTransactionTrackerRepositoryAdapter(
         regularTransactionId: RegularTransactionId,
         bookletId: UUID
     ): RegularTransactionTracker? {
-        return jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId.value, bookletId)?.toDomain()
+        return jpaRepository.findByTransactionTrackerByRegularTransactionAndBookletId(
+            regularTransactionId.value, bookletId
+        )?.toDomain()
     }
 
     override fun upsertTracker(tracker: RegularTransactionTracker): RegularTransactionTracker {
@@ -139,7 +141,6 @@ class RegularTransactionTrackerRepositoryAdapter(
             )
             upsertTracker(updatedTracker)
         } else {
-            // If no tracker exists, create one with the excluded month
             val newTracker = RegularTransactionTracker(
                 regularTransactionId = regularTransactionId,
                 bookletId = bookletId,

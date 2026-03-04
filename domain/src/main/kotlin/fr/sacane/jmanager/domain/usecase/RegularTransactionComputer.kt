@@ -453,7 +453,7 @@ class RegularTransactionGeneratorService(
             // Legacy fallback: for old transactions created before regularTransactionId field
             // These old transactions don't have regularTransactionId, so we check by label and amount
             return@any transaction.label == regularTransaction.label &&
-                       transaction.amount == regularTransaction.amount
+                    transaction.amount == regularTransaction.amount
         } ?: false
     }
 
