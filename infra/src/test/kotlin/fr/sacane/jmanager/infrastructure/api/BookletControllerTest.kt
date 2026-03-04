@@ -4,10 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
+import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.infrastructure.api.booklet.BookletBookingRequest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
+import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
 import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
@@ -29,11 +35,13 @@ class BookletControllerTest(
     @param:LocalServerPort val port: Int,
     @param:Autowired val accountStateAdapter: AccountStateTestAdapter,
     @param:Autowired val objectMapper: ObjectMapper,
-    @param:Autowired private val transactionStateTestAdapter: TransactionStateTestAdapter
+    @param:Autowired private val transactionStateTestAdapter: TransactionStateTestAdapter,
+    @param:Autowired private val regularTransactionStateAdapter: RegularTransactionStateForTestAdapter
 ): AuthenticatedUserTest() {
 
     @AfterEach
     fun clear() {
+        regularTransactionStateAdapter.clear()
         accountStateAdapter.clear()
     }
     @Nested
@@ -435,6 +443,64 @@ class BookletControllerTest(
                 statusCode(200)
                 body("realSold", equalTo("2000.00"))
                 body("previewSold", org.hamcrest.Matchers.notNullValue())
+            }
+        }
+    }
+
+    @Nested
+    inner class BalancesAndTransactionsEndpointsTest {
+        @Test
+        fun `first generation with regular transactions should not fail between balances and transactions endpoints`() {
+            val booklet = Booklet(
+                id = null,
+                amount = Amount.fromString("1000.00"),
+                labelAccount = "Generation Test",
+                owner = user,
+            )
+            accountStateAdapter.init(listOf(booklet))
+            val savedBooklet = accountStateAdapter.get().first()
+            val currentDate = LocalDate.now()
+
+            regularTransactionStateAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = savedBooklet.id!!.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = RegularTransactionId(java.util.UUID.randomUUID().toString()),
+                            label = "Salaire",
+                            amount = Amount.fromString("500.00"),
+                            isIncome = true,
+                            startDate = currentDate.withDayOfMonth(1),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            recurrenceRule = RecurrenceRule.Monthly(1)
+                        )
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+            } When {
+                get("/api/account/${savedBooklet.id}/balances")
+            } Then {
+                statusCode(200)
+            }
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+            } When {
+                get("/api/account/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
             }
         }
     }

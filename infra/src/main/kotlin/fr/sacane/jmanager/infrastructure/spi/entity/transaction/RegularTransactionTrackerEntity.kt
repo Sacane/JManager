@@ -81,7 +81,7 @@ data class RegularTransactionTrackerEntity(
 }
 
 @Repository
-interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransactionTrackerEntity, UUID> {
+interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransactionTrackerEntity, Long> {
 
     @Query("SELECT r FROM RegularTransactionTrackerEntity r WHERE r.regularTransactionId = :regularTransactionId AND r.bookletId = :bookletId")
     fun findByTransactionTrackerByRegularTransactionAndBookletId(regularTransactionId: String, bookletId: UUID): RegularTransactionTrackerEntity?

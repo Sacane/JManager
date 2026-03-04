@@ -96,7 +96,7 @@ sealed interface BookletFeature {
      * and compute provisional balances.
      *
      * @param token Authentication token identifying the requester.
-     * @param bookletId UUID of the booklet to load.
+     * @param bookletId UUID of the booklet to load transactions for.
      * @param month Target month to load transactions for.
      * @param year Target year to load transactions for.
      * @param startingMonth Starting month for calculation (defaults to current month if null).
@@ -369,18 +369,10 @@ class BookletFeatureImpl(
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
                 ?: emptyList()
 
-            // Only generate physical previsional transactions for the CURRENT month
-            val targetYearMonth = YearMonth.of(year, month)
-            val currentYearMonth = YearMonth.of(currentYear, currentMonth)
-            if (targetYearMonth == currentYearMonth) {
-                // side-effect: generator persists missing preview tx; doesn't require loading all sheets
-                regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
-                    bookletId,
-                    regularTransactions,
-                    month,
-                    year
-                )
-            }
+            // IMPORTANT: do NOT generate physical preview transactions here.
+            // The frontend calls /balances and /transactions in parallel; generating in both
+            // endpoints can race on tracker creation. Physical generation is centralized in
+            // loadTransactionsForBookletForAMonth only.
 
             // Build a minimal booklet carrying only what calculatePrevisionalSold needs
             // (transactions are still needed for physical previews between current and target).
