@@ -118,7 +118,7 @@ class TransactionFeatureImpl(
             registeredAccount.removeTransactionById(transaction.id)
             registeredAccount.addTransaction(transactionFromDatabase)
             accountRepository.update(registeredAccount)
-            success(TransactionResumeResult(transactionFromDatabase, registeredAccount.amount, registeredAccount.previewAmount))
+            success(TransactionResumeResult(transactionFromDatabase, registeredAccount.amount))
         }
     }
 
@@ -144,7 +144,7 @@ class TransactionFeatureImpl(
             account.addTransaction(toSaveTransaction)
             accountRepository.update(account)
             logger.info("Transaction $newTr has been created, the booklet sold has been updated : $account")
-            success(TransactionResumeResult(newTr, account.amount, account.previewAmount))
+            success(TransactionResumeResult(newTr, account.amount))
         }
     }
 
@@ -206,7 +206,6 @@ class TransactionFeatureImpl(
                     TransactionDeletionResult(
                         deletedIds = sheetIds,
                         accountAmount = booklet.amount,
-                        accountPreviewAmount = booklet.previewAmount
                     )
                 )
             }
@@ -241,7 +240,7 @@ class TransactionFeatureImpl(
             account.addTransaction(transaction)
             // Update only account balances/label to avoid JPA collection merge side-effects.
             accountRepository.update(account)
-            return@executeInTransaction success(TransactionResumeResult(transaction, account.amount, account.previewAmount))
+            return@executeInTransaction success(TransactionResumeResult(transaction, account.amount))
         }
     }
 
@@ -250,5 +249,4 @@ class TransactionFeatureImpl(
 data class TransactionDeletionResult(
     val deletedIds: List<UUID>,
     val accountAmount: Amount,
-    val accountPreviewAmount: Amount
 )

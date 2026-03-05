@@ -3,7 +3,6 @@ import { format } from 'date-fns'
 export interface TransactionDeletionDTO {
   deletedIds: string[]
   amount: string
-  previewAmount: string
 }
 
 export default function useTransaction() {

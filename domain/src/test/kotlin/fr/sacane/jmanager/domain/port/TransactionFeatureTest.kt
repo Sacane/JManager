@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.Month
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import kotlin.random.Random
 
 fun <T> T.asSingleton(): List<T> = listOf(this)
 
@@ -280,11 +280,9 @@ class TransactionFeatureTest: FeatureTest() {
                     .assertSuccess()
                 val actualAccount = accountState.getStates().find { it.userId == user.id }?.booklet?.find { it.id == booklet.id }
                 val actualAmount = actualAccount?.amount ?: 10.toAmount().negate()
-                val actualPreviewAmount = actualAccount?.previewAmount ?: 0.toAmount()
 
                 org.junit.jupiter.api.assertAll(
-                    { assertEquals(0.toAmount(), actualAmount) },
-                    { assertEquals(100.toAmount(), actualPreviewAmount) }
+                    { assertEquals(0.toAmount(), actualAmount) }
                 )
             }
         }
@@ -336,9 +334,9 @@ class TransactionFeatureTest: FeatureTest() {
                 transactionFeature.deleteSheetsByIds(booklet.id!!, listOf(previewTransaction.id!!), tokenValue)
                     .assertSuccess()
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id)
                 assertNotNull(tracker)
-                assertTrue(tracker!!.excludedMonths.contains(java.time.YearMonth.of(2024, java.time.Month.JANUARY)))
+                assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2024, Month.JANUARY)))
             }
         }
     }
@@ -361,7 +359,7 @@ class TransactionFeatureTest: FeatureTest() {
 
                 transactionFeature.confirmPreviewTransaction(
                     tokenValue,
-                    booklet.id!!,
+                    booklet.id,
                     transactionPreviewTest.id!!,
                     null
                 )
@@ -433,7 +431,6 @@ class TransactionFeatureTest: FeatureTest() {
 
                 val actualAccount = accountState.getStates().find { it.userId == user.id }?.booklet?.find { it.id == booklet.id }
                 assertEquals(newAmount, actualAccount?.amount)
-                assertEquals(150.toAmount(), actualAccount?.previewAmount)
             }
         }
     }

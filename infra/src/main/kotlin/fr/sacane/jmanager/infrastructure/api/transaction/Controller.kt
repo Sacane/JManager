@@ -205,7 +205,6 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
         this.transaction.isIncome,
         this.transaction.tag!!.toDTO(),
         this.accountAmount.value.toString(),
-        this.accountPreviewAmount.value.toString(),
         this.transaction.isPreview
     )
 }
@@ -222,11 +221,9 @@ data class ConfirmPreviewRequest(
 data class TransactionDeletionResponse(
     val deletedIds: List<String>,
     val amount: String,
-    val previewAmount: String
 )
 
 private fun TransactionDeletionResult.toDTO(): TransactionDeletionResponse = TransactionDeletionResponse(
     deletedIds = deletedIds.map { it.toString() },
     amount = accountAmount.value.toString(),
-    previewAmount = accountPreviewAmount.value.toString()
 )

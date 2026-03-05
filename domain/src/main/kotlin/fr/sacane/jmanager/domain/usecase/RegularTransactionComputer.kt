@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.domain.usecase
 
 import fr.sacane.jmanager.domain.hexadoc.UseCase
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
@@ -511,6 +512,7 @@ class RegularTransactionGeneratorService(
             date = LocalDate.of(date.year, month, adjustedDay),
             isPreview = true,
             isIncome = regularTransaction.isIncome,
+            tag = regularTransaction.tag ?: Tag.noneTag(),
             regularTransactionId = regularTransaction.id
         )
     }

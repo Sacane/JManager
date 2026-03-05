@@ -12,7 +12,7 @@ declare global {
     regularTransactionId?: string | null
   }
   interface TransactionResultDTO {
-    id: string
+    id: string | null
     label: string
     value: number
     isIncome: boolean
@@ -21,7 +21,6 @@ declare global {
     tagDTO: TagDTO
     isPreview: boolean
     accountAmount: string
-    accountPreviewAmount: string
     regularTransactionId?: string | null
   }
 
@@ -30,7 +29,6 @@ declare global {
     amount: number
     labelAccount: string
     transactions: Array<SheetDTO>
-    previewAmount: number
     currency?: string
   }
 

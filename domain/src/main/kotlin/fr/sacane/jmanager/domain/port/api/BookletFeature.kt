@@ -323,6 +323,22 @@ class BookletFeatureImpl(
 
             val transactions = filteredTransactions.partition { it.isPreview }
 
+            // Always compute virtual previews for the requested month.
+            // They are not persisted and come back with id = null, allowing the frontend
+            // to explicitly create/confirm them later.
+            val virtualTransactionsForTargetMonth = regularTransactionGeneratorService.calculateVirtualTransactions(
+                bookletId = bookletId,
+                regularTransactions = regularTransactions,
+                startMonth = month,
+                startYear = year,
+                endMonth = month,
+                endYear = year,
+                existingPhysicalTransactions = allTransactionsForMonth
+            )
+
+            val combinedPrevisionalTransactions = (transactions.first + virtualTransactionsForTargetMonth)
+                .sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+
             val previsionalStartNs = System.nanoTime()
             // Pass allPhysicalTransactionsForDedup (current→target window) so that physical previews
             // from intermediate months (e.g. February when viewing March) are properly excluded
@@ -346,7 +362,7 @@ class BookletFeatureImpl(
             val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
                 currentTransactions = transactions.second,
-                previsionalTransactions = transactions.first,
+                previsionalTransactions = combinedPrevisionalTransactions,
                 regularTransactions = filteredRegularTransactions,
                 realSold = booklet.amount,
                 previsionalSold = previsionalSold
@@ -358,7 +374,7 @@ class BookletFeatureImpl(
                 Booklet loaded successfully:
                 - bookletId: $bookletId
                 - period: $month/$year
-                - sizes: monthTransactions=${allTransactionsForMonth.size}, current=${transactions.second.size}, preview=${transactions.first.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
+                - sizes: monthTransactions=${allTransactionsForMonth.size}, current=${transactions.second.size}, preview=${transactions.first.size}, virtualPreview=${virtualTransactionsForTargetMonth.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
                 - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs (generated=$generatedCount), updateBooklet=$updateBookletMs, monthQuery=$monthSheetMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
                 """.trimIndent()
             )
@@ -396,7 +412,6 @@ class BookletFeatureImpl(
             val baseBooklet = Booklet(
                 amount = Amount(persisted.amount),
                 labelAccount = persisted.label,
-                previewAmount = Amount(persisted.previewAmount),
                 id = bookletId
             )
 

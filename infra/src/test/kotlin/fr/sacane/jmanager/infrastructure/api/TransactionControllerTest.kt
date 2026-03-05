@@ -294,7 +294,6 @@ class TransactionControllerTest(
                 statusCode(200)
                 body("deletedIds.size()", equalTo(ids.size))
                 body("amount", notNullValue())
-                body("previewAmount", notNullValue())
             }
 
             assertEquals(0, transactionStateTestAdapter.get().size)

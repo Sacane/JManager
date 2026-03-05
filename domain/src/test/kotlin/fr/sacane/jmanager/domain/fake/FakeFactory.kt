@@ -48,7 +48,7 @@ object FakeFactory {
             val roleStrings = parts[2].split("|").mapNotNull {
                 try {
                     Role.valueOf(it)
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     null
                 }
             }.toSet()
@@ -67,7 +67,6 @@ object FakeFactory {
             return BookletBalanceQueryRepository.PersistedBalances(
                 label = booklet.label,
                 amount = booklet.amount.value,
-                previewAmount = booklet.previewAmount.value
             )
         }
     }

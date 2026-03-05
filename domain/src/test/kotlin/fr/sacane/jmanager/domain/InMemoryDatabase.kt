@@ -22,7 +22,7 @@ class InMemoryDatabase {
     private val bookletsByTransaction = mutableMapOf<UUID, MutableList<Transaction>>()
     private val tags = mutableMapOf<UserId, MutableList<Tag>>()
     val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
-    val defaultTags = fr.sacane.jmanager.domain.models.defaultTags.mapIndexed { index, tag ->
+    val defaultTags = fr.sacane.jmanager.domain.models.defaultTags.map { tag ->
         Tag(
             id = UUID.randomUUID(),
             label = tag.label,
@@ -124,7 +124,7 @@ class InMemoryDatabase {
             val account = it.value.find { acc -> acc.id == accountId }
             if(account != null) {
                 val transactions = bookletsByTransaction[accountId] ?: mutableListOf()
-                targetBooklet = Booklet(account.amount, account.label, transactions, initialSold = account.initialSold, previewAmount = account.previewAmount, owner = account.owner, id = accountId)
+                targetBooklet = Booklet(account.amount, account.label, transactions, initialSold = account.initialSold, owner = account.owner, id = accountId)
             }
         }
         return targetBooklet
@@ -142,7 +142,7 @@ class InMemoryDatabase {
 
         bookletList.forEach {
             result.add(
-                Booklet(it.amount, it.label, bookletsByTransaction[it.id]!!, initialSold = it.initialSold, previewAmount = it.previewAmount, owner = it.owner, id = it.id)
+                Booklet(it.amount, it.label, bookletsByTransaction[it.id]!!, initialSold = it.initialSold, owner = it.owner, id = it.id)
             )
         }
         return result
@@ -162,8 +162,8 @@ class InMemoryDatabase {
 
     fun addTransaction(userAccountId: IdUserAccount, transaction: Transaction) {
         val account = userByBooklet[userAccountId.userId]?.find { it.id == userAccountId.accountId } ?: throw IllegalArgumentException("Account not found")
-        account?.addTransaction(transaction)
-        bookletsByTransaction[account!!.id]?.add(transaction)
+        account.addTransaction(transaction)
+        bookletsByTransaction[account.id]?.add(transaction)
     }
     fun addMassiveTransaction(collection: Collection<IdUserAccountByTransaction>){
         collection.forEach { idByTr ->
@@ -226,12 +226,5 @@ class InMemoryDatabase {
             bookletsByTransaction[accountId] = mutableListOf()
         }
         bookletsByTransaction[accountId]?.add(transaction)
-    }
-
-    fun addTag(userId: UserId, tag: Tag) {
-        if(tags[userId] == null) {
-            tags[userId] = mutableListOf()
-        }
-        tags[userId]?.add(tag)
     }
 }

@@ -12,7 +12,6 @@ class Booklet(
     private val _regularTransactions: MutableList<RegularTransaction> = mutableListOf(),
     var owner : User? = null,
     val initialSold: Amount = amount.copy(),
-    var previewAmount: Amount = amount.copy(),
     val id: UUID? = null
 ){
 
@@ -38,7 +37,6 @@ class Booklet(
         _transactions.replaceAll {
             Transaction(it.id, it.label, it.date, it.amount, it.isIncome, tag = it.tag)
         }
-        previewAmount = booklet.previewAmount
     }
 
     override fun hashCode(): Int {
@@ -59,7 +57,6 @@ class Booklet(
             amount: $amount
             label: $labelAccount
             initialSold: $initialSold
-            previewAmount: $previewAmount
             owner: ${owner?.id}
         """.trimIndent()
     }
@@ -69,12 +66,9 @@ class Booklet(
         if(transaction.isNotPreview) {
             this.amount = this.amount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
-        this.previewAmount = this.previewAmount + if(transaction.isIncome) transaction.amount else transaction.amount.negate()
     }
     private fun removeTransaction(transaction: Transaction) {
         _transactions.removeIf { transaction.id == it.id }
-        this.previewAmount =
-            this.previewAmount - if (transaction.isIncome) transaction.amount else transaction.amount.negate()
         if (transaction.isNotPreview) {
             this.amount = this.amount - if (transaction.isIncome) transaction.amount else transaction.amount.negate()
         }
@@ -84,7 +78,6 @@ class Booklet(
             if(it.isNotPreview) {
                 this.amount = this.amount - if(it.isIncome) it.amount else it.amount.negate()
             }
-            this.previewAmount = this.previewAmount - if(it.isIncome) it.amount else it.amount.negate()
         }
         _transactions.removeIf { tr -> transactionId == tr.id }
     }
@@ -92,24 +85,6 @@ class Booklet(
     fun removeTransactionIf(sheetOnList: (s: Transaction) -> Boolean) {
         _transactions.filter(sheetOnList).forEach {
             removeTransaction(it)
-        }
-    }
-
-    /**
-     * Recalculates previewAmount from scratch based on the real balance (amount) plus
-     * all preview transactions currently in memory.
-     *
-     * The persisted previewAmount can be stale when generateMissingPrevisionalTransactions
-     * has saved new preview transactions directly via the repository without going through
-     * addTransaction(). Call this after reloading the booklet from DB to resync.
-     *
-     * [month] and [year] indicate which month triggered the resync (informational only —
-     * previewAmount is a running total so we must recompute it globally).
-     */
-    fun recalculatePreviewAmountForMonth(month: Month, year: Int) {
-        previewAmount = _transactions.fold(amount.copy()) { acc, t ->
-            if (!t.isPreview) return@fold acc
-            if (t.isIncome) acc + t.amount else acc - t.amount
         }
     }
 }
