@@ -86,8 +86,8 @@ function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} EUR` : '-',
-    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} EUR` : '-',
+    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
+    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
     date: transaction.date,
     tagDTO: transaction.tagDTO ?? fallbackTag,
   }
@@ -220,9 +220,19 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
 
 async function confirmDelete() {
   try {
+    const idsToDelete = selectedSheets.value
+      .map(sheet => sheet.id)
+      .filter((id): id is string => id != null)
+
+    if (idsToDelete.length === 0) {
+      toast.warn('La sélection contient uniquement des transactions virtuelles non supprimables.')
+      selectedSheets.value = []
+      return
+    }
+
     const res = await deleteTransaction(
       bookletData.id,
-      selectedSheets.value.map(sheet => sheet.id as string),
+      idsToDelete,
     )
 
     // Update list locally (no reload)
