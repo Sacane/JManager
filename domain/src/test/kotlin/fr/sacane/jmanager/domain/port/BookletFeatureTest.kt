@@ -1202,5 +1202,84 @@ class BookletFeatureTest: FeatureTest() {
             }
         }
 
+        @Test
+        fun `Should not expose null id previsional transactions for current month`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Current Month No Null Id",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Current month regular",
+                    amount = 120.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-current-null-id-check"),
+                    startDate = LocalDate.of(2026, 3, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue,
+                    bookletId,
+                    java.time.Month.MARCH,
+                    2026,
+                    startingMonth = java.time.Month.MARCH,
+                    startingYear = 2026
+                )
+
+                result.assertTrue { this.previsionalTransactions.all { tr -> tr.id != null } }
+            }
+        }
+
+        @Test
+        fun `Should expose virtual previsional transactions with null id for non current month`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Future Month Virtual Id",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Future month regular",
+                    amount = 75.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-future-null-id-check"),
+                    startDate = LocalDate.of(2026, 4, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue,
+                    bookletId,
+                    java.time.Month.APRIL,
+                    2026,
+                    startingMonth = java.time.Month.MARCH,
+                    startingYear = 2026
+                )
+
+                result.assertTrue { this.previsionalTransactions.any { tr -> tr.id == null } }
+            }
+        }
+
     }
 }
+

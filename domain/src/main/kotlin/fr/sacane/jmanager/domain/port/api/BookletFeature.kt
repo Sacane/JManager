@@ -323,18 +323,20 @@ class BookletFeatureImpl(
 
             val transactions = filteredTransactions.partition { it.isPreview }
 
-            // Always compute virtual previews for the requested month.
-            // They are not persisted and come back with id = null, allowing the frontend
-            // to explicitly create/confirm them later.
-            val virtualTransactionsForTargetMonth = regularTransactionGeneratorService.calculateVirtualTransactions(
-                bookletId = bookletId,
-                regularTransactions = regularTransactions,
-                startMonth = month,
-                startYear = year,
-                endMonth = month,
-                endYear = year,
-                existingPhysicalTransactions = allTransactionsForMonth
-            )
+            val virtualTransactionsForTargetMonth = if (targetYearMonth == currentYearMonth) {
+                emptyList()
+            } else {
+                // Virtual previews are exposed only for non-current months.
+                regularTransactionGeneratorService.calculateVirtualTransactions(
+                    bookletId = bookletId,
+                    regularTransactions = regularTransactions,
+                    startMonth = month,
+                    startYear = year,
+                    endMonth = month,
+                    endYear = year,
+                    existingPhysicalTransactions = allTransactionsForMonth
+                )
+            }
 
             val combinedPrevisionalTransactions = (transactions.first + virtualTransactionsForTargetMonth)
                 .sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
