@@ -26,11 +26,11 @@ class AccountMapper(
         return if(userResource != null) {
             BookletResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
                 it.tag?.asResource()
-            ) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
+            ) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id)
         } else {
             BookletResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
                 it.tag?.asResource()
-            ) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id, previewAmount = booklet.previewAmount.value)
+            ) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id)
         }
     }
 }
@@ -48,7 +48,7 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
     resource.regularTransactionId = this.regularTransactionId?.value?.let {
         try {
             java.util.UUID.fromString(it)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null // Si la conversion échoue, on met null
         }
     }
@@ -69,7 +69,7 @@ internal fun Booklet.asResource(): BookletResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return BookletResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.value, previewAmount = this.previewAmount.value)
+    return BookletResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.value)
 }
 
 internal fun User.asResource(password: String): UserResource {
@@ -98,7 +98,6 @@ internal fun BookletResource.toModel(): Booklet
     this.label,
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
     owner = this.owner?.toModel(),
-    previewAmount = this.previewAmount.toAmount(),
     initialSold = Amount(this.initialSold),
     id = this.idAccount
 )
@@ -121,7 +120,7 @@ internal fun UserResource.toModelWithSimpleAccounts()
     booklets = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
 )
 
-internal fun BookletResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, previewAmount = this.previewAmount.toAmount(), id = this.idAccount)
+internal fun BookletResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, id = this.idAccount)
 
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
     UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password, roles)
@@ -172,14 +171,5 @@ internal fun FrequencyProperty.toResource(): FrequencyPropertyEntity {
         is FrequencyProperty.Forever -> ForeverEntity()
         is FrequencyProperty.UntilDate -> UntilDateEntity(this.date)
         is FrequencyProperty.SpecificRepetitionTimes -> SpecificRepetitionTimesEntity(this.number)
-    }
-}
-
-internal fun FrequencyPropertyEntity.toDomain(): FrequencyProperty {
-    return when(this) {
-        is ForeverEntity -> FrequencyProperty.Forever()
-        is UntilDateEntity -> FrequencyProperty.UntilDate(this.date!!)
-        is SpecificRepetitionTimesEntity -> FrequencyProperty.SpecificRepetitionTimes(this.number!!)
-        else -> throw IllegalArgumentException("Unknown FrequencyPropertyEntity type")
     }
 }

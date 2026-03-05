@@ -15,7 +15,6 @@ class BookletBalanceQueryRepositoryJpaAdapter(
         return BookletBalanceQueryRepository.PersistedBalances(
             label = row.label,
             amount = row.amount,
-            previewAmount = row.previewAmount
         )
     }
 }

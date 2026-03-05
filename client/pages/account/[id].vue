@@ -51,7 +51,15 @@ const currentTransaction = reactive<TransactionCreationDTO>({
   isPreview: false,
 })
 
-const displayMonth = computed(() => translate(bookletData.month))
+const displayMonth = computed({
+  get: () => translate(bookletData.month),
+  set: (value: string) => {
+    const normalized = englishMonth(value) || value
+    if (numberFromMonth(normalized) != null) {
+      bookletData.month = normalized
+    }
+  },
+})
 const transactionsCount = computed(() => actualSheets.value.length)
 const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedSheets.value.length > 0)
@@ -68,13 +76,20 @@ const filteredTransactions = computed(() => {
 })
 
 function asDisplayableTransaction(transaction: TransactionResultDTO): any {
+  const fallbackTag: TagDTO = {
+    tagId: undefined,
+    label: 'Aucune',
+    isDefault: true,
+    colorDTO: { red: 255, green: 255, blue: 255 },
+  }
+
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
-    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
+    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} EUR` : '-',
+    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} EUR` : '-',
     date: transaction.date,
-    tagDTO: transaction.tagDTO,
+    tagDTO: transaction.tagDTO ?? fallbackTag,
   }
 }
 
@@ -122,8 +137,7 @@ async function retrieveTags() {
   }
 }
 
-function onMonthChange(event: any) {
-  bookletData.month = englishMonth(event.value)
+function onMonthChange() {
   loadBookletData()
 }
 
@@ -148,12 +162,11 @@ async function bookTransaction(transaction: TransactionCreationDTO) {
   try {
     const result = await saveTransaction(bookletData.label, transaction)
 
-    bookletData.realSold = Number.parseFloat(result.accountAmount)
-    bookletData.previewSold = Number.parseFloat(result.accountPreviewAmount)
-
     const newTransaction = asDisplayableTransaction(result)
     actualSheets.value.push(newTransaction)
     actualSheets.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    await loadBookletData()
 
     isCreationDialogVisible.value = false
     resetTransaction()
@@ -165,6 +178,11 @@ async function bookTransaction(transaction: TransactionCreationDTO) {
 
 async function onEditTransaction(event: any) {
   try {
+    if (!event?.data?.id) {
+      toast.warn('Cette transaction est virtuelle. Validez-la pour la créer avant modification.')
+      return
+    }
+
     const transaction = await findTransactionById(event.data.id)
 
     currentTransaction.id = event.data.id
@@ -190,8 +208,7 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
       actualSheets.value[index] = asDisplayableTransaction(result)
     }
 
-    bookletData.realSold = Number.parseFloat(result.accountAmount)
-    bookletData.previewSold = Number.parseFloat(result.accountPreviewAmount)
+    await loadBookletData()
 
     isEditDialogVisible.value = false
     resetTransaction()
@@ -213,9 +230,7 @@ async function confirmDelete() {
     actualSheets.value = actualSheets.value.filter(t => !deleted.has(t.id as string))
     selectedSheets.value = []
 
-    // Update soldes locally
-    bookletData.realSold = Number.parseFloat(res.amount)
-    bookletData.previewSold = Number.parseFloat(res.previewAmount)
+    await loadBookletData()
 
     toast.success('Transactions supprimées avec succès')
   } catch (err) {
@@ -241,17 +256,29 @@ async function confirmPreview() {
   const transaction = transactionToConfirm.value
   if (!transaction) return
   try {
-    const result = await confirmPreviewTransaction(bookletData.id, transaction.id as string, newAmountForPreview.value)
-
-    // Update locally: replace the transaction (now confirmed)
-    const index = actualSheets.value.findIndex(item => item?.id === result.id)
-    if (index !== -1) {
-      actualSheets.value[index] = asDisplayableTransaction(result)
+    const finalAmount = newAmountForPreview.value ?? transaction.value
+    if (finalAmount == null) {
+      toast.warn('Veuillez renseigner un montant pour valider cette transaction.')
+      return
     }
 
-    // Update soldes from response
-    bookletData.realSold = Number.parseFloat(result.accountAmount)
-    bookletData.previewSold = Number.parseFloat(result.accountPreviewAmount)
+    if (transaction.id) {
+      const result = await confirmPreviewTransaction(bookletData.id, transaction.id, newAmountForPreview.value)
+
+      const index = actualSheets.value.findIndex(item => item?.id === result.id)
+      if (index !== -1) {
+        actualSheets.value[index] = asDisplayableTransaction(result)
+      }
+    } else {
+      await saveTransaction(bookletData.label, {
+        ...transaction,
+        id: null,
+        isPreview: false,
+        value: finalAmount,
+      })
+    }
+
+    await loadBookletData()
 
     toast.success('Transaction validée avec succès')
   } catch (err) {
@@ -389,7 +416,7 @@ onUnmounted(() => {
                 :options="useDate().months.map(u => translate(u))"
                 placeholder="Mois"
                 class="flex-1 min-w-0 w-full md:(flex-none min-w-[140px] w-auto) border-1 rounded-lg bg-transparent"
-                @change="onMonthChange($event)"
+                @change="onMonthChange"
               />
               <DatePicker
                 v-model="bookletData.dateYear"
@@ -539,6 +566,7 @@ onUnmounted(() => {
             <template #body="{ data }">
               <div class="flex items-center justify-center gap-1">
                 <Button
+                  v-if="data.id"
                   class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
                   icon="pi pi-pencil"
                   text
@@ -596,8 +624,17 @@ onUnmounted(() => {
                 </div>
               </div>
               <div class="flex gap-1.5 md:gap-1.5">
+                <Button
+                  v-if="transaction.id"
+                  class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  size="small"
+                  title="Modifier"
+                  @click.stop="onEditTransaction({ data: transaction })"
+                />
                 <Button v-if="transaction.isPreview" class="text-emerald-500 hover:bg-emerald-500/15" icon="pi pi-check" text rounded severity="success" size="small" title="Valider" @click.stop="onConfirmPreview(transaction)" />
-                <Button class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]" icon="pi pi-pencil" text rounded size="small" title="Modifier" @click.stop="onEditTransaction({ data: transaction })" />
               </div>
             </div>
 

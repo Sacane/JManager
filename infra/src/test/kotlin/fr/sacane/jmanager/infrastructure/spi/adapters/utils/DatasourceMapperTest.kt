@@ -213,8 +213,7 @@ class DatasourceMapperTest {
             amount = BigDecimal("2000.00"),
             label = "Test Booklet",
             sheets = mutableListOf(transactionResource),
-            initialSold = BigDecimal("2000.00"),
-            previewAmount = BigDecimal("2000.00")
+            initialSold = BigDecimal("2000.00")
         )
 
         val booklet = bookletResource.toModel()
@@ -246,20 +245,18 @@ class DatasourceMapperTest {
     }
 
     @Test
-    fun `Booklet should preserve initial sold and preview amount when converting`() {
+    fun `Booklet should preserve initial sold when converting`() {
         val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 1000.toAmount(),
             labelAccount = "Test",
             initialSold = 800.toAmount(),
-            previewAmount = 950.toAmount(),
             id = bookletId
         )
 
         val resource = booklet.asResource()
 
         assertEquals(BigDecimal("800.00"), resource.initialSold)
-        assertEquals(BigDecimal("950.00"), resource.previewAmount)
     }
 
     @Test

@@ -22,7 +22,6 @@ class BookletTest {
         assertEquals(initialAmount, booklet.amount)
         assertEquals("Compte principal", booklet.label)
         assertEquals(initialAmount, booklet.initialSold)
-        assertEquals(initialAmount, booklet.previewAmount)
         assertTrue(booklet.transactions.isEmpty())
         assertEquals(bookletId, booklet.id)
     }
@@ -41,7 +40,6 @@ class BookletTest {
         booklet.addTransaction(incomeTransaction)
 
         assertEquals(1500.toAmount(), booklet.amount)
-        assertEquals(1500.toAmount(), booklet.previewAmount)
         assertEquals(1, booklet.transactions.size)
     }
 
@@ -59,12 +57,11 @@ class BookletTest {
         booklet.addTransaction(expenseTransaction)
 
         assertEquals(800.toAmount(), booklet.amount)
-        assertEquals(800.toAmount(), booklet.previewAmount)
         assertEquals(1, booklet.transactions.size)
     }
 
     @Test
-    fun `addTransaction with preview should only update previewAmount`() {
+    fun `addTransaction with preview should not update real amount`() {
         val booklet = Booklet(1000.toAmount(), "Test")
         val previewTransaction = Transaction(
             id = UUID.randomUUID(),
@@ -78,7 +75,6 @@ class BookletTest {
         booklet.addTransaction(previewTransaction)
 
         assertEquals(1000.toAmount(), booklet.amount) // Should not change
-        assertEquals(900.toAmount(), booklet.previewAmount) // Should change
     }
 
     @Test
@@ -98,7 +94,6 @@ class BookletTest {
 
         booklet.removeTransactionById(transactionId)
         assertEquals(1000.toAmount(), booklet.amount)
-        assertEquals(1000.toAmount(), booklet.previewAmount)
         assertTrue(booklet.transactions.isEmpty())
     }
 
@@ -249,4 +244,3 @@ class BookletTest {
         assertTrue(booklet.regularTransactions.isEmpty())
     }
 }
-

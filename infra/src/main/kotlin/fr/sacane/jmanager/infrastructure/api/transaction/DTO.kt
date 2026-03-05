@@ -48,7 +48,6 @@ data class TransactionResponse(
     val isIncome: Boolean,
     val tagDTO: TagDTO,
     val accountAmount: String,
-    val accountPreviewAmount: String,
     val isPreview: Boolean
 )
 
@@ -62,17 +61,6 @@ data class UserBookletResponse(
 data class AccountTransactionsIdRequest(
     val accountId: String,
     val transactionIds: List<String>
-)
-
-@Serializable
-data class RegularTransactionCreationRequest(
-    val label: String,
-    val startDate: String,
-    @Serializable(with = BigDecimalSerializer::class)
-    val value: BigDecimal,
-    val isIncome: Boolean,
-    val regularity: String,
-    val tagDTO: TagDTO? = null
 )
 
 @Serializable
@@ -134,11 +122,6 @@ data class FrequencyPropertyDTO(
         }
     }
 }
-
-data class RegularTransactionLinkRequest(
-    val transactionId: String,
-    val bookletId: String
-)
 
 @Serializable
 data class UpdateRegularTransactionRequest(

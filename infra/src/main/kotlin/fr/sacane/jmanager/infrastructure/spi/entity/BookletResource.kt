@@ -19,7 +19,6 @@ class BookletResource(
     @ManyToOne
     var owner: UserResource? = null,
     var initialSold: BigDecimal = BigDecimal.ZERO,
-    var previewAmount: BigDecimal = BigDecimal.ZERO,
     @ManyToMany(mappedBy = "accounts", fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     var regularTransactions: MutableSet<RegularTransactionEntity> = mutableSetOf(),
     @Id

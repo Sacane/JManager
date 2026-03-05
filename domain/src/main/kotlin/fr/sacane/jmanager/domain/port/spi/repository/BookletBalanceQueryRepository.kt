@@ -16,9 +16,7 @@ interface BookletBalanceQueryRepository {
     data class PersistedBalances(
         val label: String,
         val amount: BigDecimal,
-        val previewAmount: BigDecimal
     )
 
     fun findPersistedBalances(bookletId: UUID): PersistedBalances?
 }
-

@@ -64,7 +64,7 @@ class BookletJpaRepositoryAdapter(
     }
     override fun update(booklet: Booklet) {
         val id = booklet.id ?: return
-        accountRepository.update(booklet.label, booklet.amount.value, booklet.previewAmount.value, id)
+        accountRepository.update(booklet.label, booklet.amount.value, id)
     }
 
     @Transactional

@@ -19,7 +19,6 @@ internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
     this.id?.toString() ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
     this.amount.value,
     this.label,
-    this.previewAmount.toStringValue(),
     this.sheets().map { sheet -> sheet.toDTO() },
     this.amount.currency.symbol
 )

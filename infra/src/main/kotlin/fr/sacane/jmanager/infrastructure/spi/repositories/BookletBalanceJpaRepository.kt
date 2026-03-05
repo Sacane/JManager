@@ -16,7 +16,7 @@ interface BookletBalanceJpaRepository : Repository<BookletResource, UUID> {
 
     @Query(
         """
-        SELECT acc.label AS label, acc.amount AS amount, acc.previewAmount AS previewAmount
+        SELECT acc.label AS label, acc.amount AS amount
         FROM BookletResource acc
         WHERE acc.idAccount = :id
         """
@@ -30,5 +30,4 @@ interface BookletBalanceJpaRepository : Repository<BookletResource, UUID> {
 interface PersistedBalancesRow {
     val label: String
     val amount: BigDecimal
-    val previewAmount: BigDecimal
 }

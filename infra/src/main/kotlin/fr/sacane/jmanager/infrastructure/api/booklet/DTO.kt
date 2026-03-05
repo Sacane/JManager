@@ -11,7 +11,6 @@ data class AccountDTO(
     @Serializable(with = BigDecimalSerializer::class)
     val amount: BigDecimal,
     val labelAccount: String,
-    val previewAmount: String,
     val transactions: List<TransactionResult>?,
     val currency: String
 )
