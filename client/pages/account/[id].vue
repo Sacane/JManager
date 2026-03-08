@@ -63,6 +63,21 @@ const displayMonth = computed({
 const transactionsCount = computed(() => actualSheets.value.length)
 const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedSheets.value.length > 0)
+const selectedTransactionsAmount = computed(() => selectedSheets.value.reduce((total, transaction) => {
+  const amount = Number.parseFloat(transaction?.value?.toString() ?? '0')
+  return total + (transaction.isIncome ? amount : -amount)
+}, 0))
+const selectedTransactionsAmountLabel = computed(() => {
+  const amount = selectedTransactionsAmount.value
+  const formattedAmount = Math.abs(amount).toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+
+  if (amount === 0) return '0,00 €'
+
+  return `${amount > 0 ? '+' : '-'}${formattedAmount} €`
+})
 
 const displayLabel = computed(() => capitalizeFirst(bookletData.label))
 
@@ -478,34 +493,52 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <div class="flex flex-col md:flex-row justify-between items-stretch gap-4 mb-5 md:(gap-3 mb-4)">
-        <div class="flex flex-col gap-2 md:(flex-row gap-3 flex-wrap)">
-          <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
-          <Button
-            outlined
-            class="w-full md:w-auto border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(245,158,11,0.15)] hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)]"
-            icon="pi pi-clock"
-            :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
-            @click="openPreviewCreationDialog"
-          />
-          <Button
-            outlined
-            class="csv-action-btn w-full md:w-auto border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
-            icon="pi pi-file-import"
-            :label="isMobile ? 'CSV' : 'Importer CSV'"
-            @click="openCsvImportDialog"
-          />
-          <Button
-            outlined
-            class="csv-action-btn w-full md:w-auto border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
-            icon="pi pi-file-export"
-            :label="isMobile ? 'Export' : 'Exporter CSV'"
-            @click="openCsvExportDialog"
-          />
+      <div class="flex flex-col gap-3 mb-5 md:mb-4">
+        <div class="flex flex-col gap-3 lg:(flex-row justify-between items-center gap-6)">
+          <div class="flex flex-col gap-2 md:(flex-row gap-3 flex-wrap)">
+            <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
+            <Button
+              outlined
+              class="w-full md:w-auto border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(245,158,11,0.15)] hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)]"
+              icon="pi pi-clock"
+              :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
+              @click="openPreviewCreationDialog"
+            />
+          </div>
+
+          <div class="flex flex-col gap-2 lg:(flex-row items-center gap-3 shrink-0)">
+            <Button
+              outlined
+              class="csv-action-btn w-full lg:w-auto border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
+              icon="pi pi-file-import"
+              :label="isMobile ? 'CSV' : 'Importer CSV'"
+              @click="openCsvImportDialog"
+            />
+            <Button
+              outlined
+              class="csv-action-btn w-full lg:w-auto border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
+              icon="pi pi-file-export"
+              :label="isMobile ? 'Export' : 'Exporter CSV'"
+              @click="openCsvExportDialog"
+            />
+          </div>
         </div>
-        <div class="md:self-center">
-          <Button v-if="hasSelection" class="w-full md:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" @click="confirmDeleteButton" />
-        </div>
+
+        <Transition name="fade">
+          <div v-if="hasSelection" class="flex flex-col gap-3 lg:(flex-row items-center justify-end gap-3)">
+            <div class="flex items-center justify-between gap-6 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm lg:justify-start">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-check-square text-[var(--primary)] text-sm" />
+                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedSheets.length }} transaction{{ selectedSheets.length > 1 ? 's' : '' }} sélectionnée{{ selectedSheets.length > 1 ? 's' : '' }}</span>
+              </div>
+              <div class="w-px h-6 bg-[var(--border-color)]" />
+              <span class="text-base font-extrabold" :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">
+                {{ selectedTransactionsAmountLabel }}
+              </span>
+            </div>
+            <Button class="w-full lg:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" @click="confirmDeleteButton" />
+          </div>
+        </Transition>
       </div>
 
       <div v-if="!isMobile" class="flex-1 bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
@@ -991,6 +1024,16 @@ onUnmounted(() => {
   .csv-action-btn {
     display: inline-flex;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .fab-enter-active,
