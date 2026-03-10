@@ -1,0 +1,35 @@
+services:
+  jmanager:
+    image: eclipse-temurin:21-jre
+    container_name: jmanager-app
+    working_dir: /app
+    volumes:
+      - ./Jmanager-{{VERSION}}.jar:/app/Jmanager-{{VERSION}}.jar:ro
+      - ./application.properties:/app/application.properties:ro
+    command: ["java", "-jar", "/app/Jmanager-{{VERSION}}.jar"]
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:15
+    container_name: jmanager-postgres
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+

@@ -13,6 +13,9 @@ group = "fr.sacane"
 java.sourceCompatibility = JavaVersion.toVersion("21")
 
 allprojects{
+	group = rootProject.group
+	version = rootProject.version
+
 	repositories {
 		mavenCentral()
 	}

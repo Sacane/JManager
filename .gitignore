@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode
+
+### Front Build Artifacts ###
+infra/src/main/resources/static/

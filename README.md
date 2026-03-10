@@ -52,6 +52,20 @@ Infra & quality tools
 
 ---
 
+## 🔢 Versioning Strategy
+
+The project version is stored in `gradle.properties` (`version=x.y.z`) and is automatically bumped on pushes to `master`.
+
+Commit type to bump mapping:
+
+- `fix:` -> patch bump (`x.y.z+1`)
+- `feat:`, `chore:`, `patch:` -> minor bump (`x.y+1.0`)
+- `release:` -> major bump (`x+1.0.0`)
+
+The CI updates `gradle.properties`, commits the new version, and builds `executables/Jmanager-<version>.jar`.
+
+---
+
 ## 📦 Prerequisites
 
 Install the following tools on your machine:
@@ -94,7 +108,7 @@ gradlew.bat :infra:bootRun
 
 # or to create a standalone JAR
 ./gradlew :infra:shadowJar
-java -jar executables/Jmanager-1.0.jar
+java -jar executables/Jmanager-<version>.jar
 ```
 
 4) Start the frontend (`client`)
@@ -121,6 +135,23 @@ gradlew.bat test
 ```
 
 - Integration tests that rely on Testcontainers require Docker to be running.
+
+---
+
+## 🚚 Deployment Dispatch (CI)
+
+On `master`, the workflow:
+
+- bumps the version,
+- builds the versioned JAR,
+- publishes it as a GitHub Release asset (`v<version>`),
+- triggers the Deploy repository through `repository_dispatch` (`jmanager_deploy`).
+
+Payload sent to Deploy includes:
+
+- `jar_version`
+- `jar_download_url`
+- `jar_file_name`
 
 ---
 
