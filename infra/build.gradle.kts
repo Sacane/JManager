@@ -21,7 +21,6 @@ repositories{
 }
 
 group = "fr.sacane.jmanager"
-version = "1.0"
 val springBootVersion = "3.4.0"
 val restAssuredVersion = "5.5.0"
 val jwtVersion = "0.12.6"

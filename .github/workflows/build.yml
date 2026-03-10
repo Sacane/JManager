@@ -1,10 +1,12 @@
 name: Build
+
 env:
   GRADLE_OPTS: "-XX:MaxMetaspaceSize=512m -Xmx2g"
+
 on:
   push:
     branches:
-      - '**'
+      - "**"
 
 jobs:
   test-analysis:
@@ -15,10 +17,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up JDK 21
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 21
+          distribution: temurin
+          java-version: "21"
+
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
@@ -34,34 +39,46 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: allow permission
+
+      - name: Allow execution permission
         run: chmod +x ./gradlew
+
       - name: Run tests
-        run: ./gradlew :domain:test :infra:test jacocoTestReport --info --stacktrace  # Run Gradle tests sequentially
+        run: ./gradlew :domain:test :infra:test jacocoTestReport --info --stacktrace
+
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: ./gradlew sonar --info  # Run SonarQube analysis
+        run: ./gradlew sonar --info
+
   build:
-    name: Build and deploy
+    name: Build and dispatch deploy
     runs-on: self-hosted
     if: github.ref == 'refs/heads/master' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     needs: test-analysis
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.bump.outputs.new_version }}
+      jar_file_name: ${{ steps.jar.outputs.jar_file_name }}
+      jar_download_url: ${{ steps.jar.outputs.jar_download_url }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Set up JDK 21
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 21
-      - name: Cache SonarQube packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
+          distribution: temurin
+          java-version: "21"
+
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
@@ -71,20 +88,73 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: allow permission
-        run: chmod +x ./gradlew
-      - name: Clean and Build JAR
+
+      - name: Allow execution permission
+        run: |
+          chmod +x ./gradlew
+          chmod +x ./.github/scripts/bump-version.sh
+
+      - name: Compute and apply version bump
+        id: bump
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          GIT_COMMIT_RANGE: ${{ github.event.before }}..${{ github.sha }}
+        run: ./.github/scripts/bump-version.sh
+
+      - name: Commit bumped version
+        if: steps.bump.outputs.should_bump == 'true'
+        run: |
+          git add gradle.properties
+          git commit -m "chore(version): bump to ${{ steps.bump.outputs.new_version }}" || echo "No version file changes to commit"
+          git push
+
+      - name: Build versioned JAR
+        if: steps.bump.outputs.should_bump == 'true'
         run: ./gradlew clean build -x test --info
-      - name: Add SSH key
-        uses: webfactory/ssh-agent@v0.5.3
+
+      - name: Compute JAR metadata
+        if: steps.bump.outputs.should_bump == 'true'
+        id: jar
+        run: |
+          JAR_FILE_NAME="Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+          JAR_DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.bump.outputs.new_version }}/${JAR_FILE_NAME}"
+
+          if [ ! -f "./executables/${JAR_FILE_NAME}" ]; then
+            echo "Expected JAR not found: ./executables/${JAR_FILE_NAME}"
+            ls -la ./executables || true
+            exit 1
+          fi
+
+          echo "jar_file_name=${JAR_FILE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "jar_download_url=${JAR_DOWNLOAD_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub release with JAR
+        if: steps.bump.outputs.should_bump == 'true'
+        uses: softprops/action-gh-release@v2
         with:
-          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          tag_name: v${{ steps.bump.outputs.new_version }}
+          name: v${{ steps.bump.outputs.new_version }}
+          target_commitish: ${{ github.sha }}
+          files: ./executables/${{ steps.jar.outputs.jar_file_name }}
+          fail_on_unmatched_files: true
 
-      - name: Remove old JAR from VPS
-        run: ssh -p ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "rm -f /home/${{ secrets.SERVER_USER }}/jmanager/*.jar"
-
-      - name: Copy JAR to VPS
-        run: scp -P ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=no -r ./executables/Jmanager-1.0.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/jmanager/
+      - name: Trigger Deploy repository
+        if: steps.bump.outputs.should_bump == 'true'
+        env:
+          DEPLOY_REPO_PAT: ${{ secrets.DEPLOY_REPO_PAT }}
+          DEPLOY_REPOSITORY: ${{ vars.DEPLOY_REPOSITORY || 'Sacane/Deploy' }}
+        run: |
+          curl --fail --location \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${DEPLOY_REPO_PAT}" \
+            "https://api.github.com/repos/${DEPLOY_REPOSITORY}/dispatches" \
+            --data @- <<JSON
+          {
+            "event_type": "jmanager_deploy",
+            "client_payload": {
+              "jar_version": "${{ steps.bump.outputs.new_version }}",
+              "jar_download_url": "${{ steps.jar.outputs.jar_download_url }}",
+              "jar_file_name": "${{ steps.jar.outputs.jar_file_name }}"
+            }
+          }
+          JSON
