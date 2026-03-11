@@ -13,3 +13,9 @@
   - publish `Jmanager-<version>.jar` to GitHub Releases,
   - send `repository_dispatch` payload (`jar_version`, `jar_download_url`, `jar_file_name`) to deploy repository.
 - Updated `README.md` with versioning and deployment CI behavior.
+
+## 2026-03-11
+
+- Updated CI version bump flow to avoid committing/pushing on `master` during build.
+- Version computation now uses the latest Git tag (`vX.Y.Z`) as primary source of truth, with `gradle.properties` as fallback.
+- Build now injects the computed version via Gradle property (`-Pversion=...`) for release JAR generation.
