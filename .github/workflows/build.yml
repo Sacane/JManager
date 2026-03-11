@@ -68,10 +68,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Fetch tags
+        run: git fetch --force --tags
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -94,22 +92,15 @@ jobs:
           chmod +x ./gradlew
           chmod +x ./.github/scripts/bump-version.sh
 
-      - name: Compute and apply version bump
+      - name: Compute next version bump
         id: bump
         env:
           GIT_COMMIT_RANGE: ${{ github.event.before }}..${{ github.sha }}
         run: ./.github/scripts/bump-version.sh
 
-      - name: Commit bumped version
-        if: steps.bump.outputs.should_bump == 'true'
-        run: |
-          git add gradle.properties
-          git commit -m "chore(version): bump to ${{ steps.bump.outputs.new_version }}" || echo "No version file changes to commit"
-          git push
-
       - name: Build versioned JAR
         if: steps.bump.outputs.should_bump == 'true'
-        run: ./gradlew clean build -x test --info
+        run: ./gradlew clean build -x test --info -Pversion=${{ steps.bump.outputs.new_version }}
 
       - name: Compute JAR metadata
         if: steps.bump.outputs.should_bump == 'true'

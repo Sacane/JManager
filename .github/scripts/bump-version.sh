@@ -1,27 +1,37 @@
 #!/usr/bin/env bash
 # bump-version.sh
-# Applies semantic version bump rules based on commit type:
+# Computes semantic version bump rules based on commit type:
 # - fix:                    -> PATCH
 # - feat:, chore:, patch:   -> MINOR
 # - release:                -> MAJOR
+#
+# Source of truth priority for current version:
+# 1) latest git tag matching vX.Y.Z
+# 2) gradle.properties version=X.Y.Z
 
 set -euo pipefail
 
 PROPERTIES_FILE="gradle.properties"
 
-if [ ! -f "$PROPERTIES_FILE" ]; then
-  echo "Missing $PROPERTIES_FILE"
-  exit 1
-fi
+LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -n 1 || true)
 
-CURRENT_VERSION=$(grep -E "^version=" "$PROPERTIES_FILE" | cut -d'=' -f2 | tr -d '[:space:]' || true)
-if [ -z "$CURRENT_VERSION" ]; then
-  echo "Missing version entry in $PROPERTIES_FILE"
-  exit 1
+if [ -n "$LATEST_TAG" ]; then
+  CURRENT_VERSION="${LATEST_TAG#v}"
+else
+  if [ ! -f "$PROPERTIES_FILE" ]; then
+    echo "Missing $PROPERTIES_FILE and no version tag found (expected vX.Y.Z)"
+    exit 1
+  fi
+
+  CURRENT_VERSION=$(grep -E "^version=" "$PROPERTIES_FILE" | cut -d'=' -f2 | tr -d '[:space:]' || true)
+  if [ -z "$CURRENT_VERSION" ]; then
+    echo "Missing version entry in $PROPERTIES_FILE and no version tag found"
+    exit 1
+  fi
 fi
 
 if ! echo "$CURRENT_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-  echo "Invalid semantic version in $PROPERTIES_FILE: $CURRENT_VERSION"
+  echo "Invalid semantic version detected: $CURRENT_VERSION"
   exit 1
 fi
 
@@ -125,9 +135,6 @@ esac
 
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 echo "Bump type: $BUMP -> New version: $NEW_VERSION"
-
-sed -i "s/^version=.*/version=$NEW_VERSION/" "$PROPERTIES_FILE"
-echo "$PROPERTIES_FILE updated."
 
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   {
