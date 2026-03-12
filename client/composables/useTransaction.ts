@@ -47,11 +47,12 @@ export default function useTransaction() {
     })
   }
 
-  function confirmPreviewTransaction(accountId: string, transactionId: string, amount: number | null): Promise<TransactionResultDTO> {
+  function confirmPreviewTransaction(accountId: string, transactionId: string, amount: number | null, date: Date | null): Promise<TransactionResultDTO> {
     return patch(`transaction/confirm`, {
       transactionID: transactionId,
       accountID: accountId,
       newAmount: amount,
+      newDate: date ? format(date, 'yyyy-MM-dd') : null,
     })
   }
 
