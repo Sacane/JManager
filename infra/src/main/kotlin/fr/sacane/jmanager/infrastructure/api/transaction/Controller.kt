@@ -15,6 +15,7 @@ import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.toUUIDs
 import fr.sacane.jmanager.infrastructure.api.*
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
+import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
 import kotlinx.serialization.Serializable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -109,6 +110,7 @@ class TransactionController(
             transactionId = java.util.UUID.fromString(command.transactionID),
             accountID = java.util.UUID.fromString(command.accountID),
             newAmount = command.newAmount?.toAmount(),
+            newDate = command.newDate,
             token = currentUser.token
         ).map {
             it.toDTO()
@@ -214,7 +216,9 @@ data class ConfirmPreviewRequest(
     val accountID: String,
     val transactionID: String,
     @Serializable(with = BigDecimalSerializer::class)
-    val newAmount: BigDecimal?
+    val newAmount: BigDecimal?,
+    @Serializable(with = LocalDateSerializer::class)
+    val newDate: LocalDate?
 )
 
 @Serializable

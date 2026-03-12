@@ -19,3 +19,11 @@
 - Updated CI version bump flow to avoid committing/pushing on `master` during build.
 - Version computation now uses the latest Git tag (`vX.Y.Z`) as primary source of truth, with `gradle.properties` as fallback.
 - Build now injects the computed version via Gradle property (`-Pversion=...`) for release JAR generation.
+
+## 2026-03-12
+
+- Added support for changing the date when confirming a preview transaction.
+- Extended the confirmation API contract (`PATCH /api/transaction/confirm`) with an optional `newDate` field.
+- Updated domain transaction confirmation use case to apply optional `newDate` and `newAmount` in a single confirmation flow.
+- Updated account preview confirmation dialog to allow users to edit both amount and date before validating.
+- Added and updated domain and infrastructure tests to cover confirmation with date override and preserve existing confirmation behavior.

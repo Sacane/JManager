@@ -361,6 +361,7 @@ class TransactionFeatureTest: FeatureTest() {
                     tokenValue,
                     booklet.id,
                     transactionPreviewTest.id!!,
+                    null,
                     null
                 )
                     .assertSuccess()
@@ -384,6 +385,7 @@ class TransactionFeatureTest: FeatureTest() {
                     tokenValue,
                     UUID.randomUUID(),
                     transactionPreviewTest.id!!,
+                    null,
                     null
                 ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
@@ -395,6 +397,7 @@ class TransactionFeatureTest: FeatureTest() {
                     tokenValue,
                     booklet.id!!,
                     UUID.randomUUID(),
+                    null,
                     null
                 ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
@@ -419,7 +422,8 @@ class TransactionFeatureTest: FeatureTest() {
                     tokenValue,
                     booklet.id,
                     transactionPreviewTest.id!!,
-                    newAmount
+                    newAmount,
+                    null
                 ).assertSuccess()
 
                 val transactions = transactionState.getStates().find { it.id.userId == user.id && it.id.accountId == booklet.id }
@@ -431,6 +435,38 @@ class TransactionFeatureTest: FeatureTest() {
 
                 val actualAccount = accountState.getStates().find { it.userId == user.id }?.booklet?.find { it.id == booklet.id }
                 assertEquals(newAmount, actualAccount?.amount)
+            }
+        }
+
+        @Test
+        fun `confirm preview with new date should update transaction date`() {
+            launchWithConnectedUserInstance {
+                val transactionPreviewTest = generateTransaction("test#2", 100.toAmount(), true, "01/01/2024".toDate(), isPreview = true)
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, booklet.id!!),
+                            mutableListOf(transactionPreviewTest)
+                        )
+                    )
+                )
+
+                val newDate = "12/01/2024".toDate()
+
+                transactionFeature.confirmPreviewTransaction(
+                    tokenValue,
+                    booklet.id,
+                    transactionPreviewTest.id!!,
+                    null,
+                    newDate
+                ).assertSuccess()
+
+                val transactions = transactionState.getStates().find { it.id.userId == user.id && it.id.accountId == booklet.id }
+                    ?.transactions
+                val updated = transactions?.find { it.id == transactionPreviewTest.id }
+                assertNotNull(updated)
+                assertFalse(updated!!.isPreview)
+                assertEquals(newDate, updated.date)
             }
         }
     }

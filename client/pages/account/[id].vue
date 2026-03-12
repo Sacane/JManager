@@ -29,6 +29,7 @@ const isMobileMenuOpen = ref(false)
 const transactionFilter = ref<'all' | 'preview' | 'confirmed'>('all')
 const isConfirmPreviewDialogVisible = ref(false)
 const newAmountForPreview = ref<number | null>(null)
+const newDateForPreview = ref<Date | null>(null)
 const transactionToConfirm = ref<TransactionCreationDTO | null>(null)
 
 const bookletData = reactive({
@@ -282,13 +283,21 @@ async function confirmPreview() {
   if (!transaction) return
   try {
     const finalAmount = newAmountForPreview.value ?? transaction.value
+    const baseDate = transaction.date instanceof Date ? transaction.date : new Date(transaction.date)
+    const finalDate = newDateForPreview.value ?? baseDate
+
     if (finalAmount == null) {
       toast.warn('Veuillez renseigner un montant pour valider cette transaction.')
       return
     }
 
+    if (Number.isNaN(finalDate.getTime())) {
+      toast.warn('Veuillez renseigner une date valide pour valider cette transaction.')
+      return
+    }
+
     if (transaction.id) {
-      const result = await confirmPreviewTransaction(bookletData.id, transaction.id, newAmountForPreview.value)
+      const result = await confirmPreviewTransaction(bookletData.id, transaction.id, newAmountForPreview.value, finalDate)
 
       const index = actualSheets.value.findIndex(item => item?.id === result.id)
       if (index !== -1) {
@@ -300,6 +309,7 @@ async function confirmPreview() {
         id: null,
         isPreview: false,
         value: finalAmount,
+        date: finalDate,
       })
     }
 
@@ -311,12 +321,15 @@ async function confirmPreview() {
   } finally {
     isConfirmPreviewDialogVisible.value = false
     newAmountForPreview.value = null
+    newDateForPreview.value = null
     transactionToConfirm.value = null
   }
 }
 
 function onConfirmPreview(transaction: TransactionCreationDTO) {
   transactionToConfirm.value = transaction
+  const parsedDate = transaction.date instanceof Date ? transaction.date : new Date(transaction.date)
+  newDateForPreview.value = Number.isNaN(parsedDate.getTime()) ? null : parsedDate
   isConfirmPreviewDialogVisible.value = true
 }
 
@@ -737,14 +750,24 @@ onUnmounted(() => {
                 {{ transactionToConfirm.isIncome ? '+' : '-' }} {{ transactionToConfirm.value }} €
               </span>
             </div>
+            <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <span class="font-semibold text-gray-600 dark:text-gray-400">Date de base</span>
+              <span class="font-medium text-gray-800 dark:text-gray-200">{{ transactionToConfirm.date }}</span>
+            </div>
           </div>
 
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Vous pouvez optionnellement spécifier un nouveau montant ci-dessous.
+            Vous pouvez optionnellement spécifier un nouveau montant et une nouvelle date ci-dessous.
           </p>
-          <div class="flex flex-col gap-2">
-            <label for="newAmount" class="font-semibold">Nouveau montant</label>
-            <InputNumber id="newAmount" v-model="newAmountForPreview" mode="currency" currency="EUR" locale="fr-FR" placeholder="0.00" />
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-2">
+              <label for="newAmount" class="font-semibold">Nouveau montant</label>
+              <InputNumber id="newAmount" v-model="newAmountForPreview" mode="currency" currency="EUR" locale="fr-FR" placeholder="0.00" />
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="newDate" class="font-semibold">Nouvelle date</label>
+              <DatePicker id="newDate" v-model="newDateForPreview" date-format="dd/mm/yy" show-icon icon-display="input" />
+            </div>
           </div>
         </div>
         <div class="flex justify-end gap-2 mt-6">

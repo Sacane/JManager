@@ -442,6 +442,7 @@ class TransactionControllerTest(
             val body = ConfirmPreviewRequest(
                 account.id!!.toString(),
                 transaction.id!!.toString(),
+                null,
                 null
             )
 
@@ -454,6 +455,48 @@ class TransactionControllerTest(
                 patch("/api/transaction/confirm")
             } Then {
                 statusCode(200)
+            }
+        }
+
+        @Test
+        fun `Request to confirm a preview transaction with new date`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val transactions = listOf(
+                Transaction(null, "test1", LocalDate.of(2024, Month.JUNE, 1), Amount.fromString("100.00"), false, isPreview = true),
+                Transaction(null, "test2", LocalDate.of(2024, Month.JUNE, 2), Amount.fromString("50.00"), true, isPreview = true)
+            )
+            transactionStateTestAdapter.init(
+                listOf(
+                    AccountTransaction(
+                        user!!.id,
+                        "test",
+                        transactions,
+                        token.asTokenUUID()
+                    )
+                )
+            )
+            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
+
+            val body = ConfirmPreviewRequest(
+                account.id!!.toString(),
+                transaction.id!!.toString(),
+                null,
+                LocalDate.of(2024, Month.JUNE, 10)
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/transaction/confirm")
+            } Then {
+                statusCode(200)
+                body("date", equalTo("2024-06-10"))
             }
         }
     }

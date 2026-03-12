@@ -15,6 +15,7 @@ import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.utils.*
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Month
 import java.util.UUID
@@ -87,7 +88,13 @@ sealed interface TransactionFeature {
      * @param transactionId UUID of the preview transaction to confirm.
      * @return Result containing a TransactionResumeResult on success, or an appropriate failure state.
      */
-    fun confirmPreviewTransaction(token: String, accountID: UUID, transactionId: UUID, newAmount: Amount?): Result<TransactionResumeResult>
+    fun confirmPreviewTransaction(
+        token: String,
+        accountID: UUID,
+        transactionId: UUID,
+        newAmount: Amount?,
+        newDate: LocalDate?
+    ): Result<TransactionResumeResult>
 }
 
 @DomainService
@@ -216,7 +223,8 @@ class TransactionFeatureImpl(
         token: String,
         accountID: UUID,
         transactionId: UUID,
-        newAmount: Amount?
+        newAmount: Amount?,
+        newDate: LocalDate?
     ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)
@@ -231,6 +239,9 @@ class TransactionFeatureImpl(
             account.removeTransactionById(transactionId)
             if (newAmount != null) {
                 transaction.amount = newAmount
+            }
+            if (newDate != null) {
+                transaction.date = newDate
             }
             transaction.isPreview = false
 
