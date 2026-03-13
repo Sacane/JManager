@@ -41,3 +41,4 @@
 - Added test scripts (`test`, `test:watch`, `test:coverage`) to standardize local frontend test execution.
 - Updated SonarQube integration to include frontend analysis and frontend coverage by generating `client/coverage/lcov.info` in CI and wiring it into Gradle Sonar properties.
 - Updated Vitest coverage reporters to include `lcov` so SonarQube can import frontend coverage data.
+- Fixed GitHub Actions Node setup for frontend/Sonar pipeline by removing pnpm cache initialization from `actions/setup-node` (which required `pnpm` before installation).
