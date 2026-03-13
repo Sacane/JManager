@@ -30,6 +30,9 @@
 
 ## 2026-03-13
 
+- Refactored backend exception handling in `ProblemDetailHandler` to remove duplicated ProblemDetail construction while preserving existing HTTP status codes, titles, and error codes.
+- Cleaned backend mapper code in `DatasourceMapper` by removing inline function comments and centralizing RegularTransactionId string-to-UUID conversion.
+- Added infrastructure regression tests for RegularTransactionId mapping (valid UUID and malformed value) and for IllegalArgumentException handling without message.
 - Added frontend testing setup in `client` with Vitest, Vue Test Utils, and Happy DOM.
 - Added unit tests for utility functions (`utils/util.ts`) and date composable behavior (`composables/useDate.ts`).
 - Added component tests for `TitleCard.vue` rendering and click callback behavior.

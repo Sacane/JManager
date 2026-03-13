@@ -188,6 +188,18 @@ class ProblemDetailHandlerTest {
     }
 
     @Test
+    fun `illegal argument without message still returns bad request`() {
+        val ex = IllegalArgumentException()
+        val resp = handler.onIllegalArgumentException(ex)
+
+        assertThat(resp.statusCode.value()).isEqualTo(HttpStatus.BAD_REQUEST.value())
+        val pd = resp.body!!
+        assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
+        assertThat(pd.title).isEqualTo("Bad Request")
+        assertThat(pd.properties!!["code"]).isEqualTo(65)
+    }
+
+    @Test
     fun `forbidden exception returns forbidden with custom code`() {
         val ex = ForbiddenException(777, "Access denied")
         val resp = handler.handleForbiddenException(ex)

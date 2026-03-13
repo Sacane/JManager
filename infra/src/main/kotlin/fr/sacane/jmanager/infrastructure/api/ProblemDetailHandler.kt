@@ -21,138 +21,170 @@ class ProblemDetailHandler {
         private val LOGGER = LoggerFactory.getLogger(ProblemDetailHandler::class.java)
     }
 
+    private fun buildResponse(
+        status: HttpStatus,
+        title: String,
+        detail: String?,
+        code: Int
+    ): ResponseEntity<ProblemDetail> {
+        val problemDetail = ProblemDetail.forStatus(status)
+        problemDetail.title = title
+        problemDetail.detail = detail
+        problemDetail.setProperty("code", code)
+        return ResponseEntity.status(status).body(problemDetail)
+    }
+
+    private fun logException(context: String, message: String?) {
+        LOGGER.error("{} : {}", context, message)
+    }
+
 
     @ExceptionHandler(MissingServletRequestParameterException::class)
     fun handleMissingParams(ex: MissingServletRequestParameterException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Bad Request"
-        problemDetail.detail = "Missing mandatory parameter : ${ex.message}"
-        problemDetail.setProperty("code", 65)
-        LOGGER.error("Bad Request : {}", ex.cause?.message ?: ex.message)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        logException("Bad Request", ex.cause?.message ?: ex.message)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Bad Request",
+            detail = "Missing mandatory parameter : ${ex.message}",
+            code = 65
+        )
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleTypeMismatch(ex: MethodArgumentTypeMismatchException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Method type mismatch"
-        problemDetail.detail = "Invalid type parameter : ${ex.message}"
-        problemDetail.setProperty("code", 65)
-        LOGGER.error("Method type mismatch : {}", ex.cause?.message ?: ex.message)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        logException("Method type mismatch", ex.cause?.message ?: ex.message)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Method type mismatch",
+            detail = "Invalid type parameter : ${ex.message}",
+            code = 65
+        )
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Method argument not valid"
-        problemDetail.detail = "invalid value : ${ex.message}"
-        problemDetail.setProperty("code", 65)
-        LOGGER.error("Method argument not valid : {}", ex.cause?.message ?: ex.message)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        logException("Method argument not valid", ex.cause?.message ?: ex.message)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Method argument not valid",
+            detail = "invalid value : ${ex.message}",
+            code = 65
+        )
     }
 
     @ExceptionHandler(Exception::class, InternalServerErrorException::class)
     fun onIrregularException(ex: Exception): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-        problemDetail.title = "Internal server error"
-        problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"
-        problemDetail.setProperty("code", 111)
-        LOGGER.error("Internal server error : {}", ex.cause?.message ?: ex.message)
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail)
+        logException("Internal server error", ex.cause?.message ?: ex.message)
+        return buildResponse(
+            status = HttpStatus.INTERNAL_SERVER_ERROR,
+            title = "Internal server error",
+            detail = "Oops, something went wrong. It's our problem : ${ex.message}",
+            code = 111
+        )
     }
 
     @ExceptionHandler(InvalidCurrencyException::class)
     fun onCurrencyException(ex: InvalidCurrencyException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Invalid given currency"
-        problemDetail.detail = "Oops, something went wrong. It's our problem : ${ex.message}"
-        problemDetail.setProperty("code", 144)
-        LOGGER.error("InvalidCurrencyException : {}", ex.message)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        logException("InvalidCurrencyException", ex.message)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Invalid given currency",
+            detail = "Oops, something went wrong. It's our problem : ${ex.message}",
+            code = 144
+        )
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun onIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ProblemDetail> {
         if (ex.message?.contains("Invalid UUID string") == true) {
-            val problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND)
-            problemDetail.title = "Resource not found"
-            problemDetail.detail = "The requested resource does not exist"
-            problemDetail.setProperty("code", 404)
-            LOGGER.error("Invalid UUID provided : {}", ex.message)
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail)
+            logException("Invalid UUID provided", ex.message)
+            return buildResponse(
+                status = HttpStatus.NOT_FOUND,
+                title = "Resource not found",
+                detail = "The requested resource does not exist",
+                code = 404
+            )
         }
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Bad Request"
-        problemDetail.detail = "Invalid argument : ${ex.message}"
-        problemDetail.setProperty("code", 65)
-        LOGGER.error("IllegalArgumentException : {}", ex.message)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        logException("IllegalArgumentException", ex.message)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Bad Request",
+            detail = "Invalid argument : ${ex.message}",
+            code = 65
+        )
     }
 
 
     @ExceptionHandler(ForbiddenException::class)
     fun handleForbiddenException(ex: ForbiddenException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN)
-        problemDetail.title = "Forbidden error"
-        problemDetail.detail = ex.message
-        problemDetail.setProperty("code", ex.errCode)
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail)
+        return buildResponse(
+            status = HttpStatus.FORBIDDEN,
+            title = "Forbidden error",
+            detail = ex.message,
+            code = ex.errCode
+        )
     }
 
     @ExceptionHandler(NotFoundException::class)
     fun handleNotFoundException(ex: NotFoundException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND)
-        problemDetail.title = "Not_Found error"
-        problemDetail.detail = ex.message
-        problemDetail.setProperty("code", ex.errCode)
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail)
+        return buildResponse(
+            status = HttpStatus.NOT_FOUND,
+            title = "Not_Found error",
+            detail = ex.message,
+            code = ex.errCode
+        )
     }
 
     @ExceptionHandler(InvalidRequestException::class)
     fun handleInvalidRequestException(ex: InvalidRequestException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Bad Request error"
-        problemDetail.detail = ex.message
-        problemDetail.setProperty("code", ex.errCode)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Bad Request error",
+            detail = ex.message,
+            code = ex.errCode
+        )
     }
 
     @ExceptionHandler(UnauthorizedRequestException::class)
     fun handleUnauthorizedRequestException(ex: UnauthorizedRequestException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED)
-        problemDetail.title = "Unauthorized error"
-        problemDetail.detail = ex.message
-        problemDetail.setProperty("code", ex.errCode)
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail)
+        return buildResponse(
+            status = HttpStatus.UNAUTHORIZED,
+            title = "Unauthorized error",
+            detail = ex.message,
+            code = ex.errCode
+        )
     }
+
     @ExceptionHandler(TimeOutException::class)
     fun handleTimeOutException(ex: TimeOutException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED)
-        problemDetail.title = "Unauthorized error"
-        problemDetail.detail = ex.message
-        problemDetail.setProperty("code", ex.errCode)
         LOGGER.error("TimeOutException : {} with code {}", ex.message, ex.errCode)
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail)
+        return buildResponse(
+            status = HttpStatus.UNAUTHORIZED,
+            title = "Unauthorized error",
+            detail = ex.message,
+            code = ex.errCode
+        )
     }
 
     @ExceptionHandler(DateTimeException::class)
     fun handleInvalidMonth(ex: DateTimeException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Date time error"
-        problemDetail.detail = ex.message
-        problemDetail.setProperty("code", 68)
-        LOGGER.error("DateTimeException : {}", ex.message)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        logException("DateTimeException", ex.message)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Date time error",
+            detail = ex.message,
+            code = 68
+        )
     }
 
     @ExceptionHandler(TypeMismatchException::class)
     fun handleTypeMismatch(ex: TypeMismatchException): ResponseEntity<ProblemDetail> {
-        val problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
-        problemDetail.title = "Type Mismatch error"
-        problemDetail.detail = ex.message
-        problemDetail.setProperty("code", 67)
-        LOGGER.error("TypeMismatchException : {}", ex.message)
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail)
+        logException("TypeMismatchException", ex.message)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Type Mismatch error",
+            detail = ex.message,
+            code = 67
+        )
     }
 }
