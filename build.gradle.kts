@@ -28,12 +28,19 @@ sonar {
 	properties {
 		property("sonar.projectKey", "Sacane_JManager_bd0b693a-0a00-4752-98e2-4c1466482beb")
 		property("sonar.projectName", "Jmanager")
+		// Let Gradle subprojects (domain/infra) provide their own source sets.
+		// Only declare frontend paths at root to avoid duplicate indexing.
+		property("sonar.sources", "client")
+		property("sonar.tests", "client/tests")
+		property("sonar.exclusions", "**/node_modules/**,**/.nuxt/**,**/.output/**,**/dist/**,**/coverage/**,**/.pnpm-store/**")
+		property("sonar.test.inclusions", "client/tests/**/*.spec.ts")
 		property("sonar.coverage.jacoco.xmlReportPaths",
 			listOf(
 				"$rootDir/domain/build/reports/jacoco/test/jacocoTestReport.xml",
 				"$rootDir/infra/build/reports/jacoco/test/jacocoTestReport.xml"
 			).joinToString(",")
 		)
+		property("sonar.javascript.lcov.reportPaths", "$rootDir/client/coverage/lcov.info")
 	}
 }
 

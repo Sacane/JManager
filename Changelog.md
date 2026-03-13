@@ -27,3 +27,19 @@
 - Updated domain transaction confirmation use case to apply optional `newDate` and `newAmount` in a single confirmation flow.
 - Updated account preview confirmation dialog to allow users to edit both amount and date before validating.
 - Added and updated domain and infrastructure tests to cover confirmation with date override and preserve existing confirmation behavior.
+
+## 2026-03-13
+
+- Added frontend testing setup in `client` with Vitest, Vue Test Utils, and Happy DOM.
+- Added unit tests for utility functions (`utils/util.ts`) and date composable behavior (`composables/useDate.ts`).
+- Added component tests for `TitleCard.vue` rendering and click callback behavior.
+- Added component tests for `DarkModeToggle.vue` and `monthPicker.vue` interactions with Nuxt auto-import mocks.
+- Added component tests for recurring transaction frequency selectors (`FrequencySelector.vue` and `MonthlyRepeatSelector.vue`) covering state transitions and validation behavior.
+- Added component tests for `TransactionCreationDialog.vue` with composable mocks (`useTag`, `useJToast`) covering validation warning, successful submit, and cancel flow emissions.
+- Added component tests for `RegularTransactionDialogCard.vue` with composable mocks (`useTag`) covering tags loading, save, delete, and cancel flows.
+- Added page-level tests for `pages/regular-transaction/index.vue` with mocked `useRegularTransaction`, `useJToast`, and `useConfirm` to cover API success/failure flows and user feedback toasts for create/delete actions.
+- Added test scripts (`test`, `test:watch`, `test:coverage`) to standardize local frontend test execution.
+- Updated SonarQube integration to include frontend analysis and frontend coverage by generating `client/coverage/lcov.info` in CI and wiring it into Gradle Sonar properties.
+- Updated Vitest coverage reporters to include `lcov` so SonarQube can import frontend coverage data.
+- Fixed GitHub Actions Node setup for frontend/Sonar pipeline by removing pnpm cache initialization from `actions/setup-node` (which required `pnpm` before installation).
+- Fixed SonarQube duplicate indexing by scoping root Sonar `sources/tests` to frontend paths only (`client`, `client/tests`) and leaving backend modules to Gradle auto-detection.
