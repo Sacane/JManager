@@ -136,6 +136,13 @@ gradlew.bat test
 
 - Integration tests that rely on Testcontainers require Docker to be running.
 
+- Run frontend unit/component tests with coverage (used by SonarQube):
+
+```bash
+cd client
+pnpm test:coverage
+```
+
 ---
 
 ## 🚚 Deployment Dispatch (CI)

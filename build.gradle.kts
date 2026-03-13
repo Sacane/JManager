@@ -28,12 +28,17 @@ sonar {
 	properties {
 		property("sonar.projectKey", "Sacane_JManager_bd0b693a-0a00-4752-98e2-4c1466482beb")
 		property("sonar.projectName", "Jmanager")
+		property("sonar.sources", "domain/src/main,infra/src/main,client")
+		property("sonar.tests", "domain/src/test,infra/src/test,client/tests")
+		property("sonar.exclusions", "**/node_modules/**,**/.nuxt/**,**/.output/**,**/dist/**,**/coverage/**,**/.pnpm-store/**")
+		property("sonar.test.inclusions", "**/*Test.kt,**/*Tests.kt,client/tests/**/*.spec.ts")
 		property("sonar.coverage.jacoco.xmlReportPaths",
 			listOf(
 				"$rootDir/domain/build/reports/jacoco/test/jacocoTestReport.xml",
 				"$rootDir/infra/build/reports/jacoco/test/jacocoTestReport.xml"
 			).joinToString(",")
 		)
+		property("sonar.javascript.lcov.reportPaths", "$rootDir/client/coverage/lcov.info")
 	}
 }
 
