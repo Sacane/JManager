@@ -29,7 +29,6 @@ class CsvFileValidator {
         private const val RECETTE_COLUMN = 3
         private const val TAG_COLUMN = 4
 
-        // Security limits
         private const val MAX_ROWS = 10000
     }
 
@@ -201,13 +200,9 @@ class CsvFileValidator {
             return null
         }
 
-        // Si month et year sont fournis, vérifier si c'est un jour potentiellement valide (1-31)
-        // Dans ce cas, ne pas détecter un swap même si parseDate a échoué
-        // (l'échec est probablement dû à un jour invalide pour ce mois, ex: 30 février)
         if (month != null && year != null) {
             val dayValue = dateStr.trim().toIntOrNull()
             if (dayValue != null && dayValue in 1..31) {
-                // C'est un jour potentiellement valide mais invalide pour ce mois spécifique
                 val monthName = java.time.Month.of(month).getDisplayName(
                     java.time.format.TextStyle.FULL,
                     java.util.Locale.FRENCH
@@ -220,7 +215,6 @@ class CsvFileValidator {
             }
         }
 
-        // Si ça ressemble à un montant et que ce n'est pas un jour valide, détecter un swap potentiel
         if (CsvValidationUtils.looksLikeAmount(dateStr)) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,

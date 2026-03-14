@@ -28,8 +28,19 @@
 - Updated account preview confirmation dialog to allow users to edit both amount and date before validating.
 - Added and updated domain and infrastructure tests to cover confirmation with date override and preserve existing confirmation behavior.
 
+## 2026-03-14
+
+- Clarified duplicate-detection logic in `RegularTransactionComputer` by replacing inline lambda-label flow (`return@any`) with a dedicated typed predicate helper, improving readability without changing behavior.
+- Kept the duplicate matching rules unchanged (real transaction match by `regularTransactionId`, then preview date/id checks, then legacy label+amount fallback).
+
 ## 2026-03-13
 
+- Cleaned duplication in CSV usecases by refactoring shared tag lookup and day-only date parsing paths in `CsvValidationUtils`.
+- Removed unnecessary inline comments from CSV validation internals in `CsvFileValidator` while keeping behavior unchanged.
+- Added CSV usecase regression test for case-insensitive default tag resolution in `CsvValidationUtilsTest`.
+- Cleaned duplicated backend logic in `BookletFeature` by factoring month-range and in-range transaction filtering helpers.
+- Removed internal inline comments from `BookletFeature` methods to keep implementation concise while preserving existing behavior.
+- Added a domain regression test to verify balances computation includes preview transactions across a current-to-target month range.
 - Refactored backend exception handling in `ProblemDetailHandler` to remove duplicated ProblemDetail construction while preserving existing HTTP status codes, titles, and error codes.
 - Cleaned backend mapper code in `DatasourceMapper` by removing inline function comments and centralizing RegularTransactionId string-to-UUID conversion.
 - Added infrastructure regression tests for RegularTransactionId mapping (valid UUID and malformed value) and for IllegalArgumentException handling without message.

@@ -1203,6 +1203,52 @@ class BookletFeatureTest: FeatureTest() {
         }
 
         @Test
+        fun `Balances endpoint should include preview transactions in current-to-target month range`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Range Coverage",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val febPreviewIncome = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "Projected income",
+                    date = LocalDate.of(2026, 2, 10),
+                    amount = 100.toAmount(),
+                    isIncome = true,
+                    isPreview = true
+                )
+
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, bookletId),
+                            mutableListOf(febPreviewIncome)
+                        )
+                    )
+                )
+
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadBalancesForBookletForAMonth(
+                    tokenValue,
+                    bookletId,
+                    java.time.Month.MARCH,
+                    2026,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2026
+                )
+
+                result.assertTrue { this.realSold == 1000.toAmount() }
+                result.assertTrue { this.previewSold == 1100.toAmount() }
+            }
+        }
+
+        @Test
         fun `Should not expose null id previsional transactions for current month`() {
             launchWithConnectedUserInstance {
                 val bookletId = UUID.randomUUID()

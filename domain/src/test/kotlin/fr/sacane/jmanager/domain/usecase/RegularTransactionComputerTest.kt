@@ -698,5 +698,48 @@ class RegularTransactionComputerTest : FeatureTest() {
                 assertTrue(months.contains(Month.APRIL))
             }
         }
+
+        @Test
+        fun `virtual transactions should exclude already materialized physical occurrences`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = RegularTransactionId("${user.id.value}-gym")
+
+                val monthlyTransaction = RegularTransaction(
+                    label = "Salle de sport",
+                    amount = 35.toAmount(),
+                    isIncome = false,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2026, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                val existingPhysicalTransaction = Transaction(
+                    id = null,
+                    label = "Salle de sport",
+                    amount = 35.toAmount(),
+                    date = LocalDate.of(2026, 2, 1),
+                    isIncome = false,
+                    isPreview = false,
+                    regularTransactionId = regularTransactionId
+                )
+
+                val virtualTransactions = regularTransactionGenerator.calculateVirtualTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    startMonth = Month.JANUARY,
+                    startYear = 2026,
+                    endMonth = Month.MARCH,
+                    endYear = 2026,
+                    existingPhysicalTransactions = listOf(existingPhysicalTransaction)
+                )
+
+                assertEquals(2, virtualTransactions.size)
+                val generatedMonths = virtualTransactions.map { it.date.month }.toSet()
+                assertTrue(generatedMonths.contains(Month.JANUARY))
+                assertFalse(generatedMonths.contains(Month.FEBRUARY))
+                assertTrue(generatedMonths.contains(Month.MARCH))
+            }
+        }
     }
 }
