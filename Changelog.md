@@ -37,6 +37,7 @@
 - Added a dedicated `release/*` CI path to publish GitHub Releases and attach the versioned JAR only from release branches.
 - Updated `release/*` CI flow to also trigger deploy dispatch, so both `master` and `release/*` deploy.
 - Updated CI payload behavior on `master` to use workflow artifact download URLs for deploy dispatch.
+- Updated deploy dispatch payloads (`master` and `release/*`) to include `jar_download_token` from `GITHUB_TOKEN` so the Deploy repository can authenticate artifact ZIP downloads.
 
 ## 2026-03-13
 

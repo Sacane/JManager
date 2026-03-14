@@ -164,7 +164,8 @@ jobs:
             "client_payload": {
               "jar_version": "${{ steps.bump.outputs.new_version }}",
               "jar_download_url": "${{ steps.jar.outputs.jar_download_url }}",
-              "jar_file_name": "${{ steps.jar.outputs.jar_file_name }}"
+              "jar_file_name": "${{ steps.jar.outputs.jar_file_name }}",
+              "jar_download_token": "${{ secrets.GITHUB_TOKEN }}"
             }
           }
           JSON
@@ -268,7 +269,8 @@ jobs:
             "client_payload": {
               "jar_version": "${{ steps.bump.outputs.new_version }}",
               "jar_download_url": "${{ steps.jar.outputs.jar_download_url }}",
-              "jar_file_name": "${{ steps.jar.outputs.jar_file_name }}"
+              "jar_file_name": "${{ steps.jar.outputs.jar_file_name }}",
+              "jar_download_token": "${{ secrets.GITHUB_TOKEN }}"
             }
           }
           JSON
