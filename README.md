@@ -167,7 +167,7 @@ Payload sent to Deploy includes:
 - `jar_version`
 - `jar_download_url`
 - `jar_file_name`
-- `jar_download_token` (forwarded from `secrets.GITHUB_TOKEN` so Deploy can download private workflow artifacts)
+- `jar_download_token` (forwarded from `secrets.JMANAGER_ARTIFACT_TOKEN` when configured, otherwise `github.token`, so Deploy can download private workflow artifacts)
 
 ---
 
