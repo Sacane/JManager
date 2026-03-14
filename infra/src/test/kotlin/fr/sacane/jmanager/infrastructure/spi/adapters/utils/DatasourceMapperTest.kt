@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters.utils
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.infrastructure.spi.entity.BookletResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
@@ -15,6 +16,39 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class DatasourceMapperTest {
+
+    @Test
+    fun `Transaction with valid regular transaction id should convert to resource uuid`() {
+        val regularTransactionId = UUID.randomUUID()
+        val transaction = Transaction(
+            id = UUID.randomUUID(),
+            label = "With regular id",
+            date = LocalDate.of(2024, 1, 1),
+            amount = 10.toAmount(),
+            isIncome = false,
+            regularTransactionId = RegularTransactionId(regularTransactionId.toString())
+        )
+
+        val resource = transaction.asResource()
+
+        assertEquals(regularTransactionId, resource.regularTransactionId)
+    }
+
+    @Test
+    fun `Transaction with malformed regular transaction id should convert to null resource uuid`() {
+        val transaction = Transaction(
+            id = UUID.randomUUID(),
+            label = "With malformed regular id",
+            date = LocalDate.of(2024, 1, 1),
+            amount = 10.toAmount(),
+            isIncome = false,
+            regularTransactionId = RegularTransactionId("not-a-uuid")
+        )
+
+        val resource = transaction.asResource()
+
+        assertNull(resource.regularTransactionId)
+    }
 
     @Test
     fun `Transaction should convert to TransactionResource with default tag`() {

@@ -145,14 +145,22 @@ pnpm test:coverage
 
 ---
 
-## 🚚 Deployment Dispatch (CI)
+## 🚚 Deployment and Release (CI)
 
 On `master`, the workflow:
 
 - bumps the version,
 - builds the versioned JAR,
-- publishes it as a GitHub Release asset (`v<version>`),
+- uploads the JAR as a workflow artifact,
 - triggers the Deploy repository through `repository_dispatch` (`jmanager_deploy`).
+
+On branches matching `release/*`, the workflow:
+
+- bumps the version,
+- builds the versioned JAR,
+- uploads the JAR as a workflow artifact,
+- triggers the Deploy repository through `repository_dispatch` (`jmanager_deploy`),
+- publishes it as a GitHub Release asset (`v<version>`).
 
 Payload sent to Deploy includes:
 

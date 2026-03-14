@@ -270,6 +270,15 @@ class CsvValidationUtilsTest {
         }
 
         @Test
+        fun `should find default tag with case-insensitive match`() {
+            val defaultTagLabel = defaultTags.first().label
+            val tag = CsvValidationUtils.validateTag(defaultTagLabel.lowercase(), availableTags)
+
+            assertNotNull(tag)
+            assertEquals(defaultTagLabel, tag.label)
+        }
+
+        @Test
         fun `should return noneTag when tag not found anywhere`() {
             val tag = CsvValidationUtils.validateTag("NonExistentTag", availableTags)
             assertEquals(Tag.noneTag().label, tag.label)

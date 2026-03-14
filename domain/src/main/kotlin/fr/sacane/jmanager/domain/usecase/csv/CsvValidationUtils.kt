@@ -87,22 +87,9 @@ object CsvValidationUtils {
         }
 
         val trimmedTag = tagStr.trim()
-
-        // Check in available tags first
-        val matchingTag = availableTags.firstOrNull {
-            it.label.equals(trimmedTag, ignoreCase = true)
-        }
-
-        if (matchingTag != null) {
-            return matchingTag
-        }
-
-        // Check in default tags
-        val defaultTag = defaultTags.firstOrNull {
-            it.label.equals(trimmedTag, ignoreCase = true)
-        }
-
-        return defaultTag ?: Tag.noneTag()
+        return findTagByLabel(trimmedTag, availableTags)
+            ?: findTagByLabel(trimmedTag, defaultTags)
+            ?: Tag.noneTag()
     }
 
     /**
@@ -116,20 +103,7 @@ object CsvValidationUtils {
         return try {
             LocalDate.parse(trimmed, DATE_FORMATTER)
         } catch (_: DateTimeParseException) {
-            if (month != null && year != null) {
-                try {
-                    val day = trimmed.toIntOrNull()
-                    if (day != null && day in 1..31) {
-                        LocalDate.of(year, month, day)
-                    } else {
-                        null
-                    }
-                } catch (_: Exception) {
-                    null
-                }
-            } else {
-                null
-            }
+            parseDayOnlyDate(trimmed, month, year)
         }
     }
 
@@ -154,5 +128,23 @@ object CsvValidationUtils {
         }
 
         return if (semicolonCount > commaCount) ';' else ','
+    }
+
+    private fun findTagByLabel(label: String, tags: List<Tag>): Tag? {
+        return tags.firstOrNull { it.label.equals(label, ignoreCase = true) }
+    }
+
+    private fun parseDayOnlyDate(dateStr: String, month: Int?, year: Int?): LocalDate? {
+        if (month == null || year == null) {
+            return null
+        }
+
+        val day = dateStr.toIntOrNull()
+        if (day == null || day !in 1..31) {
+            return null
+        }
+
+        return runCatching { LocalDate.of(year, month, day) }
+            .getOrNull()
     }
 }

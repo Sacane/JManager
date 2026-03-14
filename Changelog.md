@@ -28,8 +28,27 @@
 - Updated account preview confirmation dialog to allow users to edit both amount and date before validating.
 - Added and updated domain and infrastructure tests to cover confirmation with date override and preserve existing confirmation behavior.
 
+## 2026-03-14
+
+- Clarified duplicate-detection logic in `RegularTransactionComputer` by replacing inline lambda-label flow (`return@any`) with a dedicated typed predicate helper, improving readability without changing behavior.
+- Kept the duplicate matching rules unchanged (real transaction match by `regularTransactionId`, then preview date/id checks, then legacy label+amount fallback).
+- Fixed GitHub Actions CI on self-hosted runners by replacing `pnpm/action-setup@v4` (requires `runs.using: node24`) with a Corepack-based pnpm setup compatible with Node 20.
+- Changed GitHub Actions release strategy: pushes to `master` now build and deploy without creating a GitHub Release.
+- Added a dedicated `release/*` CI path to publish GitHub Releases and attach the versioned JAR only from release branches.
+- Updated `release/*` CI flow to also trigger deploy dispatch, so both `master` and `release/*` deploy.
+- Updated CI payload behavior on `master` to use workflow artifact download URLs for deploy dispatch.
+
 ## 2026-03-13
 
+- Cleaned duplication in CSV usecases by refactoring shared tag lookup and day-only date parsing paths in `CsvValidationUtils`.
+- Removed unnecessary inline comments from CSV validation internals in `CsvFileValidator` while keeping behavior unchanged.
+- Added CSV usecase regression test for case-insensitive default tag resolution in `CsvValidationUtilsTest`.
+- Cleaned duplicated backend logic in `BookletFeature` by factoring month-range and in-range transaction filtering helpers.
+- Removed internal inline comments from `BookletFeature` methods to keep implementation concise while preserving existing behavior.
+- Added a domain regression test to verify balances computation includes preview transactions across a current-to-target month range.
+- Refactored backend exception handling in `ProblemDetailHandler` to remove duplicated ProblemDetail construction while preserving existing HTTP status codes, titles, and error codes.
+- Cleaned backend mapper code in `DatasourceMapper` by removing inline function comments and centralizing RegularTransactionId string-to-UUID conversion.
+- Added infrastructure regression tests for RegularTransactionId mapping (valid UUID and malformed value) and for IllegalArgumentException handling without message.
 - Added frontend testing setup in `client` with Vitest, Vue Test Utils, and Happy DOM.
 - Added unit tests for utility functions (`utils/util.ts`) and date composable behavior (`composables/useDate.ts`).
 - Added component tests for `TitleCard.vue` rendering and click callback behavior.

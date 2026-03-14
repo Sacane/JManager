@@ -424,38 +424,34 @@ class RegularTransactionGeneratorService(
             yearMonth.month,
         )
 
-        return monthTransactions?.any { transaction ->
-            // Check if a real transaction already exists for this regular transaction
-            // If a real transaction exists with the same regularTransactionId, don't generate the previsional one
-            if (transaction.isNotPreview &&
-                transaction.regularTransactionId != null &&
-                transaction.regularTransactionId == regularTransaction.id) {
-                return@any true
-            }
+        return monthTransactions?.firstOrNull { transaction ->
+            isDuplicateTransaction(transaction, regularTransaction, actualTransactionDate)
+        } != null
+    }
 
-            // Transaction must be previsional for the rest of the checks
-            if (!transaction.isPreview) return@any false
+    private fun isDuplicateTransaction(
+        existingTransaction: Transaction,
+        regularTransaction: RegularTransaction,
+        actualTransactionDate: LocalDate
+    ): Boolean {
+        if (existingTransaction.isNotPreview &&
+            existingTransaction.regularTransactionId != null &&
+            existingTransaction.regularTransactionId == regularTransaction.id
+        ) {
+            return true
+        }
 
-            // Transaction must have the same date (using the ACTUAL date)
-            if (!transaction.date.isEqual(actualTransactionDate)) return@any false
+        if (!existingTransaction.isPreview || !existingTransaction.date.isEqual(actualTransactionDate)) {
+            return false
+        }
 
-            // STRICT CHECK: If the existing transaction has a regularTransactionId, use it for comparison
-            // regularTransaction.id is never null (non-nullable field in RegularTransaction)
-            if (transaction.regularTransactionId != null) {
-                // If IDs match, it's a duplicate
-                if (transaction.regularTransactionId == regularTransaction.id) {
-                    return@any true
-                }
-                // If IDs don't match, it's a different regular transaction on the same date
-                // Don't fall back to legacy check - these are two different transactions
-                return@any false
-            }
+        val existingRegularId = existingTransaction.regularTransactionId
+        if (existingRegularId != null) {
+            return existingRegularId == regularTransaction.id
+        }
 
-            // Legacy fallback: for old transactions created before regularTransactionId field
-            // These old transactions don't have regularTransactionId, so we check by label and amount
-            return@any transaction.label == regularTransaction.label &&
-                    transaction.amount == regularTransaction.amount
-        } ?: false
+        return existingTransaction.label == regularTransaction.label &&
+                existingTransaction.amount == regularTransaction.amount
     }
 
     /**
