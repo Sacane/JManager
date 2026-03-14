@@ -33,6 +33,10 @@
 - Clarified duplicate-detection logic in `RegularTransactionComputer` by replacing inline lambda-label flow (`return@any`) with a dedicated typed predicate helper, improving readability without changing behavior.
 - Kept the duplicate matching rules unchanged (real transaction match by `regularTransactionId`, then preview date/id checks, then legacy label+amount fallback).
 - Fixed GitHub Actions CI on self-hosted runners by replacing `pnpm/action-setup@v4` (requires `runs.using: node24`) with a Corepack-based pnpm setup compatible with Node 20.
+- Changed GitHub Actions release strategy: pushes to `master` now build and deploy without creating a GitHub Release.
+- Added a dedicated `release/*` CI path to publish GitHub Releases and attach the versioned JAR only from release branches.
+- Updated `release/*` CI flow to also trigger deploy dispatch, so both `master` and `release/*` deploy.
+- Updated CI payload behavior on `master` to use workflow artifact download URLs for deploy dispatch.
 
 ## 2026-03-13
 

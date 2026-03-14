@@ -71,8 +71,8 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: ./gradlew sonar --info
 
-  build:
-    name: Build and dispatch deploy
+  build-master-deploy:
+    name: Build and dispatch deploy (master)
     runs-on: self-hosted
     if: github.ref == 'refs/heads/master' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     needs: test-analysis
@@ -121,12 +121,116 @@ jobs:
         if: steps.bump.outputs.should_bump == 'true'
         run: ./gradlew clean build -x test --info -Pversion=${{ steps.bump.outputs.new_version }}
 
+      - name: Upload JAR as workflow artifact
+        if: steps.bump.outputs.should_bump == 'true'
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jmanager-${{ steps.bump.outputs.new_version }}
+          path: ./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Compute JAR metadata
         if: steps.bump.outputs.should_bump == 'true'
         id: jar
         run: |
           JAR_FILE_NAME="Jmanager-${{ steps.bump.outputs.new_version }}.jar"
-          JAR_DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.bump.outputs.new_version }}/${JAR_FILE_NAME}"
+          JAR_DOWNLOAD_URL="https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload.outputs.artifact-id }}/zip"
+
+          if [ ! -f "./executables/${JAR_FILE_NAME}" ]; then
+            echo "Expected JAR not found: ./executables/${JAR_FILE_NAME}"
+            ls -la ./executables || true
+            exit 1
+          fi
+
+          echo "jar_file_name=${JAR_FILE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "jar_download_url=${JAR_DOWNLOAD_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Deploy repository
+        if: steps.bump.outputs.should_bump == 'true'
+        env:
+          DEPLOY_REPO_PAT: ${{ secrets.DEPLOY_REPO_PAT }}
+          DEPLOY_REPOSITORY: ${{ vars.DEPLOY_REPOSITORY || 'Sacane/Deploy' }}
+        run: |
+          curl --fail --location \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${DEPLOY_REPO_PAT}" \
+            "https://api.github.com/repos/${DEPLOY_REPOSITORY}/dispatches" \
+            --data @- <<JSON
+          {
+            "event_type": "jmanager_deploy",
+            "client_payload": {
+              "jar_version": "${{ steps.bump.outputs.new_version }}",
+              "jar_download_url": "${{ steps.jar.outputs.jar_download_url }}",
+              "jar_file_name": "${{ steps.jar.outputs.jar_file_name }}"
+            }
+          }
+          JSON
+
+  build-release:
+    name: Build and publish GitHub release (release/*)
+    runs-on: self-hosted
+    if: startsWith(github.ref, 'refs/heads/release/') && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    needs: test-analysis
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --force --tags
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Allow execution permission
+        run: |
+          chmod +x ./gradlew
+          chmod +x ./.github/scripts/bump-version.sh
+
+      - name: Compute next version bump
+        id: bump
+        env:
+          GIT_COMMIT_RANGE: ${{ github.event.before }}..${{ github.sha }}
+        run: ./.github/scripts/bump-version.sh
+
+      - name: Build versioned JAR
+        if: steps.bump.outputs.should_bump == 'true'
+        run: ./gradlew clean build -x test --info -Pversion=${{ steps.bump.outputs.new_version }}
+
+      - name: Upload JAR as workflow artifact
+        if: steps.bump.outputs.should_bump == 'true'
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jmanager-${{ steps.bump.outputs.new_version }}
+          path: ./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Compute JAR metadata
+        if: steps.bump.outputs.should_bump == 'true'
+        id: jar
+        run: |
+          JAR_FILE_NAME="Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+          JAR_DOWNLOAD_URL="https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload.outputs.artifact-id }}/zip"
 
           if [ ! -f "./executables/${JAR_FILE_NAME}" ]; then
             echo "Expected JAR not found: ./executables/${JAR_FILE_NAME}"
