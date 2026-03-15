@@ -231,7 +231,7 @@ jobs:
         id: jar
         run: |
           JAR_FILE_NAME="Jmanager-${{ steps.bump.outputs.new_version }}.jar"
-          JAR_DOWNLOAD_URL="https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload.outputs.artifact-id }}/zip"
+          JAR_DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.bump.outputs.new_version }}/${JAR_FILE_NAME}"
 
           if [ ! -f "./executables/${JAR_FILE_NAME}" ]; then
             echo "Expected JAR not found: ./executables/${JAR_FILE_NAME}"
