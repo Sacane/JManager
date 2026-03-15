@@ -165,9 +165,9 @@ On branches matching `release/*`, the workflow:
 Payload sent to Deploy includes:
 
 - `jar_version`
-- `jar_download_url`
+- `jar_download_url` (release builds now send a direct GitHub Release `.jar` URL)
 - `jar_file_name`
-- `jar_download_token` (forwarded from `secrets.JMANAGER_ARTIFACT_TOKEN` when configured, otherwise `github.token`, so Deploy can download private workflow artifacts)
+- `jar_download_token` (forwarded from `secrets.JMANAGER_ARTIFACT_TOKEN` when configured, otherwise `github.token`, so Deploy can download private artifacts/assets)
 
 `JMANAGER_ARTIFACT_TOKEN` is optional, but if you set it, use a GitHub token that can read artifacts from this repository:
 
