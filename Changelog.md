@@ -38,6 +38,7 @@
 - Updated `release/*` CI flow to also trigger deploy dispatch, so both `master` and `release/*` deploy.
 - Updated CI payload behavior on `master` to use workflow artifact download URLs for deploy dispatch.
 - Updated deploy dispatch payloads (`master` and `release/*`) to include `jar_download_token` (from `JMANAGER_ARTIFACT_TOKEN` when available, otherwise `github.token`) so the Deploy repository can authenticate artifact ZIP downloads.
+- Clarified deployment documentation for `JMANAGER_ARTIFACT_TOKEN` with recommended token type and minimum scopes (`Actions: Read-only`, `Metadata: Read-only`).
 
 ## 2026-03-13
 
