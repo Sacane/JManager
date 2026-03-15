@@ -167,6 +167,14 @@ Payload sent to Deploy includes:
 - `jar_version`
 - `jar_download_url`
 - `jar_file_name`
+- `jar_download_token` (forwarded from `secrets.JMANAGER_ARTIFACT_TOKEN` when configured, otherwise `github.token`, so Deploy can download private workflow artifacts)
+
+`JMANAGER_ARTIFACT_TOKEN` is optional, but if you set it, use a GitHub token that can read artifacts from this repository:
+
+- preferred: **fine-grained PAT** scoped to `Sacane/JManager` with at least:
+  - **Actions: Read-only**
+  - **Metadata: Read-only**
+- alternative: use `${{ github.token }}` fallback (already sent automatically by the workflow) when default permissions are sufficient.
 
 ---
 
