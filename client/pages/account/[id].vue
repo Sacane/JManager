@@ -735,38 +735,52 @@ onUnmounted(() => {
         @create-transaction="applyEditTransaction"
       />
 
-      <Dialog v-model:visible="isConfirmPreviewDialogVisible" modal header="Valider la transaction prévisionnelle" :style="{ width: '25rem' }">
+      <Dialog
+        v-model:visible="isConfirmPreviewDialogVisible"
+        modal
+        header="Valider la transaction prévisionnelle"
+        :style="{ width: '25rem' }"
+        :pt="{
+          root: { class: 'preview-confirm-root' },
+          mask: { class: 'preview-confirm-mask' },
+          header: { class: 'preview-confirm-header' },
+          title: { class: 'preview-confirm-title' },
+          closeButton: { class: 'preview-confirm-close-btn' },
+          content: { class: 'preview-confirm-content' },
+          footer: { class: 'preview-confirm-footer' },
+        }"
+      >
         <div v-if="transactionToConfirm" class="flex flex-col gap-4">
           <p>Voulez-vous valider cette transaction prévisionnelle ?</p>
 
-          <div class="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <div class="preview-confirm-summary p-3 rounded-lg border">
             <div class="flex justify-between items-center text-sm">
-              <span class="font-semibold text-gray-600 dark:text-gray-400">Transaction</span>
-              <span class="font-medium text-gray-800 dark:text-gray-200">{{ transactionToConfirm.label }}</span>
+              <span class="font-semibold">Transaction</span>
+              <span class="font-medium">{{ transactionToConfirm.label }}</span>
             </div>
-            <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <span class="font-semibold text-gray-600 dark:text-gray-400">Montant de base</span>
+            <div class="preview-confirm-summary-row flex justify-between items-center mt-2 pt-2 border-t">
+              <span class="font-semibold">Montant de base</span>
               <span class="font-bold text-lg" :class="transactionToConfirm.isIncome ? 'text-emerald-500' : 'text-red-500'">
                 {{ transactionToConfirm.isIncome ? '+' : '-' }} {{ transactionToConfirm.value }} €
               </span>
             </div>
-            <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <span class="font-semibold text-gray-600 dark:text-gray-400">Date de base</span>
-              <span class="font-medium text-gray-800 dark:text-gray-200">{{ transactionToConfirm.date }}</span>
+            <div class="preview-confirm-summary-row flex justify-between items-center mt-2 pt-2 border-t">
+              <span class="font-semibold">Date de base</span>
+              <span class="font-medium">{{ transactionToConfirm.date }}</span>
             </div>
           </div>
 
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm preview-confirm-help-text">
             Vous pouvez optionnellement spécifier un nouveau montant et une nouvelle date ci-dessous.
           </p>
           <div class="flex flex-col gap-3">
             <div class="flex flex-col gap-2">
               <label for="newAmount" class="font-semibold">Nouveau montant</label>
-              <InputNumber id="newAmount" v-model="newAmountForPreview" mode="currency" currency="EUR" locale="fr-FR" placeholder="0.00" />
+              <InputNumber id="newAmount" v-model="newAmountForPreview" mode="currency" currency="EUR" locale="fr-FR" placeholder="0.00" class="preview-confirm-field" />
             </div>
             <div class="flex flex-col gap-2">
               <label for="newDate" class="font-semibold">Nouvelle date</label>
-              <DatePicker id="newDate" v-model="newDateForPreview" date-format="dd/mm/yy" show-icon icon-display="input" />
+              <DatePicker id="newDate" v-model="newDateForPreview" date-format="dd/mm/yy" show-icon icon-display="input" class="preview-confirm-field" />
             </div>
           </div>
         </div>
@@ -1120,5 +1134,183 @@ onUnmounted(() => {
 .p-monthpicker .p-monthpicker-month:hover,
 .p-datepicker-header button:hover {
   background: var(--card-hover-bg) !important;
+}
+
+.preview-confirm-summary {
+  background: var(--bg-tertiary);
+  border-color: var(--card-border);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
+  .preview-confirm-summary {
+    background: linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--bg-tertiary) 92%, #ffffff 8%),
+      color-mix(in oklab, var(--bg-tertiary) 84%, var(--primary) 16%)
+    );
+    border-color: color-mix(in oklab, var(--card-border) 65%, var(--primary) 35%);
+  }
+}
+
+.preview-confirm-summary-row {
+  border-color: var(--border-color);
+}
+
+.preview-confirm-help-text {
+  color: var(--text-secondary);
+}
+
+.dark .preview-confirm-summary {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .preview-confirm-summary-row {
+  border-color: #374151;
+}
+
+.dark .preview-confirm-help-text {
+  color: #9ca3af;
+}
+
+:global(.preview-confirm-root) {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--text-primary) !important;
+  overflow: hidden;
+  box-shadow: 0 18px 42px var(--shadow-lg), 0 8px 22px var(--shadow-purple) !important;
+}
+
+@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
+  :global(.preview-confirm-root) {
+    background: linear-gradient(
+      165deg,
+      color-mix(in oklab, var(--card-bg) 93%, #ffffff 7%),
+      color-mix(in oklab, var(--card-bg) 86%, var(--primary) 14%)
+    ) !important;
+    border-color: color-mix(in oklab, var(--card-border) 55%, var(--primary) 45%) !important;
+  }
+}
+
+:global(.preview-confirm-mask) {
+  backdrop-filter: blur(2px);
+  background: rgba(15, 23, 42, 0.32) !important;
+}
+
+:global(.preview-confirm-header),
+:global(.preview-confirm-content),
+:global(.preview-confirm-footer) {
+  color: var(--text-primary) !important;
+}
+
+:global(.preview-confirm-header) {
+  background: var(--bg-tertiary) !important;
+  border-bottom: 1px solid var(--card-border) !important;
+}
+
+@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
+  :global(.preview-confirm-header) {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--bg-tertiary) 90%, #ffffff 10%),
+      color-mix(in oklab, var(--bg-tertiary) 84%, var(--primary) 16%)
+    ) !important;
+  }
+}
+
+:global(.preview-confirm-content),
+:global(.preview-confirm-footer) {
+  background: transparent !important;
+}
+
+:global(.preview-confirm-title),
+:global(.preview-confirm-content p),
+:global(.preview-confirm-content label) {
+  color: var(--text-primary) !important;
+}
+
+:global(.preview-confirm-close-btn) {
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--card-border) !important;
+  background: var(--bg-secondary) !important;
+  transition: all 0.2s ease;
+}
+
+:global(.preview-confirm-close-btn:hover) {
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  background: var(--card-hover-bg) !important;
+}
+
+:deep(.preview-confirm-field .p-inputtext),
+:deep(.preview-confirm-field .p-inputnumber-input),
+:deep(.preview-confirm-field .p-datepicker-input) {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+:deep(.preview-confirm-field .p-inputtext::placeholder),
+:deep(.preview-confirm-field .p-inputnumber-input::placeholder) {
+  color: var(--text-tertiary) !important;
+}
+
+:deep(.preview-confirm-field.p-inputwrapper-focus .p-inputtext),
+:deep(.preview-confirm-field .p-inputtext:focus),
+:deep(.preview-confirm-field .p-inputnumber-input:focus) {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 0.16rem color-mix(in oklab, var(--primary) 24%, transparent) !important;
+}
+
+.dark :deep(.preview-confirm-field .p-inputtext),
+.dark :deep(.preview-confirm-field .p-inputnumber-input),
+.dark :deep(.preview-confirm-field .p-datepicker-input) {
+  background: #111827 !important;
+  color: #f3f4f6 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark :deep(.preview-confirm-field .p-inputtext::placeholder),
+.dark :deep(.preview-confirm-field .p-inputnumber-input::placeholder) {
+  color: #9ca3af !important;
+}
+
+:global(.dark .preview-confirm-root) {
+  background: #111827 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+:global(.dark .preview-confirm-header),
+:global(.dark .preview-confirm-content),
+:global(.dark .preview-confirm-footer) {
+  background: #111827 !important;
+  color: #f3f4f6 !important;
+}
+
+:global(.dark .preview-confirm-header) {
+  border-bottom-color: #374151 !important;
+}
+
+:global(.dark .preview-confirm-title),
+:global(.dark .preview-confirm-content p),
+:global(.dark .preview-confirm-content label) {
+  color: #f3f4f6 !important;
+}
+
+:global(.dark .preview-confirm-close-btn) {
+  color: #9ca3af !important;
+}
+
+:global(.dark .preview-confirm-close-btn:hover) {
+  background: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+:global(.dark .preview-confirm-mask) {
+  background: rgba(2, 6, 23, 0.58) !important;
 }
 </style>
