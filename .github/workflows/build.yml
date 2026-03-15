@@ -121,6 +121,32 @@ jobs:
         if: steps.bump.outputs.should_bump == 'true'
         run: ./gradlew clean build -x test --info -Pversion=${{ steps.bump.outputs.new_version }}
 
+      - name: Verify generated JAR integrity
+        if: steps.bump.outputs.should_bump == 'true'
+        id: jar_local
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR_PATH="./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+
+          if [ ! -f "$JAR_PATH" ]; then
+            echo "Expected JAR not found: $JAR_PATH"
+            ls -la ./executables || true
+            exit 1
+          fi
+
+          # `jar tf` validates the archive can be read as a valid JAR/ZIP.
+          jar tf "$JAR_PATH" >/dev/null
+
+          JAR_SIZE_BYTES="$(wc -c < "$JAR_PATH" | tr -d ' ')"
+          JAR_SHA256="$(sha256sum "$JAR_PATH" | awk '{print $1}')"
+
+          echo "Local JAR size (bytes): $JAR_SIZE_BYTES"
+          echo "Local JAR sha256: $JAR_SHA256"
+
+          echo "jar_size_bytes=$JAR_SIZE_BYTES" >> "$GITHUB_OUTPUT"
+          echo "jar_sha256=$JAR_SHA256" >> "$GITHUB_OUTPUT"
+
       - name: Upload JAR as workflow artifact
         if: steps.bump.outputs.should_bump == 'true'
         id: upload
@@ -130,6 +156,43 @@ jobs:
           path: ./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar
           if-no-files-found: error
           retention-days: 7
+
+      - name: Verify uploaded artifact round-trip integrity
+        if: steps.bump.outputs.should_bump == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: Jmanager-${{ steps.bump.outputs.new_version }}
+          path: ./artifact-roundtrip
+
+      - name: Compare local JAR and downloaded artifact JAR
+        if: steps.bump.outputs.should_bump == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LOCAL_JAR="./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+          DOWNLOADED_JAR="./artifact-roundtrip/Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+
+          if [ ! -f "$DOWNLOADED_JAR" ]; then
+            echo "Downloaded artifact JAR not found: $DOWNLOADED_JAR"
+            find ./artifact-roundtrip -maxdepth 3 -type f -print || true
+            exit 1
+          fi
+
+          LOCAL_SHA="$(sha256sum "$LOCAL_JAR" | awk '{print $1}')"
+          DOWNLOADED_SHA="$(sha256sum "$DOWNLOADED_JAR" | awk '{print $1}')"
+          LOCAL_SIZE="$(wc -c < "$LOCAL_JAR" | tr -d ' ')"
+          DOWNLOADED_SIZE="$(wc -c < "$DOWNLOADED_JAR" | tr -d ' ')"
+
+          echo "Round-trip local sha256:      $LOCAL_SHA"
+          echo "Round-trip downloaded sha256: $DOWNLOADED_SHA"
+          echo "Round-trip local size:        $LOCAL_SIZE"
+          echo "Round-trip downloaded size:   $DOWNLOADED_SIZE"
+
+          if [ "$LOCAL_SHA" != "$DOWNLOADED_SHA" ] || [ "$LOCAL_SIZE" != "$DOWNLOADED_SIZE" ]; then
+            echo "Artifact integrity mismatch: uploaded/downloaded artifact differs from local JAR."
+            exit 1
+          fi
 
       - name: Compute JAR metadata
         if: steps.bump.outputs.should_bump == 'true'
@@ -216,6 +279,32 @@ jobs:
         if: steps.bump.outputs.should_bump == 'true'
         run: ./gradlew clean build -x test --info -Pversion=${{ steps.bump.outputs.new_version }}
 
+      - name: Verify generated JAR integrity
+        if: steps.bump.outputs.should_bump == 'true'
+        id: jar_local
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR_PATH="./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+
+          if [ ! -f "$JAR_PATH" ]; then
+            echo "Expected JAR not found: $JAR_PATH"
+            ls -la ./executables || true
+            exit 1
+          fi
+
+          # `jar tf` validates the archive can be read as a valid JAR/ZIP.
+          jar tf "$JAR_PATH" >/dev/null
+
+          JAR_SIZE_BYTES="$(wc -c < "$JAR_PATH" | tr -d ' ')"
+          JAR_SHA256="$(sha256sum "$JAR_PATH" | awk '{print $1}')"
+
+          echo "Local JAR size (bytes): $JAR_SIZE_BYTES"
+          echo "Local JAR sha256: $JAR_SHA256"
+
+          echo "jar_size_bytes=$JAR_SIZE_BYTES" >> "$GITHUB_OUTPUT"
+          echo "jar_sha256=$JAR_SHA256" >> "$GITHUB_OUTPUT"
+
       - name: Upload JAR as workflow artifact
         if: steps.bump.outputs.should_bump == 'true'
         id: upload
@@ -225,6 +314,43 @@ jobs:
           path: ./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar
           if-no-files-found: error
           retention-days: 7
+
+      - name: Verify uploaded artifact round-trip integrity
+        if: steps.bump.outputs.should_bump == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: Jmanager-${{ steps.bump.outputs.new_version }}
+          path: ./artifact-roundtrip
+
+      - name: Compare local JAR and downloaded artifact JAR
+        if: steps.bump.outputs.should_bump == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LOCAL_JAR="./executables/Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+          DOWNLOADED_JAR="./artifact-roundtrip/Jmanager-${{ steps.bump.outputs.new_version }}.jar"
+
+          if [ ! -f "$DOWNLOADED_JAR" ]; then
+            echo "Downloaded artifact JAR not found: $DOWNLOADED_JAR"
+            find ./artifact-roundtrip -maxdepth 3 -type f -print || true
+            exit 1
+          fi
+
+          LOCAL_SHA="$(sha256sum "$LOCAL_JAR" | awk '{print $1}')"
+          DOWNLOADED_SHA="$(sha256sum "$DOWNLOADED_JAR" | awk '{print $1}')"
+          LOCAL_SIZE="$(wc -c < "$LOCAL_JAR" | tr -d ' ')"
+          DOWNLOADED_SIZE="$(wc -c < "$DOWNLOADED_JAR" | tr -d ' ')"
+
+          echo "Round-trip local sha256:      $LOCAL_SHA"
+          echo "Round-trip downloaded sha256: $DOWNLOADED_SHA"
+          echo "Round-trip local size:        $LOCAL_SIZE"
+          echo "Round-trip downloaded size:   $DOWNLOADED_SIZE"
+
+          if [ "$LOCAL_SHA" != "$DOWNLOADED_SHA" ] || [ "$LOCAL_SIZE" != "$DOWNLOADED_SIZE" ]; then
+            echo "Artifact integrity mismatch: uploaded/downloaded artifact differs from local JAR."
+            exit 1
+          fi
 
       - name: Compute JAR metadata
         if: steps.bump.outputs.should_bump == 'true'
