@@ -5,6 +5,7 @@
 - Fixed `release/*` deploy dispatch metadata to send a direct GitHub Release `.jar` URL instead of an Actions artifact ZIP URL, preventing Deploy from saving a ZIP payload as `Jmanager-<version>.jar` and failing at runtime with an invalid/corrupt JAR.
 - Updated deployment documentation to clarify that release payloads now provide a direct `.jar` download URL.
 - Added CI integrity checks for generated JARs on `master` and `release/*`: validate local JAR readability (`jar tf`), compute size/SHA256, re-download uploaded artifact in the same workflow, and fail the job if size or hash differs.
+- Improved preview transaction confirmation dialog readability in light mode by adding dedicated field and summary styles, making the amount/date inputs clearly visible and visually distinct while preserving dark mode contrast.
 
 ## 2026-03-09
 
