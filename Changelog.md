@@ -1,5 +1,42 @@
 # Changelog
 
+## 2026-03-17
+
+- Started implementation of the unified error-handling refactor with a centralized backend error code catalog (`ErrorCatalog`) in the domain layer.
+- Refactored backend API error responses to include a stable `errorKey` alongside `code` in `ProblemDetail` payloads.
+- Replaced hardcoded API handler codes with centralized catalog constants for validation/type/date/internal/currency/UUID-not-found cases.
+- Improved internal server error handling by introducing a dedicated `InternalServerErrorException` handler that preserves the propagated error code.
+- Added and updated infrastructure tests for `ProblemDetailHandler` to validate `code` and `errorKey` behavior.
+- Added frontend code-to-message mapping utility (`client/utils/errorCodeMap.ts`) and switched toast error rendering to use API error codes instead of backend message strings.
+- Upgraded frontend loading composable to support scoped loading states and a `withLoading` helper for reliable start/stop behavior.
+- Added frontend unit tests for error-code parsing/mapping, toast behavior, and scoped loading state management.
+- Integrated the new error system with the homemade domain `Result` monad by introducing typed domain error metadata (`code`, `key`, `detail`) while preserving backward-compatible `message` access.
+- Propagated `Result` typed error metadata through API exception mapping so `ProblemDetail` can preserve explicit domain `errorKey` values when provided.
+- Added domain regression tests for `Result` typed-error behavior (`failure`, `map`, `flatMap`) and infrastructure coverage for explicit `errorKey` propagation.
+- Integrated explicit `DomainError` keys in `TransactionFeature` business failure paths (booking, edition, retrieval, delete, preview confirmation) so domain use-cases emit semantic error keys through the `Result` monad.
+- Added domain regression coverage to assert `TransactionFeature` keeps expected status and now exposes stable semantic error keys on failure.
+- Integrated explicit `DomainError` keys in `BookletFeature` failure paths (find/edit/delete/save/load) so booklet business errors now flow through the `Result` monad with stable semantic keys.
+- Added domain regression coverage in `BookletFeatureTest` to assert semantic key propagation on a representative business failure (`BOOKLET_MAXIMUM_SIZE_REACHED`).
+- Integrated explicit `DomainError` keys in `UserFeature` failure paths (`login`, `register`, `createAdminIfNotExists`) so authentication and registration errors now carry stable semantic keys through the `Result` monad.
+- Integrated explicit `DomainError` keys in `TagFeature` failure paths (`addTag`, `deleteTag`, `editTag`) so tag business errors now expose stable semantic keys.
+- Added domain regression assertions in `UserFeatureTest` and `TagFeatureTest` to verify semantic `errorInfo.key` propagation for representative failure scenarios.
+- Integrated explicit `DomainError` keys in `StatsFeature` failure paths (missing booklet, forbidden account access, invalid previsional date range).
+- Integrated explicit `DomainError` keys in `RegularTransactionFeature` failure paths (`getRegularTransactionById`, `updateRegularTransaction`, `deleteRegularTransaction`).
+- Integrated explicit `DomainError` keys in `FileImportExportFeature` failure paths (booklet ownership checks, validation/import/export internal errors, CSV validation blocking import).
+- Added domain regression assertions in `StatsFeatureTest`, `RegularTransactionFeatureTest`, and `FileImportExportFeatureTest` to verify semantic `errorInfo.key` propagation for representative failures.
+- Refactored frontend `useAdmin` to use the scoped loading manager (`useLoading.withLoading`) instead of ad hoc local loading state, aligning admin fetch UX with the global loading architecture.
+- Added frontend unit tests for `useAdmin` to validate pagination population, error callback behavior, and loading reset guarantees.
+- Integrated dashboard initial data load with scoped loading (`dashboard.initial`) via `useLoading.withLoading`, replacing the page-local loading flag for consistent loading orchestration.
+- Improved admin mobile UX by adding an explicit loading spinner state while users are fetched and disabling pagination interactions during active loading.
+- Refactored admin user-creation flow to use scoped loading (`admin.createUser`) via `useLoading.withLoading`, removing the remaining page-local creation loading flag and unifying loading behavior.
+- Integrated scoped loading in account details page (`account/[id]`) for critical actions (`loadBookletData`, transaction create/edit/fetch/delete, preview confirmation, CSV export) and wired button loading/disabled states to prevent concurrent operations.
+- Added an inline account-level loading indicator while transactions are being refreshed, improving feedback during month/year changes and post-mutation reloads.
+- Integrated scoped loading in tags page (`tag/index`) for load/create/edit/delete operations with action-level button loading/disabled states and inline loading feedback during list refresh.
+- Integrated scoped loading in booklets page (`account/index`) for initial load/create/delete operations, with loading indicators and interaction guards to prevent concurrent actions.
+- Added page-level frontend tests for `tag/index` and `account/index` to validate loading-state rendering and interaction guards introduced by scoped loading integration.
+- Added page-level frontend tests for `account/[id]` to validate scoped loading feedback on transaction refresh and export action loading guards.
+- Refactored frontend loading scope strings into a shared constant catalog (`client/constants/loadingScopes.ts`) and wired `useAdmin`, `admin/index`, `dashboard/index`, `account/index`, `account/[id]`, and `tag/index` to consume centralized scope keys.
+
 ## 2026-03-15
 
 - Fixed `release/*` deploy dispatch metadata to send a direct GitHub Release `.jar` URL instead of an Actions artifact ZIP URL, preventing Deploy from saving a ZIP payload as `Jmanager-<version>.jar` and failing at runtime with an invalid/corrupt JAR.

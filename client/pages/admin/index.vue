@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import useAdmin from '~/composables/useAdmin'
 import useAuth from '~/composables/useAuth'
+import { LOADING_SCOPES } from '~/constants/loadingScopes'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -9,6 +10,7 @@ definePageMeta({
 
 const { isAdmin, register } = useAuth()
 const { users, totalUsers, totalPages, currentPage, isLoading, fetchUsers } = useAdmin()
+const { isScopeLoading, withLoading } = useLoading()
 const toastr = useJToast()
 
 if (!isAdmin.value) {
@@ -21,7 +23,8 @@ const newUser = ref({
   confirmPassword: '',
 })
 
-const isCreating = ref(false)
+const userCreationLoadingScope = LOADING_SCOPES.admin.createUser
+const isCreating = computed(() => isScopeLoading(userCreationLoadingScope))
 const isMobileWidth = ref(false)
 
 function resetForm() {
@@ -48,21 +51,19 @@ async function createUser() {
     return
   }
 
-  isCreating.value = true
-
-  await register(
-    newUser.value,
-    () => {
-      toastr.success(`Utilisateur ${newUser.value.username} créé avec succès`)
-      resetForm()
-      loadUsers()
-    },
-    (error) => {
-      toastr.errorAxios(error)
-    },
-  )
-
-  isCreating.value = false
+  await withLoading(async () => {
+    await register(
+      newUser.value,
+      () => {
+        toastr.success(`Utilisateur ${newUser.value.username} créé avec succès`)
+        resetForm()
+        loadUsers()
+      },
+      (error) => {
+        toastr.errorAxios(error)
+      },
+    )
+  }, userCreationLoadingScope)
 }
 
 async function loadUsers(page: number = 0) {
@@ -238,54 +239,65 @@ onBeforeUnmount(() => {
 
         <!-- Mobile list view: shown only on small screens -->
         <div v-if="isMobileWidth" class="users-mobile-list">
-          <div class="users-mobile-count">
-            {{ users.length }} utilisateur(s)
+          <div v-if="isLoading" class="loading-container">
+            <ProgressSpinner
+              style="width: 50px; height: 50px"
+              stroke-width="4"
+            />
+            <p class="loading-text">
+              Chargement des utilisateurs...
+            </p>
           </div>
-          <div v-for="user in users" :key="user.id" class="user-mobile-card">
-            <div class="user-mobile-row">
-              <div class="user-avatar-small">
-                <i class="pi pi-user" />
-              </div>
+          <template v-else>
+            <div class="users-mobile-count">
+              {{ users.length }} utilisateur(s)
+            </div>
+            <div v-for="user in users" :key="user.id" class="user-mobile-card">
+              <div class="user-mobile-row">
+                <div class="user-avatar-small">
+                  <i class="pi pi-user" />
+                </div>
 
-              <div class="user-mobile-info">
-                <div class="user-mobile-top">
-                  <div class="user-mobile-title">
-                    <span class="username-text">{{ user.username }}</span>
-                    <Tag
-                      :value="getRoleLabel(user.roles)"
-                      :class="getRoleBadgeClass(user.roles)"
-                      class="role-badge-mobile"
-                    />
+                <div class="user-mobile-info">
+                  <div class="user-mobile-top">
+                    <div class="user-mobile-title">
+                      <span class="username-text">{{ user.username }}</span>
+                      <Tag
+                        :value="getRoleLabel(user.roles)"
+                        :class="getRoleBadgeClass(user.roles)"
+                        class="role-badge-mobile"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="user-mobile-meta">
+                    <div v-if="user.email" class="email-text">
+                      <i class="pi pi-envelope" />
+                      <span class="email-val">{{ user.email }}</span>
+                    </div>
+                    <div v-else class="text-muted">
+                      N/A
+                    </div>
+
+                    <div class="created-date-inline">
+                      {{ formatDateTime(user.createdDate) }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="user-mobile-meta">
-                  <div v-if="user.email" class="email-text">
-                    <i class="pi pi-envelope" />
-                    <span class="email-val">{{ user.email }}</span>
-                  </div>
-                  <div v-else class="text-muted">
-                    N/A
-                  </div>
-
-                  <div class="created-date-inline">
-                    {{ formatDateTime(user.createdDate) }}
-                  </div>
+                <div class="user-mobile-actions">
+                  <Button
+                    class="user-action-btn"
+                    icon="pi pi-ellipsis-v"
+                    severity="secondary"
+                    text
+                    rounded
+                    aria-label="Actions"
+                  />
                 </div>
-              </div>
-
-              <div class="user-mobile-actions">
-                <Button
-                  class="user-action-btn"
-                  icon="pi pi-ellipsis-v"
-                  severity="secondary"
-                  text
-                  rounded
-                  aria-label="Actions"
-                />
               </div>
             </div>
-          </div>
+          </template>
         </div>
 
         <DataTable
@@ -379,6 +391,7 @@ onBeforeUnmount(() => {
             :first="currentPage * 10"
             :rows="10"
             :total-records="totalUsers"
+            :disabled="isLoading"
             @page="onPageChange"
           />
         </div>

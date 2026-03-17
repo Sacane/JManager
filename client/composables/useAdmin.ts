@@ -1,5 +1,6 @@
 import type { AxiosError } from 'axios'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { LOADING_SCOPES } from '~/constants/loadingScopes'
 
 export interface UserDTO {
   id: string
@@ -19,12 +20,14 @@ export interface PageDTO<T> {
 
 export default function useAdmin() {
   const { get } = useQuery()
+  const loadingScope = LOADING_SCOPES.admin.fetchUsers
+  const { isScopeLoading, withLoading } = useLoading()
   const users = ref<UserDTO[]>([])
   const totalUsers = ref(0)
   const totalPages = ref(0)
   const currentPage = ref(0)
   const pageSize = ref(10)
-  const isLoading = ref(false)
+  const isLoading = computed(() => isScopeLoading(loadingScope))
 
   async function fetchUsers(
     page: number = 0,
@@ -32,26 +35,25 @@ export default function useAdmin() {
     onSuccess?: () => void,
     onError?: (error: AxiosError) => void,
   ) {
-    isLoading.value = true
-    try {
-      const response: PageDTO<UserDTO> = await get('admin/users', {
-        page,
-        size,
-      })
+    await withLoading(async () => {
+      try {
+        const response: PageDTO<UserDTO> = await get('admin/users', {
+          page,
+          size,
+        })
 
-      if (response) {
-        users.value = response.content
-        totalUsers.value = response.totalElements
-        totalPages.value = response.totalPages
-        currentPage.value = response.pageNumber
-        pageSize.value = response.pageSize
-        onSuccess?.()
+        if (response) {
+          users.value = response.content
+          totalUsers.value = response.totalElements
+          totalPages.value = response.totalPages
+          currentPage.value = response.pageNumber
+          pageSize.value = response.pageSize
+          onSuccess?.()
+        }
+      } catch (error) {
+        onError?.(error as AxiosError)
       }
-    } catch (error) {
-      onError?.(error as AxiosError)
-    } finally {
-      isLoading.value = false
-    }
+    }, loadingScope)
   }
 
   return {

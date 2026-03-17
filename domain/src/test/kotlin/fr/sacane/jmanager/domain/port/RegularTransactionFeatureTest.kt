@@ -262,6 +262,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
 
                 result.assertFailure()
+                assertEquals("domain.regular_transaction.get_by_id.not_found", result.errorInfo?.key)
             }
         }
 
@@ -322,6 +323,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
 
                 result.assertFailure()
+                assertEquals("domain.regular_transaction.delete.not_found", result.errorInfo?.key)
             }
         }
 
@@ -357,6 +359,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
 
                 result.assertFailure()
+                assertEquals("domain.regular_transaction.delete.not_found", result.errorInfo?.key)
             }
         }
     }
@@ -394,6 +397,26 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     assertEquals(45.toAmount(), transaction.amount)
                     assertEquals(originalTransaction.id, transaction.id)
                 }
+            }
+        }
+
+        @Test
+        fun `should fail when updating unknown regular transaction`() {
+            launchWithConnectedUserInstance {
+                val unknownTransaction = RegularTransaction(
+                    label = "Unknown",
+                    amount = 45.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("unknown-id"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                val result = regularTransactionFeature.updateRegularTransaction(tokenValue, unknownTransaction)
+
+                result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
+                assertEquals("domain.regular_transaction.update.not_found", result.errorInfo?.key)
             }
         }
 //        }

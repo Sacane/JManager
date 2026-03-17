@@ -16,9 +16,9 @@ import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRe
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
+import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
-import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
 import java.time.Duration
@@ -150,23 +150,45 @@ class BookletFeatureImpl(
     companion object {
         private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
     }
+
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return fr.sacane.jmanager.domain.utils.failure(state, DomainError(state.code, key, detail))
+    }
+
     override fun findAccountById(
         accountID: UUID,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
         accountRepository.findAccountByIdWithTransactions(accountID)?.run {
             success(this)
-        } ?: failure(ResultState.BOOKLET_NOT_FOUND, "Le compte est introuvable")
+        } ?: domainFailure(
+            ResultState.BOOKLET_NOT_FOUND,
+            "Le compte est introuvable",
+            "domain.booklet.find_by_id.not_found"
+        )
     }
 
     override fun editAccount(
         booklet: Booklet,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
-        val accountID = booklet.id ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${booklet.label} est introuvable en base")
-        val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "Le livret ${booklet.id} est introuvable")
+        val accountID = booklet.id ?: return@authenticate domainFailure(
+            ResultState.BOOKLET_NOT_FOUND,
+            "Le livret ${booklet.label} est introuvable en base",
+            "domain.booklet.edit.id_missing"
+        )
+        val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID)
+            ?: return@authenticate domainFailure(
+                ResultState.BOOKLET_NOT_FOUND,
+                "Le livret ${booklet.id} est introuvable",
+                "domain.booklet.edit.not_found"
+            )
         if(oldAccount.id != booklet.id && oldAccount.label == booklet.label){
-            return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le libellé du livret existe déjà")
+            return@authenticate domainFailure(
+                ResultState.BOOKLET_LABEL_EXIST,
+                "Le libellé du livret existe déjà",
+                "domain.booklet.edit.label_already_exists"
+            )
         }
         oldAccount.updateFrom(booklet)
         val registered = accountRepository.upsert(oldAccount)
@@ -179,7 +201,11 @@ class BookletFeatureImpl(
     ): Result<Nothing> = session.authenticate(token) {
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             if(accountRepository.findAccountByIdWithTransactions(accountID) == null){
-                return@executeInTransaction failure(ResultState.NOT_FOUND, "Le livret $accountID n'existe pas")
+                return@executeInTransaction domainFailure(
+                    ResultState.NOT_FOUND,
+                    "Le livret $accountID n'existe pas",
+                    "domain.booklet.delete.not_found"
+                )
             }
             accountRepository.deleteAccountById(accountID)
             trackerRepository.deleteTrackerByBookletId(accountID)
@@ -192,11 +218,19 @@ class BookletFeatureImpl(
         label: String
     ): Result<Booklet> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(it)
-            ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur recherché n'existe pas")
+            ?: return@authenticate domainFailure(
+                ResultState.USER_NOT_FOUND,
+                "L'utilisateur recherché n'existe pas",
+                "domain.booklet.find_by_label.user_not_found"
+            )
         success(
             user.booklets
             .find { acc -> acc.label == label }
-            ?: return@authenticate failure(ResultState.BOOKLET_LABEL_NOT_EXIST, "Le compte $label n'est pas enregistré en base")
+            ?: return@authenticate domainFailure(
+                ResultState.BOOKLET_LABEL_NOT_EXIST,
+                "Le compte $label n'est pas enregistré en base",
+                "domain.booklet.find_by_label.label_not_found"
+            )
         )
     }
 
@@ -204,7 +238,11 @@ class BookletFeatureImpl(
         token: String
     ): Result<List<Booklet>> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(it)
-            ?: return@authenticate failure(ResultState.BOOKLET_NOT_FOUND, "L'utilisateur n'existe pas en base")
+            ?: return@authenticate domainFailure(
+                ResultState.BOOKLET_NOT_FOUND,
+                "L'utilisateur n'existe pas en base",
+                "domain.booklet.find_all.user_not_found"
+            )
         return@authenticate success(user.booklets)
     }
 
@@ -213,15 +251,31 @@ class BookletFeatureImpl(
         booklet: Booklet
     ): Result<Booklet> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithAccounts(it)
-            ?: return@authenticate failure(ResultState.USER_NOT_FOUND, "L'utilisateur n'existe pas en base")
+            ?: return@authenticate domainFailure(
+                ResultState.USER_NOT_FOUND,
+                "L'utilisateur n'existe pas en base",
+                "domain.booklet.save.user_not_found"
+            )
         if(user.hasAccount(booklet.label)) {
-            return@authenticate failure(ResultState.BOOKLET_LABEL_EXIST, "Le profil contient déjà un compte avec le label ${booklet.label}")
+            return@authenticate domainFailure(
+                ResultState.BOOKLET_LABEL_EXIST,
+                "Le profil contient déjà un compte avec le label ${booklet.label}",
+                "domain.booklet.save.label_already_exists"
+            )
         }
         if (user.booklets.size >= 6) {
-            return@authenticate failure(ResultState.BOOKLET_MAXIMUM_SIZE_REACHED, "Le profil ne peut pas contenir plus de 6 comptes")
+            return@authenticate domainFailure(
+                ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
+                "Le profil ne peut pas contenir plus de 6 comptes",
+                "domain.booklet.save.maximum_size_reached"
+            )
         }
         val accountSaved = accountRepository.save(it, booklet)
-            ?: return@authenticate failure(ResultState.INFRASTRUCTURE_ERROR,"Erreur lors de la sauvegarde du compte")
+            ?: return@authenticate domainFailure(
+                ResultState.INFRASTRUCTURE_ERROR,
+                "Erreur lors de la sauvegarde du compte",
+                "domain.booklet.save.infrastructure_error"
+            )
         success(accountSaved)
     }
 
@@ -239,7 +293,11 @@ class BookletFeatureImpl(
 
             val fetchBookletStartNs = System.nanoTime()
             val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Requested booklet is not registered",
+                    "domain.booklet.load_transactions.not_found"
+                )
             LOGGER.info { "Fetched booklet: ${booklet.label} (${booklet.id})" }
             val fetchBookletMs = Duration.ofNanos(System.nanoTime() - fetchBookletStartNs).toMillis()
 
@@ -376,7 +434,11 @@ class BookletFeatureImpl(
     ): Result<BookletBalances> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             val persisted = bookletBalanceQueryRepository.findPersistedBalances(bookletId)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Requested booklet is not registered")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Requested booklet is not registered",
+                    "domain.booklet.load_balances.not_found"
+                )
 
             val currentDate = LocalDate.now()
             val currentMonth = startingMonth ?: currentDate.month

@@ -29,17 +29,40 @@ enum class ResultState (val code: Int){
     fun isFailure(): Boolean = !isSuccess()
 }
 
+data class DomainError(
+    val code: Int,
+    val key: String,
+    val detail: String,
+)
+
 class Result <S>(
     val status: ResultState,
     private var data: S? = null,
-    private var error: String = "This response is not an error"
+    private var error: String = "This response is not an error",
+    private var domainError: DomainError? = null,
 ){
+    init {
+        if (this.isFailure() && domainError == null) {
+            domainError = DomainError(
+                code = status.code,
+                key = ErrorCatalog.keyForCode(status.code),
+                detail = error,
+            )
+        }
+    }
+
     val message: String
-        get() = error
+        get() = errorInfo?.detail ?: error
+
+    val errorInfo: DomainError?
+        get() = domainError
 
     companion object{
         fun <S> unauthorized(message: String): Result<S> =
             Result(ResultState.UNAUTHORIZED, error=message)
+
+        fun <S> failure(state: ResultState, error: DomainError): Result<S> =
+            Result(state, error = error.detail, domainError = error)
     }
 
     fun onSuccess(consumer: (S) -> Unit): Result<S> {
@@ -66,16 +89,16 @@ class Result <S>(
         mapper: (S) -> Result<T>
     ): Result<T> {
         if (this.isFailure()) {
-            return failure(status, message)
+            return failure(status, errorInfo ?: DomainError(status.code, ErrorCatalog.keyForCode(status.code), message))
         }
-        val value = this.data ?: return failure(status, message)
+        val value = this.data ?: return failure(status, errorInfo ?: DomainError(status.code, ErrorCatalog.keyForCode(status.code), message))
         return mapper.invoke(value)
     }
 
     fun <T> map(
         mapper: (S) -> T
     ): Result<T> {
-        val value = this.data ?: return Result(status, null, error = error)
+        val value = this.data ?: return Result(status, null, error = message, domainError = errorInfo)
         return Result(status, mapper.invoke(value))
     }
 
@@ -98,6 +121,9 @@ fun <S> invalid(message: String): Result<S> =
 
 fun <S> failure(state: ResultState, message: String): Result<S> =
     Result(state, error = message)
+
+fun <S> failure(state: ResultState, error: DomainError): Result<S> =
+    Result(state, error = error.detail, domainError = error)
 
 fun <S> forbidden(message: String): Result<S> =
     Result(ResultState.FORBIDDEN, error=message)

@@ -14,9 +14,9 @@ import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculator
 import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculator
 import fr.sacane.jmanager.domain.usecase.PrevisionalTransactionFilter
 import fr.sacane.jmanager.domain.usecase.TrendCalculator
+import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
-import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -85,9 +85,12 @@ class StatsFeatureImpl(
     private val trendCalculator: TrendCalculator,
     private val previsionalTransactionFilter: PrevisionalTransactionFilter
 ) : StatsFeature {
-
     companion object {
         private val LOGGER = Logger.getLogger(StatsFeatureImpl::class.java.name)
+    }
+
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return fr.sacane.jmanager.domain.utils.failure(state, DomainError(state.code, key, detail))
     }
 
     override fun getMonthlyAccountStats(
@@ -98,15 +101,17 @@ class StatsFeatureImpl(
         LOGGER.info("Fetching monthly stats for account $accountId and year $year")
 
         val booklet = bookletRepository.findAccountByIdWithTransactions(accountId)
-            ?: return@authenticate failure(
+            ?: return@authenticate domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
-                "Le compte $accountId est introuvable"
+                "Le compte $accountId est introuvable",
+                "domain.stats.monthly.booklet_not_found"
             )
 
         if (booklet.owner?.id != userId) {
-            return@authenticate failure(
+            return@authenticate domainFailure(
                 ResultState.FORBIDDEN,
-                "Vous n'avez pas accès à ce compte"
+                "Vous n'avez pas accès à ce compte",
+                "domain.stats.monthly.forbidden"
             )
         }
 
@@ -190,9 +195,10 @@ class StatsFeatureImpl(
         LOGGER.info("Fetching previsional transactions from $startDate to $endDate for user $userId")
 
         if (startDate.isAfter(endDate)) {
-            return@authenticate failure(
+            return@authenticate domainFailure(
                 ResultState.INVALID,
-                "La date de début doit être antérieure à la date de fin"
+                "La date de début doit être antérieure à la date de fin",
+                "domain.stats.previsional.invalid_date_range"
             )
         }
 

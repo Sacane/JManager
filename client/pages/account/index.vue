@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import useBooklet from '../../composables/useBooklet'
 
 definePageMeta({
@@ -8,8 +9,20 @@ definePageMeta({
 
 const confirm = useConfirm()
 const router = useRouter()
+const { isScopeLoading, withLoading } = useLoading()
 
 const { fetch, deleteAccount, createAccount } = useBooklet()
+const loadAccountsScope = LOADING_SCOPES.accountIndex.load
+const createAccountScope = LOADING_SCOPES.accountIndex.create
+const deleteAccountScope = LOADING_SCOPES.accountIndex.delete
+const isLoadingAccounts = computed(() => isScopeLoading(loadAccountsScope))
+const isCreatingAccount = computed(() => isScopeLoading(createAccountScope))
+const isDeletingAccount = computed(() => isScopeLoading(deleteAccountScope))
+const isAnyBookletActionLoading = computed(() =>
+  isLoadingAccounts.value
+  || isCreatingAccount.value
+  || isDeletingAccount.value,
+)
 const isAccountFilled = ref<boolean>(false)
 const data = ref<Array<{
   id: string
@@ -19,11 +32,16 @@ const data = ref<Array<{
 }>>([])
 
 onMounted(async () => {
-  await fetch().then((accountArray) => {
+  await loadAccounts()
+})
+
+async function loadAccounts() {
+  await withLoading(async () => {
+    const accountArray = await fetch()
     format(accountArray)
     isAccountFilled.value = accountArray.length > 0
-  })
-})
+  }, loadAccountsScope)
+}
 
 function format(accounts: Array<BookletDTO>) {
   data.value = accounts.map((account: BookletDTO) => {
@@ -40,13 +58,11 @@ function onCardClick(accountId: string) {
   router.push(`/account/${accountId}`)
 }
 
-function applyDelete(accountId: string) {
-  deleteAccount(accountId).finally(() => {
-    fetch().then((accountArray) => {
-      format(accountArray)
-      isAccountFilled.value = accountArray.length > 0
-    })
-  })
+async function applyDelete(accountId: string) {
+  await withLoading(async () => {
+    await deleteAccount(accountId)
+    await loadAccounts()
+  }, deleteAccountScope)
 }
 
 function openConfirmDeleteDialog(id: string, bookletLabel: string) {
@@ -64,15 +80,14 @@ function openConfirmDeleteDialog(id: string, bookletLabel: string) {
 const isAddAccountDialogOpen = ref<boolean>(false)
 
 function handleAccountCreation(account: { label: string, digit: number }) {
-  createAccount(account.label, account.digit, '€')
-    .then(() => {
-      fetch().then((accountArray) => {
-        format(accountArray)
-        isAccountFilled.value = accountArray.length > 0
-      }).finally(() => {
-        isAddAccountDialogOpen.value = false
-      })
-    })
+  withLoading(async () => {
+    try {
+      await createAccount(account.label, account.digit, '€')
+      await loadAccounts()
+    } finally {
+      isAddAccountDialogOpen.value = false
+    }
+  }, createAccountScope)
 }
 
 function cancel() {
@@ -80,6 +95,7 @@ function cancel() {
 }
 
 function openAccountDialog() {
+  if (isAnyBookletActionLoading.value) return
   isAddAccountDialogOpen.value = true
 }
 
@@ -120,6 +136,8 @@ function formatAmount(amount: string) {
         label="Nouveau livret"
         icon="pi pi-plus"
         class="add-button"
+        :loading="isCreatingAccount"
+        :disabled="isAnyBookletActionLoading"
         @click="openAccountDialog"
       />
       <Button
@@ -147,8 +165,20 @@ function formatAmount(amount: string) {
         icon="pi pi-plus"
         size="large"
         class="empty-action-button"
+        :loading="isCreatingAccount"
+        :disabled="isAnyBookletActionLoading"
         @click="openAccountDialog"
       />
+    </div>
+
+    <div v-if="isLoadingAccounts" class="loading-container">
+      <ProgressSpinner
+        style="width: 48px; height: 48px"
+        stroke-width="4"
+      />
+      <p class="loading-text">
+        Chargement des livrets...
+      </p>
     </div>
 
     <!-- Booklets Grid -->
@@ -178,6 +208,8 @@ function formatAmount(amount: string) {
                 text
                 rounded
                 severity="danger"
+                :loading="isDeletingAccount"
+                :disabled="isAnyBookletActionLoading"
                 @click.stop="openConfirmDeleteDialog(account.id, account.labelAccount)"
               />
             </div>
@@ -206,6 +238,7 @@ function formatAmount(amount: string) {
         <div
           v-if="data.length < 6"
           class="booklet-card add-card"
+          :class="{ 'disabled-card': isAnyBookletActionLoading }"
           @click="openAccountDialog"
         >
           <div class="add-card-content">
@@ -416,6 +449,25 @@ function formatAmount(amount: string) {
   width: 100%;
 }
 
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+}
+
+.loading-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .booklets-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -429,6 +481,11 @@ function formatAmount(amount: string) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+}
+
+.disabled-card {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 /* ===== BOOKLET CARD ===== */

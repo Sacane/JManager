@@ -9,6 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.beans.TypeMismatchException
 import java.time.DateTimeException
 import org.mockito.Mockito
+import fr.sacane.jmanager.domain.utils.ErrorCatalog
+import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
 
 class ProblemDetailHandlerTest {
@@ -25,7 +27,8 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Bad Request")
         assertThat(pd.detail).contains("Missing mandatory parameter")
-        assertThat(pd.properties!!["code"]).isEqualTo(65)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_VALIDATION)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_VALIDATION))
     }
 
     @Test
@@ -39,7 +42,8 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Method type mismatch")
         assertThat(pd.detail).contains("Invalid type parameter")
-        assertThat(pd.properties!!["code"]).isEqualTo(65)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_VALIDATION)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_VALIDATION))
     }
 
     @Test
@@ -53,7 +57,8 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Method argument not valid")
         assertThat(pd.detail).contains("invalid value")
-        assertThat(pd.properties!!["code"]).isEqualTo(65)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_VALIDATION)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_VALIDATION))
     }
 
     @Test
@@ -66,7 +71,8 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Invalid given currency")
         assertThat(pd.detail).contains("Oops, something went wrong")
-        assertThat(pd.properties!!["code"]).isEqualTo(144)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.INVALID_CURRENCY)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.INVALID_CURRENCY))
     }
 
     @Test
@@ -80,6 +86,18 @@ class ProblemDetailHandlerTest {
         assertThat(pd.title).isEqualTo("Not_Found error")
         assertThat(pd.detail).isEqualTo("Missing")
         assertThat(pd.properties!!["code"]).isEqualTo(999)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo("unknown.error")
+    }
+
+    @Test
+    fun `not found exception preserves explicit error key`() {
+        val ex = NotFoundException(999, "Missing", "domain.booklet.not_found")
+        val resp = handler.handleNotFoundException(ex)
+
+        assertThat(resp.statusCode.value()).isEqualTo(HttpStatus.NOT_FOUND.value())
+        val pd = resp.body!!
+        assertThat(pd.properties!!["code"]).isEqualTo(999)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo("domain.booklet.not_found")
     }
 
     @Test
@@ -93,6 +111,7 @@ class ProblemDetailHandlerTest {
         assertThat(pd.title).isEqualTo("Bad Request error")
         assertThat(pd.detail).isEqualTo("Bad request")
         assertThat(pd.properties!!["code"]).isEqualTo(321)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo("unknown.error")
     }
 
     @Test
@@ -106,6 +125,7 @@ class ProblemDetailHandlerTest {
         assertThat(pd.title).isEqualTo("Unauthorized error")
         assertThat(pd.detail).isEqualTo("No auth")
         assertThat(pd.properties!!["code"]).isEqualTo(12)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo("unknown.error")
     }
 
     @Test
@@ -119,6 +139,7 @@ class ProblemDetailHandlerTest {
         assertThat(pd.title).isEqualTo("Unauthorized error")
         assertThat(pd.detail).isEqualTo("Timed out")
         assertThat(pd.properties!!["code"]).isEqualTo(55)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo("unknown.error")
     }
 
     @Test
@@ -131,7 +152,8 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Date time error")
         assertThat(pd.detail).isEqualTo("bad date")
-        assertThat(pd.properties!!["code"]).isEqualTo(68)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_DATE_TIME_INVALID)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_DATE_TIME_INVALID))
     }
 
     @Test
@@ -145,20 +167,22 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Type Mismatch error")
         assertThat(pd.detail).isEqualTo("Type mismatch")
-        assertThat(pd.properties!!["code"]).isEqualTo(67)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_TYPE_MISMATCH)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_TYPE_MISMATCH))
     }
 
     @Test
-    fun `internal server error exception returns 500 with code 111`() {
-        val ex = InternalServerErrorException(13, "internal")
-        val resp = handler.onIrregularException(ex)
+    fun `internal server error exception returns 500 with propagated code`() {
+        val ex = InternalServerErrorException(ResultState.INTERNAL_SERVER_ERROR.code, "internal")
+        val resp = handler.onInternalServerErrorException(ex)
 
         assertThat(resp.statusCode.value()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
         val pd = resp.body!!
         assertThat(pd.status).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
         assertThat(pd.title).isEqualTo("Internal server error")
         assertThat(pd.detail).contains("Oops, something went wrong")
-        assertThat(pd.properties!!["code"]).isEqualTo(111)
+        assertThat(pd.properties!!["code"]).isEqualTo(ResultState.INTERNAL_SERVER_ERROR.code)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ResultState.INTERNAL_SERVER_ERROR.code))
     }
 
     @Test
@@ -171,7 +195,8 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.NOT_FOUND.value())
         assertThat(pd.title).isEqualTo("Resource not found")
         assertThat(pd.detail).isEqualTo("The requested resource does not exist")
-        assertThat(pd.properties!!["code"]).isEqualTo(404)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.INVALID_UUID_NOT_FOUND)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.INVALID_UUID_NOT_FOUND))
     }
 
     @Test
@@ -184,7 +209,8 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Bad Request")
         assertThat(pd.detail).contains("Invalid argument")
-        assertThat(pd.properties!!["code"]).isEqualTo(65)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_VALIDATION)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_VALIDATION))
     }
 
     @Test
@@ -196,7 +222,8 @@ class ProblemDetailHandlerTest {
         val pd = resp.body!!
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Bad Request")
-        assertThat(pd.properties!!["code"]).isEqualTo(65)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_VALIDATION)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_VALIDATION))
     }
 
     @Test
@@ -210,6 +237,7 @@ class ProblemDetailHandlerTest {
         assertThat(pd.title).isEqualTo("Forbidden error")
         assertThat(pd.detail).isEqualTo("Access denied")
         assertThat(pd.properties!!["code"]).isEqualTo(777)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo("unknown.error")
     }
 
     @Test
@@ -222,6 +250,7 @@ class ProblemDetailHandlerTest {
         assertThat(pd.status).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
         assertThat(pd.title).isEqualTo("Internal server error")
         assertThat(pd.detail).contains("Oops, something went wrong")
-        assertThat(pd.properties!!["code"]).isEqualTo(111)
+        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.INTERNAL_UNEXPECTED)
+        assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.INTERNAL_UNEXPECTED))
     }
 }

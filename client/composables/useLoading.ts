@@ -1,11 +1,41 @@
 export default function useLoading() {
-  const isLoading = ref(false)
+  const pendingScopes = ref<Record<string, number>>({})
+  const defaultScope = 'global'
 
-  function startLoading() {
-    isLoading.value = true
+  const isLoading = computed(() => Object.values(pendingScopes.value).some(count => count > 0))
+
+  function isScopeLoading(scope: string = defaultScope) {
+    return (pendingScopes.value[scope] ?? 0) > 0
   }
-  function stopLoading() {
-    isLoading.value = false
+
+  function clearScope(scope: string) {
+    const nextScopes = { ...pendingScopes.value }
+    delete nextScopes[scope]
+    pendingScopes.value = nextScopes
   }
-  return { isLoading, startLoading, stopLoading }
+
+  function startLoading(scope: string = defaultScope) {
+    const currentCount = pendingScopes.value[scope] ?? 0
+    pendingScopes.value[scope] = currentCount + 1
+  }
+
+  function stopLoading(scope: string = defaultScope) {
+    const currentCount = pendingScopes.value[scope] ?? 0
+    if (currentCount <= 1) {
+      clearScope(scope)
+      return
+    }
+    pendingScopes.value[scope] = currentCount - 1
+  }
+
+  async function withLoading<T>(action: () => Promise<T>, scope: string = defaultScope): Promise<T> {
+    startLoading(scope)
+    try {
+      return await action()
+    } finally {
+      stopLoading(scope)
+    }
+  }
+
+  return { isLoading, pendingScopes, isScopeLoading, startLoading, stopLoading, withLoading }
 }

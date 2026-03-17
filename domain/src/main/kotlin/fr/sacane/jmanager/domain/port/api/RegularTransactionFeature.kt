@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvid
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
@@ -83,6 +84,10 @@ class RegularTransactionFeatureImpl(
     private val unitOfWork: UnitOfWorkTransactionProvider
 ) : RegularTransactionFeature {
 
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return failure(state, DomainError(state.code, key, detail))
+    }
+
 
     override fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>> {
         return session.authenticate(token) {
@@ -117,7 +122,11 @@ class RegularTransactionFeatureImpl(
         val result = regularTransactionRepository.getRegularTransactionById(
             it,
             RegularTransactionId(transactionId)
-        ) ?: return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $transactionId n'existe pas")
+        ) ?: return@authenticate domainFailure(
+            ResultState.TRANSACTION_NOT_FOUND,
+            "La transaction $transactionId n'existe pas",
+            "domain.regular_transaction.get_by_id.not_found"
+        )
         return@authenticate success(result)
     }
 
@@ -127,7 +136,11 @@ class RegularTransactionFeatureImpl(
     ): Result<RegularTransaction> = session.authenticate(token) { userId ->
         return@authenticate unitOfWork.executeInTransaction(regularTransaction) {
             val updated = regularTransactionRepository.updateRegularTransaction(userId, it)
-                ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction ${it.id} n'existe pas")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_NOT_FOUND,
+                    "La transaction ${it.id} n'existe pas",
+                    "domain.regular_transaction.update.not_found"
+                )
             return@executeInTransaction success(updated)
         }
     }
@@ -138,7 +151,11 @@ class RegularTransactionFeatureImpl(
     ): Result<Boolean> = session.authenticate(token) { userId ->
         val deleted = regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(transactionId))
         if (!deleted) {
-            return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $transactionId n'existe pas")
+            return@authenticate domainFailure(
+                ResultState.TRANSACTION_NOT_FOUND,
+                "La transaction $transactionId n'existe pas",
+                "domain.regular_transaction.delete.not_found"
+            )
         }
         return@authenticate success(true)
     }

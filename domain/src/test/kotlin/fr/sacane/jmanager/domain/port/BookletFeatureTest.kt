@@ -17,6 +17,7 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -179,8 +180,13 @@ class BookletFeatureTest: FeatureTest() {
                 AccountByOwner(bookletLists, userId)
             ))
 
-            bookletFeature.save(tokenValue, Booklet( Amount.fromString("100", "€".asCurrency()), "test7", owner = user, id = UUID.randomUUID()))
-                .assertFailure(ResultState.BOOKLET_MAXIMUM_SIZE_REACHED)
+            val result = bookletFeature.save(
+                tokenValue,
+                Booklet( Amount.fromString("100", "€".asCurrency()), "test7", owner = user, id = UUID.randomUUID())
+            )
+
+            result.assertFailure(ResultState.BOOKLET_MAXIMUM_SIZE_REACHED)
+            assertEquals("domain.booklet.save.maximum_size_reached", result.errorInfo?.key)
         }
     }
 
@@ -217,7 +223,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Salary",
-                    date = java.time.LocalDate.of(2025, 1, 15),
+                    date = LocalDate.of(2025, 1, 15),
                     amount = 2000.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -225,7 +231,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction2 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Bonus",
-                    date = java.time.LocalDate.of(2025, 1, 20),
+                    date = LocalDate.of(2025, 1, 20),
                     amount = 500.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -269,7 +275,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Rent",
-                    date = java.time.LocalDate.of(2025, 1, 5),
+                    date = LocalDate.of(2025, 1, 5),
                     amount = 500.toAmount(),
                     isIncome = false,
                     isPreview = false
@@ -277,7 +283,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction2 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Groceries",
-                    date = java.time.LocalDate.of(2025, 1, 10),
+                    date = LocalDate.of(2025, 1, 10),
                     amount = 200.toAmount(),
                     isIncome = false,
                     isPreview = false
@@ -325,7 +331,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Income 1",
-                    date = java.time.LocalDate.of(2025, 2, 5),
+                    date = LocalDate.of(2025, 2, 5),
                     amount = 1500.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -333,7 +339,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction2 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Expense 1",
-                    date = java.time.LocalDate.of(2025, 2, 10),
+                    date = LocalDate.of(2025, 2, 10),
                     amount = 300.toAmount(),
                     isIncome = false,
                     isPreview = false
@@ -341,7 +347,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction3 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Income 2",
-                    date = java.time.LocalDate.of(2025, 2, 15),
+                    date = LocalDate.of(2025, 2, 15),
                     amount = 800.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -396,7 +402,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current Income",
-                    date = java.time.LocalDate.of(2025, 11, 5),
+                    date = LocalDate.of(2025, 11, 5),
                     amount = 500.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -404,7 +410,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction2 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Future Income",
-                    date = java.time.LocalDate.of(2025, 11, 25),
+                    date = LocalDate.of(2025, 11, 25),
                     amount = 1000.toAmount(),
                     isIncome = true,
                     isPreview = true
@@ -412,7 +418,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction3 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Future Expense",
-                    date = java.time.LocalDate.of(2025, 11, 28),
+                    date = LocalDate.of(2025, 11, 28),
                     amount = 300.toAmount(),
                     isIncome = false,
                     isPreview = true
@@ -460,7 +466,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current 1",
-                    date = java.time.LocalDate.of(2025, 4, 1),
+                    date = LocalDate.of(2025, 4, 1),
                     amount = 100.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -468,7 +474,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction2 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current 2",
-                    date = java.time.LocalDate.of(2025, 4, 10),
+                    date = LocalDate.of(2025, 4, 10),
                     amount = 50.toAmount(),
                     isIncome = false,
                     isPreview = false
@@ -476,7 +482,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction3 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current 3",
-                    date = java.time.LocalDate.of(2025, 4, 15),
+                    date = LocalDate.of(2025, 4, 15),
                     amount = 75.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -484,7 +490,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction4 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Preview 1",
-                    date = java.time.LocalDate.of(2025, 4, 20),
+                    date = LocalDate.of(2025, 4, 20),
                     amount = 200.toAmount(),
                     isIncome = true,
                     isPreview = true
@@ -492,7 +498,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction5 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Preview 2",
-                    date = java.time.LocalDate.of(2025, 4, 25),
+                    date = LocalDate.of(2025, 4, 25),
                     amount = 150.toAmount(),
                     isIncome = false,
                     isPreview = true
@@ -661,7 +667,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction3 = Transaction(
                     id = UUID.randomUUID(),
                     label = "February Transaction 2",
-                    date = java.time.LocalDate.of(2025, 2, 20),
+                    date = LocalDate.of(2025, 2, 20),
                     amount = 150.toAmount(),
                     isIncome = false,
                     isPreview = false
@@ -669,7 +675,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction4 = Transaction(
                     id = UUID.randomUUID(),
                     label = "March Transaction",
-                    date = java.time.LocalDate.of(2025, 3, 5),
+                    date = LocalDate.of(2025, 3, 5),
                     amount = 50.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -721,7 +727,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Current Income",
-                    date = java.time.LocalDate.of(2025, 11, 15),
+                    date = LocalDate.of(2025, 11, 15),
                     amount = 500.toAmount(),
                     isIncome = true,
                     isPreview = false
@@ -729,7 +735,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction2 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Future Income",
-                    date = java.time.LocalDate.of(2025, 12, 10),
+                    date = LocalDate.of(2025, 12, 10),
                     amount = 800.toAmount(),
                     isIncome = true,
                     isPreview = true
@@ -737,7 +743,7 @@ class BookletFeatureTest: FeatureTest() {
                 val transaction3 = Transaction(
                     id = UUID.randomUUID(),
                     label = "Future Expense",
-                    date = java.time.LocalDate.of(2026, 1, 5),
+                    date = LocalDate.of(2026, 1, 5),
                     amount = 300.toAmount(),
                     isIncome = false,
                     isPreview = true

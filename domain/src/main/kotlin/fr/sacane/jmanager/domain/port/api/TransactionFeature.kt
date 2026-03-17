@@ -110,18 +110,48 @@ class TransactionFeatureImpl(
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
     }
 
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return failure(state, DomainError(state.code, key, detail))
+    }
+
+    private fun <S> domainNotFound(detail: String, key: String): Result<S> {
+        return domainFailure(ResultState.NOT_FOUND, detail, key)
+    }
+
+    private fun <S> domainInvalid(detail: String, key: String): Result<S> {
+        return domainFailure(ResultState.INVALID, detail, key)
+    }
+
     override fun editTransaction(
         accountID: UUID,
         transaction: Transaction,
         token: String
     ): Result<TransactionResumeResult> = session.authenticate(token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
-            if(transaction.id == null) return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "L'ID de la transaction est null")
-            val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID) ?: return@executeInTransaction notFound("Le compte $accountID n'existe pas")
-            val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy() ?: return@executeInTransaction notFound("Aucune transaction n'existe avec l'ID suivant : ${transaction.id}")
+            if (transaction.id == null) {
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_ENTRY_ERROR,
+                    "L'ID de la transaction est null",
+                    "domain.transaction.edit.id_missing"
+                )
+            }
+            val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID)
+                ?: return@executeInTransaction domainNotFound(
+                    "Le compte $accountID n'existe pas",
+                    "domain.transaction.edit.booklet_not_found"
+                )
+            val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy()
+                ?: return@executeInTransaction domainNotFound(
+                    "Aucune transaction n'existe avec l'ID suivant : ${transaction.id}",
+                    "domain.transaction.edit.transaction_not_found"
+                )
             transactionFromDatabase.updateFromOther(transaction)
             transactionFromDatabase.lastModified = LocalDateTime.now()
-            transactionRepository.save(registeredAccount.id!!, transactionFromDatabase) ?: return@executeInTransaction invalid("Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}")
+            transactionRepository.save(registeredAccount.id!!, transactionFromDatabase)
+                ?: return@executeInTransaction domainInvalid(
+                    "Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}",
+                    "domain.transaction.edit.save_failed"
+                )
             registeredAccount.removeTransactionById(transaction.id)
             registeredAccount.addTransaction(transactionFromDatabase)
             accountRepository.update(registeredAccount)
@@ -137,11 +167,23 @@ class TransactionFeatureImpl(
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             logger.info("Request for a transaction with id $id")
             val account = accountRepository.findAccountByLabelWithTransactions(id, accountLabel)
-                ?: return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Le compte $accountLabel n'existe pas")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_NOT_FOUND,
+                    "Le compte $accountLabel n'existe pas",
+                    "domain.transaction.book.booklet_not_found"
+                )
             val newTr =  transactionRepository.save(account.id!!, transaction)
-                ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Erreur est survenu lors de la transaction")
-            if(transaction.amount.isNegative()) {
-                return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Le montant de la transaction ne peut pas être négatif")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.INFRASTRUCTURE_ERROR,
+                    "Erreur est survenu lors de la transaction",
+                    "domain.transaction.book.infrastructure_error"
+                )
+            if (transaction.amount.isNegative()) {
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_ENTRY_ERROR,
+                    "Le montant de la transaction ne peut pas être négatif",
+                    "domain.transaction.book.negative_amount"
+                )
             }
             val toSaveTransaction = if (newTr.tag == null) {
                 newTr.copy(
@@ -162,7 +204,10 @@ class TransactionFeatureImpl(
         account: String
     ): Result<List<Transaction>> = session.authenticate(token) {
         success(transactionRepository.findAccountWithSheetByLabelAndUser(account, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
-            ?: return@authenticate notFound("Aucun compte ne correspond au label indiqué")
+            ?: return@authenticate domainNotFound(
+                "Aucun compte ne correspond au label indiqué",
+                "domain.transaction.retrieve.booklet_not_found"
+            )
         )
     }
 
@@ -171,7 +216,12 @@ class TransactionFeatureImpl(
         token: String
     ): Result<Transaction> = session.authenticate(token, roleUser) {
         logger.info("Request for a transaction with id $id")
-        val sheet = transactionRepository.findTransactionById(id) ?: return@authenticate failure(ResultState.TRANSACTION_NOT_FOUND, "La transaction $id n'existe pas")
+        val sheet = transactionRepository.findTransactionById(id)
+            ?: return@authenticate domainFailure(
+                ResultState.TRANSACTION_NOT_FOUND,
+                "La transaction $id n'existe pas",
+                "domain.transaction.find.not_found"
+            )
         success(sheet)
     }
 
@@ -179,16 +229,28 @@ class TransactionFeatureImpl(
         return session.authenticate(token) {
             infraTransactionManager.executeInTransaction(transactionRepository) {
                 val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
-                    ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Account $accountID n'existe pas")
+                    ?: return@executeInTransaction domainFailure(
+                        ResultState.BOOKLET_NOT_FOUND,
+                        "Account $accountID n'existe pas",
+                        "domain.transaction.delete.booklet_not_found"
+                    )
 
                 if (sheetIds.isEmpty()) {
-                    return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Aucune transaction à supprimer")
+                    return@executeInTransaction domainFailure(
+                        ResultState.TRANSACTION_ENTRY_ERROR,
+                        "Aucune transaction à supprimer",
+                        "domain.transaction.delete.empty_selection"
+                    )
                 }
 
                 // Ensure all requested ids belong to this booklet before mutating balances.
                 val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
                 if (transactionsToDelete.size != sheetIds.size) {
-                    return@executeInTransaction failure(ResultState.TRANSACTION_NOT_FOUND, "Certaines transactions à supprimer sont introuvables pour le compte $accountID")
+                    return@executeInTransaction domainFailure(
+                        ResultState.TRANSACTION_NOT_FOUND,
+                        "Certaines transactions à supprimer sont introuvables pour le compte $accountID",
+                        "domain.transaction.delete.some_not_found"
+                    )
                 }
 
                 transactionsToDelete.forEach { transaction ->
@@ -228,12 +290,24 @@ class TransactionFeatureImpl(
     ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
             val account = accountRepository.findAccountByIdWithTransactions(accountID)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Booklet $accountID not found")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Booklet $accountID not found",
+                    "domain.transaction.confirm.booklet_not_found"
+                )
             val transaction = account.findTransactionById(transactionId)
-                ?: return@executeInTransaction failure(ResultState.BOOKLET_NOT_FOUND, "Transaction not found")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Transaction not found",
+                    "domain.transaction.confirm.transaction_not_found"
+                )
 
             if (transaction.isNotPreview) {
-                return@executeInTransaction failure(ResultState.TRANSACTION_ENTRY_ERROR, "Transaction $transactionId is not preview")
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_ENTRY_ERROR,
+                    "Transaction $transactionId is not preview",
+                    "domain.transaction.confirm.not_preview"
+                )
             }
 
             account.removeTransactionById(transactionId)
@@ -246,7 +320,11 @@ class TransactionFeatureImpl(
             transaction.isPreview = false
 
             transactionRepository.save(accountID, transaction)
-                ?: return@executeInTransaction failure(ResultState.INFRASTRUCTURE_ERROR, "Could not confirm transaction $transactionId")
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.INFRASTRUCTURE_ERROR,
+                    "Could not confirm transaction $transactionId",
+                    "domain.transaction.confirm.save_failed"
+                )
 
             account.addTransaction(transaction)
             // Update only account balances/label to avoid JPA collection merge side-effects.

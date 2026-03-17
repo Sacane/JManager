@@ -3,6 +3,7 @@ import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
+import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({ layout: 'sidebar-layout' })
@@ -16,6 +17,7 @@ const { englishMonth, translate, monthFromNumber, numberFromMonth } = useDate()
 const tag = useTag()
 const { deleteTransaction, confirmPreviewTransaction, saveTransaction, editTransaction, findTransactionById } = useTransaction()
 const { downloadCsvExport } = useCsvImport()
+const { isScopeLoading, withLoading } = useLoading()
 
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 const actualSheets = ref<TransactionCreationDTO[]>([])
@@ -81,6 +83,29 @@ const selectedTransactionsAmountLabel = computed(() => {
 })
 
 const displayLabel = computed(() => capitalizeFirst(bookletData.label))
+const loadBookletScope = LOADING_SCOPES.accountDetails.load
+const bookTransactionScope = LOADING_SCOPES.accountDetails.createTransaction
+const editTransactionScope = LOADING_SCOPES.accountDetails.editTransaction
+const fetchTransactionScope = LOADING_SCOPES.accountDetails.fetchTransaction
+const deleteTransactionScope = LOADING_SCOPES.accountDetails.deleteTransaction
+const confirmPreviewScope = LOADING_SCOPES.accountDetails.confirmPreview
+const exportCsvScope = LOADING_SCOPES.accountDetails.exportCsv
+const isBookletLoading = computed(() => isScopeLoading(loadBookletScope))
+const isBookTransactionLoading = computed(() => isScopeLoading(bookTransactionScope))
+const isEditTransactionLoading = computed(() => isScopeLoading(editTransactionScope))
+const isFetchTransactionLoading = computed(() => isScopeLoading(fetchTransactionScope))
+const isDeleteTransactionLoading = computed(() => isScopeLoading(deleteTransactionScope))
+const isConfirmPreviewLoading = computed(() => isScopeLoading(confirmPreviewScope))
+const isExportCsvLoading = computed(() => isScopeLoading(exportCsvScope))
+const isAnyActionLoading = computed(() =>
+  isBookletLoading.value
+  || isBookTransactionLoading.value
+  || isEditTransactionLoading.value
+  || isFetchTransactionLoading.value
+  || isDeleteTransactionLoading.value
+  || isConfirmPreviewLoading.value
+  || isExportCsvLoading.value,
+)
 
 const filteredTransactions = computed(() => {
   if (transactionFilter.value === 'preview') {
@@ -122,27 +147,29 @@ function resetTransaction() {
 }
 
 async function loadBookletData() {
-  try {
-    const accountId = (route.params as any)?.id as string
-    const month = numberFromMonth(bookletData.month) as number
+  await withLoading(async () => {
+    try {
+      const accountId = (route.params as any)?.id as string
+      const month = numberFromMonth(bookletData.month) as number
 
-    const [balances, transactionsRes] = await Promise.all([
-      findBalancesByIdMonthAndYear(accountId, month, bookletData.year),
-      findTransactionsByIdMonthAndYear(accountId, month, bookletData.year),
-    ])
+      const [balances, transactionsRes] = await Promise.all([
+        findBalancesByIdMonthAndYear(accountId, month, bookletData.year),
+        findTransactionsByIdMonthAndYear(accountId, month, bookletData.year),
+      ])
 
-    bookletData.label = balances.label
-    bookletData.id = accountId
-    bookletData.realSold = Number.parseFloat(balances.realSold)
-    bookletData.previewSold = Number.parseFloat(balances.previewSold)
+      bookletData.label = balances.label
+      bookletData.id = accountId
+      bookletData.realSold = Number.parseFloat(balances.realSold)
+      bookletData.previewSold = Number.parseFloat(balances.previewSold)
 
-    actualSheets.value = transactionsRes.transactions
-      .map(asDisplayableTransaction)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  } catch (err) {
-    toast.errorAxios(err as AxiosError)
-    console.error(err)
-  }
+      actualSheets.value = transactionsRes.transactions
+        .map(asDisplayableTransaction)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
+      console.error(err)
+    }
+  }, loadBookletScope)
 }
 
 async function retrieveTags() {
@@ -175,93 +202,101 @@ function openPreviewCreationDialog() {
 }
 
 async function bookTransaction(transaction: TransactionCreationDTO) {
-  try {
-    const result = await saveTransaction(bookletData.label, transaction)
+  await withLoading(async () => {
+    try {
+      const result = await saveTransaction(bookletData.label, transaction)
 
-    const newTransaction = asDisplayableTransaction(result)
-    actualSheets.value.push(newTransaction)
-    actualSheets.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      const newTransaction = asDisplayableTransaction(result)
+      actualSheets.value.push(newTransaction)
+      actualSheets.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-    await loadBookletData()
+      await loadBookletData()
 
-    isCreationDialogVisible.value = false
-    resetTransaction()
-    toast.success('Transaction enregistrée avec succès')
-  } catch (err) {
-    toast.errorAxios(err as AxiosError)
-  }
+      isCreationDialogVisible.value = false
+      resetTransaction()
+      toast.success('Transaction enregistrée avec succès')
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
+    }
+  }, bookTransactionScope)
 }
 
 async function onEditTransaction(event: any) {
-  try {
-    if (!event?.data?.id) {
-      toast.warn('Cette transaction est virtuelle. Validez-la pour la créer avant modification.')
-      return
+  await withLoading(async () => {
+    try {
+      if (!event?.data?.id) {
+        toast.warn('Cette transaction est virtuelle. Validez-la pour la créer avant modification.')
+        return
+      }
+
+      const transaction = await findTransactionById(event.data.id)
+
+      currentTransaction.id = event.data.id
+      currentTransaction.label = transaction.label
+      currentTransaction.value = transaction.value
+      currentTransaction.date = new Date(transaction.date)
+      currentTransaction.tagDTO = transaction.tagDTO
+      currentTransaction.isPreview = transaction.isPreview
+      currentTransaction.isIncome = transaction.isIncome
+
+      isEditDialogVisible.value = true
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
     }
-
-    const transaction = await findTransactionById(event.data.id)
-
-    currentTransaction.id = event.data.id
-    currentTransaction.label = transaction.label
-    currentTransaction.value = transaction.value
-    currentTransaction.date = new Date(transaction.date)
-    currentTransaction.tagDTO = transaction.tagDTO
-    currentTransaction.isPreview = transaction.isPreview
-    currentTransaction.isIncome = transaction.isIncome
-
-    isEditDialogVisible.value = true
-  } catch (err) {
-    toast.errorAxios(err as AxiosError)
-  }
+  }, fetchTransactionScope)
 }
 
 async function applyEditTransaction(transaction: TransactionCreationDTO) {
-  try {
-    const result: TransactionResultDTO = await editTransaction(transaction, bookletData.id)
+  await withLoading(async () => {
+    try {
+      const result: TransactionResultDTO = await editTransaction(transaction, bookletData.id)
 
-    const index = actualSheets.value.findIndex(item => item?.id === result.id)
-    if (index !== -1) {
-      actualSheets.value[index] = asDisplayableTransaction(result)
+      const index = actualSheets.value.findIndex(item => item?.id === result.id)
+      if (index !== -1) {
+        actualSheets.value[index] = asDisplayableTransaction(result)
+      }
+
+      await loadBookletData()
+
+      isEditDialogVisible.value = false
+      resetTransaction()
+      toast.success('Transaction mise à jour avec succès')
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
     }
-
-    await loadBookletData()
-
-    isEditDialogVisible.value = false
-    resetTransaction()
-    toast.success('Transaction mise à jour avec succès')
-  } catch (err) {
-    toast.errorAxios(err as AxiosError)
-  }
+  }, editTransactionScope)
 }
 
 async function confirmDelete() {
-  try {
-    const idsToDelete = selectedSheets.value
-      .map(sheet => sheet.id)
-      .filter((id): id is string => id != null)
+  await withLoading(async () => {
+    try {
+      const idsToDelete = selectedSheets.value
+        .map(sheet => sheet.id)
+        .filter((id): id is string => id != null)
 
-    if (idsToDelete.length === 0) {
-      toast.warn('La sélection contient uniquement des transactions virtuelles non supprimables.')
+      if (idsToDelete.length === 0) {
+        toast.warn('La sélection contient uniquement des transactions virtuelles non supprimables.')
+        selectedSheets.value = []
+        return
+      }
+
+      const res = await deleteTransaction(
+        bookletData.id,
+        idsToDelete,
+      )
+
+      // Update list locally (no reload)
+      const deleted = new Set(res.deletedIds)
+      actualSheets.value = actualSheets.value.filter(t => !deleted.has(t.id as string))
       selectedSheets.value = []
-      return
+
+      await loadBookletData()
+
+      toast.success('Transactions supprimées avec succès')
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
     }
-
-    const res = await deleteTransaction(
-      bookletData.id,
-      idsToDelete,
-    )
-
-    // Update list locally (no reload)
-    const deleted = new Set(res.deletedIds)
-    actualSheets.value = actualSheets.value.filter(t => !deleted.has(t.id as string))
-    selectedSheets.value = []
-
-    await loadBookletData()
-
-    toast.success('Transactions supprimées avec succès')
-  } catch (err) {
-    toast.errorAxios(err as AxiosError)
-  }
+  }, deleteTransactionScope)
 }
 
 function confirmDeleteButton() {
@@ -281,49 +316,51 @@ function confirmDeleteButton() {
 async function confirmPreview() {
   const transaction = transactionToConfirm.value
   if (!transaction) return
-  try {
-    const finalAmount = newAmountForPreview.value ?? transaction.value
-    const baseDate = transaction.date instanceof Date ? transaction.date : new Date(transaction.date)
-    const finalDate = newDateForPreview.value ?? baseDate
+  await withLoading(async () => {
+    try {
+      const finalAmount = newAmountForPreview.value ?? transaction.value
+      const baseDate = transaction.date instanceof Date ? transaction.date : new Date(transaction.date)
+      const finalDate = newDateForPreview.value ?? baseDate
 
-    if (finalAmount == null) {
-      toast.warn('Veuillez renseigner un montant pour valider cette transaction.')
-      return
-    }
-
-    if (Number.isNaN(finalDate.getTime())) {
-      toast.warn('Veuillez renseigner une date valide pour valider cette transaction.')
-      return
-    }
-
-    if (transaction.id) {
-      const result = await confirmPreviewTransaction(bookletData.id, transaction.id, newAmountForPreview.value, finalDate)
-
-      const index = actualSheets.value.findIndex(item => item?.id === result.id)
-      if (index !== -1) {
-        actualSheets.value[index] = asDisplayableTransaction(result)
+      if (finalAmount == null) {
+        toast.warn('Veuillez renseigner un montant pour valider cette transaction.')
+        return
       }
-    } else {
-      await saveTransaction(bookletData.label, {
-        ...transaction,
-        id: null,
-        isPreview: false,
-        value: finalAmount,
-        date: finalDate,
-      })
+
+      if (Number.isNaN(finalDate.getTime())) {
+        toast.warn('Veuillez renseigner une date valide pour valider cette transaction.')
+        return
+      }
+
+      if (transaction.id) {
+        const result = await confirmPreviewTransaction(bookletData.id, transaction.id, newAmountForPreview.value, finalDate)
+
+        const index = actualSheets.value.findIndex(item => item?.id === result.id)
+        if (index !== -1) {
+          actualSheets.value[index] = asDisplayableTransaction(result)
+        }
+      } else {
+        await saveTransaction(bookletData.label, {
+          ...transaction,
+          id: null,
+          isPreview: false,
+          value: finalAmount,
+          date: finalDate,
+        })
+      }
+
+      await loadBookletData()
+
+      toast.success('Transaction validée avec succès')
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
+    } finally {
+      isConfirmPreviewDialogVisible.value = false
+      newAmountForPreview.value = null
+      newDateForPreview.value = null
+      transactionToConfirm.value = null
     }
-
-    await loadBookletData()
-
-    toast.success('Transaction validée avec succès')
-  } catch (err) {
-    toast.errorAxios(err as AxiosError)
-  } finally {
-    isConfirmPreviewDialogVisible.value = false
-    newAmountForPreview.value = null
-    newDateForPreview.value = null
-    transactionToConfirm.value = null
-  }
+  }, confirmPreviewScope)
 }
 
 function onConfirmPreview(transaction: TransactionCreationDTO) {
@@ -384,15 +421,17 @@ function openCsvExportDialog() {
     acceptLabel: 'Télécharger',
     rejectLabel: 'Annuler',
     accept: async () => {
-      try {
-        const transactionIds = nonPreviewTransactions.map(t => t.id).filter(id => id != null) as string[]
-        const filename = `transactions_${bookletData.label.replace(/\s+/g, '_')}_${bookletData.month}_${bookletData.year}.csv`
-        await downloadCsvExport(transactionIds, filename)
-        toast.success('Fichier CSV téléchargé avec succès !')
-      } catch (err) {
-        console.error('Erreur lors de l\'export CSV:', err)
-        toast.errorAxios(err as AxiosError)
-      }
+      await withLoading(async () => {
+        try {
+          const transactionIds = nonPreviewTransactions.map(t => t.id).filter(id => id != null) as string[]
+          const filename = `transactions_${bookletData.label.replace(/\s+/g, '_')}_${bookletData.month}_${bookletData.year}.csv`
+          await downloadCsvExport(transactionIds, filename)
+          toast.success('Fichier CSV téléchargé avec succès !')
+        } catch (err) {
+          console.error('Erreur lors de l\'export CSV:', err)
+          toast.errorAxios(err as AxiosError)
+        }
+      }, exportCsvScope)
     },
   })
 }
@@ -509,12 +548,13 @@ onUnmounted(() => {
       <div class="flex flex-col gap-3 mb-5 md:mb-4">
         <div class="flex flex-col gap-3 lg:(flex-row justify-between items-center gap-6)">
           <div class="flex flex-col gap-2 md:(flex-row gap-3 flex-wrap)">
-            <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" @click="openCreationDialog" />
+            <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" :disabled="isAnyActionLoading" @click="openCreationDialog" />
             <Button
               outlined
               class="w-full md:w-auto border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(245,158,11,0.15)] hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)]"
               icon="pi pi-clock"
               :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
+              :disabled="isAnyActionLoading"
               @click="openPreviewCreationDialog"
             />
           </div>
@@ -525,6 +565,7 @@ onUnmounted(() => {
               class="csv-action-btn w-full lg:w-auto border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
               icon="pi pi-file-import"
               :label="isMobile ? 'CSV' : 'Importer CSV'"
+              :disabled="isAnyActionLoading"
               @click="openCsvImportDialog"
             />
             <Button
@@ -532,6 +573,8 @@ onUnmounted(() => {
               class="csv-action-btn w-full lg:w-auto border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
               icon="pi pi-file-export"
               :label="isMobile ? 'Export' : 'Exporter CSV'"
+              :loading="isExportCsvLoading"
+              :disabled="isAnyActionLoading"
               @click="openCsvExportDialog"
             />
           </div>
@@ -549,9 +592,14 @@ onUnmounted(() => {
                 {{ selectedTransactionsAmountLabel }}
               </span>
             </div>
-            <Button class="w-full lg:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" @click="confirmDeleteButton" />
+            <Button class="w-full lg:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" :loading="isDeleteTransactionLoading" :disabled="isAnyActionLoading" @click="confirmDeleteButton" />
           </div>
         </Transition>
+      </div>
+
+      <div v-if="isBookletLoading" class="mb-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-3 text-[var(--text-secondary)]">
+        <i class="pi pi-spin pi-spinner" />
+        <span>Chargement des transactions...</span>
       </div>
 
       <div v-if="!isMobile" class="flex-1 bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
@@ -628,6 +676,7 @@ onUnmounted(() => {
                   text
                   rounded
                   size="small"
+                  :disabled="isAnyActionLoading"
                   title="Modifier la transaction"
                   @click="onEditTransaction({ data })"
                 />
@@ -639,6 +688,8 @@ onUnmounted(() => {
                   rounded
                   size="small"
                   severity="success"
+                  :loading="isConfirmPreviewLoading"
+                  :disabled="isAnyActionLoading"
                   title="Valider la transaction prévisionnel"
                   @click="onConfirmPreview(data)"
                 />
@@ -687,10 +738,11 @@ onUnmounted(() => {
                   text
                   rounded
                   size="small"
+                  :disabled="isAnyActionLoading"
                   title="Modifier"
                   @click.stop="onEditTransaction({ data: transaction })"
                 />
-                <Button v-if="transaction.isPreview" class="text-emerald-500 hover:bg-emerald-500/15" icon="pi pi-check" text rounded severity="success" size="small" title="Valider" @click.stop="onConfirmPreview(transaction)" />
+                <Button v-if="transaction.isPreview" class="text-emerald-500 hover:bg-emerald-500/15" icon="pi pi-check" text rounded severity="success" size="small" :loading="isConfirmPreviewLoading" :disabled="isAnyActionLoading" title="Valider" @click.stop="onConfirmPreview(transaction)" />
               </div>
             </div>
 
@@ -785,8 +837,8 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="flex justify-end gap-2 mt-6">
-          <Button type="button" label="Annuler" severity="secondary" @click="isConfirmPreviewDialogVisible = false" />
-          <Button type="button" label="Valider" @click="confirmPreview" />
+          <Button type="button" label="Annuler" severity="secondary" :disabled="isConfirmPreviewLoading" @click="isConfirmPreviewDialogVisible = false" />
+          <Button type="button" label="Valider" :loading="isConfirmPreviewLoading" :disabled="isConfirmPreviewLoading" @click="confirmPreview" />
         </div>
       </Dialog>
 
