@@ -43,6 +43,7 @@ onUnmounted(() => {
 })
 
 const isCreationDialogVisible = ref(false)
+const isCreateRegularTransactionLoading = ref(false)
 
 function openCreationRegularTransactionDialog() {
   isCreationDialogVisible.value = true
@@ -51,18 +52,20 @@ function cancelCreationDialog() {
   isCreationDialogVisible.value = false
 }
 
-function onSave(transaction: MonthlyTransactionCreationRequest) {
-  saveMonthlyTransaction(transaction)
-    .then((regularTransaction: RegularTransactionDTO) => {
-      console.warn('Transaction saved successfully', regularTransaction)
-      isCreationDialogVisible.value = false
-      transactions.value.push(regularTransaction)
-      jToast.success('La transaction mensuel a bien été généré')
-    })
-    .catch((err) => {
-      console.error(err)
-      jToast.errorAxios(err)
-    })
+async function onSave(transaction: MonthlyTransactionCreationRequest) {
+  isCreateRegularTransactionLoading.value = true
+  try {
+    const regularTransaction = await saveMonthlyTransaction(transaction)
+    console.warn('Transaction saved successfully', regularTransaction)
+    isCreationDialogVisible.value = false
+    transactions.value.push(regularTransaction)
+    jToast.success('La transaction mensuel a bien été généré')
+  } catch (err) {
+    console.error(err)
+    jToast.errorAxios(err)
+  } finally {
+    isCreateRegularTransactionLoading.value = false
+  }
 }
 
 const isEditDialogVisible = ref(false)
@@ -348,6 +351,7 @@ const transactionsCount = computed(() => transactions.value.length)
     <RegularTransactionCreationDialog
       :visible="isCreationDialogVisible"
       :booklets="booklets"
+      :loading="isCreateRegularTransactionLoading"
       @create-transaction="onSave"
       @cancel-creation="cancelCreationDialog"
     />

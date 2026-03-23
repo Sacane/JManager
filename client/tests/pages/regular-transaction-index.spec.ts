@@ -12,6 +12,16 @@ function flushPromises() {
   return new Promise(resolve => setTimeout(resolve, 0))
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
 function createRegularTransaction(id: string) {
   return {
     id,
@@ -69,7 +79,7 @@ function mountPage(options?: {
         Button: { template: '<button><slot /></button>' },
         Tag: { template: '<span><slot /></span>' },
         ConfirmDialog: true,
-        RegularTransactionCreationDialog: { name: 'RegularTransactionCreationDialog', template: '<div />' },
+        RegularTransactionCreationDialog: { name: 'RegularTransactionCreationDialog', props: ['loading'], template: '<div />' },
         RegularTransactionDialogCard: { name: 'RegularTransactionDialogCard', template: '<div />' },
       },
     },
@@ -126,6 +136,33 @@ describe('pages/regular-transaction/index', () => {
     await flushPromises()
 
     expect(mocks.errorAxios).toHaveBeenCalledWith(saveError)
+  })
+
+  it('toggles creation dialog loading while save is in progress', async () => {
+    const deferred = createDeferred<RegularTransactionDTO>()
+    const { wrapper, mocks } = mountPage()
+    mocks.saveMonthlyTransaction.mockReturnValueOnce(deferred.promise)
+
+    const payload = {
+      label: 'Netflix',
+      value: 10,
+      isIncome: false,
+      startDate: '2026-03-13',
+      tagDTO: { tagId: 'tag-1', label: 'Abonnement', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false },
+      frequencyProperty: { type: 'FOREVER', untilDate: undefined, times: undefined },
+      repeatDay: null,
+      bookletIds: [],
+    }
+
+    wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).vm.$emit('create-transaction', payload)
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).props('loading')).toBe(true)
+
+    deferred.resolve(createRegularTransaction('rt-late'))
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).props('loading')).toBe(false)
   })
 
   it('calls success toast when delete is confirmed and succeeds', async () => {

@@ -3,6 +3,7 @@
 ## 2026-03-23
 
 - Improved user action feedback by ensuring key operations display a short, consistent loading state, making the interface feel clearer and more reassuring during fast requests.
+- Improved creation dialogs so users now see a dedicated loading screen while a transaction is being saved, preventing accidental repeated actions and clarifying that the request is being processed.
 
 ## 2026-03-17
 

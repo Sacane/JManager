@@ -770,6 +770,7 @@ onUnmounted(() => {
 
       <TransactionCreationDialog
         :visible="isCreationDialogVisible"
+        :loading="isBookTransactionLoading"
         :digit-placeholder="currentTransaction.value"
         :transaction-placeholder="currentTransaction"
         :title="isCreationDialogVisible ? (currentTransaction.isPreview ? 'Nouvelle transaction prévisionnelle' : 'Nouvelle transaction') : ''"
@@ -779,6 +780,7 @@ onUnmounted(() => {
 
       <TransactionCreationDialog
         :visible="isEditDialogVisible"
+        :loading="isEditTransactionLoading"
         :title="isEditDialogVisible ? (currentTransaction.isPreview ? 'Modifier la transaction prévisionnelle' : 'Modifier la transaction') : ''"
         :digit-placeholder="currentTransaction.value"
         :transaction-placeholder="currentTransaction"
