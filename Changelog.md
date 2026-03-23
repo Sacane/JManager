@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-03-23
+
+- Improved user action feedback by ensuring key operations display a short, consistent loading state, making the interface feel clearer and more reassuring during fast requests.
+
 ## 2026-03-17
 
 - Started implementation of the unified error-handling refactor with a centralized backend error code catalog (`ErrorCatalog`) in the domain layer.

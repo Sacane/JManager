@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import useLoading from '../../composables/useLoading'
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('composables/useLoading', () => {
   it('tracks global loading state with default scope', () => {
@@ -53,5 +57,35 @@ describe('composables/useLoading', () => {
 
     expect(isScopeLoading('refresh')).toBe(false)
     expect(isLoading.value).toBe(false)
+  })
+
+  it('withLoading keeps spinner for a minimum duration by default', async () => {
+    vi.useFakeTimers()
+    const { isScopeLoading, withLoading } = useLoading()
+
+    const promise = withLoading(async () => 'ok', 'refresh')
+    expect(isScopeLoading('refresh')).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(299)
+    expect(isScopeLoading('refresh')).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await promise
+    expect(isScopeLoading('refresh')).toBe(false)
+  })
+
+  it('withLoading allows overriding minimum duration', async () => {
+    vi.useFakeTimers()
+    const { isScopeLoading, withLoading } = useLoading()
+
+    const promise = withLoading(async () => 'ok', 'quick', { minDurationMs: 120 })
+    expect(isScopeLoading('quick')).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(119)
+    expect(isScopeLoading('quick')).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await promise
+    expect(isScopeLoading('quick')).toBe(false)
   })
 })

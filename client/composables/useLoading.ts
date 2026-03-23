@@ -1,6 +1,7 @@
 export default function useLoading() {
   const pendingScopes = ref<Record<string, number>>({})
   const defaultScope = 'global'
+  const defaultMinDurationMs = 300
 
   const isLoading = computed(() => Object.values(pendingScopes.value).some(count => count > 0))
 
@@ -28,11 +29,26 @@ export default function useLoading() {
     pendingScopes.value[scope] = currentCount - 1
   }
 
-  async function withLoading<T>(action: () => Promise<T>, scope: string = defaultScope): Promise<T> {
+  async function ensureMinDuration(startedAt: number, minDurationMs: number) {
+    const elapsed = Date.now() - startedAt
+    const remaining = minDurationMs - elapsed
+    if (remaining > 0) {
+      await new Promise(resolve => setTimeout(resolve, remaining))
+    }
+  }
+
+  async function withLoading<T>(
+    action: () => Promise<T>,
+    scope: string = defaultScope,
+    options?: { minDurationMs?: number },
+  ): Promise<T> {
+    const startedAt = Date.now()
+    const minDurationMs = options?.minDurationMs ?? defaultMinDurationMs
     startLoading(scope)
     try {
       return await action()
     } finally {
+      await ensureMinDuration(startedAt, minDurationMs)
       stopLoading(scope)
     }
   }
