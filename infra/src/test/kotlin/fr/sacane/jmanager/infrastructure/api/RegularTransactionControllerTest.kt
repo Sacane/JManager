@@ -938,5 +938,91 @@ class RegularTransactionControllerTest(
             assertNull(generatedAfterDelete.first { it.label == "Generated A" }.regularTransactionId)
             assertNull(generatedAfterDelete.first { it.label == "Generated B" }.regularTransactionId)
         }
+
+        @Test
+        fun `Bulk delete regular transactions must send 200 and delete all selected`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+
+            val regularTransactions = listOf(
+                RegularTransaction(
+                    id = RegularTransactionId(""),
+                    label = "Bulk 1",
+                    amount = 100.00.toAmount(),
+                    isIncome = false,
+                    tag = tagDTO.toDomain(),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    startDate = LocalDate.now(),
+                    recurrenceRule = RecurrenceRule.Monthly(15)
+                ),
+                RegularTransaction(
+                    id = RegularTransactionId(""),
+                    label = "Bulk 2",
+                    amount = 80.00.toAmount(),
+                    isIncome = false,
+                    tag = tagDTO.toDomain(),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    startDate = LocalDate.now(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                regularTransactions.map {
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = booklet.id!!.toString(),
+                        regularTransaction = it
+                    )
+                }
+            )
+
+            val transactionIds = regularTransactionStateForTestAdapter.get().map { it.id.value }
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(mapOf("transactionIds" to transactionIds)))
+            } When {
+                delete("/api/transaction/regular")
+            } Then {
+                statusCode(200)
+                body("deletedIds", hasItems(*transactionIds.toTypedArray()))
+            }
+
+            val remaining = regularTransactionStateForTestAdapter.get()
+            assertTrue(remaining.isEmpty())
+        }
+
+        @Test
+        fun `Bulk delete regular transactions with empty selection must send 400`() {
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(mapOf("transactionIds" to emptyList<String>())))
+            } When {
+                delete("/api/transaction/regular")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Bulk delete regular transactions with unknown id must send 404`() {
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(mapOf("transactionIds" to listOf(UUID.randomUUID().toString()))))
+            } When {
+                delete("/api/transaction/regular")
+            } Then {
+                statusCode(404)
+            }
+        }
     }
 }

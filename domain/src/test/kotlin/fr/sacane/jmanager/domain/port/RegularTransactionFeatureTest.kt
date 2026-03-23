@@ -362,6 +362,94 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 assertEquals("domain.regular_transaction.delete.not_found", result.errorInfo?.key)
             }
         }
+
+        @Test
+        fun `should delete multiple regular transactions successfully`() {
+            launchWithConnectedUserInstance {
+                val first = RegularTransaction(
+                    label = "Transaction 1",
+                    amount = 10.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id}-bulk-1"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+                val second = RegularTransaction(
+                    label = "Transaction 2",
+                    amount = 20.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id}-bulk-2"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(2)
+                )
+
+                regularTransactionState.init(
+                    listOf(
+                        UserRegularTransaction(user.id, first),
+                        UserRegularTransaction(user.id, second)
+                    )
+                )
+
+                val result = regularTransactionFeature.deleteRegularTransactions(
+                    tokenValue,
+                    listOf(first.id.value, second.id.value)
+                )
+
+                result.assertSuccess()
+                result.onSuccess { deletedIds ->
+                    assertEquals(2, deletedIds.size)
+                    assertTrue(deletedIds.contains(first.id.value))
+                    assertTrue(deletedIds.contains(second.id.value))
+                }
+
+                val remaining = regularTransactionFeature.getAllRegularTransactions(tokenValue)
+                remaining.assertSuccess()
+                remaining.onSuccess { all ->
+                    assertTrue(all.none { it.id == first.id })
+                    assertTrue(all.none { it.id == second.id })
+                }
+            }
+        }
+
+        @Test
+        fun `should fail bulk deletion when selection is empty`() {
+            launchWithConnectedUserInstance {
+                val result = regularTransactionFeature.deleteRegularTransactions(tokenValue, emptyList())
+
+                result.assertFailure(ResultState.TRANSACTION_ENTRY_ERROR)
+                assertEquals("domain.regular_transaction.delete.bulk.empty_selection", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `should fail bulk deletion when one transaction is missing`() {
+            launchWithConnectedUserInstance {
+                val first = RegularTransaction(
+                    label = "Transaction 1",
+                    amount = 10.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id}-bulk-missing-1"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, first)))
+
+                val result = regularTransactionFeature.deleteRegularTransactions(
+                    tokenValue,
+                    listOf(first.id.value, "missing-id")
+                )
+
+                result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
+                assertEquals("domain.regular_transaction.delete.bulk.not_found", result.errorInfo?.key)
+
+                val after = regularTransactionFeature.getRegularTransactionById(tokenValue, first.id.value)
+                after.assertSuccess()
+            }
+        }
     }
 
     @Nested

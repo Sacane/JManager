@@ -196,6 +196,19 @@ class TransactionController(
                 logger.info("Regular transaction deleted successfully")
             }
     }
+
+    @DeleteMapping("/regular")
+    fun deleteRegularTransactions(@RequestBody request: RegularTransactionsDeletionRequest): ResponseEntity<RegularTransactionsDeletionResponse> {
+        logger.info("Bulk deleting ${request.transactionIds.size} regular transaction(s)")
+        return regularTransactionFeature.deleteRegularTransactions(currentUser.token, request.transactionIds)
+            .map { deletedIds ->
+                RegularTransactionsDeletionResponse(deletedIds)
+            }
+            .toHttpResponse()
+            .also {
+                logger.info("Bulk regular transactions deletion finished")
+            }
+    }
 }
 
 fun TransactionResumeResult.toDTO(): TransactionResponse {

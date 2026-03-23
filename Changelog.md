@@ -3,10 +3,12 @@
 ## 2026-03-23
 
 - Completed regular transaction deletion cleanup across backend layers: deleting a regular transaction now also removes all related tracker rows and cleanly detaches linked booklets before deletion.
+- Added bulk regular transaction deletion support (`DELETE /api/transaction/regular`) with atomic validation: empty selection is rejected, missing IDs fail the operation, and valid selections delete all targeted regular transactions with tracker/link cleanup.
 - Preserved historical generated sheets when deleting a regular transaction, relying on existing database referential behavior (`sheet.regular_transaction_id` set to `NULL`) to keep accounting history intact.
 - Extended regular transaction API payloads to expose linked booklet identifiers and propagated these identifiers to frontend types and UI state.
-- Improved regular transaction edit/delete UX: edit flow now preserves existing booklet links, deletion confirmation now warns when linked booklets are impacted, and the dialog now displays linked booklets.
+- Improved regular transaction edit/delete UX: edit flow now preserves existing booklet links, single deletion confirmation warns when linked booklets are impacted, bulk selection deletion is available from the list view, and the dialog now displays linked booklets.
 - Added and updated domain/infra/frontend tests, including an end-to-end API scenario for deleting a regular transaction linked to multiple booklets while verifying tracker cleanup, link cleanup, and generated sheet preservation.
+- Added domain, API integration, and frontend page tests for bulk regular transaction deletion flows (success + error cases).
 - Executed full test phase successfully: Gradle backend suites (`./gradlew test`) and frontend Vitest suites (`pnpm test`) are green.
 
 - Improved user action feedback by ensuring key operations display a short, consistent loading state, making the interface feel clearer and more reassuring during fast requests.

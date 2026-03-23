@@ -138,6 +138,16 @@ data class UpdateRegularTransactionRequest(
 )
 
 @Serializable
+data class RegularTransactionsDeletionRequest(
+    val transactionIds: List<String>
+)
+
+@Serializable
+data class RegularTransactionsDeletionResponse(
+    val deletedIds: List<String>
+)
+
+@Serializable
 data class RecurrenceRuleDTO(
     val type: String,
     val value: Int? = null

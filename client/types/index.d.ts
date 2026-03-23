@@ -110,6 +110,10 @@ declare global {
     bookletIds: string[]
     recurrenceRule: RecurrenceRuleDTO
   }
+
+  interface RegularTransactionsDeletionRequest {
+    transactionIds: string[]
+  }
   interface BookletReport {
     label: string
     transactions: TransactionResultDTO[]
