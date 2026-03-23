@@ -164,4 +164,34 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
 
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false])
   })
+
+  it('displays linked booklet labels when booklet ids are provided', async () => {
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([]),
+    }))
+
+    const wrapper = mount(RegularTransactionDialogCard, {
+      props: {
+        modelValue: true,
+        transaction: createTransaction({ bookletIds: ['booklet-1'] }),
+        booklets: [{ id: 'booklet-1', amount: 200, labelAccount: 'Compte principal', currency: 'EUR' }],
+      },
+      global: {
+        stubs: {
+          Dialog: DialogStub,
+          InputText: InputTextStub,
+          InputNumber: true,
+          RadioButton: true,
+          Tag: true,
+          Select: true,
+          DatePicker: true,
+          ProgressSpinner: true,
+          Button: ButtonStub,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Livrets associés')
+    expect(wrapper.text()).toContain('Compte principal')
+  })
 })

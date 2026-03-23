@@ -122,5 +122,17 @@ class RegularTransactionTrackerRepositoryAdapterTest {
 
         Mockito.verify(jpa).deleteAllByBookletId(bookletId)
     }
+
+    @Test
+    fun `deleteTrackerByRegularTransactionId delegates to jpa repository`() {
+        val jpa = Mockito.mock(JpaRegularTransactionTrackerRepository::class.java)
+        val adapter = RegularTransactionTrackerRepositoryAdapter(jpa)
+
+        val regularId = RegularTransactionId("rt-delete")
+
+        adapter.deleteTrackerByRegularTransactionId(regularId)
+
+        Mockito.verify(jpa).deleteAllByRegularTransactionId(regularId.value)
+    }
 }
 

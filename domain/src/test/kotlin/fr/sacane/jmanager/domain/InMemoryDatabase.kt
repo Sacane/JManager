@@ -97,6 +97,12 @@ class InMemoryDatabase {
         trackers.remove(bookletId)
     }
 
+    fun deleteTrackerByRegularTransactionId(regularTransactionId: RegularTransactionId) {
+        trackers.forEach { (_, trackerList) ->
+            trackerList.removeIf { it.regularTransactionId == regularTransactionId }
+        }
+    }
+
     fun addAccount(ownerId: UserId, booklet: Booklet) {
         if(userByBooklet[ownerId] == null) {
             userByBooklet[ownerId] = mutableListOf()

@@ -5,16 +5,20 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTrackerStateRepository
+import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyDTO
 import fr.sacane.jmanager.infrastructure.api.transaction.FrequencyPropertyType
 import fr.sacane.jmanager.infrastructure.api.transaction.MonthlyRegularTransactionRequest
@@ -26,6 +30,9 @@ import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.hasItems
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -43,6 +50,7 @@ class RegularTransactionControllerTest(
     @LocalServerPort val port: Int,
     @Autowired private val regularTransactionStateForTestAdapter: RegularTransactionStateForTestAdapter,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
+    @Autowired private val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val regularTrackerStateRepository: RegularTrackerStateRepository,
     @Autowired var objectMapper: ObjectMapper,
     @Autowired val tokenGenerator: TokenGenerator,
@@ -60,6 +68,7 @@ class RegularTransactionControllerTest(
 
     @AfterEach
     fun clear() {
+        transactionStateTestAdapter.clear()
         regularTransactionStateForTestAdapter.clear()
         accountStateTestAdapter.clear()
         regularTrackerStateRepository.clear()
@@ -789,7 +798,8 @@ class RegularTransactionControllerTest(
             val allTransactions = regularTransactionStateForTestAdapter.get()
             assertEquals(2, allTransactions.size)
 
-            val firstTransactionId = allTransactions.first().id.value
+            val transactionToDelete = allTransactions.first()
+            val firstTransactionId = transactionToDelete.id.value
 
             Given {
                 port(port)
@@ -802,7 +812,131 @@ class RegularTransactionControllerTest(
 
             val remainingTransactions = regularTransactionStateForTestAdapter.get()
             assertEquals(1, remainingTransactions.size)
-            assertEquals("Transaction 2", remainingTransactions.first().label)
+            assertTrue(remainingTransactions.first().id.value != transactionToDelete.id.value)
+        }
+
+        @Test
+        fun `Delete regular transaction linked to multiple booklets must cleanup links and trackers while keeping generated sheets`() {
+            accountStateTestAdapter.init(
+                listOf(
+                    Booklet(200.toAmount(), "booklet-a", owner = user),
+                    Booklet(300.toAmount(), "booklet-b", owner = user)
+                )
+            )
+            val booklets = accountStateTestAdapter.get().toList()
+            val bookletA = booklets.first { it.label == "booklet-a" }
+            val bookletB = booklets.first { it.label == "booklet-b" }
+
+            val request = MonthlyRegularTransactionRequest(
+                label = "Subscription Multi",
+                value = BigDecimal(49.99),
+                startDate = LocalDate.now(),
+                isIncome = false,
+                tagDTO = tagDTO,
+                frequencyProperty = FrequencyPropertyDTO(
+                    type = FrequencyPropertyType.FOREVER,
+                    untilDate = null,
+                    times = null
+                ),
+                repeatDay = 10,
+                bookletIds = listOf(bookletA.id!!.toString(), bookletB.id!!.toString())
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(request))
+            } When {
+                post("/api/transaction/monthly")
+            } Then {
+                statusCode(200)
+            }
+
+            val createdRegular = regularTransactionStateForTestAdapter.get().first { it.label == "Subscription Multi" }
+
+            regularTrackerStateRepository.init(
+                listOf(
+                    RegularTransactionTracker(
+                        regularTransactionId = createdRegular.id,
+                        bookletId = bookletA.id!!,
+                        lastGeneratedDate = LocalDate.now().minusMonths(1),
+                        numberOfGeneratedTransaction = 2
+                    ),
+                    RegularTransactionTracker(
+                        regularTransactionId = createdRegular.id,
+                        bookletId = bookletB.id!!,
+                        lastGeneratedDate = LocalDate.now().minusMonths(1),
+                        numberOfGeneratedTransaction = 1
+                    )
+                )
+            )
+
+            transactionStateTestAdapter.init(
+                listOf(
+                    AccountTransaction(
+                        accountOwnerId = user!!.id,
+                        accountName = bookletA.label,
+                        token = token,
+                        transactions = listOf(
+                            Transaction(
+                                id = null,
+                                label = "Generated A",
+                                date = LocalDate.now(),
+                                amount = 49.99.toAmount(),
+                                isIncome = false,
+                                tag = tagRepository.defaultTag(),
+                                regularTransactionId = createdRegular.id
+                            )
+                        )
+                    ),
+                    AccountTransaction(
+                        accountOwnerId = user!!.id,
+                        accountName = bookletB.label,
+                        token = token,
+                        transactions = listOf(
+                            Transaction(
+                                id = null,
+                                label = "Generated B",
+                                date = LocalDate.now(),
+                                amount = 49.99.toAmount(),
+                                isIncome = false,
+                                tag = tagRepository.defaultTag(),
+                                regularTransactionId = createdRegular.id
+                            )
+                        )
+                    )
+                )
+            )
+
+            val createdBeforeDelete = transactionStateTestAdapter.get()
+                .filter { it.label == "Generated A" || it.label == "Generated B" }
+            assertEquals(2, createdBeforeDelete.size)
+            assertTrue(createdBeforeDelete.all { it.regularTransactionId?.value == createdRegular.id.value })
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/transaction/regular/{id}", mapOf("id" to createdRegular.id.value))
+            } Then {
+                statusCode(200)
+            }
+
+            val remainingRegulars = regularTransactionStateForTestAdapter.get()
+            assertTrue(remainingRegulars.none { it.id.value == createdRegular.id.value })
+
+            val remainingTrackers = regularTrackerStateRepository.get()
+            assertTrue(remainingTrackers.none { it.regularTransactionId.value == createdRegular.id.value })
+
+            val generatedAfterDelete = transactionStateTestAdapter.get()
+                .filter { it.label == "Generated A" || it.label == "Generated B" }
+            assertEquals(2, generatedAfterDelete.size)
+            assertNotNull(generatedAfterDelete.find { it.label == "Generated A" })
+            assertNotNull(generatedAfterDelete.find { it.label == "Generated B" })
+            assertTrue(generatedAfterDelete.all { it.regularTransactionId == null })
+            assertNull(generatedAfterDelete.first { it.label == "Generated A" }.regularTransactionId)
+            assertNull(generatedAfterDelete.first { it.label == "Generated B" }.regularTransactionId)
         }
     }
 }

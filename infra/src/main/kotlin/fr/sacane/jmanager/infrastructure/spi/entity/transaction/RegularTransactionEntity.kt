@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toSimpleModel
 import fr.sacane.jmanager.infrastructure.spi.entity.BookletResource
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
@@ -62,7 +63,8 @@ data class RegularTransactionEntity(
             startDate = this.startDate,
             tag = this.tag?.toDomain() ?: this.personalTag?.toDomain(),
             frequencyProperty = frequencyProperty!!.toDomain(),
-            recurrenceRule = recurrenceRule!!.toDomain()
+            recurrenceRule = recurrenceRule!!.toDomain(),
+            associatedBooklets = this.accounts.map { it.toSimpleModel() }
         )
     }
 

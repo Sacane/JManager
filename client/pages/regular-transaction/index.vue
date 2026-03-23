@@ -102,7 +102,7 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
       isIncome: updatedTransaction.isIncome,
       tagDTO: updatedTransaction.tagDTO,
       frequencyProperty: updatedTransaction.frequencyProperty,
-      bookletIds: [],
+      bookletIds: updatedTransaction.bookletIds ?? [],
       recurrenceRule: {
         type: updatedTransaction.regularity,
         value: updatedTransaction.regularity === 'MONTHLY' ? 1 : undefined,
@@ -125,8 +125,14 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
 }
 
 function handleDelete(transactionId: string) {
+  const transaction = transactions.value.find(t => t.id === transactionId)
+  const bookletCount = transaction?.bookletIds?.length ?? 0
+  const deletionMessage = bookletCount > 0
+    ? `Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.\n\nCette transaction est liée à ${bookletCount} livret(s). Les liens avec ces livrets seront également supprimés.`
+    : 'Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.'
+
   confirm.require({
-    message: 'Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.',
+    message: deletionMessage,
     header: '⚠️ Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     rejectLabel: 'Annuler',
@@ -359,6 +365,7 @@ const transactionsCount = computed(() => transactions.value.length)
     <RegularTransactionDialogCard
       v-model="isEditDialogVisible"
       :transaction="selectedTransaction"
+      :booklets="booklets"
       :loading="loadingTransaction"
       @save="handleEditSave"
       @delete="handleDelete"

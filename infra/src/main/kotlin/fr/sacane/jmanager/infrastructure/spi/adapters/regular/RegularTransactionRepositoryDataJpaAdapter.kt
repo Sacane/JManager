@@ -4,9 +4,11 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
+import jakarta.transaction.Transactional
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -16,7 +18,8 @@ class RegularTransactionRepositoryDataJpaAdapter(
     private val userPostgresRepository: UserPostgresRepository,
     private val regularTransactionOperator: RegularTransactionOperator,
     private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
-    private val bookletJpaRepository: BookletJpaRepository
+    private val bookletJpaRepository: BookletJpaRepository,
+    private val regularTransactionTrackerRepository: RegularTransactionTrackerRepository
 ): RegularTransactionRepository {
     companion object {
         private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionRepositoryDataJpaAdapter::class.java)
@@ -38,12 +41,12 @@ class RegularTransactionRepositoryDataJpaAdapter(
         transactionId: RegularTransactionId
     ): RegularTransaction? {
         val id = transactionId.value.asUUID()
-        return regularTransactionRepository.findByIdOrNull(id)?.toDomain()
+        return regularTransactionRepository.findByIdWithAccounts(id)?.toDomain()
     }
 
     override fun getAllRegularTransactions(userId: UserId): List<RegularTransaction> {
-        return regularTransactionRepository.findAll()
-            .filter { it.owner?.idUser == userId.value }
+        val ownerId = userId.value ?: return emptyList()
+        return regularTransactionRepository.findAllByOwnerIdWithAccounts(ownerId)
             .map { it.toDomain() }
     }
 
@@ -66,6 +69,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
         return regularTransactionOperator.update(existing, regularTransaction).toDomain()
     }
 
+    @Transactional
     override fun deleteRegularTransaction(
         userId: UserId,
         transactionId: RegularTransactionId
@@ -75,6 +79,14 @@ class RegularTransactionRepositoryDataJpaAdapter(
 
         if (existing.owner?.idUser != userId.value) {
             return false
+        }
+
+        // Remove generation trackers first to avoid orphan tracker state.
+        regularTransactionTrackerRepository.deleteTrackerByRegularTransactionId(transactionId)
+
+        // Explicitly detach all booklets before delete to keep the many-to-many link table clean.
+        existing.accounts.toList().forEach { booklet ->
+            existing.removeBooklet(booklet)
         }
 
         regularTransactionRepository.delete(existing)

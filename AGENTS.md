@@ -38,3 +38,4 @@ Keep these scopes clearly separated — do not mix concerns across layers in a s
 
 - Always update `Changelog.md` whenever a feature or fix is implemented.
 - Entries must clearly describe what changed and why.
+- During a plan, you must update changelog only when I mention that the plan is fully complete and the time i want to push. You must do an effort to synthesis the maximum you can.

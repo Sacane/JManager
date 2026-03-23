@@ -31,6 +31,10 @@ class InMemoryRegularTrackerRepository(
         inMemoryDatabase.deleteTrackerByBookletId(bookletId)
     }
 
+    override fun deleteTrackerByRegularTransactionId(regularTransactionId: RegularTransactionId) {
+        inMemoryDatabase.deleteTrackerByRegularTransactionId(regularTransactionId)
+    }
+
     override fun markMonthAsExcluded(
         regularTransactionId: RegularTransactionId,
         bookletId: UUID,

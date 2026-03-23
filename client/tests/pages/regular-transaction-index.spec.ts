@@ -37,6 +37,7 @@ function createRegularTransaction(id: string) {
       colorDTO: { red: 100, green: 120, blue: 240 },
       isDefault: false,
     },
+    bookletIds: ['booklet-1'],
   }
 }
 
@@ -89,6 +90,7 @@ function mountPage(options?: {
     wrapper,
     mocks: {
       saveMonthlyTransaction,
+      updateRegularTransaction,
       deleteRegularTransaction,
       success,
       errorAxios,
@@ -185,5 +187,29 @@ describe('pages/regular-transaction/index', () => {
     await confirmConfig.accept()
 
     expect(mocks.errorAxios).toHaveBeenCalledWith(deleteError)
+  })
+
+  it('adds linked booklet count in delete confirmation message', async () => {
+    const { wrapper, mocks } = mountPage()
+    await flushPromises()
+
+    wrapper.findComponent({ name: 'RegularTransactionDialogCard' }).vm.$emit('delete', 'rt-1')
+    const confirmConfig = mocks.require.mock.calls[0]?.[0]
+
+    expect(confirmConfig.message).toContain('liée à 1 livret(s)')
+  })
+
+  it('preserves booklet ids when submitting edit', async () => {
+    const { wrapper, mocks } = mountPage()
+
+    wrapper.findComponent({ name: 'RegularTransactionDialogCard' }).vm.$emit('save', createRegularTransaction('rt-1'))
+    await flushPromises()
+
+    expect(mocks.updateRegularTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookletIds: ['booklet-1'],
+      }),
+    )
+    expect(mocks.success).toHaveBeenCalledWith('Transaction régulière mise à jour avec succès')
   })
 })

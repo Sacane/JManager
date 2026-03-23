@@ -12,6 +12,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.regular.RegularTransactionRepositoryDataJpaAdapter
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.JpaRegularTransactionTrackerRepository
+import fr.sacane.jmanager.infrastructure.spi.entity.transaction.RegularTransactionTrackerEntity
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -30,6 +32,7 @@ import java.util.*
 class RegularTransactionRepositoryDataJpaAdapterTest(
     @Autowired private val regularTransactionAdapter: RegularTransactionRepositoryDataJpaAdapter,
     @Autowired private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
+    @Autowired private val trackerRepository: JpaRegularTransactionTrackerRepository,
     @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
     @Autowired private val tagRepository: TagRepository
 ) : AuthenticatedUserTest() {
@@ -51,6 +54,7 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
 
     @AfterEach
     fun cleanUp() {
+        trackerRepository.deleteAll()
         regularTransactionRepository.deleteAll()
         accountStateTestAdapter.clear()
     }
@@ -452,6 +456,44 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
 
             val getResult = regularTransactionAdapter.getRegularTransactionById(user!!.id, saved.id)
             assertNotNull(getResult)
+        }
+
+        @Test
+        fun `should delete trackers linked to deleted regular transaction`() {
+            val transaction = RegularTransaction(
+                label = "Subscription with tracker",
+                amount = Amount(1599L),
+                isIncome = false,
+                tag = defaultTag,
+                id = RegularTransactionId(UUID.randomUUID().toString()),
+                startDate = LocalDate.of(2024, 1, 1),
+                frequencyProperty = FrequencyProperty.Forever(),
+                recurrenceRule = RecurrenceRule.Monthly(1)
+            )
+
+            val saved = regularTransactionAdapter.saveRegularTransaction(
+                user!!.id,
+                transaction,
+                listOf(booklet.id!!)
+            )
+
+            trackerRepository.save(
+                RegularTransactionTrackerEntity(
+                    regularTransactionId = saved.id.value,
+                    bookletId = booklet.id!!,
+                    lastGeneratedDate = LocalDate.of(2024, 2, 1),
+                    numberOfGeneratedTransaction = 2
+                )
+            )
+
+            val trackersBeforeDelete = trackerRepository.findAllByBookletId(booklet.id!!)
+            assertEquals(1, trackersBeforeDelete.size)
+
+            val result = regularTransactionAdapter.deleteRegularTransaction(user!!.id, saved.id)
+            assertTrue(result)
+
+            val trackersAfterDelete = trackerRepository.findAllByBookletId(booklet.id!!)
+            assertTrue(trackersAfterDelete.none { it.regularTransactionId == saved.id.value })
         }
     }
 }

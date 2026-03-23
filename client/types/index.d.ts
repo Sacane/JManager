@@ -75,6 +75,7 @@ declare global {
     regularity: string
     tagDTO: TagDTO
     frequencyProperty: FrequencyPropertyDTO
+    bookletIds?: string[]
   }
 
   interface FrequencyPropertyDTO {

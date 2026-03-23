@@ -75,6 +75,7 @@ data class RegularTransactionDTO(
     val regularity: String,
     val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO,
+    val bookletIds: List<String> = emptyList(),
 )
 
 @Serializable

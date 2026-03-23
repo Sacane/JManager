@@ -149,14 +149,16 @@ class RegularTransactionFeatureImpl(
         token: String,
         transactionId: String
     ): Result<Boolean> = session.authenticate(token) { userId ->
-        val deleted = regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(transactionId))
-        if (!deleted) {
-            return@authenticate domainFailure(
-                ResultState.TRANSACTION_NOT_FOUND,
-                "La transaction $transactionId n'existe pas",
-                "domain.regular_transaction.delete.not_found"
-            )
+        return@authenticate unitOfWork.executeInTransaction(transactionId) {
+            val deleted = regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(it))
+            if (!deleted) {
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_NOT_FOUND,
+                    "La transaction $transactionId n'existe pas",
+                    "domain.regular_transaction.delete.not_found"
+                )
+            }
+            return@executeInTransaction success(true)
         }
-        return@authenticate success(true)
     }
 }

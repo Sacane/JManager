@@ -5,6 +5,7 @@ import { getTagStyle } from '~/utils/util'
 interface Props {
   modelValue: boolean
   transaction: RegularTransactionDTO | null
+  booklets?: OnlyBookletInfo[]
   loading?: boolean
 }
 
@@ -50,6 +51,7 @@ const formData = ref<RegularTransactionDTO>({
     },
     isDefault: false,
   },
+  bookletIds: [],
 })
 
 const originalData = ref<string>('')
@@ -87,6 +89,15 @@ const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== originalData.value
 })
 
+const linkedBooklets = computed(() => {
+  const ids = formData.value.bookletIds ?? []
+  if (!ids.length) return []
+  return ids.map((id) => {
+    const booklet = props.booklets?.find(b => String(b.id) === id)
+    return booklet?.labelAccount ?? id
+  })
+})
+
 watch(() => props.transaction, (newTransaction) => {
   if (newTransaction) {
     formData.value = {
@@ -111,6 +122,7 @@ watch(() => props.transaction, (newTransaction) => {
         },
         isDefault: false,
       },
+      bookletIds: newTransaction.bookletIds || [],
     }
     originalData.value = JSON.stringify(formData.value)
   }
@@ -355,6 +367,25 @@ function handleDelete() {
                   />
                 </template>
               </Select>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card" v-if="linkedBooklets.length">
+          <div class="section-header">
+            <i class="pi pi-wallet" />
+            <h3>Livrets associés</h3>
+          </div>
+          <div class="section-content">
+            <div class="flex flex-col gap-2">
+              <div
+                v-for="bookletLabel in linkedBooklets"
+                :key="bookletLabel"
+                class="flex items-center gap-2"
+              >
+                <i class="pi pi-check-circle text-green-500" />
+                <span>{{ bookletLabel }}</span>
+              </div>
             </div>
           </div>
         </div>
