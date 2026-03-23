@@ -113,6 +113,10 @@ class FileImportExportFeatureImpl(
     private val fileValidator = CsvFileValidator()
     private val csvExporter = CsvTransactionExporter()
 
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return failure(state, DomainError(state.code, key, detail))
+    }
+
     override fun validateCsvFile(
         token: String,
         bookletId: UUID,
@@ -143,7 +147,11 @@ class FileImportExportFeatureImpl(
                 }
             } catch (e: Exception) {
                 logger.severe("Error during CSV validation: ${e.message}")
-                failure(ResultState.INTERNAL_SERVER_ERROR, "Error during validation: ${e.message}")
+                domainFailure(
+                    ResultState.INTERNAL_SERVER_ERROR,
+                    "Error during validation: ${e.message}",
+                    "domain.file.validation.internal_error"
+                )
             }
         }
     }
@@ -173,16 +181,29 @@ class FileImportExportFeatureImpl(
                 bookletFindResult.flatMap { processImport(it, rows, userTags, skipValidation, month, year) }
             } catch (e: Exception) {
                 logger.severe("Error during CSV import: ${e.message}")
-                failure(ResultState.INTERNAL_SERVER_ERROR, "Error during import: ${e.message}")
+                domainFailure(
+                    ResultState.INTERNAL_SERVER_ERROR,
+                    "Error during import: ${e.message}",
+                    "domain.file.import.internal_error"
+                )
             }
         }
     }
 
     private fun findBookletAndCheckOwner(userId: UserId, bookletId: UUID): Result<Booklet> {
         val booklet =
-            bookletRepository.findAccountByIdWithTransactions(bookletId) ?: return notFound("Booklet not found")
+            bookletRepository.findAccountByIdWithTransactions(bookletId)
+                ?: return domainFailure(
+                    ResultState.NOT_FOUND,
+                    "Booklet not found",
+                    "domain.file.booklet.not_found"
+                )
         if (booklet.owner?.id?.value != userId.value) {
-            return failure(ResultState.FORBIDDEN, "You are not the owner of this booklet")
+            return domainFailure(
+                ResultState.FORBIDDEN,
+                "You are not the owner of this booklet",
+                "domain.file.booklet.forbidden_owner"
+            )
         }
         return success(booklet)
     }
@@ -191,7 +212,11 @@ class FileImportExportFeatureImpl(
         val validationResult = fileValidator.validate(rows, userTags, month, year, csvSeparator)
 
         if (validationResult.isFailure()) {
-            return failure(validationResult.status, validationResult.message)
+            return domainFailure(
+                validationResult.status,
+                validationResult.message,
+                validationResult.errorInfo?.key ?: "domain.file.import.validation_failed"
+            )
         }
 
         val hasErrors = validationResult.mapNullable { report -> report?.hasErrors ?: false }
@@ -200,10 +225,14 @@ class FileImportExportFeatureImpl(
                 report?.errors?.joinToString("; ") { "Line ${it.lineNumber}: ${it.message}" }
                     ?: "Unknown validation errors"
             }
-            return invalid("CSV validation failed: $errorMessages")
+            return domainFailure(
+                ResultState.INVALID,
+                "CSV validation failed: $errorMessages",
+                "domain.file.import.validation_errors"
+            )
         }
 
-        return failure(validationResult.status, validationResult.message)
+        return validationResult.map { CsvImportResult(0, emptyList(), emptyList()) }
     }
 
     private fun processImport(
@@ -297,7 +326,11 @@ class FileImportExportFeatureImpl(
                 success(csvContent)
             } catch (e: Exception) {
                 logger.severe("Error during CSV export: ${e.message}")
-                failure(ResultState.INTERNAL_SERVER_ERROR, "Error during export: ${e.message}")
+                domainFailure(
+                    ResultState.INTERNAL_SERVER_ERROR,
+                    "Error during export: ${e.message}",
+                    "domain.file.export.internal_error"
+                )
             }
         }
     }

@@ -88,11 +88,24 @@ class TagFeatureImpl(
     private val tagRepository: TagRepository,
     private val session: SessionManager
 ): TagFeature {
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return failure(state, DomainError(state.code, key, detail))
+    }
+
     override fun addTag(token: String, tag: Tag): Result<Tag> = session.authenticate(token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
-            return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Label '${tag.label}' is already taken by the user ${it.value}")
+            return@authenticate domainFailure(
+                ResultState.TAG_LABEL_ALREADY_TAKEN,
+                "Label '${tag.label}' is already taken by the user ${it.value}",
+                "domain.tag.add.label_already_taken"
+            )
         }
-        val save = tagRepository.save(it, tag) ?: return@authenticate notFound("User has not been found")
+        val save = tagRepository.save(it, tag)
+            ?: return@authenticate domainFailure(
+                ResultState.NOT_FOUND,
+                "User has not been found",
+                "domain.tag.add.user_not_found"
+            )
         success(save)
     }
 
@@ -109,7 +122,11 @@ class TagFeatureImpl(
 
     override fun deleteTag(token: String, tagId: UUID): Result<Nothing> = session.authenticate(token){
         if(!tagRepository.deleteById(tagId)) {
-            return@authenticate notFound("Tag with id $tagId has not been found")
+            return@authenticate domainFailure(
+                ResultState.NOT_FOUND,
+                "Tag with id $tagId has not been found",
+                "domain.tag.delete.not_found"
+            )
         }
         success()
     }
@@ -121,17 +138,34 @@ class TagFeatureImpl(
 
     override fun editTag(token: String, tag: Tag): Result<Tag> = session.authenticate(token) {
         if(tag.id == null || !tagRepository.existsById(tag.id)) {
-            return@authenticate notFound("Tag with id ${tag.id} has not been found")
+            return@authenticate domainFailure(
+                ResultState.NOT_FOUND,
+                "Tag with id ${tag.id} has not been found",
+                "domain.tag.edit.not_found"
+            )
         }
         if(
             tagRepository.existsAnotherTagByLabel(it, tag)
         ) {
-            return@authenticate failure(ResultState.TAG_LABEL_ALREADY_TAKEN, "Label '${tag.label}' is already taken")
+            return@authenticate domainFailure(
+                ResultState.TAG_LABEL_ALREADY_TAKEN,
+                "Label '${tag.label}' is already taken",
+                "domain.tag.edit.label_already_taken"
+            )
         }
         if(tag.isDefault) {
-            return@authenticate failure(ResultState.TAG_SHOULD_NOT_BE_DEFAULT, "Tag should not be default")
+            return@authenticate domainFailure(
+                ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
+                "Tag should not be default",
+                "domain.tag.edit.default_forbidden"
+            )
         }
-        val save = tagRepository.patch(tag) ?: return@authenticate notFound("User has not been found")
+        val save = tagRepository.patch(tag)
+            ?: return@authenticate domainFailure(
+                ResultState.NOT_FOUND,
+                "User has not been found",
+                "domain.tag.edit.user_not_found"
+            )
         success(save)
     }
 }

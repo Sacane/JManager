@@ -14,6 +14,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.api.StatsFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -105,8 +106,10 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should fail when account does not exist`() {
             launchWithConnectedUserInstance {
-                statsFeature.getMonthlyAccountStats(UUID.randomUUID(), 2025, tokenValue)
-                    .assertFailure()
+                val result = statsFeature.getMonthlyAccountStats(UUID.randomUUID(), 2025, tokenValue)
+
+                result.assertFailure()
+                assertEquals("domain.stats.monthly.booklet_not_found", result.errorInfo?.key)
             }
         }
 
@@ -440,8 +443,10 @@ class StatsFeatureTest : FeatureTest() {
                 val startDate = LocalDate.now().plusMonths(6)
                 val endDate = LocalDate.now()
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
-                    .assertFailure()
+                val result = statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+
+                result.assertFailure()
+                assertEquals("domain.stats.previsional.invalid_date_range", result.errorInfo?.key)
             }
         }
 

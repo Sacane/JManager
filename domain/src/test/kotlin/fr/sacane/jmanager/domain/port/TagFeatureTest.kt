@@ -48,8 +48,10 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Add a default tag must return failure`() {
             launchWithConnectedUserInstance {
-                tagFeature.addTag(this.tokenValue, Tag("test", isDefault = true))
-                    .assertFailure(ResultState.TAG_LABEL_ALREADY_TAKEN)
+                val result = tagFeature.addTag(this.tokenValue, Tag("test", isDefault = true))
+
+                result.assertFailure(ResultState.TAG_LABEL_ALREADY_TAKEN)
+                assertEquals("domain.tag.add.label_already_taken", result.errorInfo?.key)
             }
         }
     }
@@ -126,8 +128,10 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Patch a tag without id must return failure`() {
             launchWithConnectedUserInstance {
-                tagFeature.editTag(this.tokenValue, Tag("no-id"))
-                    .assertFailure(ResultState.NOT_FOUND)
+                val result = tagFeature.editTag(this.tokenValue, Tag("no-id"))
+
+                result.assertFailure(ResultState.NOT_FOUND)
+                assertEquals("domain.tag.edit.not_found", result.errorInfo?.key)
             }
         }
 
@@ -149,8 +153,10 @@ class TagFeatureTest: FeatureTest() {
                 val uuid = UUID.randomUUID()
                 tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
-                tagFeature.editTag(this.tokenValue, Tag("test", id = uuid, isDefault = true))
-                    .assertFailure(ResultState.TAG_SHOULD_NOT_BE_DEFAULT)
+                val result = tagFeature.editTag(this.tokenValue, Tag("test", id = uuid, isDefault = true))
+
+                result.assertFailure(ResultState.TAG_SHOULD_NOT_BE_DEFAULT)
+                assertEquals("domain.tag.edit.default_forbidden", result.errorInfo?.key)
             }
         }
     }

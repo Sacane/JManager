@@ -20,6 +20,7 @@ import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import useStats from '~/composables/useStats'
+import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { capitalizeFirst, rgbToHex } from '~/utils/util'
 
 ChartJS.register(
@@ -44,6 +45,7 @@ const { createAccount, fetch: fetchBooklets } = useBooklet()
 const { getRegularTransaction } = useRegularTransaction()
 const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
+const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
 
 // Refs
@@ -54,7 +56,8 @@ const tags = ref<TagDTO[]>([])
 const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
 const trendStats = ref<TrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
-const isLoading = ref(true)
+const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
+const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
 // Animation refs
 const overviewRef = ref(null)
@@ -189,14 +192,12 @@ const expensesTrendData = computed(() => {
   }
 
   // Get last 12 months
-  const sortedTrends = [...trendStats.value.monthlyTrends]
-    .sort((a, b) => {
-      if (a.year !== b.year) {
-        return a.year - b.year
-      }
-      return a.month - b.month
-    })
-    .slice(-12)
+  const sortedTrends = trendStats.value.monthlyTrends.toSorted((a, b) => {
+    if (a.year !== b.year) {
+      return a.year - b.year
+    }
+    return a.month - b.month
+  }).slice(-12)
 
   const labels = sortedTrends.map((trend) => {
     const date = new Date(trend.year, trend.month - 1)
@@ -234,8 +235,7 @@ const categoryExpensesData = computed(() => {
     }
   }
 
-  const sortedCategories = [...categoryDistribution.value.categories]
-    .sort((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
+  const sortedCategories = categoryDistribution.value.categories.toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
     .slice(0, 6)
 
   return {
@@ -434,41 +434,38 @@ function cancel() {
 }
 
 async function loadDashboardData() {
-  isLoading.value = true
-  try {
-    // Load basic data
-    const [accountsData, regularTransData, tagsData] = await Promise.all([
-      fetchBooklets().catch(() => []),
-      getRegularTransaction().catch(() => []),
-      getAllTags().catch(() => []),
-    ])
+  await withLoading(async () => {
+    try {
+      // Load basic data
+      const [accountsData, regularTransData, tagsData] = await Promise.all([
+        fetchBooklets().catch(() => []),
+        getRegularTransaction().catch(() => []),
+        getAllTags().catch(() => []),
+      ])
 
-    accounts.value = Array.isArray(accountsData) ? accountsData : []
-    regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
-    tags.value = Array.isArray(tagsData) ? tagsData : []
+      accounts.value = Array.isArray(accountsData) ? accountsData : []
+      regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
+      tags.value = Array.isArray(tagsData) ? tagsData : []
 
-    // Load stats data
-    const now = new Date()
-    const startDate = format(startOfMonth(now), 'yyyy-MM-dd')
-    const endDate = format(endOfMonth(addMonths(now, 3)), 'yyyy-MM-dd')
+      // Load stats data
+      const now = new Date()
+      const startDate = format(startOfMonth(now), 'yyyy-MM-dd')
+      const endDate = format(endOfMonth(addMonths(now, 3)), 'yyyy-MM-dd')
 
-    const [categoryData, trendsData, previsionalData] = await Promise.all([
-      getCategoryDistribution().catch(() => null),
-      getTrendStats().catch(() => null),
-      getPrevisionalTransactions(startDate, endDate).catch(() => null),
-    ])
+      const [categoryData, trendsData, previsionalData] = await Promise.all([
+        getCategoryDistribution().catch(() => null),
+        getTrendStats().catch(() => null),
+        getPrevisionalTransactions(startDate, endDate).catch(() => null),
+      ])
 
-    console.warn(trendsData)
-
-    categoryDistribution.value = categoryData
-    trendStats.value = trendsData
-    previsionalTransactions.value = previsionalData
-  } catch (error) {
-    toast.error('Erreur lors du chargement des données')
-    console.error(error)
-  } finally {
-    isLoading.value = false
-  }
+      categoryDistribution.value = categoryData
+      trendStats.value = trendsData
+      previsionalTransactions.value = previsionalData
+    } catch (error) {
+      toast.error('Erreur lors du chargement des données')
+      console.error(error)
+    }
+  }, dashboardLoadingScope)
 }
 
 onMounted(() => {

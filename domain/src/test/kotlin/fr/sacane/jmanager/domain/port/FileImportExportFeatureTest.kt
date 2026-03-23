@@ -46,6 +46,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isFailure())
             Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
+            Assertions.assertEquals("domain.file.booklet.not_found", result.errorInfo?.key)
         }
     }
 
@@ -71,6 +72,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isFailure())
             Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
+            Assertions.assertEquals("domain.file.booklet.forbidden_owner", result.errorInfo?.key)
         }
     }
 
@@ -334,6 +336,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isFailure())
             Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
+            Assertions.assertEquals("domain.file.booklet.not_found", result.errorInfo?.key)
         }
     }
 
@@ -358,6 +361,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isFailure())
             Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
+            Assertions.assertEquals("domain.file.booklet.forbidden_owner", result.errorInfo?.key)
         }
     }
 
@@ -373,6 +377,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             Assertions.assertTrue(result.isFailure())
             Assertions.assertEquals(ResultState.INVALID, result.status)
             Assertions.assertTrue(result.message.contains("empty"))
+            Assertions.assertEquals("domain.file.import.validation_errors", result.errorInfo?.key)
         }
     }
 

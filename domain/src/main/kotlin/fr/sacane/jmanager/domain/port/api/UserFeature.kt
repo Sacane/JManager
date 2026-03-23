@@ -75,9 +75,18 @@ class UserFeatureImpl(
     companion object{
         private val LOGGER = Logger.getLogger(UserFeatureImpl::class.java.name)
     }
+
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return failure(state, DomainError(state.code, key, detail))
+    }
+
     override fun login(pseudonym: String, userPassword: String): Result<UserToken> {
         val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym)
-            ?: return failure(ResultState.NOT_FOUND, "L'utilisateur $pseudonym n'existe pas")
+            ?: return domainFailure(
+                ResultState.NOT_FOUND,
+                "L'utilisateur $pseudonym n'existe pas",
+                "domain.user.login.user_not_found"
+            )
         LOGGER.info("LOGIN request for user ${userWithPassword.user.id}")
         val user = userWithPassword.user
         if(hasher.verify(userPassword, userWithPassword.password)) {
@@ -87,7 +96,11 @@ class UserFeatureImpl(
             return success(user.withToken(accessToken.tokenValue))
         }
         LOGGER.warning("Failed to log user $pseudonym")
-        return failure(ResultState.USER_UNAUTHORIZED, "Le pseudonyme ou le mot de passe est incorrect")
+        return domainFailure(
+            ResultState.USER_UNAUTHORIZED,
+            "Le pseudonyme ou le mot de passe est incorrect",
+            "domain.user.login.invalid_credentials"
+        )
     }
 
     override fun logout(token: String)
@@ -97,9 +110,20 @@ class UserFeatureImpl(
     }
 
     override fun register(username: String, password: String, confirmPassword: String): Result<User> {
-        if(password != confirmPassword) return failure(ResultState.PASSWORD_NOT_MATCH, "Les mots de passes ne correspondent pas")
+        if (password != confirmPassword) {
+            return domainFailure(
+                ResultState.PASSWORD_NOT_MATCH,
+                "Les mots de passes ne correspondent pas",
+                "domain.user.register.password_mismatch"
+            )
+        }
         val hashedPassword = hasher.hash(password)
-        val userResult = userRepository.register(username, hashedPassword) ?: return invalid("Une erreur est survenue")
+        val userResult = userRepository.register(username, hashedPassword)
+            ?: return domainFailure(
+                ResultState.INVALID,
+                "Une erreur est survenue",
+                "domain.user.register.invalid"
+            )
         return success(userResult)
     }
 
@@ -112,11 +136,19 @@ class UserFeatureImpl(
         if(existingAdmin != null){
             LOGGER.info("Admin user already exists with username $username")
             return if (!hasher.verify(password, existingAdmin.password))
-                failure(ResultState.PASSWORD_NOT_MATCH, "admin password does not match the existing one")
+                domainFailure(
+                    ResultState.PASSWORD_NOT_MATCH,
+                    "admin password does not match the existing one",
+                    "domain.user.admin.password_mismatch"
+                )
             else success(existingAdmin.user)
         }
         val adminUser = userRepository.register(username, hashedPassword, setOf(Role.USER, Role.ADMIN))
-            ?: return invalid("Une erreur est survenue lors de la création de l'administrateur")
+            ?: return domainFailure(
+                ResultState.INVALID,
+                "Une erreur est survenue lors de la création de l'administrateur",
+                "domain.user.admin.creation_failed"
+            )
         LOGGER.info("Admin user created with username $username")
         return success(adminUser)
     }

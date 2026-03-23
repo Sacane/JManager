@@ -1,4 +1,5 @@
 import type { AxiosError } from 'axios'
+import { extractErrorCode, getErrorMessageByCode } from '~/utils/errorCodeMap'
 
 export default function useJToast() {
   const toast = useToast()
@@ -29,11 +30,12 @@ export default function useJToast() {
     })
   }
   function errorAxios(axiosError: AxiosError, title: string = 'Erreur') {
-    const errorData = axiosError.response?.data as { message?: string }
+    const code = extractErrorCode(axiosError.response?.data)
+    const mappedError = getErrorMessageByCode(code)
     toast.add({
       severity: 'error',
-      summary: title,
-      detail: errorData?.message || 'Une erreur inconnue est survenue',
+      summary: title === 'Erreur' ? mappedError.summary : title,
+      detail: mappedError.detail,
       life: 3000,
     })
   }

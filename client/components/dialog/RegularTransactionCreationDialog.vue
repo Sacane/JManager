@@ -5,6 +5,7 @@ import { getTagStyle } from '~/utils/util'
 
 defineProps<{
   booklets: OnlyBookletInfo[]
+  loading?: boolean
 }>()
 const emit = defineEmits(['visible', 'createTransaction', 'cancelCreation'])
 const tag = useTag()
@@ -131,14 +132,20 @@ function handleTabKey(event: KeyboardEvent) {
 <template>
   <Dialog
     v-model:visible="isVisibleData"
-    dismissable-mask
+    :dismissable-mask="!loading"
+    :closable="!loading"
+    :close-on-escape="!loading"
     modal
     header="Créer une transaction régulière"
     :style="{ width: '35rem' }"
     @update:visible="closeDialog"
-    @keydown.enter="emitTransaction"
+    @keydown.enter="!loading && emitTransaction()"
   >
-    <div class="h-full mt-6">
+    <div v-if="loading" class="h-14rem flex flex-col items-center justify-center gap-3 text-[var(--text-secondary)]">
+      <i class="pi pi-spin pi-spinner text-3xl" />
+      <span>Création en cours...</span>
+    </div>
+    <div v-else class="h-full mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libellé</label>
         <InputText id="label" v-model="regularTrForm.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" />

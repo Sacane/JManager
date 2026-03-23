@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
+import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import org.slf4j.LoggerFactory
 import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpStatus
@@ -25,12 +26,14 @@ class ProblemDetailHandler {
         status: HttpStatus,
         title: String,
         detail: String?,
-        code: Int
+        code: Int,
+        errorKey: String? = null,
     ): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(status)
         problemDetail.title = title
         problemDetail.detail = detail
         problemDetail.setProperty("code", code)
+        problemDetail.setProperty("errorKey", errorKey ?: ErrorCatalog.keyForCode(code))
         return ResponseEntity.status(status).body(problemDetail)
     }
 
@@ -46,7 +49,7 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Bad Request",
             detail = "Missing mandatory parameter : ${ex.message}",
-            code = 65
+            code = ErrorCatalog.REQUEST_VALIDATION
         )
     }
 
@@ -57,7 +60,7 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Method type mismatch",
             detail = "Invalid type parameter : ${ex.message}",
-            code = 65
+            code = ErrorCatalog.REQUEST_VALIDATION
         )
     }
 
@@ -68,18 +71,30 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Method argument not valid",
             detail = "invalid value : ${ex.message}",
-            code = 65
+            code = ErrorCatalog.REQUEST_VALIDATION
         )
     }
 
-    @ExceptionHandler(Exception::class, InternalServerErrorException::class)
+    @ExceptionHandler(InternalServerErrorException::class)
+    fun onInternalServerErrorException(ex: InternalServerErrorException): ResponseEntity<ProblemDetail> {
+        logException("Internal server error", ex.cause?.message ?: ex.message)
+        return buildResponse(
+            status = HttpStatus.INTERNAL_SERVER_ERROR,
+            title = "Internal server error",
+            detail = "Oops, something went wrong. It's our problem : ${ex.message}",
+            code = ex.errCode,
+            errorKey = ex.errKey,
+        )
+    }
+
+    @ExceptionHandler(Exception::class)
     fun onIrregularException(ex: Exception): ResponseEntity<ProblemDetail> {
         logException("Internal server error", ex.cause?.message ?: ex.message)
         return buildResponse(
             status = HttpStatus.INTERNAL_SERVER_ERROR,
             title = "Internal server error",
             detail = "Oops, something went wrong. It's our problem : ${ex.message}",
-            code = 111
+            code = ErrorCatalog.INTERNAL_UNEXPECTED
         )
     }
 
@@ -90,7 +105,7 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Invalid given currency",
             detail = "Oops, something went wrong. It's our problem : ${ex.message}",
-            code = 144
+            code = ErrorCatalog.INVALID_CURRENCY
         )
     }
 
@@ -102,7 +117,7 @@ class ProblemDetailHandler {
                 status = HttpStatus.NOT_FOUND,
                 title = "Resource not found",
                 detail = "The requested resource does not exist",
-                code = 404
+                code = ErrorCatalog.INVALID_UUID_NOT_FOUND
             )
         }
         logException("IllegalArgumentException", ex.message)
@@ -110,7 +125,7 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Bad Request",
             detail = "Invalid argument : ${ex.message}",
-            code = 65
+            code = ErrorCatalog.REQUEST_VALIDATION
         )
     }
 
@@ -121,7 +136,8 @@ class ProblemDetailHandler {
             status = HttpStatus.FORBIDDEN,
             title = "Forbidden error",
             detail = ex.message,
-            code = ex.errCode
+            code = ex.errCode,
+            errorKey = ex.errKey,
         )
     }
 
@@ -131,7 +147,8 @@ class ProblemDetailHandler {
             status = HttpStatus.NOT_FOUND,
             title = "Not_Found error",
             detail = ex.message,
-            code = ex.errCode
+            code = ex.errCode,
+            errorKey = ex.errKey,
         )
     }
 
@@ -141,7 +158,8 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Bad Request error",
             detail = ex.message,
-            code = ex.errCode
+            code = ex.errCode,
+            errorKey = ex.errKey,
         )
     }
 
@@ -151,7 +169,8 @@ class ProblemDetailHandler {
             status = HttpStatus.UNAUTHORIZED,
             title = "Unauthorized error",
             detail = ex.message,
-            code = ex.errCode
+            code = ex.errCode,
+            errorKey = ex.errKey,
         )
     }
 
@@ -162,7 +181,8 @@ class ProblemDetailHandler {
             status = HttpStatus.UNAUTHORIZED,
             title = "Unauthorized error",
             detail = ex.message,
-            code = ex.errCode
+            code = ex.errCode,
+            errorKey = ex.errKey,
         )
     }
 
@@ -173,7 +193,7 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Date time error",
             detail = ex.message,
-            code = 68
+            code = ErrorCatalog.REQUEST_DATE_TIME_INVALID
         )
     }
 
@@ -184,7 +204,7 @@ class ProblemDetailHandler {
             status = HttpStatus.BAD_REQUEST,
             title = "Type Mismatch error",
             detail = ex.message,
-            code = 67
+            code = ErrorCatalog.REQUEST_TYPE_MISMATCH
         )
     }
 }

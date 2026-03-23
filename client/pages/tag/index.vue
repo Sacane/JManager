@@ -2,6 +2,7 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { onMounted, reactive, ref } from 'vue'
 import useTag from '~/composables/useTag'
+import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { hexToRgb } from '~/utils/util'
 
 definePageMeta({
@@ -16,6 +17,23 @@ interface DataDisplay {
 }
 
 const { addPersonalTag, getAllTags, deleteTag, editTag } = useTag()
+const { isScopeLoading, withLoading } = useLoading()
+const toast = useJToast()
+
+const loadTagsScope = LOADING_SCOPES.tag.load
+const addTagScope = LOADING_SCOPES.tag.add
+const editTagScope = LOADING_SCOPES.tag.edit
+const deleteTagScope = LOADING_SCOPES.tag.delete
+const isLoadingTags = computed(() => isScopeLoading(loadTagsScope))
+const isAddingTag = computed(() => isScopeLoading(addTagScope))
+const isEditingTag = computed(() => isScopeLoading(editTagScope))
+const isDeletingTag = computed(() => isScopeLoading(deleteTagScope))
+const isAnyTagActionLoading = computed(() =>
+  isLoadingTags.value
+  || isAddingTag.value
+  || isEditingTag.value
+  || isDeletingTag.value,
+)
 
 const tags = ref<DataDisplay[]>([])
 const addTagDialog = ref<boolean>(false)
@@ -37,10 +55,19 @@ const personalTagForm = reactive({
 
 const confirm = useConfirm()
 
+async function loadTags() {
+  await withLoading(async () => {
+    try {
+      const tagsData = await getAllTags()
+      tags.value = tagsData.map(e => formattedData(e))
+    } catch (error) {
+      toast.errorAxios(error as any)
+    }
+  }, loadTagsScope)
+}
+
 onMounted(() => {
-  getAllTags().then((tagsData) => {
-    tags.value = tagsData.map(e => formattedData(e))
-  })
+  loadTags()
 })
 
 function formattedData(tagDTO: TagDTO): DataDisplay {
@@ -73,21 +100,27 @@ const filteredTags = computed(() => {
   return filtered
 })
 
-function add() {
-  const rgb = hexToRgb(personalTagForm.hex)
-  addPersonalTag(
-    personalTagForm.tagLabel,
-    {
-      red: rgb.r,
-      green: rgb.g,
-      blue: rgb.b,
-    },
-  ).then((tag) => {
-    tags.value.push(formattedData(tag))
-    addTagDialog.value = false
-    personalTagForm.tagLabel = ''
-    personalTagForm.hex = '#6366f1'
-  })
+async function add() {
+  await withLoading(async () => {
+    try {
+      const rgb = hexToRgb(personalTagForm.hex)
+      const tag = await addPersonalTag(
+        personalTagForm.tagLabel,
+        {
+          red: rgb.r,
+          green: rgb.g,
+          blue: rgb.b,
+        },
+      )
+      tags.value.push(formattedData(tag))
+      addTagDialog.value = false
+      personalTagForm.tagLabel = ''
+      personalTagForm.hex = '#6366f1'
+      toast.success('Tag créé avec succès')
+    } catch (error) {
+      toast.errorAxios(error as any)
+    }
+  }, addTagScope)
 }
 
 function onDeleteClick(row: DataDisplay): void {
@@ -104,12 +137,20 @@ function onDeleteClick(row: DataDisplay): void {
       label: 'Supprimer',
       severity: 'danger',
     },
-    accept: () => deleteTag(row.id).then(() => {
-      const indexDelTag = tags.value.findIndex(e => e.id === row.id)
-      if (indexDelTag !== -1) {
-        tags.value.splice(indexDelTag, 1)
-      }
-    }),
+    accept: async () => {
+      await withLoading(async () => {
+        try {
+          await deleteTag(row.id)
+          const indexDelTag = tags.value.findIndex(e => e.id === row.id)
+          if (indexDelTag !== -1) {
+            tags.value.splice(indexDelTag, 1)
+          }
+          toast.success('Tag supprimé avec succès')
+        } catch (error) {
+          toast.errorAxios(error as any)
+        }
+      }, deleteTagScope)
+    },
   })
 }
 
@@ -126,24 +167,30 @@ function onEditClick(row: DataDisplay): void {
   }
 }
 
-function applyEdit() {
-  const rgb = hexToRgb(tagToEdit.color)
-  editTag({
-    tagId: tagToEdit.id,
-    label: tagToEdit.label,
-    colorDTO: {
-      red: rgb.r,
-      green: rgb.g,
-      blue: rgb.b,
-    },
-    isDefault: false,
-  }).then((tag: TagDTO) => {
-    const indexTag = tags.value.findIndex(e => e.id === tagToEdit.id)
-    if (indexTag !== -1) {
-      tags.value[indexTag] = formattedData(tag)
+async function applyEdit() {
+  await withLoading(async () => {
+    try {
+      const rgb = hexToRgb(tagToEdit.color)
+      const tag = await editTag({
+        tagId: tagToEdit.id,
+        label: tagToEdit.label,
+        colorDTO: {
+          red: rgb.r,
+          green: rgb.g,
+          blue: rgb.b,
+        },
+        isDefault: false,
+      })
+      const indexTag = tags.value.findIndex(e => e.id === tagToEdit.id)
+      if (indexTag !== -1) {
+        tags.value[indexTag] = formattedData(tag)
+      }
+      editTagDialog.value = false
+      toast.success('Tag modifié avec succès')
+    } catch (error) {
+      toast.errorAxios(error as any)
     }
-    editTagDialog.value = false
-  })
+  }, editTagScope)
 }
 
 function edit() {
@@ -207,6 +254,7 @@ function edit() {
           icon="pi pi-plus"
           label="Nouveau tag"
           class="modern-fab header"
+          :disabled="isAnyTagActionLoading"
           aria-label="Ajouter un tag"
           @click="addTagDialog = true"
         />
@@ -215,6 +263,15 @@ function edit() {
 
     <!-- Tags Grid -->
     <div class="tags-container">
+      <div v-if="isLoadingTags" class="loading-container">
+        <ProgressSpinner
+          style="width: 48px; height: 48px"
+          stroke-width="4"
+        />
+        <p class="loading-text">
+          Chargement des tags...
+        </p>
+      </div>
       <TransitionGroup name="tag-list" tag="div" class="tags-grid">
         <div
           v-for="tag in filteredTags"
@@ -255,6 +312,7 @@ function edit() {
                 rounded
                 text
                 severity="secondary"
+                :disabled="isAnyTagActionLoading"
                 aria-label="Modifier"
                 @click="onEditClick(tag)"
               />
@@ -264,6 +322,8 @@ function edit() {
                 rounded
                 text
                 severity="danger"
+                :loading="isDeletingTag"
+                :disabled="isAnyTagActionLoading"
                 aria-label="Supprimer"
                 @click="onDeleteClick(tag)"
               />
@@ -333,7 +393,8 @@ function edit() {
           label="Créer le tag"
           icon="pi pi-check"
           class="w-full mt-4"
-          :disabled="!personalTagForm.tagLabel"
+          :loading="isAddingTag"
+          :disabled="!personalTagForm.tagLabel || isAnyTagActionLoading"
           @click="add()"
         />
       </div>
@@ -392,7 +453,8 @@ function edit() {
           label="Enregistrer les modifications"
           icon="pi pi-save"
           class="w-full mt-4"
-          :disabled="!tagToEdit.label"
+          :loading="isEditingTag"
+          :disabled="!tagToEdit.label || isAnyTagActionLoading"
           @click="edit()"
         />
       </div>
@@ -417,6 +479,25 @@ function edit() {
 /* Header */
 .page-header {
   margin-bottom: 2rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+
+.loading-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .header-content {

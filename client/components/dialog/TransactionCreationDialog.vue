@@ -6,6 +6,7 @@ export interface TransactionCreationProps {
   digitPlaceholder: number | null
   transactionPlaceholder: TransactionCreationDTO
   buttonTitle?: string
+  loading?: boolean
 }
 
 const props = defineProps<TransactionCreationProps>()
@@ -93,14 +94,20 @@ function handleTabKey(event: KeyboardEvent) {
 <template>
   <Dialog
     v-model:visible="isVisibleData"
-    dismissable-mask
+    :dismissable-mask="!props.loading"
+    :closable="!props.loading"
+    :close-on-escape="!props.loading"
     modal
     :header="title"
     :style="{ width: '30rem' }"
     @update:visible="closeDialog"
-    @keydown.enter="emitTransaction"
+    @keydown.enter="!props.loading && emitTransaction()"
   >
-    <div class="h-full mt-6">
+    <div v-if="props.loading" class="h-14rem flex flex-col items-center justify-center gap-3 text-[var(--text-secondary)]">
+      <i class="pi pi-spin pi-spinner text-3xl" />
+      <span>Enregistrement en cours...</span>
+    </div>
+    <div v-else class="h-full mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libellé</label>
         <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" />

@@ -22,6 +22,37 @@ const ButtonStub = {
 }
 
 describe('components/dialog/TransactionCreationDialog', () => {
+  it('shows loading state instead of form content when loading is true', () => {
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([]),
+    }))
+    vi.stubGlobal('useJToast', () => ({ warn: vi.fn() }))
+
+    const wrapper = mount(TransactionCreationDialog, {
+      props: {
+        title: 'Créer transaction',
+        digitPlaceholder: null,
+        transactionPlaceholder: createTransactionPlaceholder(),
+        loading: true,
+      },
+      global: {
+        stubs: {
+          Dialog: { template: '<div><slot /></div>' },
+          InputText: true,
+          RadioButton: true,
+          InputNumber: true,
+          DatePicker: true,
+          Select: true,
+          Tag: true,
+          Button: ButtonStub,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Enregistrement en cours...')
+    expect(wrapper.findAll('[data-test="btn"]').length).toBe(0)
+  })
+
   it('shows warning and does not emit createTransaction when transaction is invalid', async () => {
     const warn = vi.fn()
     vi.stubGlobal('useTag', () => ({

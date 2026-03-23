@@ -381,13 +381,16 @@ class TransactionFeatureTest: FeatureTest() {
                     )
                 )
 
-                transactionFeature.confirmPreviewTransaction(
+                val result = transactionFeature.confirmPreviewTransaction(
                     tokenValue,
                     UUID.randomUUID(),
                     transactionPreviewTest.id!!,
                     null,
                     null
-                ).assertFailure(ResultState.BOOKLET_NOT_FOUND)
+                )
+
+                result.assertFailure(ResultState.BOOKLET_NOT_FOUND)
+                assertEquals("domain.transaction.confirm.booklet_not_found", result.errorInfo?.key)
             }
         }
         @Test

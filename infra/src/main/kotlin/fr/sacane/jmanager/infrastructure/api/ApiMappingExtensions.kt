@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.api
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.booklet.AccountDTO
@@ -16,7 +17,7 @@ import org.springframework.http.ResponseEntity
 import java.awt.Color
 
 internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
-    this.id?.toString() ?: throw InternalServerErrorException(111, "Impossible d'envoyer null au client"),
+    this.id?.toString() ?: throw InternalServerErrorException(ErrorCatalog.INTERNAL_UNEXPECTED, "Impossible d'envoyer null au client"),
     this.amount.value,
     this.label,
     this.sheets().map { sheet -> sheet.toDTO() },
@@ -52,18 +53,42 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.USER_NOT_FOUND,
     ResultState.BOOKLET_NOT_FOUND, ResultState.TRANSACTION_NOT_FOUND,
     ResultState.TAG_PLACEHOLDER_UNDEFINED,
-    ResultState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(this.status.code, this.message)
+    ResultState.BOOKLET_LABEL_NOT_EXIST -> throw NotFoundException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
     ResultState.INVALID, ResultState.REGISTRATION_ERROR,
     ResultState.BOOKLET_LABEL_EXIST,
     ResultState.TRANSACTION_ENTRY_ERROR,
     ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
     ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR,
-    ResultState.BOOKLET_MAXIMUM_SIZE_REACHED -> throw InvalidRequestException(this.status.code, this.message)
-    ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(this.status.code, this.message)
-    ResultState.TIMEOUT  -> throw TimeOutException(this.status.code, this.message)
+    ResultState.BOOKLET_MAXIMUM_SIZE_REACHED -> throw InvalidRequestException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
+    ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
+    ResultState.TIMEOUT  -> throw TimeOutException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
     ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED,
-         ResultState.PASSWORD_NOT_MATCH -> throw UnauthorizedRequestException(this.status.code, this.message)
-    ResultState.INTERNAL_SERVER_ERROR -> throw InternalServerErrorException(this.status.code, this.message)
+         ResultState.PASSWORD_NOT_MATCH -> throw UnauthorizedRequestException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
+    ResultState.INTERNAL_SERVER_ERROR -> throw InternalServerErrorException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
 }
 
 internal fun fr.sacane.jmanager.infrastructure.spi.entity.Color.asAwtColor(): Color = Color(this.red, this.green, this.blue)

@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.domain.port.spi.DefaultHasher
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -45,8 +46,10 @@ class UserFeatureTest: FeatureTest() {
             userState.init(listOf(
                 UserWithPassword(user, DefaultHasher.hash("test"))
             ))
-            userFeature.login("John", "wrong")
-                .assertFailure(ResultState.USER_UNAUTHORIZED)
+            val result = userFeature.login("John", "wrong")
+
+            result.assertFailure(ResultState.USER_UNAUTHORIZED)
+            assertEquals("domain.user.login.invalid_credentials", result.errorInfo?.key)
         }
     }
     @Nested
@@ -75,8 +78,10 @@ class UserFeatureTest: FeatureTest() {
         }
         @Test
         fun `Register a user with different password must return password not match`() {
-            userFeature.register("John", "test", "wrong")
-                .assertFailure(ResultState.PASSWORD_NOT_MATCH)
+            val result = userFeature.register("John", "test", "wrong")
+
+            result.assertFailure(ResultState.PASSWORD_NOT_MATCH)
+            assertEquals("domain.user.register.password_mismatch", result.errorInfo?.key)
         }
     }
 
@@ -97,8 +102,10 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Create admin with different password must return password not match`() {
             userFeature.createAdminIfNotExists("admin", "test")
-            userFeature.createAdminIfNotExists("admin", "wrong")
-                .assertFailure(ResultState.PASSWORD_NOT_MATCH)
+            val result = userFeature.createAdminIfNotExists("admin", "wrong")
+
+            result.assertFailure(ResultState.PASSWORD_NOT_MATCH)
+            assertEquals("domain.user.admin.password_mismatch", result.errorInfo?.key)
         }
     }
 }
