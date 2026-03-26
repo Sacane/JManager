@@ -5,7 +5,6 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
-import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
@@ -18,7 +17,6 @@ class RegularTransactionRepositoryDataJpaAdapter(
     private val userPostgresRepository: UserPostgresRepository,
     private val regularTransactionOperator: RegularTransactionOperator,
     private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
-    private val bookletJpaRepository: BookletJpaRepository,
     private val regularTransactionTrackerRepository: RegularTransactionTrackerRepository
 ): RegularTransactionRepository {
     companion object {
@@ -33,7 +31,10 @@ class RegularTransactionRepositoryDataJpaAdapter(
         logger.info("Saving regular transaction {}", regularTransaction)
         val user = userPostgresRepository.findByIdOrNull(userId.value!!)
             ?: throw IllegalArgumentException("User not found")
-        return regularTransactionOperator.save(user, regularTransaction, bookletIds).toDomain()
+        val saved = regularTransactionOperator.save(user, regularTransaction, bookletIds)
+        val savedId = saved.transactionId ?: throw IllegalStateException("Saved regular transaction has no id")
+        return regularTransactionRepository.findByIdWithAccounts(savedId)?.toDomain()
+            ?: throw IllegalStateException("Saved regular transaction $savedId not found")
     }
 
     override fun getRegularTransactionById(
@@ -51,13 +52,17 @@ class RegularTransactionRepositoryDataJpaAdapter(
     }
 
     override fun getAllRegularUsedByAccount(userId: UserId, accountID: UUID): List<RegularTransaction>? {
-        return bookletJpaRepository.findByIdWithRegularTransactions(accountID)
-            ?.regularTransactions?.map { it.toDomain() }
+        val ownerId = userId.value ?: return emptyList()
+        return regularTransactionRepository.findAllByOwnerIdWithAccounts(ownerId)
+            .filter { transaction -> transaction.accounts.any { it.idAccount == accountID } }
+            .map { it.toDomain() }
     }
 
+    @Transactional
     override fun updateRegularTransaction(
         userId: UserId,
-        regularTransaction: RegularTransaction
+        regularTransaction: RegularTransaction,
+        bookletIds: List<UUID>
     ): RegularTransaction? {
         val id = regularTransaction.id.value.asUUID()
         val existing = regularTransactionRepository.findByIdOrNull(id) ?: return null
@@ -66,7 +71,8 @@ class RegularTransactionRepositoryDataJpaAdapter(
             return null
         }
 
-        return regularTransactionOperator.update(existing, regularTransaction).toDomain()
+        regularTransactionOperator.update(existing, regularTransaction, bookletIds, userId)
+        return regularTransactionRepository.findByIdWithAccounts(id)?.toDomain()
     }
 
     @Transactional

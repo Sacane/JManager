@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters.regular
 
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.NotFoundException
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.JpaTagMapperAdapter
@@ -70,13 +71,33 @@ class RegularTransactionOperator(
         return regularTransactionResourceJpaRepository.save(result)
     }
 
-    fun update(existing: RegularTransactionEntity, regularTransaction: RegularTransaction): RegularTransactionEntity {
+    fun update(
+        existing: RegularTransactionEntity,
+        regularTransaction: RegularTransaction,
+        bookletIds: List<java.util.UUID>,
+        userId: UserId
+    ): RegularTransactionEntity {
         existing.label = regularTransaction.label
         existing.amount = regularTransaction.amount.value.toDouble()
         existing.isIncome = regularTransaction.isIncome
         existing.startDate = regularTransaction.startDate
         existing.frequencyProperty = regularTransaction.frequencyProperty.toResource()
         existing.recurrenceRule = RecurrenceRuleEntity.fromDomain(regularTransaction.recurrenceRule)
+
+        existing.accounts.toList().forEach { booklet ->
+            existing.removeBooklet(booklet)
+        }
+
+        bookletIds.distinct().forEach { bookletId ->
+            val booklet = bookletJpaRepository.findByIdWithRegularTransactions(bookletId)
+                ?: throw NotFoundException(ResultState.NOT_FOUND.code, "Booklet with id $bookletId not found")
+
+            if (booklet.owner?.idUser != userId.value) {
+                throw NotFoundException(ResultState.NOT_FOUND.code, "Booklet with id $bookletId not found")
+            }
+
+            existing.addBooklet(booklet)
+        }
 
         logger.info("Update regular transaction in postgres database {}", existing)
         return regularTransactionResourceJpaRepository.save(existing)

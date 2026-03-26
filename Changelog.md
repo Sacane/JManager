@@ -9,6 +9,9 @@
 - Improved regular transaction edit/delete UX: edit flow now preserves existing booklet links, single deletion confirmation warns when linked booklets are impacted, bulk selection deletion is available from the list view, and the dialog now displays linked booklets.
 - Added and updated domain/infra/frontend tests, including an end-to-end API scenario for deleting a regular transaction linked to multiple booklets while verifying tracker cleanup, link cleanup, and generated sheet preservation.
 - Added domain, API integration, and frontend page tests for bulk regular transaction deletion flows (success + error cases).
+- Added editable booklet association management in regular transaction detail modal: users can now view, add, and remove linked booklets directly from the same dialog.
+- Extended regular transaction update backend flow to persist booklet association changes (`bookletIds`) consistently across domain, API, and JPA layers.
+- Added regression tests to validate booklet association updates through domain feature tests, infrastructure adapter/controller tests, and frontend modal/page tests.
 - Executed full test phase successfully: Gradle backend suites (`./gradlew test`) and frontend Vitest suites (`pnpm test`) are green.
 
 - Improved user action feedback by ensuring key operations display a short, consistent loading state, making the interface feel clearer and more reassuring during fast requests.

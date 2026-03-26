@@ -682,6 +682,80 @@ class RegularTransactionControllerTest(
                 body("label", equalTo("Modified Label"))
             }
         }
+
+        @Test
+        fun `Update regular transaction must update associated booklets`() {
+            accountStateTestAdapter.init(
+                listOf(
+                    Booklet(200.toAmount(), "test-a", owner = user),
+                    Booklet(300.toAmount(), "test-b", owner = user)
+                )
+            )
+            val booklets = accountStateTestAdapter.get().toList()
+            val bookletA = booklets.first { it.label == "test-a" }
+            val bookletB = booklets.first { it.label == "test-b" }
+
+            val regularTransaction = RegularTransaction(
+                id = RegularTransactionId(""),
+                label = "Switch booklet",
+                amount = 100.00.toAmount(),
+                isIncome = false,
+                tag = tagDTO.toDomain(),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
+                recurrenceRule = RecurrenceRule.Monthly(15)
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = bookletA.id!!.toString(),
+                        regularTransaction = regularTransaction
+                    )
+                )
+            )
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+
+            val updateRequest = mapOf(
+                "id" to createdTransaction.id.value,
+                "label" to "Switch booklet updated",
+                "value" to 100.00,
+                "isIncome" to false,
+                "tagDTO" to mapOf(
+                    "tagId" to tagDTO.tagId,
+                    "label" to tagDTO.label,
+                    "colorDTO" to mapOf(
+                        "red" to tagDTO.colorDTO.red,
+                        "green" to tagDTO.colorDTO.green,
+                        "blue" to tagDTO.colorDTO.blue
+                    )
+                ),
+                "frequencyProperty" to mapOf("type" to "FOREVER"),
+                "bookletIds" to listOf(bookletB.id!!.toString()),
+                "recurrenceRule" to mapOf(
+                    "type" to "MONTHLY",
+                    "value" to 15
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(updateRequest))
+            } When {
+                patch("/api/transaction/regular")
+            } Then {
+                statusCode(200)
+                body("bookletIds", hasItems(bookletB.id!!.toString()))
+            }
+
+            val refreshed = regularTransactionStateForTestAdapter.get().first { it.id.value == createdTransaction.id.value }
+            assertTrue(refreshed.associatedBooklets.any { it.id == bookletB.id })
+            assertTrue(refreshed.associatedBooklets.none { it.id == bookletA.id })
+        }
     }
 
     @Nested

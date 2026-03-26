@@ -178,7 +178,8 @@ class TransactionController(
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
                 startDate = LocalDate.now(),
                 recurrenceRule = request.recurrenceRule.toDomain()
-            )
+            ),
+            request.bookletIds.map { java.util.UUID.fromString(it) }
         ).map {
             it.toDTO()
         }.toHttpResponse().also {

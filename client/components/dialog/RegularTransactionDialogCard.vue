@@ -89,6 +89,15 @@ const hasChanges = computed(() => {
   return JSON.stringify(formData.value) !== originalData.value
 })
 
+const bookletOptions = computed(() => {
+  return (props.booklets ?? [])
+    .filter(booklet => booklet.id !== undefined && booklet.id !== null)
+    .map(booklet => ({
+      label: booklet.labelAccount,
+      value: String(booklet.id),
+    }))
+})
+
 const linkedBooklets = computed(() => {
   const ids = formData.value.bookletIds ?? []
   if (!ids.length) return []
@@ -371,13 +380,32 @@ function handleDelete() {
           </div>
         </div>
 
-        <div class="section-card" v-if="linkedBooklets.length">
+        <div class="section-card">
           <div class="section-header">
             <i class="pi pi-wallet" />
             <h3>Livrets associés</h3>
           </div>
           <div class="section-content">
-            <div class="flex flex-col gap-2">
+            <div class="form-field">
+              <label for="bookletIds" class="field-label">
+                <i class="pi pi-list" />
+                Modifier les livrets liés
+              </label>
+              <MultiSelect
+                id="bookletIds"
+                v-model="formData.bookletIds"
+                data-test="booklet-selector"
+                :options="bookletOptions"
+                option-label="label"
+                option-value="value"
+                display="chip"
+                filter
+                placeholder="Sélectionner les livrets"
+                class="w-full"
+              />
+            </div>
+
+            <div v-if="linkedBooklets.length" class="flex flex-col gap-2">
               <div
                 v-for="bookletLabel in linkedBooklets"
                 :key="bookletLabel"
@@ -387,6 +415,9 @@ function handleDelete() {
                 <span>{{ bookletLabel }}</span>
               </div>
             </div>
+            <span v-else class="text-sm text-color-secondary">
+              Aucun livret associé.
+            </span>
           </div>
         </div>
       </div>

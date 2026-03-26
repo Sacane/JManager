@@ -62,9 +62,10 @@ sealed interface RegularTransactionFeature {
      *
      * @param token Authentication token identifying the requester.
      * @param regularTransaction RegularTransaction object containing updated values (must include id).
+        * @param bookletIds Booklet identifiers to associate with this regular transaction.
      * @return Result containing the updated RegularTransaction on success, or an error state if not found.
      */
-    fun updateRegularTransaction(token: String, regularTransaction: RegularTransaction): Result<RegularTransaction>
+        fun updateRegularTransaction(token: String, regularTransaction: RegularTransaction, bookletIds: List<UUID>): Result<RegularTransaction>
 
     /**
      * Delete a regular transaction by its identifier.
@@ -141,10 +142,11 @@ class RegularTransactionFeatureImpl(
 
     override fun updateRegularTransaction(
         token: String,
-        regularTransaction: RegularTransaction
+        regularTransaction: RegularTransaction,
+        bookletIds: List<UUID>
     ): Result<RegularTransaction> = session.authenticate(token) { userId ->
         return@authenticate unitOfWork.executeInTransaction(regularTransaction) {
-            val updated = regularTransactionRepository.updateRegularTransaction(userId, it)
+            val updated = regularTransactionRepository.updateRegularTransaction(userId, it, bookletIds)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,
                     "La transaction ${it.id} n'existe pas",

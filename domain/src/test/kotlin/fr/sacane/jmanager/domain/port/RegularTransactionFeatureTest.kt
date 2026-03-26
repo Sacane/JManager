@@ -476,7 +476,8 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 val result = regularTransactionFeature.updateRegularTransaction(
                     tokenValue,
-                    updatedTransaction
+                    updatedTransaction,
+                    listOf(booklet.id!!)
                 )
 
                 result.assertSuccess()
@@ -501,8 +502,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val result = regularTransactionFeature.updateRegularTransaction(tokenValue, unknownTransaction)
-
+                val result = regularTransactionFeature.updateRegularTransaction(tokenValue, unknownTransaction, listOf(booklet.id!!))
                 result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
                 assertEquals("domain.regular_transaction.update.not_found", result.errorInfo?.key)
             }

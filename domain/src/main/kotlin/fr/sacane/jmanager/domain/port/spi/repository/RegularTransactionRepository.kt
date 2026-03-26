@@ -54,9 +54,10 @@ interface RegularTransactionRepository {
      *
      * @param userId Domain user identifier
      * @param regularTransaction RegularTransaction object with updated data (must contain id)
+        * @param bookletIds List of booklet UUIDs associated with the updated regular transaction
      * @return Updated RegularTransaction or null if the transaction does not exist
      */
-    fun updateRegularTransaction(userId: UserId, regularTransaction: RegularTransaction): RegularTransaction?
+        fun updateRegularTransaction(userId: UserId, regularTransaction: RegularTransaction, bookletIds: List<UUID>): RegularTransaction?
 
     /**
      * Delete a regular transaction by id for the given user.

@@ -219,6 +219,22 @@ describe('pages/regular-transaction/index', () => {
     expect(mocks.success).toHaveBeenCalledWith('Transaction régulière mise à jour avec succès')
   })
 
+  it('forwards changed booklet ids when editing a regular transaction', async () => {
+    const { wrapper, mocks } = mountPage()
+
+    const updated = createRegularTransaction('rt-1')
+    updated.bookletIds = ['booklet-2']
+
+    wrapper.findComponent({ name: 'RegularTransactionDialogCard' }).vm.$emit('save', updated)
+    await flushPromises()
+
+    expect(mocks.updateRegularTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookletIds: ['booklet-2'],
+      }),
+    )
+  })
+
   it('calls bulk delete endpoint when bulk deletion is confirmed', async () => {
     const { wrapper, mocks } = mountPage()
     await flushPromises()
