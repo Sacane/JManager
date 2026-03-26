@@ -11,6 +11,7 @@ import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
 import fr.sacane.jmanager.domain.port.api.TransactionDeletionResult
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
+import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.toUUIDs
 import fr.sacane.jmanager.infrastructure.api.*
@@ -132,6 +133,10 @@ class TransactionController(
         @RequestBody request: MonthlyRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
         logger.info("Creating monthly transaction $request from userID ${currentUser.id}")
+        if (request.bookletIds.isEmpty()) {
+            throw InvalidRequestException(ResultState.BAD_REQUEST.code, "At least one booklet must be selected")
+        }
+
         return regularTransactionFeature.bookRegularTransaction(
             currentUser.token,
             RegularTransaction(
@@ -141,8 +146,8 @@ class TransactionController(
                 isIncome = request.isIncome,
                 tag = request.tagDTO.toDomain(),
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
-                startDate = LocalDate.now(),
-                recurrenceRule = RecurrenceRule.Monthly(request.repeatDay ?: 1)
+                startDate = request.startDate,
+                recurrenceRule = RecurrenceRule.Monthly(request.repeatDay ?: request.startDate.dayOfMonth)
             ),
             request.bookletIds.map { java.util.UUID.fromString(it) }
         ).map {
@@ -176,8 +181,8 @@ class TransactionController(
                 isIncome = request.isIncome,
                 tag = request.tagDTO.toDomain(),
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
-                startDate = LocalDate.now(),
-                recurrenceRule = request.recurrenceRule.toDomain()
+                startDate = request.startDate,
+                recurrenceRule = request.recurrenceRule.toDomain(request.startDate.dayOfMonth)
             ),
             request.bookletIds.map { java.util.UUID.fromString(it) }
         ).map {

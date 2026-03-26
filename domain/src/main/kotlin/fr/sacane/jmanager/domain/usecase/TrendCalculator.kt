@@ -18,18 +18,25 @@ interface TrendCalculator {
      * @return a list of MonthlyTrend containing detailed financial data such as income, expenses, balance,
      *         cumulative balance, and the total number of accounts for each month
      */
-    fun calculateTrend(booklets: List<Booklet>): List<MonthlyTrend>
+    fun calculateTrend(
+        booklets: List<Booklet>,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null
+    ): List<MonthlyTrend>
 }
 
 @UseCase
 class TrendCalculatorImpl : TrendCalculator {
-    override fun calculateTrend(booklets: List<Booklet>): List<MonthlyTrend> {
-        val currentDate = LocalDate.now()
-        val last12Months = generateLast12Months(currentDate)
+    override fun calculateTrend(
+        booklets: List<Booklet>,
+        startDate: LocalDate?,
+        endDate: LocalDate?
+    ): List<MonthlyTrend> {
+        val monthsToCompute = resolveMonths(startDate, endDate)
 
         var cumulativeBalance = BigDecimal.ZERO
 
-        return last12Months.map { yearMonth ->
+        return monthsToCompute.map { yearMonth ->
             val monthTransactions = booklets.flatMap { booklet ->
                 booklet.transactions.filter { transaction ->
                     !transaction.isPreview &&
@@ -65,5 +72,21 @@ class TrendCalculatorImpl : TrendCalculator {
         return (11 downTo 0).map { monthsAgo ->
             YearMonth.from(currentDate.minusMonths(monthsAgo.toLong()))
         }
+    }
+
+    private fun resolveMonths(startDate: LocalDate?, endDate: LocalDate?): List<YearMonth> {
+        if (startDate == null || endDate == null) {
+            return generateLast12Months(LocalDate.now())
+        }
+
+        val startMonth = YearMonth.from(startDate)
+        val endMonth = YearMonth.from(endDate)
+        val months = mutableListOf<YearMonth>()
+        var current = startMonth
+        while (!current.isAfter(endMonth)) {
+            months.add(current)
+            current = current.plusMonths(1)
+        }
+        return months
     }
 }

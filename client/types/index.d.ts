@@ -104,6 +104,7 @@ declare global {
     id: string
     label: string
     value: number
+    startDate: Date | string
     isIncome: boolean
     tagDTO: TagDTO
     frequencyProperty: FrequencyPropertyDTO
@@ -168,6 +169,10 @@ declare global {
     totalAmount: string
     totalIncome: string
     totalExpenses: string
+    regularTransactions: StatsTransactionDTO[]
+    nonRegularTransactions: StatsTransactionDTO[]
+    totalRegularAmount: string
+    totalNonRegularAmount: string
     startDate: Date
     endDate: Date
   }
@@ -179,6 +184,7 @@ declare global {
     isIncome: boolean
     date: Date
     tag: string
+    regularTransactionId?: string | null
   }
 
   interface CsvValidationReportDTO {

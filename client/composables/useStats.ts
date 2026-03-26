@@ -1,5 +1,11 @@
 import useQuery from './useQuery'
 
+interface StatsFilters {
+  accountId?: string | number
+  startDate?: string
+  endDate?: string
+}
+
 export default function useStats() {
   const { get } = useQuery()
 
@@ -7,18 +13,19 @@ export default function useStats() {
     return get(`stats/monthly/${accountId}/${year}`)
   }
 
-  async function getCategoryDistribution(): Promise<CategoryDistributionDTO> {
-    return get('stats/category-distribution')
+  async function getCategoryDistribution(filters: StatsFilters = {}): Promise<CategoryDistributionDTO> {
+    return get('stats/category-distribution', filters)
   }
 
-  async function getTrendStats(): Promise<TrendStatsDTO> {
-    return get('stats/trends')
+  async function getTrendStats(filters: StatsFilters = {}): Promise<TrendStatsDTO> {
+    return get('stats/trends', filters)
   }
 
-  async function getPrevisionalTransactions(startDate: string, endDate: string): Promise<PrevisionalTransactionsDTO> {
+  async function getPrevisionalTransactions(startDate: string, endDate: string, accountId?: string): Promise<PrevisionalTransactionsDTO> {
     return get('stats/previsional', {
       startDate,
       endDate,
+      accountId,
     })
   }
 

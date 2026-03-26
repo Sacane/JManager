@@ -11,6 +11,7 @@ import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
 import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.api.StatsFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
@@ -245,6 +246,64 @@ class StatsFeatureTest : FeatureTest() {
                     }
             }
         }
+
+        @Test
+        fun `Should scope category distribution to selected account`() {
+            launchWithConnectedUserInstance {
+                val foodTag = Tag(id = UUID.randomUUID(), label = "Food", isDefault = false)
+                initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
+
+                val secondBooklet = Booklet(
+                    Amount.fromString("500", "€".asCurrency()),
+                    "account2",
+                    owner = user.toUser(),
+                    id = UUID.randomUUID()
+                )
+
+                val firstAccountTransaction = generateTransactionWithTag(
+                    "Groceries",
+                    Amount(BigDecimal("-100")),
+                    LocalDate.of(2025, 1, 10),
+                    foodTag
+                )
+                initTransactions(listOf(firstAccountTransaction))
+
+                val secondAccountTransaction = generateTransactionWithTag(
+                    "Restaurant",
+                    Amount(BigDecimal("-200")),
+                    LocalDate.of(2025, 1, 12),
+                    foodTag
+                )
+                accountState.init(listOf(AccountByOwner(listOf(secondBooklet), user.id)))
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, secondBooklet.id!!),
+                            mutableListOf(secondAccountTransaction)
+                        )
+                    )
+                )
+
+                statsFeature.getCategoryDistribution(tokenValue, accountId = booklet.id)
+                    .assertTrue {
+                        this.totalExpenses == Amount(BigDecimal("100"))
+                    }
+            }
+        }
+
+        @Test
+        fun `Should fail category distribution when period is partially provided`() {
+            launchWithConnectedUserInstance {
+                val result = statsFeature.getCategoryDistribution(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 1, 1),
+                    endDate = null
+                )
+
+                result.assertFailure()
+                assertEquals("domain.stats.category_distribution.invalid_partial_date_range", result.errorInfo?.key)
+            }
+        }
     }
 
     @Nested
@@ -349,6 +408,43 @@ class StatsFeatureTest : FeatureTest() {
                             it.income.value.compareTo(BigDecimal.ZERO) == 0 && it.expenses.value.compareTo(BigDecimal.ZERO) == 0
                         }
                     }
+            }
+        }
+
+        @Test
+        fun `Should scope trend stats to selected account and period`() {
+            launchWithConnectedUserInstance {
+                val janDate = LocalDate.of(2025, 1, 5)
+                val febDate = LocalDate.of(2025, 2, 5)
+                initTransactions(
+                    listOf(
+                        generateTransaction("A1 Jan", Amount(BigDecimal("100")), true, janDate),
+                        generateTransaction("A1 Feb", Amount(BigDecimal("100")), true, febDate)
+                    )
+                )
+
+                statsFeature.getTrendStats(
+                    token = tokenValue,
+                    accountId = booklet.id,
+                    startDate = LocalDate.of(2025, 1, 1),
+                    endDate = LocalDate.of(2025, 2, 28)
+                ).assertTrue {
+                    this.monthlyTrends.size == 2 && this.monthlyTrends.all { it.totalAccounts == 1 }
+                }
+            }
+        }
+
+        @Test
+        fun `Should fail trend stats when period is partially provided`() {
+            launchWithConnectedUserInstance {
+                val result = statsFeature.getTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 1, 1),
+                    endDate = null
+                )
+
+                result.assertFailure()
+                assertEquals("domain.stats.trend.invalid_partial_date_range", result.errorInfo?.key)
             }
         }
     }
@@ -480,6 +576,75 @@ class StatsFeatureTest : FeatureTest() {
                     .assertTrue {
                         val dates = this.transactions.map { it.date }
                         dates == dates.sorted()
+                    }
+            }
+        }
+
+        @Test
+        fun `Should scope previsional transactions to selected account`() {
+            launchWithConnectedUserInstance {
+                val startDate = LocalDate.now()
+                val endDate = startDate.plusMonths(3)
+
+                initTransactions(
+                    listOf(
+                        generateTransaction("A1 Future", Amount(BigDecimal("-100")), false, startDate.plusDays(5), isPreview = true)
+                    )
+                )
+
+                val secondBooklet = Booklet(
+                    Amount.fromString("500", "€".asCurrency()),
+                    "account2",
+                    owner = user.toUser(),
+                    id = UUID.randomUUID()
+                )
+                accountState.init(listOf(AccountByOwner(listOf(secondBooklet), user.id)))
+                transactionState.init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, secondBooklet.id!!),
+                            mutableListOf(
+                                generateTransaction("A2 Future", Amount(BigDecimal("-200")), false, startDate.plusDays(10), isPreview = true)
+                            )
+                        )
+                    )
+                )
+
+                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate, booklet.id)
+                    .assertTrue {
+                        this.groupedByAccount.keys.size == 1
+                    }
+            }
+        }
+
+        @Test
+        fun `Should split previsional transactions by regular and non regular`() {
+            launchWithConnectedUserInstance {
+                val startDate = LocalDate.now()
+                val endDate = startDate.plusMonths(1)
+
+                val regularPreview = generateTransaction(
+                    "Loyer régulier",
+                    Amount(BigDecimal("-800")),
+                    false,
+                    startDate.plusDays(5),
+                    isPreview = true,
+                ).copy(regularTransactionId = RegularTransactionId(UUID.randomUUID().toString()))
+
+                val nonRegularPreview = generateTransaction(
+                    "Facture ponctuelle",
+                    Amount(BigDecimal("-120")),
+                    false,
+                    startDate.plusDays(8),
+                    isPreview = true,
+                )
+
+                initTransactions(listOf(regularPreview, nonRegularPreview))
+
+                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                    .assertTrue {
+                        this.regularTransactions.size == 1 &&
+                            this.nonRegularTransactions.size == 1
                     }
             }
         }

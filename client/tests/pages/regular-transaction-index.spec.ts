@@ -62,6 +62,7 @@ function mountPage(options?: {
 
   const success = vi.fn()
   const errorAxios = vi.fn()
+  const warn = vi.fn()
   const require = vi.fn()
 
   vi.stubGlobal('definePageMeta', vi.fn())
@@ -74,7 +75,7 @@ function mountPage(options?: {
     deleteRegularTransaction,
     deleteRegularTransactions,
   }))
-  vi.stubGlobal('useJToast', () => ({ success, errorAxios }))
+  vi.stubGlobal('useJToast', () => ({ success, errorAxios, warn }))
   vi.stubGlobal('useConfirm', () => ({ require }))
 
   const wrapper = shallowMount(RegularTransactionPage, {
@@ -100,6 +101,7 @@ function mountPage(options?: {
       deleteRegularTransactions,
       success,
       errorAxios,
+      warn,
       require,
     },
   }
@@ -116,7 +118,7 @@ describe('pages/regular-transaction/index', () => {
       tagDTO: { tagId: 'tag-1', label: 'Abonnement', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false },
       frequencyProperty: { type: 'FOREVER', untilDate: undefined, times: undefined },
       repeatDay: null,
-      bookletIds: [],
+      bookletIds: ['booklet-1'],
     }
 
     wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).vm.$emit('create-transaction', payload)
@@ -137,7 +139,7 @@ describe('pages/regular-transaction/index', () => {
       tagDTO: { tagId: 'tag-1', label: 'Abonnement', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false },
       frequencyProperty: { type: 'FOREVER', untilDate: undefined, times: undefined },
       repeatDay: null,
-      bookletIds: [],
+      bookletIds: ['booklet-1'],
     }
 
     wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).vm.$emit('create-transaction', payload)
@@ -159,7 +161,7 @@ describe('pages/regular-transaction/index', () => {
       tagDTO: { tagId: 'tag-1', label: 'Abonnement', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false },
       frequencyProperty: { type: 'FOREVER', untilDate: undefined, times: undefined },
       repeatDay: null,
-      bookletIds: [],
+      bookletIds: ['booklet-1'],
     }
 
     wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).vm.$emit('create-transaction', payload)
@@ -171,6 +173,26 @@ describe('pages/regular-transaction/index', () => {
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).props('loading')).toBe(false)
+  })
+
+  it('does not call save endpoint when no booklet is selected', async () => {
+    const { wrapper, mocks } = mountPage()
+    const payload = {
+      label: 'Netflix',
+      value: 10,
+      isIncome: false,
+      startDate: '2026-03-13',
+      tagDTO: { tagId: 'tag-1', label: 'Abonnement', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false },
+      frequencyProperty: { type: 'FOREVER', untilDate: undefined, times: undefined },
+      repeatDay: null,
+      bookletIds: [],
+    }
+
+    wrapper.findComponent({ name: 'RegularTransactionCreationDialog' }).vm.$emit('create-transaction', payload)
+    await flushPromises()
+
+    expect(mocks.saveMonthlyTransaction).not.toHaveBeenCalled()
+    expect(mocks.warn).toHaveBeenCalledWith('Veuillez sélectionner au moins un compte')
   })
 
   it('calls success toast when delete is confirmed and succeeds', async () => {

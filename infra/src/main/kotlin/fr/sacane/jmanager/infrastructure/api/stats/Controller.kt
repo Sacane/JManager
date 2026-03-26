@@ -10,6 +10,7 @@ import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
+import java.util.UUID
 import java.util.logging.Logger
 
 @RestController
@@ -35,19 +36,37 @@ class StatsController(
     }
 
     @GetMapping("/category-distribution")
-    fun getCategoryDistribution(): ResponseEntity<CategoryDistributionDTO> {
+    fun getCategoryDistribution(
+        @RequestParam(required = false) accountId: UUID?,
+        @RequestParam(required = false) startDate: LocalDate?,
+        @RequestParam(required = false) endDate: LocalDate?
+    ): ResponseEntity<CategoryDistributionDTO> {
         LOGGER.info("Requesting category distribution")
 
-        return statsFeature.getCategoryDistribution(currentUser.token)
+        return statsFeature.getCategoryDistribution(
+            token = currentUser.token,
+            accountId = accountId,
+            startDate = startDate,
+            endDate = endDate
+        )
             .map { it.toDTO() }
             .toHttpResponse()
     }
 
     @GetMapping("/trends")
-    fun getTrendStats(): ResponseEntity<TrendStatsDTO> {
+    fun getTrendStats(
+        @RequestParam(required = false) accountId: UUID?,
+        @RequestParam(required = false) startDate: LocalDate?,
+        @RequestParam(required = false) endDate: LocalDate?
+    ): ResponseEntity<TrendStatsDTO> {
         LOGGER.info("Requesting trend stats")
 
-        return statsFeature.getTrendStats(currentUser.token)
+        return statsFeature.getTrendStats(
+            token = currentUser.token,
+            accountId = accountId,
+            startDate = startDate,
+            endDate = endDate
+        )
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -55,12 +74,13 @@ class StatsController(
     @GetMapping("/previsional")
     fun getPrevisionalTransactions(
         @RequestParam startDate: LocalDate,
-        @RequestParam endDate: LocalDate
+        @RequestParam endDate: LocalDate,
+        @RequestParam(required = false) accountId: UUID?
     ): ResponseEntity<PrevisionalTransactionsDTO> {
         LOGGER.info("Requesting previsional transactions from $startDate to $endDate")
         val defaultTag = tagFeature.defaultTag(currentUser.token).mapNotNullOrFailure() ?: throw NotFoundException(
             ResultState.TAG_NOT_FOUND.code, "Default tag not found")
-        return statsFeature.getPrevisionalTransactions(currentUser.token, startDate, endDate)
+        return statsFeature.getPrevisionalTransactions(currentUser.token, startDate, endDate, accountId)
             .map {
                 it.toDTO(defaultTag)
             }

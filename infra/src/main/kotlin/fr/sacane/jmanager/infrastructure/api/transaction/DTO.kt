@@ -130,6 +130,8 @@ data class UpdateRegularTransactionRequest(
     val label: String,
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
+    @Serializable(with = LocalDateSerializer::class)
+    val startDate: LocalDate,
     val isIncome: Boolean,
     val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO,
@@ -170,9 +172,9 @@ fun FrequencyProperty.toDTO(): FrequencyPropertyDTO {
     }
 }
 
-fun RecurrenceRuleDTO.toDomain(): fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule {
+fun RecurrenceRuleDTO.toDomain(defaultMonthlyDay: Int = 1): fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule {
     return when(type.uppercase()) {
-        "MONTHLY" -> fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Monthly(value ?: 1)
+        "MONTHLY" -> fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Monthly(value ?: defaultMonthlyDay)
         "YEARLY" -> {
             val month = value?.div(100) ?: 1
             val day = value?.rem(100) ?: 1

@@ -66,6 +66,9 @@ function emitTransaction() {
   if (regularTrForm.amount === undefined || regularTrForm.amount <= 0 || regularTrForm.label === '') {
     return
   }
+  if (regularTrForm.selectedBooklets.length === 0) {
+    return
+  }
   const frequency = strToFrequency(regularTrForm.frequency)
   if (frequency === 'MONTHLY') {
     const formattedStartDate = formattedDateString(regularTrForm.date)
@@ -215,8 +218,8 @@ function handleTabKey(event: KeyboardEvent) {
         />
       </div>
       <div class="flex flex-row gap-5">
-        <Button severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
-        <Button label="Créer" class="mt-6 w-full btn-primary text-white" @click="emitTransaction" />
+        <Button data-test="cancel-btn" severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
+        <Button data-test="create-btn" label="Créer" class="mt-6 w-full btn-primary text-white" :disabled="regularTrForm.selectedBooklets.length === 0" @click="emitTransaction" />
       </div>
     </div>
   </Dialog>

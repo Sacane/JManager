@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDate
 
 
 
@@ -19,7 +20,11 @@ interface CategoryDistributionCalculator {
      * @return a pair where the first element is a list of `CategoryData` containing distribution data
      *         for each category, and the second element is the total amount for all transactions
      */
-    fun calculateDistribution(transactions: List<Transaction>): Pair<List<CategoryData>, Amount>
+    fun calculateDistribution(
+        transactions: List<Transaction>,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null
+    ): Pair<List<CategoryData>, Amount>
 }
 
 @UseCase
@@ -27,9 +32,16 @@ class CategoryDistributionCalculatorImpl(
     private val tagRepository: TagRepository
 ) : CategoryDistributionCalculator {
 
-    override fun calculateDistribution(transactions: List<Transaction>): Pair<List<CategoryData>, Amount> {
+    override fun calculateDistribution(
+        transactions: List<Transaction>,
+        startDate: LocalDate?,
+        endDate: LocalDate?
+    ): Pair<List<CategoryData>, Amount> {
         val expenseTransactions = transactions.filter {
-            !it.isIncome && !it.isPreview
+            !it.isIncome &&
+                !it.isPreview &&
+                (startDate == null || !it.date.isBefore(startDate)) &&
+                (endDate == null || !it.date.isAfter(endDate))
         }
 
         val totalExpenses = expenseTransactions

@@ -54,6 +54,20 @@ data class PrevisionalTransactionsOutput(
     val totalAmount: Amount,
     val totalIncome: Amount,
     val totalExpenses: Amount,
+    val regularTransactions: List<Transaction> = transactions.filter { it.regularTransactionId != null },
+    val nonRegularTransactions: List<Transaction> = transactions.filter { it.regularTransactionId == null },
+    val totalRegularAmount: Amount = Amount(
+        regularTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
+            val signedAmount = if (transaction.isIncome) transaction.amount.value else transaction.amount.value.abs().negate()
+            acc.add(signedAmount)
+        }
+    ),
+    val totalNonRegularAmount: Amount = Amount(
+        nonRegularTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
+            val signedAmount = if (transaction.isIncome) transaction.amount.value else transaction.amount.value.abs().negate()
+            acc.add(signedAmount)
+        }
+    ),
     val startDate: java.time.LocalDate,
     val endDate: java.time.LocalDate
 )
