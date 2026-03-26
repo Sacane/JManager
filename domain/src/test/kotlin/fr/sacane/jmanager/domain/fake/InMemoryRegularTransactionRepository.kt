@@ -70,14 +70,15 @@ class InMemoryRegularTransactionRepository(
 
     override fun updateRegularTransaction(
         userId: UserId,
-        regularTransaction: RegularTransaction
+        regularTransaction: RegularTransaction,
+        bookletIds: List<UUID>
     ): RegularTransaction? {
         val existing = inMemoryDatabase.getRegularTransactionById(userId, regularTransaction.id)
         if (existing == null) {
             return null
         }
 
-        inMemoryDatabase.updateRegularTransaction(userId, regularTransaction)
+        inMemoryDatabase.updateRegularTransaction(userId, regularTransaction, bookletIds)
         return regularTransaction
     }
 

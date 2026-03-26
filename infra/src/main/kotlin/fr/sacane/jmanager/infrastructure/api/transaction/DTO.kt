@@ -75,6 +75,7 @@ data class RegularTransactionDTO(
     val regularity: String,
     val tagDTO: TagDTO,
     val frequencyProperty: FrequencyPropertyDTO,
+    val bookletIds: List<String> = emptyList(),
 )
 
 @Serializable
@@ -134,6 +135,16 @@ data class UpdateRegularTransactionRequest(
     val frequencyProperty: FrequencyPropertyDTO,
     val bookletIds: List<String>,
     val recurrenceRule: RecurrenceRuleDTO
+)
+
+@Serializable
+data class RegularTransactionsDeletionRequest(
+    val transactionIds: List<String>
+)
+
+@Serializable
+data class RegularTransactionsDeletionResponse(
+    val deletedIds: List<String>
 )
 
 @Serializable

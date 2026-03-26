@@ -62,9 +62,10 @@ sealed interface RegularTransactionFeature {
      *
      * @param token Authentication token identifying the requester.
      * @param regularTransaction RegularTransaction object containing updated values (must include id).
+        * @param bookletIds Booklet identifiers to associate with this regular transaction.
      * @return Result containing the updated RegularTransaction on success, or an error state if not found.
      */
-    fun updateRegularTransaction(token: String, regularTransaction: RegularTransaction): Result<RegularTransaction>
+        fun updateRegularTransaction(token: String, regularTransaction: RegularTransaction, bookletIds: List<UUID>): Result<RegularTransaction>
 
     /**
      * Delete a regular transaction by its identifier.
@@ -74,6 +75,15 @@ sealed interface RegularTransactionFeature {
      * @return Result containing a boolean indicating deletion success, or a failure when not found.
      */
     fun deleteRegularTransaction(token: String, transactionId: String): Result<Boolean>
+
+    /**
+     * Delete multiple regular transactions in a single operation.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param transactionIds Identifiers of regular transactions to delete.
+     * @return Result containing deleted transaction ids, or a failure when any id is missing.
+     */
+    fun deleteRegularTransactions(token: String, transactionIds: List<String>): Result<List<String>>
 }
 
 @DomainService
@@ -132,10 +142,11 @@ class RegularTransactionFeatureImpl(
 
     override fun updateRegularTransaction(
         token: String,
-        regularTransaction: RegularTransaction
+        regularTransaction: RegularTransaction,
+        bookletIds: List<UUID>
     ): Result<RegularTransaction> = session.authenticate(token) { userId ->
         return@authenticate unitOfWork.executeInTransaction(regularTransaction) {
-            val updated = regularTransactionRepository.updateRegularTransaction(userId, it)
+            val updated = regularTransactionRepository.updateRegularTransaction(userId, it, bookletIds)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,
                     "La transaction ${it.id} n'existe pas",
@@ -149,14 +160,50 @@ class RegularTransactionFeatureImpl(
         token: String,
         transactionId: String
     ): Result<Boolean> = session.authenticate(token) { userId ->
-        val deleted = regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(transactionId))
-        if (!deleted) {
+        return@authenticate unitOfWork.executeInTransaction(transactionId) {
+            val deleted = regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(it))
+            if (!deleted) {
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_NOT_FOUND,
+                    "La transaction $transactionId n'existe pas",
+                    "domain.regular_transaction.delete.not_found"
+                )
+            }
+            return@executeInTransaction success(true)
+        }
+    }
+
+    override fun deleteRegularTransactions(
+        token: String,
+        transactionIds: List<String>
+    ): Result<List<String>> = session.authenticate(token) { userId ->
+        if (transactionIds.isEmpty()) {
             return@authenticate domainFailure(
-                ResultState.TRANSACTION_NOT_FOUND,
-                "La transaction $transactionId n'existe pas",
-                "domain.regular_transaction.delete.not_found"
+                ResultState.TRANSACTION_ENTRY_ERROR,
+                "Aucune transaction régulière à supprimer",
+                "domain.regular_transaction.delete.bulk.empty_selection"
             )
         }
-        return@authenticate success(true)
+
+        val distinctIds = transactionIds.distinct()
+        return@authenticate unitOfWork.executeInTransaction(distinctIds) { ids ->
+            val missingId = ids.firstOrNull {
+                regularTransactionRepository.getRegularTransactionById(userId, RegularTransactionId(it)) == null
+            }
+
+            if (missingId != null) {
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_NOT_FOUND,
+                    "La transaction $missingId n'existe pas",
+                    "domain.regular_transaction.delete.bulk.not_found"
+                )
+            }
+
+            ids.forEach {
+                regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(it))
+            }
+
+            return@executeInTransaction success(ids)
+        }
     }
 }

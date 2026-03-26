@@ -178,7 +178,8 @@ class TransactionController(
                 frequencyProperty = request.frequencyProperty.frequencyToDomain(),
                 startDate = LocalDate.now(),
                 recurrenceRule = request.recurrenceRule.toDomain()
-            )
+            ),
+            request.bookletIds.map { java.util.UUID.fromString(it) }
         ).map {
             it.toDTO()
         }.toHttpResponse().also {
@@ -194,6 +195,19 @@ class TransactionController(
             .toHttpResponse()
             .also {
                 logger.info("Regular transaction deleted successfully")
+            }
+    }
+
+    @DeleteMapping("/regular")
+    fun deleteRegularTransactions(@RequestBody request: RegularTransactionsDeletionRequest): ResponseEntity<RegularTransactionsDeletionResponse> {
+        logger.info("Bulk deleting ${request.transactionIds.size} regular transaction(s)")
+        return regularTransactionFeature.deleteRegularTransactions(currentUser.token, request.transactionIds)
+            .map { deletedIds ->
+                RegularTransactionsDeletionResponse(deletedIds)
+            }
+            .toHttpResponse()
+            .also {
+                logger.info("Bulk regular transactions deletion finished")
             }
     }
 }

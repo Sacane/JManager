@@ -7,7 +7,7 @@ definePageMeta({
 })
 
 const { fetch } = useBooklet()
-const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById, updateRegularTransaction, deleteRegularTransaction } = useRegularTransaction()
+const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById, updateRegularTransaction, deleteRegularTransaction, deleteRegularTransactions } = useRegularTransaction()
 const transactions = ref<RegularTransactionDTO[]>([])
 const { frequencyToString } = useDate()
 const jToast = useJToast()
@@ -102,7 +102,7 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
       isIncome: updatedTransaction.isIncome,
       tagDTO: updatedTransaction.tagDTO,
       frequencyProperty: updatedTransaction.frequencyProperty,
-      bookletIds: [],
+      bookletIds: updatedTransaction.bookletIds ?? [],
       recurrenceRule: {
         type: updatedTransaction.regularity,
         value: updatedTransaction.regularity === 'MONTHLY' ? 1 : undefined,
@@ -125,8 +125,14 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
 }
 
 function handleDelete(transactionId: string) {
+  const transaction = transactions.value.find(t => t.id === transactionId)
+  const bookletCount = transaction?.bookletIds?.length ?? 0
+  const deletionMessage = bookletCount > 0
+    ? `Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.\n\nCette transaction est liée à ${bookletCount} livret(s). Les liens avec ces livrets seront également supprimés.`
+    : 'Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.'
+
   confirm.require({
-    message: 'Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.',
+    message: deletionMessage,
     header: '⚠️ Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     rejectLabel: 'Annuler',
@@ -159,6 +165,43 @@ function handleDelete(transactionId: string) {
   })
 }
 
+function handleBulkDelete() {
+  const ids = selectedTransactions.value.map(transaction => transaction.id)
+
+  if (ids.length === 0) {
+    return
+  }
+
+  confirm.require({
+    message: `Êtes-vous sûr de vouloir supprimer ${ids.length} transaction(s) régulière(s) ? Cette action est irréversible.`,
+    header: '⚠️ Confirmation de suppression multiple',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Annuler',
+    acceptLabel: 'Supprimer',
+    rejectProps: {
+      label: 'Annuler',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: 'Supprimer',
+      severity: 'danger',
+    },
+    accept: async () => {
+      try {
+        await deleteRegularTransactions({ transactionIds: ids })
+        transactions.value = transactions.value.filter(transaction => !ids.includes(transaction.id))
+        selectedTransactions.value = []
+        isEditDialogVisible.value = false
+        jToast.success(`${ids.length} transaction(s) régulière(s) supprimée(s) avec succès`)
+      } catch (error: any) {
+        console.error('Erreur lors de la suppression multiple:', error)
+        jToast.errorAxios(error)
+      }
+    },
+  })
+}
+
 function isSelected(transaction: RegularTransactionDTO): boolean {
   return selectedTransactions.value.some(t => t.id === transaction.id)
 }
@@ -167,6 +210,7 @@ function checkMobile() {
 }
 
 const transactionsCount = computed(() => transactions.value.length)
+const selectedTransactionsCount = computed(() => selectedTransactions.value.length)
 </script>
 
 <template>
@@ -194,17 +238,29 @@ const transactionsCount = computed(() => transactions.value.length)
         :label="isMobile ? 'Créer' : 'Créer une transaction régulière'"
         @click="openCreationRegularTransactionDialog"
       />
+      <Button
+        v-if="!isMobile"
+        class="border-none font-semibold transition-all duration-300 md:w-auto md:text-3.5 md:px-4 md:py-2.5"
+        icon="pi pi-trash"
+        severity="danger"
+        :disabled="selectedTransactionsCount === 0"
+        :label="`Supprimer la sélection (${selectedTransactionsCount})`"
+        @click="handleBulkDelete"
+      />
     </div>
 
     <div v-if="!isMobile" class="flex-1 rounded-5 overflow-hidden shadow-lg border" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
       <DataTable
         v-model:selection="selectedTransactions"
         :value="transactions"
+        data-key="id"
+        selection-mode="multiple"
         scrollable
         scroll-height="flex"
         striped-rows
         @row-dblclick="handleRowDoubleClick"
       >
+        <Column selection-mode="multiple" header-style="width: 3rem" />
         <template #empty>
           <div class="flex flex-col items-center justify-center p-15 text-center md:p-10">
             <i class="pi pi-sync text-4rem mb-4" style="color: var(--text-muted);" />
@@ -359,6 +415,7 @@ const transactionsCount = computed(() => transactions.value.length)
     <RegularTransactionDialogCard
       v-model="isEditDialogVisible"
       :transaction="selectedTransaction"
+      :booklets="booklets"
       :loading="loadingTransaction"
       @save="handleEditSave"
       @delete="handleDelete"

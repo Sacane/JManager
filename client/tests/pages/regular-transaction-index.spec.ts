@@ -37,12 +37,14 @@ function createRegularTransaction(id: string) {
       colorDTO: { red: 100, green: 120, blue: 240 },
       isDefault: false,
     },
+    bookletIds: ['booklet-1'],
   }
 }
 
 function mountPage(options?: {
   saveReject?: any
   deleteReject?: any
+  bulkDeleteReject?: any
 }) {
   const fetch = vi.fn().mockResolvedValue([])
   const getRegularTransaction = vi.fn().mockResolvedValue([createRegularTransaction('rt-1')])
@@ -53,6 +55,9 @@ function mountPage(options?: {
   const updateRegularTransaction = vi.fn().mockResolvedValue(createRegularTransaction('rt-1'))
   const deleteRegularTransaction = options?.deleteReject
     ? vi.fn().mockRejectedValue(options.deleteReject)
+    : vi.fn().mockResolvedValue(undefined)
+  const deleteRegularTransactions = options?.bulkDeleteReject
+    ? vi.fn().mockRejectedValue(options.bulkDeleteReject)
     : vi.fn().mockResolvedValue(undefined)
 
   const success = vi.fn()
@@ -67,6 +72,7 @@ function mountPage(options?: {
     getRegularTransactionById,
     updateRegularTransaction,
     deleteRegularTransaction,
+    deleteRegularTransactions,
   }))
   vi.stubGlobal('useJToast', () => ({ success, errorAxios }))
   vi.stubGlobal('useConfirm', () => ({ require }))
@@ -76,7 +82,7 @@ function mountPage(options?: {
       stubs: {
         DataTable: { template: '<div><slot /><slot name="empty" /></div>' },
         Column: { template: '<div><slot :data="{}" /></div>' },
-        Button: { template: '<button><slot /></button>' },
+        Button: { props: ['label'], template: '<button>{{ label }}<slot /></button>' },
         Tag: { template: '<span><slot /></span>' },
         ConfirmDialog: true,
         RegularTransactionCreationDialog: { name: 'RegularTransactionCreationDialog', props: ['loading'], template: '<div />' },
@@ -89,7 +95,9 @@ function mountPage(options?: {
     wrapper,
     mocks: {
       saveMonthlyTransaction,
+      updateRegularTransaction,
       deleteRegularTransaction,
+      deleteRegularTransactions,
       success,
       errorAxios,
       require,
@@ -185,5 +193,81 @@ describe('pages/regular-transaction/index', () => {
     await confirmConfig.accept()
 
     expect(mocks.errorAxios).toHaveBeenCalledWith(deleteError)
+  })
+
+  it('adds linked booklet count in delete confirmation message', async () => {
+    const { wrapper, mocks } = mountPage()
+    await flushPromises()
+
+    wrapper.findComponent({ name: 'RegularTransactionDialogCard' }).vm.$emit('delete', 'rt-1')
+    const confirmConfig = mocks.require.mock.calls[0]?.[0]
+
+    expect(confirmConfig.message).toContain('liée à 1 livret(s)')
+  })
+
+  it('preserves booklet ids when submitting edit', async () => {
+    const { wrapper, mocks } = mountPage()
+
+    wrapper.findComponent({ name: 'RegularTransactionDialogCard' }).vm.$emit('save', createRegularTransaction('rt-1'))
+    await flushPromises()
+
+    expect(mocks.updateRegularTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookletIds: ['booklet-1'],
+      }),
+    )
+    expect(mocks.success).toHaveBeenCalledWith('Transaction régulière mise à jour avec succès')
+  })
+
+  it('forwards changed booklet ids when editing a regular transaction', async () => {
+    const { wrapper, mocks } = mountPage()
+
+    const updated = createRegularTransaction('rt-1')
+    updated.bookletIds = ['booklet-2']
+
+    wrapper.findComponent({ name: 'RegularTransactionDialogCard' }).vm.$emit('save', updated)
+    await flushPromises()
+
+    expect(mocks.updateRegularTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookletIds: ['booklet-2'],
+      }),
+    )
+  })
+
+  it('calls bulk delete endpoint when bulk deletion is confirmed', async () => {
+    const { wrapper, mocks } = mountPage()
+    await flushPromises()
+
+    wrapper.vm.selectedTransactions = [createRegularTransaction('rt-1')]
+    await flushPromises()
+
+    const bulkDeleteButton = wrapper.findAll('button').find(button => button.text().includes('Supprimer la sélection'))
+    expect(bulkDeleteButton).toBeTruthy()
+
+    await bulkDeleteButton!.trigger('click')
+    const confirmConfig = mocks.require.mock.calls[0]?.[0]
+    await confirmConfig.accept()
+
+    expect(mocks.deleteRegularTransactions).toHaveBeenCalledWith({ transactionIds: ['rt-1'] })
+    expect(mocks.success).toHaveBeenCalledWith('1 transaction(s) régulière(s) supprimée(s) avec succès')
+  })
+
+  it('calls error toast when bulk deletion fails', async () => {
+    const bulkDeleteError = new Error('bulk delete failed')
+    const { wrapper, mocks } = mountPage({ bulkDeleteReject: bulkDeleteError })
+    await flushPromises()
+
+    wrapper.vm.selectedTransactions = [createRegularTransaction('rt-1')]
+    await flushPromises()
+
+    const bulkDeleteButton = wrapper.findAll('button').find(button => button.text().includes('Supprimer la sélection'))
+    expect(bulkDeleteButton).toBeTruthy()
+
+    await bulkDeleteButton!.trigger('click')
+    const confirmConfig = mocks.require.mock.calls[0]?.[0]
+    await confirmConfig.accept()
+
+    expect(mocks.errorAxios).toHaveBeenCalledWith(bulkDeleteError)
   })
 })

@@ -116,6 +116,7 @@ internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
         isIncome = this.isIncome,
         regularity = regularityType,
         tagDTO = this.tag!!.toDTO(),
-        frequencyProperty = frequencyProperty.toDTO()
+        frequencyProperty = frequencyProperty.toDTO(),
+        bookletIds = this.associatedBooklets.mapNotNull { it.id?.toString() }
     )
 }

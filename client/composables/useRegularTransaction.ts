@@ -23,11 +23,16 @@ export default function useRegularTransaction() {
     return deleteQuery(`transaction/regular/${id}`, {})
   }
 
+  async function deleteRegularTransactions(request: RegularTransactionsDeletionRequest): Promise<void> {
+    return deleteQuery('transaction/regular', request)
+  }
+
   return {
     getRegularTransaction,
     saveMonthlyTransaction,
     getRegularTransactionById,
     updateRegularTransaction,
     deleteRegularTransaction,
+    deleteRegularTransactions,
   }
 }

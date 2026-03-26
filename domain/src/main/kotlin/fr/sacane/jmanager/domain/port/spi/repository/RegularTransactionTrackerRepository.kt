@@ -43,6 +43,13 @@ interface RegularTransactionTrackerRepository {
     fun deleteTrackerByBookletId(bookletId: UUID)
 
     /**
+     * Deletes all trackers associated with a specific regular transaction.
+     *
+     * @param regularTransactionId The identifier of the regular transaction for which trackers are deleted.
+     */
+    fun deleteTrackerByRegularTransactionId(regularTransactionId: RegularTransactionId)
+
+    /**
      * Marks a specific month and year as excluded for a regular transaction in a booklet.
      * This prevents the transaction from being regenerated for that month.
      *

@@ -57,12 +57,11 @@ class InMemoryDatabase {
             ?.find { it.id == transactionId }
     }
 
-    fun updateRegularTransaction(userId: UserId, regularTransaction: RegularTransaction) {
+    fun updateRegularTransaction(userId: UserId, regularTransaction: RegularTransaction, bookletIds: List<UUID>) {
         val userTransactions = regularTransactionsByUser[userId] ?: return
         val index = userTransactions.indexOfFirst { it.transaction.id == regularTransaction.id }
         if (index != -1) {
-            val oldBookletIds = userTransactions[index].bookletIds
-            userTransactions[index] = RegularByBooklet(regularTransaction, oldBookletIds)
+            userTransactions[index] = RegularByBooklet(regularTransaction, bookletIds)
         }
     }
 
@@ -95,6 +94,12 @@ class InMemoryDatabase {
 
     fun deleteTrackerByBookletId(bookletId: UUID) {
         trackers.remove(bookletId)
+    }
+
+    fun deleteTrackerByRegularTransactionId(regularTransactionId: RegularTransactionId) {
+        trackers.forEach { (_, trackerList) ->
+            trackerList.removeIf { it.regularTransactionId == regularTransactionId }
+        }
     }
 
     fun addAccount(ownerId: UserId, booklet: Booklet) {

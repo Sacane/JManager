@@ -42,6 +42,12 @@ const ButtonStub = {
   template: '<button :data-label="label" @click="$emit(\'click\')">{{ label }}</button>',
 }
 
+const MultiSelectStub = {
+  props: ['modelValue', 'options'],
+  emits: ['update:modelValue'],
+  template: '<select data-test="booklet-selector" @change="$emit(\'update:modelValue\', [$event.target.value])"><option value="">-</option><option v-for="option in options" :key="option.value" :value="option.value">{{ option.label }}</option></select>',
+}
+
 describe('components/dialog/RegularTransactionDialogCard', () => {
   it('loads tags on mount using useTag composable', async () => {
     const getAllTags = vi.fn().mockResolvedValue([])
@@ -61,6 +67,7 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
           Tag: true,
           Select: true,
           DatePicker: true,
+          MultiSelect: MultiSelectStub,
           ProgressSpinner: true,
           Button: ButtonStub,
         },
@@ -91,6 +98,7 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
           Tag: true,
           Select: true,
           DatePicker: true,
+          MultiSelect: MultiSelectStub,
           ProgressSpinner: true,
           Button: ButtonStub,
         },
@@ -124,6 +132,7 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
           Tag: true,
           Select: true,
           DatePicker: true,
+          MultiSelect: MultiSelectStub,
           ProgressSpinner: true,
           Button: ButtonStub,
         },
@@ -154,6 +163,7 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
           Tag: true,
           Select: true,
           DatePicker: true,
+          MultiSelect: MultiSelectStub,
           ProgressSpinner: true,
           Button: ButtonStub,
         },
@@ -163,5 +173,74 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
     await wrapper.get('[data-label="Annuler"]').trigger('click')
 
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false])
+  })
+
+  it('displays linked booklet labels when booklet ids are provided', async () => {
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([]),
+    }))
+
+    const wrapper = mount(RegularTransactionDialogCard, {
+      props: {
+        modelValue: true,
+        transaction: createTransaction({ bookletIds: ['booklet-1'] }),
+        booklets: [{ id: 'booklet-1', amount: 200, labelAccount: 'Compte principal', currency: 'EUR' }],
+      },
+      global: {
+        stubs: {
+          Dialog: DialogStub,
+          InputText: InputTextStub,
+          InputNumber: true,
+          RadioButton: true,
+          Tag: true,
+          Select: true,
+          DatePicker: true,
+          MultiSelect: MultiSelectStub,
+          ProgressSpinner: true,
+          Button: ButtonStub,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Livrets associés')
+    expect(wrapper.text()).toContain('Compte principal')
+  })
+
+  it('emits updated booklet ids when selection changes and save is clicked', async () => {
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([]),
+    }))
+
+    const wrapper = mount(RegularTransactionDialogCard, {
+      props: {
+        modelValue: true,
+        transaction: createTransaction({ bookletIds: ['booklet-1'] }),
+        booklets: [
+          { id: 'booklet-1', amount: 200, labelAccount: 'Compte principal', currency: 'EUR' },
+          { id: 'booklet-2', amount: 300, labelAccount: 'Compte secondaire', currency: 'EUR' },
+        ],
+      },
+      global: {
+        stubs: {
+          Dialog: DialogStub,
+          InputText: InputTextStub,
+          InputNumber: true,
+          RadioButton: true,
+          Tag: true,
+          Select: true,
+          DatePicker: true,
+          MultiSelect: MultiSelectStub,
+          ProgressSpinner: true,
+          Button: ButtonStub,
+        },
+      },
+    })
+
+    await wrapper.get('[data-test="booklet-selector"]').setValue('booklet-2')
+    await wrapper.get('[data-label="Enregistrer"]').trigger('click')
+
+    const emitted = wrapper.emitted('save')
+    expect(emitted).toBeTruthy()
+    expect(emitted?.[0]?.[0]).toMatchObject({ bookletIds: ['booklet-2'] })
   })
 })
