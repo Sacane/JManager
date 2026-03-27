@@ -59,6 +59,7 @@ const trendStats = ref<TrendStatsDTO | null>(null)
 const previousTrendStats = ref<TrendStatsDTO | null>(null)
 const evolutionTrendStats = ref<TrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
+const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const selectedAccountId = ref<string | number | null>(null)
 const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
 const periodAnchorDate = ref(new Date())
@@ -312,6 +313,53 @@ const totalNonRegularUpcoming = computed(() =>
 )
 
 const totalUpcomingNet = computed(() => totalRegularUpcoming.value + totalNonRegularUpcoming.value)
+
+const projectionPeriodEnded = computed(() => isAfter(new Date(), currentDateRange.value.end))
+
+const periodProjectionNet = computed(() => {
+  if (!periodProjectionTransactions.value) {
+    return 0
+  }
+
+  return Number.parseFloat(periodProjectionTransactions.value.totalAmount || '0')
+})
+
+const projectedEndPeriodBalance = computed(() =>
+  selectedAccountBalance.value + periodProjectionNet.value,
+)
+
+const dashboardAlerts = computed(() => {
+  const alerts: Array<{ key: string, level: 'danger' | 'warning' | 'info', title: string, detail: string }> = []
+
+  if (monthlyExpenses.value > monthlyIncome.value && monthlyIncome.value > 0) {
+    alerts.push({
+      key: 'overspending',
+      level: 'danger',
+      title: 'Dépenses supérieures aux revenus',
+      detail: `Le déficit de la période est de ${(monthlyExpenses.value - monthlyIncome.value).toFixed(2)} €`,
+    })
+  }
+
+  if (totalUpcomingNet.value < 0) {
+    alerts.push({
+      key: 'upcoming-negative',
+      level: 'warning',
+      title: 'Fenêtre 15 jours négative',
+      detail: `Impact prévisionnel: ${totalUpcomingNet.value.toFixed(2)} €`,
+    })
+  }
+
+  if (totalPrevisionalTransactions.value === 0) {
+    alerts.push({
+      key: 'no-upcoming',
+      level: 'info',
+      title: 'Aucun mouvement à venir',
+      detail: 'Aucune transaction prévue dans les 15 prochains jours',
+    })
+  }
+
+  return alerts.slice(0, 3)
+})
 
 // Chart data
 const expensesTrendData = computed(() => {
@@ -619,7 +667,19 @@ async function loadStatsData() {
   const upcomingStartDate = format(upcomingStart, 'yyyy-MM-dd')
   const upcomingEndDate = format(upcomingEnd, 'yyyy-MM-dd')
 
-  const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData] = await Promise.all([
+  const now = new Date()
+  const projectionStart = isAfter(currentDateRange.value.start, now) ? currentDateRange.value.start : now
+  const projectionEnd = currentDateRange.value.end
+  const shouldLoadPeriodProjection = !isAfter(projectionStart, projectionEnd)
+  const periodProjectionPromise = shouldLoadPeriodProjection
+    ? getPrevisionalTransactions(
+      format(projectionStart, 'yyyy-MM-dd'),
+      format(projectionEnd, 'yyyy-MM-dd'),
+      scopedAccountId.value,
+    ).catch(() => null)
+    : Promise.resolve(null)
+
+  const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData] = await Promise.all([
     getCategoryDistribution({
       accountId: scopedAccountId.value,
       startDate,
@@ -646,6 +706,7 @@ async function loadStatsData() {
       endDate: evolutionEndDate,
     }).catch(() => null),
     getPrevisionalTransactions(upcomingStartDate, upcomingEndDate, scopedAccountId.value).catch(() => null),
+    periodProjectionPromise,
   ])
 
   categoryDistribution.value = categoryData
@@ -654,6 +715,7 @@ async function loadStatsData() {
   previousTrendStats.value = previousTrendsData
   evolutionTrendStats.value = evolutionTrendsData
   previsionalTransactions.value = previsionalData
+  periodProjectionTransactions.value = periodProjectionData
 }
 
 function shiftPeriod(direction: -1 | 1) {
@@ -707,6 +769,10 @@ watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
             </span>
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
               Solde prévisionnel court terme: {{ totalUpcomingNet.toFixed(2) }} €
+            </span>
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedAccountBalance ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+              Projection fin de période:
+              {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
             </span>
           </div>
         </div>
@@ -1107,6 +1173,55 @@ watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
         </div>
       </section>
 
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+              <i class="pi pi-bell text-orange-500" />
+              Alertes de la période
+            </h2>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
+              {{ dashboardAlerts.length }} active(s)
+            </span>
+          </div>
+
+          <div v-if="dashboardAlerts.length === 0" class="text-sm" style="color: var(--text-secondary);">
+            Aucun signal particulier sur cette période
+          </div>
+          <div v-else class="flex flex-col gap-3">
+            <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-red-500/8 border-red-500/25' : (alert.level === 'warning' ? 'bg-yellow-500/10 border-yellow-500/25' : 'bg-blue-500/8 border-blue-500/25')">
+              <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                {{ alert.title }}
+              </p>
+              <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                {{ alert.detail }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <h2 class="text-lg font-bold m-0 mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+            <i class="pi pi-bolt text-purple-600" />
+            Actions rapides
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button class="quick-action-btn" @click="navigateTo('/account')">
+              <i class="pi pi-wallet" />
+              Voir mes comptes
+            </button>
+            <button class="quick-action-btn" @click="navigateTo('/regular-transaction')">
+              <i class="pi pi-calendar" />
+              Ajuster les régulières
+            </button>
+            <button class="quick-action-btn" @click="navigateTo('/tag')">
+              <i class="pi pi-tags" />
+              Revoir mes tags
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- Quick Stats Banner -->
       <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 p-6 rounded-2xl shadow-lg mb-5" style="background-color: var(--card-bg);">
         <div class="flex items-center gap-4">
@@ -1224,6 +1339,26 @@ watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
 .period-nav-btn:hover {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.quick-action-btn:hover {
+  background-color: var(--card-bg);
+  border-color: #822acc;
 }
 
 @media (min-width: 640px) {
