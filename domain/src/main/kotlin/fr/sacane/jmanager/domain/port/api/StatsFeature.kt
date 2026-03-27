@@ -4,9 +4,11 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.CategoryDistributionOutput
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.MonthlyAccountStatsOutput
 import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
@@ -50,7 +52,12 @@ sealed interface StatsFeature {
      * @return A Result object containing the category distribution data wrapped in CategoryDistributionOutput
      *         if successful, or an appropriate error state otherwise.
      */
-    fun getCategoryDistribution(token: String): Result<CategoryDistributionOutput>
+    fun getCategoryDistribution(
+        token: String,
+        accountId: UUID? = null,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null
+    ): Result<CategoryDistributionOutput>
 
     /**
      * Retrieves trend statistics for the authenticated user.
@@ -60,7 +67,12 @@ sealed interface StatsFeature {
      * @return A Result object containing the trend statistics wrapped in TrendStatsOutput if successful,
      *         or an appropriate error state otherwise.
      */
-    fun getTrendStats(token: String): Result<TrendStatsOutput>
+    fun getTrendStats(
+        token: String,
+        accountId: UUID? = null,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null
+    ): Result<TrendStatsOutput>
 
     /**
      * Retrieves a set of provisional transactions for the authenticated user within a specified date range.
@@ -71,7 +83,12 @@ sealed interface StatsFeature {
      * @return A Result object containing the provisional transactions data wrapped in PrevisionalTransactionsOutput
      *         if successful, or an appropriate error state otherwise.
      */
-    fun getPrevisionalTransactions(token: String, startDate: LocalDate, endDate: LocalDate): Result<PrevisionalTransactionsOutput>
+    fun getPrevisionalTransactions(
+        token: String,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        accountId: UUID? = null
+    ): Result<PrevisionalTransactionsOutput>
 }
 
 
@@ -91,6 +108,51 @@ class StatsFeatureImpl(
 
     private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
         return fr.sacane.jmanager.domain.utils.failure(state, DomainError(state.code, key, detail))
+    }
+
+    private fun validateDateRange(startDate: LocalDate?, endDate: LocalDate?, keyPrefix: String): Pair<String, String>? {
+        if ((startDate == null) != (endDate == null)) {
+            return Pair(
+                "La date de début et la date de fin doivent être fournies ensemble",
+                "$keyPrefix.invalid_partial_date_range"
+            )
+        }
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            return Pair(
+                "La date de début doit être antérieure à la date de fin",
+                "$keyPrefix.invalid_date_range"
+            )
+        }
+
+        return null
+    }
+
+    private fun <S> withScopedBooklets(
+        userId: UserId,
+        accountId: UUID?,
+        onSuccess: (List<Booklet>) -> Result<S>
+    ): Result<S> {
+        if (accountId == null) {
+            return onSuccess(bookletRepository.findBookletsForUser(userId))
+        }
+
+        val booklet = bookletRepository.findAccountByIdWithTransactions(accountId)
+            ?: return domainFailure(
+                ResultState.BOOKLET_NOT_FOUND,
+                "Le compte $accountId est introuvable",
+                "domain.stats.booklet_not_found"
+            )
+
+        if (booklet.owner?.id != userId) {
+            return domainFailure(
+                ResultState.FORBIDDEN,
+                "Vous n'avez pas accès à ce compte",
+                "domain.stats.forbidden"
+            )
+        }
+
+        return onSuccess(listOf(booklet))
     }
 
     override fun getMonthlyAccountStats(
@@ -133,64 +195,83 @@ class StatsFeatureImpl(
     }
 
     override fun getCategoryDistribution(
-        token: String
+        token: String,
+        accountId: UUID?,
+        startDate: LocalDate?,
+        endDate: LocalDate?
     ): Result<CategoryDistributionOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching category distribution for user $userId")
 
-        val booklets = bookletRepository.findBookletsForUser(userId)
-
-        val allTransactions = booklets.flatMap { booklet ->
-            booklet.transactions
+        validateDateRange(startDate, endDate, "domain.stats.category_distribution")?.let { (detail, key) ->
+            return@authenticate domainFailure(ResultState.INVALID, detail, key)
         }
 
-        LOGGER.info("All transactions fetched: ${allTransactions.size} transactions found")
+        withScopedBooklets(userId, accountId) { scopedBooklets ->
+            val allTransactions = scopedBooklets.flatMap { booklet ->
+                booklet.transactions
+            }
 
-        val (categories, totalExpenses) = categoryDistributionCalculator.calculateDistribution(
-            transactions = allTransactions
-        )
+            LOGGER.info("All transactions fetched: ${allTransactions.size} transactions found")
 
-        LOGGER.info("Category distribution calculated: ${categories.size} categories found")
-
-        success(
-            CategoryDistributionOutput(
-                categories = categories,
-                totalExpenses = totalExpenses
+            val (categories, totalExpenses) = categoryDistributionCalculator.calculateDistribution(
+                transactions = allTransactions,
+                startDate = startDate,
+                endDate = endDate
             )
-        )
+
+            LOGGER.info("Category distribution calculated: ${categories.size} categories found")
+
+            success(
+                CategoryDistributionOutput(
+                    categories = categories,
+                    totalExpenses = totalExpenses
+                )
+            )
+        }
     }
 
     override fun getTrendStats(
-        token: String
+        token: String,
+        accountId: UUID?,
+        startDate: LocalDate?,
+        endDate: LocalDate?
     ): Result<TrendStatsOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching trend stats for user $userId")
 
-        val booklets = bookletRepository.findBookletsForUser(userId)
-
-        val monthlyTrends = trendCalculator.calculateTrend(
-            booklets = booklets
-        )
-
-        LOGGER.info("Trend stats calculated: ${monthlyTrends.size} months processed")
-
-        for (trend in monthlyTrends) {
-            if (trend.income.value > BigDecimal.ZERO || trend.expenses.value > BigDecimal.ZERO) {
-                LOGGER.info(
-                    "Month: ${trend.year}-${trend.month} | Income: ${trend.income} | Expenses: ${trend.expenses}"
-                )
-            }
+        validateDateRange(startDate, endDate, "domain.stats.trend")?.let { (detail, key) ->
+            return@authenticate domainFailure(ResultState.INVALID, detail, key)
         }
 
-        success(
-            TrendStatsOutput(
-                monthlyTrends = monthlyTrends
+        withScopedBooklets(userId, accountId) { scopedBooklets ->
+            val monthlyTrends = trendCalculator.calculateTrend(
+                booklets = scopedBooklets,
+                startDate = startDate,
+                endDate = endDate
             )
-        )
+
+            LOGGER.info("Trend stats calculated: ${monthlyTrends.size} months processed")
+
+            for (trend in monthlyTrends) {
+                if (trend.income.value > BigDecimal.ZERO || trend.expenses.value > BigDecimal.ZERO) {
+                    LOGGER.info(
+                        "Month: ${trend.year}-${trend.month} | Income: ${trend.income} | Expenses: ${trend.expenses}"
+                    )
+                }
+            }
+
+            success(
+                TrendStatsOutput(
+                    monthlyTrends = monthlyTrends
+                )
+            )
+        }
     }
 
     override fun getPrevisionalTransactions(
         token: String,
         startDate: LocalDate,
-        endDate: LocalDate
+        endDate: LocalDate,
+        accountId: UUID?
     ): Result<PrevisionalTransactionsOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching previsional transactions from $startDate to $endDate for user $userId")
 
@@ -202,34 +283,38 @@ class StatsFeatureImpl(
             )
         }
 
-        val booklets = bookletRepository.findBookletsForUser(userId)
-
-        val result = previsionalTransactionFilter.filterPrevisionalTransactions(
-            booklets = booklets,
-            startDate = startDate,
-            endDate = endDate
-        )
-
-        LOGGER.info(
-            """
-            Previsional transactions fetched:
-            - Total transactions: ${result.transactions.size}
-            - Total amount: ${result.totalAmount}
-            - Total income: ${result.totalIncome}
-            - Total expenses: ${result.totalExpenses}
-            """.trimIndent()
-        )
-
-        success(
-            PrevisionalTransactionsOutput(
-                transactions = result.transactions,
-                groupedByAccount = result.groupedByAccount,
-                totalAmount = result.totalAmount,
-                totalIncome = result.totalIncome,
-                totalExpenses = result.totalExpenses,
+        withScopedBooklets(userId, accountId) { scopedBooklets ->
+            val result = previsionalTransactionFilter.filterPrevisionalTransactions(
+                booklets = scopedBooklets,
                 startDate = startDate,
                 endDate = endDate
             )
-        )
+
+            LOGGER.info(
+                """
+                Previsional transactions fetched:
+                - Total transactions: ${result.transactions.size}
+                - Total amount: ${result.totalAmount}
+                - Total income: ${result.totalIncome}
+                - Total expenses: ${result.totalExpenses}
+                """.trimIndent()
+            )
+
+            success(
+                PrevisionalTransactionsOutput(
+                    transactions = result.transactions,
+                    groupedByAccount = result.groupedByAccount,
+                    totalAmount = result.totalAmount,
+                    totalIncome = result.totalIncome,
+                    totalExpenses = result.totalExpenses,
+                    regularTransactions = result.regularTransactions,
+                    nonRegularTransactions = result.nonRegularTransactions,
+                    totalRegularAmount = result.totalRegularAmount,
+                    totalNonRegularAmount = result.totalNonRegularAmount,
+                    startDate = startDate,
+                    endDate = endDate
+                )
+            )
+        }
     }
 }

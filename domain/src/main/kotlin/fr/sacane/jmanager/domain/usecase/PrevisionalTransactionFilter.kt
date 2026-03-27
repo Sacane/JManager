@@ -30,7 +30,11 @@ data class PrevisionalTransactionResult(
     val groupedByAccount: Map<String, List<Transaction>>,
     val totalAmount: Amount,
     val totalIncome: Amount,
-    val totalExpenses: Amount
+    val totalExpenses: Amount,
+    val regularTransactions: List<Transaction>,
+    val nonRegularTransactions: List<Transaction>,
+    val totalRegularAmount: Amount,
+    val totalNonRegularAmount: Amount
 )
 @UseCase
 class PrevisionalTransactionFilterImpl : PrevisionalTransactionFilter {
@@ -66,12 +70,29 @@ class PrevisionalTransactionFilterImpl : PrevisionalTransactionFilter {
 
         val totalAmount = totalIncome.subtract(totalExpenses)
 
+        val regularTransactions = previsionalTransactions.filter { it.regularTransactionId != null }
+        val nonRegularTransactions = previsionalTransactions.filter { it.regularTransactionId == null }
+
+        val totalRegularAmount = regularTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
+            val signedAmount = if (transaction.isIncome) transaction.amount.value else transaction.amount.value.abs().negate()
+            acc.add(signedAmount)
+        }
+
+        val totalNonRegularAmount = nonRegularTransactions.fold(BigDecimal.ZERO) { acc, transaction ->
+            val signedAmount = if (transaction.isIncome) transaction.amount.value else transaction.amount.value.abs().negate()
+            acc.add(signedAmount)
+        }
+
         return PrevisionalTransactionResult(
             transactions = previsionalTransactions,
             groupedByAccount = groupedByAccount,
             totalAmount = Amount(totalAmount),
             totalIncome = Amount(totalIncome),
-            totalExpenses = Amount(totalExpenses)
+            totalExpenses = Amount(totalExpenses),
+            regularTransactions = regularTransactions,
+            nonRegularTransactions = nonRegularTransactions,
+            totalRegularAmount = Amount(totalRegularAmount),
+            totalNonRegularAmount = Amount(totalNonRegularAmount)
         )
     }
 }

@@ -157,6 +157,12 @@ class RegularTransactionControllerTest(
                     "isIncome", equalTo(false)
                 )
             }
+
+            val createdTransactions = regularTransactionStateForTestAdapter.get()
+            assertEquals(1, createdTransactions.size)
+            val created = createdTransactions.first()
+            val monthlyRule = created.recurrenceRule as RecurrenceRule.Monthly
+            assertEquals(request.startDate.dayOfMonth, monthlyRule.dayOfMonth)
         }
 
         @Test
@@ -238,6 +244,10 @@ class RegularTransactionControllerTest(
                     "value", equalTo("150.00")
                 )
             }
+
+            val createdTransactions = regularTransactionStateForTestAdapter.get()
+            assertEquals(1, createdTransactions.size)
+            assertEquals(futureDate, createdTransactions.first().startDate)
         }
 
         @Test
@@ -266,6 +276,35 @@ class RegularTransactionControllerTest(
                 post("/api/transaction/monthly")
             } Then {
                 statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Create a monthly transaction without booklet must send 400`() {
+            val request = MonthlyRegularTransactionRequest(
+                label = "Test",
+                value = BigDecimal(100.00),
+                startDate = LocalDate.now(),
+                isIncome = true,
+                tagDTO = tagDTO,
+                frequencyProperty = FrequencyPropertyDTO(
+                    type = FrequencyPropertyType.FOREVER,
+                    untilDate = null,
+                    times = null
+                ),
+                repeatDay = 15,
+                bookletIds = emptyList()
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(request))
+            } When {
+                post("/api/transaction/monthly")
+            } Then {
+                statusCode(400)
             }
         }
 
@@ -503,6 +542,7 @@ class RegularTransactionControllerTest(
                 "id" to transactionId,
                 "label" to "Updated Label",
                 "value" to 200.00,
+                "startDate" to LocalDate.now().toString(),
                 "isIncome" to true,
                 "tagDTO" to mapOf(
                     "tagId" to tagDTO.tagId,
@@ -546,6 +586,7 @@ class RegularTransactionControllerTest(
                 "id" to UUID.randomUUID().toString(),
                 "label" to "Updated Label",
                 "value" to 200.00,
+                "startDate" to LocalDate.now().toString(),
                 "isIncome" to true,
                 "tagDTO" to mapOf(
                     "tagId" to tagDTO.tagId,
@@ -584,6 +625,7 @@ class RegularTransactionControllerTest(
                 "id" to UUID.randomUUID().toString(),
                 "label" to "Updated Label",
                 "value" to 200.00,
+                "startDate" to LocalDate.now().toString(),
                 "isIncome" to true,
                 "tagDTO" to mapOf(
                     "tagId" to tagDTO.tagId,
@@ -650,6 +692,7 @@ class RegularTransactionControllerTest(
                 "id" to createdTransaction.id.value,
                 "label" to "Modified Label",
                 "value" to 100.00,
+                "startDate" to LocalDate.now().toString(),
                 "isIncome" to false,
                 "tagDTO" to mapOf(
                     "tagId" to tagDTO.tagId,
@@ -722,6 +765,7 @@ class RegularTransactionControllerTest(
                 "id" to createdTransaction.id.value,
                 "label" to "Switch booklet updated",
                 "value" to 100.00,
+                "startDate" to LocalDate.now().toString(),
                 "isIncome" to false,
                 "tagDTO" to mapOf(
                     "tagId" to tagDTO.tagId,

@@ -13,7 +13,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import { addMonths, endOfMonth, format, startOfMonth } from 'date-fns'
+import { addDays, addMonths, endOfMonth, endOfQuarter, endOfYear, format, isAfter, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
@@ -47,6 +47,7 @@ const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
+const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByAccount.v1'
 
 // Refs
 const isAccountDialogOpen = ref(false)
@@ -54,8 +55,18 @@ const accounts = ref<BookletDTO[]>([])
 const regularTransactions = ref<RegularTransactionDTO[]>([])
 const tags = ref<TagDTO[]>([])
 const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
+const previousCategoryDistribution = ref<CategoryDistributionDTO | null>(null)
 const trendStats = ref<TrendStatsDTO | null>(null)
+const previousTrendStats = ref<TrendStatsDTO | null>(null)
+const evolutionTrendStats = ref<TrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
+const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
+const selectedAccountId = ref<string | number | null>(null)
+const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
+const periodAnchorDate = ref(new Date())
+const hasInitializedDashboard = ref(false)
+const budgetTargetsByAccount = ref<Record<string, number>>({})
+const budgetTargetInput = ref<number | undefined>(undefined)
 const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
 const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
@@ -83,13 +94,112 @@ const totalBalance = computed(() =>
   accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount.toString()), 0.00),
 )
 
+const selectedAccount = computed(() =>
+  accounts.value.find(account => account.id === selectedAccountId.value) ?? null,
+)
+
+const scopedAccountId = computed(() => {
+  if (selectedAccountId.value === null) {
+    return undefined
+  }
+
+  const raw = String(selectedAccountId.value)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(raw) ? raw : undefined
+})
+
+const selectedAccountBalance = computed(() => {
+  if (!selectedAccount.value) {
+    return totalBalance.value
+  }
+  return Number.parseFloat(selectedAccount.value.amount.toString())
+})
+
+const selectedPeriodLabel = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    return format(periodAnchorDate.value, 'MMMM yyyy', { locale: fr })
+  }
+  if (selectedPeriod.value === 'quarter') {
+    const quarter = Math.floor(periodAnchorDate.value.getMonth() / 3) + 1
+    return `T${quarter} ${periodAnchorDate.value.getFullYear()}`
+  }
+  return `${periodAnchorDate.value.getFullYear()}`
+})
+
+const periodMetricLabel = computed(() =>
+  selectedPeriod.value === 'month' ? 'du mois' : 'de la période',
+)
+
+const currentDateRange = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    return {
+      start: startOfMonth(periodAnchorDate.value),
+      end: endOfMonth(periodAnchorDate.value),
+    }
+  }
+
+  if (selectedPeriod.value === 'quarter') {
+    return {
+      start: startOfQuarter(periodAnchorDate.value),
+      end: endOfQuarter(periodAnchorDate.value),
+    }
+  }
+
+  return {
+    start: startOfYear(periodAnchorDate.value),
+    end: endOfYear(periodAnchorDate.value),
+  }
+})
+
+const previousDateRange = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    const previousAnchor = subMonths(periodAnchorDate.value, 1)
+    return {
+      start: startOfMonth(previousAnchor),
+      end: endOfMonth(previousAnchor),
+    }
+  }
+
+  if (selectedPeriod.value === 'quarter') {
+    const previousAnchor = subMonths(periodAnchorDate.value, 3)
+    return {
+      start: startOfQuarter(previousAnchor),
+      end: endOfQuarter(previousAnchor),
+    }
+  }
+
+  const previousAnchor = subMonths(periodAnchorDate.value, 12)
+  return {
+    start: startOfYear(previousAnchor),
+    end: endOfYear(previousAnchor),
+  }
+})
+
+const evolutionDateRange = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    return {
+      start: startOfMonth(subMonths(periodAnchorDate.value, 5)),
+      end: endOfMonth(periodAnchorDate.value),
+    }
+  }
+
+  return {
+    start: currentDateRange.value.start,
+    end: currentDateRange.value.end,
+  }
+})
+
+const currentDateRangeLabel = computed(() =>
+  `${format(currentDateRange.value.start, 'dd MMM', { locale: fr })} - ${format(currentDateRange.value.end, 'dd MMM yyyy', { locale: fr })}`,
+)
+
 const currentMonthTrend = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
     return null
   }
 
-  const currentMonth = new Date().getMonth() + 1
-  const currentYear = new Date().getFullYear()
+  const currentMonth = periodAnchorDate.value.getMonth() + 1
+  const currentYear = periodAnchorDate.value.getFullYear()
 
   return trendStats.value.monthlyTrends.find(
     trend => trend.month === currentMonth && trend.year === currentYear,
@@ -101,8 +211,7 @@ const previousMonthTrend = computed(() => {
     return null
   }
 
-  const lastMonth = new Date()
-  lastMonth.setMonth(lastMonth.getMonth() - 1)
+  const lastMonth = subMonths(periodAnchorDate.value, 1)
   const month = lastMonth.getMonth() + 1
   const year = lastMonth.getFullYear()
 
@@ -112,58 +221,70 @@ const previousMonthTrend = computed(() => {
 })
 
 const monthlyExpenses = computed(() => {
-  const expenses = currentMonthTrend.value?.expenses
-  return expenses ? Number.parseFloat(expenses) : 0
+  if (!trendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return trendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.expenses),
+    0,
+  )
 })
 
 const monthlyIncome = computed(() => {
-  const income = currentMonthTrend.value?.income
-  return income ? Number.parseFloat(income) : 0
+  if (!trendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return trendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.income),
+    0,
+  )
+})
+
+const previousPeriodExpenses = computed(() => {
+  if (!previousTrendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return previousTrendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.expenses),
+    0,
+  )
+})
+
+const previousPeriodIncome = computed(() => {
+  if (!previousTrendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return previousTrendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.income),
+    0,
+  )
 })
 
 const expensesGrowth = computed(() => {
-  if (!currentMonthTrend.value || !previousMonthTrend.value) {
+  if (previousPeriodExpenses.value === 0) {
     return 0
   }
 
-  const current = Number.parseFloat(currentMonthTrend.value.expenses)
-  const previous = Number.parseFloat(previousMonthTrend.value.expenses)
-
-  if (previous === 0) {
-    return 0
-  }
-
-  return ((current - previous) / previous * 100)
+  return ((monthlyExpenses.value - previousPeriodExpenses.value) / previousPeriodExpenses.value * 100)
 })
 
 const incomeGrowth = computed(() => {
-  if (!currentMonthTrend.value || !previousMonthTrend.value) {
+  if (previousPeriodIncome.value === 0) {
     return 0
   }
 
-  const current = Number.parseFloat(currentMonthTrend.value.income)
-  const previous = Number.parseFloat(previousMonthTrend.value.income)
-
-  if (previous === 0) {
-    return 0
-  }
-
-  return ((current - previous) / previous * 100)
+  return ((monthlyIncome.value - previousPeriodIncome.value) / previousPeriodIncome.value * 100)
 })
 
 const balanceGrowth = computed(() => {
-  if (!currentMonthTrend.value || !previousMonthTrend.value) {
+  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
+
+  if (previousBalance === 0) {
     return 0
   }
 
-  const current = Number.parseFloat(currentMonthTrend.value.balance)
-  const previous = Number.parseFloat(previousMonthTrend.value.balance)
-
-  if (previous === 0) {
-    return 0
-  }
-
-  return ((current - previous) / previous * 100)
+  return ((currentBalance - previousBalance) / Math.abs(previousBalance) * 100)
 })
 
 const savingsRate = computed(() => {
@@ -174,30 +295,137 @@ const savingsRate = computed(() => {
   return ((monthlyIncome.value - monthlyExpenses.value) / monthlyIncome.value * 100)
 })
 
-const upcomingPayments = computed(() =>
-  previsionalTransactions.value?.transactions.slice(0, 5) || [],
+const upcomingRegularPayments = computed(() =>
+  previsionalTransactions.value?.regularTransactions.slice(0, 5) || [],
+)
+
+const upcomingNonRegularPayments = computed(() =>
+  previsionalTransactions.value?.nonRegularTransactions.slice(0, 5) || [],
 )
 
 const totalPrevisionalTransactions = computed(() =>
   previsionalTransactions.value?.transactions.length || 0,
 )
 
+const totalRegularUpcoming = computed(() =>
+  Number.parseFloat(previsionalTransactions.value?.totalRegularAmount || '0'),
+)
+
+const totalNonRegularUpcoming = computed(() =>
+  Number.parseFloat(previsionalTransactions.value?.totalNonRegularAmount || '0'),
+)
+
+const totalUpcomingNet = computed(() => totalRegularUpcoming.value + totalNonRegularUpcoming.value)
+
+const selectedAccountBudgetKey = computed(() => {
+  if (selectedAccountId.value === null || selectedAccountId.value === undefined) {
+    return null
+  }
+
+  return String(selectedAccountId.value)
+})
+
+const selectedBudgetTarget = computed(() => {
+  if (!selectedAccountBudgetKey.value) {
+    return 0
+  }
+
+  return budgetTargetsByAccount.value[selectedAccountBudgetKey.value] ?? 0
+})
+
+const isBudgetConfigured = computed(() => selectedBudgetTarget.value > 0)
+
+const projectedRemainingExpenses = computed(() =>
+  Number.parseFloat(periodProjectionTransactions.value?.totalExpenses || '0'),
+)
+
+const projectedPeriodExpenses = computed(() =>
+  monthlyExpenses.value + projectedRemainingExpenses.value,
+)
+
+const budgetDelta = computed(() => selectedBudgetTarget.value - monthlyExpenses.value)
+
+const projectedBudgetDelta = computed(() => selectedBudgetTarget.value - projectedPeriodExpenses.value)
+
+const budgetConsumptionRate = computed(() => {
+  if (!isBudgetConfigured.value) {
+    return 0
+  }
+
+  return (monthlyExpenses.value / selectedBudgetTarget.value) * 100
+})
+
+const projectionPeriodEnded = computed(() => isAfter(new Date(), currentDateRange.value.end))
+
+const periodProjectionNet = computed(() => {
+  if (!periodProjectionTransactions.value) {
+    return 0
+  }
+
+  return Number.parseFloat(periodProjectionTransactions.value.totalAmount || '0')
+})
+
+const projectedEndPeriodBalance = computed(() =>
+  selectedAccountBalance.value + periodProjectionNet.value,
+)
+
+const dashboardAlerts = computed(() => {
+  const alerts: Array<{ key: string, level: 'danger' | 'warning' | 'info', title: string, detail: string }> = []
+
+  if (monthlyExpenses.value > monthlyIncome.value && monthlyIncome.value > 0) {
+    alerts.push({
+      key: 'overspending',
+      level: 'danger',
+      title: 'Dépenses supérieures aux revenus',
+      detail: `Le déficit de la période est de ${(monthlyExpenses.value - monthlyIncome.value).toFixed(2)} €`,
+    })
+  }
+
+  if (totalUpcomingNet.value < 0) {
+    alerts.push({
+      key: 'upcoming-negative',
+      level: 'warning',
+      title: 'Fenêtre 15 jours négative',
+      detail: `Impact prévisionnel: ${totalUpcomingNet.value.toFixed(2)} €`,
+    })
+  }
+
+  if (totalPrevisionalTransactions.value === 0) {
+    alerts.push({
+      key: 'no-upcoming',
+      level: 'info',
+      title: 'Aucun mouvement à venir',
+      detail: 'Aucune transaction prévue dans les 15 prochains jours',
+    })
+  }
+
+  if (isBudgetConfigured.value && projectedBudgetDelta.value < 0) {
+    alerts.push({
+      key: 'budget-overrun',
+      level: 'warning',
+      title: 'Budget projeté dépassé',
+      detail: `Dépassement estimé: ${Math.abs(projectedBudgetDelta.value).toFixed(2)} €`,
+    })
+  }
+
+  return alerts.slice(0, 3)
+})
+
 // Chart data
 const expensesTrendData = computed(() => {
-  if (!trendStats.value?.monthlyTrends.length) {
+  if (!evolutionTrendStats.value?.monthlyTrends.length) {
     return {
       labels: [],
       datasets: [],
     }
   }
 
-  // Get last 12 months
-  const sortedTrends = trendStats.value.monthlyTrends.toSorted((a, b) => {
+  const sortedTrends = evolutionTrendStats.value.monthlyTrends.toSorted((a, b) => {
     if (a.year !== b.year) {
       return a.year - b.year
     }
     return a.month - b.month
-  }).slice(-12)
+  })
 
   const labels = sortedTrends.map((trend) => {
     const date = new Date(trend.year, trend.month - 1)
@@ -257,39 +485,54 @@ const categoryExpensesData = computed(() => {
   }
 })
 
-const monthlyComparisonData = computed(() => {
-  if (!trendStats.value?.monthlyTrends.length) {
-    return {
-      labels: [],
-      datasets: [],
-    }
+const topTagsInsights = computed(() => {
+  const currentCategories = categoryDistribution.value?.categories ?? []
+  if (currentCategories.length === 0) {
+    return []
   }
 
-  const now = new Date()
-  const currentMonthData = trendStats.value.monthlyTrends.find(
-    t => t.month === now.getMonth() + 1 && t.year === now.getFullYear(),
+  const previousMap = new Map(
+    (previousCategoryDistribution.value?.categories ?? []).map(category => [
+      category.tagId ?? category.tagLabel,
+      Number.parseFloat(category.totalAmount),
+    ]),
   )
 
-  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1)
-  const previousMonthData = trendStats.value.monthlyTrends.find(
-    t => t.month === prevMonth.getMonth() + 1 && t.year === prevMonth.getFullYear(),
-  )
+  return currentCategories
+    .toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
+    .slice(0, 5)
+    .map((category) => {
+      const currentAmount = Number.parseFloat(category.totalAmount)
+      const previousAmount = previousMap.get(category.tagId ?? category.tagLabel) ?? 0
+      const variation = previousAmount === 0
+        ? null
+        : ((currentAmount - previousAmount) / previousAmount) * 100
 
-  const currentExpenses = currentMonthData ? Number.parseFloat(currentMonthData.expenses) : 0
-  const previousExpenses = previousMonthData ? Number.parseFloat(previousMonthData.expenses) : 0
+      return {
+        tagLabel: category.tagLabel,
+        currentAmount,
+        percentage: category.percentage,
+        variation,
+      }
+    })
+})
+
+const monthlyComparisonData = computed(() => {
+  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
 
   return {
-    labels: ['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4'],
+    labels: ['Revenus', 'Dépenses', 'Solde net'],
     datasets: [
       {
-        label: 'Ce mois',
-        data: Array.from({ length: 4 }).fill(currentExpenses / 4) as number[],
+        label: 'Période active',
+        data: [monthlyIncome.value, monthlyExpenses.value, currentBalance],
         backgroundColor: '#822acc',
         borderRadius: 8,
       },
       {
-        label: 'Mois dernier',
-        data: Array.from({ length: 4 }).fill(previousExpenses / 4) as number[],
+        label: 'Période précédente',
+        data: [previousPeriodIncome.value, previousPeriodExpenses.value, previousBalance],
         backgroundColor: '#b1aeae',
         borderRadius: 8,
       },
@@ -433,6 +676,68 @@ function cancel() {
   isAccountDialogOpen.value = false
 }
 
+function loadBudgetTargets() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(BUDGET_STORAGE_KEY)
+    if (!rawValue) {
+      budgetTargetsByAccount.value = {}
+      return
+    }
+
+    const parsed = JSON.parse(rawValue)
+    if (parsed && typeof parsed === 'object') {
+      budgetTargetsByAccount.value = parsed as Record<string, number>
+    }
+  } catch (error) {
+    console.error('Unable to load budget targets', error)
+    budgetTargetsByAccount.value = {}
+  }
+}
+
+function persistBudgetTargets() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetTargetsByAccount.value))
+}
+
+function syncBudgetInputFromSelection() {
+  if (!selectedAccountBudgetKey.value) {
+    budgetTargetInput.value = undefined
+    return
+  }
+
+  const configuredBudget = budgetTargetsByAccount.value[selectedAccountBudgetKey.value]
+  budgetTargetInput.value = configuredBudget && configuredBudget > 0 ? configuredBudget : undefined
+}
+
+function saveBudgetTarget() {
+  if (!selectedAccountBudgetKey.value) {
+    return
+  }
+
+  const nextValue = Number(budgetTargetInput.value ?? 0)
+  if (Number.isNaN(nextValue) || nextValue <= 0) {
+    const { [selectedAccountBudgetKey.value]: _, ...remainingBudgets } = budgetTargetsByAccount.value
+    budgetTargetsByAccount.value = remainingBudgets
+    budgetTargetInput.value = undefined
+    persistBudgetTargets()
+    return
+  }
+
+  budgetTargetsByAccount.value = {
+    ...budgetTargetsByAccount.value,
+    [selectedAccountBudgetKey.value]: Number(nextValue.toFixed(2)),
+  }
+  budgetTargetInput.value = Number(nextValue.toFixed(2))
+  persistBudgetTargets()
+}
+
 async function loadDashboardData() {
   await withLoading(async () => {
     try {
@@ -447,20 +752,13 @@ async function loadDashboardData() {
       regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
       tags.value = Array.isArray(tagsData) ? tagsData : []
 
-      // Load stats data
-      const now = new Date()
-      const startDate = format(startOfMonth(now), 'yyyy-MM-dd')
-      const endDate = format(endOfMonth(addMonths(now, 3)), 'yyyy-MM-dd')
+      if (!selectedAccountId.value && accounts.value.length > 0) {
+        const firstAccountId = accounts.value[0]?.id
+        selectedAccountId.value = firstAccountId ?? null
+      }
 
-      const [categoryData, trendsData, previsionalData] = await Promise.all([
-        getCategoryDistribution().catch(() => null),
-        getTrendStats().catch(() => null),
-        getPrevisionalTransactions(startDate, endDate).catch(() => null),
-      ])
-
-      categoryDistribution.value = categoryData
-      trendStats.value = trendsData
-      previsionalTransactions.value = previsionalData
+      await loadStatsData()
+      hasInitializedDashboard.value = true
     } catch (error) {
       toast.error('Erreur lors du chargement des données')
       console.error(error)
@@ -468,8 +766,102 @@ async function loadDashboardData() {
   }, dashboardLoadingScope)
 }
 
+async function loadStatsData() {
+  const startDate = format(currentDateRange.value.start, 'yyyy-MM-dd')
+  const endDate = format(currentDateRange.value.end, 'yyyy-MM-dd')
+  const previousStartDate = format(previousDateRange.value.start, 'yyyy-MM-dd')
+  const previousEndDate = format(previousDateRange.value.end, 'yyyy-MM-dd')
+  const evolutionStartDate = format(evolutionDateRange.value.start, 'yyyy-MM-dd')
+  const evolutionEndDate = format(evolutionDateRange.value.end, 'yyyy-MM-dd')
+
+  const upcomingStart = new Date()
+  const upcomingEnd = addDays(upcomingStart, 15)
+  const upcomingStartDate = format(upcomingStart, 'yyyy-MM-dd')
+  const upcomingEndDate = format(upcomingEnd, 'yyyy-MM-dd')
+
+  const now = new Date()
+  const projectionStart = isAfter(currentDateRange.value.start, now) ? currentDateRange.value.start : now
+  const projectionEnd = currentDateRange.value.end
+  const shouldLoadPeriodProjection = !isAfter(projectionStart, projectionEnd)
+  const periodProjectionPromise = shouldLoadPeriodProjection
+    ? getPrevisionalTransactions(
+      format(projectionStart, 'yyyy-MM-dd'),
+      format(projectionEnd, 'yyyy-MM-dd'),
+      scopedAccountId.value,
+    ).catch(() => null)
+    : Promise.resolve(null)
+
+  const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData] = await Promise.all([
+    getCategoryDistribution({
+      accountId: scopedAccountId.value,
+      startDate,
+      endDate,
+    }).catch(() => null),
+    getCategoryDistribution({
+      accountId: scopedAccountId.value,
+      startDate: previousStartDate,
+      endDate: previousEndDate,
+    }).catch(() => null),
+    getTrendStats({
+      accountId: scopedAccountId.value,
+      startDate,
+      endDate,
+    }).catch(() => null),
+    getTrendStats({
+      accountId: scopedAccountId.value,
+      startDate: previousStartDate,
+      endDate: previousEndDate,
+    }).catch(() => null),
+    getTrendStats({
+      accountId: scopedAccountId.value,
+      startDate: evolutionStartDate,
+      endDate: evolutionEndDate,
+    }).catch(() => null),
+    getPrevisionalTransactions(upcomingStartDate, upcomingEndDate, scopedAccountId.value).catch(() => null),
+    periodProjectionPromise,
+  ])
+
+  categoryDistribution.value = categoryData
+  previousCategoryDistribution.value = previousCategoryData
+  trendStats.value = trendsData
+  previousTrendStats.value = previousTrendsData
+  evolutionTrendStats.value = evolutionTrendsData
+  previsionalTransactions.value = previsionalData
+  periodProjectionTransactions.value = periodProjectionData
+}
+
+function shiftPeriod(direction: -1 | 1) {
+  if (selectedPeriod.value === 'month') {
+    periodAnchorDate.value = addMonths(periodAnchorDate.value, direction)
+    return
+  }
+
+  if (selectedPeriod.value === 'quarter') {
+    periodAnchorDate.value = addMonths(periodAnchorDate.value, direction * 3)
+    return
+  }
+
+  periodAnchorDate.value = new Date(
+    periodAnchorDate.value.getFullYear() + direction,
+    periodAnchorDate.value.getMonth(),
+    1,
+  )
+}
+
 onMounted(() => {
+  loadBudgetTargets()
   loadDashboardData()
+})
+
+watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
+  if (!hasInitializedDashboard.value || accounts.value.length === 0) {
+    return
+  }
+  loadStatsData()
+})
+
+watch(selectedAccountId, () => {
+  syncBudgetInputFromSelection()
 })
 </script>
 
@@ -483,8 +875,49 @@ onMounted(() => {
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
           <p class="text-base" style="color: var(--text-secondary);">
-            Voici un aperçu de vos finances au {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
+            Vue {{ selectedPeriodLabel }} • {{ selectedAccount?.labelAccount || 'Tous les comptes' }}
           </p>
+          <div class="flex items-center gap-2.5 mt-3 flex-wrap">
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
+              Période: {{ currentDateRangeLabel }}
+            </span>
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
+              À venir 15 jours: {{ totalPrevisionalTransactions }} transaction(s)
+            </span>
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+              Solde prévisionnel court terme: {{ totalUpcomingNet.toFixed(2) }} €
+            </span>
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedAccountBalance ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+              Projection fin de période:
+              {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <select v-model="selectedAccountId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
+            <option v-for="account in accounts" :key="account.id" :value="account.id">
+              {{ account.labelAccount }}
+            </option>
+          </select>
+          <div class="period-toggle flex items-center rounded-lg p-1">
+            <button class="period-toggle-btn px-3 py-1.5 text-sm rounded-md" :class="selectedPeriod === 'month' ? 'is-active' : ''" @click="selectedPeriod = 'month'">
+              Mois
+            </button>
+            <button class="period-toggle-btn px-3 py-1.5 text-sm rounded-md" :class="selectedPeriod === 'quarter' ? 'is-active' : ''" @click="selectedPeriod = 'quarter'">
+              Trimestre
+            </button>
+            <button class="period-toggle-btn px-3 py-1.5 text-sm rounded-md" :class="selectedPeriod === 'year' ? 'is-active' : ''" @click="selectedPeriod = 'year'">
+              Année
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="period-nav-btn w-9 h-9 rounded-lg border" @click="shiftPeriod(-1)">
+              <i class="pi pi-chevron-left" />
+            </button>
+            <button class="period-nav-btn w-9 h-9 rounded-lg border" @click="shiftPeriod(1)">
+              <i class="pi pi-chevron-right" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -513,13 +946,13 @@ onMounted(() => {
           </div>
           <div>
             <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
-              Solde total
+              Solde du compte
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ totalBalance.toFixed(2) }} €
+              {{ selectedAccountBalance.toFixed(2) }} €
             </p>
             <p class="text-xs" style="color: var(--text-tertiary);">
-              {{ accounts.length }} livret{{ accounts.length > 1 ? 's' : '' }} actif{{ accounts.length > 1 ? 's' : '' }}
+              {{ selectedAccount?.labelAccount || 'Compte sélectionné' }}
             </p>
           </div>
         </div>
@@ -536,7 +969,7 @@ onMounted(() => {
           </div>
           <div>
             <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
-              Dépenses du mois
+              Dépenses {{ periodMetricLabel }}
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
               {{ monthlyExpenses.toFixed(2) }} €
@@ -559,7 +992,7 @@ onMounted(() => {
           </div>
           <div>
             <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
-              Revenus du mois
+              Revenus {{ periodMetricLabel }}
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
               {{ monthlyIncome.toFixed(2) }} €
@@ -603,7 +1036,7 @@ onMounted(() => {
               Évolution des finances
             </h2>
             <p class="text-sm" style="color: var(--text-secondary);">
-              Comparaison revenus vs dépenses sur 12 mois
+              Comparaison revenus vs dépenses sur la période sélectionnée
             </p>
           </div>
           <div class="chart-container h-75 relative">
@@ -618,11 +1051,39 @@ onMounted(() => {
               Dépenses par catégorie
             </h2>
             <p class="text-sm" style="color: var(--text-secondary);">
-              Répartition totale: {{ categoryDistribution?.totalExpenses || '0.00' }} €
+              {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
             </p>
           </div>
           <div class="chart-container h-70 relative">
             <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
+          </div>
+          <div class="mt-5">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                Top tags de la période
+              </h3>
+              <span class="text-xs" style="color: var(--text-secondary);">
+                Variation vs période précédente
+              </span>
+            </div>
+            <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
+              Aucun tag de dépense sur cette période
+            </div>
+            <div v-else class="flex flex-col gap-2">
+              <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
+                <div>
+                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    {{ tag.tagLabel }}
+                  </p>
+                  <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                    {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
+                  </p>
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
+                  {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -630,10 +1091,10 @@ onMounted(() => {
           <div class="mb-5">
             <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
               <i class="pi pi-chart-bar text-purple-600" />
-              Comparaison hebdomadaire
+              Comparaison de période
             </h2>
             <p class="text-sm" style="color: var(--text-secondary);">
-              Ce mois vs mois dernier
+              Période active vs période précédente
             </p>
           </div>
           <div class="chart-container h-75 relative">
@@ -705,7 +1166,7 @@ onMounted(() => {
             </button>
           </div>
           <div class="max-h-87.5 overflow-y-auto">
-            <div v-if="upcomingPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+            <div v-if="upcomingRegularPayments.length === 0 && upcomingNonRegularPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
               <i class="pi pi-calendar-times text-5xl" style="color: var(--text-muted);" />
               <p class="m-0" style="color: var(--text-secondary);">
                 Aucune transaction prévue
@@ -714,23 +1175,74 @@ onMounted(() => {
                 Configurer une mensualité
               </button>
             </div>
-            <div v-else class="flex flex-col gap-3">
-              <div v-for="payment in upcomingPayments" :key="payment.id ?? `payment-${Math.random()}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--bg-tertiary);">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
-                  <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
-                </div>
-                <div class="flex-1">
-                  <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
-                    {{ payment.label }}
+            <div v-else class="flex flex-col gap-4">
+              <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+                <div class="flex justify-between items-center mb-2">
+                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    Régulières
                   </p>
-                  <p class="text-xs m-0" style="color: var(--text-secondary);">
-                    {{ new Date(payment.date).toLocaleDateString('fr-FR') }}
+                  <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
+                    Total: {{ totalRegularUpcoming.toFixed(2) }} €
                   </p>
                 </div>
-                <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
-                  {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
-                </p>
+                <div v-if="upcomingRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
+                  Aucune régulière à venir
+                </div>
+                <div v-else class="flex flex-col gap-2">
+                  <div v-for="payment in upcomingRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
+                      <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+                    </div>
+                    <div class="flex-1">
+                      <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
+                        {{ payment.label }}
+                      </p>
+                      <p class="text-xs m-0" style="color: var(--text-secondary);">
+                        {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Régulière</span>
+                      </p>
+                    </div>
+                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
+                      {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+                <div class="flex justify-between items-center mb-2">
+                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    Non régulières
+                  </p>
+                  <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
+                    Total: {{ totalNonRegularUpcoming.toFixed(2) }} €
+                  </p>
+                </div>
+                <div v-if="upcomingNonRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
+                  Aucune non régulière à venir
+                </div>
+                <div v-else class="flex flex-col gap-2">
+                  <div v-for="payment in upcomingNonRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
+                      <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+                    </div>
+                    <div class="flex-1">
+                      <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
+                        {{ payment.label }}
+                      </p>
+                      <p class="text-xs m-0" style="color: var(--text-secondary);">
+                        {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Non régulière</span>
+                      </p>
+                    </div>
+                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
+                      {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-xs m-0" style="color: var(--text-tertiary);">
+                {{ totalPrevisionalTransactions }} transaction(s) sur la fenêtre de 15 jours
+              </p>
             </div>
           </div>
         </div>
@@ -775,6 +1287,120 @@ onMounted(() => {
               </button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+              <i class="pi pi-bell text-orange-500" />
+              Alertes de la période
+            </h2>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
+              {{ dashboardAlerts.length }} active(s)
+            </span>
+          </div>
+
+          <div v-if="dashboardAlerts.length === 0" class="text-sm" style="color: var(--text-secondary);">
+            Aucun signal particulier sur cette période
+          </div>
+          <div v-else class="flex flex-col gap-3">
+            <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-red-500/8 border-red-500/25' : (alert.level === 'warning' ? 'bg-yellow-500/10 border-yellow-500/25' : 'bg-blue-500/8 border-blue-500/25')">
+              <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                {{ alert.title }}
+              </p>
+              <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                {{ alert.detail }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <h2 class="text-lg font-bold m-0 mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+            <i class="pi pi-bolt text-purple-600" />
+            Actions rapides
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button class="quick-action-btn" @click="navigateTo('/account')">
+              <i class="pi pi-wallet" />
+              Voir mes comptes
+            </button>
+            <button class="quick-action-btn" @click="navigateTo('/regular-transaction')">
+              <i class="pi pi-calendar" />
+              Ajuster les régulières
+            </button>
+            <button class="quick-action-btn" @click="navigateTo('/tag')">
+              <i class="pi pi-tags" />
+              Revoir mes tags
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+              <i class="pi pi-euro text-green-500" />
+              Budget du compte
+            </h2>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="!isBudgetConfigured ? 'bg-gray-500/10 text-gray-500' : (projectedBudgetDelta >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500')">
+              {{ !isBudgetConfigured ? 'Non configuré' : (projectedBudgetDelta >= 0 ? 'Dans le budget' : 'Dépassement') }}
+            </span>
+          </div>
+
+          <div class="flex items-end gap-2 mb-4">
+            <div class="flex-1">
+              <label for="budget-target" class="text-xs font-semibold block mb-1" style="color: var(--text-secondary);">
+                Cible {{ selectedPeriod === 'month' ? 'mensuelle' : 'périodique' }} (€)
+              </label>
+              <input
+                id="budget-target"
+                v-model.number="budgetTargetInput"
+                data-test="budget-target-input"
+                type="number"
+                min="0"
+                step="0.01"
+                class="budget-input"
+                placeholder="Ex: 1200"
+                @blur="saveBudgetTarget"
+              >
+            </div>
+            <button class="budget-save-btn" data-test="budget-save-btn" @click="saveBudgetTarget">
+              Enregistrer
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Dépenses consommées
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" style="color: var(--text-primary);">
+                {{ monthlyExpenses.toFixed(2) }} €
+              </p>
+            </div>
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Reste budget
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+                {{ isBudgetConfigured ? `${budgetDelta.toFixed(2)} €` : 'N/A' }}
+              </p>
+            </div>
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Projection budget
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+                {{ isBudgetConfigured ? `${projectedBudgetDelta.toFixed(2)} €` : 'N/A' }}
+              </p>
+            </div>
+          </div>
+
+          <p class="text-xs m-0 mt-3" style="color: var(--text-secondary);">
+            {{ isBudgetConfigured ? `Consommation: ${budgetConsumptionRate.toFixed(1)}% du budget` : 'Définis une cible pour activer les alertes budget.' }}
+          </p>
         </div>
       </section>
 
@@ -860,6 +1486,85 @@ onMounted(() => {
 .chart-container {
   position: relative;
   width: 100%;
+}
+
+.period-toggle {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+}
+
+.period-toggle-btn {
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: none;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.period-toggle-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.period-toggle-btn.is-active {
+  background-color: #822acc;
+  color: #fff;
+}
+
+.period-nav-btn {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  background-color: var(--card-bg);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.period-nav-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.quick-action-btn:hover {
+  background-color: var(--card-bg);
+  border-color: #822acc;
+}
+
+.budget-input {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.budget-save-btn {
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.budget-save-btn:hover {
+  border-color: #822acc;
+  background-color: var(--card-bg);
 }
 
 @media (min-width: 640px) {

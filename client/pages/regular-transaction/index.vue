@@ -53,6 +53,11 @@ function cancelCreationDialog() {
 }
 
 async function onSave(transaction: MonthlyTransactionCreationRequest) {
+  if (!transaction.bookletIds?.length) {
+    jToast.warn('Veuillez sélectionner au moins un compte')
+    return
+  }
+
   isCreateRegularTransactionLoading.value = true
   try {
     const regularTransaction = await saveMonthlyTransaction(transaction)
@@ -95,17 +100,21 @@ async function handleRowDoubleClick(event: any) {
 
 async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
   try {
+    const parsedStartDate = new Date(updatedTransaction.startDate)
+    const monthlyDay = Number.isNaN(parsedStartDate.getTime()) ? undefined : parsedStartDate.getDate()
+
     const updateRequest: UpdateRegularTransactionRequest = {
       id: updatedTransaction.id,
       label: updatedTransaction.label,
       value: updatedTransaction.value,
+      startDate: updatedTransaction.startDate,
       isIncome: updatedTransaction.isIncome,
       tagDTO: updatedTransaction.tagDTO,
       frequencyProperty: updatedTransaction.frequencyProperty,
       bookletIds: updatedTransaction.bookletIds ?? [],
       recurrenceRule: {
         type: updatedTransaction.regularity,
-        value: updatedTransaction.regularity === 'MONTHLY' ? 1 : undefined,
+        value: updatedTransaction.regularity === 'MONTHLY' ? monthlyDay : undefined,
       },
     }
 

@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-03-26
+
+- Started dashboard V1 implementation for account-first analytics by adding optional `accountId` and period filters (`startDate`, `endDate`) to stats domain/API flows (`category-distribution`, `trends`, `previsional`) with backward-compatible defaults.
+- Refactored stats domain orchestration to validate partial/invalid date ranges consistently and to scope data access to a selected account while preserving ownership/authorization checks.
+- Extended trend and category use cases to support period-aware computations instead of fixed all-time/12-month-only behavior when a period is provided.
+- Updated frontend stats composable and dashboard page wiring to send account + period filters, add account/period controls (month/quarter/year), and load scoped dashboard data.
+- Extended previsional stats payloads with explicit regular/non-regular split (`regularTransactions`, `nonRegularTransactions`) and dedicated totals to support a clearer “Arrive dans 15 jours” dashboard UX.
+- Exposed `regularTransactionId` in stats transaction DTOs so frontend rendering can reliably distinguish recurring vs non-recurring upcoming items.
+- Updated dashboard upcoming-transactions card to display separate regular/non-regular sections with distinct labels and totals on the selected account and period window.
+- Improved dashboard category section UX by adding top tags insight cards (amount, share, and variation versus previous period) while keeping the simple period-scoped doughnut chart as primary visual.
+- Added frontend page test coverage for dashboard tags insights rendering (`client/tests/pages/dashboard-index.spec.ts`).
+- Polished dashboard header UX with contextual chips (active date range, 15-day upcoming volume, short-term projected net) to surface critical information faster.
+- Updated dashboard wording and KPI labels to be period-aware (`mois` vs `période`) for better clarity in month/quarter/year modes.
+- Replaced the previous artificial weekly comparison chart with a real period-expense comparison (`période active` vs `période précédente`) based on scoped category totals.
+- Fixed a critical regular transaction API bug where `startDate` from create/update requests was ignored and replaced by `LocalDate.now()`, which could prevent expected previsional generation for the selected month.
+- Extended update regular transaction contract to include `startDate` and propagated this field from frontend edit payloads.
+- Added integration-test assertion in `RegularTransactionControllerTest` to verify future `startDate` is persisted as requested.
+- Added domain regression tests in `StatsFeatureTest` covering selected-account scoping and partial-period validation failures for category and trend stats, plus account scoping for previsional transactions.
+- Added domain regression coverage asserting previsional split between regular and non-regular transactions.
+- Verified implementation slice with green test runs: `./gradlew :domain:test --tests "fr.sacane.jmanager.domain.port.StatsFeatureTest"`, `./gradlew :domain:test --tests "fr.sacane.jmanager.domain.usecase.TrendCalculatorTest" --tests "fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculatorTest"`, and `pnpm -C client test -- --run`.
+
 ## 2026-03-23
 
 - Completed regular transaction deletion cleanup across backend layers: deleting a regular transaction now also removes all related tracker rows and cleanly detaches linked booklets before deletion.

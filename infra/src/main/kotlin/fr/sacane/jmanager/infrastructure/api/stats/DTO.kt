@@ -53,6 +53,10 @@ data class PrevisionalTransactionsDTO(
     val totalAmount: String,
     val totalIncome: String,
     val totalExpenses: String,
+    val regularTransactions: List<TransactionDTO>,
+    val nonRegularTransactions: List<TransactionDTO>,
+    val totalRegularAmount: String,
+    val totalNonRegularAmount: String,
     val startDate: LocalDate,
     val endDate: LocalDate
 )
@@ -63,7 +67,8 @@ data class TransactionDTO(
     val amount: String,
     val isIncome: Boolean,
     val date: LocalDate,
-    val tag: String
+    val tag: String,
+    val regularTransactionId: String?
 )
 
 fun MonthlyAccountStatsOutput.toDTO() = MonthlyAccountStatsDTO(
@@ -115,6 +120,10 @@ fun PrevisionalTransactionsOutput.toDTO(defaultTag: Tag) = PrevisionalTransactio
     totalAmount = totalAmount.toStringValue(),
     totalIncome = totalIncome.toStringValue(),
     totalExpenses = totalExpenses.toStringValue(),
+    regularTransactions = regularTransactions.map { it.toTransactionDTO(defaultTag) },
+    nonRegularTransactions = nonRegularTransactions.map { it.toTransactionDTO(defaultTag) },
+    totalRegularAmount = totalRegularAmount.toStringValue(),
+    totalNonRegularAmount = totalNonRegularAmount.toStringValue(),
     startDate = startDate,
     endDate = endDate
 )
@@ -125,5 +134,6 @@ fun Transaction.toTransactionDTO(defaultTag: Tag) = TransactionDTO(
     amount = amount.toStringValue(),
     isIncome = isIncome,
     date = date,
-    tag = tag?.label ?: defaultTag.label
+    tag = tag?.label ?: defaultTag.label,
+    regularTransactionId = regularTransactionId?.value
 )
