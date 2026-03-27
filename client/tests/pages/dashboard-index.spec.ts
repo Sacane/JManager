@@ -116,5 +116,7 @@ describe('pages/dashboard/index tags insights', () => {
     expect(wrapper.text()).toContain('Actions rapides')
     expect(wrapper.text()).toContain('Aucun mouvement à venir')
     expect(wrapper.text()).toContain('Projection fin de période')
+    expect(wrapper.text()).toContain('Budget du compte')
+    expect(wrapper.text()).toContain('Définis une cible pour activer les alertes budget.')
   })
 })

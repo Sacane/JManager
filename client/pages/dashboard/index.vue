@@ -47,6 +47,7 @@ const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
+const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByAccount.v1'
 
 // Refs
 const isAccountDialogOpen = ref(false)
@@ -64,6 +65,8 @@ const selectedAccountId = ref<string | number | null>(null)
 const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
 const periodAnchorDate = ref(new Date())
 const hasInitializedDashboard = ref(false)
+const budgetTargetsByAccount = ref<Record<string, number>>({})
+const budgetTargetInput = ref<number | undefined>(undefined)
 const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
 const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
@@ -314,6 +317,44 @@ const totalNonRegularUpcoming = computed(() =>
 
 const totalUpcomingNet = computed(() => totalRegularUpcoming.value + totalNonRegularUpcoming.value)
 
+const selectedAccountBudgetKey = computed(() => {
+  if (selectedAccountId.value === null || selectedAccountId.value === undefined) {
+    return null
+  }
+
+  return String(selectedAccountId.value)
+})
+
+const selectedBudgetTarget = computed(() => {
+  if (!selectedAccountBudgetKey.value) {
+    return 0
+  }
+
+  return budgetTargetsByAccount.value[selectedAccountBudgetKey.value] ?? 0
+})
+
+const isBudgetConfigured = computed(() => selectedBudgetTarget.value > 0)
+
+const projectedRemainingExpenses = computed(() =>
+  Number.parseFloat(periodProjectionTransactions.value?.totalExpenses || '0'),
+)
+
+const projectedPeriodExpenses = computed(() =>
+  monthlyExpenses.value + projectedRemainingExpenses.value,
+)
+
+const budgetDelta = computed(() => selectedBudgetTarget.value - monthlyExpenses.value)
+
+const projectedBudgetDelta = computed(() => selectedBudgetTarget.value - projectedPeriodExpenses.value)
+
+const budgetConsumptionRate = computed(() => {
+  if (!isBudgetConfigured.value) {
+    return 0
+  }
+
+  return (monthlyExpenses.value / selectedBudgetTarget.value) * 100
+})
+
 const projectionPeriodEnded = computed(() => isAfter(new Date(), currentDateRange.value.end))
 
 const periodProjectionNet = computed(() => {
@@ -355,6 +396,15 @@ const dashboardAlerts = computed(() => {
       level: 'info',
       title: 'Aucun mouvement à venir',
       detail: 'Aucune transaction prévue dans les 15 prochains jours',
+    })
+  }
+
+  if (isBudgetConfigured.value && projectedBudgetDelta.value < 0) {
+    alerts.push({
+      key: 'budget-overrun',
+      level: 'warning',
+      title: 'Budget projeté dépassé',
+      detail: `Dépassement estimé: ${Math.abs(projectedBudgetDelta.value).toFixed(2)} €`,
     })
   }
 
@@ -626,6 +676,68 @@ function cancel() {
   isAccountDialogOpen.value = false
 }
 
+function loadBudgetTargets() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(BUDGET_STORAGE_KEY)
+    if (!rawValue) {
+      budgetTargetsByAccount.value = {}
+      return
+    }
+
+    const parsed = JSON.parse(rawValue)
+    if (parsed && typeof parsed === 'object') {
+      budgetTargetsByAccount.value = parsed as Record<string, number>
+    }
+  } catch (error) {
+    console.error('Unable to load budget targets', error)
+    budgetTargetsByAccount.value = {}
+  }
+}
+
+function persistBudgetTargets() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetTargetsByAccount.value))
+}
+
+function syncBudgetInputFromSelection() {
+  if (!selectedAccountBudgetKey.value) {
+    budgetTargetInput.value = undefined
+    return
+  }
+
+  const configuredBudget = budgetTargetsByAccount.value[selectedAccountBudgetKey.value]
+  budgetTargetInput.value = configuredBudget && configuredBudget > 0 ? configuredBudget : undefined
+}
+
+function saveBudgetTarget() {
+  if (!selectedAccountBudgetKey.value) {
+    return
+  }
+
+  const nextValue = Number(budgetTargetInput.value ?? 0)
+  if (Number.isNaN(nextValue) || nextValue <= 0) {
+    const { [selectedAccountBudgetKey.value]: _, ...remainingBudgets } = budgetTargetsByAccount.value
+    budgetTargetsByAccount.value = remainingBudgets
+    budgetTargetInput.value = undefined
+    persistBudgetTargets()
+    return
+  }
+
+  budgetTargetsByAccount.value = {
+    ...budgetTargetsByAccount.value,
+    [selectedAccountBudgetKey.value]: Number(nextValue.toFixed(2)),
+  }
+  budgetTargetInput.value = Number(nextValue.toFixed(2))
+  persistBudgetTargets()
+}
+
 async function loadDashboardData() {
   await withLoading(async () => {
     try {
@@ -737,6 +849,7 @@ function shiftPeriod(direction: -1 | 1) {
 }
 
 onMounted(() => {
+  loadBudgetTargets()
   loadDashboardData()
 })
 
@@ -745,6 +858,10 @@ watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
     return
   }
   loadStatsData()
+})
+
+watch(selectedAccountId, () => {
+  syncBudgetInputFromSelection()
 })
 </script>
 
@@ -1220,6 +1337,71 @@ watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
             </button>
           </div>
         </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+              <i class="pi pi-euro text-green-500" />
+              Budget du compte
+            </h2>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="!isBudgetConfigured ? 'bg-gray-500/10 text-gray-500' : (projectedBudgetDelta >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500')">
+              {{ !isBudgetConfigured ? 'Non configuré' : (projectedBudgetDelta >= 0 ? 'Dans le budget' : 'Dépassement') }}
+            </span>
+          </div>
+
+          <div class="flex items-end gap-2 mb-4">
+            <div class="flex-1">
+              <label for="budget-target" class="text-xs font-semibold block mb-1" style="color: var(--text-secondary);">
+                Cible {{ selectedPeriod === 'month' ? 'mensuelle' : 'périodique' }} (€)
+              </label>
+              <input
+                id="budget-target"
+                v-model.number="budgetTargetInput"
+                data-test="budget-target-input"
+                type="number"
+                min="0"
+                step="0.01"
+                class="budget-input"
+                placeholder="Ex: 1200"
+                @blur="saveBudgetTarget"
+              >
+            </div>
+            <button class="budget-save-btn" data-test="budget-save-btn" @click="saveBudgetTarget">
+              Enregistrer
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Dépenses consommées
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" style="color: var(--text-primary);">
+                {{ monthlyExpenses.toFixed(2) }} €
+              </p>
+            </div>
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Reste budget
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+                {{ isBudgetConfigured ? `${budgetDelta.toFixed(2)} €` : 'N/A' }}
+              </p>
+            </div>
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Projection budget
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+                {{ isBudgetConfigured ? `${projectedBudgetDelta.toFixed(2)} €` : 'N/A' }}
+              </p>
+            </div>
+          </div>
+
+          <p class="text-xs m-0 mt-3" style="color: var(--text-secondary);">
+            {{ isBudgetConfigured ? `Consommation: ${budgetConsumptionRate.toFixed(1)}% du budget` : 'Définis une cible pour activer les alertes budget.' }}
+          </p>
+        </div>
       </section>
 
       <!-- Quick Stats Banner -->
@@ -1359,6 +1541,30 @@ watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
 .quick-action-btn:hover {
   background-color: var(--card-bg);
   border-color: #822acc;
+}
+
+.budget-input {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.budget-save-btn {
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.budget-save-btn:hover {
+  border-color: #822acc;
+  background-color: var(--card-bg);
 }
 
 @media (min-width: 640px) {
