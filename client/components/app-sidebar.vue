@@ -127,6 +127,16 @@ onUnmounted(() => {
             </NuxtLink>
 
             <NuxtLink
+              to="/settings"
+              class="nav-item"
+              active-class="nav-item-active"
+              @click="closeOnNavigateIfMobile()"
+            >
+              <i class="pi pi-cog" />
+              <span>Paramètres</span>
+            </NuxtLink>
+
+            <NuxtLink
               v-if="isAdmin"
               to="/admin"
               class="nav-item admin-item"

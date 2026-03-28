@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
+import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
@@ -106,6 +107,64 @@ class UserFeatureTest: FeatureTest() {
 
             result.assertFailure(ResultState.PASSWORD_NOT_MATCH)
             assertEquals("domain.user.admin.password_mismatch", result.errorInfo?.key)
+        }
+    }
+
+    @Nested
+    inner class UserSettingsFeatureTest {
+        @Test
+        fun `Get settings for a connected user must return defaults`() {
+            userFeature.register("John", "test", "test")
+            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+
+            userFeature.getSettings(token)
+                .assertTrue {
+                    projectionWindowDays == 15 && accountCycles.isEmpty()
+                }
+        }
+
+        @Test
+        fun `Update settings must persist projection window`() {
+            userFeature.register("John", "test", "test")
+            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+
+            userFeature.updateSettings(
+                token = token,
+                projectionWindowDays = 30,
+                accountCycles = emptyMap(),
+            ).assertTrue {
+                projectionWindowDays == 30
+            }
+        }
+
+        @Test
+        fun `Update settings with projection outside range must fail`() {
+            userFeature.register("John", "test", "test")
+            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+
+            val result = userFeature.updateSettings(
+                token = token,
+                projectionWindowDays = 6,
+                accountCycles = emptyMap(),
+            )
+
+            result.assertFailure(ResultState.INVALID)
+            assertEquals("domain.user.settings.invalid_projection_window", result.errorInfo?.key)
+        }
+
+        @Test
+        fun `Update settings with non owned account must fail`() {
+            userFeature.register("John", "test", "test")
+            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+
+            val result = userFeature.updateSettings(
+                token = token,
+                projectionWindowDays = 20,
+                accountCycles = mapOf(UUID.randomUUID() to 10),
+            )
+
+            result.assertFailure(ResultState.FORBIDDEN)
+            assertEquals("domain.user.settings.account_forbidden", result.errorInfo?.key)
         }
     }
 }

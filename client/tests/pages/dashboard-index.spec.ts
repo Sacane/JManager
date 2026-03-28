@@ -64,11 +64,28 @@ const getPrevisionalTransactionsMock = vi.fn().mockResolvedValue({
   endDate: new Date(),
 })
 
+const getUserSettingsMock = vi.fn().mockResolvedValue({
+  projectionWindowDays: 15,
+  accountCycles: [
+    {
+      accountId: '1',
+      label: 'Compte principal',
+      monthlyPeriodStartDay: 1,
+    },
+  ],
+})
+
 vi.mock('~/composables/useStats', () => ({
   default: () => ({
     getCategoryDistribution: getCategoryDistributionMock,
     getTrendStats: getTrendStatsMock,
     getPrevisionalTransactions: getPrevisionalTransactionsMock,
+  }),
+}))
+
+vi.mock('~/composables/useUserSettings', () => ({
+  default: () => ({
+    getSettings: getUserSettingsMock,
   }),
 }))
 

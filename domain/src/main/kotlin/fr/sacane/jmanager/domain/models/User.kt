@@ -29,11 +29,26 @@ class User(
     val roles: Set<Role> = setOf(Role.USER),
     val creationDate: LocalDateTime = LocalDateTime.now(),
     val isEnabled: Boolean = true,
+    var projectionWindowDays: Int = 15,
 ) {
+
+    init {
+        require(projectionWindowDays in 7..60) {
+            "projectionWindowDays must be between 7 and 60"
+        }
+    }
 
     fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
     fun hasAccount(labelAccount: String): Boolean = booklets.any { labelAccount == it.label }
     override fun toString(): String = "username: $username"
+
+    fun updateProjectionWindowDays(days: Int) {
+        require(days in 7..60) {
+            "projectionWindowDays must be between 7 and 60"
+        }
+        projectionWindowDays = days
+    }
+
     fun addAccount(booklet: Booklet) {
         booklets.add(booklet)
         booklet.owner = this

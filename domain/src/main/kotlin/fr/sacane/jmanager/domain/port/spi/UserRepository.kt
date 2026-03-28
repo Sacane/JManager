@@ -75,6 +75,15 @@ interface UserRepository {
     fun upsert(user: User): User?
 
     /**
+     * Update only the projection window preference for a user.
+     *
+     * @param userId domain UserId
+     * @param projectionWindowDays projection window in days (7..60)
+     * @return true when one row was updated, false otherwise
+     */
+    fun updateProjectionWindowDays(userId: UserId, projectionWindowDays: Int): Boolean
+
+    /**
      * Retrieves all user aggregates stored in the repository.
      *
      * @return a list of all users in the repository, or an empty list if none exist.

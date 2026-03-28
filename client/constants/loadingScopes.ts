@@ -26,4 +26,8 @@ export const LOADING_SCOPES = {
     edit: 'tag.edit',
     delete: 'tag.delete',
   },
+  settings: {
+    load: 'settings.load',
+    save: 'settings.save',
+  },
 } as const

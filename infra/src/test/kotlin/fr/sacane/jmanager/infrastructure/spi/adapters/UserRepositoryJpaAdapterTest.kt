@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.UserWithPassword
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
+import java.util.UUID
 
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 @SpringBootTest
@@ -58,5 +60,19 @@ class UserRepositoryJpaAdapterTest(
         userRepositoryJpaAdapter.register("u4", "p4", emptySet())
         val all = userRepositoryJpaAdapter.findAll()
         assertThat(all).isNotEmpty
+    }
+
+    @Test
+    fun `updateProjectionWindowDays should persist setting`() {
+        val registered = userRepositoryJpaAdapter.register("u5", "p5", emptySet())
+        assertThat(registered).isNotNull
+
+        val userId = registered!!.id.value ?: UUID.randomUUID()
+        val updated = userRepositoryJpaAdapter.updateProjectionWindowDays(UserId(userId), 30)
+        assertThat(updated).isTrue()
+
+        val refreshed = userRepositoryJpaAdapter.findByPseudonym("u5")
+        assertThat(refreshed).isNotNull
+        assertThat(refreshed!!.projectionWindowDays).isEqualTo(30)
     }
 }

@@ -5,12 +5,15 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.spi.Hasher
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.*
+import java.util.UUID
 import java.util.logging.Logger
 
 @Port(Side.APPLICATION)
@@ -61,12 +64,35 @@ sealed interface UserFeature {
      * @return Result containing the admin User on success, or a failure describing the problem.
      */
     fun createAdminIfNotExists(username: String, password: String): Result<User>
+
+    /**
+     * Retrieve user settings used by dashboard calculations.
+     *
+     * @param token Authentication token identifying the requester.
+     * @return Result containing the current settings on success.
+     */
+    fun getSettings(token: String): Result<UserSettings>
+
+    /**
+     * Update user settings for projection and account monthly cycles.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param projectionWindowDays global projection window in days (7..60)
+     * @param accountCycles monthly cycle start day per account (1..31)
+     * @return Result containing updated settings on success.
+     */
+    fun updateSettings(
+        token: String,
+        projectionWindowDays: Int,
+        accountCycles: Map<UUID, Int>
+    ): Result<UserSettings>
 }
 
 
 @DomainService
 class UserFeatureImpl(
     private val userRepository: UserRepository,
+    private val bookletRepository: BookletRepository,
     private val session: SessionManager,
     private val hasher: Hasher,
     private val tokenGenerator: TokenGenerator
@@ -152,5 +178,93 @@ class UserFeatureImpl(
         LOGGER.info("Admin user created with username $username")
         return success(adminUser)
     }
+
+    override fun getSettings(token: String): Result<UserSettings> = session.authenticate(token) { userId ->
+        val user = userRepository.findUserByIdWithAccounts(userId)
+            ?: return@authenticate domainFailure(
+                ResultState.USER_NOT_FOUND,
+                "L'utilisateur n'existe pas",
+                "domain.user.settings.user_not_found"
+            )
+
+        success(user.toSettings())
+    }
+
+    override fun updateSettings(
+        token: String,
+        projectionWindowDays: Int,
+        accountCycles: Map<UUID, Int>
+    ): Result<UserSettings> = session.authenticate(token) { userId ->
+        if (projectionWindowDays !in 7..60) {
+            return@authenticate domainFailure(
+                ResultState.INVALID,
+                "La fenêtre de projection doit être comprise entre 7 et 60 jours",
+                "domain.user.settings.invalid_projection_window"
+            )
+        }
+
+        val invalidAccountCycle = accountCycles.entries.firstOrNull { (_, day) -> day !in 1..31 }
+        if (invalidAccountCycle != null) {
+            return@authenticate domainFailure(
+                ResultState.INVALID,
+                "Le jour de début de période doit être compris entre 1 et 31",
+                "domain.user.settings.invalid_monthly_period_start_day"
+            )
+        }
+
+        val user = userRepository.findUserByIdWithAccounts(userId)
+            ?: return@authenticate domainFailure(
+                ResultState.USER_NOT_FOUND,
+                "L'utilisateur n'existe pas",
+                "domain.user.settings.user_not_found"
+            )
+
+        val accountsById = user.booklets.mapNotNull { account ->
+            account.id?.let { id -> id to account }
+        }.toMap()
+
+        for ((accountId, monthlyPeriodStartDay) in accountCycles) {
+            val account = accountsById[accountId]
+                ?: return@authenticate domainFailure(
+                    ResultState.FORBIDDEN,
+                    "Vous n'avez pas accès au compte $accountId",
+                    "domain.user.settings.account_forbidden"
+                )
+
+            val updated = bookletRepository.updateMonthlyPeriodStartDay(accountId, monthlyPeriodStartDay)
+            if (!updated) {
+                return@authenticate domainFailure(
+                    ResultState.INFRASTRUCTURE_ERROR,
+                    "Impossible de mettre à jour le cycle du compte $accountId",
+                    "domain.user.settings.account_update_failed"
+                )
+            }
+            account.updateMonthlyPeriodStartDay(monthlyPeriodStartDay)
+        }
+
+        val projectionUpdated = userRepository.updateProjectionWindowDays(userId, projectionWindowDays)
+        if (!projectionUpdated) {
+            return@authenticate domainFailure(
+                ResultState.INFRASTRUCTURE_ERROR,
+                "Impossible de mettre à jour la fenêtre de projection",
+                "domain.user.settings.projection_update_failed"
+            )
+        }
+
+        user.updateProjectionWindowDays(projectionWindowDays)
+        success(user.toSettings())
+    }
+
+    private fun User.toSettings(): UserSettings = UserSettings(
+        projectionWindowDays = projectionWindowDays,
+        accountCycles = booklets.mapNotNull { booklet ->
+            val accountId = booklet.id ?: return@mapNotNull null
+            fr.sacane.jmanager.domain.models.AccountMonthlyCycleSetting(
+                accountId = accountId,
+                accountLabel = booklet.label,
+                monthlyPeriodStartDay = booklet.monthlyPeriodStartDay
+            )
+        }
+    )
 
 }

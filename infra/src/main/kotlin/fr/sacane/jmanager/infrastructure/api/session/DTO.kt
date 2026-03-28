@@ -31,3 +31,28 @@ data class UserStorageDTO(
     val email: String? = null,
     val token: String,
 )
+
+@Serializable
+data class UserSettingsDTO(
+    val projectionWindowDays: Int,
+    val accountCycles: List<AccountMonthlyCycleDTO>,
+)
+
+@Serializable
+data class AccountMonthlyCycleDTO(
+    val accountId: String,
+    val label: String,
+    val monthlyPeriodStartDay: Int,
+)
+
+@Serializable
+data class UserSettingsUpdateDTO(
+    val projectionWindowDays: Int,
+    val accountCycles: List<AccountMonthlyCycleUpdateDTO>,
+)
+
+@Serializable
+data class AccountMonthlyCycleUpdateDTO(
+    val accountId: String,
+    val monthlyPeriodStartDay: Int,
+)

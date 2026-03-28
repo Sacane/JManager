@@ -80,6 +80,21 @@ export default function useQuery() {
     }
   }
 
+  async function put(url: string, body: any | undefined) {
+    try {
+      const response = await axios.put(`${host}${url}`, body, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        transformRequest: [serializeWithPrecision],
+      })
+      return response.data
+    } catch (error: any) {
+      handleError(error)
+    }
+  }
+
   function handleError(error: Error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<any, any>
@@ -98,5 +113,5 @@ export default function useQuery() {
     throw error
   }
 
-  return { get, post, deleteQuery, patch }
+  return { get, post, deleteQuery, patch, put }
 }

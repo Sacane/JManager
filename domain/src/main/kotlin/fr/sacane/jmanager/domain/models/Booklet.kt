@@ -12,8 +12,15 @@ class Booklet(
     private val _regularTransactions: MutableList<RegularTransaction> = mutableListOf(),
     var owner : User? = null,
     val initialSold: Amount = amount.copy(),
-    val id: UUID? = null
+    val id: UUID? = null,
+    var monthlyPeriodStartDay: Int = 1,
 ){
+
+    init {
+        require(monthlyPeriodStartDay in 1..31) {
+            "monthlyPeriodStartDay must be between 1 and 31"
+        }
+    }
 
     val label: String
         get() = labelAccount
@@ -34,9 +41,17 @@ class Booklet(
     fun updateFrom(booklet: Booklet) {
         amount = booklet.amount
         labelAccount = booklet.label
+        monthlyPeriodStartDay = booklet.monthlyPeriodStartDay
         _transactions.replaceAll {
             Transaction(it.id, it.label, it.date, it.amount, it.isIncome, tag = it.tag)
         }
+    }
+
+    fun updateMonthlyPeriodStartDay(day: Int) {
+        require(day in 1..31) {
+            "monthlyPeriodStartDay must be between 1 and 31"
+        }
+        monthlyPeriodStartDay = day
     }
 
     override fun hashCode(): Int {
@@ -57,6 +72,7 @@ class Booklet(
             amount: $amount
             label: $labelAccount
             initialSold: $initialSold
+            monthlyPeriodStartDay: $monthlyPeriodStartDay
             owner: ${owner?.id}
         """.trimIndent()
     }

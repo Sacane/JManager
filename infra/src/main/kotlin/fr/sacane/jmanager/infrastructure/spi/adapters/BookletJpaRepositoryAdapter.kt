@@ -68,6 +68,11 @@ class BookletJpaRepositoryAdapter(
     }
 
     @Transactional
+    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int): Boolean {
+        return accountRepository.updateMonthlyPeriodStartDay(accountId, monthlyPeriodStartDay) > 0
+    }
+
+    @Transactional
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
         return userId.value?.let { id -> accountRepository.findAllBookletsByUserId(id).map { it.toModel() } } ?: emptyList()
     }
