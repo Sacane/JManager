@@ -13,7 +13,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import { addDays, addMonths, endOfQuarter, endOfYear, format, isAfter, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns'
+import { addDays, addMonths, endOfQuarter, endOfYear, format, isAfter, startOfQuarter, startOfYear, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
@@ -252,33 +252,6 @@ const evolutionDateRange = computed(() => {
 const currentDateRangeLabel = computed(() =>
   `${format(currentDateRange.value.start, 'dd MMM', { locale: fr })} - ${format(currentDateRange.value.end, 'dd MMM yyyy', { locale: fr })}`,
 )
-
-const currentMonthTrend = computed(() => {
-  if (!trendStats.value?.monthlyTrends.length) {
-    return null
-  }
-
-  const currentMonth = periodAnchorDate.value.getMonth() + 1
-  const currentYear = periodAnchorDate.value.getFullYear()
-
-  return trendStats.value.monthlyTrends.find(
-    trend => trend.month === currentMonth && trend.year === currentYear,
-  )
-})
-
-const previousMonthTrend = computed(() => {
-  if (!trendStats.value?.monthlyTrends.length) {
-    return null
-  }
-
-  const lastMonth = subMonths(periodAnchorDate.value, 1)
-  const month = lastMonth.getMonth() + 1
-  const year = lastMonth.getFullYear()
-
-  return trendStats.value.monthlyTrends.find(
-    trend => trend.month === month && trend.year === year,
-  )
-})
 
 const monthlyExpenses = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
@@ -859,10 +832,10 @@ async function loadStatsData() {
   const shouldLoadPeriodProjection = !isAfter(projectionStart, projectionEnd)
   const periodProjectionPromise = shouldLoadPeriodProjection
     ? getPrevisionalTransactions(
-      format(projectionStart, 'yyyy-MM-dd'),
-      format(projectionEnd, 'yyyy-MM-dd'),
-      scopedAccountId.value,
-    ).catch(() => null)
+        format(projectionStart, 'yyyy-MM-dd'),
+        format(projectionEnd, 'yyyy-MM-dd'),
+        scopedAccountId.value,
+      ).catch(() => null)
     : Promise.resolve(null)
 
   const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData] = await Promise.all([
