@@ -68,8 +68,8 @@ class BookletJpaRepositoryAdapter(
     }
 
     @Transactional
-    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int): Boolean {
-        return accountRepository.updateMonthlyPeriodStartDay(accountId, monthlyPeriodStartDay) > 0
+    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
+        return accountRepository.updateMonthlyPeriodStartDay(accountId, monthlyPeriodStartDay, monthlyPeriodEndDay) > 0
     }
 
     @Transactional

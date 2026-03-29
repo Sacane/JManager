@@ -64,17 +64,18 @@ class BookletJpaRepositoryAdapterTest(
     }
 
     @Test
-    fun `updateMonthlyPeriodStartDay should persist cycle setting`() {
+    fun `updateMonthlyPeriodStartDay should persist cycle settings`() {
         val booklet = Booklet(labelAccount = "acct-cycle", amount = Amount(10L), owner = user)
         val saved = bookletJpaRepositoryAdapter.save(user!!.id, booklet)
         assertThat(saved).isNotNull
         val savedId = saved!!.id ?: throw AssertionError("booklet id is null")
 
-        val updated = bookletJpaRepositoryAdapter.updateMonthlyPeriodStartDay(savedId, 28)
+        val updated = bookletJpaRepositoryAdapter.updateMonthlyPeriodStartDay(savedId, 28, 27)
         assertThat(updated).isTrue()
 
         val refreshed = bookletJpaRepositoryAdapter.findAccountByIdWithTransactions(savedId)
         assertThat(refreshed).isNotNull
         assertThat(refreshed!!.monthlyPeriodStartDay).isEqualTo(28)
+        assertThat(refreshed.monthlyPeriodEndDay).isEqualTo(27)
     }
 }

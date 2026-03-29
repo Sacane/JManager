@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.assertTrue
+import fr.sacane.jmanager.domain.models.AccountMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
@@ -160,7 +161,7 @@ class UserFeatureTest: FeatureTest() {
             val result = userFeature.updateSettings(
                 token = token,
                 projectionWindowDays = 20,
-                accountCycles = mapOf(UUID.randomUUID() to 10),
+                accountCycles = mapOf(UUID.randomUUID() to AccountMonthlyCycleUpdate(10, null)),
             )
 
             result.assertFailure(ResultState.FORBIDDEN)
@@ -182,18 +183,33 @@ class UserFeatureTest: FeatureTest() {
         }
 
         @Test
+        fun `Update settings with invalid monthly period end day must fail`() {
+            launchWithConnectedUserInstance {
+                val result = userFeature.updateSettings(
+                    token = tokenValue,
+                    projectionWindowDays = 20,
+                    accountCycles = mapOf(booklet.id!! to AccountMonthlyCycleUpdate(28, 40)),
+                )
+
+                result.assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.settings.invalid_monthly_period_end_day", result.errorInfo?.key)
+            }
+        }
+
+        @Test
         fun `Update settings with cycle for each owned account must succeed`() {
             launchWithConnectedUserInstance {
                 val result = userFeature.updateSettings(
                     token = tokenValue,
                     projectionWindowDays = 20,
-                    accountCycles = mapOf(booklet.id!! to 28),
+                    accountCycles = mapOf(booklet.id!! to AccountMonthlyCycleUpdate(28, 27)),
                 )
 
                 result.assertTrue {
                     projectionWindowDays == 20
                             && accountCycles.size == 1
                             && accountCycles.first().monthlyPeriodStartDay == 28
+                            && accountCycles.first().monthlyPeriodEndDay == 27
                 }
             }
         }

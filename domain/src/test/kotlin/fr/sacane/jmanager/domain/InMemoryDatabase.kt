@@ -137,6 +137,7 @@ class InMemoryDatabase {
                     owner = account.owner,
                     id = accountId,
                     monthlyPeriodStartDay = account.monthlyPeriodStartDay,
+                    monthlyPeriodEndDay = account.monthlyPeriodEndDay,
                 )
             }
         }
@@ -163,6 +164,7 @@ class InMemoryDatabase {
                     owner = it.owner,
                     id = it.id,
                     monthlyPeriodStartDay = it.monthlyPeriodStartDay,
+                    monthlyPeriodEndDay = it.monthlyPeriodEndDay,
                 )
             )
         }

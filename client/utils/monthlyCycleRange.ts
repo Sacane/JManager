@@ -15,6 +15,14 @@ function asLocalDate(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
+function normalizeOptionalCycleDay(day: number | null | undefined): number | undefined {
+  if (day === null || day === undefined || Number.isNaN(day)) {
+    return undefined
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(day)))
+}
+
 function resolveMonthlyCycleBoundary(year: number, monthIndex: number, cycleDay: number): Date {
   const safeCycleDay = normalizeCycleDay(cycleDay)
   const lastDayOfMonth = new Date(year, monthIndex + 1, 0).getDate()
@@ -28,32 +36,40 @@ function addDays(date: Date, days: number): Date {
   return next
 }
 
-export function resolveMonthlyCycleRangeFromAnchor(anchorDate: Date, cycleDay: number): MonthlyCycleRange {
+function resolveRangeEndFromStart(start: Date, cycleStartDay: number, cycleEndDay?: number | null): Date {
+  const normalizedEndDay = normalizeOptionalCycleDay(cycleEndDay)
+  if (normalizedEndDay !== undefined) {
+    return resolveMonthlyCycleBoundary(start.getFullYear(), start.getMonth() + 1, normalizedEndDay)
+  }
+
+  const nextStartBoundary = resolveMonthlyCycleBoundary(start.getFullYear(), start.getMonth() + 1, cycleStartDay)
+  return addDays(nextStartBoundary, -1)
+}
+
+export function resolveMonthlyCycleRangeFromAnchor(anchorDate: Date, cycleStartDay: number, cycleEndDay?: number | null): MonthlyCycleRange {
   const anchor = asLocalDate(anchorDate)
-  const currentBoundary = resolveMonthlyCycleBoundary(anchor.getFullYear(), anchor.getMonth(), cycleDay)
+  const currentBoundary = resolveMonthlyCycleBoundary(anchor.getFullYear(), anchor.getMonth(), cycleStartDay)
 
   if (anchor < currentBoundary) {
-    const previousBoundary = resolveMonthlyCycleBoundary(anchor.getFullYear(), anchor.getMonth() - 1, cycleDay)
+    const previousBoundary = resolveMonthlyCycleBoundary(anchor.getFullYear(), anchor.getMonth() - 1, cycleStartDay)
     return {
       start: previousBoundary,
-      end: addDays(currentBoundary, -1),
+      end: resolveRangeEndFromStart(previousBoundary, cycleStartDay, cycleEndDay),
     }
   }
 
-  const nextBoundary = resolveMonthlyCycleBoundary(anchor.getFullYear(), anchor.getMonth() + 1, cycleDay)
   return {
     start: currentBoundary,
-    end: addDays(nextBoundary, -1),
+    end: resolveRangeEndFromStart(currentBoundary, cycleStartDay, cycleEndDay),
   }
 }
 
-export function resolveMonthlyCycleRangeForTargetMonth(targetYear: number, targetMonth: number, cycleDay: number): MonthlyCycleRange {
-  const boundaryCurrent = resolveMonthlyCycleBoundary(targetYear, targetMonth - 1, cycleDay)
-  const boundaryPrevious = resolveMonthlyCycleBoundary(targetYear, targetMonth - 2, cycleDay)
+export function resolveMonthlyCycleRangeForTargetMonth(targetYear: number, targetMonth: number, cycleStartDay: number, cycleEndDay?: number | null): MonthlyCycleRange {
+  const boundaryPrevious = resolveMonthlyCycleBoundary(targetYear, targetMonth - 2, cycleStartDay)
 
   return {
     start: boundaryPrevious,
-    end: addDays(boundaryCurrent, -1),
+    end: resolveRangeEndFromStart(boundaryPrevious, cycleStartDay, cycleEndDay),
   }
 }
 

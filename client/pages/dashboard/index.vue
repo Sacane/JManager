@@ -71,7 +71,7 @@ const hasInitializedDashboard = ref(false)
 const budgetTargetsByAccount = ref<Record<string, number>>({})
 const budgetTargetInput = ref<number | undefined>(undefined)
 const projectionWindowDays = ref(15)
-const accountMonthlyCycleById = ref<Record<string, number>>({})
+const accountMonthlyCycleById = ref<Record<string, { startDay: number, endDay: number | null }>>({})
 const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
 const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
@@ -125,7 +125,7 @@ const selectedMonthlyPeriodStartDay = computed(() => {
     return 1
   }
 
-  const configured = accountMonthlyCycleById.value[String(selectedAccountId.value)]
+  const configured = accountMonthlyCycleById.value[String(selectedAccountId.value)]?.startDay
   if (!configured) {
     return 1
   }
@@ -133,15 +133,36 @@ const selectedMonthlyPeriodStartDay = computed(() => {
   return Math.min(31, Math.max(1, Math.trunc(configured)))
 })
 
+const selectedMonthlyPeriodEndDay = computed(() => {
+  if (!selectedAccountId.value) {
+    return null
+  }
+
+  const configured = accountMonthlyCycleById.value[String(selectedAccountId.value)]?.endDay
+  if (configured === null || configured === undefined) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(configured)))
+})
+
 const projectionWindowLabel = computed(() => `${projectionWindowDays.value} jours`)
 
-function resolveCustomMonthlyRange(anchorDate: Date, cycleStartDay: number) {
-  return resolveMonthlyCycleRangeFromAnchor(anchorDate, cycleStartDay)
+function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number | null {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(value)))
 }
 
-function resolvePreviousCustomMonthlyRange(startDate: Date, cycleStartDay: number) {
+function resolveCustomMonthlyRange(anchorDate: Date, cycleStartDay: number, cycleEndDay: number | null) {
+  return resolveMonthlyCycleRangeFromAnchor(anchorDate, cycleStartDay, cycleEndDay)
+}
+
+function resolvePreviousCustomMonthlyRange(startDate: Date, cycleStartDay: number, cycleEndDay: number | null) {
   const dayBeforeCurrentRange = addDays(startDate, -1)
-  return resolveCustomMonthlyRange(dayBeforeCurrentRange, cycleStartDay)
+  return resolveCustomMonthlyRange(dayBeforeCurrentRange, cycleStartDay, cycleEndDay)
 }
 
 function normalizeProjectionWindowDays(value: number | undefined): number {
@@ -169,7 +190,11 @@ const periodMetricLabel = computed(() =>
 
 const currentDateRange = computed(() => {
   if (selectedPeriod.value === 'month') {
-    return resolveCustomMonthlyRange(periodAnchorDate.value, selectedMonthlyPeriodStartDay.value)
+    return resolveCustomMonthlyRange(
+      periodAnchorDate.value,
+      selectedMonthlyPeriodStartDay.value,
+      selectedMonthlyPeriodEndDay.value,
+    )
   }
 
   if (selectedPeriod.value === 'quarter') {
@@ -187,7 +212,11 @@ const currentDateRange = computed(() => {
 
 const previousDateRange = computed(() => {
   if (selectedPeriod.value === 'month') {
-    return resolvePreviousCustomMonthlyRange(currentDateRange.value.start, selectedMonthlyPeriodStartDay.value)
+    return resolvePreviousCustomMonthlyRange(
+      currentDateRange.value.start,
+      selectedMonthlyPeriodStartDay.value,
+      selectedMonthlyPeriodEndDay.value,
+    )
   }
 
   if (selectedPeriod.value === 'quarter') {
@@ -789,7 +818,10 @@ async function loadDashboardData() {
         accountMonthlyCycleById.value = Object.fromEntries(
           settingsData.accountCycles.map((cycle: AccountMonthlyCycleDTO) => [
             cycle.accountId,
-            Math.min(31, Math.max(1, Math.trunc(cycle.monthlyPeriodStartDay))),
+            {
+              startDay: Math.min(31, Math.max(1, Math.trunc(cycle.monthlyPeriodStartDay))),
+              endDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
+            },
           ]),
         )
       }

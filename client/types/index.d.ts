@@ -196,6 +196,7 @@ declare global {
     accountId: string
     label: string
     monthlyPeriodStartDay: number
+    monthlyPeriodEndDay?: number | null
   }
 
   interface UserSettingsUpdateDTO {
@@ -206,6 +207,7 @@ declare global {
   interface AccountMonthlyCycleUpdateDTO {
     accountId: string
     monthlyPeriodStartDay: number
+    monthlyPeriodEndDay?: number | null
   }
 
   interface CsvValidationReportDTO {

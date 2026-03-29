@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.AccountMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.spi.Hasher
@@ -78,13 +79,13 @@ sealed interface UserFeature {
      *
      * @param token Authentication token identifying the requester.
      * @param projectionWindowDays global projection window in days (7..60)
-     * @param accountCycles monthly cycle start day per account (1..31)
+        * @param accountCycles monthly cycle configuration per account (start day required, end day optional)
      * @return Result containing updated settings on success.
      */
     fun updateSettings(
         token: String,
         projectionWindowDays: Int,
-        accountCycles: Map<UUID, Int>
+        accountCycles: Map<UUID, AccountMonthlyCycleUpdate>
     ): Result<UserSettings>
 }
 
@@ -193,7 +194,7 @@ class UserFeatureImpl(
     override fun updateSettings(
         token: String,
         projectionWindowDays: Int,
-        accountCycles: Map<UUID, Int>
+        accountCycles: Map<UUID, AccountMonthlyCycleUpdate>
     ): Result<UserSettings> = session.authenticate(token) { userId ->
         if (projectionWindowDays !in 7..60) {
             return@authenticate domainFailure(
@@ -203,12 +204,25 @@ class UserFeatureImpl(
             )
         }
 
-        val invalidAccountCycle = accountCycles.entries.firstOrNull { (_, day) -> day !in 1..31 }
+        val invalidAccountCycle = accountCycles.entries.firstOrNull { (_, cycle) ->
+            cycle.monthlyPeriodStartDay !in 1..31
+        }
         if (invalidAccountCycle != null) {
             return@authenticate domainFailure(
                 ResultState.INVALID,
                 "Le jour de début de période doit être compris entre 1 et 31",
                 "domain.user.settings.invalid_monthly_period_start_day"
+            )
+        }
+
+        val invalidAccountCycleEndDay = accountCycles.entries.firstOrNull { (_, cycle) ->
+            cycle.monthlyPeriodEndDay != null && cycle.monthlyPeriodEndDay !in 1..31
+        }
+        if (invalidAccountCycleEndDay != null) {
+            return@authenticate domainFailure(
+                ResultState.INVALID,
+                "Le jour de fin de période doit être compris entre 1 et 31",
+                "domain.user.settings.invalid_monthly_period_end_day"
             )
         }
 
@@ -232,7 +246,7 @@ class UserFeatureImpl(
             )
         }
 
-        for ((accountId, monthlyPeriodStartDay) in accountCycles) {
+        for ((accountId, accountCycle) in accountCycles) {
             val account = accountsById[accountId]
                 ?: return@authenticate domainFailure(
                     ResultState.FORBIDDEN,
@@ -240,7 +254,11 @@ class UserFeatureImpl(
                     "domain.user.settings.account_forbidden"
                 )
 
-            val updated = bookletRepository.updateMonthlyPeriodStartDay(accountId, monthlyPeriodStartDay)
+            val updated = bookletRepository.updateMonthlyPeriodStartDay(
+                accountId,
+                accountCycle.monthlyPeriodStartDay,
+                accountCycle.monthlyPeriodEndDay,
+            )
             if (!updated) {
                 return@authenticate domainFailure(
                     ResultState.INFRASTRUCTURE_ERROR,
@@ -248,7 +266,10 @@ class UserFeatureImpl(
                     "domain.user.settings.account_update_failed"
                 )
             }
-            account.updateMonthlyPeriodStartDay(monthlyPeriodStartDay)
+            account.updateMonthlyPeriodConfiguration(
+                accountCycle.monthlyPeriodStartDay,
+                accountCycle.monthlyPeriodEndDay,
+            )
         }
 
         val projectionUpdated = userRepository.updateProjectionWindowDays(userId, projectionWindowDays)
@@ -271,7 +292,8 @@ class UserFeatureImpl(
             fr.sacane.jmanager.domain.models.AccountMonthlyCycleSetting(
                 accountId = accountId,
                 accountLabel = booklet.label,
-                monthlyPeriodStartDay = booklet.monthlyPeriodStartDay
+                monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
+                monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
             )
         }
     )

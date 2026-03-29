@@ -124,6 +124,34 @@ class SessionControllerTest(
         }
 
         @Test
+        fun `Update user settings with invalid monthly period end day must return 400`() {
+            accountStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
+            val accountId = accountStateTestAdapter.get().first().id!!.toString()
+
+            val body = UserSettingsUpdateDTO(
+                projectionWindowDays = 15,
+                accountCycles = listOf(
+                    AccountMonthlyCycleUpdateDTO(
+                        accountId = accountId,
+                        monthlyPeriodStartDay = 20,
+                        monthlyPeriodEndDay = 32,
+                    ),
+                ),
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                put("/api/user/settings")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
         fun `Update user settings with invalid account id must return 400`() {
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 15,
@@ -198,6 +226,7 @@ class SessionControllerTest(
                     AccountMonthlyCycleUpdateDTO(
                         accountId = accountId,
                         monthlyPeriodStartDay = 28,
+                        monthlyPeriodEndDay = 27,
                     )
                 ),
             )
@@ -215,6 +244,7 @@ class SessionControllerTest(
                 body("accountCycles.size()", equalTo(1))
                 body("accountCycles[0].accountId", equalTo(accountId))
                 body("accountCycles[0].monthlyPeriodStartDay", equalTo(28))
+                body("accountCycles[0].monthlyPeriodEndDay", equalTo(27))
             }
 
             Given {
@@ -229,6 +259,7 @@ class SessionControllerTest(
                 body("accountCycles.size()", equalTo(1))
                 body("accountCycles[0].accountId", equalTo(accountId))
                 body("accountCycles[0].monthlyPeriodStartDay", equalTo(28))
+                body("accountCycles[0].monthlyPeriodEndDay", equalTo(27))
             }
         }
     }

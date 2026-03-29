@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-03-30
+
+- Added per-account optional monthly period end day configuration (`monthlyPeriodEndDay`) across domain models, settings contracts, infrastructure API DTOs, and persistence adapters.
+- Added database migration `V14__add_account_monthly_period_end_day.sql` to store `monthly_period_end_day` with nullable semantics and strict day-range validation (`1..31` when provided).
+- Extended user settings update validation to reject invalid end-day values with a dedicated semantic error key (`domain.user.settings.invalid_monthly_period_end_day`).
+- Updated settings API read/write flows so account cycles now persist and return both `monthlyPeriodStartDay` and optional `monthlyPeriodEndDay`.
+- Updated frontend settings page to configure both monthly start and optional next-month end day, including an explicit default mode that preserves legacy behavior.
+- Extended shared frontend monthly range utility to apply explicit end-day boundaries when configured while keeping default fallback behavior (`next-month start day - 1`).
+- Updated dashboard and account details pages to consume the optional end-day configuration for period range computation and account-scoped data queries.
+- Added and updated regression tests across layers (domain, infra API/repository, and frontend pages) to cover explicit end-day behavior, fallback behavior, validation failures, and persistence/readback.
+
 ## 2026-03-29
 
 - Implemented cycle-aware monthly period semantics end-to-end for dashboard and account details with explicit boundary behavior: for cycle day N, the period starts at boundary(current month) and ends at boundary(next month) - 1 day (including short-month fallback to the last day).
@@ -13,12 +24,6 @@
 - Added domain regression tests for explicit range inclusions/exclusions and range-bounded previsional balances.
 - Added infrastructure API tests for explicit date-range success and invalid-range failures on account report and transaction listing endpoints.
 - Updated English and French performance documentation to describe optional date-range query support and cycle-aware frontend usage examples.
-- Verified the implementation with green targeted and full suites:
-  - `./gradlew :domain:test --tests "fr.sacane.jmanager.domain.port.BookletFeatureTest"`
-  - `./gradlew :infra:test --tests "fr.sacane.jmanager.infrastructure.api.BookletControllerTest" --tests "fr.sacane.jmanager.infrastructure.api.TransactionControllerTest"`
-  - `./gradlew :domain:test :infra:test`
-  - `pnpm -C client test -- tests/pages/dashboard-index.spec.ts tests/pages/account-id.spec.ts`
-  - `pnpm -C client test`
 
 ## 2026-03-26
 

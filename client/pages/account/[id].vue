@@ -25,6 +25,7 @@ const selectedSheets = ref<TransactionCreationDTO[]>([])
 const actualSheets = ref<TransactionCreationDTO[]>([])
 const tags = ref<TagDTO[]>([])
 const accountMonthlyPeriodStartDay = ref(1)
+const accountMonthlyPeriodEndDay = ref<number | null>(null)
 
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
@@ -157,18 +158,29 @@ function normalizeMonthlyPeriodStartDay(value: number | undefined): number {
   return Math.min(31, Math.max(1, Math.trunc(value)))
 }
 
+function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number | null {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(value)))
+}
+
 async function loadAccountCycleSetting(accountId: string) {
   try {
     const settings = await getUserSettings()
     if (!settings) {
       accountMonthlyPeriodStartDay.value = 1
+      accountMonthlyPeriodEndDay.value = null
       return
     }
 
     const accountCycle = settings.accountCycles.find(cycle => cycle.accountId === accountId)
     accountMonthlyPeriodStartDay.value = normalizeMonthlyPeriodStartDay(accountCycle?.monthlyPeriodStartDay)
+    accountMonthlyPeriodEndDay.value = normalizeMonthlyPeriodEndDay(accountCycle?.monthlyPeriodEndDay)
   } catch {
     accountMonthlyPeriodStartDay.value = 1
+    accountMonthlyPeriodEndDay.value = null
   }
 }
 
@@ -181,6 +193,7 @@ async function loadBookletData() {
         bookletData.year,
         month,
         accountMonthlyPeriodStartDay.value,
+        accountMonthlyPeriodEndDay.value,
       )
       const dateRange = {
         startDate: toIsoLocalDate(cycleRange.start),

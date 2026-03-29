@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.session
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.AccountMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -91,7 +92,10 @@ class SessionController(
     ): ResponseEntity<UserSettingsDTO> {
         val accountCycles = settings.accountCycles.associate { cycle ->
             val accountId = parseAccountId(cycle.accountId)
-            accountId to cycle.monthlyPeriodStartDay
+            accountId to AccountMonthlyCycleUpdate(
+                monthlyPeriodStartDay = cycle.monthlyPeriodStartDay,
+                monthlyPeriodEndDay = cycle.monthlyPeriodEndDay,
+            )
         }
 
         return loginFeature.updateSettings(
@@ -121,6 +125,7 @@ private fun UserSettings.toDTO(): UserSettingsDTO = UserSettingsDTO(
             accountId = cycle.accountId.toString(),
             label = cycle.accountLabel,
             monthlyPeriodStartDay = cycle.monthlyPeriodStartDay,
+            monthlyPeriodEndDay = cycle.monthlyPeriodEndDay,
         )
     },
 )

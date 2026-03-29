@@ -54,6 +54,7 @@ const getSettingsMock = vi.fn().mockResolvedValue({
       accountId: 'booklet-1',
       label: 'Compte courant',
       monthlyPeriodStartDay: 28,
+      monthlyPeriodEndDay: null,
     },
   ],
 })
@@ -173,6 +174,35 @@ describe('pages/account/[id] loading states', () => {
       {
         startDate: '2026-02-28',
         endDate: '2026-03-27',
+      },
+    )
+  })
+
+  it('queries account with explicit monthly end day when configured', async () => {
+    getSettingsMock.mockResolvedValueOnce({
+      projectionWindowDays: 15,
+      accountCycles: [
+        {
+          accountId: 'booklet-1',
+          label: 'Compte courant',
+          monthlyPeriodStartDay: 28,
+          monthlyPeriodEndDay: 30,
+        },
+      ],
+    })
+
+    mountPage()
+
+    await flushPromises()
+    await flushPromises()
+
+    expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {
+        startDate: '2026-02-28',
+        endDate: '2026-03-30',
       },
     )
   })

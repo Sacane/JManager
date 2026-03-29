@@ -33,6 +33,14 @@ function normalizeMonthlyPeriodStartDay(value: number): number {
   return Math.min(31, Math.max(1, Math.trunc(value)))
 }
 
+function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number | null {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(value)))
+}
+
 function monthlyDayOptions() {
   return Array.from({ length: 31 }, (_, index) => index + 1)
 }
@@ -51,6 +59,7 @@ async function loadUserSettings() {
         accountId: cycle.accountId,
         label: cycle.label,
         monthlyPeriodStartDay: normalizeMonthlyPeriodStartDay(cycle.monthlyPeriodStartDay),
+        monthlyPeriodEndDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
   }, loadSettingsScope)
@@ -63,6 +72,7 @@ async function saveUserSettings() {
       accountCycles: accountCycles.value.map(cycle => ({
         accountId: cycle.accountId,
         monthlyPeriodStartDay: normalizeMonthlyPeriodStartDay(cycle.monthlyPeriodStartDay),
+        monthlyPeriodEndDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
       })),
     }
 
@@ -78,6 +88,7 @@ async function saveUserSettings() {
         accountId: cycle.accountId,
         label: cycle.label,
         monthlyPeriodStartDay: normalizeMonthlyPeriodStartDay(cycle.monthlyPeriodStartDay),
+        monthlyPeriodEndDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
 
@@ -124,7 +135,7 @@ onMounted(() => {
       <section class="settings-card">
         <h2>Cycle mensuel par compte</h2>
         <p class="settings-help">
-          Le jour choisi definit le debut du mois de suivi. Si le jour n'existe pas dans un mois, le dernier jour du mois est utilise.
+          Configure le jour de debut de periode et, si besoin, le jour de fin du mois suivant. Sans jour de fin, le comportement par defaut reste jour du mois suivant - 1.
         </p>
 
         <div v-if="accountCycles.length === 0" class="empty-state">
@@ -142,11 +153,28 @@ onMounted(() => {
               </p>
             </div>
 
-            <select v-model.number="cycle.monthlyPeriodStartDay" class="settings-select" :data-test="`cycle-select-${cycle.accountId}`">
-              <option v-for="day in monthlyDayOptions()" :key="day" :value="day">
-                Jour {{ day }}
-              </option>
-            </select>
+            <div class="account-cycle-controls">
+              <label class="account-cycle-control">
+                <span class="settings-label">Debut</span>
+                <select v-model.number="cycle.monthlyPeriodStartDay" class="settings-select" :data-test="`cycle-select-${cycle.accountId}`">
+                  <option v-for="day in monthlyDayOptions()" :key="day" :value="day">
+                    Jour {{ day }}
+                  </option>
+                </select>
+              </label>
+
+              <label class="account-cycle-control">
+                <span class="settings-label">Fin (mois suivant)</span>
+                <select v-model="cycle.monthlyPeriodEndDay" class="settings-select" :data-test="`cycle-end-select-${cycle.accountId}`">
+                  <option :value="null">
+                    Defaut (jour suivant - 1)
+                  </option>
+                  <option v-for="day in monthlyDayOptions()" :key="`end-${day}`" :value="day">
+                    Jour {{ day }}
+                  </option>
+                </select>
+              </label>
+            </div>
           </div>
         </div>
       </section>
@@ -239,13 +267,25 @@ onMounted(() => {
 
 .account-cycle-item {
   display: grid;
-  grid-template-columns: 1fr minmax(120px, 150px);
+  grid-template-columns: 1fr minmax(240px, 360px);
   gap: 0.75rem;
   align-items: center;
   padding: 0.7rem;
   border: 1px solid var(--border-color);
   border-radius: 0.8rem;
   background-color: var(--bg-tertiary);
+}
+
+.account-cycle-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 0.6rem;
+}
+
+.account-cycle-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .account-cycle-label {
@@ -289,6 +329,10 @@ onMounted(() => {
 
 @media (max-width: 640px) {
   .account-cycle-item {
+    grid-template-columns: 1fr;
+  }
+
+  .account-cycle-controls {
     grid-template-columns: 1fr;
   }
 }

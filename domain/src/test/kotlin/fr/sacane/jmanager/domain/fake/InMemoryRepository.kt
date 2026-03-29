@@ -198,9 +198,9 @@ class InMemoryBookletRepository(
         upsert(booklet)
     }
 
-    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int): Boolean {
+    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
         val account = inMemoryDatabase.findAccountById(accountId) ?: return false
-        account.updateMonthlyPeriodStartDay(monthlyPeriodStartDay)
+        account.updateMonthlyPeriodConfiguration(monthlyPeriodStartDay, monthlyPeriodEndDay)
         upsert(account)
         return true
     }

@@ -9,6 +9,7 @@ const getSettingsMock = vi.fn().mockResolvedValue({
       accountId: 'acc-1',
       label: 'Compte principal',
       monthlyPeriodStartDay: 28,
+      monthlyPeriodEndDay: null,
     },
   ],
 })
@@ -20,6 +21,7 @@ const updateSettingsMock = vi.fn().mockResolvedValue({
       accountId: 'acc-1',
       label: 'Compte principal',
       monthlyPeriodStartDay: 27,
+      monthlyPeriodEndDay: 26,
     },
   ],
 })
@@ -72,6 +74,9 @@ describe('pages/settings/index', () => {
     const cycleSelect = wrapper.find('[data-test="cycle-select-acc-1"]')
     await cycleSelect.setValue('27')
 
+    const cycleEndSelect = wrapper.find('[data-test="cycle-end-select-acc-1"]')
+    await cycleEndSelect.setValue('26')
+
     await wrapper.find('[data-test="save-settings-btn"]').trigger('click')
 
     expect(updateSettingsMock).toHaveBeenCalledWith({
@@ -80,6 +85,7 @@ describe('pages/settings/index', () => {
         {
           accountId: 'acc-1',
           monthlyPeriodStartDay: 27,
+          monthlyPeriodEndDay: 26,
         },
       ],
     })

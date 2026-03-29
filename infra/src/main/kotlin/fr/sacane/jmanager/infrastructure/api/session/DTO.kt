@@ -43,6 +43,7 @@ data class AccountMonthlyCycleDTO(
     val accountId: String,
     val label: String,
     val monthlyPeriodStartDay: Int,
+    val monthlyPeriodEndDay: Int? = null,
 )
 
 @Serializable
@@ -55,4 +56,5 @@ data class UserSettingsUpdateDTO(
 data class AccountMonthlyCycleUpdateDTO(
     val accountId: String,
     val monthlyPeriodStartDay: Int,
+    val monthlyPeriodEndDay: Int? = null,
 )

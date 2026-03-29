@@ -60,6 +60,7 @@ const getUserSettingsMock = vi.fn().mockResolvedValue({
       accountId: '11111111-1111-4111-8111-111111111111',
       label: 'Compte principal',
       monthlyPeriodStartDay: 1,
+      monthlyPeriodEndDay: null,
     },
   ],
 })
@@ -144,6 +145,7 @@ describe('pages/dashboard/index tags insights', () => {
           accountId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
           monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
         },
       ],
     })
@@ -180,6 +182,7 @@ describe('pages/dashboard/index tags insights', () => {
           accountId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
           monthlyPeriodStartDay: 28,
+          monthlyPeriodEndDay: null,
         },
       ],
     })
@@ -212,6 +215,7 @@ describe('pages/dashboard/index tags insights', () => {
           accountId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
           monthlyPeriodStartDay: 28,
+          monthlyPeriodEndDay: null,
         },
       ],
     })
@@ -224,6 +228,33 @@ describe('pages/dashboard/index tags insights', () => {
       accountId: '11111111-1111-4111-8111-111111111111',
       startDate: '2026-03-28',
       endDate: '2026-04-27',
+    }))
+  })
+
+  it('uses explicit configured end day for monthly period', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 21,
+      accountCycles: [
+        {
+          accountId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 28,
+          monthlyPeriodEndDay: 30,
+        },
+      ],
+    })
+
+    mountDashboardPage()
+    await flushPromises()
+    await flushPromises()
+
+    expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
+      accountId: '11111111-1111-4111-8111-111111111111',
+      startDate: '2026-03-28',
+      endDate: '2026-04-30',
     }))
   })
 })
