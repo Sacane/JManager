@@ -13,7 +13,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import { addDays, addMonths, endOfMonth, endOfQuarter, endOfYear, format, isAfter, isBefore, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns'
+import { addDays, addMonths, endOfQuarter, endOfYear, format, isAfter, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
@@ -22,6 +22,7 @@ import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import useStats from '~/composables/useStats'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import { resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, rgbToHex } from '~/utils/util'
 
 ChartJS.register(
@@ -134,27 +135,8 @@ const selectedMonthlyPeriodStartDay = computed(() => {
 
 const projectionWindowLabel = computed(() => `${projectionWindowDays.value} jours`)
 
-function resolveMonthlyCycleBoundary(referenceDate: Date, cycleStartDay: number) {
-  const safeCycleStartDay = Math.min(31, Math.max(1, Math.trunc(cycleStartDay)))
-  const monthLastDay = endOfMonth(referenceDate).getDate()
-  const targetDay = Math.min(safeCycleStartDay, monthLastDay)
-  return new Date(referenceDate.getFullYear(), referenceDate.getMonth(), targetDay)
-}
-
 function resolveCustomMonthlyRange(anchorDate: Date, cycleStartDay: number) {
-  const anchor = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate())
-  const currentBoundary = resolveMonthlyCycleBoundary(anchor, cycleStartDay)
-
-  const start = isBefore(anchor, currentBoundary)
-    ? resolveMonthlyCycleBoundary(subMonths(anchor, 1), cycleStartDay)
-    : currentBoundary
-
-  const end = resolveMonthlyCycleBoundary(addMonths(start, 1), cycleStartDay)
-
-  return {
-    start,
-    end,
-  }
+  return resolveMonthlyCycleRangeFromAnchor(anchorDate, cycleStartDay)
 }
 
 function resolvePreviousCustomMonthlyRange(startDate: Date, cycleStartDay: number) {

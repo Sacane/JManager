@@ -276,6 +276,66 @@ class BookletControllerTest(
         }
 
         @Test
+        fun `Request report for a booklet with explicit date range should return 200`() {
+            accountStateAdapter.init(
+                listOf(
+                    Booklet(
+                        id = null,
+                        amount = Amount.fromString("1000.00"),
+                        labelAccount = "Compte Épargne",
+                        owner = user,
+                    )
+                )
+            )
+            val booklet = accountStateAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", 4)
+                queryParam("year", 2026)
+                queryParam("startDate", "2026-03-28")
+                queryParam("endDate", "2026-04-27")
+            } When {
+                get("/api/account/report/${booklet.id}")
+            } Then {
+                statusCode(200)
+                body("label", equalTo("Compte Épargne"))
+                body("realSold", equalTo("1000.00"))
+            }
+        }
+
+        @Test
+        fun `Request report with invalid date range should return 400`() {
+            accountStateAdapter.init(
+                listOf(
+                    Booklet(
+                        id = null,
+                        amount = Amount.fromString("1000.00"),
+                        labelAccount = "Compte Épargne",
+                        owner = user,
+                    )
+                )
+            )
+            val booklet = accountStateAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", 4)
+                queryParam("year", 2026)
+                queryParam("startDate", "2026-04-28")
+                queryParam("endDate", "2026-04-27")
+            } When {
+                get("/api/account/report/${booklet.id}")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
         fun `Request report for a booklet with transactions should return all transactions`() {
             val booklet = Booklet(
                 id = null,

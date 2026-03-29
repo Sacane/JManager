@@ -109,7 +109,9 @@ sealed interface BookletFeature {
         month: Month,
         year: Int,
         startingMonth: Month? = null,
-        startingYear: Int? = null
+        startingYear: Int? = null,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null,
     ): Result<BookletLoadingResult>
 
     /**
@@ -131,7 +133,9 @@ sealed interface BookletFeature {
         month: Month,
         year: Int,
         startingMonth: Month? = null,
-        startingYear: Int? = null
+        startingYear: Int? = null,
+        startDate: LocalDate? = null,
+        endDate: LocalDate? = null,
     ): Result<BookletBalances>
 }
 
@@ -285,7 +289,9 @@ class BookletFeatureImpl(
         month: Month,
         year: Int,
         startingMonth: Month?,
-        startingYear: Int?
+        startingYear: Int?,
+        startDate: LocalDate?,
+        endDate: LocalDate?,
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             val totalStartNs = System.nanoTime()
@@ -309,12 +315,32 @@ class BookletFeatureImpl(
             val currentDate = LocalDate.now()
             val currentMonth = startingMonth ?: currentDate.month
             val currentYear = startingYear ?: currentDate.year
+            val hasExplicitDateRange = startDate != null || endDate != null
+
+            if ((startDate == null) != (endDate == null)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BAD_REQUEST,
+                    "startDate and endDate must be both defined or both omitted",
+                    "domain.booklet.load_transactions.invalid_date_range"
+                )
+            }
+
+            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BAD_REQUEST,
+                    "startDate cannot be after endDate",
+                    "domain.booklet.load_transactions.invalid_date_range"
+                )
+            }
+
+            val resolvedRangeStart = startDate ?: LocalDate.of(year, month, 1)
+            val resolvedRangeEnd = endDate ?: resolvedRangeStart.withDayOfMonth(resolvedRangeStart.lengthOfMonth())
 
             val targetYearMonth = YearMonth.of(year, month)
             val currentYearMonth = YearMonth.of(currentYear, currentMonth)
 
             val generationStartNs = System.nanoTime()
-            val generatedCount: Int = if (targetYearMonth.equals(currentYearMonth)) {
+            val generatedCount: Int = if (!hasExplicitDateRange && targetYearMonth.equals(currentYearMonth)) {
                 val transactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
                     bookletId,
                     regularTransactions,
@@ -332,16 +358,18 @@ class BookletFeatureImpl(
             val updateBookletMs = 0L
 
             val monthSheetStartNs = System.nanoTime()
-            val rangeStart = LocalDate.of(year, month, 1)
-            val rangeEnd = rangeStart.withDayOfMonth(rangeStart.lengthOfMonth())
-            val allTransactionsForMonth = transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, rangeStart, rangeEnd)
+            val allTransactionsForPeriod = transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, resolvedRangeStart, resolvedRangeEnd)
             val monthSheetMs = Duration.ofNanos(System.nanoTime() - monthSheetStartNs).toMillis()
 
-            val dedupRangeStart = LocalDate.of(currentYear, currentMonth, 1)
-            val allPhysicalTransactionsForDedup = if (dedupRangeStart < rangeStart) {
-                transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, dedupRangeStart, rangeEnd)
+            val dedupRangeStart = if (hasExplicitDateRange) {
+                resolvedRangeStart
             } else {
-                allTransactionsForMonth
+                LocalDate.of(currentYear, currentMonth, 1)
+            }
+            val allPhysicalTransactionsForDedup = if (dedupRangeStart < resolvedRangeStart) {
+                transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, dedupRangeStart, resolvedRangeEnd)
+            } else {
+                allTransactionsForPeriod
             }
 
             val preloadTrackersStartNs = System.nanoTime()
@@ -350,7 +378,7 @@ class BookletFeatureImpl(
             val preloadTrackersMs = Duration.ofNanos(System.nanoTime() - preloadTrackersStartNs).toMillis()
 
             val filterExcludedStartNs = System.nanoTime()
-            val filteredTransactions = allTransactionsForMonth.filter { transaction ->
+            val filteredTransactions = allTransactionsForPeriod.filter { transaction ->
                 when {
                     !transaction.isPreview -> true
                     transaction.regularTransactionId == null -> true
@@ -366,7 +394,18 @@ class BookletFeatureImpl(
 
             val transactions = filteredTransactions.partition { it.isPreview }
 
-            val virtualTransactionsForTargetMonth = if (targetYearMonth == currentYearMonth) {
+            val virtualTransactionsForTargetPeriod = if (hasExplicitDateRange) {
+                regularTransactionGeneratorService.calculateVirtualTransactions(
+                    bookletId = bookletId,
+                    regularTransactions = regularTransactions,
+                    startMonth = resolvedRangeStart.month,
+                    startYear = resolvedRangeStart.year,
+                    endMonth = resolvedRangeEnd.month,
+                    endYear = resolvedRangeEnd.year,
+                    existingPhysicalTransactions = allTransactionsForPeriod
+                )
+                    .filter { tx -> !tx.date.isBefore(resolvedRangeStart) && !tx.date.isAfter(resolvedRangeEnd) }
+            } else if (targetYearMonth == currentYearMonth) {
                 emptyList()
             } else {
                 regularTransactionGeneratorService.calculateVirtualTransactions(
@@ -376,28 +415,31 @@ class BookletFeatureImpl(
                     startYear = year,
                     endMonth = month,
                     endYear = year,
-                    existingPhysicalTransactions = allTransactionsForMonth
+                    existingPhysicalTransactions = allTransactionsForPeriod
                 )
             }
 
-            val combinedPrevisionalTransactions = (transactions.first + virtualTransactionsForTargetMonth)
+            val combinedPrevisionalTransactions = (transactions.first + virtualTransactionsForTargetPeriod)
                 .sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+
+            val previsionalRangeStart = if (hasExplicitDateRange) {
+                resolvedRangeStart
+            } else {
+                LocalDate.of(currentYear, currentMonth, 1)
+            }
 
             val previsionalStartNs = System.nanoTime()
             val previsionalSold = calculatePrevisionalSold(
                 booklet,
                 regularTransactions,
-                currentMonth,
-                currentYear,
-                month,
-                year,
+                previsionalRangeStart,
+                resolvedRangeEnd,
                 allPhysicalTransactionsForDedup = allPhysicalTransactionsForDedup
             )
             val previsionalMs = Duration.ofNanos(System.nanoTime() - previsionalStartNs).toMillis()
 
-            val requestedDate = LocalDate.of(year, month, 1)
             val filteredRegularTransactions = regularTransactions.filter { rt ->
-                !rt.startDate.isAfter(requestedDate.withDayOfMonth(requestedDate.lengthOfMonth()))
+                !rt.startDate.isAfter(resolvedRangeEnd)
             }
 
             val bookletLoadingResult = BookletLoadingResult(
@@ -414,8 +456,8 @@ class BookletFeatureImpl(
                 """
                 Booklet loaded successfully:
                 - bookletId: $bookletId
-                - period: $month/$year
-                - sizes: monthTransactions=${allTransactionsForMonth.size}, current=${transactions.second.size}, preview=${transactions.first.size}, virtualPreview=${virtualTransactionsForTargetMonth.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
+                - period: $month/$year (range=$resolvedRangeStart..$resolvedRangeEnd)
+                - sizes: monthTransactions=${allTransactionsForPeriod.size}, current=${transactions.second.size}, preview=${transactions.first.size}, virtualPreview=${virtualTransactionsForTargetPeriod.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
                 - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs (generated=$generatedCount), updateBooklet=$updateBookletMs, monthQuery=$monthSheetMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
                 """.trimIndent()
             )
@@ -430,7 +472,9 @@ class BookletFeatureImpl(
         month: Month,
         year: Int,
         startingMonth: Month?,
-        startingYear: Int?
+        startingYear: Int?,
+        startDate: LocalDate?,
+        endDate: LocalDate?,
     ): Result<BookletBalances> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             val persisted = bookletBalanceQueryRepository.findPersistedBalances(bookletId)
@@ -444,6 +488,22 @@ class BookletFeatureImpl(
             val currentMonth = startingMonth ?: currentDate.month
             val currentYear = startingYear ?: currentDate.year
 
+            if ((startDate == null) != (endDate == null)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BAD_REQUEST,
+                    "startDate and endDate must be both defined or both omitted",
+                    "domain.booklet.load_balances.invalid_date_range"
+                )
+            }
+
+            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BAD_REQUEST,
+                    "startDate cannot be after endDate",
+                    "domain.booklet.load_balances.invalid_date_range"
+                )
+            }
+
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
                 ?: emptyList()
 
@@ -453,9 +513,13 @@ class BookletFeatureImpl(
                 id = bookletId
             )
 
-            val previewStart = YearMonth.of(currentYear, currentMonth)
-            val previewEnd = YearMonth.of(year, month)
-            val (from, to) = monthDateBounds(previewStart, previewEnd)
+            val (from, to) = if (startDate != null && endDate != null) {
+                startDate to endDate
+            } else {
+                val previewStart = YearMonth.of(currentYear, currentMonth)
+                val previewEnd = YearMonth.of(year, month)
+                monthDateBounds(previewStart, previewEnd)
+            }
             val allPhysicalTransactionsInRange = transactionQueryRepository
                 .findByBookletIdAndDateBetween(bookletId, from, to)
 
@@ -465,10 +529,8 @@ class BookletFeatureImpl(
             val previsionalSold = calculatePrevisionalSold(
                 baseBooklet,
                 regularTransactions,
-                currentMonth,
-                currentYear,
-                month,
-                year,
+                from,
+                to,
                 allPhysicalTransactionsForDedup = allPhysicalTransactionsInRange
             )
 
@@ -488,42 +550,31 @@ class BookletFeatureImpl(
         return from to to
     }
 
-    private fun isInRange(date: LocalDate, start: YearMonth, end: YearMonth): Boolean {
-        val dateMonth = YearMonth.from(date)
-        return dateMonth in start..end
-    }
-
-    private fun transactionsInRange(transactions: List<Transaction>, start: YearMonth, end: YearMonth): List<Transaction> {
-        return transactions.filter { isInRange(it.date, start, end) }
-    }
-
     private fun calculatePrevisionalSold(
         booklet: Booklet,
         regularTransactions: List<RegularTransaction>,
-        currentMonth: Month,
-        currentYear: Int,
-        targetMonth: Month,
-        targetYear: Int,
+        rangeStartDate: LocalDate,
+        rangeEndDate: LocalDate,
         allPhysicalTransactionsForDedup: List<Transaction> = booklet.transactions
     ): Amount {
         val allTransactions = booklet.transactions
-        val rangeStart = YearMonth.of(currentYear, currentMonth)
-        val rangeEnd = YearMonth.of(targetYear, targetMonth)
 
-        val relevantPreviewTransactions = transactionsInRange(allTransactions, rangeStart, rangeEnd)
+        val relevantPreviewTransactions = allTransactions
+            .filter { tx -> !tx.date.isBefore(rangeStartDate) && !tx.date.isAfter(rangeEndDate) }
             .filter { it.isPreview }
 
-        val relevantPhysicalTransactionsForDedup = transactionsInRange(allPhysicalTransactionsForDedup, rangeStart, rangeEnd)
+        val relevantPhysicalTransactionsForDedup = allPhysicalTransactionsForDedup
+            .filter { tx -> !tx.date.isBefore(rangeStartDate) && !tx.date.isAfter(rangeEndDate) }
 
         val virtualTransactions = regularTransactionGeneratorService.calculateVirtualTransactions(
             booklet.id!!,
             regularTransactions,
-            currentMonth,
-            currentYear,
-            targetMonth,
-            targetYear,
+            rangeStartDate.month,
+            rangeStartDate.year,
+            rangeEndDate.month,
+            rangeEndDate.year,
             existingPhysicalTransactions = relevantPhysicalTransactionsForDedup
-        )
+        ).filter { tx -> !tx.date.isBefore(rangeStartDate) && !tx.date.isAfter(rangeEndDate) }
 
         val allRelevantTransactions = relevantPreviewTransactions + virtualTransactions
 

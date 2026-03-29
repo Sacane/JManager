@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-03-29
+
+- Implemented cycle-aware monthly period semantics end-to-end for dashboard and account details with explicit boundary behavior: for cycle day N, the period starts at boundary(current month) and ends at boundary(next month) - 1 day (including short-month fallback to the last day).
+- Added a shared frontend utility for cycle range computation and ISO date serialization (`client/utils/monthlyCycleRange.ts`) and reused it from dashboard and account pages to keep a single source of truth.
+- Updated dashboard monthly period calls and assertions to use the new cycle-window semantics, including explicit regression coverage for “end bound = next-month cycle day minus one”.
+- Updated account details loading flow to retrieve the configured account cycle from user settings and query balances/transactions with explicit `startDate`/`endDate` date ranges.
+- Extended frontend account API composable contracts to support optional date-range parameters on report/balances/transactions queries while preserving existing month/year compatibility.
+- Extended backend account and transaction HTTP endpoints to accept optional `startDate`/`endDate` query parameters with strict validation (`both-or-none`, `start <= end`) and forward them to domain services.
+- Extended `BookletFeature` domain contracts to support explicit date ranges for transactions and balances loading, including day-level filtering and previsional balance computations bounded to the effective range.
+- Preserved legacy month/year behavior for current-month generation and previsional computations when explicit date ranges are not provided.
+- Added domain regression tests for explicit range inclusions/exclusions and range-bounded previsional balances.
+- Added infrastructure API tests for explicit date-range success and invalid-range failures on account report and transaction listing endpoints.
+- Updated English and French performance documentation to describe optional date-range query support and cycle-aware frontend usage examples.
+- Verified the implementation with green targeted and full suites:
+  - `./gradlew :domain:test --tests "fr.sacane.jmanager.domain.port.BookletFeatureTest"`
+  - `./gradlew :infra:test --tests "fr.sacane.jmanager.infrastructure.api.BookletControllerTest" --tests "fr.sacane.jmanager.infrastructure.api.TransactionControllerTest"`
+  - `./gradlew :domain:test :infra:test`
+  - `pnpm -C client test -- tests/pages/dashboard-index.spec.ts tests/pages/account-id.spec.ts`
+  - `pnpm -C client test`
+
 ## 2026-03-26
 
 - Started dashboard V1 implementation for account-first analytics by adding optional `accountId` and period filters (`startDate`, `endDate`) to stats domain/API flows (`category-distribution`, `trends`, `previsional`) with backward-compatible defaults.

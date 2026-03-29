@@ -1,6 +1,9 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.session.AccountMonthlyCycleUpdateDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserPasswordDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserSettingsUpdateDTO
@@ -16,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
+import java.util.UUID
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -23,11 +27,13 @@ import org.springframework.test.context.TestPropertySource
 class SessionControllerTest(
     @LocalServerPort private val port: Int,
     @Autowired val objectMapper: ObjectMapper,
-    @Autowired val userRepository: UserPostgresRepository
+    @Autowired val userRepository: UserPostgresRepository,
+    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
 ): AuthenticatedUserTest() {
 
     @AfterEach
     fun clear() {
+        accountStateTestAdapter.clear()
         userRepository.deleteAll()
     }
 
@@ -133,6 +139,96 @@ class SessionControllerTest(
                 put("/api/user/settings")
             } Then {
                 statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Update user settings with non owned account must return 403`() {
+            val body = UserSettingsUpdateDTO(
+                projectionWindowDays = 15,
+                accountCycles = listOf(
+                    AccountMonthlyCycleUpdateDTO(
+                        accountId = UUID.randomUUID().toString(),
+                        monthlyPeriodStartDay = 20,
+                    )
+                ),
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                put("/api/user/settings")
+            } Then {
+                statusCode(403)
+            }
+        }
+
+        @Test
+        fun `Update user settings without cycles for owned accounts must return 400`() {
+            accountStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
+
+            val body = UserSettingsUpdateDTO(
+                projectionWindowDays = 20,
+                accountCycles = emptyList(),
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                put("/api/user/settings")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Update user settings with owned account must persist and be readable`() {
+            accountStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
+            val accountId = accountStateTestAdapter.get().first().id!!.toString()
+
+            val updateBody = UserSettingsUpdateDTO(
+                projectionWindowDays = 30,
+                accountCycles = listOf(
+                    AccountMonthlyCycleUpdateDTO(
+                        accountId = accountId,
+                        monthlyPeriodStartDay = 28,
+                    )
+                ),
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(updateBody))
+            } When {
+                put("/api/user/settings")
+            } Then {
+                statusCode(200)
+                body("projectionWindowDays", equalTo(30))
+                body("accountCycles.size()", equalTo(1))
+                body("accountCycles[0].accountId", equalTo(accountId))
+                body("accountCycles[0].monthlyPeriodStartDay", equalTo(28))
+            }
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/user/settings")
+            } Then {
+                statusCode(200)
+                body("projectionWindowDays", equalTo(30))
+                body("accountCycles.size()", equalTo(1))
+                body("accountCycles[0].accountId", equalTo(accountId))
+                body("accountCycles[0].monthlyPeriodStartDay", equalTo(28))
             }
         }
     }

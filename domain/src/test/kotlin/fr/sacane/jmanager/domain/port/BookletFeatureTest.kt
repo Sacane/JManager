@@ -1332,6 +1332,121 @@ class BookletFeatureTest: FeatureTest() {
             }
         }
 
+        @Test
+        fun `Explicit date range should include start and exclude end plus one day for transactions`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Explicit Range Tx",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val txAtStart = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "At start",
+                    date = LocalDate.of(2026, 3, 28),
+                    amount = 100.toAmount(),
+                    isIncome = false,
+                    isPreview = false
+                )
+                val txAtEnd = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "At end",
+                    date = LocalDate.of(2026, 4, 27),
+                    amount = 50.toAmount(),
+                    isIncome = false,
+                    isPreview = false
+                )
+                val txAfterEnd = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "After end",
+                    date = LocalDate.of(2026, 4, 28),
+                    amount = 75.toAmount(),
+                    isIncome = false,
+                    isPreview = false
+                )
+
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, bookletId),
+                            mutableListOf(txAtStart, txAtEnd, txAfterEnd)
+                        )
+                    )
+                )
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = java.time.Month.APRIL,
+                    year = 2026,
+                    startDate = LocalDate.of(2026, 3, 28),
+                    endDate = LocalDate.of(2026, 4, 27)
+                )
+
+                result.assertTrue { this.currentTransactions.any { tr -> tr.label == "At start" } }
+                result.assertTrue { this.currentTransactions.any { tr -> tr.label == "At end" } }
+                result.assertTrue { this.currentTransactions.none { tr -> tr.label == "After end" } }
+            }
+        }
+
+        @Test
+        fun `Explicit date range should bound previsional sold to provided end date`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Explicit Range Balance",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val inRangePreview = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "In range preview",
+                    date = LocalDate.of(2026, 4, 27),
+                    amount = 120.toAmount(),
+                    isIncome = true,
+                    isPreview = true
+                )
+                val outOfRangePreview = Transaction(
+                    id = UUID.randomUUID(),
+                    label = "Out of range preview",
+                    date = LocalDate.of(2026, 4, 28),
+                    amount = 80.toAmount(),
+                    isIncome = true,
+                    isPreview = true
+                )
+
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(
+                        IdUserAccountByTransaction(
+                            IdUserAccount(user.id, bookletId),
+                            mutableListOf(inRangePreview, outOfRangePreview)
+                        )
+                    )
+                )
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadBalancesForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = java.time.Month.APRIL,
+                    year = 2026,
+                    startDate = LocalDate.of(2026, 3, 28),
+                    endDate = LocalDate.of(2026, 4, 27)
+                )
+
+                result.assertTrue { this.realSold == 1000.toAmount() }
+                result.assertTrue { this.previewSold == 1120.toAmount() }
+            }
+        }
+
     }
 }
 

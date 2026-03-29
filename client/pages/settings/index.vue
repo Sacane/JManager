@@ -105,7 +105,7 @@ onMounted(() => {
       <section class="settings-card">
         <h2>Projection</h2>
         <p class="settings-help">
-          Definis le nombre de jours a venir utilise pour les previsions sur le dashboard.
+          Definis le nombre de jours à venir, utilisé pour les previsions sur le dashboard.
         </p>
 
         <label for="projection-window" class="settings-label">Fenetre de projection (7 a 60 jours)</label>
@@ -134,8 +134,12 @@ onMounted(() => {
         <div v-else class="account-cycle-list">
           <div v-for="cycle in accountCycles" :key="cycle.accountId" class="account-cycle-item">
             <div class="account-cycle-info">
-              <p class="account-cycle-label">{{ cycle.label }}</p>
-              <p class="account-cycle-id">{{ cycle.accountId }}</p>
+              <p class="account-cycle-label">
+                {{ cycle.label }}
+              </p>
+              <p class="account-cycle-id">
+                {{ cycle.accountId }}
+              </p>
             </div>
 
             <select v-model.number="cycle.monthlyPeriodStartDay" class="settings-select" :data-test="`cycle-select-${cycle.accountId}`">

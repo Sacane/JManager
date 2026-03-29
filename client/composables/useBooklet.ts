@@ -15,6 +15,11 @@ export interface BookletTransactionsDTO {
   transactions: TransactionResultDTO[]
 }
 
+export interface BookletDateRangeQuery {
+  startDate?: string
+  endDate?: string
+}
+
 export default function useBooklet() {
   const { get, post, deleteQuery } = useQuery()
   const accountFormatted = ref<AccountFormatted[]>([])
@@ -40,19 +45,43 @@ export default function useBooklet() {
     return get(`account/${accountId}`)
   }
 
-  async function findByIdMonthAndYear(accountId: string, month: number, year: number): Promise<BookletReport> {
+  async function findByIdMonthAndYear(
+    accountId: string,
+    month: number,
+    year: number,
+    dateRange: BookletDateRangeQuery = {},
+  ): Promise<BookletReport> {
     return get(`account/report/${accountId}`, {
       month,
       year,
+      ...dateRange,
     })
   }
 
-  async function findBalancesByIdMonthAndYear(accountId: string, month: number, year: number): Promise<BookletBalancesDTO> {
-    return get(`account/${accountId}/balances`, { month, year })
+  async function findBalancesByIdMonthAndYear(
+    accountId: string,
+    month: number,
+    year: number,
+    dateRange: BookletDateRangeQuery = {},
+  ): Promise<BookletBalancesDTO> {
+    return get(`account/${accountId}/balances`, {
+      month,
+      year,
+      ...dateRange,
+    })
   }
 
-  async function findTransactionsByIdMonthAndYear(accountId: string, month: number, year: number): Promise<BookletTransactionsDTO> {
-    return get(`account/${accountId}/transactions`, { month, year })
+  async function findTransactionsByIdMonthAndYear(
+    accountId: string,
+    month: number,
+    year: number,
+    dateRange: BookletDateRangeQuery = {},
+  ): Promise<BookletTransactionsDTO> {
+    return get(`account/${accountId}/transactions`, {
+      month,
+      year,
+      ...dateRange,
+    })
   }
 
   return {

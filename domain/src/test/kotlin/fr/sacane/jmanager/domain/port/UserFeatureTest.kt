@@ -166,5 +166,36 @@ class UserFeatureTest: FeatureTest() {
             result.assertFailure(ResultState.FORBIDDEN)
             assertEquals("domain.user.settings.account_forbidden", result.errorInfo?.key)
         }
+
+        @Test
+        fun `Update settings without cycle for each owned account must fail`() {
+            launchWithConnectedUserInstance {
+                val result = userFeature.updateSettings(
+                    token = tokenValue,
+                    projectionWindowDays = 20,
+                    accountCycles = emptyMap(),
+                )
+
+                result.assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.settings.missing_account_cycles", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Update settings with cycle for each owned account must succeed`() {
+            launchWithConnectedUserInstance {
+                val result = userFeature.updateSettings(
+                    token = tokenValue,
+                    projectionWindowDays = 20,
+                    accountCycles = mapOf(booklet.id!! to 28),
+                )
+
+                result.assertTrue {
+                    projectionWindowDays == 20
+                            && accountCycles.size == 1
+                            && accountCycles.first().monthlyPeriodStartDay == 28
+                }
+            }
+        }
     }
 }

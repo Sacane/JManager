@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.toUUID
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.infrastructure.api.InvalidRequestException
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
@@ -15,6 +17,7 @@ import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import kotlinx.serialization.Serializable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.time.LocalDate
 import java.time.Month
 import java.util.logging.Logger
 
@@ -72,11 +75,19 @@ class BookletController (
     fun findBookletReportByIdMonthAndYear(
         @PathVariable("accountID") accountID: String,
         @RequestParam("month") month: Int,
-        @RequestParam("year") year: Int
+        @RequestParam("year") year: Int,
+        @RequestParam("startDate", required = false) startDate: LocalDate?,
+        @RequestParam("endDate", required = false) endDate: LocalDate?,
     ): ResponseEntity<BookletReport> {
+        validateDateRange(startDate, endDate)
         LOGGER.info("Requesting account report for booklet $accountID")
         val result = feature.loadTransactionsForBookletForAMonth(
-            token = currentUser.token, accountID.toUUID(), Month.of(month), year
+            token = currentUser.token,
+            bookletId = accountID.toUUID(),
+            month = Month.of(month),
+            year = year,
+            startDate = startDate,
+            endDate = endDate,
         )
         val report = result.map { res ->
             BookletReport(
@@ -93,11 +104,21 @@ class BookletController (
     fun findBookletBalancesByMonthAndYear(
         @PathVariable("accountID") accountID: String,
         @RequestParam("month") month: Int,
-        @RequestParam("year") year: Int
+        @RequestParam("year") year: Int,
+        @RequestParam("startDate", required = false) startDate: LocalDate?,
+        @RequestParam("endDate", required = false) endDate: LocalDate?,
     ): ResponseEntity<BookletBalancesResponse> {
+        validateDateRange(startDate, endDate)
         LOGGER.info("Requesting account balances for booklet $accountID")
         return feature
-            .loadBalancesForBookletForAMonth(currentUser.token, accountID.toUUID(), Month.of(month), year)
+            .loadBalancesForBookletForAMonth(
+                token = currentUser.token,
+                bookletId = accountID.toUUID(),
+                month = Month.of(month),
+                year = year,
+                startDate = startDate,
+                endDate = endDate,
+            )
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -106,17 +127,43 @@ class BookletController (
     fun findBookletTransactionsByMonthAndYear(
         @PathVariable("accountID") accountID: String,
         @RequestParam("month") month: Int,
-        @RequestParam("year") year: Int
+        @RequestParam("year") year: Int,
+        @RequestParam("startDate", required = false) startDate: LocalDate?,
+        @RequestParam("endDate", required = false) endDate: LocalDate?,
     ): ResponseEntity<BookletTransactionsResponse> {
+        validateDateRange(startDate, endDate)
         LOGGER.info("Requesting account transactions for booklet $accountID")
         return feature
-            .loadTransactionsForBookletForAMonth(currentUser.token, accountID.toUUID(), Month.of(month), year)
+            .loadTransactionsForBookletForAMonth(
+                token = currentUser.token,
+                bookletId = accountID.toUUID(),
+                month = Month.of(month),
+                year = year,
+                startDate = startDate,
+                endDate = endDate,
+            )
             .map { res ->
                 BookletTransactionsResponse(
                     transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() }
                 )
             }
             .toHttpResponse()
+    }
+
+    private fun validateDateRange(startDate: LocalDate?, endDate: LocalDate?) {
+        if ((startDate == null) != (endDate == null)) {
+            throw InvalidRequestException(
+                ResultState.BAD_REQUEST.code,
+                "startDate and endDate must both be provided"
+            )
+        }
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw InvalidRequestException(
+                ResultState.BAD_REQUEST.code,
+                "startDate cannot be after endDate"
+            )
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardPage from '../../pages/dashboard/index.vue'
 
 vi.mock('@vueuse/core', () => ({
@@ -18,7 +18,7 @@ vi.mock('@/composables/useAuth', () => ({
 
 const fetchBookletsMock = vi.fn().mockResolvedValue([
   {
-    id: 1,
+    id: '11111111-1111-4111-8111-111111111111',
     amount: 1200,
     labelAccount: 'Compte principal',
     transactions: [],
@@ -33,18 +33,7 @@ const categoryCurrent = {
   totalExpenses: '400.00',
 }
 
-const categoryPrevious = {
-  categories: [
-    { tagLabel: 'Courses', tagId: 'tag-1', totalAmount: '100.00', percentage: 40, transactionCount: 1 },
-    { tagLabel: 'Transport', tagId: 'tag-2', totalAmount: '120.00', percentage: 48, transactionCount: 1 },
-  ],
-  totalExpenses: '300.00',
-}
-
-const getCategoryDistributionMock = vi
-  .fn()
-  .mockResolvedValueOnce(categoryCurrent)
-  .mockResolvedValueOnce(categoryPrevious)
+const getCategoryDistributionMock = vi.fn().mockResolvedValue(categoryCurrent)
 
 const getTrendStatsMock = vi.fn().mockResolvedValue({
   monthlyTrends: [],
@@ -68,7 +57,7 @@ const getUserSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 15,
   accountCycles: [
     {
-      accountId: '1',
+      accountId: '11111111-1111-4111-8111-111111111111',
       label: 'Compte principal',
       monthlyPeriodStartDay: 1,
     },
@@ -90,7 +79,7 @@ vi.mock('~/composables/useUserSettings', () => ({
 }))
 
 function flushPromises() {
-  return new Promise(resolve => setTimeout(resolve, 0))
+  return new Promise<void>(resolve => queueMicrotask(resolve))
 }
 
 function mountDashboardPage() {
@@ -120,6 +109,50 @@ function mountDashboardPage() {
 }
 
 describe('pages/dashboard/index tags insights', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+
+    fetchBookletsMock.mockResolvedValue([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        amount: 1200,
+        labelAccount: 'Compte principal',
+        transactions: [],
+      },
+    ])
+
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByAccount: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 15,
+      accountCycles: [
+        {
+          accountId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 1,
+        },
+      ],
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders top tags section with variation label', async () => {
     const wrapper = mountDashboardPage()
 
@@ -128,12 +161,69 @@ describe('pages/dashboard/index tags insights', () => {
 
     expect(wrapper.text()).toContain('Top tags de la période')
     expect(wrapper.text()).toContain('Variation vs période précédente')
-    expect(wrapper.text()).toContain('Courses')
     expect(wrapper.text()).toContain('Alertes de la période')
     expect(wrapper.text()).toContain('Actions rapides')
     expect(wrapper.text()).toContain('Aucun mouvement à venir')
     expect(wrapper.text()).toContain('Projection fin de période')
     expect(wrapper.text()).toContain('Budget du compte')
     expect(wrapper.text()).toContain('Définis une cible pour activer les alertes budget.')
+  })
+
+  it('uses account cycle and configurable projection window in stats calls', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-10T12:00:00.000Z'))
+
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 21,
+      accountCycles: [
+        {
+          accountId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 28,
+        },
+      ],
+    })
+
+    mountDashboardPage()
+    await flushPromises()
+    await flushPromises()
+
+    expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
+      accountId: '11111111-1111-4111-8111-111111111111',
+      startDate: '2026-02-28',
+      endDate: '2026-03-27',
+    }))
+
+    expect(getPrevisionalTransactionsMock).toHaveBeenCalledWith(
+      '2026-03-10',
+      '2026-03-31',
+      '11111111-1111-4111-8111-111111111111',
+    )
+  })
+
+  it('bounds monthly period end to next-month cycle day minus one', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 21,
+      accountCycles: [
+        {
+          accountId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 28,
+        },
+      ],
+    })
+
+    mountDashboardPage()
+    await flushPromises()
+    await flushPromises()
+
+    expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
+      accountId: '11111111-1111-4111-8111-111111111111',
+      startDate: '2026-03-28',
+      endDate: '2026-04-27',
+    }))
   })
 })

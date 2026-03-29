@@ -172,11 +172,17 @@ Deux nouveaux endpoints REST ont été ajoutés :
 
 | Endpoint | Données retournées | Coût |
 |---|---|---|
-| `GET /api/account/{id}/balances?month=X&year=Y` | `label`, `realSold`, `previewSold` | Léger — projection DB |
-| `GET /api/account/{id}/transactions?month=X&year=Y` | Liste des transactions du mois | Borné au mois |
+| `GET /api/account/{id}/balances?month=X&year=Y[&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD]` | `label`, `realSold`, `previewSold` | Léger — projection DB, supporte un intervalle explicite |
+| `GET /api/account/{id}/transactions?month=X&year=Y[&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD]` | Liste des transactions du mois/de l'intervalle | Borné au mois par défaut, intervalle explicite si fourni |
 
-L'ancien `GET /api/account/report/{id}` reste disponible pour la rétro-compatibilité mais n'est
-plus utilisé par les vues principales.
+L'endpoint report existant supporte aussi un intervalle explicite :
+
+| Endpoint | Données retournées | Coût |
+|---|---|---|
+| `GET /api/account/report/{id}?month=X&year=Y[&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD]` | `label`, payload transactions complet, `realSold`, `previewSold` | Payload historique tout-en-un, rétro-compatible |
+
+`GET /api/account/report/{id}` reste disponible pour la rétro-compatibilité, tandis que les vues
+principales privilégient désormais les endpoints ciblés.
 
 **Nouvelles DTOs :**
 - `BookletBalancesResponse(label, realSold, previewSold)`
@@ -200,15 +206,21 @@ Deux nouvelles fonctions ont été exposées :
 
 ```typescript
 async function findBalancesByIdMonthAndYear(
-  accountId: string, month: number, year: number
+  accountId: string,
+  month: number,
+  year: number,
+  dateRange: { startDate?: string; endDate?: string } = {},
 ): Promise<BookletBalancesDTO> {
-  return get(`account/${accountId}/balances`, { month, year })
+  return get(`account/${accountId}/balances`, { month, year, ...dateRange })
 }
 
 async function findTransactionsByIdMonthAndYear(
-  accountId: string, month: number, year: number
+  accountId: string,
+  month: number,
+  year: number,
+  dateRange: { startDate?: string; endDate?: string } = {},
 ): Promise<BookletTransactionsDTO> {
-  return get(`account/${accountId}/transactions`, { month, year })
+  return get(`account/${accountId}/transactions`, { month, year, ...dateRange })
 }
 ```
 
@@ -219,10 +231,15 @@ async function findTransactionsByIdMonthAndYear(
 // AVANT — un seul appel retournant tout
 const result: BookletReport = await findByIdMonthAndYear(accountId, month, year)
 
-// APRÈS — deux appels parallèles, chacun ciblé
+// APRÈS — deux appels parallèles, chacun ciblé, avec intervalle explicite cycle-aware
+const dateRange = {
+  startDate: '2026-03-28',
+  endDate: '2026-04-27',
+}
+
 const [balances, transactionsRes] = await Promise.all([
-  findBalancesByIdMonthAndYear(accountId, month, year),
-  findTransactionsByIdMonthAndYear(accountId, month, year),
+  findBalancesByIdMonthAndYear(accountId, month, year, dateRange),
+  findTransactionsByIdMonthAndYear(accountId, month, year, dateRange),
 ])
 ```
 
@@ -252,10 +269,10 @@ const [balances, transactionsRes] = await Promise.all([
 
 | Fichier | Modification |
 |---|---|
-| `domain/…/port/api/BookletFeature.kt` | Ajout de `loadBalancesForBookletForAMonth`, injection des nouveaux ports, chargement groupé des trackers, timing logs |
-| `infra/…/api/booklet/Controller.kt` | Ajout des endpoints `/balances` et `/transactions`, DTOs `BookletBalancesResponse` / `BookletTransactionsResponse` |
-| `client/composables/useBooklet.ts` | Ajout de `findBalancesByIdMonthAndYear` et `findTransactionsByIdMonthAndYear` |
-| `client/pages/account/[id].vue` | Remplacement de l'appel unique par `Promise.all`, adaptation de la consommation des réponses |
+| `domain/…/port/api/BookletFeature.kt` | Ajout du support optionnel `startDate`/`endDate` pour les chargements transactions et soldes |
+| `infra/…/api/booklet/Controller.kt` | Support des bornes explicites sur `/report`, `/balances`, `/transactions` |
+| `client/composables/useBooklet.ts` | Ajout d'un payload de bornes optionnel (`BookletDateRangeQuery`) |
+| `client/pages/account/[id].vue` | Utilise le cycle du compte et appelle balances/transactions avec bornes explicites |
 
 ---
 

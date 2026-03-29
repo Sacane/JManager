@@ -223,6 +223,15 @@ class UserFeatureImpl(
             account.id?.let { id -> id to account }
         }.toMap()
 
+        val missingAccounts = accountsById.keys - accountCycles.keys
+        if (missingAccounts.isNotEmpty()) {
+            return@authenticate domainFailure(
+                ResultState.INVALID,
+                "Chaque compte doit avoir un cycle mensuel configuré",
+                "domain.user.settings.missing_account_cycles"
+            )
+        }
+
         for ((accountId, monthlyPeriodStartDay) in accountCycles) {
             val account = accountsById[accountId]
                 ?: return@authenticate domainFailure(

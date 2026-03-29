@@ -4,11 +4,13 @@ import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import { resolveMonthlyCycleRangeForTargetMonth, toIsoLocalDate } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({ layout: 'sidebar-layout' })
 
 const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear } = useBooklet()
+const { getSettings: getUserSettings } = useUserSettings()
 const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
@@ -22,6 +24,7 @@ const { isScopeLoading, withLoading } = useLoading()
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 const actualSheets = ref<TransactionCreationDTO[]>([])
 const tags = ref<TagDTO[]>([])
+const accountMonthlyPeriodStartDay = ref(1)
 
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
@@ -146,15 +149,47 @@ function resetTransaction() {
   })
 }
 
+function normalizeMonthlyPeriodStartDay(value: number | undefined): number {
+  if (value === undefined || Number.isNaN(value)) {
+    return 1
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(value)))
+}
+
+async function loadAccountCycleSetting(accountId: string) {
+  try {
+    const settings = await getUserSettings()
+    if (!settings) {
+      accountMonthlyPeriodStartDay.value = 1
+      return
+    }
+
+    const accountCycle = settings.accountCycles.find(cycle => cycle.accountId === accountId)
+    accountMonthlyPeriodStartDay.value = normalizeMonthlyPeriodStartDay(accountCycle?.monthlyPeriodStartDay)
+  } catch {
+    accountMonthlyPeriodStartDay.value = 1
+  }
+}
+
 async function loadBookletData() {
   await withLoading(async () => {
     try {
       const accountId = (route.params as any)?.id as string
       const month = numberFromMonth(bookletData.month) as number
+      const cycleRange = resolveMonthlyCycleRangeForTargetMonth(
+        bookletData.year,
+        month,
+        accountMonthlyPeriodStartDay.value,
+      )
+      const dateRange = {
+        startDate: toIsoLocalDate(cycleRange.start),
+        endDate: toIsoLocalDate(cycleRange.end),
+      }
 
       const [balances, transactionsRes] = await Promise.all([
-        findBalancesByIdMonthAndYear(accountId, month, bookletData.year),
-        findTransactionsByIdMonthAndYear(accountId, month, bookletData.year),
+        findBalancesByIdMonthAndYear(accountId, month, bookletData.year, dateRange),
+        findTransactionsByIdMonthAndYear(accountId, month, bookletData.year, dateRange),
       ])
 
       bookletData.label = balances.label
@@ -442,7 +477,9 @@ function onCsvImportSuccess(result: CsvImportResultDTO) {
 }
 
 onMounted(async () => {
+  const accountId = (route.params as any)?.id as string
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
+  await loadAccountCycleSetting(accountId)
   await loadBookletData()
   await retrieveTags()
   currentTransaction.tagDTO = await tag.getDefaultTag()
