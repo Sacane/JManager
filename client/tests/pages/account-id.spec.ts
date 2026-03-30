@@ -206,4 +206,42 @@ describe('pages/account/[id] loading states', () => {
       },
     )
   })
+
+  it('keeps current month range with default cycle settings', async () => {
+    getSettingsMock.mockResolvedValueOnce({
+      projectionWindowDays: 15,
+      accountCycles: [
+        {
+          accountId: 'booklet-1',
+          label: 'Compte courant',
+          monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
+        },
+      ],
+    })
+
+    mountPage()
+
+    await flushPromises()
+    await flushPromises()
+
+    expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {
+        startDate: '2026-03-01',
+        endDate: '2026-03-31',
+      },
+    )
+    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {
+        startDate: '2026-03-01',
+        endDate: '2026-03-31',
+      },
+    )
+  })
 })
