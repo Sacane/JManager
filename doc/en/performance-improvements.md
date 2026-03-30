@@ -172,11 +172,17 @@ Two new REST endpoints were added:
 
 | Endpoint | Returned data | Cost |
 |---|---|---|
-| `GET /api/account/{id}/balances?month=X&year=Y` | `label`, `realSold`, `previewSold` | Lightweight — DB projection |
-| `GET /api/account/{id}/transactions?month=X&year=Y` | Transaction list for the month | Bounded to the month |
+| `GET /api/account/{id}/balances?month=X&year=Y[&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD]` | `label`, `realSold`, `previewSold` | Lightweight — DB projection, supports explicit date ranges |
+| `GET /api/account/{id}/transactions?month=X&year=Y[&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD]` | Transaction list for the month/range | Bounded to month by default, explicit range when provided |
 
-The old `GET /api/account/report/{id}` remains available for backwards compatibility but is no
-longer used by the main views.
+The existing report endpoint also supports explicit ranges:
+
+| Endpoint | Returned data | Cost |
+|---|---|---|
+| `GET /api/account/report/{id}?month=X&year=Y[&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD]` | `label`, full transactions payload, `realSold`, `previewSold` | Backward-compatible all-in-one payload |
+
+`GET /api/account/report/{id}` remains available for backwards compatibility, while main views now
+prefer targeted endpoints.
 
 **New DTOs:**
 - `BookletBalancesResponse(label, realSold, previewSold)`
@@ -200,15 +206,21 @@ Two new functions are now exposed:
 
 ```typescript
 async function findBalancesByIdMonthAndYear(
-  accountId: string, month: number, year: number
+  accountId: string,
+  month: number,
+  year: number,
+  dateRange: { startDate?: string; endDate?: string } = {},
 ): Promise<BookletBalancesDTO> {
-  return get(`account/${accountId}/balances`, { month, year })
+  return get(`account/${accountId}/balances`, { month, year, ...dateRange })
 }
 
 async function findTransactionsByIdMonthAndYear(
-  accountId: string, month: number, year: number
+  accountId: string,
+  month: number,
+  year: number,
+  dateRange: { startDate?: string; endDate?: string } = {},
 ): Promise<BookletTransactionsDTO> {
-  return get(`account/${accountId}/transactions`, { month, year })
+  return get(`account/${accountId}/transactions`, { month, year, ...dateRange })
 }
 ```
 
@@ -219,10 +231,15 @@ async function findTransactionsByIdMonthAndYear(
 // BEFORE — a single call returning everything
 const result: BookletReport = await findByIdMonthAndYear(accountId, month, year)
 
-// AFTER — two parallel targeted calls
+// AFTER — two parallel targeted calls with cycle-aware explicit range
+const dateRange = {
+  startDate: '2026-03-28',
+  endDate: '2026-04-27',
+}
+
 const [balances, transactionsRes] = await Promise.all([
-  findBalancesByIdMonthAndYear(accountId, month, year),
-  findTransactionsByIdMonthAndYear(accountId, month, year),
+  findBalancesByIdMonthAndYear(accountId, month, year, dateRange),
+  findTransactionsByIdMonthAndYear(accountId, month, year, dateRange),
 ])
 ```
 
@@ -252,10 +269,10 @@ const [balances, transactionsRes] = await Promise.all([
 
 | File | Change |
 |---|---|
-| `domain/…/port/api/BookletFeature.kt` | Added `loadBalancesForBookletForAMonth`, injected new ports, bulk tracker loading, timing logs |
-| `infra/…/api/booklet/Controller.kt` | Added `/balances` and `/transactions` endpoints, `BookletBalancesResponse` / `BookletTransactionsResponse` DTOs |
-| `client/composables/useBooklet.ts` | Added `findBalancesByIdMonthAndYear` and `findTransactionsByIdMonthAndYear` |
-| `client/pages/account/[id].vue` | Replaced single call with `Promise.all`, updated response consumption |
+| `domain/…/port/api/BookletFeature.kt` | Added optional `startDate`/`endDate` support for transactions and balances loading |
+| `infra/…/api/booklet/Controller.kt` | Added range query support on `/report`, `/balances`, `/transactions` |
+| `client/composables/useBooklet.ts` | Added optional date range payload (`BookletDateRangeQuery`) |
+| `client/pages/account/[id].vue` | Uses account cycle settings and calls balances/transactions with explicit range |
 
 ---
 

@@ -66,10 +66,20 @@ class TransactionController(
     fun getTransactionsByMonthAndYearAndAccountId(
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
-        @RequestParam("bookletId") bookletId: String
+        @RequestParam("bookletId") bookletId: String,
+        @RequestParam("startDate", required = false) startDate: LocalDate?,
+        @RequestParam("endDate", required = false) endDate: LocalDate?,
         ): ResponseEntity<TransactionListResponse> {
+        validateDateRange(startDate, endDate)
         logger.info("Request transactions from booklet $bookletId for month $month and year $year")
-        val response = bookletFeature.loadTransactionsForBookletForAMonth(currentUser.token, java.util.UUID.fromString(bookletId), month ?: Month.JANUARY, year)
+        val response = bookletFeature.loadTransactionsForBookletForAMonth(
+            token = currentUser.token,
+            bookletId = java.util.UUID.fromString(bookletId),
+            month = month ?: Month.JANUARY,
+            year = year,
+            startDate = startDate,
+            endDate = endDate,
+        )
 
         return response.map {
             TransactionListResponse(
@@ -78,6 +88,22 @@ class TransactionController(
                 previewAmount = it.previsionalSold.value.toString()
             )
         }.toHttpResponse().also { logger.info("Transactions fetched successfully") }
+    }
+
+    private fun validateDateRange(startDate: LocalDate?, endDate: LocalDate?) {
+        if ((startDate == null) != (endDate == null)) {
+            throw InvalidRequestException(
+                ResultState.BAD_REQUEST.code,
+                "startDate and endDate must both be provided"
+            )
+        }
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw InvalidRequestException(
+                ResultState.BAD_REQUEST.code,
+                "startDate cannot be after endDate"
+            )
+        }
     }
 
     @PatchMapping

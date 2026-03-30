@@ -84,6 +84,12 @@ class UserRepositoryJpaAdapter (
         }
     }
 
+    @Transactional
+    override fun updateProjectionWindowDays(userId: UserId, projectionWindowDays: Int): Boolean {
+        val id = userId.value ?: return false
+        return userPostgresRepository.updateProjectionWindowDays(id, projectionWindowDays) > 0
+    }
+
     override fun findAll(): List<User> {
         return userPostgresRepository.findAll().map { it.toModel() }
     }

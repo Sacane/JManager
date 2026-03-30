@@ -250,6 +250,52 @@ class TransactionControllerTest(
                 )
             }
         }
+
+        @Test
+        fun `Request for transactions with explicit date range should return 200`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                param("month", Month.MARCH)
+                param("year", 2026)
+                param("bookletId", booklet.id)
+                param("startDate", "2026-02-28")
+                param("endDate", "2026-03-27")
+            } When {
+                get("/api/transaction")
+            } Then {
+                statusCode(200)
+            }
+        }
+
+        @Test
+        fun `Request for transactions with invalid explicit date range should return 400`() {
+            accountStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                param("month", Month.MARCH)
+                param("year", 2026)
+                param("bookletId", booklet.id)
+                param("startDate", "2026-03-28")
+                param("endDate", "2026-03-27")
+            } When {
+                get("/api/transaction")
+            } Then {
+                statusCode(400)
+            }
+        }
     }
 
     @Nested

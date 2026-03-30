@@ -73,6 +73,16 @@ interface BookletRepository {
     fun update(booklet: Booklet)
 
     /**
+     * Update monthly cycle settings for a booklet.
+     *
+     * @param accountId UUID of the account to update
+     * @param monthlyPeriodStartDay configured period start day (1..31)
+     * @param monthlyPeriodEndDay configured period end day (1..31) or null to keep default behavior
+     * @return true when one row was updated, false otherwise
+     */
+    fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int? = null): Boolean
+
+    /**
      * Retrieve all booklets owned by a user.
      *
      * @param userId Domain user identifier

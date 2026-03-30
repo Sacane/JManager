@@ -187,6 +187,29 @@ declare global {
     regularTransactionId?: string | null
   }
 
+  interface UserSettingsDTO {
+    projectionWindowDays: number
+    accountCycles: AccountMonthlyCycleDTO[]
+  }
+
+  interface AccountMonthlyCycleDTO {
+    accountId: string
+    label: string
+    monthlyPeriodStartDay: number
+    monthlyPeriodEndDay?: number | null
+  }
+
+  interface UserSettingsUpdateDTO {
+    projectionWindowDays: number
+    accountCycles: AccountMonthlyCycleUpdateDTO[]
+  }
+
+  interface AccountMonthlyCycleUpdateDTO {
+    accountId: string
+    monthlyPeriodStartDay: number
+    monthlyPeriodEndDay?: number | null
+  }
+
   interface CsvValidationReportDTO {
     totalLines: number
     validLines: number

@@ -22,6 +22,8 @@ class UserResource(
     val creationDate: LocalDateTime = LocalDateTime.now(),
     @Column(name = "is_enabled", nullable = false)
     val isEnabled: Boolean = true,
+    @Column(name = "projection_window_days", nullable = false)
+    var projectionWindowDays: Int = 15,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",

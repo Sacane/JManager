@@ -129,7 +129,16 @@ class InMemoryDatabase {
             val account = it.value.find { acc -> acc.id == accountId }
             if(account != null) {
                 val transactions = bookletsByTransaction[accountId] ?: mutableListOf()
-                targetBooklet = Booklet(account.amount, account.label, transactions, initialSold = account.initialSold, owner = account.owner, id = accountId)
+                targetBooklet = Booklet(
+                    account.amount,
+                    account.label,
+                    transactions,
+                    initialSold = account.initialSold,
+                    owner = account.owner,
+                    id = accountId,
+                    monthlyPeriodStartDay = account.monthlyPeriodStartDay,
+                    monthlyPeriodEndDay = account.monthlyPeriodEndDay,
+                )
             }
         }
         return targetBooklet
@@ -147,7 +156,16 @@ class InMemoryDatabase {
 
         bookletList.forEach {
             result.add(
-                Booklet(it.amount, it.label, bookletsByTransaction[it.id]!!, initialSold = it.initialSold, owner = it.owner, id = it.id)
+                Booklet(
+                    it.amount,
+                    it.label,
+                    bookletsByTransaction[it.id]!!,
+                    initialSold = it.initialSold,
+                    owner = it.owner,
+                    id = it.id,
+                    monthlyPeriodStartDay = it.monthlyPeriodStartDay,
+                    monthlyPeriodEndDay = it.monthlyPeriodEndDay,
+                )
             )
         }
         return result

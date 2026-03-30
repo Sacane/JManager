@@ -49,6 +49,12 @@ class FakeUserRepository: UserRepository, State<User> {
         return user
     }
 
+    override fun updateProjectionWindowDays(userId: UserId, projectionWindowDays: Int): Boolean {
+        val existing = users.find { it.user.id == userId } ?: return false
+        existing.user.updateProjectionWindowDays(projectionWindowDays)
+        return true
+    }
+
     override fun findAll(): List<User> {
         return users.map { it.user }
     }

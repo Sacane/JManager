@@ -13,14 +13,16 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import { addDays, addMonths, endOfMonth, endOfQuarter, endOfYear, format, isAfter, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns'
+import { addDays, addMonths, endOfQuarter, endOfYear, format, isAfter, startOfQuarter, startOfYear, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import useStats from '~/composables/useStats'
+import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import { resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, rgbToHex } from '~/utils/util'
 
 ChartJS.register(
@@ -45,6 +47,7 @@ const { createAccount, fetch: fetchBooklets } = useBooklet()
 const { getRegularTransaction } = useRegularTransaction()
 const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
+const { getSettings: getUserSettings } = useUserSettings()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
 const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByAccount.v1'
@@ -67,6 +70,8 @@ const periodAnchorDate = ref(new Date())
 const hasInitializedDashboard = ref(false)
 const budgetTargetsByAccount = ref<Record<string, number>>({})
 const budgetTargetInput = ref<number | undefined>(undefined)
+const projectionWindowDays = ref(15)
+const accountMonthlyCycleById = ref<Record<string, { startDay: number, endDay: number | null }>>({})
 const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
 const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
@@ -115,6 +120,59 @@ const selectedAccountBalance = computed(() => {
   return Number.parseFloat(selectedAccount.value.amount.toString())
 })
 
+const selectedMonthlyPeriodStartDay = computed(() => {
+  if (!selectedAccountId.value) {
+    return 1
+  }
+
+  const configured = accountMonthlyCycleById.value[String(selectedAccountId.value)]?.startDay
+  if (!configured) {
+    return 1
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(configured)))
+})
+
+const selectedMonthlyPeriodEndDay = computed(() => {
+  if (!selectedAccountId.value) {
+    return null
+  }
+
+  const configured = accountMonthlyCycleById.value[String(selectedAccountId.value)]?.endDay
+  if (configured === null || configured === undefined) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(configured)))
+})
+
+const projectionWindowLabel = computed(() => `${projectionWindowDays.value} jours`)
+
+function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number | null {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(value)))
+}
+
+function resolveCustomMonthlyRange(anchorDate: Date, cycleStartDay: number, cycleEndDay: number | null) {
+  return resolveMonthlyCycleRangeFromAnchor(anchorDate, cycleStartDay, cycleEndDay)
+}
+
+function resolvePreviousCustomMonthlyRange(startDate: Date, cycleStartDay: number, cycleEndDay: number | null) {
+  const dayBeforeCurrentRange = addDays(startDate, -1)
+  return resolveCustomMonthlyRange(dayBeforeCurrentRange, cycleStartDay, cycleEndDay)
+}
+
+function normalizeProjectionWindowDays(value: number | undefined): number {
+  if (value === undefined || Number.isNaN(value)) {
+    return 15
+  }
+
+  return Math.min(60, Math.max(7, Math.trunc(value)))
+}
+
 const selectedPeriodLabel = computed(() => {
   if (selectedPeriod.value === 'month') {
     return format(periodAnchorDate.value, 'MMMM yyyy', { locale: fr })
@@ -132,10 +190,11 @@ const periodMetricLabel = computed(() =>
 
 const currentDateRange = computed(() => {
   if (selectedPeriod.value === 'month') {
-    return {
-      start: startOfMonth(periodAnchorDate.value),
-      end: endOfMonth(periodAnchorDate.value),
-    }
+    return resolveCustomMonthlyRange(
+      periodAnchorDate.value,
+      selectedMonthlyPeriodStartDay.value,
+      selectedMonthlyPeriodEndDay.value,
+    )
   }
 
   if (selectedPeriod.value === 'quarter') {
@@ -153,11 +212,11 @@ const currentDateRange = computed(() => {
 
 const previousDateRange = computed(() => {
   if (selectedPeriod.value === 'month') {
-    const previousAnchor = subMonths(periodAnchorDate.value, 1)
-    return {
-      start: startOfMonth(previousAnchor),
-      end: endOfMonth(previousAnchor),
-    }
+    return resolvePreviousCustomMonthlyRange(
+      currentDateRange.value.start,
+      selectedMonthlyPeriodStartDay.value,
+      selectedMonthlyPeriodEndDay.value,
+    )
   }
 
   if (selectedPeriod.value === 'quarter') {
@@ -177,9 +236,10 @@ const previousDateRange = computed(() => {
 
 const evolutionDateRange = computed(() => {
   if (selectedPeriod.value === 'month') {
+    const currentRange = currentDateRange.value
     return {
-      start: startOfMonth(subMonths(periodAnchorDate.value, 5)),
-      end: endOfMonth(periodAnchorDate.value),
+      start: addMonths(currentRange.start, -5),
+      end: currentRange.end,
     }
   }
 
@@ -192,33 +252,6 @@ const evolutionDateRange = computed(() => {
 const currentDateRangeLabel = computed(() =>
   `${format(currentDateRange.value.start, 'dd MMM', { locale: fr })} - ${format(currentDateRange.value.end, 'dd MMM yyyy', { locale: fr })}`,
 )
-
-const currentMonthTrend = computed(() => {
-  if (!trendStats.value?.monthlyTrends.length) {
-    return null
-  }
-
-  const currentMonth = periodAnchorDate.value.getMonth() + 1
-  const currentYear = periodAnchorDate.value.getFullYear()
-
-  return trendStats.value.monthlyTrends.find(
-    trend => trend.month === currentMonth && trend.year === currentYear,
-  )
-})
-
-const previousMonthTrend = computed(() => {
-  if (!trendStats.value?.monthlyTrends.length) {
-    return null
-  }
-
-  const lastMonth = subMonths(periodAnchorDate.value, 1)
-  const month = lastMonth.getMonth() + 1
-  const year = lastMonth.getFullYear()
-
-  return trendStats.value.monthlyTrends.find(
-    trend => trend.month === month && trend.year === year,
-  )
-})
 
 const monthlyExpenses = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
@@ -385,7 +418,7 @@ const dashboardAlerts = computed(() => {
     alerts.push({
       key: 'upcoming-negative',
       level: 'warning',
-      title: 'Fenêtre 15 jours négative',
+      title: `Fenêtre ${projectionWindowDays.value} jours négative`,
       detail: `Impact prévisionnel: ${totalUpcomingNet.value.toFixed(2)} €`,
     })
   }
@@ -395,7 +428,7 @@ const dashboardAlerts = computed(() => {
       key: 'no-upcoming',
       level: 'info',
       title: 'Aucun mouvement à venir',
-      detail: 'Aucune transaction prévue dans les 15 prochains jours',
+      detail: `Aucune transaction prévue dans les ${projectionWindowDays.value} prochains jours`,
     })
   }
 
@@ -742,15 +775,29 @@ async function loadDashboardData() {
   await withLoading(async () => {
     try {
       // Load basic data
-      const [accountsData, regularTransData, tagsData] = await Promise.all([
+      const [accountsData, regularTransData, tagsData, settingsData] = await Promise.all([
         fetchBooklets().catch(() => []),
         getRegularTransaction().catch(() => []),
         getAllTags().catch(() => []),
+        getUserSettings().catch(() => null),
       ])
 
       accounts.value = Array.isArray(accountsData) ? accountsData : []
       regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
       tags.value = Array.isArray(tagsData) ? tagsData : []
+
+      if (settingsData) {
+        projectionWindowDays.value = normalizeProjectionWindowDays(settingsData.projectionWindowDays)
+        accountMonthlyCycleById.value = Object.fromEntries(
+          settingsData.accountCycles.map((cycle: AccountMonthlyCycleDTO) => [
+            cycle.accountId,
+            {
+              startDay: Math.min(31, Math.max(1, Math.trunc(cycle.monthlyPeriodStartDay))),
+              endDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
+            },
+          ]),
+        )
+      }
 
       if (!selectedAccountId.value && accounts.value.length > 0) {
         const firstAccountId = accounts.value[0]?.id
@@ -775,7 +822,7 @@ async function loadStatsData() {
   const evolutionEndDate = format(evolutionDateRange.value.end, 'yyyy-MM-dd')
 
   const upcomingStart = new Date()
-  const upcomingEnd = addDays(upcomingStart, 15)
+  const upcomingEnd = addDays(upcomingStart, projectionWindowDays.value)
   const upcomingStartDate = format(upcomingStart, 'yyyy-MM-dd')
   const upcomingEndDate = format(upcomingEnd, 'yyyy-MM-dd')
 
@@ -785,10 +832,10 @@ async function loadStatsData() {
   const shouldLoadPeriodProjection = !isAfter(projectionStart, projectionEnd)
   const periodProjectionPromise = shouldLoadPeriodProjection
     ? getPrevisionalTransactions(
-      format(projectionStart, 'yyyy-MM-dd'),
-      format(projectionEnd, 'yyyy-MM-dd'),
-      scopedAccountId.value,
-    ).catch(() => null)
+        format(projectionStart, 'yyyy-MM-dd'),
+        format(projectionEnd, 'yyyy-MM-dd'),
+        scopedAccountId.value,
+      ).catch(() => null)
     : Promise.resolve(null)
 
   const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData] = await Promise.all([
@@ -882,7 +929,7 @@ watch(selectedAccountId, () => {
               Période: {{ currentDateRangeLabel }}
             </span>
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
-              À venir 15 jours: {{ totalPrevisionalTransactions }} transaction(s)
+              À venir {{ projectionWindowLabel }}: {{ totalPrevisionalTransactions }} transaction(s)
             </span>
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
               Solde prévisionnel court terme: {{ totalUpcomingNet.toFixed(2) }} €
@@ -1241,7 +1288,7 @@ watch(selectedAccountId, () => {
               </div>
 
               <p class="text-xs m-0" style="color: var(--text-tertiary);">
-                {{ totalPrevisionalTransactions }} transaction(s) sur la fenêtre de 15 jours
+                {{ totalPrevisionalTransactions }} transaction(s) sur la fenêtre de {{ projectionWindowLabel }}
               </p>
             </div>
           </div>

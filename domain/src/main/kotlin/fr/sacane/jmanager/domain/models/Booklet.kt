@@ -12,8 +12,19 @@ class Booklet(
     private val _regularTransactions: MutableList<RegularTransaction> = mutableListOf(),
     var owner : User? = null,
     val initialSold: Amount = amount.copy(),
-    val id: UUID? = null
+    val id: UUID? = null,
+    var monthlyPeriodStartDay: Int = 1,
+    var monthlyPeriodEndDay: Int? = null,
 ){
+
+    init {
+        require(monthlyPeriodStartDay in 1..31) {
+            "monthlyPeriodStartDay must be between 1 and 31"
+        }
+        require(monthlyPeriodEndDay == null || monthlyPeriodEndDay in 1..31) {
+            "monthlyPeriodEndDay must be between 1 and 31 when provided"
+        }
+    }
 
     val label: String
         get() = labelAccount
@@ -34,9 +45,31 @@ class Booklet(
     fun updateFrom(booklet: Booklet) {
         amount = booklet.amount
         labelAccount = booklet.label
+        monthlyPeriodStartDay = booklet.monthlyPeriodStartDay
+        monthlyPeriodEndDay = booklet.monthlyPeriodEndDay
         _transactions.replaceAll {
             Transaction(it.id, it.label, it.date, it.amount, it.isIncome, tag = it.tag)
         }
+    }
+
+    fun updateMonthlyPeriodConfiguration(startDay: Int, endDay: Int?) {
+        require(startDay in 1..31) {
+            "monthlyPeriodStartDay must be between 1 and 31"
+        }
+        require(endDay == null || endDay in 1..31) {
+            "monthlyPeriodEndDay must be between 1 and 31 when provided"
+        }
+
+        monthlyPeriodStartDay = startDay
+        monthlyPeriodEndDay = endDay
+    }
+
+    fun updateMonthlyPeriodStartDay(day: Int) {
+        updateMonthlyPeriodConfiguration(day, monthlyPeriodEndDay)
+    }
+
+    fun updateMonthlyPeriodEndDay(day: Int?) {
+        updateMonthlyPeriodConfiguration(monthlyPeriodStartDay, day)
     }
 
     override fun hashCode(): Int {
@@ -57,6 +90,8 @@ class Booklet(
             amount: $amount
             label: $labelAccount
             initialSold: $initialSold
+            monthlyPeriodStartDay: $monthlyPeriodStartDay
+            monthlyPeriodEndDay: $monthlyPeriodEndDay
             owner: ${owner?.id}
         """.trimIndent()
     }

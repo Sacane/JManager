@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-03-30
+
+- Added per-account optional monthly period end day configuration (`monthlyPeriodEndDay`) across domain models, settings contracts, infrastructure API DTOs, and persistence adapters.
+- Added database migration `V14__add_account_monthly_period_end_day.sql` to store `monthly_period_end_day` with nullable semantics and strict day-range validation (`1..31` when provided).
+- Extended user settings update validation to reject invalid end-day values with a dedicated semantic error key (`domain.user.settings.invalid_monthly_period_end_day`).
+- Updated settings API read/write flows so account cycles now persist and return both `monthlyPeriodStartDay` and optional `monthlyPeriodEndDay`.
+- Updated frontend settings page to configure both monthly start and optional next-month end day, including an explicit default mode that preserves legacy behavior.
+- Extended shared frontend monthly range utility to apply explicit end-day boundaries when configured while keeping default fallback behavior (`next-month start day - 1`).
+- Updated dashboard and account details pages to consume the optional end-day configuration for period range computation and account-scoped data queries.
+- Added and updated regression tests across layers (domain, infra API/repository, and frontend pages) to cover explicit end-day behavior, fallback behavior, validation failures, and persistence/readback.
+
+## 2026-03-29
+
+- Implemented cycle-aware monthly period semantics end-to-end for dashboard and account details with explicit boundary behavior: for cycle day N, the period starts at boundary(current month) and ends at boundary(next month) - 1 day (including short-month fallback to the last day).
+- Added a shared frontend utility for cycle range computation and ISO date serialization (`client/utils/monthlyCycleRange.ts`) and reused it from dashboard and account pages to keep a single source of truth.
+- Updated dashboard monthly period calls and assertions to use the new cycle-window semantics, including explicit regression coverage for “end bound = next-month cycle day minus one”.
+- Updated account details loading flow to retrieve the configured account cycle from user settings and query balances/transactions with explicit `startDate`/`endDate` date ranges.
+- Extended frontend account API composable contracts to support optional date-range parameters on report/balances/transactions queries while preserving existing month/year compatibility.
+- Extended backend account and transaction HTTP endpoints to accept optional `startDate`/`endDate` query parameters with strict validation (`both-or-none`, `start <= end`) and forward them to domain services.
+- Extended `BookletFeature` domain contracts to support explicit date ranges for transactions and balances loading, including day-level filtering and previsional balance computations bounded to the effective range.
+- Preserved legacy month/year behavior for current-month generation and previsional computations when explicit date ranges are not provided.
+- Added domain regression tests for explicit range inclusions/exclusions and range-bounded previsional balances.
+- Added infrastructure API tests for explicit date-range success and invalid-range failures on account report and transaction listing endpoints.
+- Updated English and French performance documentation to describe optional date-range query support and cycle-aware frontend usage examples.
+
 ## 2026-03-26
 
 - Started dashboard V1 implementation for account-first analytics by adding optional `accountId` and period filters (`startDate`, `endDate`) to stats domain/API flows (`category-distribution`, `trends`, `previsional`) with backward-compatible defaults.

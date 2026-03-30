@@ -83,7 +83,7 @@ object FakeFactory {
         bookletBalanceQueryRepository
     )
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
-    val sessionFeature = UserFeatureImpl(userRepository, sessionManager, DefaultHasher, tokenGenerator)
+    val sessionFeature = UserFeatureImpl(userRepository, fakeAccountRepository, sessionManager, DefaultHasher, tokenGenerator)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
     val regularTransactionFeature = RegularTransactionFeatureImpl(
         inMemoryRegularTransactionRepository,

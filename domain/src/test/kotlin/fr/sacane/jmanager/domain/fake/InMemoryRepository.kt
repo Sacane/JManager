@@ -130,6 +130,12 @@ class InMemoryUserRepository (
         return user
     }
 
+    override fun updateProjectionWindowDays(userId: UserId, projectionWindowDays: Int): Boolean {
+        val userWithPassword = inMemoryDatabase.users[userId] ?: return false
+        userWithPassword.user.updateProjectionWindowDays(projectionWindowDays)
+        return true
+    }
+
     override fun findAll(): List<User> {
         return inMemoryDatabase.users.values.map { it.user }
     }
@@ -190,6 +196,13 @@ class InMemoryBookletRepository(
 
     override fun update(booklet: Booklet) {
         upsert(booklet)
+    }
+
+    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
+        val account = inMemoryDatabase.findAccountById(accountId) ?: return false
+        account.updateMonthlyPeriodConfiguration(monthlyPeriodStartDay, monthlyPeriodEndDay)
+        upsert(account)
+        return true
     }
 
     override fun findBookletsForUser(userId: UserId): List<Booklet> {

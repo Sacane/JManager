@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AccountDetailsPage from '../../pages/account/[id].vue'
 
 vi.mock('~/composables/useTransaction', () => ({
@@ -39,6 +39,30 @@ const defaultTag = {
   isDefault: true,
 }
 
+const findBalancesByIdMonthAndYearMock = vi.fn().mockResolvedValue({
+  label: 'compte courant',
+  realSold: '1500.00',
+  previewSold: '1700.00',
+})
+
+const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({ transactions: [] })
+
+const getSettingsMock = vi.fn().mockResolvedValue({
+  projectionWindowDays: 15,
+  accountCycles: [
+    {
+      accountId: 'booklet-1',
+      label: 'Compte courant',
+      monthlyPeriodStartDay: 28,
+      monthlyPeriodEndDay: null,
+    },
+  ],
+})
+
+function flushPromises() {
+  return new Promise<void>(resolve => queueMicrotask(resolve))
+}
+
 function mountPage(activeScopes: string[] = []) {
   vi.stubGlobal('definePageMeta', vi.fn())
   vi.stubGlobal('useRoute', () => ({ params: { id: 'booklet-1' } }))
@@ -52,12 +76,11 @@ function mountPage(activeScopes: string[] = []) {
     withLoading: async <T>(action: () => Promise<T>) => action(),
   }))
   vi.stubGlobal('useBooklet', () => ({
-    findBalancesByIdMonthAndYear: vi.fn().mockResolvedValue({
-      label: 'compte courant',
-      realSold: '1500.00',
-      previewSold: '1700.00',
-    }),
-    findTransactionsByIdMonthAndYear: vi.fn().mockResolvedValue({ transactions: [] }),
+    findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
+    findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+  }))
+  vi.stubGlobal('useUserSettings', () => ({
+    getSettings: getSettingsMock,
   }))
   vi.stubGlobal('useTag', () => ({
     getAllTags: vi.fn().mockResolvedValue([defaultTag]),
@@ -103,6 +126,16 @@ function mountPage(activeScopes: string[] = []) {
 }
 
 describe('pages/account/[id] loading states', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('shows inline loading feedback when account load scope is active', () => {
     const { wrapper } = mountPage(['account.loadBookletData'])
 
@@ -116,5 +149,61 @@ describe('pages/account/[id] loading states', () => {
     expect(exportButton).toBeDefined()
     expect(exportButton?.attributes('data-loading')).toBe('true')
     expect(exportButton?.attributes('disabled')).toBeDefined()
+  })
+
+  it('queries account balances and transactions with cycle-aware date range', async () => {
+    mountPage()
+
+    await flushPromises()
+    await flushPromises()
+
+    expect(getSettingsMock).toHaveBeenCalledTimes(1)
+    expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {
+        startDate: '2026-02-28',
+        endDate: '2026-03-27',
+      },
+    )
+    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {
+        startDate: '2026-02-28',
+        endDate: '2026-03-27',
+      },
+    )
+  })
+
+  it('queries account with explicit monthly end day when configured', async () => {
+    getSettingsMock.mockResolvedValueOnce({
+      projectionWindowDays: 15,
+      accountCycles: [
+        {
+          accountId: 'booklet-1',
+          label: 'Compte courant',
+          monthlyPeriodStartDay: 28,
+          monthlyPeriodEndDay: 30,
+        },
+      ],
+    })
+
+    mountPage()
+
+    await flushPromises()
+    await flushPromises()
+
+    expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {
+        startDate: '2026-02-28',
+        endDate: '2026-03-30',
+      },
+    )
   })
 })

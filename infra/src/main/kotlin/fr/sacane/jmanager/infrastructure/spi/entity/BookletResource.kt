@@ -14,6 +14,10 @@ class BookletResource(
     var amount: BigDecimal = BigDecimal(0.0),
     @Column(name = "label", length = 30, nullable = false)
     var label: String,
+    @Column(name = "monthly_period_start_day", nullable = false)
+    var monthlyPeriodStartDay: Int = 1,
+    @Column(name = "monthly_period_end_day")
+    var monthlyPeriodEndDay: Int? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "account")
     var sheets: MutableList<TransactionResource> = mutableListOf(),
     @ManyToOne

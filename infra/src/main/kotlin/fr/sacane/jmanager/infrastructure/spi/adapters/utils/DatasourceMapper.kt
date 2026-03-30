@@ -24,13 +24,26 @@ class AccountMapper(
     fun asResource(booklet: Booklet): BookletResource {
         val userResource = booklet.owner?.id?.value?.let { userRepository.findById(it) }
         return if(userResource != null) {
-            BookletResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
-                it.tag?.asResource()
-            ) }.toMutableList(), userResource.get(),  initialSold = booklet.initialSold.value, idAccount = booklet.id)
+            BookletResource(
+                amount = booklet.amount.applyOnValue { it },
+                label = booklet.label,
+                monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
+                monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
+                sheets = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
+                owner = userResource.get(),
+                initialSold = booklet.initialSold.value,
+                idAccount = booklet.id,
+            )
         } else {
-            BookletResource(amount = booklet.amount.applyOnValue { it }, label = booklet.label, sheets = booklet.transactions.map { it.asResource(
-                it.tag?.asResource()
-            ) }.toMutableList(), initialSold = booklet.initialSold.value, idAccount = booklet.id)
+            BookletResource(
+                amount = booklet.amount.applyOnValue { it },
+                label = booklet.label,
+                monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
+                monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
+                sheets = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
+                initialSold = booklet.initialSold.value,
+                idAccount = booklet.id,
+            )
         }
     }
 }
@@ -68,11 +81,26 @@ internal fun Booklet.asResource(): BookletResource {
     } else {
         sheets().map { it.asResource() }.toMutableList()
     }
-    return BookletResource(idAccount = id, amount = amount.applyOnValue { it }, label = label, sheets = sheets, initialSold = this.initialSold.value)
+    return BookletResource(
+        idAccount = id,
+        amount = amount.applyOnValue { it },
+        label = label,
+        monthlyPeriodStartDay = monthlyPeriodStartDay,
+        monthlyPeriodEndDay = monthlyPeriodEndDay,
+        sheets = sheets,
+        initialSold = this.initialSold.value,
+    )
 }
 
 internal fun User.asResource(password: String): UserResource {
-    return UserResource(username = username, password = password, email = email, mutableListOf(), tags = tags.map { it.toPersonalTag() }.toMutableList())
+    return UserResource(
+        username = username,
+        password = password,
+        email = email,
+        accounts = mutableListOf(),
+        tags = tags.map { it.toPersonalTag() }.toMutableList(),
+        projectionWindowDays = projectionWindowDays,
+    )
 }
 
 
@@ -97,7 +125,9 @@ internal fun BookletResource.toModel(): Booklet
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
     owner = this.owner?.toModel(),
     initialSold = Amount(this.initialSold),
-    id = this.idAccount
+    id = this.idAccount,
+    monthlyPeriodStartDay = this.monthlyPeriodStartDay,
+    monthlyPeriodEndDay = this.monthlyPeriodEndDay,
 )
 
 
@@ -109,6 +139,7 @@ internal fun UserResource.toModel()
     roles = roles,
     creationDate = creationDate,
     isEnabled = isEnabled,
+    projectionWindowDays = projectionWindowDays,
 )
 internal fun UserResource.toModelWithSimpleAccounts()
         : User = User(
@@ -116,12 +147,28 @@ internal fun UserResource.toModelWithSimpleAccounts()
     username = this.username,
     email = this.email,
     booklets = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
+    projectionWindowDays = projectionWindowDays,
 )
 
-internal fun BookletResource.toSimpleModel(): Booklet = Booklet(this.amount.toAmount(), this.label, id = this.idAccount)
+internal fun BookletResource.toSimpleModel(): Booklet = Booklet(
+    this.amount.toAmount(),
+    this.label,
+    id = this.idAccount,
+    monthlyPeriodStartDay = this.monthlyPeriodStartDay,
+    monthlyPeriodEndDay = this.monthlyPeriodEndDay,
+)
 
 internal fun UserResource.toModelWithPasswords() : UserWithPassword =
-    UserWithPassword(User(id = UserId(this.idUser), username = this.username, email = email), password, roles)
+    UserWithPassword(
+        User(
+            id = UserId(this.idUser),
+            username = this.username,
+            email = email,
+            projectionWindowDays = projectionWindowDays,
+        ),
+        password,
+        roles,
+    )
 
 fun Tag.asResource(): AbstractTagResource {
     return when(this.isDefault) {
@@ -145,7 +192,8 @@ internal fun User.asExistingResource(): UserResource
     username = username,
     email = email,
     accounts = this.booklets.map {it.asResource()}.toMutableList(),
-    tags = this.tags.map { it.toPersonalTag() }.toMutableList()
+    tags = this.tags.map { it.toPersonalTag() }.toMutableList(),
+    projectionWindowDays = this.projectionWindowDays,
 )
 
 @Component
