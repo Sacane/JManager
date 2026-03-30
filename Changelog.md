@@ -2,6 +2,7 @@
 
 ## 2026-03-30
 
+- Upgraded frontend dependency `happy-dom` from `20.8.4` to `20.8.9` to fix known security vulnerabilities (fetch credential origin handling and ECMAScript module export-name code injection).
 - Added per-account optional monthly period end day configuration (`monthlyPeriodEndDay`) across domain models, settings contracts, infrastructure API DTOs, and persistence adapters.
 - Added database migration `V14__add_account_monthly_period_end_day.sql` to store `monthly_period_end_day` with nullable semantics and strict day-range validation (`1..31` when provided).
 - Extended user settings update validation to reject invalid end-day values with a dedicated semantic error key (`domain.user.settings.invalid_monthly_period_end_day`).
