@@ -152,7 +152,7 @@ data class RegularTransactionsDeletionResponse(
 @Serializable
 data class RecurrenceRuleDTO(
     val type: String,
-    val value: Int? = null
+    val dayOfMonth: Int? = null
 )
 
 
@@ -174,10 +174,10 @@ fun FrequencyProperty.toDTO(): FrequencyPropertyDTO {
 
 fun RecurrenceRuleDTO.toDomain(defaultMonthlyDay: Int = 1): fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule {
     return when(type.uppercase()) {
-        "MONTHLY" -> fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Monthly(value ?: defaultMonthlyDay)
+        "MONTHLY" -> fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Monthly(dayOfMonth ?: defaultMonthlyDay)
         "YEARLY" -> {
-            val month = value?.div(100) ?: 1
-            val day = value?.rem(100) ?: 1
+            val month = dayOfMonth?.div(100) ?: 1
+            val day = dayOfMonth?.rem(100) ?: 1
             fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule.Yearly(month, day)
         }
         else -> throw IllegalArgumentException("Unknown recurrence rule type: $type")

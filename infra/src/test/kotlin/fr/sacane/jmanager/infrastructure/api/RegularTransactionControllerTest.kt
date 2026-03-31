@@ -559,7 +559,7 @@ class RegularTransactionControllerTest(
                 "bookletIds" to listOf(booklet.id!!.toString()),
                 "recurrenceRule" to mapOf(
                     "type" to "MONTHLY",
-                    "value" to 20
+                    "dayOfMonth" to 20
                 )
             )
 
@@ -603,7 +603,7 @@ class RegularTransactionControllerTest(
                 "bookletIds" to listOf(UUID.randomUUID().toString()),
                 "recurrenceRule" to mapOf(
                     "type" to "MONTHLY",
-                    "value" to 20
+                    "dayOfMonth" to 20
                 )
             )
 
@@ -642,7 +642,7 @@ class RegularTransactionControllerTest(
                 "bookletIds" to listOf(UUID.randomUUID().toString()),
                 "recurrenceRule" to mapOf(
                     "type" to "MONTHLY",
-                    "value" to 20
+                    "dayOfMonth" to 20
                 )
             )
 
@@ -709,7 +709,7 @@ class RegularTransactionControllerTest(
                 "bookletIds" to listOf(booklet.id!!.toString()),
                 "recurrenceRule" to mapOf(
                     "type" to "MONTHLY",
-                    "value" to 15
+                    "dayOfMonth" to 15
                 )
             )
 
@@ -780,7 +780,7 @@ class RegularTransactionControllerTest(
                 "bookletIds" to listOf(bookletB.id!!.toString()),
                 "recurrenceRule" to mapOf(
                     "type" to "MONTHLY",
-                    "value" to 15
+                    "dayOfMonth" to 15
                 )
             )
 
