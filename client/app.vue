@@ -81,6 +81,8 @@ tryOnBeforeMount(() => {
 body, html {
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
   font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   background-color: var(--bg-primary);
   color: var(--text-primary);
