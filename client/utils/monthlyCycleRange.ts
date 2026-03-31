@@ -65,12 +65,12 @@ export function resolveMonthlyCycleRangeFromAnchor(anchorDate: Date, cycleStartD
 }
 
 export function resolveMonthlyCycleRangeForTargetMonth(targetYear: number, targetMonth: number, cycleStartDay: number, cycleEndDay?: number | null): MonthlyCycleRange {
-  const boundaryPrevious = resolveMonthlyCycleBoundary(targetYear, targetMonth - 2, cycleStartDay)
+  const monthIndex = targetMonth - 1
+  const lastDayOfMonth = new Date(targetYear, targetMonth, 0).getDate()
+  const anchorDay = Math.min(15, lastDayOfMonth)
+  const anchorDate = new Date(targetYear, monthIndex, anchorDay)
 
-  return {
-    start: boundaryPrevious,
-    end: resolveRangeEndFromStart(boundaryPrevious, cycleStartDay, cycleEndDay),
-  }
+  return resolveMonthlyCycleRangeFromAnchor(anchorDate, cycleStartDay, cycleEndDay)
 }
 
 export function toIsoLocalDate(date: Date): string {

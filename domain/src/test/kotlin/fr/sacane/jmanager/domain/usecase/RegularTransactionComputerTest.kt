@@ -741,5 +741,99 @@ class RegularTransactionComputerTest : FeatureTest() {
                 assertTrue(generatedMonths.contains(Month.MARCH))
             }
         }
+
+        @Test
+        fun `day anchor must be preserved after a short month in non-leap year`() {
+            // Monthly(29) starting Jan 29 2025: Feb clamps to 28, but Mar must be Mar 29 (not 28)
+            launchWithConnectedUserInstance {
+                val monthlyTransaction = RegularTransaction(
+                    label = "Ancrage jour",
+                    amount = 100.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-anchor-non-leap"),
+                    startDate = LocalDate.of(2025, 1, 29),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(29)
+                )
+
+                val marchTransaction = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2025
+                )
+
+                assertEquals(1, marchTransaction.size)
+                assertEquals(LocalDate.of(2025, 3, 29), marchTransaction[0].date)
+            }
+        }
+
+        @Test
+        fun `day anchor must be preserved after a short month for day 31`() {
+            // Monthly(31) starting Jan 31: Feb clamps to 28, Mar must be Mar 31 (not 28)
+            launchWithConnectedUserInstance {
+                val monthlyTransaction = RegularTransaction(
+                    label = "Ancrage jour 31",
+                    amount = 50.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-anchor-31"),
+                    startDate = LocalDate.of(2025, 1, 31),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(31)
+                )
+
+                val marchTransaction = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2025
+                )
+
+                assertEquals(1, marchTransaction.size)
+                assertEquals(LocalDate.of(2025, 3, 31), marchTransaction[0].date)
+            }
+        }
+
+        @Test
+        fun `virtual transactions use correct anchor date after crossing a short month`() {
+            // Monthly(28) starting Feb 28 2026: virtual for custom range Mar (28/02->27/03) = 28/02, Apr (28/03->27/04) = 28/03
+            launchWithConnectedUserInstance {
+                val monthlyTransaction = RegularTransaction(
+                    label = "Aqua",
+                    amount = 30.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-aqua"),
+                    startDate = LocalDate.of(2026, 2, 28),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(28)
+                )
+
+                // Custom range for "March" with startDay=28: 2026-02-28 → 2026-03-27
+                val marchRangeTransactions = regularTransactionGenerator.calculateVirtualTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    startMonth = Month.FEBRUARY,
+                    startYear = 2026,
+                    endMonth = Month.MARCH,
+                    endYear = 2026
+                ).filter { !it.date.isBefore(LocalDate.of(2026, 2, 28)) && !it.date.isAfter(LocalDate.of(2026, 3, 27)) }
+
+                assertEquals(1, marchRangeTransactions.size)
+                assertEquals(LocalDate.of(2026, 2, 28), marchRangeTransactions[0].date)
+
+                // Custom range for "April" with startDay=28: 2026-03-28 → 2026-04-27
+                val aprilRangeTransactions = regularTransactionGenerator.calculateVirtualTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    startMonth = Month.MARCH,
+                    startYear = 2026,
+                    endMonth = Month.APRIL,
+                    endYear = 2026
+                ).filter { !it.date.isBefore(LocalDate.of(2026, 3, 28)) && !it.date.isAfter(LocalDate.of(2026, 4, 27)) }
+
+                assertEquals(1, aprilRangeTransactions.size)
+                assertEquals(LocalDate.of(2026, 3, 28), aprilRangeTransactions[0].date)
+            }
+        }
     }
 }
