@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-03-31
+
+- Fixed day-anchor drift in monthly recurring transactions: `calculateNextOccurrence` now reapplies the configured `dayOfMonth` with month-end clamping after `plusMonths(1)`, so a rule anchored on day 29 or 31 no longer shifts to an earlier day after crossing a short month (e.g. Monthly(29) Jan→Feb(28)→Mar was 28/03, now correctly 29/03).
+- Fixed physical previsional generation for the current period when a custom date range (startDate/endDate) is provided: `loadTransactionsForBookletForAMonth` now generates physical previsional transactions for every calendar month covered by the custom range when today falls inside the range, ensuring the correct occurrence date is used and not a stale calendar-month occurrence persisted from a prior standard-range visit.
+- Added domain regression tests: day-anchor preservation for Monthly(29) across a non-leap February, Monthly(31) across April, and custom-range virtual transaction dates for the "Aqua" scenario (Monthly(28) starting 2026-02-28 appearing as 28/02 in the March custom view and 28/03 in the April custom view).
+
 ## 2026-03-30
 
 - Upgraded frontend dependency `happy-dom` from `20.8.4` to `20.8.9` to fix known security vulnerabilities (fetch credential origin handling and ECMAScript module export-name code injection).

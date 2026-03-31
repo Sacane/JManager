@@ -518,8 +518,13 @@ class RegularTransactionGeneratorService(
         currentDate: LocalDate,
         regularTransaction: RegularTransaction
     ): LocalDate {
-        return when (regularTransaction.recurrenceRule) {
-            is RecurrenceRule.Monthly -> currentDate.plusMonths(1)
+        return when (val rule = regularTransaction.recurrenceRule) {
+            is RecurrenceRule.Monthly -> {
+                val nextMonth = currentDate.plusMonths(1)
+                val targetDay = rule.dayOfMonth
+                val monthLength = YearMonth.of(nextMonth.year, nextMonth.month).lengthOfMonth()
+                LocalDate.of(nextMonth.year, nextMonth.month, minOf(targetDay, monthLength))
+            }
             is RecurrenceRule.Yearly -> currentDate.plusYears(1)
             is RecurrenceRule.Weekly -> currentDate.plusDays(1)
             is RecurrenceRule.Daily -> currentDate.plusDays(1)

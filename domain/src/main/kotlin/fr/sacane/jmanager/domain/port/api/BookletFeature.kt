@@ -349,6 +349,32 @@ class BookletFeatureImpl(
                 )
                 LOGGER.info("Generated ${transactions.size} physical transactions for current month $month/$year")
                 transactions.size
+            } else if (hasExplicitDateRange) {
+                // When a custom date range is provided, generate physical previsional transactions for
+                // every calendar month covered by the range that qualifies as the "current" period
+                // (i.e. today falls inside [resolvedRangeStart, resolvedRangeEnd]).
+                val today = LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)
+                if (!today.isBefore(resolvedRangeStart) && !today.isAfter(resolvedRangeEnd)) {
+                    val startYM = YearMonth.from(resolvedRangeStart)
+                    val endYM = YearMonth.from(resolvedRangeEnd)
+                    var generated = 0
+                    var ym = startYM
+                    while (!ym.isAfter(endYM)) {
+                        val transactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                            bookletId,
+                            regularTransactions,
+                            ym.month,
+                            ym.year
+                        )
+                        generated += transactions.size
+                        ym = ym.plusMonths(1)
+                    }
+                    LOGGER.info("Generated $generated physical transactions for custom-range current period $resolvedRangeStart..$resolvedRangeEnd")
+                    generated
+                } else {
+                    LOGGER.info("Skipping physical generation for custom-range non-current period $resolvedRangeStart..$resolvedRangeEnd")
+                    0
+                }
             } else {
                 LOGGER.info("Skipping physical transaction generation for non-current month $month/$year")
                 0
