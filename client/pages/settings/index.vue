@@ -135,7 +135,7 @@ onMounted(() => {
       <section class="settings-card">
         <h2>Cycle mensuel par compte</h2>
         <p class="settings-help">
-          Configure le jour de debut de periode et, si besoin, le jour de fin du mois suivant. Sans jour de fin, le comportement par defaut reste jour du mois suivant - 1.
+          Configure le jour de début de période pour chaque compte. Le début s'applique au mois précédent du mois affiché. La fin peut être personnalisée ; sans valeur, elle est calculée automatiquement (jour de début du cycle suivant - 1).
         </p>
 
         <div v-if="accountCycles.length === 0" class="empty-state">
@@ -145,35 +145,27 @@ onMounted(() => {
         <div v-else class="account-cycle-list">
           <div v-for="cycle in accountCycles" :key="cycle.accountId" class="account-cycle-item">
             <div class="account-cycle-info">
-              <p class="account-cycle-label">
+              <p class="account-cycle-label" :title="cycle.label">
                 {{ cycle.label }}
-              </p>
-              <p class="account-cycle-id">
-                {{ cycle.accountId }}
               </p>
             </div>
 
             <div class="account-cycle-controls">
-              <label class="account-cycle-control">
-                <span class="settings-label">Debut</span>
-                <select v-model.number="cycle.monthlyPeriodStartDay" class="settings-select" :data-test="`cycle-select-${cycle.accountId}`">
-                  <option v-for="day in monthlyDayOptions()" :key="day" :value="day">
-                    Jour {{ day }}
-                  </option>
+              <div class="cycle-field">
+                <span class="cycle-field-label">Début</span>
+                <select v-model.number="cycle.monthlyPeriodStartDay" class="cycle-select" :data-test="`cycle-select-${cycle.accountId}`">
+                  <option v-for="day in monthlyDayOptions()" :key="day" :value="day">{{ day }}</option>
                 </select>
-              </label>
+                <span class="cycle-field-hint">Démarre le mois précédent</span>
+              </div>
 
-              <label class="account-cycle-control">
-                <span class="settings-label">Fin (mois suivant)</span>
-                <select v-model="cycle.monthlyPeriodEndDay" class="settings-select" :data-test="`cycle-end-select-${cycle.accountId}`">
-                  <option :value="null">
-                    Defaut (jour suivant - 1)
-                  </option>
-                  <option v-for="day in monthlyDayOptions()" :key="`end-${day}`" :value="day">
-                    Jour {{ day }}
-                  </option>
+              <div class="cycle-field">
+                <span class="cycle-field-label">Fin</span>
+                <select v-model="cycle.monthlyPeriodEndDay" class="cycle-select" :data-test="`cycle-end-select-${cycle.accountId}`">
+                  <option :value="null">Par défaut</option>
+                  <option v-for="day in monthlyDayOptions()" :key="`end-${day}`" :value="day">{{ day }}</option>
                 </select>
-              </label>
+              </div>
             </div>
           </div>
         </div>
@@ -249,8 +241,7 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.settings-input,
-.settings-select {
+.settings-input {
   width: 100%;
   border: 1px solid var(--border-color);
   border-radius: 0.7rem;
@@ -269,8 +260,8 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr minmax(240px, 360px);
   gap: 0.75rem;
-  align-items: center;
-  padding: 0.7rem;
+  align-items: start;
+  padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 0.8rem;
   background-color: var(--bg-tertiary);
@@ -278,26 +269,60 @@ onMounted(() => {
 
 .account-cycle-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(120px, 1fr));
-  gap: 0.6rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  align-items: start;
 }
 
-.account-cycle-control {
+.cycle-field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
+}
+
+.cycle-field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cycle-select {
+  width: 100%;
+  max-width: 110px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 0.5rem;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  padding: 0.45rem 0.4rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.cycle-select:focus {
+  outline: none;
+  border-color: #822acc;
+}
+
+.cycle-field-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .account-cycle-label {
   margin: 0;
   color: var(--text-primary);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.account-cycle-id {
-  margin: 0.2rem 0 0;
-  color: var(--text-tertiary);
-  font-size: 0.75rem;
+.account-cycle-info {
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 .empty-state {

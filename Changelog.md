@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-03-31
+
+- Fixed day-anchor drift in monthly recurring transactions: `calculateNextOccurrence` now reapplies the configured `dayOfMonth` with month-end clamping after `plusMonths(1)`, so a rule anchored on day 29 or 31 no longer shifts to an earlier day after crossing a short month (e.g. Monthly(29) Jan→Feb(28)→Mar was 28/03, now correctly 29/03).
+- Fixed physical previsional generation for the current period when a custom date range (startDate/endDate) is provided: `loadTransactionsForBookletForAMonth` now generates physical previsional transactions for every calendar month covered by the custom range when today falls inside the range, ensuring the correct occurrence date is used and not a stale calendar-month occurrence persisted from a prior standard-range visit.
+- Added domain regression tests: day-anchor preservation for Monthly(29) across a non-leap February, Monthly(31) across April, and custom-range virtual transaction dates for the "Aqua" scenario (Monthly(28) starting 2026-02-28 appearing as 28/02 in the March custom view and 28/03 in the April custom view).
+
 ## 2026-03-30
 
 - Upgraded frontend dependency `happy-dom` from `20.8.4` to `20.8.9` to fix known security vulnerabilities (fetch credential origin handling and ECMAScript module export-name code injection).
@@ -14,9 +20,10 @@
 
 ## 2026-03-29
 
-- Implemented cycle-aware monthly period semantics end-to-end for dashboard and account details with explicit boundary behavior: for cycle day N, the period starts at boundary(current month) and ends at boundary(next month) - 1 day (including short-month fallback to the last day).
+- Fixed account month targeting regression where default cycle settings could resolve to the previous month range, causing virtual transactions from M-1 to appear when viewing month M.
 - Added a shared frontend utility for cycle range computation and ISO date serialization (`client/utils/monthlyCycleRange.ts`) and reused it from dashboard and account pages to keep a single source of truth.
 - Updated dashboard monthly period calls and assertions to use the new cycle-window semantics, including explicit regression coverage for “end bound = next-month cycle day minus one”.
+- Added dedicated frontend unit regression coverage for monthly range resolution to assert both rules: default cycle keeps calendar month boundaries, and cycle 28->27 resolves month M as 28/M-1 to 27/M.
 - Updated account details loading flow to retrieve the configured account cycle from user settings and query balances/transactions with explicit `startDate`/`endDate` date ranges.
 - Extended frontend account API composable contracts to support optional date-range parameters on report/balances/transactions queries while preserving existing month/year compatibility.
 - Extended backend account and transaction HTTP endpoints to accept optional `startDate`/`endDate` query parameters with strict validation (`both-or-none`, `start <= end`) and forward them to domain services.
