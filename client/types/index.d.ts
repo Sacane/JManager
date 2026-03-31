@@ -86,7 +86,7 @@ declare global {
 
   interface RecurrenceRuleDTO {
     type: string
-    value?: number
+    dayOfMonth?: number
   }
 
   interface MonthlyTransactionCreationRequest {

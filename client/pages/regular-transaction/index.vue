@@ -114,7 +114,7 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
       bookletIds: updatedTransaction.bookletIds ?? [],
       recurrenceRule: {
         type: updatedTransaction.regularity,
-        value: updatedTransaction.regularity === 'MONTHLY' ? monthlyDay : undefined,
+        dayOfMonth: updatedTransaction.regularity === 'MONTHLY' ? monthlyDay : undefined,
       },
     }
 
