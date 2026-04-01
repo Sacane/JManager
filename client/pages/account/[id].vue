@@ -509,8 +509,8 @@ onUnmounted(() => {
 <template>
   <ConfirmDialog />
 
-  <div class="flex flex-col min-h-screen bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-5 md:(py-3 pb-8)">
-    <div class="w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8">
+  <div class="flex flex-col h-full bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-5 md:(py-3 pb-8)">
+    <div class="flex-1 flex flex-col min-h-0 w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8">
       <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-8">
           <div class="flex items-center gap-4 flex-1 min-w-0 md:gap-3">
@@ -652,7 +652,7 @@ onUnmounted(() => {
         <span>Chargement des transactions...</span>
       </div>
 
-      <div v-if="!isMobile" class="flex-1 bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
+      <div v-if="!isMobile" class="flex-1 min-h-0 bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <DataTable
           v-model:selection="selectedSheets"
           :value="filteredTransactions"
@@ -749,7 +749,7 @@ onUnmounted(() => {
         </DataTable>
       </div>
 
-      <div v-else class="flex-1 overflow-hidden flex flex-col md:(overflow-visible flex-none)">
+      <div v-else class="flex-1 min-h-0 overflow-y-auto flex flex-col">
         <div v-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
           <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
           <h3 class="text-lg font-bold text-[var(--text-primary)] mt-4 mb-2">

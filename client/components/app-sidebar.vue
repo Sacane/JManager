@@ -198,6 +198,12 @@ onUnmounted(() => {
     font-size: 1.25rem;
   }
 
+:global(.dark) & {
+    background: #1e293b;
+    border: 1px solid rgba(130, 42, 204, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(130, 42, 204, 0.15);
+  }
+
   &:hover {
     transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
@@ -223,15 +229,30 @@ onUnmounted(() => {
   left: 0;
   height: 100vh;
   width: 280px;
-  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-2) 100%);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+  /* Light mode: deep purple gradient */
+  background: linear-gradient(160deg, #2d0a4e 0%, #1d0840 55%, #160730 100%);
+  border-right: 1px solid rgba(150, 60, 220, 0.25);
+  box-shadow: 4px 0 28px rgba(0, 0, 0, 0.2), 1px 0 0 rgba(150, 60, 220, 0.1);
   z-index: 1000;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.4s ease,
+              box-shadow 0.4s ease,
+              border-color 0.4s ease;
   display: flex;
   flex-direction: column;
 
   @media (max-width: 768px) {
     width: 280px;
+  }
+
+  /* Dark mode: dark navy-purple, distinct from light mode */
+  :global(.dark) & {
+    background: linear-gradient(160deg, #0e0c1e 0%, #100d22 55%, #0c0a18 100%);
+    border-right: 1px solid rgba(130, 42, 204, 0.3);
+    box-shadow:
+      4px 0 32px rgba(0, 0, 0, 0.6),
+      2px 0 0 rgba(130, 42, 204, 0.15),
+      0 0 40px rgba(130, 42, 204, 0.04);
   }
 }
 
@@ -256,11 +277,15 @@ onUnmounted(() => {
 
 .sidebar-header {
   padding: 1.5rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+
+  :global(.dark) & {
+    border-bottom-color: rgba(130, 42, 204, 0.2);
+  }
 }
 
 .header-actions {
@@ -287,6 +312,11 @@ onUnmounted(() => {
   border-radius: 10px;
   background: white;
   padding: 0.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+
+  :global(.dark) & {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 10px rgba(130, 42, 204, 0.3);
+  }
 }
 
 .logo-text {
@@ -294,6 +324,10 @@ onUnmounted(() => {
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+
+  :global(.dark) & {
+    text-shadow: 0 0 14px rgba(192, 132, 252, 0.35);
+  }
 }
 
 .close-btn {
@@ -338,12 +372,22 @@ onUnmounted(() => {
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 10px;
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  :global(.dark) & {
+    &::-webkit-scrollbar-thumb {
+      background: rgba(130, 42, 204, 0.35);
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(130, 42, 204, 0.55);
+    }
   }
 }
 
@@ -358,7 +402,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.875rem;
   padding: 0.875rem 1rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   border-radius: 12px;
   font-size: 0.95rem;
@@ -366,12 +410,14 @@ onUnmounted(() => {
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  border: 1px solid transparent;
 
   i {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     flex-shrink: 0;
     width: 24px;
     text-align: center;
+    transition: all 0.2s ease;
   }
 
   span {
@@ -388,6 +434,7 @@ onUnmounted(() => {
     top: 0;
     height: 100%;
     width: 3px;
+    border-radius: 0 2px 2px 0;
     background: white;
     transform: scaleY(0);
     transition: transform 0.2s ease;
@@ -402,47 +449,106 @@ onUnmounted(() => {
   &:active {
     transform: translateX(0) scale(0.98);
   }
+
+  /* Dark mode hover */
+  :global(.dark) &:not(.nav-item-active):hover {
+    background: rgba(130, 42, 204, 0.12);
+    color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(130, 42, 204, 0.15);
+  }
 }
 
 .nav-item-active {
-  background: white;
+  /* Light mode: white pill with purple text */
+  background: rgba(255, 255, 255, 0.95);
   color: var(--primary);
   font-weight: 600;
+  border-color: transparent;
+  box-shadow: 0 2px 12px rgba(130, 42, 204, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.15);
 
   &::before {
     transform: scaleY(1);
     background: var(--primary);
+    /* subtle neon glow on the left indicator */
+    box-shadow: 0 0 6px rgba(130, 42, 204, 0.7), 0 0 14px rgba(130, 42, 204, 0.35);
   }
 
   &:hover {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
     color: var(--primary);
     transform: translateX(2px);
+  }
+
+  /* Dark mode: solid violet pill + white text */
+  :global(.dark) & {
+    background: rgba(88, 28, 160, 0.7);
+    color: #ffffff;
+    border-color: rgba(192, 132, 252, 0.35);
+    box-shadow: 0 2px 16px rgba(88, 28, 160, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+    i {
+      color: #e9d5ff;
+    }
+
+    &::before {
+      background: #e9d5ff;
+      box-shadow: 0 0 8px rgba(233, 213, 255, 0.85), 0 0 20px rgba(192, 132, 252, 0.5);
+    }
+
+    &:hover {
+      background: rgba(109, 40, 196, 0.75);
+      color: #ffffff;
+      transform: translateX(2px);
+      box-shadow: 0 4px 20px rgba(88, 28, 160, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
   }
 }
 
 .admin-item {
   margin-top: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.05);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.45);
   }
 
   &.nav-item-active {
-    background: rgba(255, 200, 100, 0.95);
+    background: rgba(255, 200, 100, 0.92);
     color: var(--primary);
-    border-color: rgba(255, 200, 100, 1);
+    border-color: rgba(255, 200, 100, 0.9);
+    box-shadow: 0 2px 12px rgba(255, 200, 100, 0.3), 0 0 8px rgba(255, 200, 100, 0.2);
+  }
+
+  :global(.dark) & {
+    border-color: rgba(130, 42, 204, 0.3);
+    background: rgba(130, 42, 204, 0.07);
+
+    &:hover {
+      background: rgba(130, 42, 204, 0.14);
+      border-color: rgba(130, 42, 204, 0.5);
+    }
+
+    &.nav-item-active {
+      background: rgba(251, 191, 36, 0.14);
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.4);
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.2), 0 0 4px rgba(251, 191, 36, 0.3);
+    }
   }
 }
 
 .sidebar-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding: 1rem 1.25rem;
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.08);
+
+  :global(.dark) & {
+    border-top-color: rgba(130, 42, 204, 0.2);
+    background: rgba(130, 42, 204, 0.04);
+  }
 }
 
 @media (min-width: 769px) {
