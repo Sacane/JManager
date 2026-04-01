@@ -1447,6 +1447,140 @@ class BookletFeatureTest: FeatureTest() {
             }
         }
 
+        @Test
+        fun `Should not generate virtual transactions for a past explicit range with default settings`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Past Default Range",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Monthly salary",
+                    amount = 3000.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-past-default-range"),
+                    startDate = LocalDate.of(2026, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(15)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                // Simulate: current date is 1st April 2026, user views March 2026 with default settings (1→31)
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = java.time.Month.MARCH,
+                    year = 2026,
+                    startingMonth = java.time.Month.APRIL,
+                    startingYear = 2026,
+                    startDate = LocalDate.of(2026, 3, 1),
+                    endDate = LocalDate.of(2026, 3, 31)
+                )
+
+                result.assertTrue { this.previsionalTransactions.isEmpty() }
+            }
+        }
+
+        @Test
+        fun `Should not generate virtual transactions for a past custom cycle range`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Past Custom Cycle",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Monthly salary",
+                    amount = 3000.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-past-custom-cycle"),
+                    startDate = LocalDate.of(2026, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(28)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                // Simulate: current date is 1st April 2026, user views March cycle (28 Feb → 27 Mar)
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = java.time.Month.MARCH,
+                    year = 2026,
+                    startingMonth = java.time.Month.APRIL,
+                    startingYear = 2026,
+                    startDate = LocalDate.of(2026, 2, 28),
+                    endDate = LocalDate.of(2026, 3, 27)
+                )
+
+                result.assertTrue { this.previsionalTransactions.isEmpty() }
+            }
+        }
+
+        @Test
+        fun `Should generate virtual transaction for a future custom cycle range`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(
+                    amount = 1000.toAmount(),
+                    labelAccount = "Future Custom Cycle",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Monthly salary",
+                    amount = 3000.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-future-custom-cycle"),
+                    startDate = LocalDate.of(2026, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(28)
+                )
+
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                // Simulate: current date is 1st April 2026, user views May cycle (28 Apr → 27 May)
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = java.time.Month.MAY,
+                    year = 2026,
+                    startingMonth = java.time.Month.APRIL,
+                    startingYear = 2026,
+                    startDate = LocalDate.of(2026, 4, 28),
+                    endDate = LocalDate.of(2026, 5, 27)
+                )
+
+                result.assertTrue { this.previsionalTransactions.isNotEmpty() }
+                result.assertTrue {
+                    this.previsionalTransactions.any { tx ->
+                        tx.date == LocalDate.of(2026, 4, 28) && tx.isPreview
+                    }
+                }
+            }
+        }
+
     }
 }
 
