@@ -338,6 +338,7 @@ class BookletFeatureImpl(
 
             val targetYearMonth = YearMonth.of(year, month)
             val currentYearMonth = YearMonth.of(currentYear, currentMonth)
+            val today = LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)
 
             val generationStartNs = System.nanoTime()
             val generatedCount: Int = if (!hasExplicitDateRange && targetYearMonth.equals(currentYearMonth)) {
@@ -353,7 +354,6 @@ class BookletFeatureImpl(
                 // When a custom date range is provided, generate physical previsional transactions for
                 // every calendar month covered by the range that qualifies as the "current" period
                 // (i.e. today falls inside [resolvedRangeStart, resolvedRangeEnd]).
-                val today = LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)
                 if (!today.isBefore(resolvedRangeStart) && !today.isAfter(resolvedRangeEnd)) {
                     val startYM = YearMonth.from(resolvedRangeStart)
                     val endYM = YearMonth.from(resolvedRangeEnd)
@@ -421,17 +421,23 @@ class BookletFeatureImpl(
             val transactions = filteredTransactions.partition { it.isPreview }
 
             val virtualTransactionsForTargetPeriod = if (hasExplicitDateRange) {
-                regularTransactionGeneratorService.calculateVirtualTransactions(
-                    bookletId = bookletId,
-                    regularTransactions = regularTransactions,
-                    startMonth = resolvedRangeStart.month,
-                    startYear = resolvedRangeStart.year,
-                    endMonth = resolvedRangeEnd.month,
-                    endYear = resolvedRangeEnd.year,
-                    existingPhysicalTransactions = allTransactionsForPeriod
-                )
-                    .filter { tx -> !tx.date.isBefore(resolvedRangeStart) && !tx.date.isAfter(resolvedRangeEnd) }
-            } else if (targetYearMonth == currentYearMonth) {
+                if (resolvedRangeEnd.isBefore(today)) {
+                    emptyList()
+                } else {
+                    regularTransactionGeneratorService.calculateVirtualTransactions(
+                        bookletId = bookletId,
+                        regularTransactions = regularTransactions,
+                        startMonth = resolvedRangeStart.month,
+                        startYear = resolvedRangeStart.year,
+                        endMonth = resolvedRangeEnd.month,
+                        endYear = resolvedRangeEnd.year,
+                        existingPhysicalTransactions = allTransactionsForPeriod
+                    )
+                        .filter { tx -> !tx.date.isBefore(resolvedRangeStart) && !tx.date.isAfter(resolvedRangeEnd) }
+                }
+            } else if (targetYearMonth.month == currentYearMonth.month) {
+                emptyList()
+            } else if (targetYearMonth.isBefore(currentYearMonth)) {
                 emptyList()
             } else {
                 regularTransactionGeneratorService.calculateVirtualTransactions(
