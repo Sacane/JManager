@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-03
+
+- Fixed ghost virtual transaction appearing after confirming a forecasted (preview) transaction with a changed date: `calculateVirtualTransactions` now deduplicates confirmed transactions by `(regularTransactionId, YearMonth)` rather than exact date, consistently with `generateMissingPrevisionalTransactions`, so a confirmed occurrence covers its full month regardless of the date it was moved to.
+- Added domain regression test covering the "confirm preview with date change" scenario in `RegularTransactionComputerTest`.
+
 ## 2026-03-31
 
 - Fixed day-anchor drift in monthly recurring transactions: `calculateNextOccurrence` now reapplies the configured `dayOfMonth` with month-end clamping after `plusMonths(1)`, so a rule anchored on day 29 or 31 no longer shifts to an earlier day after crossing a short month (e.g. Monthly(29) Jan→Feb(28)→Mar was 28/03, now correctly 29/03).
