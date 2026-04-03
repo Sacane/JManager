@@ -835,5 +835,53 @@ class RegularTransactionComputerTest : FeatureTest() {
                 assertEquals(LocalDate.of(2026, 3, 28), aprilRangeTransactions[0].date)
             }
         }
+
+        @Test
+        fun `confirmed preview with changed date must not produce a virtual on the original natural date`() {
+            // Regression: when a preview transaction is confirmed with a different date,
+            // calculateVirtualTransactions must not re-create a virtual for that month.
+            launchWithConnectedUserInstance {
+                val regularTransactionId = RegularTransactionId("${user.id.value}-confirmed-date-change")
+
+                val monthlyTransaction = RegularTransaction(
+                    label = "Abonnement",
+                    amount = 20.toAmount(),
+                    isIncome = false,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2026, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                // User confirmed the January preview but changed the date to the 15th
+                val confirmedWithChangedDate = Transaction(
+                    id = null,
+                    label = "Abonnement",
+                    amount = 20.toAmount(),
+                    date = LocalDate.of(2026, 1, 15),
+                    isIncome = false,
+                    isPreview = false,
+                    regularTransactionId = regularTransactionId
+                )
+
+                val virtualTransactions = regularTransactionGenerator.calculateVirtualTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    startMonth = Month.JANUARY,
+                    startYear = 2026,
+                    endMonth = Month.MARCH,
+                    endYear = 2026,
+                    existingPhysicalTransactions = listOf(confirmedWithChangedDate)
+                )
+
+                // January is already covered by the confirmed transaction — no virtual expected.
+                // Only February and March must be present.
+                assertEquals(2, virtualTransactions.size)
+                val months = virtualTransactions.map { it.date.month }.toSet()
+                assertFalse(months.contains(Month.JANUARY), "January should be suppressed because a confirmed transaction already covers that month")
+                assertTrue(months.contains(Month.FEBRUARY))
+                assertTrue(months.contains(Month.MARCH))
+            }
+        }
     }
 }

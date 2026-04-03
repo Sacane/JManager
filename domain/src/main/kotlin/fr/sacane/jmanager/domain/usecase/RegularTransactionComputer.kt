@@ -175,8 +175,17 @@ class RegularTransactionGeneratorService(
         val lastDayOfEndMonth = YearMonth.of(endYear, endMonth).lengthOfMonth()
         val endDate = LocalDate.of(endYear, endMonth, lastDayOfEndMonth)
 
-        val existingPhysicalKeys = existingPhysicalTransactions
-            .filter { it.regularTransactionId != null }
+        // Confirmed transactions are matched by (regularTransactionId, YearMonth) regardless of exact
+        // date: when a user confirms a preview and changes its date, the confirmed transaction's date
+        // differs from the natural recurrence date, but it still covers that month's occurrence.
+        val confirmedByYearMonthKeys = existingPhysicalTransactions
+            .filter { it.regularTransactionId != null && it.isNotPreview }
+            .map { "${it.regularTransactionId}-${YearMonth.from(it.date)}" }
+            .toSet()
+
+        // Preview transactions are matched by exact date to avoid suppressing unrelated previews.
+        val previewExactKeys = existingPhysicalTransactions
+            .filter { it.regularTransactionId != null && it.isPreview }
             .map { "${it.regularTransactionId}-${it.date}" }
             .toSet()
 
@@ -222,8 +231,10 @@ class RegularTransactionGeneratorService(
             val filteredTransactions = transactions.filter { transaction ->
                 val transactionYearMonth = YearMonth.from(transaction.date)
                 if (excludedMonths.contains(transactionYearMonth)) return@filter false
-                val key = "${transaction.regularTransactionId}-${transaction.date}"
-                key !in existingPhysicalKeys
+                val confirmedKey = "${transaction.regularTransactionId}-$transactionYearMonth"
+                if (confirmedKey in confirmedByYearMonthKeys) return@filter false
+                val previewKey = "${transaction.regularTransactionId}-${transaction.date}"
+                previewKey !in previewExactKeys
             }
 
             virtualTransactions.addAll(filteredTransactions)
