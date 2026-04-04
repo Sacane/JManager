@@ -635,6 +635,7 @@ onUnmounted(() => {
             />
             <Button
               v-tooltip.bottom="'Exporter CSV'"
+              aria-label="Exporter CSV"
               outlined
               class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 transition-all"
               icon="pi pi-file-export"

@@ -145,7 +145,7 @@ describe('pages/account/[id] loading states', () => {
   it('shows export button loading state when csv export scope is active', () => {
     const { wrapper } = mountPage(['account.exportCsv'])
 
-    const exportButton = wrapper.findAll('button').find(btn => btn.attributes('data-label') === 'Exporter CSV')
+    const exportButton = wrapper.findAll('button').find(btn => btn.attributes('aria-label') === 'Exporter CSV')
     expect(exportButton).toBeDefined()
     expect(exportButton?.attributes('data-loading')).toBe('true')
     expect(exportButton?.attributes('disabled')).toBeDefined()
