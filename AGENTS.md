@@ -67,6 +67,32 @@ JManager/
 
 ## Testing Guidelines
 
+## Implementation Strategy (Mandatory)
+
+Whenever implementing a new feature or a fix, the following order is mandatory:
+
+1. **TDD first, always**:
+   - Start with a failing test (**red**).
+   - Implement the minimum code required to pass (**green**).
+   - Refactor safely without changing behavior (**refactor**).
+   - Keep implementation incremental and test-driven at every step.
+
+2. **Start from the domain layer**:
+   - Create or update the domain entity first when needed.
+   - Create/update the corresponding domain port (interface contract) first.
+   - Adapt/create domain tests first, using in-memory fake implementations to simulate database behavior.
+
+3. **Then implement database/infrastructure (infra => SPI)**:
+   - Implement the infrastructure adapter for the domain port.
+   - Validate behavior with persistence-oriented tests to ensure real database behavior is correct.
+
+4. **Then implement application/API layer (infra => API)**:
+   - Implement API layer changes only after domain and SPI are in place.
+   - Add/update API tests to validate status codes and API behavior scope.
+
+5. **Always finish with full-layer validation**:
+   - Execute and keep green end-to-end coverage across **API + Domain + Database**.
+
 ### Domain Tests
 - Tests in the domain layer must identify and validate **business rules**, not the internal behaviour of a specific class.
 - No infrastructure or adapter dependencies are allowed in domain tests.
