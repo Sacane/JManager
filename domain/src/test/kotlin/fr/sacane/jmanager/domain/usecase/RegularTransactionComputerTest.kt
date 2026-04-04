@@ -884,4 +884,142 @@ class RegularTransactionComputerTest : FeatureTest() {
             }
         }
     }
+
+    @Nested
+    inner class GenerateMissingPrevisionalTransactionsWithCustomDateBounds {
+
+        @Test
+        fun `should not generate transaction when target date falls before startDateBound`() {
+            launchWithConnectedUserInstance {
+                // Monthly-on-5, cycle starts March 28 → March 5 is before the bound → no transaction
+                val monthlyTransaction = RegularTransaction(
+                    label = "Rent",
+                    amount = 800.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-rent-bounds-start"),
+                    startDate = LocalDate.of(2026, 1, 5),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+
+                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2026,
+                    startDateBound = LocalDate.of(2026, 3, 28)
+                )
+
+                assertEquals(0, generatedTransactions.size)
+            }
+        }
+
+        @Test
+        fun `should generate transaction when target date falls within startDateBound`() {
+            launchWithConnectedUserInstance {
+                // Monthly-on-29, cycle starts March 28 → March 29 ≥ March 28 → 1 transaction
+                val monthlyTransaction = RegularTransaction(
+                    label = "Salary",
+                    amount = 2000.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-salary-bounds-start"),
+                    startDate = LocalDate.of(2026, 1, 29),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(29)
+                )
+
+                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2026,
+                    startDateBound = LocalDate.of(2026, 3, 28)
+                )
+
+                assertEquals(1, generatedTransactions.size)
+                assertEquals(LocalDate.of(2026, 3, 29), generatedTransactions[0].date)
+            }
+        }
+
+        @Test
+        fun `should not generate transaction when target date falls after endDateBound`() {
+            launchWithConnectedUserInstance {
+                // Monthly-on-29, cycle ends April 27 → April 29 > April 27 → no transaction
+                val monthlyTransaction = RegularTransaction(
+                    label = "Salary",
+                    amount = 2000.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id.value}-salary-bounds-end"),
+                    startDate = LocalDate.of(2026, 1, 29),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(29)
+                )
+
+                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.APRIL,
+                    targetYear = 2026,
+                    endDateBound = LocalDate.of(2026, 4, 27)
+                )
+
+                assertEquals(0, generatedTransactions.size)
+            }
+        }
+
+        @Test
+        fun `should generate transaction when target date is exactly on endDateBound`() {
+            launchWithConnectedUserInstance {
+                // Monthly-on-27, cycle ends April 27 → April 27 ≤ April 27 → 1 transaction
+                val monthlyTransaction = RegularTransaction(
+                    label = "Insurance",
+                    amount = 150.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-insurance-bounds-end"),
+                    startDate = LocalDate.of(2026, 1, 27),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(27)
+                )
+
+                val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.APRIL,
+                    targetYear = 2026,
+                    endDateBound = LocalDate.of(2026, 4, 27)
+                )
+
+                assertEquals(1, generatedTransactions.size)
+                assertEquals(LocalDate.of(2026, 4, 27), generatedTransactions[0].date)
+            }
+        }
+
+        @Test
+        fun `should behave identically to no-bounds when bounds match full calendar month`() {
+            launchWithConnectedUserInstance {
+                // Explicitly passing full-month bounds should produce same result as no bounds
+                val monthlyTransaction = RegularTransaction(
+                    label = "Subscription",
+                    amount = 20.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-subscription-full-bounds"),
+                    startDate = LocalDate.of(2026, 1, 15),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(15)
+                )
+
+                val withBounds = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    targetMonth = Month.MARCH,
+                    targetYear = 2026,
+                    startDateBound = LocalDate.of(2026, 3, 1),
+                    endDateBound = LocalDate.of(2026, 3, 31)
+                )
+
+                assertEquals(1, withBounds.size)
+                assertEquals(LocalDate.of(2026, 3, 15), withBounds[0].date)
+            }
+        }
+    }
 }
