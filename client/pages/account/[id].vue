@@ -572,11 +572,11 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Filtres de transactions -->
-      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2 md:gap-3">
-        <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1">Afficher :</span>
+      <!-- Filtres + Actions desktop -->
+      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+        <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1 shrink-0">Afficher :</span>
         <button
-          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
+          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
           :class="transactionFilter === 'all'
             ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
             : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--primary)]'"
@@ -586,7 +586,7 @@ onUnmounted(() => {
           Tout ({{ transactionsCount }})
         </button>
         <button
-          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
+          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
           :class="transactionFilter === 'confirmed'
             ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
             : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-emerald-600'"
@@ -596,7 +596,7 @@ onUnmounted(() => {
           Confirmées ({{ transactionsCount - previewTransactionsCount }})
         </button>
         <button
-          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap"
+          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
           :class="transactionFilter === 'preview'
             ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
             : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-amber-600'"
@@ -605,43 +605,67 @@ onUnmounted(() => {
           <i class="pi pi-clock mr-2" />
           Prévisionnelles ({{ previewTransactionsCount }})
         </button>
-      </div>
 
-      <div class="flex flex-col gap-3 mb-5 md:mb-4">
-        <div class="flex flex-col gap-3 lg:(flex-row justify-between items-center gap-6)">
-          <div class="flex flex-col gap-2 md:(flex-row gap-3 flex-wrap)">
-            <Button class="btn-primary w-full md:w-auto" icon="pi pi-plus" :label="isMobile ? 'Transaction' : 'Nouvelle transaction'" :disabled="isAnyActionLoading" @click="openCreationDialog" />
+        <!-- Actions icon-only : desktop uniquement -->
+        <template v-if="!isMobile">
+          <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
+          <div class="flex items-center gap-1.5 shrink-0 ml-auto">
             <Button
+              v-tooltip.bottom="'Nouvelle transaction'"
+              class="btn-primary !w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0"
+              icon="pi pi-plus"
+              :disabled="isAnyActionLoading"
+              @click="openCreationDialog"
+            />
+            <Button
+              v-tooltip.bottom="'Transaction prévisionnelle'"
               outlined
-              class="w-full md:w-auto border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(245,158,11,0.15)] hover:shadow-[0_4px_12px_rgba(245,158,11,0.25)]"
+              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-amber-500 text-amber-600 hover:bg-amber-500/10 transition-all"
               icon="pi pi-clock"
-              :label="isMobile ? 'Prévisionnelle' : 'Transaction prévisionnelle'"
               :disabled="isAnyActionLoading"
               @click="openPreviewCreationDialog"
             />
-          </div>
-
-          <div class="flex flex-col gap-2 lg:(flex-row items-center gap-3 shrink-0)">
             <Button
+              v-tooltip.bottom="'Importer CSV'"
               outlined
-              class="csv-action-btn w-full lg:w-auto border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(6,182,212,0.15)] hover:shadow-[0_4px_12px_rgba(6,182,212,0.25)]"
+              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 transition-all"
               icon="pi pi-file-import"
-              :label="isMobile ? 'CSV' : 'Importer CSV'"
               :disabled="isAnyActionLoading"
               @click="openCsvImportDialog"
             />
             <Button
+              v-tooltip.bottom="'Exporter CSV'"
               outlined
-              class="csv-action-btn w-full lg:w-auto border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 font-semibold transition-all shadow-[0_2px_8px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.25)]"
+              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 transition-all"
               icon="pi pi-file-export"
-              :label="isMobile ? 'Export' : 'Exporter CSV'"
               :loading="isExportCsvLoading"
               :disabled="isAnyActionLoading"
               @click="openCsvExportDialog"
             />
           </div>
-        </div>
+        </template>
+      </div>
 
+      <!-- Boutons d'action mobile -->
+      <div v-if="isMobile" class="flex gap-2 mb-4">
+        <Button
+          class="btn-primary flex-1"
+          icon="pi pi-plus"
+          label="Transaction"
+          :disabled="isAnyActionLoading"
+          @click="openCreationDialog"
+        />
+        <Button
+          outlined
+          class="flex-1 border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all"
+          icon="pi pi-clock"
+          label="Prévisionnelle"
+          :disabled="isAnyActionLoading"
+          @click="openPreviewCreationDialog"
+        />
+      </div>
+
+      <div class="flex flex-col gap-3 mb-5 md:mb-4">
         <Transition name="fade">
           <div v-if="hasSelection" class="flex flex-col gap-3 lg:(flex-row items-center justify-end gap-3)">
             <div class="flex items-center justify-between gap-6 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm lg:justify-start">
@@ -1028,6 +1052,10 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+:global(body) {
+  scrollbar-gutter: stable;
+}
+
 :deep(.p-dropdown),
 :deep(.p-select),
 :deep(.p-calendar) {
