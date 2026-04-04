@@ -23,13 +23,21 @@ interface RegularTransactionGenerator {
      * @param regularTransactions The list of regular transactions to use for generating missing previsional transactions.
      * @param targetMonth The month for which the previsional transactions are being generated.
      * @param targetYear The year for which the previsional transactions are being generated.
+     * @param startDateBound Optional lower bound within the target month. Defaults to the first day of
+     *        the month when null. Allows restricting generation to a custom cycle sub-range (e.g. a
+     *        user-configured period that starts on the 28th of the previous calendar month).
+     * @param endDateBound Optional upper bound within the target month. Defaults to the last day of
+     *        the month when null. Allows restricting generation to a custom cycle sub-range (e.g. a
+     *        user-configured period that ends on the 27th of the calendar month).
      * @return A list of generated previsional transactions.
      */
     fun generateMissingPrevisionalTransactions(
         bookletId: UUID,
         regularTransactions: List<RegularTransaction>,
         targetMonth: Month,
-        targetYear: Int
+        targetYear: Int,
+        startDateBound: LocalDate? = null,
+        endDateBound: LocalDate? = null
     ): List<Transaction>
 
     /**
@@ -86,7 +94,9 @@ class RegularTransactionGeneratorService(
         bookletId: UUID,
         regularTransactions: List<RegularTransaction>,
         targetMonth: Month,
-        targetYear: Int
+        targetYear: Int,
+        startDateBound: LocalDate?,
+        endDateBound: LocalDate?
     ): List<Transaction> {
         val createdTransactions = mutableListOf<Transaction>()
 
@@ -101,25 +111,24 @@ class RegularTransactionGeneratorService(
                 return@forEach
             }
 
-            val firstDayOfTargetMonth = LocalDate.of(targetYear, targetMonth, 1)
-            val lastDayOfTargetMonth = YearMonth.of(targetYear, targetMonth).lengthOfMonth()
-            val targetEndDate = LocalDate.of(targetYear, targetMonth, lastDayOfTargetMonth)
+            val calendarMonthStart = LocalDate.of(targetYear, targetMonth, 1)
+            val calendarMonthEnd = LocalDate.of(targetYear, targetMonth, YearMonth.of(targetYear, targetMonth).lengthOfMonth())
 
-            if (targetEndDate.isBefore(regularTransaction.startDate)) {
+            if (calendarMonthEnd.isBefore(regularTransaction.startDate)) {
                 return@forEach
             }
 
-            val transactionsToCreate = when(val frequency = regularTransaction.frequencyProperty) {
+            val rawTransactions = when(val frequency = regularTransaction.frequencyProperty) {
                 is FrequencyProperty.Forever -> generateTransactionsBetween(
                     regularTransaction,
-                    firstDayOfTargetMonth,
-                    targetEndDate,
+                    calendarMonthStart,
+                    calendarMonthEnd,
                     bookletId,
                 )
                 is FrequencyProperty.UntilDate -> generateTransactionsBetween(
                     regularTransaction,
-                    firstDayOfTargetMonth,
-                    targetEndDate,
+                    calendarMonthStart,
+                    calendarMonthEnd,
                     bookletId,
                     untilDate = frequency.date
                 )
@@ -128,12 +137,22 @@ class RegularTransactionGeneratorService(
                     val currentCount = tracker?.numberOfGeneratedTransaction ?: 0
                     generateTransactionsBetween(
                         regularTransaction,
-                        firstDayOfTargetMonth,
-                        targetEndDate,
+                        calendarMonthStart,
+                        calendarMonthEnd,
                         bookletId,
                         currentMaxNumber = CurrentMaxNumber(currentCount, frequency.number)
                     )
                 }
+            }
+
+            // Apply cycle boundary filter when explicit bounds are provided.
+            // The generation loop always covers the full calendar month so that Monthly/Yearly
+            // recurrence rules (which compute dates from rule.dayOfMonth and not from the
+            // loop position) produce the right occurrences. The filter then restricts the
+            // resulting transaction dates to the caller-supplied cycle sub-range.
+            val transactionsToCreate = rawTransactions.filter { tx ->
+                (startDateBound == null || !tx.date.isBefore(startDateBound)) &&
+                (endDateBound == null || !tx.date.isAfter(endDateBound))
             }
 
             // Save each transaction to the repository
@@ -150,7 +169,7 @@ class RegularTransactionGeneratorService(
                     id = tracker?.id,
                     regularTransactionId = regularTxId,
                     bookletId = bookletId,
-                    lastGeneratedDate = targetEndDate,
+                    lastGeneratedDate = calendarMonthEnd,
                     numberOfGeneratedTransaction = tracker?.numberOfGeneratedTransaction?.plus(transactionsToCreate.size) ?: transactionsToCreate.size
                 )
                 trackerRepository.upsertTracker(newTracker)

@@ -360,11 +360,15 @@ class BookletFeatureImpl(
                     var generated = 0
                     var ym = startYM
                     while (!ym.isAfter(endYM)) {
+                        val boundsStart = if (ym == startYM) resolvedRangeStart else ym.atDay(1)
+                        val boundsEnd = if (ym == endYM) resolvedRangeEnd else ym.atEndOfMonth()
                         val transactions = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
                             bookletId,
                             regularTransactions,
                             ym.month,
-                            ym.year
+                            ym.year,
+                            startDateBound = boundsStart,
+                            endDateBound = boundsEnd
                         )
                         generated += transactions.size
                         ym = ym.plusMonths(1)
