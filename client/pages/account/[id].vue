@@ -33,6 +33,7 @@ const isMobile = ref(false)
 const csvImportDialogRef = ref<any>(null)
 const isMobileMenuOpen = ref(false)
 const transactionFilter = ref<'all' | 'preview' | 'confirmed'>('all')
+const selectedTagFilter = ref<string>('')
 const isConfirmPreviewDialogVisible = ref(false)
 const newAmountForPreview = ref<number | null>(null)
 const newDateForPreview = ref<Date | null>(null)
@@ -68,6 +69,10 @@ const displayMonth = computed({
   },
 })
 const transactionsCount = computed(() => actualSheets.value.length)
+const tagFilterOptions = computed(() => [
+  { label: 'Tous les tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
+  ...tags.value.map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
+])
 const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedSheets.value.length > 0)
 const selectedTransactionsAmount = computed(() => selectedSheets.value.reduce((total, transaction) => {
@@ -112,12 +117,16 @@ const isAnyActionLoading = computed(() =>
 )
 
 const filteredTransactions = computed(() => {
+  let result = actualSheets.value
   if (transactionFilter.value === 'preview') {
-    return actualSheets.value.filter(t => t.isPreview)
+    result = result.filter(t => t.isPreview)
   } else if (transactionFilter.value === 'confirmed') {
-    return actualSheets.value.filter(t => !t.isPreview)
+    result = result.filter(t => !t.isPreview)
   }
-  return actualSheets.value
+  if (selectedTagFilter.value !== '') {
+    result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedTagFilter.value)
+  }
+  return result
 })
 
 function asDisplayableTransaction(transaction: TransactionResultDTO): any {
@@ -128,11 +137,14 @@ function asDisplayableTransaction(transaction: TransactionResultDTO): any {
     colorDTO: { red: 255, green: 255, blue: 255 },
   }
 
+  const numericValue = Number.parseFloat(transaction?.value?.toString() ?? '0')
   return {
     ...transaction,
     id: transaction.id,
-    expensesRepresentation: !transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
-    incomeRepresentation: transaction.isIncome ? `${Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2)} €` : '-',
+    expensesRepresentation: !transaction.isIncome ? `${numericValue.toFixed(2)} €` : '-',
+    incomeRepresentation: transaction.isIncome ? `${numericValue.toFixed(2)} €` : '-',
+    expenseSortValue: !transaction.isIncome ? numericValue : null,
+    incomeSortValue: transaction.isIncome ? numericValue : null,
     date: transaction.date,
     tagDTO: transaction.tagDTO ?? fallbackTag,
   }
@@ -687,7 +699,7 @@ onUnmounted(() => {
             </template>
           </Column>
 
-          <Column field="label" header="Libellé" :style="{ minWidth: '200px' }">
+          <Column field="label" header="Libellé" :sortable="true" :style="{ minWidth: '200px' }">
             <template #body="{ data }">
               <div class="flex items-center gap-2">
                 <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
@@ -696,23 +708,57 @@ onUnmounted(() => {
             </template>
           </Column>
 
-          <Column field="expensesRepresentation" header="Dépenses" :style="{ minWidth: '120px' }">
+          <Column field="expenseSortValue" header="Dépenses" :sortable="true" :style="{ minWidth: '120px' }">
             <template #body="{ data }">
               <span v-if="!data.isIncome" class="font-extrabold text-red-500">{{ data.expensesRepresentation }}</span>
               <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
             </template>
           </Column>
 
-          <Column field="incomeRepresentation" header="Recettes" :style="{ minWidth: '120px' }">
+          <Column field="incomeSortValue" header="Recettes" :sortable="true" :style="{ minWidth: '120px' }">
             <template #body="{ data }">
               <span v-if="data.isIncome" class="font-extrabold text-emerald-500">{{ data.incomeRepresentation }}</span>
               <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
             </template>
           </Column>
 
-          <Column field="tagDTO" header="Catégorie" :style="{ minWidth: '150px' }">
+          <Column field="tagDTO" :style="{ width: '180px', minWidth: '180px', maxWidth: '180px' }">
+            <template #header>
+              <div class="w-full" @click.stop>
+                <Select
+                  v-model="selectedTagFilter"
+                  :options="tagFilterOptions"
+                  option-label="label"
+                  option-value="value"
+                  class="w-full text-xs"
+                  size="small"
+                >
+                  <template #value="{ value: val }">
+                    <span class="text-xs font-semibold" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+                      {{ val ? (tagFilterOptions.find(o => o.value === val)?.label ?? val) : 'Tag' }}
+                    </span>
+                  </template>
+                  <template #option="{ option }">
+                    <span v-if="!option.value" class="text-sm text-[var(--text-secondary)]">Tous les tags</span>
+                    <Tag
+                      v-else
+                      :value="option.label"
+                      :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
+                      class="text-xs"
+                    />
+                  </template>
+                </Select>
+              </div>
+            </template>
             <template #body="{ data }">
-              <Tag :value="data.tagDTO.label" :style="getTagStyle(data.tagDTO.colorDTO)" />
+              <div class="max-w-[148px] overflow-hidden">
+                <Tag
+                  :value="data.tagDTO.label"
+                  :style="getTagStyle(data.tagDTO.colorDTO)"
+                  class="block max-w-full truncate"
+                  :title="data.tagDTO.label"
+                />
+              </div>
             </template>
           </Column>
 

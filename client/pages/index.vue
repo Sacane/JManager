@@ -852,7 +852,7 @@ onMounted(() => {
 
 /* ===== STATS SECTION ===== */
 .stats-section {
-  padding: 80px 20px;
+  padding: 48px 20px;
   background: #f9fafb;
   opacity: 0;
   transform: translateY(30px);
@@ -914,7 +914,7 @@ onMounted(() => {
 
 /* ===== FEATURES SECTION ===== */
 .features-section {
-  padding: 100px 20px;
+  padding: 56px 20px;
   background: white;
   opacity: 0;
   transform: translateY(30px);
@@ -930,7 +930,7 @@ onMounted(() => {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 40px;
   color: #1f2937;
   line-height: 1.2;
 }
@@ -1051,7 +1051,7 @@ onMounted(() => {
 /* ===== CTA SECTION ===== */
 .cta-section {
   position: relative;
-  padding: 100px 20px;
+  padding: 56px 20px;
   background: linear-gradient(135deg, #822acc 0%, #651e9e 100%);
   overflow: hidden;
 }
