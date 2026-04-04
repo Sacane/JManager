@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-04
+
+- Updated `AGENTS.md` with a new mandatory implementation strategy section defining the required execution order for all features/fixes: strict TDD cycle (red/green/refactor with incremental steps), domain-first design (entity/port/contracts and domain tests with in-memory fakes), then infra SPI/database implementation and tests, then infra API implementation and API behavior tests, and mandatory final full-stack validation (API + Domain + Database).
+
 ## 2026-04-03
 
 - Fixed ghost virtual transaction appearing after confirming a forecasted (preview) transaction with a changed date: `calculateVirtualTransactions` now deduplicates confirmed transactions by `(regularTransactionId, YearMonth)` rather than exact date, consistently with `generateMissingPrevisionalTransactions`, so a confirmed occurrence covers its full month regardless of the date it was moved to.
