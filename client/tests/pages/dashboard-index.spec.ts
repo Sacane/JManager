@@ -20,7 +20,7 @@ const fetchBookletsMock = vi.fn().mockResolvedValue([
   {
     id: '11111111-1111-4111-8111-111111111111',
     amount: 1200,
-    labelAccount: 'Compte principal',
+    label: 'Compte principal',
     transactions: [],
   },
 ])
@@ -55,7 +55,7 @@ const getPrevisionalTransactionsMock = vi.fn().mockResolvedValue({
 
 const getUserSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 15,
-  accountCycles: [
+  bookletCycles: [
     {
       accountId: '11111111-1111-4111-8111-111111111111',
       label: 'Compte principal',
@@ -87,7 +87,7 @@ function mountDashboardPage() {
   vi.stubGlobal('definePageMeta', vi.fn())
   vi.stubGlobal('navigateTo', vi.fn())
   vi.stubGlobal('useBooklet', () => ({
-    createAccount: vi.fn(),
+    createBooklet: vi.fn(),
     fetch: fetchBookletsMock,
   }))
   vi.stubGlobal('useRegularTransaction', () => ({ getRegularTransaction: vi.fn().mockResolvedValue([]) }))
@@ -118,7 +118,7 @@ describe('pages/dashboard/index tags insights', () => {
       {
         id: '11111111-1111-4111-8111-111111111111',
         amount: 1200,
-        labelAccount: 'Compte principal',
+        label: 'Compte principal',
         transactions: [],
       },
     ])
@@ -140,7 +140,7 @@ describe('pages/dashboard/index tags insights', () => {
     })
     getUserSettingsMock.mockResolvedValue({
       projectionWindowDays: 15,
-      accountCycles: [
+      bookletCycles: [
         {
           accountId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
@@ -177,7 +177,7 @@ describe('pages/dashboard/index tags insights', () => {
 
     getUserSettingsMock.mockResolvedValue({
       projectionWindowDays: 21,
-      accountCycles: [
+      bookletCycles: [
         {
           accountId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
@@ -210,7 +210,7 @@ describe('pages/dashboard/index tags insights', () => {
 
     getUserSettingsMock.mockResolvedValue({
       projectionWindowDays: 21,
-      accountCycles: [
+      bookletCycles: [
         {
           accountId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
@@ -237,7 +237,7 @@ describe('pages/dashboard/index tags insights', () => {
 
     getUserSettingsMock.mockResolvedValue({
       projectionWindowDays: 21,
-      accountCycles: [
+      bookletCycles: [
         {
           accountId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',

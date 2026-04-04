@@ -93,7 +93,7 @@ const bookletOptions = computed(() => {
   return (props.booklets ?? [])
     .filter(booklet => booklet.id !== undefined && booklet.id !== null)
     .map(booklet => ({
-      label: booklet.labelAccount,
+      label: booklet.label,
       value: String(booklet.id),
     }))
 })
@@ -103,7 +103,7 @@ const linkedBooklets = computed(() => {
   if (!ids.length) return []
   return ids.map((id) => {
     const booklet = props.booklets?.find(b => String(b.id) === id)
-    return booklet?.labelAccount ?? id
+    return booklet?.label ?? id
   })
 })
 

@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.session
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.AccountMonthlyCycleUpdate
+import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -90,9 +90,9 @@ class SessionController(
     fun updateUserSettings(
         @RequestBody settings: UserSettingsUpdateDTO,
     ): ResponseEntity<UserSettingsDTO> {
-        val accountCycles = settings.accountCycles.associate { cycle ->
-            val accountId = parseAccountId(cycle.accountId)
-            accountId to AccountMonthlyCycleUpdate(
+        val bookletCycles = settings.bookletCycles.associate { cycle ->
+            val bookletId = parseBookletId(cycle.bookletId)
+            bookletId to BookletMonthlyCycleUpdate(
                 monthlyPeriodStartDay = cycle.monthlyPeriodStartDay,
                 monthlyPeriodEndDay = cycle.monthlyPeriodEndDay,
             )
@@ -101,18 +101,18 @@ class SessionController(
         return loginFeature.updateSettings(
             token = currentUser.token,
             projectionWindowDays = settings.projectionWindowDays,
-            accountCycles = accountCycles,
+            bookletCycles = bookletCycles,
         )
             .map { it.toDTO() }
             .toHttpResponse()
     }
 
-    private fun parseAccountId(accountId: String): UUID = try {
-        UUID.fromString(accountId)
+    private fun parseBookletId(bookletId: String): UUID = try {
+        UUID.fromString(bookletId)
     } catch (_: IllegalArgumentException) {
         throw InvalidRequestException(
             ResultState.INVALID.code,
-            "L'identifiant de compte '$accountId' est invalide",
+            "L'identifiant de compte '$bookletId' est invalide",
             "domain.user.settings.invalid_account_id",
         )
     }
@@ -120,10 +120,10 @@ class SessionController(
 
 private fun UserSettings.toDTO(): UserSettingsDTO = UserSettingsDTO(
     projectionWindowDays = projectionWindowDays,
-    accountCycles = accountCycles.map { cycle ->
-        AccountMonthlyCycleDTO(
-            accountId = cycle.accountId.toString(),
-            label = cycle.accountLabel,
+    bookletCycles = bookletCycles.map { cycle ->
+        BookletMonthlyCycleDTO(
+            bookletId = cycle.bookletId.toString(),
+            label = cycle.bookletLabel,
             monthlyPeriodStartDay = cycle.monthlyPeriodStartDay,
             monthlyPeriodEndDay = cycle.monthlyPeriodEndDay,
         )

@@ -12,7 +12,7 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TagStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
@@ -37,7 +37,7 @@ import java.util.UUID
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class StatsControllerTest(
     @LocalServerPort val port: Int,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
+    @Autowired private val bookletStateTestAdapter: BookletStateTestAdapter,
     @Autowired private val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val tagStateTestAdapter: TagStateTestAdapter,
     @Autowired var objectMapper: ObjectMapper,
@@ -53,16 +53,16 @@ class StatsControllerTest(
         configureObjectMapper(objectMapper)
         defaultTag = tagRepository.defaultTag()
 
-        accountStateTestAdapter.init(
+        bookletStateTestAdapter.init(
             listOf(Booklet(1000.toAmount(), "Compte Principal", owner = user))
         )
-        booklet = accountStateTestAdapter.get().first()
+        booklet = bookletStateTestAdapter.get().first()
     }
 
     @AfterEach
     fun clear() {
         transactionStateTestAdapter.clear()
-        accountStateTestAdapter.clear()
+        bookletStateTestAdapter.clear()
         tagStateTestAdapter.clear()
     }
 
@@ -97,12 +97,12 @@ class StatsControllerTest(
                 cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/stats/monthly/{accountId}/{year}", mapOf("accountId" to booklet.id!!, "year" to year))
+                get("/api/stats/monthly/{bookletId}/{year}", mapOf("bookletId" to booklet.id!!, "year" to year))
             } Then {
                 statusCode(200)
                 body(
-                    "accountId", equalTo(booklet.id!!.toString()),
-                    "accountLabel", equalTo("Compte Principal"),
+                    "bookletId", equalTo(booklet.id!!.toString()),
+                    "bookletLabel", equalTo("Compte Principal"),
                     "year", equalTo(year),
                     "monthlyData", notNullValue()
                 )
@@ -118,7 +118,7 @@ class StatsControllerTest(
                 cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/stats/monthly/{accountId}/{year}", mapOf("accountId" to UUID.randomUUID(), "year" to year))
+                get("/api/stats/monthly/{bookletId}/{year}", mapOf("bookletId" to UUID.randomUUID(), "year" to year))
             } Then {
                 statusCode(404)
             }
@@ -133,7 +133,7 @@ class StatsControllerTest(
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
                 header("Content-Type", "application/json")
             } When {
-                get("/api/stats/monthly/{accountId}/{year}", mapOf("accountId" to booklet.id!!, "year" to year))
+                get("/api/stats/monthly/{bookletId}/{year}", mapOf("bookletId" to booklet.id!!, "year" to year))
             } Then {
                 statusCode(404)
             }

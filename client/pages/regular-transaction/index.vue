@@ -22,7 +22,7 @@ onMounted(() => {
       booklets.value = res.map(booklet => ({
         id: booklet.id,
         amount: booklet.amount,
-        labelAccount: booklet.labelAccount,
+        label: booklet.label,
         currency: booklet.currency,
       }))
     })

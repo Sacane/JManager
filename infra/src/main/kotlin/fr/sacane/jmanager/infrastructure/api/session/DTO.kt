@@ -35,12 +35,12 @@ data class UserStorageDTO(
 @Serializable
 data class UserSettingsDTO(
     val projectionWindowDays: Int,
-    val accountCycles: List<AccountMonthlyCycleDTO>,
+    val bookletCycles: List<BookletMonthlyCycleDTO>,
 )
 
 @Serializable
-data class AccountMonthlyCycleDTO(
-    val accountId: String,
+data class BookletMonthlyCycleDTO(
+    val bookletId: String,
     val label: String,
     val monthlyPeriodStartDay: Int,
     val monthlyPeriodEndDay: Int? = null,
@@ -49,12 +49,12 @@ data class AccountMonthlyCycleDTO(
 @Serializable
 data class UserSettingsUpdateDTO(
     val projectionWindowDays: Int,
-    val accountCycles: List<AccountMonthlyCycleUpdateDTO>,
+    val bookletCycles: List<BookletMonthlyCycleUpdateDTO>,
 )
 
 @Serializable
-data class AccountMonthlyCycleUpdateDTO(
-    val accountId: String,
+data class BookletMonthlyCycleUpdateDTO(
+    val bookletId: String,
     val monthlyPeriodStartDay: Int,
     val monthlyPeriodEndDay: Int? = null,
 )

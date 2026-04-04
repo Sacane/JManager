@@ -29,7 +29,7 @@ interface TransactionQueryJpaRepository : Repository<TransactionResource, UUID> 
         FROM TransactionResource s
         LEFT JOIN FETCH s.personalTag
         LEFT JOIN FETCH s.tag
-        WHERE s.account.idAccount = :bookletId
+        WHERE s.account.idBooklet = :bookletId
           AND s.date >= :from
           AND s.date <= :to
         ORDER BY s.date, s.lastModified

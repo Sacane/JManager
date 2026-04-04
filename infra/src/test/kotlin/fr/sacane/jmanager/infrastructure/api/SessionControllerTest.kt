@@ -3,8 +3,8 @@ package fr.sacane.jmanager.infrastructure.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.session.AccountMonthlyCycleUpdateDTO
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.session.BookletMonthlyCycleUpdateDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserPasswordDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserSettingsUpdateDTO
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
@@ -28,12 +28,12 @@ class SessionControllerTest(
     @LocalServerPort private val port: Int,
     @Autowired val objectMapper: ObjectMapper,
     @Autowired val userRepository: UserPostgresRepository,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
+    @Autowired private val BookletStateTestAdapter: BookletStateTestAdapter,
 ): AuthenticatedUserTest() {
 
     @AfterEach
     fun clear() {
-        accountStateTestAdapter.clear()
+        BookletStateTestAdapter.clear()
         userRepository.deleteAll()
     }
 
@@ -88,7 +88,7 @@ class SessionControllerTest(
         fun `Update user settings with valid projection must return 200`() {
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 30,
-                accountCycles = emptyList(),
+                bookletCycles = emptyList(),
             )
 
             Given {
@@ -108,7 +108,7 @@ class SessionControllerTest(
         fun `Update user settings with invalid projection must return 400`() {
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 6,
-                accountCycles = emptyList(),
+                bookletCycles = emptyList(),
             )
 
             Given {
@@ -125,14 +125,14 @@ class SessionControllerTest(
 
         @Test
         fun `Update user settings with invalid monthly period end day must return 400`() {
-            accountStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
-            val accountId = accountStateTestAdapter.get().first().id!!.toString()
+            BookletStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
+            val bookletId = BookletStateTestAdapter.get().first().id!!.toString()
 
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 15,
-                accountCycles = listOf(
-                    AccountMonthlyCycleUpdateDTO(
-                        accountId = accountId,
+                bookletCycles = listOf(
+                    BookletMonthlyCycleUpdateDTO(
+                        bookletId = bookletId,
                         monthlyPeriodStartDay = 20,
                         monthlyPeriodEndDay = 32,
                     ),
@@ -155,7 +155,7 @@ class SessionControllerTest(
         fun `Update user settings with invalid account id must return 400`() {
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 15,
-                accountCycles = listOf(AccountMonthlyCycleUpdateDTO(accountId = "not-a-uuid", monthlyPeriodStartDay = 20)),
+                bookletCycles = listOf(BookletMonthlyCycleUpdateDTO(bookletId = "not-a-uuid", monthlyPeriodStartDay = 20)),
             )
 
             Given {
@@ -174,9 +174,9 @@ class SessionControllerTest(
         fun `Update user settings with non owned account must return 403`() {
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 15,
-                accountCycles = listOf(
-                    AccountMonthlyCycleUpdateDTO(
-                        accountId = UUID.randomUUID().toString(),
+                bookletCycles = listOf(
+                    BookletMonthlyCycleUpdateDTO(
+                        bookletId = UUID.randomUUID().toString(),
                         monthlyPeriodStartDay = 20,
                     )
                 ),
@@ -196,11 +196,11 @@ class SessionControllerTest(
 
         @Test
         fun `Update user settings without cycles for owned accounts must return 400`() {
-            accountStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
+            BookletStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
 
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 20,
-                accountCycles = emptyList(),
+                bookletCycles = emptyList(),
             )
 
             Given {
@@ -217,14 +217,14 @@ class SessionControllerTest(
 
         @Test
         fun `Update user settings with owned account must persist and be readable`() {
-            accountStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
-            val accountId = accountStateTestAdapter.get().first().id!!.toString()
+            BookletStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
+            val bookletId = BookletStateTestAdapter.get().first().id!!.toString()
 
             val updateBody = UserSettingsUpdateDTO(
                 projectionWindowDays = 30,
-                accountCycles = listOf(
-                    AccountMonthlyCycleUpdateDTO(
-                        accountId = accountId,
+                bookletCycles = listOf(
+                    BookletMonthlyCycleUpdateDTO(
+                        bookletId = bookletId,
                         monthlyPeriodStartDay = 28,
                         monthlyPeriodEndDay = 27,
                     )
@@ -241,10 +241,10 @@ class SessionControllerTest(
             } Then {
                 statusCode(200)
                 body("projectionWindowDays", equalTo(30))
-                body("accountCycles.size()", equalTo(1))
-                body("accountCycles[0].accountId", equalTo(accountId))
-                body("accountCycles[0].monthlyPeriodStartDay", equalTo(28))
-                body("accountCycles[0].monthlyPeriodEndDay", equalTo(27))
+                body("bookletCycles.size()", equalTo(1))
+                body("bookletCycles[0].bookletId", equalTo(bookletId))
+                body("bookletCycles[0].monthlyPeriodStartDay", equalTo(28))
+                body("bookletCycles[0].monthlyPeriodEndDay", equalTo(27))
             }
 
             Given {
@@ -256,10 +256,10 @@ class SessionControllerTest(
             } Then {
                 statusCode(200)
                 body("projectionWindowDays", equalTo(30))
-                body("accountCycles.size()", equalTo(1))
-                body("accountCycles[0].accountId", equalTo(accountId))
-                body("accountCycles[0].monthlyPeriodStartDay", equalTo(28))
-                body("accountCycles[0].monthlyPeriodEndDay", equalTo(27))
+                body("bookletCycles.size()", equalTo(1))
+                body("bookletCycles[0].bookletId", equalTo(bookletId))
+                body("bookletCycles[0].monthlyPeriodStartDay", equalTo(28))
+                body("bookletCycles[0].monthlyPeriodEndDay", equalTo(27))
             }
         }
     }

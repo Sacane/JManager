@@ -7,8 +7,8 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class MonthlyAccountStatsDTO(
-    val accountId: UUID,
-    val accountLabel: String,
+    val bookletId: UUID,
+    val bookletLabel: String,
     val year: Int,
     val monthlyData: List<MonthlyDataDTO>
 )
@@ -72,8 +72,8 @@ data class TransactionDTO(
 )
 
 fun MonthlyAccountStatsOutput.toDTO() = MonthlyAccountStatsDTO(
-    accountId = accountId,
-    accountLabel = accountLabel,
+    bookletId = bookletId,
+    bookletLabel = bookletLabel,
     year = year,
     monthlyData = monthlyData.map { it.toDTO() }
 )

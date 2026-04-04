@@ -14,20 +14,25 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 import java.time.Month
 import java.util.*
 
-data class IdUserAccountByTransaction(
-    val id: IdUserAccount,
+data class IdUserBooklet(
+    val userId: UserId,
+    val bookletId: UUID
+)
+
+data class IdBookletByTransaction(
+    val id: IdUserBooklet,
     val transactions: MutableList<Transaction>
 )
 
 class InMemoryTransactionRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): TransactionRepository, State<IdUserAccountByTransaction> {
+): TransactionRepository, State<IdBookletByTransaction> {
 
 
-    override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
-        val accounts = inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklet?.find { it.label == accountLabel } ?: return null
-        val userAccountId = accounts.id?.let { IdUserAccount(userId, it) } ?: return null
-        inMemoryDatabase.addTransaction(userAccountId, transaction)
+    override fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction? {
+        val booklet = inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklets?.find { it.label == bookletLabel } ?: return null
+        val userBookletId = booklet.id?.let { IdUserBooklet(userId, it) } ?: return null
+        inMemoryDatabase.addTransaction(userBookletId, transaction)
 
         return transaction
     }
@@ -40,13 +45,13 @@ class InMemoryTransactionRepository(
         return inMemoryDatabase.findTransactionById(transactionId)
     }
 
-    override fun save(accountId: UUID, transaction: Transaction): Transaction {
+    override fun save(bookletId: UUID, transaction: Transaction): Transaction {
         val transactionWithId = if (transaction.id == null) {
             transaction.copy(id = UUID.randomUUID())
         } else {
             transaction
         }
-        inMemoryDatabase.saveTransaction(accountId, transactionWithId)
+        inMemoryDatabase.saveTransaction(bookletId, transactionWithId)
         return transactionWithId
     }
 
@@ -70,7 +75,7 @@ class InMemoryTransactionRepository(
         return inMemoryDatabase.findAccountById(bookletId)?.retrieveSheetSurroundAndSortedByDate(month, year)
     }
 
-    override fun getStates(): Collection<IdUserAccountByTransaction> {
+    override fun getStates(): Collection<IdBookletByTransaction> {
         return inMemoryDatabase.findTransactions()
     }
 
@@ -78,7 +83,7 @@ class InMemoryTransactionRepository(
         inMemoryDatabase.clearTransactions()
     }
 
-    override fun init(initialState: Collection<IdUserAccountByTransaction>) {
+    override fun init(initialState: Collection<IdBookletByTransaction>) {
         inMemoryDatabase.addMassiveTransaction(initialState)
     }
 }
@@ -92,12 +97,12 @@ class InMemoryUserRepository (
         return inMemoryDatabase.users[userId]?.user
     }
 
-    override fun findUserByIdWithAccounts(userId: UserId): User? {
+    override fun findUserByIdWithBooklets(userId: UserId): User? {
         val user = inMemoryDatabase.users[userId]?.user ?: return null
-        val accounts = inMemoryDatabase.accountsByOwner().find { it.userId == userId }
-        if(accounts != null) {
-            for(account in accounts.booklet) {
-                user.addAccount(account)
+        val booklets = inMemoryDatabase.accountsByOwner().find { it.userId == userId }
+        if(booklets != null) {
+            for(booklet in booklets.booklets) {
+                user.addBooklet(booklet)
             }
         }
         println(user)
@@ -153,18 +158,18 @@ class InMemoryUserRepository (
     }
 }
 
-data class AccountByOwner(
-    val booklet: List<Booklet>,
+data class BookletsByOwner(
+    val booklets: List<Booklet>,
     val userId: UserId
 ) {
-    fun existsById(accountId: UUID): Booklet? {
-        return booklet.find { it.id == accountId }
+    fun existsById(bookletId: UUID): Booklet? {
+        return booklets.find { it.id == bookletId }
     }
 }
 
 class InMemoryBookletRepository(
     private val inMemoryDatabase: InMemoryDatabase
-): BookletRepository, State<AccountByOwner> {
+): BookletRepository, State<BookletsByOwner> {
 
     override fun editFromAnother(booklet: Booklet): Booklet {
         inMemoryDatabase.upsert(booklet)
@@ -175,16 +180,16 @@ class InMemoryBookletRepository(
         return booklet
     }
 
-    override fun findAccountByIdWithTransactions(accountId: UUID): Booklet? {
-        return inMemoryDatabase.findAccountById(accountId)
+    override fun findBookletByIdWithTransactions(bookletId: UUID): Booklet? {
+        return inMemoryDatabase.findAccountById(bookletId)
     }
 
-    override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Booklet? {
-        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, accountLabel)
+    override fun findBookletByLabelWithTransactions(userId: UserId, bookletLabel: String): Booklet? {
+        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, bookletLabel)
     }
 
-    override fun deleteAccountById(accountId: UUID) {
-        inMemoryDatabase.removeAccountById(accountId)
+    override fun deleteBookletById(bookletId: UUID) {
+        inMemoryDatabase.removeAccountById(bookletId)
     }
 
     override fun upsert(booklet: Booklet): Booklet {
@@ -206,10 +211,10 @@ class InMemoryBookletRepository(
     }
 
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
-        return inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklet ?: emptyList()
+        return inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklets ?: emptyList()
     }
 
-    override fun getStates(): Collection<AccountByOwner> {
+    override fun getStates(): Collection<BookletsByOwner> {
         return inMemoryDatabase.accountsByOwner()
     }
 
@@ -217,14 +222,8 @@ class InMemoryBookletRepository(
         inMemoryDatabase.clearAccounts()
     }
 
-    override fun init(initialState: Collection<AccountByOwner>) {
+    override fun init(initialState: Collection<BookletsByOwner>) {
         inMemoryDatabase.initAccounts(initialState)
     }
 }
-
-data class IdUserAccount(
-    val userId: UserId,
-    val accountId: UUID
-)
-
 

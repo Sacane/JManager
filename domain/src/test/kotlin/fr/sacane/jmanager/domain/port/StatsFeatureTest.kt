@@ -4,10 +4,10 @@ import fr.sacane.jmanager.domain.AuthenticationTest
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertTrue
-import fr.sacane.jmanager.domain.fake.AccountByOwner
+import fr.sacane.jmanager.domain.fake.BookletsByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.fake.IdUserAccount
-import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.fake.IdUserBooklet
+import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -31,7 +31,7 @@ class StatsFeatureTest : FeatureTest() {
         private val user = userRepository.register("jojo", "test") as User
         private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
         private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
-        private val accountState: State<AccountByOwner> = FakeFactory.accountState()
+        private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
         private val transactionState = FakeFactory.fakeTransactionRepository()
 
     }
@@ -198,7 +198,7 @@ class StatsFeatureTest : FeatureTest() {
         fun `Should return empty distribution when no transactions exist`() {
             launchWithConnectedUserWithoutAccount {
                 val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
-                accountState.init(listOf(AccountByOwner(listOf(booklet), userId)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), userId)))
 
                 statsFeature.getCategoryDistribution(tokenValue)
                     .assertTrue {
@@ -274,11 +274,11 @@ class StatsFeatureTest : FeatureTest() {
                     LocalDate.of(2025, 1, 12),
                     foodTag
                 )
-                accountState.init(listOf(AccountByOwner(listOf(secondBooklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(secondBooklet), user.id)))
                 transactionState.init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, secondBooklet.id!!),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, secondBooklet.id!!),
                             mutableListOf(secondAccountTransaction)
                         )
                     )
@@ -365,7 +365,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 transactions2.forEach { booklet2.addTransaction(it) }
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet2), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet2), user.id)))
 
                 statsFeature.getTrendStats(tokenValue)
                     .assertTrue {
@@ -503,9 +503,9 @@ class StatsFeatureTest : FeatureTest() {
                 initTransactions(transactions1)
 
                 val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "account2", owner = user.toUser(), id = UUID.randomUUID())
-                accountState.init(listOf(AccountByOwner(listOf(booklet2), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet2), user.id)))
                 transactionState.init(
-                    listOf(IdUserAccountByTransaction(IdUserAccount(user.id, booklet2.id!!), mutableListOf(generateTransaction("Future Bill", Amount(BigDecimal("100")), false, startDate.plusMonths(1), isPreview = true))))
+                    listOf(IdBookletByTransaction(IdUserBooklet(user.id, booklet2.id!!), mutableListOf(generateTransaction("Future Bill", Amount(BigDecimal("100")), false, startDate.plusMonths(1), isPreview = true))))
                 )
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
@@ -598,11 +598,11 @@ class StatsFeatureTest : FeatureTest() {
                     owner = user.toUser(),
                     id = UUID.randomUUID()
                 )
-                accountState.init(listOf(AccountByOwner(listOf(secondBooklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(secondBooklet), user.id)))
                 transactionState.init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, secondBooklet.id!!),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, secondBooklet.id!!),
                             mutableListOf(
                                 generateTransaction("A2 Future", Amount(BigDecimal("-200")), false, startDate.plusDays(10), isPreview = true)
                             )

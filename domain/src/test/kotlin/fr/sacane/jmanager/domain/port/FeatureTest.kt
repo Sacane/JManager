@@ -2,10 +2,10 @@ package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.State
-import fr.sacane.jmanager.domain.fake.AccountByOwner
+import fr.sacane.jmanager.domain.fake.BookletsByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.fake.IdUserAccount
-import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.fake.IdUserBooklet
+import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -17,8 +17,8 @@ import kotlin.random.Random
 
 open class FeatureTest {
 
-    private val accountState: State<AccountByOwner> = FakeFactory.accountState()
-    private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
+    private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
+    private val transactionState: State<IdBookletByTransaction> = FakeFactory.fakeTransactionRepository()
     private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
     private val sessionManager: SessionManager = FakeFactory.sessionManager()
     private val tagState: BiState<UserTag, List<Tag>> = FakeFactory.tagTestState()
@@ -27,7 +27,7 @@ open class FeatureTest {
     fun cleanUp() {
         userState.clear()
         transactionState.clear()
-        accountState.clear()
+        bookletState.clear()
     }
     companion object {
         private val tagRepository = FakeFactory.fakeTagRepository()
@@ -40,9 +40,9 @@ open class FeatureTest {
     }
     fun createAccount(userId: User, label: String, amount: Amount): Booklet {
         val id = UUID.randomUUID()
-        val booklet = Booklet(id = id, amount = amount, labelAccount = label, owner = userId)
-        accountState.init(
-            AccountByOwner(booklet.asSingleton(), userId.id).asSingleton()
+        val booklet = Booklet(id = id, amount = amount, label = label, owner = userId)
+        bookletState.init(
+            BookletsByOwner(booklet.asSingleton(), userId.id).asSingleton()
         )
         return booklet
     }
@@ -75,7 +75,7 @@ open class FeatureTest {
         val booklet: Booklet
     ) {
         fun initTransactions(transactions: List<Transaction>) {
-            transactionState.init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, booklet.id!!), transactions.toMutableList())))
+            transactionState.init(listOf(IdBookletByTransaction(IdUserBooklet(user.id, booklet.id!!), transactions.toMutableList())))
         }
         fun initTags(tags: List<UserTag>) {
             tags.forEach {

@@ -43,7 +43,7 @@ definePageMeta({
 })
 
 const { user } = useAuth()
-const { createAccount, fetch: fetchBooklets } = useBooklet()
+const { createBooklet, fetch: fetchBooklets } = useBooklet()
 const { getRegularTransaction } = useRegularTransaction()
 const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
@@ -71,7 +71,7 @@ const hasInitializedDashboard = ref(false)
 const budgetTargetsByAccount = ref<Record<string, number>>({})
 const budgetTargetInput = ref<number | undefined>(undefined)
 const projectionWindowDays = ref(15)
-const accountMonthlyCycleById = ref<Record<string, { startDay: number, endDay: number | null }>>({})
+const bookletMonthlyCycleById = ref<Record<string, { startDay: number, endDay: number | null }>>({})
 const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
 const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
@@ -125,7 +125,7 @@ const selectedMonthlyPeriodStartDay = computed(() => {
     return 1
   }
 
-  const configured = accountMonthlyCycleById.value[String(selectedAccountId.value)]?.startDay
+  const configured = bookletMonthlyCycleById.value[String(selectedAccountId.value)]?.startDay
   if (!configured) {
     return 1
   }
@@ -138,7 +138,7 @@ const selectedMonthlyPeriodEndDay = computed(() => {
     return null
   }
 
-  const configured = accountMonthlyCycleById.value[String(selectedAccountId.value)]?.endDay
+  const configured = bookletMonthlyCycleById.value[String(selectedAccountId.value)]?.endDay
   if (configured === null || configured === undefined) {
     return null
   }
@@ -694,13 +694,13 @@ onBeforeUnmount(() => {
 
 // Functions
 function handleAccountCreation(account: { label: string, digit: number }) {
-  createAccount(account.label, account.digit, '€')
+  createBooklet(account.label, account.digit, '€')
     .then((acc) => {
       if (accounts.value.length < 10) {
         accounts.value.push(acc)
       }
       toast.success('Le compte a bien été créé')
-      navigateTo(`/account/${acc.id}`)
+      navigateTo(`/booklet/${acc.id}`)
     })
     .catch(err => toast.errorAxios(err))
 }
@@ -788,9 +788,9 @@ async function loadDashboardData() {
 
       if (settingsData) {
         projectionWindowDays.value = normalizeProjectionWindowDays(settingsData.projectionWindowDays)
-        accountMonthlyCycleById.value = Object.fromEntries(
-          settingsData.accountCycles.map((cycle: AccountMonthlyCycleDTO) => [
-            cycle.accountId,
+        bookletMonthlyCycleById.value = Object.fromEntries(
+          settingsData.bookletCycles.map((cycle: BookletMonthlyCycleDTO) => [
+            cycle.bookletId,
             {
               startDay: Math.min(31, Math.max(1, Math.trunc(cycle.monthlyPeriodStartDay))),
               endDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
@@ -922,7 +922,7 @@ watch(selectedAccountId, () => {
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
           <p class="text-base" style="color: var(--text-secondary);">
-            Vue {{ selectedPeriodLabel }} • {{ selectedAccount?.labelAccount || 'Tous les comptes' }}
+            Vue {{ selectedPeriodLabel }} • {{ selectedAccount?.label || 'Tous les comptes' }}
           </p>
           <div class="flex items-center gap-2.5 mt-3 flex-wrap">
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
@@ -943,7 +943,7 @@ watch(selectedAccountId, () => {
         <div class="flex items-center gap-3 flex-wrap">
           <select v-model="selectedAccountId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
             <option v-for="account in accounts" :key="account.id" :value="account.id">
-              {{ account.labelAccount }}
+              {{ account.label }}
             </option>
           </select>
           <div class="period-toggle flex items-center rounded-lg p-1">
@@ -999,7 +999,7 @@ watch(selectedAccountId, () => {
               {{ selectedAccountBalance.toFixed(2) }} €
             </p>
             <p class="text-xs" style="color: var(--text-tertiary);">
-              {{ selectedAccount?.labelAccount || 'Compte sélectionné' }}
+              {{ selectedAccount?.label || 'Compte sélectionné' }}
             </p>
           </div>
         </div>
@@ -1179,14 +1179,14 @@ watch(selectedAccountId, () => {
                 :key="account.id"
                 class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all hover:translate-x-1.5"
                 style="background-color: var(--bg-tertiary);"
-                @click="navigateTo(`/account/${account.id}`)"
+                @click="navigateTo(`/booklet/${account.id}`)"
               >
                 <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
                   <i class="pi pi-wallet" />
                 </div>
                 <div class="flex-1">
                   <p class="font-semibold m-0 mb-1" style="color: var(--text-primary);">
-                    {{ account.labelAccount }}
+                    {{ account.label }}
                   </p>
                   <p class="text-sm m-0" style="color: var(--text-secondary);">
                     {{ Number.parseFloat(account.amount.toString()).toFixed(2) }} €
@@ -1370,7 +1370,7 @@ watch(selectedAccountId, () => {
             Actions rapides
           </h2>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button class="quick-action-btn" @click="navigateTo('/account')">
+            <button class="quick-action-btn" @click="navigateTo('/booklet')">
               <i class="pi pi-wallet" />
               Voir mes comptes
             </button>

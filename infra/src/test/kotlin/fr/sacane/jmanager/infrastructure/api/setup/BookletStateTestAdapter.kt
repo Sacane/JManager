@@ -2,16 +2,16 @@ package fr.sacane.jmanager.infrastructure.api.setup
 
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.infrastructure.State
-import fr.sacane.jmanager.infrastructure.spi.adapters.utils.AccountMapper
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.BookletMapper
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 
 @Component
-class AccountStateTestAdapter(
+class BookletStateTestAdapter(
     private val bookletJpaRepository: BookletJpaRepository,
-    private val accountMapper: AccountMapper
+    private val bookletMapper: BookletMapper
 ): State<Booklet, Booklet> {
     @Transactional
     override fun get(): Collection<Booklet> {
@@ -23,6 +23,6 @@ class AccountStateTestAdapter(
     }
 
     override fun init(initialState: Collection<Booklet>) {
-        bookletJpaRepository.saveAll(initialState.map { accountMapper.asResource(it) })
+        bookletJpaRepository.saveAll(initialState.map { bookletMapper.asResource(it) })
     }
 }

@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.transaction.TransactionRepositoryJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -31,7 +31,7 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
     private lateinit var transactionRepositoryJpaAdapter: TransactionRepositoryJpaAdapter
 
     @Autowired
-    private lateinit var accountStateTestAdapter: AccountStateTestAdapter
+    private lateinit var bookletStateTestAdapter: BookletStateTestAdapter
 
     @Autowired
     private lateinit var transactionJpaRepository: TransactionJpaRepository
@@ -62,7 +62,7 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
     @AfterEach
     fun clear() {
         transactionJpaRepository.deleteAll()
-        accountStateTestAdapter.clear()
+        bookletStateTestAdapter.clear()
     }
 
     @Nested
@@ -70,8 +70,8 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
 
         @Test
         fun `save must persist transaction and be retrievable by id`() {
-            val booklet = Booklet(labelAccount = "acct-save", amount = Amount(100L), owner = user)
-            accountStateTestAdapter.init(listOf(booklet))
+            val booklet = Booklet(label = "acct-save", amount = Amount(100L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
 
             val tx = Transaction(
                 id = null,
@@ -83,8 +83,8 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             )
 
             val persistedAccount = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, user!!.id)
-            val accountId = persistedAccount!!.id!!
-            val saved = transactionRepositoryJpaAdapter.save(accountId, tx)
+            val bookletId = persistedAccount!!.id!!
+            val saved = transactionRepositoryJpaAdapter.save(bookletId, tx)
             assertThat(saved).isNotNull
             val id = saved!!.id
             assertThat(id).isNotNull
@@ -96,17 +96,17 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
 
         @Test
         fun `deleteAllSheetsById must remove sheets from repository`() {
-            val booklet = Booklet(labelAccount = "acct-del", amount = Amount(200L), owner = user)
-            accountStateTestAdapter.init(listOf(booklet))
+            val booklet = Booklet(label = "acct-del", amount = Amount(200L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
 
             val tx1 = Transaction(id = null, label = "t1", date = LocalDate.now(), amount = Amount(10L), isIncome = false)
             val tx2 = Transaction(id = null, label = "t2", date = LocalDate.now(), amount = Amount(20L), isIncome = true)
 
             val persistedAccount = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, user!!.id)
 
-            val accountId = persistedAccount!!.id!!
-            val s1 = transactionRepositoryJpaAdapter.save(accountId, tx1)
-            val s2 = transactionRepositoryJpaAdapter.save(accountId, tx2)
+            val bookletId = persistedAccount!!.id!!
+            val s1 = transactionRepositoryJpaAdapter.save(bookletId, tx1)
+            val s2 = transactionRepositoryJpaAdapter.save(bookletId, tx2)
 
             assertThat(s1).isNotNull
             assertThat(s2).isNotNull
@@ -126,11 +126,11 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
 
         @Test
         fun `findAccountWithSheetByLabelAndUser must return account with sheets`() {
-            val booklet = Booklet(labelAccount = "acct-list", amount = Amount(300L), owner = user)
-            accountStateTestAdapter.init(listOf(booklet))
+            val booklet = Booklet(label = "acct-list", amount = Amount(300L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
 
             val tx = Transaction(id = null, label = "list-tx", date = LocalDate.now(), amount = Amount(30L), isIncome = false, tag = Tag("t"))
-            val persisted = transactionRepositoryJpaAdapter.persist(userId = user!!.id, accountLabel = booklet.label, transaction = tx)
+            val persisted = transactionRepositoryJpaAdapter.persist(userId = user!!.id, bookletLabel = booklet.label, transaction = tx)
 
             assertThat(persisted).isNotNull
 
@@ -142,8 +142,8 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
         @Test
         fun `findTransactionsByBookletYearAndMonth must filter by month and year`() {
             val year = 2025
-            val booklet = Booklet(labelAccount = "acct-month", amount = Amount(400L), owner = user)
-            accountStateTestAdapter.init(listOf(booklet))
+            val booklet = Booklet(label = "acct-month", amount = Amount(400L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
 
             val txJan1 = Transaction(id = null, label = "jan1", date = LocalDate.of(year, Month.JANUARY, 5), amount = Amount(10L), isIncome = false)
             val txJan2 = Transaction(id = null, label = "jan2", date = LocalDate.of(year, Month.JANUARY, 15), amount = Amount(20L), isIncome = true)
@@ -151,13 +151,13 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
 
             val persistedAccount = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, user!!.id)
 
-            val accountId = persistedAccount!!.id!!
+            val bookletId = persistedAccount!!.id!!
 
-            transactionRepositoryJpaAdapter.save(accountId, txJan1)
-            transactionRepositoryJpaAdapter.save(accountId, txJan2)
-            transactionRepositoryJpaAdapter.save(accountId, txDec)
+            transactionRepositoryJpaAdapter.save(bookletId, txJan1)
+            transactionRepositoryJpaAdapter.save(bookletId, txJan2)
+            transactionRepositoryJpaAdapter.save(bookletId, txDec)
 
-            val result = transactionRepositoryJpaAdapter.findTransactionsByBookletYearAndMonth(accountId, year, Month.JANUARY)
+            val result = transactionRepositoryJpaAdapter.findTransactionsByBookletYearAndMonth(bookletId, year, Month.JANUARY)
             assertThat(result).isNotNull
             assertThat(result!!.map { it.label }).containsExactlyInAnyOrder("jan1", "jan2")
         }
@@ -168,13 +168,13 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
 
         @Test
         fun `mapToRightTag should resolve default, personal and unknown tags correctly`() {
-            val booklet = Booklet(labelAccount = "acct-maptag", amount = Amount(500L), owner = user)
-            accountStateTestAdapter.init(listOf(booklet))
+            val booklet = Booklet(label = "acct-maptag", amount = Amount(500L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
 
             val uid = user!!.id
 
             val txUnknown = Transaction(id = null, label = "tx-unknown", date = LocalDate.now(), amount = Amount(5L), isIncome = false, tag = Tag.noneTag())
-            val persisted = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = txUnknown)
+            val persisted = transactionRepositoryJpaAdapter.persist(userId = uid, bookletLabel = booklet.label, transaction = txUnknown)
             assertThat(persisted).isNotNull
             assertThat(persisted!!.tag).isNotNull
             assertThat(persisted.tag!!.label).isEqualTo(Tag.noneTag().label)
@@ -201,31 +201,31 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             val txDefault = Transaction(id = null, label = "tx-default", date = LocalDate.now(), amount = Amount(10L), isIncome = false, tag = Tag("Achat & Shopping",
                 tagInDb?.idTag, isDefault = true))
             val acct = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, uid)
-            val accountId = acct!!.id!!
-            val persistedDefault = transactionRepositoryJpaAdapter.save(accountId, txDefault)
+            val bookletId = acct!!.id!!
+            val persistedDefault = transactionRepositoryJpaAdapter.save(bookletId, txDefault)
             assertThat(persistedDefault).isNotNull
             assertThat(persistedDefault!!.tag).isNotNull
             assertThat(persistedDefault.tag!!.label).isEqualTo("Achat & Shopping")
 
             val personalTag = Tag("my-personal", null, isDefault = false)
             val txPersonal = Transaction(id = null, label = "tx-personal", date = LocalDate.now(), amount = Amount(15L), isIncome = false, tag = personalTag)
-            val persistedPersonal = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = txPersonal)
+            val persistedPersonal = transactionRepositoryJpaAdapter.persist(userId = uid, bookletLabel = booklet.label, transaction = txPersonal)
             assertThat(persistedPersonal).isNotNull
             assertThat(persistedPersonal!!.tag).isNotNull
         }
 
         @Test
         fun `findAccountWithTransactionById must return account populated with transactions`() {
-            val booklet = Booklet(labelAccount = "acct-findById", amount = Amount(600L), owner = user)
-            accountStateTestAdapter.init(listOf(booklet))
+            val booklet = Booklet(label = "acct-findById", amount = Amount(600L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
 
             val uid = user!!.id
 
             val tx1 = Transaction(id = null, label = "fb1", date = LocalDate.now(), amount = Amount(1L), isIncome = false)
             val tx2 = Transaction(id = null, label = "fb2", date = LocalDate.now(), amount = Amount(2L), isIncome = false)
 
-            val persisted = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = tx1)
-            val persisted2 = transactionRepositoryJpaAdapter.persist(userId = uid, accountLabel = booklet.label, transaction = tx2)
+            val persisted = transactionRepositoryJpaAdapter.persist(userId = uid, bookletLabel = booklet.label, transaction = tx1)
+            val persisted2 = transactionRepositoryJpaAdapter.persist(userId = uid, bookletLabel = booklet.label, transaction = tx2)
 
             // ensure persisted transactions were created
             assertThat(persisted).isNotNull
@@ -233,9 +233,9 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
 
             val account = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, uid)
             assertThat(account).isNotNull
-            val accountId = account!!.id!!
+            val bookletId = account!!.id!!
 
-            val loaded = transactionRepositoryJpaAdapter.findAccountWithTransactionById(accountId)
+            val loaded = transactionRepositoryJpaAdapter.findAccountWithTransactionById(bookletId)
             assertThat(loaded).isNotNull
             assertThat(loaded!!.transactions).isNotEmpty
             assertThat(loaded.transactions.map { it.label }).containsExactlyInAnyOrder("fb1", "fb2")
@@ -243,22 +243,22 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
 
         @Test
         fun `findTransactionsByBookletId should return all persisted transactions for booklet`() {
-            val booklet = Booklet(labelAccount = "acct-listAll", amount = Amount(700L), owner = user)
-            accountStateTestAdapter.init(listOf(booklet))
+            val booklet = Booklet(label = "acct-listAll", amount = Amount(700L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
 
             val txA = Transaction(id = null, label = "A", date = LocalDate.now(), amount = Amount(7L), isIncome = false)
             val txB = Transaction(id = null, label = "B", date = LocalDate.now(), amount = Amount(8L), isIncome = false)
 
             val uid = user!!.id
             val account = transactionRepositoryJpaAdapter.findAccountWithSheetByLabelAndUser(booklet.label, uid)
-            val accountId = account!!.id!!
+            val bookletId = account!!.id!!
 
-            val savedA = transactionRepositoryJpaAdapter.save(accountId, txA)
-            val savedB = transactionRepositoryJpaAdapter.save(accountId, txB)
+            val savedA = transactionRepositoryJpaAdapter.save(bookletId, txA)
+            val savedB = transactionRepositoryJpaAdapter.save(bookletId, txB)
             assertThat(savedA).isNotNull
             assertThat(savedB).isNotNull
 
-            val list = transactionRepositoryJpaAdapter.findTransactionsByBookletId(accountId)
+            val list = transactionRepositoryJpaAdapter.findTransactionsByBookletId(bookletId)
             assertThat(list).isNotNull
             assertThat(list!!.map { it.label }).containsExactlyInAnyOrder("A", "B")
         }

@@ -54,7 +54,7 @@ class RegularTransactionRepositoryDataJpaAdapter(
     override fun getAllRegularUsedByAccount(userId: UserId, accountID: UUID): List<RegularTransaction>? {
         val ownerId = userId.value ?: return emptyList()
         return regularTransactionRepository.findAllByOwnerIdWithAccounts(ownerId)
-            .filter { transaction -> transaction.accounts.any { it.idAccount == accountID } }
+            .filter { transaction -> transaction.accounts.any { it.idBooklet == accountID } }
             .map { it.toDomain() }
     }
 

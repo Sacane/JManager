@@ -101,7 +101,7 @@ sealed interface TransactionFeature {
 class TransactionFeatureImpl(
     private val transactionRepository: TransactionRepository,
     private val session: SessionManager,
-    private val accountRepository: BookletRepository,
+    private val bookletRepository: BookletRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider,
     private val tagRepository: TagRepository,
     private val trackerRepository: RegularTransactionTrackerRepository
@@ -135,7 +135,7 @@ class TransactionFeatureImpl(
                     "domain.transaction.edit.id_missing"
                 )
             }
-            val registeredAccount = accountRepository.findAccountByIdWithTransactions(accountID)
+            val registeredAccount = bookletRepository.findBookletByIdWithTransactions(accountID)
                 ?: return@executeInTransaction domainNotFound(
                     "Le compte $accountID n'existe pas",
                     "domain.transaction.edit.booklet_not_found"
@@ -154,7 +154,7 @@ class TransactionFeatureImpl(
                 )
             registeredAccount.removeTransactionById(transaction.id)
             registeredAccount.addTransaction(transactionFromDatabase)
-            accountRepository.update(registeredAccount)
+            bookletRepository.update(registeredAccount)
             success(TransactionResumeResult(transactionFromDatabase, registeredAccount.amount))
         }
     }
@@ -166,7 +166,7 @@ class TransactionFeatureImpl(
     ): Result<TransactionResumeResult> = session.authenticate(token) { id ->
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             logger.info("Request for a transaction with id $id")
-            val account = accountRepository.findAccountByLabelWithTransactions(id, accountLabel)
+            val account = bookletRepository.findBookletByLabelWithTransactions(id, accountLabel)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,
                     "Le compte $accountLabel n'existe pas",
@@ -191,7 +191,7 @@ class TransactionFeatureImpl(
                 )
             } else newTr
             account.addTransaction(toSaveTransaction)
-            accountRepository.update(account)
+            bookletRepository.update(account)
             logger.info("Transaction $newTr has been created, the booklet sold has been updated : $account")
             success(TransactionResumeResult(newTr, account.amount))
         }
@@ -228,7 +228,7 @@ class TransactionFeatureImpl(
     override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
         return session.authenticate(token) {
             infraTransactionManager.executeInTransaction(transactionRepository) {
-                val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(accountID)
+                val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(accountID)
                     ?: return@executeInTransaction domainFailure(
                         ResultState.BOOKLET_NOT_FOUND,
                         "Account $accountID n'existe pas",
@@ -269,7 +269,7 @@ class TransactionFeatureImpl(
 
                 val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
                 booklet.removeTransactionIf(isSheetOnList)
-                accountRepository.update(booklet)
+                bookletRepository.update(booklet)
 
                 return@executeInTransaction success(
                     TransactionDeletionResult(
@@ -289,7 +289,7 @@ class TransactionFeatureImpl(
         newDate: LocalDate?
     ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
-            val account = accountRepository.findAccountByIdWithTransactions(accountID)
+            val account = bookletRepository.findBookletByIdWithTransactions(accountID)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,
                     "Booklet $accountID not found",
@@ -328,7 +328,7 @@ class TransactionFeatureImpl(
 
             account.addTransaction(transaction)
             // Update only account balances/label to avoid JPA collection merge side-effects.
-            accountRepository.update(account)
+            bookletRepository.update(account)
             return@executeInTransaction success(TransactionResumeResult(transaction, account.amount))
         }
     }

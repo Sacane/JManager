@@ -8,7 +8,7 @@ definePageMeta({
 })
 
 const { user } = useAuth()
-const { createAccount, fetch } = useBooklet()
+const { createBooklet, fetch } = useBooklet()
 const isAccountDialogOpen = ref(false)
 const toast = useJToast()
 
@@ -41,7 +41,7 @@ useIntersectionObserver(statsRef, ([{ isIntersecting }]) => {
 }, { threshold: 0.2 })
 
 function handleAccountCreation(account: { label: string, digit: number }) {
-  createAccount(account.label, account.digit, '€')
+  createBooklet(account.label, account.digit, '€')
     .then((acc) => {
       if (accounts.value.length < 3) {
         accounts.value.push(acc)
@@ -103,14 +103,14 @@ onMounted(() => {
                   v-for="account in accounts"
                   :key="account.id"
                   class="booklet-card"
-                  @click="navigateTo(`/account/${account.id}`)"
+                  @click="navigateTo(`/booklet/${account.id}`)"
                 >
                   <div class="booklet-icon">
                     <i class="pi pi-book" />
                   </div>
                   <div class="booklet-info">
                     <h4 class="booklet-label">
-                      {{ account.labelAccount }}
+                      {{ account.label }}
                     </h4>
                     <p class="booklet-amount">
                       {{ Number.parseFloat(account.amount.toString()).toFixed(2) }} {{ account.currency }}

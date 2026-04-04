@@ -1,16 +1,16 @@
-import { shallowMount } from '@vue/test-utils'
+﻿import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import AccountPage from '../../pages/account/index.vue'
+import AccountPage from '../../pages/booklet/index.vue'
 
 const fetchMock = vi.fn().mockResolvedValue([])
-const deleteAccountMock = vi.fn().mockResolvedValue(undefined)
-const createAccountMock = vi.fn().mockResolvedValue(undefined)
+const deleteBookletMock = vi.fn().mockResolvedValue(undefined)
+const createBookletMock = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../composables/useBooklet', () => ({
   default: () => ({
     fetch: fetchMock,
-    deleteAccount: deleteAccountMock,
-    createAccount: createAccountMock,
+    deleteBooklet: deleteBookletMock,
+    createBooklet: createBookletMock,
   }),
 }))
 
@@ -41,7 +41,7 @@ function mountAccountPage(activeScopes: string[] = []) {
   return { wrapper }
 }
 
-describe('pages/account/index loading states', () => {
+describe('pages/booklet/index loading states', () => {
   it('shows list loading feedback when account load scope is active', () => {
     const { wrapper } = mountAccountPage(['account.index.load'])
 

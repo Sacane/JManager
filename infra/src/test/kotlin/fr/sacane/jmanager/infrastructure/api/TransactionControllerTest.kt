@@ -9,7 +9,7 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.*
@@ -61,7 +61,7 @@ fun configureObjectMapper(objectMapper: ObjectMapper): ObjectMapper {
 class TransactionControllerTest(
     @LocalServerPort val port: Int,
     @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
+    @Autowired private val bookletStateTestAdapter: BookletStateTestAdapter,
     @Autowired var objectMapper: ObjectMapper,
     @Autowired val tokenGenerator: TokenGenerator,
     @Autowired private val transactionJpaRepository: TransactionJpaRepository
@@ -76,7 +76,7 @@ class TransactionControllerTest(
 
     @AfterEach
     fun clear() {
-        accountStateTestAdapter.clear()
+        bookletStateTestAdapter.clear()
         transactionStateTestAdapter.clear()
     }
 
@@ -85,7 +85,7 @@ class TransactionControllerTest(
 
         @Test
         fun `Create a transaction must send 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
@@ -146,10 +146,10 @@ class TransactionControllerTest(
         fun `Find a transaction with its id must send 200 and the asked transaction`() {
             // When
             val element = Booklet(200.00.toAmount(), "test", owner = user)
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(element)
             )
-            val justInputAccount = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val justInputAccount = bookletStateTestAdapter.get().find { it.label == "test" }!!
             transactionStateTestAdapter.init(listOf(
                 AccountTransaction(user!!.id, justInputAccount.label, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount(200.00.toBigDecimal()), false)), token.asTokenUUID())
             ))
@@ -205,7 +205,7 @@ class TransactionControllerTest(
     inner class RequestForTransactionsByDate {
         @Test
         fun `Request for transactions for a certain month and year must return 200 with all the requested ones and only those`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
@@ -226,7 +226,7 @@ class TransactionControllerTest(
                     )
                 )
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
             Given {
                 port(port)
                 cookie("token", token)
@@ -253,10 +253,10 @@ class TransactionControllerTest(
 
         @Test
         fun `Request for transactions with explicit date range should return 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             Given {
                 port(port)
@@ -276,10 +276,10 @@ class TransactionControllerTest(
 
         @Test
         fun `Request for transactions with invalid explicit date range should return 400`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             Given {
                 port(port)
@@ -302,7 +302,7 @@ class TransactionControllerTest(
     inner class DeleteTransactionEndpointTest {
         @Test
         fun `delete an existing transaction should return 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
@@ -313,7 +313,7 @@ class TransactionControllerTest(
                 Transaction(null, "test5", LocalDate.of(2024, Month.JUNE, 20), Amount.fromString("100.00"), false),
                 Transaction(null, "test6", LocalDate.of(2024, Month.MAY, 20), Amount.fromString("100.00"), false),
             )
-            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
             transactionStateTestAdapter.init(
                 listOf(
                     AccountTransaction(
@@ -363,7 +363,7 @@ class TransactionControllerTest(
         }
         @Test
         fun `delete should remove targeted transaction from database`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
 
@@ -383,7 +383,7 @@ class TransactionControllerTest(
                 )
             )
 
-            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
             val transactionToDelete = transactionStateTestAdapter.get().first { it.label == "to-delete" }
             val transactionToKeep = transactionStateTestAdapter.get().first { it.label == "to-keep" }
 
@@ -415,7 +415,7 @@ class TransactionControllerTest(
     inner class PatchTransactionEndpointTest {
         @Test
         fun `Update an existing transaction should return 200 and the updated one`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
@@ -432,12 +432,12 @@ class TransactionControllerTest(
                 )
             )
 
-            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
-            val accountId = account.id
+            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
+            val bookletId = account.id
             val transactionToPatch = transactionStateTestAdapter.get()
                 .find { it.label == "test2" }!!
             val body = UserAccountIdsTransactionRequest(
-                accountId = accountId!!.toString(),
+                bookletId = bookletId!!.toString(),
                 transaction = transactionToPatch.toDTO()
                     .copy(
                         label = "test4",
@@ -461,7 +461,7 @@ class TransactionControllerTest(
     inner class ConfirmPreviewTransactionEndpointTest {
         @Test
         fun `Request to confirm a preview transaction`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
@@ -482,7 +482,7 @@ class TransactionControllerTest(
                     )
                 )
             )
-            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
             val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
 
             val body = ConfirmPreviewRequest(
@@ -506,7 +506,7 @@ class TransactionControllerTest(
 
         @Test
         fun `Request to confirm a preview transaction with new date`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
             val transactions = listOf(
@@ -523,7 +523,7 @@ class TransactionControllerTest(
                     )
                 )
             )
-            val account = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
             val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
 
             val body = ConfirmPreviewRequest(

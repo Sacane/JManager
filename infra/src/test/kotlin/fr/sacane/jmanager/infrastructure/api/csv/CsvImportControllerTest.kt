@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets
 @DisplayName("CSV Import Controller Tests")
 class CsvImportControllerTest(
     @param:LocalServerPort val port: Int,
-    @param:Autowired val accountStateAdapter: AccountStateTestAdapter,
+    @param:Autowired val bookletStateAdapter: BookletStateTestAdapter,
     @param:Autowired val objectMapper: ObjectMapper
 ) : AuthenticatedUserTest() {
 
@@ -31,22 +31,22 @@ class CsvImportControllerTest(
 
     @BeforeEach
     fun setupBooklet() {
-        accountStateAdapter.init(
+        bookletStateAdapter.init(
             listOf(
                 Booklet(
                     id = null,
                     amount = Amount.fromString("1000.00"),
-                    labelAccount = "Test Booklet",
+                    label = "Test Booklet",
                     owner = user,
                 )
             )
         )
-        bookletId = accountStateAdapter.get().first().id!!.toString()
+        bookletId = bookletStateAdapter.get().first().id!!.toString()
     }
 
     @AfterEach
     fun clear() {
-        accountStateAdapter.clear()
+        bookletStateAdapter.clear()
     }
 
     private fun createTempCsvFile(content: String): File {
@@ -350,7 +350,7 @@ class CsvImportControllerTest(
         @Test
         @DisplayName("Should update booklet amount after importing expense transactions")
         fun `should update booklet amount correctly after importing expense transactions`() {
-            val initialAmount = accountStateAdapter.get().first().amount
+            val initialAmount = bookletStateAdapter.get().first().amount
 
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Groceries,45.50,,Alimentation & Restaurant\n16-01-2025,Transport,30.00,,Transport\n"
             val file = createTempCsvFile(csvContent)
@@ -367,7 +367,7 @@ class CsvImportControllerTest(
                 body("failedCount", equalTo(0))
             }
 
-            val updatedBooklet = accountStateAdapter.get().first()
+            val updatedBooklet = bookletStateAdapter.get().first()
             val expectedAmount = initialAmount.value.subtract(java.math.BigDecimal("75.50"))
             Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
         }
@@ -375,7 +375,7 @@ class CsvImportControllerTest(
         @Test
         @DisplayName("Should update booklet amount after importing income transactions")
         fun `should update booklet amount correctly after importing income transactions`() {
-            val initialAmount = accountStateAdapter.get().first().amount
+            val initialAmount = bookletStateAdapter.get().first().amount
 
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Salary,,2500.00,Aucune\n16-01-2025,Bonus,,500.00,Aucune\n"
             val file = createTempCsvFile(csvContent)
@@ -392,7 +392,7 @@ class CsvImportControllerTest(
                 body("failedCount", equalTo(0))
             }
 
-            val updatedBooklet = accountStateAdapter.get().first()
+            val updatedBooklet = bookletStateAdapter.get().first()
             val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3000.00"))
             Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
         }
@@ -400,7 +400,7 @@ class CsvImportControllerTest(
         @Test
         @DisplayName("Should update booklet amount correctly with mixed transactions")
         fun `should update booklet amount correctly with mixed income and expense transactions`() {
-            val initialAmount = accountStateAdapter.get().first().amount
+            val initialAmount = bookletStateAdapter.get().first().amount
 
             val csvContent = "date,label,depense,recette,tag\n15-01-2025,Salary,,2500.00,Aucune\n16-01-2025,Groceries,45.50,,Alimentation & Restaurant\n17-01-2025,Transport,30.00,,Transport\n18-01-2025,Freelance,,800.00,Aucune\n"
             val file = createTempCsvFile(csvContent)
@@ -417,7 +417,7 @@ class CsvImportControllerTest(
                 body("failedCount", equalTo(0))
             }
 
-            val updatedBooklet = accountStateAdapter.get().first()
+            val updatedBooklet = bookletStateAdapter.get().first()
             val expectedAmount = initialAmount.value.add(java.math.BigDecimal("3224.50"))
             Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
         }
@@ -426,7 +426,7 @@ class CsvImportControllerTest(
         @DisplayName("Should not change booklet amount when import fails due to validation errors")
         fun `should not change booklet amount when import fails`() {
             // Récupérer le montant initial du livret
-            val initialAmount = accountStateAdapter.get().first().amount
+            val initialAmount = bookletStateAdapter.get().first().amount
 
             val csvContent = "date,label,depense,recette,tag\ninvalid-date,Test,45.50,,\n"
             val file = createTempCsvFile(csvContent)
@@ -441,7 +441,7 @@ class CsvImportControllerTest(
                 statusCode(400)
             }
 
-            val updatedBooklet = accountStateAdapter.get().first()
+            val updatedBooklet = bookletStateAdapter.get().first()
             Assertions.assertEquals(initialAmount.value, updatedBooklet.amount.value)
         }
     }
@@ -732,7 +732,7 @@ class CsvImportControllerTest(
         @Test
         @DisplayName("Should import transactions with day-only dates when month and year provided")
         fun `should import transactions with day-only dates`() {
-            val initialAmount = accountStateAdapter.get().first().amount
+            val initialAmount = bookletStateAdapter.get().first().amount
             val csvContent = "date,label,depense,recette,tag\n1,Groceries,45.50,,Alimentation & Restaurant\n15,Salary,,2500.00,Aucune\n"
             val file = createTempCsvFile(csvContent)
 
@@ -752,7 +752,7 @@ class CsvImportControllerTest(
             }
 
             // Verify the dates are correctly set
-            val updatedBooklet = accountStateAdapter.get().first()
+            val updatedBooklet = bookletStateAdapter.get().first()
             val expectedAmount = initialAmount.value.add(java.math.BigDecimal("2454.50"))
             Assertions.assertEquals(expectedAmount, updatedBooklet.amount.value)
         }

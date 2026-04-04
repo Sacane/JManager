@@ -11,7 +11,7 @@ import java.time.LocalDate
 
 @Serializable
 data class UserAccountIdsTransactionRequest(
-    val accountId: String,
+    val bookletId: String,
     val transaction: TransactionResult
 )
 

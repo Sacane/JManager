@@ -192,7 +192,7 @@ class FileImportExportFeatureImpl(
 
     private fun findBookletAndCheckOwner(userId: UserId, bookletId: UUID): Result<Booklet> {
         val booklet =
-            bookletRepository.findAccountByIdWithTransactions(bookletId)
+            bookletRepository.findBookletByIdWithTransactions(bookletId)
                 ?: return domainFailure(
                     ResultState.NOT_FOUND,
                     "Booklet not found",

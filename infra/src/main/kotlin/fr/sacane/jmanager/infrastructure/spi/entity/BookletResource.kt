@@ -8,7 +8,7 @@ import kotlin.collections.toList
 
 
 @Entity
-@Table(name = "account")
+@Table(name = "booklet")
 class BookletResource(
     @Column(name = "amount")
     var amount: BigDecimal = BigDecimal(0.0),
@@ -27,8 +27,8 @@ class BookletResource(
     var regularTransactions: MutableSet<RegularTransactionEntity> = mutableSetOf(),
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id_account")
-    var idAccount: UUID? = null
+    @Column(name = "id_booklet")
+    var idBooklet: UUID? = null
 ) {
     fun clearAllRegularTransactions() {
         regularTransactions.toList().forEach { transaction ->

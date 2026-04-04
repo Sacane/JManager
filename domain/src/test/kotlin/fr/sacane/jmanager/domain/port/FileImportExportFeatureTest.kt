@@ -423,10 +423,10 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(2, importResult.successCount)
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val accountState = FakeFactory.accountState()
-                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                val bookletState = FakeFactory.bookletState()
+                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
                 Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
 
                 val expectedAmount = initialAmount.value.subtract(BigDecimal("75.50"))
@@ -457,10 +457,10 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(2, importResult.successCount)
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val accountState = FakeFactory.accountState()
-                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                val bookletState = FakeFactory.bookletState()
+                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
                 Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
 
                 val expectedAmount = initialAmount.value.add(BigDecimal("3000.00"))
@@ -493,10 +493,10 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(4, importResult.successCount)
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val accountState = FakeFactory.accountState()
-                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                val bookletState = FakeFactory.bookletState()
+                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
                 Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
 
                 val expectedAmount = initialAmount.value.add(BigDecimal("3224.50"))
@@ -522,10 +522,10 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isFailure())
 
-            val accountState = FakeFactory.accountState()
-            val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+            val bookletState = FakeFactory.bookletState()
+            val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
             Assertions.assertNotNull(updatedBooklets)
-            val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+            val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
             Assertions.assertNotNull(updatedBooklet)
             Assertions.assertEquals(initialAmount.value, updatedBooklet!!.amount.value)
         }
@@ -549,10 +549,10 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isSuccess())
 
-            val accountState = FakeFactory.accountState()
-            val persistedBooklets = accountState.getStates().find { it.userId == user.id }
+            val bookletState = FakeFactory.bookletState()
+            val persistedBooklets = bookletState.getStates().find { it.userId == user.id }
             Assertions.assertNotNull(persistedBooklets)
-            val persistedBooklet = persistedBooklets!!.booklet.find { it.id == booklet.id }
+            val persistedBooklet = persistedBooklets!!.booklets.find { it.id == booklet.id }
             Assertions.assertNotNull(persistedBooklet)
 
             val expectedAmount = initialAmount.value.subtract(BigDecimal("100.00"))
@@ -649,10 +649,10 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertNotNull(transaction2)
                 Assertions.assertEquals(LocalDate.of(2026, 1, 15), transaction2!!.date)
 
-                val accountState = FakeFactory.accountState()
-                val updatedBooklets = accountState.getStates().find { it.userId == user.id }
+                val bookletState = FakeFactory.bookletState()
+                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
                 Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklet.find { it.id == booklet.id }
+                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
 
                 val expectedAmount = initialAmount.value.add(BigDecimal("2454.50"))

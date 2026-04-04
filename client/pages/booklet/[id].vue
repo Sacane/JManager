@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
@@ -178,7 +178,7 @@ function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number 
   return Math.min(31, Math.max(1, Math.trunc(value)))
 }
 
-async function loadAccountCycleSetting(accountId: string) {
+async function loadBookletCycleSetting(accountId: string) {
   try {
     const settings = await getUserSettings()
     if (!settings) {
@@ -187,7 +187,7 @@ async function loadAccountCycleSetting(accountId: string) {
       return
     }
 
-    const accountCycle = settings.accountCycles.find(cycle => cycle.accountId === accountId)
+    const accountCycle = settings.bookletCycles.find(cycle => cycle.bookletId === accountId)
     accountMonthlyPeriodStartDay.value = normalizeMonthlyPeriodStartDay(accountCycle?.monthlyPeriodStartDay)
     accountMonthlyPeriodEndDay.value = normalizeMonthlyPeriodEndDay(accountCycle?.monthlyPeriodEndDay)
   } catch {
@@ -504,7 +504,7 @@ function onCsvImportSuccess(result: CsvImportResultDTO) {
 onMounted(async () => {
   const accountId = (route.params as any)?.id as string
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
-  await loadAccountCycleSetting(accountId)
+  await loadBookletCycleSetting(accountId)
   await loadBookletData()
   await retrieveTags()
   currentTransaction.tagDTO = await tag.getDefaultTag()

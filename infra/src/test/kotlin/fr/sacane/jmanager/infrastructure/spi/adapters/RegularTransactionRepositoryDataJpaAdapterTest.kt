@@ -10,7 +10,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.regular.RegularTransactionRepositoryDataJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.JpaRegularTransactionTrackerRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.RegularTransactionTrackerEntity
@@ -33,7 +33,7 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
     @Autowired private val regularTransactionAdapter: RegularTransactionRepositoryDataJpaAdapter,
     @Autowired private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
     @Autowired private val trackerRepository: JpaRegularTransactionTrackerRepository,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
+    @Autowired private val bookletStateTestAdapter: BookletStateTestAdapter,
     @Autowired private val tagRepository: TagRepository
 ) : AuthenticatedUserTest() {
 
@@ -43,12 +43,12 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
     @BeforeEach
     fun setupBooklet() {
         val newBooklet = Booklet(
-            labelAccount = "Test Account",
+            label = "Test Account",
             amount = fr.sacane.jmanager.domain.models.Amount(1000L),
             owner = user,
         )
-        accountStateTestAdapter.init(listOf(newBooklet))
-        booklet = accountStateTestAdapter.get().find { it.label == "Test Account" }!!
+        bookletStateTestAdapter.init(listOf(newBooklet))
+        booklet = bookletStateTestAdapter.get().find { it.label == "Test Account" }!!
         defaultTag = tagRepository.defaultTag()!!
     }
 
@@ -56,7 +56,7 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
     fun cleanUp() {
         trackerRepository.deleteAll()
         regularTransactionRepository.deleteAll()
-        accountStateTestAdapter.clear()
+        bookletStateTestAdapter.clear()
     }
 
     @Nested
@@ -254,12 +254,12 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
         @Test
         fun `should retrieve regular transactions used by specific account`() {
             val secondBooklet = Booklet(
-                labelAccount = "Second Account",
+                label = "Second Account",
                 amount = Amount(500L),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(secondBooklet))
-            val savedSecondBooklet = accountStateTestAdapter.get().find { it.label == "Second Account" }!!
+            bookletStateTestAdapter.init(listOf(secondBooklet))
+            val savedSecondBooklet = bookletStateTestAdapter.get().find { it.label == "Second Account" }!!
 
             val transaction1 = RegularTransaction(
                 tag = defaultTag,
@@ -463,12 +463,12 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
         @Test
         fun `should update associated booklets when editing regular transaction`() {
             val secondBooklet = Booklet(
-                labelAccount = "Second Booklet",
+                label = "Second Booklet",
                 amount = Amount(500L),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(secondBooklet))
-            val savedSecondBooklet = accountStateTestAdapter.get().find { it.label == "Second Booklet" }!!
+            bookletStateTestAdapter.init(listOf(secondBooklet))
+            val savedSecondBooklet = bookletStateTestAdapter.get().find { it.label == "Second Booklet" }!!
 
             val originalTransaction = RegularTransaction(
                 label = "Booklet Switch",

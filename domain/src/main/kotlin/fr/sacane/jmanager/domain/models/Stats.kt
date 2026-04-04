@@ -6,8 +6,8 @@ import java.util.UUID
 
 
 data class MonthlyAccountStatsOutput(
-    val accountId: UUID,
-    val accountLabel: String,
+    val bookletId: UUID,
+    val bookletLabel: String,
     val year: Int,
     val monthlyData: List<MonthlyData>
 )

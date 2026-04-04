@@ -7,7 +7,7 @@ import java.util.UUID
 
 class Booklet(
     var amount: Amount,
-    private var labelAccount: String,
+    label: String,
     private val _transactions: MutableList<Transaction> = mutableListOf(),
     private val _regularTransactions: MutableList<RegularTransaction> = mutableListOf(),
     var owner : User? = null,
@@ -26,15 +26,15 @@ class Booklet(
         }
     }
 
-    val label: String
-        get() = labelAccount
+    var label: String = label
+        private set
 
     val transactions: List<Transaction>
         get() = _transactions
     val regularTransactions: List<RegularTransaction>
         get() = _regularTransactions
 
-    override fun equals(other: Any?): Boolean = (other is Booklet) && labelAccount == other.label
+    override fun equals(other: Any?): Boolean = (other is Booklet) && label == other.label
     fun sheets(): List<Transaction>{
         return transactions.toList()
     }
@@ -44,7 +44,7 @@ class Booklet(
 
     fun updateFrom(booklet: Booklet) {
         amount = booklet.amount
-        labelAccount = booklet.label
+        label = booklet.label
         monthlyPeriodStartDay = booklet.monthlyPeriodStartDay
         monthlyPeriodEndDay = booklet.monthlyPeriodEndDay
         _transactions.replaceAll {
@@ -73,7 +73,7 @@ class Booklet(
     }
 
     override fun hashCode(): Int {
-        return labelAccount.hashCode()
+        return label.hashCode()
     }
 
     fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
@@ -88,7 +88,7 @@ class Booklet(
         return """
             id: $id
             amount: $amount
-            label: $labelAccount
+            label: $label
             initialSold: $initialSold
             monthlyPeriodStartDay: $monthlyPeriodStartDay
             monthlyPeriodEndDay: $monthlyPeriodEndDay

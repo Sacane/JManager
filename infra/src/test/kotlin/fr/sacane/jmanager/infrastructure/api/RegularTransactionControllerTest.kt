@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
@@ -49,7 +49,7 @@ import java.util.UUID
 class RegularTransactionControllerTest(
     @LocalServerPort val port: Int,
     @Autowired private val regularTransactionStateForTestAdapter: RegularTransactionStateForTestAdapter,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
+    @Autowired private val bookletStateTestAdapter: BookletStateTestAdapter,
     @Autowired private val transactionStateTestAdapter: TransactionStateTestAdapter,
     @Autowired private val regularTrackerStateRepository: RegularTrackerStateRepository,
     @Autowired var objectMapper: ObjectMapper,
@@ -70,7 +70,7 @@ class RegularTransactionControllerTest(
     fun clear() {
         transactionStateTestAdapter.clear()
         regularTransactionStateForTestAdapter.clear()
-        accountStateTestAdapter.clear()
+        bookletStateTestAdapter.clear()
         regularTrackerStateRepository.clear()
     }
 
@@ -79,10 +79,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Create a monthly transaction must send 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val request = MonthlyRegularTransactionRequest(
                 label = "Salaire",
@@ -122,10 +122,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Create a monthly transaction without repeatDay must send 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val request = MonthlyRegularTransactionRequest(
                 label = "Loyer",
@@ -167,13 +167,13 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Create a monthly transaction with multiple booklets must send 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(
                     Booklet(200.toAmount(), "test1", owner = user),
                     Booklet(300.toAmount(), "test2", owner = user)
                 )
             )
-            val booklets = accountStateTestAdapter.get()
+            val booklets = bookletStateTestAdapter.get()
             val bookletIds = booklets.mapNotNull { it.id?.toString() }
 
             val request = MonthlyRegularTransactionRequest(
@@ -209,10 +209,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Create a monthly transaction with future start date must send 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val futureDate = LocalDate.now().plusMonths(2)
             val request = MonthlyRegularTransactionRequest(
@@ -343,10 +343,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Get regular transaction by id must send 200 and return the transaction`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val regularTransaction = RegularTransaction(
                 id = RegularTransactionId(""),
@@ -420,10 +420,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Get all regular transactions must send 200 and return all transactions`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val regularTransactions = listOf(
                 RegularTransaction(
@@ -509,10 +509,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Update regular transaction must send 200 and return updated transaction`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val regularTransaction = RegularTransaction(
                 id = RegularTransactionId(""),
@@ -660,10 +660,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Update regular transaction changing only label must send 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val regularTransaction = RegularTransaction(
                 id = RegularTransactionId(""),
@@ -728,13 +728,13 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Update regular transaction must update associated booklets`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(
                     Booklet(200.toAmount(), "test-a", owner = user),
                     Booklet(300.toAmount(), "test-b", owner = user)
                 )
             )
-            val booklets = accountStateTestAdapter.get().toList()
+            val booklets = bookletStateTestAdapter.get().toList()
             val bookletA = booklets.first { it.label == "test-a" }
             val bookletB = booklets.first { it.label == "test-b" }
 
@@ -807,10 +807,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Delete regular transaction must send 200`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val regularTransaction = RegularTransaction(
                 id = RegularTransactionId(""),
@@ -875,10 +875,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Delete regular transaction must not affect other transactions`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val regularTransactions = listOf(
                 RegularTransaction(
@@ -935,13 +935,13 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Delete regular transaction linked to multiple booklets must cleanup links and trackers while keeping generated sheets`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(
                     Booklet(200.toAmount(), "booklet-a", owner = user),
                     Booklet(300.toAmount(), "booklet-b", owner = user)
                 )
             )
-            val booklets = accountStateTestAdapter.get().toList()
+            val booklets = bookletStateTestAdapter.get().toList()
             val bookletA = booklets.first { it.label == "booklet-a" }
             val bookletB = booklets.first { it.label == "booklet-b" }
 
@@ -1059,10 +1059,10 @@ class RegularTransactionControllerTest(
 
         @Test
         fun `Bulk delete regular transactions must send 200 and delete all selected`() {
-            accountStateTestAdapter.init(
+            bookletStateTestAdapter.init(
                 listOf(Booklet(200.toAmount(), "test", owner = user))
             )
-            val booklet = accountStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
 
             val regularTransactions = listOf(
                 RegularTransaction(

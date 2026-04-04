@@ -23,14 +23,14 @@ class StatsController(
         private val LOGGER: Logger = Logger.getLogger("StatsController")
     }
 
-    @GetMapping("/monthly/{accountId}/{year}")
+    @GetMapping("/monthly/{bookletId}/{year}")
     fun getMonthlyAccountStats(
-        @PathVariable accountId: String,
+        @PathVariable bookletId: String,
         @PathVariable year: Int
     ): ResponseEntity<MonthlyAccountStatsDTO> {
-        LOGGER.info("Requesting monthly stats for account $accountId and year $year")
+        LOGGER.info("Requesting monthly stats for account $bookletId and year $year")
 
-        return statsFeature.getMonthlyAccountStats(accountId.toUUID(), year, currentUser.token)
+        return statsFeature.getMonthlyAccountStats(bookletId.toUUID(), year, currentUser.token)
             .map { it.toDTO() }
             .toHttpResponse()
     }

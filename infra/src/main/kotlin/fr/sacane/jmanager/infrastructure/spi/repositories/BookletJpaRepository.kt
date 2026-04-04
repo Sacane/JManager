@@ -20,25 +20,25 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
         LEFT JOIN FETCH acc.sheets s
         LEFT JOIN FETCH s.personalTag
         LEFT JOIN FETCH s.tag
-        WHERE acc.idAccount = :id
+        WHERE acc.idBooklet = :id
     """)
     fun findByIdWithSheets(id: UUID): BookletResource?
 
-    @Query("SELECT DISTINCT account FROM BookletResource account LEFT JOIN FETCH account.sheets WHERE account.owner.idUser = :userId AND account.label = :labelAccount")
-    fun findByOwnerAndLabelWithSheets(userId: UUID, labelAccount: String): BookletResource?
+    @Query("SELECT DISTINCT account FROM BookletResource account LEFT JOIN FETCH account.sheets WHERE account.owner.idUser = :userId AND account.label = :label")
+    fun findByOwnerAndLabelWithSheets(userId: UUID, @Param("label") label: String): BookletResource?
 
     @Modifying
-    @Query("UPDATE BookletResource account SET account.label = :labelAccount, account.amount = :amount WHERE account.idAccount = :id")
-    fun update(@Param("labelAccount") labelAccount: String, @Param("amount") amount: BigDecimal, @Param("id") id: UUID)
+    @Query("UPDATE BookletResource account SET account.label = :label, account.amount = :amount WHERE account.idBooklet = :id")
+    fun update(@Param("label") labelAccount: String, @Param("amount") amount: BigDecimal, @Param("id") id: UUID)
 
     @Modifying
-    @Query("UPDATE BookletResource account SET account.monthlyPeriodStartDay = :monthlyPeriodStartDay, account.monthlyPeriodEndDay = :monthlyPeriodEndDay WHERE account.idAccount = :id")
+    @Query("UPDATE BookletResource account SET account.monthlyPeriodStartDay = :monthlyPeriodStartDay, account.monthlyPeriodEndDay = :monthlyPeriodEndDay WHERE account.idBooklet = :id")
     fun updateMonthlyPeriodStartDay(@Param("id") id: UUID, @Param("monthlyPeriodStartDay") monthlyPeriodStartDay: Int, @Param("monthlyPeriodEndDay") monthlyPeriodEndDay: Int?): Int
 
-    @Query("SELECT DISTINCT account FROM BookletResource account LEFT JOIN FETCH account.sheets WHERE account.idAccount = :id")
+    @Query("SELECT DISTINCT account FROM BookletResource account LEFT JOIN FETCH account.sheets WHERE account.idBooklet = :id")
     fun findTransactionsById(id: UUID): BookletResource?
 
-    @Query("SELECT account FROM BookletResource account LEFT JOIN FETCH account.regularTransactions WHERE account.idAccount = :id")
+    @Query("SELECT account FROM BookletResource account LEFT JOIN FETCH account.regularTransactions WHERE account.idBooklet = :id")
     fun findByIdWithRegularTransactions(id: UUID): BookletResource?
 
     @Query("SELECT DISTINCT account FROM BookletResource account LEFT JOIN FETCH account.sheets LEFT JOIN FETCH account.regularTransactions WHERE account.owner.idUser = :userId")

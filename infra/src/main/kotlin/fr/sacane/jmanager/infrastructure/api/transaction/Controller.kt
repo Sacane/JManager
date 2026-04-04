@@ -111,7 +111,7 @@ class TransactionController(
         @RequestBody dto: UserAccountIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Start editing transaction => ${dto.transaction}")
-        return transactionFeature.editTransaction(java.util.UUID.fromString(dto.accountId), dto.transaction.toModel(), currentUser.token)
+        return transactionFeature.editTransaction(java.util.UUID.fromString(dto.bookletId), dto.transaction.toModel(), currentUser.token)
             .map {
                 it.toDTO()
             }.toHttpResponse()

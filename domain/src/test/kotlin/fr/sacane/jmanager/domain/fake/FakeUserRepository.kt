@@ -17,7 +17,7 @@ class FakeUserRepository: UserRepository, State<User> {
         return users.find { it.user.id == userId }?.user
     }
 
-    override fun findUserByIdWithAccounts(userId: UserId): User? {
+    override fun findUserByIdWithBooklets(userId: UserId): User? {
         return users.find { it.user.id == userId }?.user
     }
 

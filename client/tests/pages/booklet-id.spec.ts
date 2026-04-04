@@ -1,6 +1,6 @@
-import { shallowMount } from '@vue/test-utils'
+﻿import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import AccountDetailsPage from '../../pages/account/[id].vue'
+import AccountDetailsPage from '../../pages/booklet/[id].vue'
 
 vi.mock('~/composables/useTransaction', () => ({
   default: () => ({
@@ -49,9 +49,9 @@ const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({ transac
 
 const getSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 15,
-  accountCycles: [
+  bookletCycles: [
     {
-      accountId: 'booklet-1',
+      bookletId: 'booklet-1',
       label: 'Compte courant',
       monthlyPeriodStartDay: 28,
       monthlyPeriodEndDay: null,
@@ -125,7 +125,7 @@ function mountPage(activeScopes: string[] = []) {
   return { wrapper }
 }
 
-describe('pages/account/[id] loading states', () => {
+describe('pages/booklet/[id] loading states', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
@@ -181,9 +181,9 @@ describe('pages/account/[id] loading states', () => {
   it('queries account with explicit monthly end day when configured', async () => {
     getSettingsMock.mockResolvedValueOnce({
       projectionWindowDays: 15,
-      accountCycles: [
+      bookletCycles: [
         {
-          accountId: 'booklet-1',
+          bookletId: 'booklet-1',
           label: 'Compte courant',
           monthlyPeriodStartDay: 28,
           monthlyPeriodEndDay: 30,
@@ -210,9 +210,9 @@ describe('pages/account/[id] loading states', () => {
   it('keeps current month range with default cycle settings', async () => {
     getSettingsMock.mockResolvedValueOnce({
       projectionWindowDays: 15,
-      accountCycles: [
+      bookletCycles: [
         {
-          accountId: 'booklet-1',
+          bookletId: 'booklet-1',
           label: 'Compte courant',
           monthlyPeriodStartDay: 1,
           monthlyPeriodEndDay: null,

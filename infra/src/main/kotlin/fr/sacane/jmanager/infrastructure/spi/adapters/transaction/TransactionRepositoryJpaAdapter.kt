@@ -32,9 +32,9 @@ class TransactionRepositoryJpaAdapter(
 ) : TransactionRepository {
 
     @Transactional
-    override fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction? {
+    override fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction? {
         val id = userId.value ?: return null
-        val account = bookletJpaRepository.findByOwnerAndLabelWithSheets(id, accountLabel) ?: return null
+        val account = bookletJpaRepository.findByOwnerAndLabelWithSheets(id, bookletLabel) ?: return null
         val transactionResource: TransactionResource
         if (transaction.tag?.label == Tag.noneTag().label) {
             val noneTag = tagRepository.findUnknownTag()
@@ -85,7 +85,7 @@ class TransactionRepositoryJpaAdapter(
 
 
     @Transactional
-    override fun save(accountId: java.util.UUID, transaction: Transaction): Transaction? {
+    override fun save(bookletId: java.util.UUID, transaction: Transaction): Transaction? {
         val tag = if (transaction.tag == null) {
             tagRepository.findUnknownTag()
         } else if (transaction.tag!!.isDefault) {
@@ -94,7 +94,7 @@ class TransactionRepositoryJpaAdapter(
             tagPersonalPostgresRepository.findByIdNullable(transaction.tag?.id!!)
         }
         val transactionResource = transaction.asResource(tag)
-        transactionResource.account = bookletJpaRepository.findByIdOrNull(accountId)
+        transactionResource.account = bookletJpaRepository.findByIdOrNull(bookletId)
         return transactionJpaRepository.save(transactionResource).toModel()
     }
 

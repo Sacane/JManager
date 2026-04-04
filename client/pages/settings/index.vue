@@ -13,7 +13,7 @@ const toast = useJToast()
 const loadSettingsScope = LOADING_SCOPES.settings.load
 const saveSettingsScope = LOADING_SCOPES.settings.save
 
-const accountCycles = ref<AccountMonthlyCycleDTO[]>([])
+const bookletCycles = ref<BookletMonthlyCycleDTO[]>([])
 const projectionWindowDays = ref(15)
 
 const isLoading = computed(() => isScopeLoading(loadSettingsScope))
@@ -54,9 +54,9 @@ async function loadUserSettings() {
     }
 
     projectionWindowDays.value = normalizeProjectionWindowDays(settings.projectionWindowDays)
-    accountCycles.value = settings.accountCycles
+    bookletCycles.value = settings.bookletCycles
       .map(cycle => ({
-        accountId: cycle.accountId,
+        bookletId: cycle.bookletId,
         label: cycle.label,
         monthlyPeriodStartDay: normalizeMonthlyPeriodStartDay(cycle.monthlyPeriodStartDay),
         monthlyPeriodEndDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
@@ -69,8 +69,8 @@ async function saveUserSettings() {
   await withLoading(async () => {
     const payload: UserSettingsUpdateDTO = {
       projectionWindowDays: normalizeProjectionWindowDays(projectionWindowDays.value),
-      accountCycles: accountCycles.value.map(cycle => ({
-        accountId: cycle.accountId,
+      bookletCycles: bookletCycles.value.map(cycle => ({
+        bookletId: cycle.bookletId,
         monthlyPeriodStartDay: normalizeMonthlyPeriodStartDay(cycle.monthlyPeriodStartDay),
         monthlyPeriodEndDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
       })),
@@ -83,9 +83,9 @@ async function saveUserSettings() {
     }
 
     projectionWindowDays.value = normalizeProjectionWindowDays(updatedSettings.projectionWindowDays)
-    accountCycles.value = updatedSettings.accountCycles
+    bookletCycles.value = updatedSettings.bookletCycles
       .map(cycle => ({
-        accountId: cycle.accountId,
+        bookletId: cycle.bookletId,
         label: cycle.label,
         monthlyPeriodStartDay: normalizeMonthlyPeriodStartDay(cycle.monthlyPeriodStartDay),
         monthlyPeriodEndDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
@@ -138,12 +138,12 @@ onMounted(() => {
           Configure le jour de début de période pour chaque compte. Le début s'applique au mois précédent du mois affiché. La fin peut être personnalisée ; sans valeur, elle est calculée automatiquement (jour de début du cycle suivant - 1).
         </p>
 
-        <div v-if="accountCycles.length === 0" class="empty-state">
+        <div v-if="bookletCycles.length === 0" class="empty-state">
           Aucun compte disponible pour configurer un cycle mensuel.
         </div>
 
         <div v-else class="account-cycle-list">
-          <div v-for="cycle in accountCycles" :key="cycle.accountId" class="account-cycle-item">
+          <div v-for="cycle in bookletCycles" :key="cycle.bookletId" class="account-cycle-item">
             <div class="account-cycle-info">
               <p class="account-cycle-label" :title="cycle.label">
                 {{ cycle.label }}
@@ -153,7 +153,7 @@ onMounted(() => {
             <div class="account-cycle-controls">
               <div class="cycle-field">
                 <span class="cycle-field-label">Début</span>
-                <select v-model.number="cycle.monthlyPeriodStartDay" class="cycle-select" :data-test="`cycle-select-${cycle.accountId}`">
+                <select v-model.number="cycle.monthlyPeriodStartDay" class="cycle-select" :data-test="`cycle-select-${cycle.bookletId}`">
                   <option v-for="day in monthlyDayOptions()" :key="day" :value="day">{{ day }}</option>
                 </select>
                 <span class="cycle-field-hint">Démarre le mois précédent</span>
@@ -161,7 +161,7 @@ onMounted(() => {
 
               <div class="cycle-field">
                 <span class="cycle-field-label">Fin</span>
-                <select v-model="cycle.monthlyPeriodEndDay" class="cycle-select" :data-test="`cycle-end-select-${cycle.accountId}`">
+                <select v-model="cycle.monthlyPeriodEndDay" class="cycle-select" :data-test="`cycle-end-select-${cycle.bookletId}`">
                   <option :value="null">Par défaut</option>
                   <option v-for="day in monthlyDayOptions()" :key="`end-${day}`" :value="day">{{ day }}</option>
                 </select>

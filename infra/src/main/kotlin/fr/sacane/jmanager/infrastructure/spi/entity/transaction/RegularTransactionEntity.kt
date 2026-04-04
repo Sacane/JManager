@@ -46,7 +46,7 @@ data class RegularTransactionEntity(
     @JoinTable(
         name = "regular_transaction_booklet",
         joinColumns = [JoinColumn(name = "transaction_id")],
-        inverseJoinColumns = [JoinColumn(name = "id_account", nullable = false)]
+        inverseJoinColumns = [JoinColumn(name = "id_booklet", nullable = false)]
     )
     var accounts: MutableSet<BookletResource> = mutableSetOf(),
 
@@ -74,7 +74,7 @@ data class RegularTransactionEntity(
     }
 
     fun removeBooklet(account: BookletResource) {
-        accounts.removeIf { it.idAccount == account.idAccount }
+        accounts.removeIf { it.idBooklet == account.idBooklet }
     }
 }
 

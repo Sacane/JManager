@@ -1,8 +1,8 @@
 package fr.sacane.jmanager.domain
 
-import fr.sacane.jmanager.domain.fake.AccountByOwner
-import fr.sacane.jmanager.domain.fake.IdUserAccount
-import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.fake.BookletsByOwner
+import fr.sacane.jmanager.domain.fake.IdUserBooklet
+import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
@@ -171,24 +171,24 @@ class InMemoryDatabase {
         return result
     }
 
-    fun accountsByOwner(): Collection<AccountByOwner> {
-        return userByBooklet.map { AccountByOwner(it.value, it.key) }
+    fun accountsByOwner(): Collection<BookletsByOwner> {
+        return userByBooklet.map { BookletsByOwner(it.value, it.key) }
     }
 
-    fun initAccounts(initialState: Collection<AccountByOwner>) {
+    fun initAccounts(initialState: Collection<BookletsByOwner>) {
         initialState.forEach { accByOwn ->
-            accByOwn.booklet.forEach {
+            accByOwn.booklets.forEach {
                 addAccount(accByOwn.userId, it)
             }
         }
     }
 
-    fun addTransaction(userAccountId: IdUserAccount, transaction: Transaction) {
-        val account = userByBooklet[userAccountId.userId]?.find { it.id == userAccountId.accountId } ?: throw IllegalArgumentException("Account not found")
+    fun addTransaction(userBookletId: IdUserBooklet, transaction: Transaction) {
+        val account = userByBooklet[userBookletId.userId]?.find { it.id == userBookletId.bookletId } ?: throw IllegalArgumentException("Booklet not found")
         account.addTransaction(transaction)
         bookletsByTransaction[account.id]?.add(transaction)
     }
-    fun addMassiveTransaction(collection: Collection<IdUserAccountByTransaction>){
+    fun addMassiveTransaction(collection: Collection<IdBookletByTransaction>){
         collection.forEach { idByTr ->
             idByTr.transactions.forEach {
                 addTransaction(idByTr.id, it)
@@ -215,25 +215,25 @@ class InMemoryDatabase {
         users.putAll(userCollection.associateBy { it.user.id })
     }
 
-    fun findTransactions(): Collection<IdUserAccountByTransaction> {
-        val transactionsResult = mutableMapOf<Pair<IdUserAccount, UUID>, Transaction>()
+    fun findTransactions(): Collection<IdBookletByTransaction> {
+        val transactionsResult = mutableMapOf<Pair<IdUserBooklet, UUID>, Transaction>()
         userByBooklet.forEach { (key, value) ->
             value.forEach {
-                val id = IdUserAccount(key, it.id!!)
+                val id = IdUserBooklet(key, it.id!!)
                 bookletsByTransaction[it.id]!!.forEach { transaction ->
                     transactionsResult[id to transaction.id!!] = transaction
                 }
 
             }
         }
-        val result = mutableMapOf<IdUserAccount, MutableList<Transaction>>()
+        val result = mutableMapOf<IdUserBooklet, MutableList<Transaction>>()
         transactionsResult.forEach {
             if(result[it.key.first] == null) {
                 result[it.key.first] = mutableListOf()
             }
             result[it.key.first]?.add(it.value)
         }
-        return result.map { IdUserAccountByTransaction(it.key, it.value) }
+        return result.map { IdBookletByTransaction(it.key, it.value) }
     }
 
     fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Booklet?

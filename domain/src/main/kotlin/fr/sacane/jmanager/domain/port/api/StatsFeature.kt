@@ -137,7 +137,7 @@ class StatsFeatureImpl(
             return onSuccess(bookletRepository.findBookletsForUser(userId))
         }
 
-        val booklet = bookletRepository.findAccountByIdWithTransactions(accountId)
+        val booklet = bookletRepository.findBookletByIdWithTransactions(accountId)
             ?: return domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
                 "Le compte $accountId est introuvable",
@@ -162,7 +162,7 @@ class StatsFeatureImpl(
     ): Result<MonthlyAccountStatsOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching monthly stats for account $accountId and year $year")
 
-        val booklet = bookletRepository.findAccountByIdWithTransactions(accountId)
+        val booklet = bookletRepository.findBookletByIdWithTransactions(accountId)
             ?: return@authenticate domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
                 "Le compte $accountId est introuvable",
@@ -186,8 +186,8 @@ class StatsFeatureImpl(
 
         success(
             MonthlyAccountStatsOutput(
-                accountId = accountId,
-                accountLabel = booklet.label,
+                bookletId = accountId,
+                bookletLabel = booklet.label,
                 year = year,
                 monthlyData = monthlyData
             )

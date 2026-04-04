@@ -18,7 +18,7 @@ import java.awt.Color
 import java.time.LocalDateTime
 
 @Component
-class AccountMapper(
+class BookletMapper(
     val userRepository: UserPostgresRepository,
 ){
     fun asResource(booklet: Booklet): BookletResource {
@@ -32,7 +32,7 @@ class AccountMapper(
                 sheets = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
                 owner = userResource.get(),
                 initialSold = booklet.initialSold.value,
-                idAccount = booklet.id,
+                idBooklet = booklet.id,
             )
         } else {
             BookletResource(
@@ -42,7 +42,7 @@ class AccountMapper(
                 monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
                 sheets = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
                 initialSold = booklet.initialSold.value,
-                idAccount = booklet.id,
+                idBooklet = booklet.id,
             )
         }
     }
@@ -82,7 +82,7 @@ internal fun Booklet.asResource(): BookletResource {
         sheets().map { it.asResource() }.toMutableList()
     }
     return BookletResource(
-        idAccount = id,
+        idBooklet = id,
         amount = amount.applyOnValue { it },
         label = label,
         monthlyPeriodStartDay = monthlyPeriodStartDay,
@@ -125,7 +125,7 @@ internal fun BookletResource.toModel(): Booklet
     this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
     owner = this.owner?.toModel(),
     initialSold = Amount(this.initialSold),
-    id = this.idAccount,
+    id = this.idBooklet,
     monthlyPeriodStartDay = this.monthlyPeriodStartDay,
     monthlyPeriodEndDay = this.monthlyPeriodEndDay,
 )
@@ -153,7 +153,7 @@ internal fun UserResource.toModelWithSimpleAccounts()
 internal fun BookletResource.toSimpleModel(): Booklet = Booklet(
     this.amount.toAmount(),
     this.label,
-    id = this.idAccount,
+    id = this.idBooklet,
     monthlyPeriodStartDay = this.monthlyPeriodStartDay,
     monthlyPeriodEndDay = this.monthlyPeriodEndDay,
 )

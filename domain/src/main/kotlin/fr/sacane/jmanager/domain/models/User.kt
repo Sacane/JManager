@@ -39,7 +39,7 @@ class User(
     }
 
     fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
-    fun hasAccount(labelAccount: String): Boolean = booklets.any { labelAccount == it.label }
+    fun hasBooklet(label: String): Boolean = booklets.any { label == it.label }
     override fun toString(): String = "username: $username"
 
     fun updateProjectionWindowDays(days: Int) {
@@ -49,7 +49,7 @@ class User(
         projectionWindowDays = days
     }
 
-    fun addAccount(booklet: Booklet) {
+    fun addBooklet(booklet: Booklet) {
         booklets.add(booklet)
         booklet.owner = this
     }

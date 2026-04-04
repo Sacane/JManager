@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import useBooklet from '../../composables/useBooklet'
@@ -11,13 +11,13 @@ const confirm = useConfirm()
 const router = useRouter()
 const { isScopeLoading, withLoading } = useLoading()
 
-const { fetch, deleteAccount, createAccount } = useBooklet()
+const { fetch, deleteBooklet, createBooklet } = useBooklet()
 const loadAccountsScope = LOADING_SCOPES.accountIndex.load
-const createAccountScope = LOADING_SCOPES.accountIndex.create
-const deleteAccountScope = LOADING_SCOPES.accountIndex.delete
+const createBookletScope = LOADING_SCOPES.accountIndex.create
+const deleteBookletScope = LOADING_SCOPES.accountIndex.delete
 const isLoadingAccounts = computed(() => isScopeLoading(loadAccountsScope))
-const isCreatingAccount = computed(() => isScopeLoading(createAccountScope))
-const isDeletingAccount = computed(() => isScopeLoading(deleteAccountScope))
+const isCreatingAccount = computed(() => isScopeLoading(createBookletScope))
+const isDeletingAccount = computed(() => isScopeLoading(deleteBookletScope))
 const isAnyBookletActionLoading = computed(() =>
   isLoadingAccounts.value
   || isCreatingAccount.value
@@ -26,7 +26,7 @@ const isAnyBookletActionLoading = computed(() =>
 const isAccountFilled = ref<boolean>(false)
 const data = ref<Array<{
   id: string
-  labelAccount: string
+  label: string
   amount: string
   currency: string
 }>>([])
@@ -47,7 +47,7 @@ function format(accounts: Array<BookletDTO>) {
   data.value = accounts.map((account: BookletDTO) => {
     return {
       id: String(account.id || ''),
-      labelAccount: account.labelAccount,
+      label: account.label,
       amount: `${account.amount}`,
       currency: account.currency || '€',
     }
@@ -55,14 +55,14 @@ function format(accounts: Array<BookletDTO>) {
 }
 
 function onCardClick(accountId: string) {
-  router.push(`/account/${accountId}`)
+  router.push(`/booklet/${accountId}`)
 }
 
 async function applyDelete(accountId: string) {
   await withLoading(async () => {
-    await deleteAccount(accountId)
+    await deleteBooklet(accountId)
     await loadAccounts()
-  }, deleteAccountScope)
+  }, deleteBookletScope)
 }
 
 function openConfirmDeleteDialog(id: string, bookletLabel: string) {
@@ -82,12 +82,12 @@ const isAddAccountDialogOpen = ref<boolean>(false)
 function handleAccountCreation(account: { label: string, digit: number }) {
   withLoading(async () => {
     try {
-      await createAccount(account.label, account.digit, '€')
+      await createBooklet(account.label, account.digit, '€')
       await loadAccounts()
     } finally {
       isAddAccountDialogOpen.value = false
     }
-  }, createAccountScope)
+  }, createBookletScope)
 }
 
 function cancel() {
@@ -199,7 +199,7 @@ function formatAmount(amount: string) {
                   <i class="pi pi-wallet" />
                 </div>
                 <h3 class="booklet-name">
-                  {{ capitalizeFirst(account.labelAccount) }}
+                  {{ capitalizeFirst(account.label) }}
                 </h3>
               </div>
               <Button
@@ -210,7 +210,7 @@ function formatAmount(amount: string) {
                 severity="danger"
                 :loading="isDeletingAccount"
                 :disabled="isAnyBookletActionLoading"
-                @click.stop="openConfirmDeleteDialog(account.id, account.labelAccount)"
+                @click.stop="openConfirmDeleteDialog(account.id, account.label)"
               />
             </div>
 

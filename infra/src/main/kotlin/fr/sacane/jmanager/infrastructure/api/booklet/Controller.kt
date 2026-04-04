@@ -23,7 +23,7 @@ import java.util.logging.Logger
 
 
 @RestController
-@RequestMapping("api/account")
+@RequestMapping("api/booklet")
 @Adapter(Side.APPLICATION)
 class BookletController (
     private val feature: BookletFeature
@@ -35,19 +35,19 @@ class BookletController (
     @PostMapping
     fun saveBooklet(
         @RequestBody userAccount: BookletBookingRequest
-    ): ResponseEntity<AccountInfoDTO> {
-        LOGGER.info("Booking a new Booklet ${userAccount.labelAccount} starting at ${userAccount.amount}${userAccount.currency} for user ${currentUser.id}")
+    ): ResponseEntity<BookletInfoDTO> {
+        LOGGER.info("Booking a new Booklet ${userAccount.label} starting at ${userAccount.amount}${userAccount.currency} for user ${currentUser.id}")
         return feature.save(
             currentUser.token,
-            Booklet(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), labelAccount = userAccount.labelAccount)
-        ).map { AccountInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
+            Booklet(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), label = userAccount.label)
+        ).map { BookletInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
 
     @GetMapping
-    fun getAllBooklets(): ResponseEntity<List<AccountDTO>> {
+    fun getAllBooklets(): ResponseEntity<List<BookletDTO>> {
         LOGGER.info("Requesting all accounts...")
 
-        val response = feature.findAllRegisteredAccounts(
+        val response = feature.findAllRegisteredBooklets(
             currentUser.token
         )
         return response.map { accounts ->
@@ -57,17 +57,17 @@ class BookletController (
         }.toHttpResponse()
     }
 
-    @DeleteMapping(path = ["{accountId}"])
+    @DeleteMapping(path = ["{bookletId}"])
     fun deleteAccount(
-        @PathVariable accountId: String
-    ): ResponseEntity<Nothing> = feature.deleteAccountById(accountId.toUUID(), currentUser.token).toHttpResponse()
+        @PathVariable bookletId: String
+    ): ResponseEntity<Nothing> = feature.deleteBookletById(bookletId.toUUID(), currentUser.token).toHttpResponse()
 
-    @GetMapping("{accountID}")
+    @GetMapping("{bookletID}")
     fun findBookletById(
-        @PathVariable("accountID") accountID: String
-    ): ResponseEntity<AccountDTO> {
-        LOGGER.info("Requesting account with ID $accountID")
-        return feature.findAccountById(accountID.toUUID(), currentUser.token)
+        @PathVariable("bookletID") bookletID: String
+    ): ResponseEntity<BookletDTO> {
+        LOGGER.info("Requesting account with ID $bookletID")
+        return feature.findBookletById(bookletID.toUUID(), currentUser.token)
             .map { it.toDTO() }.toHttpResponse()
     }
 

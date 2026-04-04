@@ -27,12 +27,12 @@ declare global {
   interface BookletDTO {
     id: number | undefined
     amount: number
-    labelAccount: string
+    label: string
     transactions: Array<SheetDTO>
     currency?: string
   }
 
-  type OnlyBookletInfo = Pick<BookletDTO, 'id' | 'amount' | 'labelAccount' | 'currency'>
+  type OnlyBookletInfo = Pick<BookletDTO, 'id' | 'amount' | 'label' | 'currency'>
 
   interface SheetAverageDTO {
     transactions: TransactionCreationDTO[]
@@ -62,7 +62,7 @@ declare global {
   }
 
   interface BookletCreationRequest {
-    labelAccount: string
+    label: string
     amount: number
     currency: string
   }
@@ -189,11 +189,11 @@ declare global {
 
   interface UserSettingsDTO {
     projectionWindowDays: number
-    accountCycles: AccountMonthlyCycleDTO[]
+    bookletCycles: BookletMonthlyCycleDTO[]
   }
 
-  interface AccountMonthlyCycleDTO {
-    accountId: string
+  interface BookletMonthlyCycleDTO {
+    bookletId: string
     label: string
     monthlyPeriodStartDay: number
     monthlyPeriodEndDay?: number | null
@@ -201,11 +201,11 @@ declare global {
 
   interface UserSettingsUpdateDTO {
     projectionWindowDays: number
-    accountCycles: AccountMonthlyCycleUpdateDTO[]
+    bookletCycles: BookletMonthlyCycleUpdateDTO[]
   }
 
-  interface AccountMonthlyCycleUpdateDTO {
-    accountId: string
+  interface BookletMonthlyCycleUpdateDTO {
+    bookletId: string
     monthlyPeriodStartDay: number
     monthlyPeriodEndDay?: number | null
   }

@@ -93,10 +93,10 @@ class IdTest {
         val owner = userRepo.save(user)
 
         val booklet = BookletResource(label = "my acc")
-        booklet.idAccount = null
+        booklet.idBooklet = null
         booklet.owner = owner
         val saved = bookletRepo.save(booklet)
-        assertThat(saved.idAccount).isNotNull()
+        assertThat(saved.idBooklet).isNotNull()
     }
 
     @Test

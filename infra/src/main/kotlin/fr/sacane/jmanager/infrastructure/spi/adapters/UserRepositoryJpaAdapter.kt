@@ -34,7 +34,7 @@ class UserRepositoryJpaAdapter (
         return user.toModel()
     }
     @Transactional
-    override fun findUserByIdWithAccounts(userId: UserId): User? {
+    override fun findUserByIdWithBooklets(userId: UserId): User? {
         val id = userId.value ?: return null
         return userPostgresRepository.findByIdWithAccount(id)?.toModelWithSimpleAccounts()
     }

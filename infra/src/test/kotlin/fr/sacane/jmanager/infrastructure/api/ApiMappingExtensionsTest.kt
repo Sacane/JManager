@@ -20,7 +20,7 @@ import java.util.UUID
 class ApiMappingExtensionsTest {
 
     @Test
-    fun `Booklet toDTO should convert booklet to AccountDTO`() {
+    fun `Booklet toDTO should convert booklet to BookletDTO`() {
         val transaction = Transaction(
             id = UUID.randomUUID(),
             label = "Test",
@@ -32,7 +32,7 @@ class ApiMappingExtensionsTest {
         val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 1000.toAmount(),
-            labelAccount = "Main Account",
+            label = "Main Account",
             id = bookletId
         )
         booklet.addTransaction(transaction)
@@ -41,7 +41,7 @@ class ApiMappingExtensionsTest {
 
         assertEquals(bookletId.toString(), dto.id)
         assertEquals(BigDecimal("1100.00"), dto.amount)
-        assertEquals("Main Account", dto.labelAccount)
+        assertEquals("Main Account", dto.label)
         assertEquals("€", dto.currency)
         assertEquals(1, dto.transactions?.size)
     }
@@ -50,7 +50,7 @@ class ApiMappingExtensionsTest {
     fun `Booklet toDTO should throw exception when id is null`() {
         val booklet = Booklet(
             amount = 1000.toAmount(),
-            labelAccount = "No ID Account",
+            label = "No ID Account",
             id = null
         )
 

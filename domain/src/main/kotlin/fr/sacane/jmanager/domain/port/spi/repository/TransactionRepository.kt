@@ -17,14 +17,14 @@ import java.util.UUID
  */
 interface TransactionRepository {
     /**
-     * Persist a transaction for the given user and account label.
+     * Persist a transaction for the given user and booklet label.
      *
      * @param userId Domain user identifier
-     * @param accountLabel Label of the account (booklet) where the transaction is created
+     * @param bookletLabel Label of the booklet where the transaction is created
      * @param transaction Transaction entity to persist
      * @return Persisted Transaction with any assigned identifiers, or null on failure
      */
-    fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?
+    fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction?
 
     /**
      * Delete multiple transaction sheets by their identifiers.
@@ -42,13 +42,13 @@ interface TransactionRepository {
     fun findTransactionById(transactionId: UUID): Transaction?
 
     /**
-     * Save (update) a transaction for a given account id.
+     * Save (update) a transaction for a given booklet id.
      *
-     * @param accountId UUID of the account owning the transaction
+     * @param bookletId UUID of the booklet owning the transaction
      * @param transaction Transaction to save
      * @return Saved Transaction or null on failure
      */
-    fun save(accountId: UUID, transaction: Transaction): Transaction?
+    fun save(bookletId: UUID, transaction: Transaction): Transaction?
 
     /**
      * Retrieve a Booklet aggregate with its transaction sheets by account label and user.
