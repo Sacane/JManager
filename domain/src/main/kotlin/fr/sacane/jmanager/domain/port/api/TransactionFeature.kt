@@ -41,15 +41,15 @@ sealed interface TransactionFeature {
     fun bookTransaction(token: String, bookletLabel: String, transaction: Transaction): Result<TransactionResumeResult>
 
     /**
-     * Retrieve transactions for a specific month and year for the given account label.
+     * Retrieve transactions for a specific month and year for the given booklet label.
      *
      * @param token Authentication token identifying the requester.
      * @param month The month to retrieve transactions for.
      * @param year The year to retrieve transactions for.
-     * @param account The label of the account to fetch transactions from.
+     * @param bookletLabel The label of the booklet to fetch transactions from.
      * @return Result containing the list of Transaction objects on success, or a not found error.
      */
-    fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, account: String): Result<List<Transaction>>
+    fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, bookletLabel: String): Result<List<Transaction>>
 
     /**
      * Edit an existing transaction belonging to a specific booklet.
@@ -135,27 +135,27 @@ class TransactionFeatureImpl(
                     "domain.transaction.edit.id_missing"
                 )
             }
-            val registeredAccount = bookletRepository.findBookletByIdWithTransactions(bookletID)
+            val registeredBooklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
                 ?: return@executeInTransaction domainNotFound(
                     "Le livret $bookletID n'existe pas",
                     "domain.transaction.edit.booklet_not_found"
                 )
-            val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy()
+            val transactionFromDatabase = registeredBooklet.findTransactionById(transaction.id)?.copy()
                 ?: return@executeInTransaction domainNotFound(
                     "Aucune transaction n'existe avec l'ID suivant : ${transaction.id}",
                     "domain.transaction.edit.transaction_not_found"
                 )
             transactionFromDatabase.updateFromOther(transaction)
             transactionFromDatabase.lastModified = LocalDateTime.now()
-            transactionRepository.save(registeredAccount.id!!, transactionFromDatabase)
+            transactionRepository.save(registeredBooklet.id!!, transactionFromDatabase)
                 ?: return@executeInTransaction domainInvalid(
                     "Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}",
                     "domain.transaction.edit.save_failed"
                 )
-            registeredAccount.removeTransactionById(transaction.id)
-            registeredAccount.addTransaction(transactionFromDatabase)
-            bookletRepository.update(registeredAccount)
-            success(TransactionResumeResult(transactionFromDatabase, registeredAccount.amount))
+            registeredBooklet.removeTransactionById(transaction.id)
+            registeredBooklet.addTransaction(transactionFromDatabase)
+            bookletRepository.update(registeredBooklet)
+            success(TransactionResumeResult(transactionFromDatabase, registeredBooklet.amount))
         }
     }
 
@@ -201,9 +201,9 @@ class TransactionFeatureImpl(
         token: String,
         month: Month,
         year: Int,
-        account: String
+        bookletLabel: String
     ): Result<List<Transaction>> = session.authenticate(token) {
-        success(transactionRepository.findBookletByLabelWithSheets(account, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
+        success(transactionRepository.findBookletByLabelWithSheets(bookletLabel, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate domainNotFound(
                 "Aucun compte ne correspond au label indiqué",
                 "domain.transaction.retrieve.booklet_not_found"

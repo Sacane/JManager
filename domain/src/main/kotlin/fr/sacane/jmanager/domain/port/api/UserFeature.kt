@@ -29,7 +29,7 @@ sealed interface UserFeature {
     /**
      * Authenticate a user with the given pseudonym and password.
      *
-     * @param pseudonym The user's pseudonym or username used to identify the account.
+     * @param pseudonym The user's pseudonym or username used to identify the user.
      * @param userPassword The plain-text password to verify against the stored credentials.
      * @return Result containing a UserToken on success (including an access token), or an
      *         appropriate failure state (e.g. NOT_FOUND, USER_UNAUTHORIZED).
@@ -45,10 +45,10 @@ sealed interface UserFeature {
     fun logout(token: String): Result<Nothing>
 
     /**
-     * Register a new user account.
+     * Register a new user.
      *
-     * @param username Desired username for the new account.
-     * @param password Desired password for the new account (will be hashed by the domain).
+     * @param username Desired username for the new user.
+     * @param password Desired password for the new user (will be hashed by the domain).
      * @param confirmPassword Confirmation of the password; must match `password`.
      * @return Result containing the created User on success, or a failure state when
      *         validation or persistence fails.
@@ -58,7 +58,7 @@ sealed interface UserFeature {
     /**
      * Create an administrator user if one does not already exist.
      *
-     * This is typically used at application bootstrap to ensure an admin account is present.
+     * This is typically used at application bootstrap to ensure an admin user is present.
      *
      * @param username Desired admin username.
      * @param password Desired admin password.
@@ -75,7 +75,7 @@ sealed interface UserFeature {
     fun getSettings(token: String): Result<UserSettings>
 
     /**
-     * Update user settings for projection and account monthly cycles.
+     * Update user settings for projection and booklet monthly cycles.
      *
      * @param token Authentication token identifying the requester.
      * @param projectionWindowDays global projection window in days (7..60)

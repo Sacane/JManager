@@ -16,7 +16,7 @@ interface TrendCalculator {
      *
      * @param booklets the list of booklets for which the financial trends will be calculated
      * @return a list of MonthlyTrend containing detailed financial data such as income, expenses, balance,
-     *         cumulative balance, and the total number of accounts for each month
+     *         cumulative balance, and the total number of booklets for each month
      */
     fun calculateTrend(
         booklets: List<Booklet>,

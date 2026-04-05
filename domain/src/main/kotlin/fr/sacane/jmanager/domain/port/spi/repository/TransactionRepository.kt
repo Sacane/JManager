@@ -9,10 +9,10 @@ import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
 /**
- * SPI contract for transaction persistence and account-related retrievals.
+ * SPI contract for transaction persistence and booklet-related retrievals.
  *
  * Implementations provide concrete storage operations for transactions and related
- * account (booklet) reads. The domain depends on this abstraction to persist and
+ * booklet reads. The domain depends on this abstraction to persist and
  * query transaction sheets without coupling to a specific datastore.
  */
 interface TransactionRepository {
@@ -51,9 +51,9 @@ interface TransactionRepository {
     fun save(bookletId: UUID, transaction: Transaction): Transaction?
 
     /**
-     * Retrieve a Booklet aggregate with its transaction sheets by account label and user.
+     * Retrieve a Booklet aggregate with its transaction sheets by booklet label and user.
      *
-     * @param label Account label
+     * @param label Booklet label
      * @param userId Domain user identifier
      * @return Booklet aggregate or null when not found
      */

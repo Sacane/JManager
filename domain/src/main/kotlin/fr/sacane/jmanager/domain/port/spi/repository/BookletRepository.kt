@@ -8,7 +8,7 @@ import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
 /**
- * SPI contract for persistence and retrieval operations related to Booklet (account) aggregates.
+ * SPI contract for persistence and retrieval operations related to Booklet aggregates.
  *
  * Implementations provide concrete adapters (JPA, JDBC, in-memory, etc.) that persist and
  * retrieve Booklet aggregates used by the domain use-cases. The domain depends on this abstraction

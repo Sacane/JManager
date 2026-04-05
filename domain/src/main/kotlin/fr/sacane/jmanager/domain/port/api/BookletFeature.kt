@@ -32,7 +32,7 @@ import java.util.logging.Logger
 /**
  * Application port: BookletFeature
  *
- * High-level API for managing booklets (accounts) exposed to the application layer.
+ * High-level API for managing booklets exposed to the application layer.
  * Implementations are responsible for authentication and returning domain Result<T>
  * signaling success or failure states.
  */

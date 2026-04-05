@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-04-05
+
+- Completed the full "account → booklet" rename across every remaining layer and file.
+- **Database**: Added migration `V16__rename_account_fk_to_booklet.sql` (`sheet.account_id_booklet`→`booklet_id_booklet`), `V17__rename_account_amount_to_booklet_amount.sql` (`sheet.account_amount`→`booklet_amount`), `V18__rename_regular_transaction_booklet_fk_column.sql` (`regular_transaction_booklet.id_account`→`id_booklet`).
+- **Domain source**: Renamed parameter `account: String`→`bookletLabel: String` in `TransactionFeature.retrieveTransactionsByMonthAndYear` (interface + implementation); renamed local variable `registeredAccount`→`registeredBooklet` in `TransactionFeature.editTransaction`; updated all KDoc comments across `TransactionFeature`, `BookletFeature`, `StatsFeature`, `UserFeature`, `BookletRepository`, `TransactionRepository`, `PrevisionalTransactionFilter` and `TrendCalculator`.
+- **Domain tests**: Renamed all local variables, inner class names, test data labels and test names from account to booklet across `BookletFeatureTest`, `TransactionFeatureTest`, `StatsFeatureTest`, `RegularTransactionFeatureTest`, `FileImportExportFeatureTest`, `UserFeatureTest`, `FeatureTest`, `PrevisionalTransactionFilterTest`, `TrendCalculatorTest` and `BookletTest`.
+- **Infra tests**: Renamed all local variables, test data strings, test names and method calls from account to booklet across `TransactionRepositoryJpaAdapterTest`, `RegularTransactionRepositoryDataJpaAdapterTest`, `RegularTransactionStateForTestAdapter`, `InfraUserTest`, `SpaControllerTest`, `TransactionAdapterSqlTest`, `BookletJpaRepositoryAdapterTest`, `DatasourceMapperTest`, `BookletControllerTest` and `TransactionControllerTest`.
+- Full test suite passes across all layers after all migrations and renames.
+
 ## 2026-04-04
 
 - Updated `AGENTS.md` with a new mandatory implementation strategy section defining the required execution order for all features/fixes: strict TDD cycle (red/green/refactor with incremental steps), domain-first design (entity/port/contracts and domain tests with in-memory fakes), then infra SPI/database implementation and tests, then infra API implementation and API behavior tests, and mandatory final full-stack validation (API + Domain + Database).

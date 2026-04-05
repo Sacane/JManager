@@ -15,7 +15,7 @@ interface PrevisionalTransactionFilter {
      * @param booklets the list of booklets containing transactions to be filtered
      * @param startDate the starting date of the range for filtering transactions
      * @param endDate the ending date of the range for filtering transactions
-     * @return a result containing the filtered previsional transactions, grouped by account,
+     * @return a result containing the filtered previsional transactions, grouped by booklet,
      *         along with the total amount, total income, and total expenses within the specified range
      */
     fun filterPrevisionalTransactions(

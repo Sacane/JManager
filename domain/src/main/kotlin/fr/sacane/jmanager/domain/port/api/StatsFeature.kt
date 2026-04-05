@@ -41,7 +41,7 @@ sealed interface StatsFeature {
      * @param year The year for which the statistics are to be retrieved.
      * @param token The authentication token for verifying requester access.
      * @return A Result object containing the monthly booklet statistics wrapped in
-     *         MonthlyAccountStatsOutput if successful, or an appropriate error state otherwise.
+     *         MonthlyBookletStatsOutput if successful, or an appropriate error state otherwise.
      */
     fun getMonthlyBookletStats(bookletId: UUID, year: Int, token: String): Result<MonthlyBookletStatsOutput>
 
