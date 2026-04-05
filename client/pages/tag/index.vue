@@ -649,8 +649,6 @@ function edit() {
   font-weight: 600;
   margin: 0;
   color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .tag-badge {
