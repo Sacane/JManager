@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.transaction.TransactionRepositoryJpaAdapter
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -22,7 +22,7 @@ import java.time.LocalDate
 @SpringBootTest
 class TransactionAdapterSqlTest(
     @Autowired private val transactionRepositoryJpaAdapter: TransactionRepositoryJpaAdapter,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter
+    @Autowired private val bookletStateTestAdapter: BookletStateTestAdapter
 ): AuthenticatedUserTest() {
 
     @Nested
@@ -39,11 +39,11 @@ class TransactionAdapterSqlTest(
                 id = null
             )
             val booklet = Booklet(
-                labelAccount = "test",
+                label = "test",
                 amount = Amount(10.0.toLong()),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(booklet))
+            bookletStateTestAdapter.init(listOf(booklet))
             val result = transactionRepositoryJpaAdapter.persist(userId = user!!.id, booklet.label, transaction)
             assertNotNull(result?.id)
         }
@@ -59,17 +59,17 @@ class TransactionAdapterSqlTest(
                 id = null
             )
             val booklet = Booklet(
-                labelAccount = "test",
+                label = "test",
                 amount = Amount(10.0.toLong()),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(booklet))
+            bookletStateTestAdapter.init(listOf(booklet))
             val result = transactionRepositoryJpaAdapter.persist(userId = UserId(null), booklet.label, transaction)
             assertNull(result)
         }
 
         @Test
-        fun `Persist a transaction with an unknown account label must return null`() {
+        fun `Persist a transaction with an unknown booklet label must return null`() {
             val transaction = Transaction(
                 amount = Amount(10.0.toLong()),
                 label = "test",
@@ -79,11 +79,11 @@ class TransactionAdapterSqlTest(
                 id = null
             )
             val booklet = Booklet(
-                labelAccount = "test",
+                label = "test",
                 amount = Amount(10.0.toLong()),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(booklet))
+            bookletStateTestAdapter.init(listOf(booklet))
             val result = transactionRepositoryJpaAdapter.persist(userId = UserId(null), "unknown", transaction)
             assertNull(result)
         }

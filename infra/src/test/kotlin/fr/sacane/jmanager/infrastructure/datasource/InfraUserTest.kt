@@ -73,21 +73,21 @@ class InfraUserTest {
 
     @Test
     @Order(2)
-    fun `users should got accounts while add them into database`(){
+    fun `users should got booklets while add them into database`(){
         val user = basicUserTest()
-        user.accounts = mutableListOf()
+        user.booklets = mutableListOf()
         userPostgresRepository.save(user)
 
         val byName = userPostgresRepository.findByUsername(user.username)
-        val account = BookletResource(label = "test account")
-        account.amount = BigDecimal(102)
+        val bookletResource = BookletResource(label = "test booklet")
+        bookletResource.amount = BigDecimal(102)
 
-        byName?.accounts!!.add(account)
+        byName?.booklets!!.add(bookletResource)
 
         userPostgresRepository.save(byName)
 
         assertThat(userPostgresRepository.count()).isLessThan(2)
-        assertThat(byName.accounts).isNotEmpty
+        assertThat(byName.booklets).isNotEmpty
         assertThat(bookletJpaRepository.count()).isGreaterThan(0)
         userPostgresRepository.deleteByUsername("johan_test")
 

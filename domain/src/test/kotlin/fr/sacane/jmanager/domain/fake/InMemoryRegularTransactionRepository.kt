@@ -45,11 +45,11 @@ class InMemoryRegularTransactionRepository(
         return inMemoryDatabase.getAllRegularTransactionsByUser(userId)
     }
 
-    override fun getAllRegularUsedByAccount(
+    override fun getAllRegularUsedByBooklet(
         userId: UserId,
-        accountID: UUID
+        bookletID: UUID
     ): List<RegularTransaction> {
-        return inMemoryDatabase.getAllRegularTransactionsByBooklet(userId, accountID)
+        return inMemoryDatabase.getAllRegularTransactionsByBooklet(userId, bookletID)
     }
 
     override fun saveRegularTransaction(

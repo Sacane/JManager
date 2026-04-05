@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.assertTrue
-import fr.sacane.jmanager.domain.models.AccountMonthlyCycleUpdate
+import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
@@ -120,7 +120,7 @@ class UserFeatureTest: FeatureTest() {
 
             userFeature.getSettings(token)
                 .assertTrue {
-                    projectionWindowDays == 15 && accountCycles.isEmpty()
+                    projectionWindowDays == 15 && bookletCycles.isEmpty()
                 }
         }
 
@@ -132,7 +132,7 @@ class UserFeatureTest: FeatureTest() {
             userFeature.updateSettings(
                 token = token,
                 projectionWindowDays = 30,
-                accountCycles = emptyMap(),
+                bookletCycles = emptyMap(),
             ).assertTrue {
                 projectionWindowDays == 30
             }
@@ -146,7 +146,7 @@ class UserFeatureTest: FeatureTest() {
             val result = userFeature.updateSettings(
                 token = token,
                 projectionWindowDays = 6,
-                accountCycles = emptyMap(),
+                bookletCycles = emptyMap(),
             )
 
             result.assertFailure(ResultState.INVALID)
@@ -154,31 +154,31 @@ class UserFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `Update settings with non owned account must fail`() {
+        fun `Update settings with non owned booklet must fail`() {
             userFeature.register("John", "test", "test")
             val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
 
             val result = userFeature.updateSettings(
                 token = token,
                 projectionWindowDays = 20,
-                accountCycles = mapOf(UUID.randomUUID() to AccountMonthlyCycleUpdate(10, null)),
+                bookletCycles = mapOf(UUID.randomUUID() to BookletMonthlyCycleUpdate(10, null)),
             )
 
             result.assertFailure(ResultState.FORBIDDEN)
-            assertEquals("domain.user.settings.account_forbidden", result.errorInfo?.key)
+            assertEquals("domain.user.settings.booklet_forbidden", result.errorInfo?.key)
         }
 
         @Test
-        fun `Update settings without cycle for each owned account must fail`() {
+        fun `Update settings without cycle for each owned booklet must fail`() {
             launchWithConnectedUserInstance {
                 val result = userFeature.updateSettings(
                     token = tokenValue,
                     projectionWindowDays = 20,
-                    accountCycles = emptyMap(),
+                    bookletCycles = emptyMap(),
                 )
 
                 result.assertFailure(ResultState.INVALID)
-                assertEquals("domain.user.settings.missing_account_cycles", result.errorInfo?.key)
+                assertEquals("domain.user.settings.missing_booklet_cycles", result.errorInfo?.key)
             }
         }
 
@@ -188,7 +188,7 @@ class UserFeatureTest: FeatureTest() {
                 val result = userFeature.updateSettings(
                     token = tokenValue,
                     projectionWindowDays = 20,
-                    accountCycles = mapOf(booklet.id!! to AccountMonthlyCycleUpdate(28, 40)),
+                    bookletCycles = mapOf(booklet.id!! to BookletMonthlyCycleUpdate(28, 40)),
                 )
 
                 result.assertFailure(ResultState.INVALID)
@@ -197,19 +197,19 @@ class UserFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `Update settings with cycle for each owned account must succeed`() {
+        fun `Update settings with cycle for each owned booklet must succeed`() {
             launchWithConnectedUserInstance {
                 val result = userFeature.updateSettings(
                     token = tokenValue,
                     projectionWindowDays = 20,
-                    accountCycles = mapOf(booklet.id!! to AccountMonthlyCycleUpdate(28, 27)),
+                    bookletCycles = mapOf(booklet.id!! to BookletMonthlyCycleUpdate(28, 27)),
                 )
 
                 result.assertTrue {
                     projectionWindowDays == 20
-                            && accountCycles.size == 1
-                            && accountCycles.first().monthlyPeriodStartDay == 28
-                            && accountCycles.first().monthlyPeriodEndDay == 27
+                            && bookletCycles.size == 1
+                            && bookletCycles.first().monthlyPeriodStartDay == 28
+                            && bookletCycles.first().monthlyPeriodEndDay == 27
                 }
             }
         }

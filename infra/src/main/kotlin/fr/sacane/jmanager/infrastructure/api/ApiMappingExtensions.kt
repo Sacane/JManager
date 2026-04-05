@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
-import fr.sacane.jmanager.infrastructure.api.booklet.AccountDTO
+import fr.sacane.jmanager.infrastructure.api.booklet.BookletDTO
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
 import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
@@ -16,7 +16,7 @@ import fr.sacane.jmanager.infrastructure.api.transaction.toDTO
 import org.springframework.http.ResponseEntity
 import java.awt.Color
 
-internal fun Booklet.toDTO(): AccountDTO = AccountDTO(
+internal fun Booklet.toDTO(): BookletDTO = BookletDTO(
     this.id?.toString() ?: throw InternalServerErrorException(ErrorCatalog.INTERNAL_UNEXPECTED, "Impossible d'envoyer null au client"),
     this.amount.value,
     this.label,

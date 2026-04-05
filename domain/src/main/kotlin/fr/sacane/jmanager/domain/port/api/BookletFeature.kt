@@ -32,19 +32,19 @@ import java.util.logging.Logger
 /**
  * Application port: BookletFeature
  *
- * High-level API for managing booklets (accounts) exposed to the application layer.
+ * High-level API for managing booklets exposed to the application layer.
  * Implementations are responsible for authentication and returning domain Result<T>
  * signaling success or failure states.
  */
 sealed interface BookletFeature {
     /**
-     * Find a booklet (account) by its unique identifier.
+     * Find a booklet by its unique identifier.
      *
-     * @param accountID The UUID of the booklet to find.
+     * @param bookletId The UUID of the booklet to find.
      * @param token Authentication token identifying the requester.
      * @return Result containing the found Booklet on success, or a failure state (e.g. BOOKLET_NOT_FOUND).
      */
-    fun findAccountById(accountID: UUID, token: String): Result<Booklet>
+    fun findBookletById(bookletId: UUID, token: String): Result<Booklet>
 
     /**
      * Edit an existing booklet.
@@ -53,16 +53,16 @@ sealed interface BookletFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing the updated Booklet on success, or failure states when validation or persistence fails.
      */
-    fun editAccount(booklet: Booklet, token: String): Result<Booklet>
+    fun editBooklet(booklet: Booklet, token: String): Result<Booklet>
 
     /**
      * Delete a booklet by its identifier.
      *
-     * @param accountID The UUID of the booklet to delete.
+     * @param bookletId The UUID of the booklet to delete.
      * @param token Authentication token identifying the requester.
      * @return Result with no value on success, or an error state if the booklet does not exist.
      */
-    fun deleteAccountById(accountID: UUID, token: String): Result<Nothing>
+    fun deleteBookletById(bookletId: UUID, token: String): Result<Nothing>
 
     /**
      * Find a booklet by its label for the authenticated user.
@@ -79,7 +79,7 @@ sealed interface BookletFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing the list of Booklet on success.
      */
-    fun findAllRegisteredAccounts(token: String): Result<List<Booklet>>
+    fun findAllRegisteredBooklets(token: String): Result<List<Booklet>>
 
     /**
      * Save a new booklet for the authenticated user.
@@ -143,7 +143,7 @@ sealed interface BookletFeature {
 class BookletFeatureImpl(
     private val userRepository: UserRepository,
     private val session: SessionManager,
-    private val accountRepository: BookletRepository,
+    private val bookletRepository: BookletRepository,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
@@ -159,11 +159,11 @@ class BookletFeatureImpl(
         return fr.sacane.jmanager.domain.utils.failure(state, DomainError(state.code, key, detail))
     }
 
-    override fun findAccountById(
-        accountID: UUID,
+    override fun findBookletById(
+        bookletID: UUID,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
-        accountRepository.findAccountByIdWithTransactions(accountID)?.run {
+        bookletRepository.findBookletByIdWithTransactions(bookletID)?.run {
             success(this)
         } ?: domainFailure(
             ResultState.BOOKLET_NOT_FOUND,
@@ -172,47 +172,47 @@ class BookletFeatureImpl(
         )
     }
 
-    override fun editAccount(
+    override fun editBooklet(
         booklet: Booklet,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
-        val accountID = booklet.id ?: return@authenticate domainFailure(
+        val bookletID = booklet.id ?: return@authenticate domainFailure(
             ResultState.BOOKLET_NOT_FOUND,
             "Le livret ${booklet.label} est introuvable en base",
             "domain.booklet.edit.id_missing"
         )
-        val oldAccount = accountRepository.findAccountByIdWithTransactions(accountID)
+        val oldBooklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
             ?: return@authenticate domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
                 "Le livret ${booklet.id} est introuvable",
                 "domain.booklet.edit.not_found"
             )
-        if(oldAccount.id != booklet.id && oldAccount.label == booklet.label){
+        if(oldBooklet.id != booklet.id && oldBooklet.label == booklet.label){
             return@authenticate domainFailure(
                 ResultState.BOOKLET_LABEL_EXIST,
                 "Le libellé du livret existe déjà",
                 "domain.booklet.edit.label_already_exists"
             )
         }
-        oldAccount.updateFrom(booklet)
-        val registered = accountRepository.upsert(oldAccount)
+        oldBooklet.updateFrom(booklet)
+        val registered = bookletRepository.upsert(oldBooklet)
         success(registered)
     }
 
-    override fun deleteAccountById(
-        accountID: UUID,
+    override fun deleteBookletById(
+        bookletID: UUID,
         token: String
     ): Result<Nothing> = session.authenticate(token) {
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
-            if(accountRepository.findAccountByIdWithTransactions(accountID) == null){
+            if(bookletRepository.findBookletByIdWithTransactions(bookletID) == null){
                 return@executeInTransaction domainFailure(
                     ResultState.NOT_FOUND,
-                    "Le livret $accountID n'existe pas",
+                    "Le livret $bookletID n'existe pas",
                     "domain.booklet.delete.not_found"
                 )
             }
-            accountRepository.deleteAccountById(accountID)
-            trackerRepository.deleteTrackerByBookletId(accountID)
+            bookletRepository.deleteBookletById(bookletID)
+            trackerRepository.deleteTrackerByBookletId(bookletID)
             return@executeInTransaction success()
         }
     }
@@ -221,7 +221,7 @@ class BookletFeatureImpl(
         token: String,
         label: String
     ): Result<Booklet> = session.authenticate(token) {
-        val user = userRepository.findUserByIdWithAccounts(it)
+        val user = userRepository.findUserByIdWithBooklets(it)
             ?: return@authenticate domainFailure(
                 ResultState.USER_NOT_FOUND,
                 "L'utilisateur recherché n'existe pas",
@@ -238,10 +238,10 @@ class BookletFeatureImpl(
         )
     }
 
-    override fun findAllRegisteredAccounts(
+    override fun findAllRegisteredBooklets(
         token: String
     ): Result<List<Booklet>> = session.authenticate(token) {
-        val user = userRepository.findUserByIdWithAccounts(it)
+        val user = userRepository.findUserByIdWithBooklets(it)
             ?: return@authenticate domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
                 "L'utilisateur n'existe pas en base",
@@ -254,13 +254,13 @@ class BookletFeatureImpl(
         token: String,
         booklet: Booklet
     ): Result<Booklet> = session.authenticate(token) {
-        val user = userRepository.findUserByIdWithAccounts(it)
+        val user = userRepository.findUserByIdWithBooklets(it)
             ?: return@authenticate domainFailure(
                 ResultState.USER_NOT_FOUND,
                 "L'utilisateur n'existe pas en base",
                 "domain.booklet.save.user_not_found"
             )
-        if(user.hasAccount(booklet.label)) {
+        if(user.hasBooklet(booklet.label)) {
             return@authenticate domainFailure(
                 ResultState.BOOKLET_LABEL_EXIST,
                 "Le profil contient déjà un compte avec le label ${booklet.label}",
@@ -274,13 +274,13 @@ class BookletFeatureImpl(
                 "domain.booklet.save.maximum_size_reached"
             )
         }
-        val accountSaved = accountRepository.save(it, booklet)
+        val bookletSaved = bookletRepository.save(it, booklet)
             ?: return@authenticate domainFailure(
                 ResultState.INFRASTRUCTURE_ERROR,
                 "Erreur lors de la sauvegarde du compte",
                 "domain.booklet.save.infrastructure_error"
             )
-        success(accountSaved)
+        success(bookletSaved)
     }
 
     override fun loadTransactionsForBookletForAMonth(
@@ -298,7 +298,7 @@ class BookletFeatureImpl(
             LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
 
             val fetchBookletStartNs = System.nanoTime()
-            val booklet: Booklet = accountRepository.findAccountByIdWithTransactions(bookletId)
+            val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,
                     "Requested booklet is not registered",
@@ -308,7 +308,7 @@ class BookletFeatureImpl(
             val fetchBookletMs = Duration.ofNanos(System.nanoTime() - fetchBookletStartNs).toMillis()
 
             val fetchRegularStartNs = System.nanoTime()
-            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByBooklet(userId, bookletId)
                 ?: emptyList()
             val fetchRegularMs = Duration.ofNanos(System.nanoTime() - fetchRegularStartNs).toMillis()
 
@@ -540,12 +540,12 @@ class BookletFeatureImpl(
                 )
             }
 
-            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByBooklet(userId, bookletId)
                 ?: emptyList()
 
             val baseBooklet = Booklet(
                 amount = Amount(persisted.amount),
-                labelAccount = persisted.label,
+                label = persisted.label,
                 id = bookletId
             )
 

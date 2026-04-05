@@ -5,9 +5,9 @@ import java.math.BigDecimal
 import java.util.UUID
 
 
-data class MonthlyAccountStatsOutput(
-    val accountId: UUID,
-    val accountLabel: String,
+data class MonthlyBookletStatsOutput(
+    val bookletId: UUID,
+    val bookletLabel: String,
     val year: Int,
     val monthlyData: List<MonthlyData>
 )
@@ -45,12 +45,12 @@ data class MonthlyTrend(
     val expenses: Amount,
     val balance: Amount,
     val cumulativeBalance: Amount,
-    val totalAccounts: Int
+    val totalBooklets: Int
 )
 
 data class PrevisionalTransactionsOutput(
     val transactions: List<Transaction>,
-    val groupedByAccount: Map<String, List<Transaction>>,
+    val groupedByBooklet: Map<String, List<Transaction>>,
     val totalAmount: Amount,
     val totalIncome: Amount,
     val totalExpenses: Amount,

@@ -6,17 +6,17 @@ import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 
 @Serializable
-data class AccountDTO(
+data class BookletDTO(
     val id: String?,
     @Serializable(with = BigDecimalSerializer::class)
     val amount: BigDecimal,
-    val labelAccount: String,
+    val label: String,
     val transactions: List<TransactionResult>?,
     val currency: String
 )
 
 @Serializable
-data class AccountInfoDTO(
+data class BookletInfoDTO(
     val amount: String,
     val label: String,
     val id: String,
@@ -25,7 +25,7 @@ data class AccountInfoDTO(
 
 @Serializable
 data class BookletBookingRequest(
-    val labelAccount: String,
+    val label: String,
     val amount: Double,
     val currency: String
 )

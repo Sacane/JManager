@@ -8,12 +8,12 @@ definePageMeta({
 })
 
 const { user } = useAuth()
-const { createAccount, fetch } = useBooklet()
-const isAccountDialogOpen = ref(false)
+const { createBooklet, fetch } = useBooklet()
+const isBookletDialogOpen = ref(false)
 const toast = useJToast()
 
-const accounts = ref<BookletDTO[]>([])
-const sum = computed(() => accounts.value.reduce((acc: number, curr: BookletDTO) => acc + Number.parseFloat(curr.amount.toString()), 0.00))
+const booklets = ref<BookletDTO[]>([])
+const sum = computed(() => booklets.value.reduce((acc: number, curr: BookletDTO) => acc + Number.parseFloat(curr.amount.toString()), 0.00))
 
 const heroRef = ref(null)
 const featuresRef = ref(null)
@@ -40,11 +40,11 @@ useIntersectionObserver(statsRef, ([{ isIntersecting }]) => {
   }
 }, { threshold: 0.2 })
 
-function handleAccountCreation(account: { label: string, digit: number }) {
-  createAccount(account.label, account.digit, '€')
+function handleBookletCreation(booklet: { label: string, digit: number }) {
+  createBooklet(booklet.label, booklet.digit, '€')
     .then((acc) => {
-      if (accounts.value.length < 3) {
-        accounts.value.push(acc)
+      if (booklets.value.length < 3) {
+        booklets.value.push(acc)
       }
       toast.success('Le compte a bien été créé')
     })
@@ -52,12 +52,12 @@ function handleAccountCreation(account: { label: string, digit: number }) {
 }
 
 function cancel() {
-  isAccountDialogOpen.value = false
+  isBookletDialogOpen.value = false
 }
 
 onMounted(() => {
   fetch().then((result) => {
-    accounts.value = result
+    booklets.value = result
   })
 })
 </script>
@@ -87,33 +87,33 @@ onMounted(() => {
             Gérez vos dépenses quotidiennes, visualisez vos budgets et planifiez votre avenir financier en toute simplicité
           </p>
           <div class="hero-cta">
-            <button v-if="accounts.length === 0" class="cta-primary" @click="isAccountDialogOpen = true">
+            <button v-if="booklets.length === 0" class="cta-primary" @click="isBookletDialogOpen = true">
               <i class="pi pi-plus-circle" />
               <span>Créer mon premier livret</span>
             </button>
             <div v-else class="booklets-list">
               <div class="booklets-header">
                 <h3>Mes livrets</h3>
-                <button class="add-booklet-btn" title="Ajouter un livret" @click="isAccountDialogOpen = true">
+                <button class="add-booklet-btn" title="Ajouter un livret" @click="isBookletDialogOpen = true">
                   <i class="pi pi-plus" />
                 </button>
               </div>
               <div class="booklets-grid">
                 <div
-                  v-for="account in accounts"
-                  :key="account.id"
+                  v-for="booklet in booklets"
+                  :key="booklet.id"
                   class="booklet-card"
-                  @click="navigateTo(`/account/${account.id}`)"
+                  @click="navigateTo(`/booklet/${booklet.id}`)"
                 >
                   <div class="booklet-icon">
                     <i class="pi pi-book" />
                   </div>
                   <div class="booklet-info">
                     <h4 class="booklet-label">
-                      {{ account.labelAccount }}
+                      {{ booklet.label }}
                     </h4>
                     <p class="booklet-amount">
-                      {{ Number.parseFloat(account.amount.toString()).toFixed(2) }} {{ account.currency }}
+                      {{ Number.parseFloat(booklet.amount.toString()).toFixed(2) }} {{ booklet.currency }}
                     </p>
                   </div>
                   <div class="booklet-arrow">
@@ -122,16 +122,16 @@ onMounted(() => {
                 </div>
               </div>
             </div>
-            <button v-if="accounts.length > 0" class="cta-secondary" @click="navigateTo('/dashboard')">
+            <button v-if="booklets.length > 0" class="cta-secondary" @click="navigateTo('/dashboard')">
               <i class="pi pi-arrow-right" />
               <span>Accéder à mon tableau de bord</span>
             </button>
             <div class="quick-stats">
               <div class="stat-item">
                 <i class="pi pi-wallet" />
-                <span>{{ accounts.length }} livret{{ accounts.length > 1 ? 's' : '' }}</span>
+                <span>{{ booklets.length }} livret{{ booklets.length > 1 ? 's' : '' }}</span>
               </div>
-              <div v-if="accounts.length > 0" class="stat-item highlight">
+              <div v-if="booklets.length > 0" class="stat-item highlight">
                 <i class="pi pi-chart-line" />
                 <span>{{ sum.toFixed(2) }} €</span>
               </div>
@@ -183,8 +183,8 @@ onMounted(() => {
           <div class="stat-icon">
             <i class="pi pi-book" />
           </div>
-          <h3>{{ accounts.length }}</h3>
-          <p>Livret{{ accounts.length > 1 ? 's' : '' }} actif{{ accounts.length > 1 ? 's' : '' }}</p>
+          <h3>{{ booklets.length }}</h3>
+          <p>Livret{{ booklets.length > 1 ? 's' : '' }} actif{{ booklets.length > 1 ? 's' : '' }}</p>
         </div>
         <div class="stat-card">
           <div class="stat-icon">
@@ -213,7 +213,7 @@ onMounted(() => {
       <div class="features-grid">
         <div
           class="feature-card"
-          @click="isAccountDialogOpen = true"
+          @click="isBookletDialogOpen = true"
         >
           <div class="feature-icon gradient-1">
             <i class="pi pi-book" />
@@ -221,8 +221,8 @@ onMounted(() => {
           <h3>Livrets de compte</h3>
           <p>Créez plusieurs livrets pour organiser vos finances par projet ou objectif</p>
           <div class="feature-action">
-            <span v-if="accounts.length === 0">Créer votre premier livret</span>
-            <span v-else>{{ accounts.length }} livret{{ accounts.length > 1 ? 's' : '' }} créé{{ accounts.length > 1 ? 's' : '' }}</span>
+            <span v-if="booklets.length === 0">Créer votre premier livret</span>
+            <span v-else>{{ booklets.length }} livret{{ booklets.length > 1 ? 's' : '' }} créé{{ booklets.length > 1 ? 's' : '' }}</span>
             <i class="pi pi-arrow-right" />
           </div>
         </div>
@@ -313,8 +313,8 @@ onMounted(() => {
 
   <BookletBookingDialog
     :digit="0.00"
-    :visible="isAccountDialogOpen"
-    @create-account="handleAccountCreation"
+    :visible="isBookletDialogOpen"
+    @create-booklet="handleBookletCreation"
     @cancel="cancel"
   />
 </template>

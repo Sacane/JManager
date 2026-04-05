@@ -1,8 +1,26 @@
 # Changelog
 
+## 2026-04-05
+
+- Completed the full "account → booklet" rename across every remaining layer and file.
+- **Database**: Added migration `V16__rename_account_fk_to_booklet.sql` (`sheet.account_id_booklet`→`booklet_id_booklet`), `V17__rename_account_amount_to_booklet_amount.sql` (`sheet.account_amount`→`booklet_amount`), `V18__rename_regular_transaction_booklet_fk_column.sql` (`regular_transaction_booklet.id_account`→`id_booklet`).
+- **Domain source**: Renamed parameter `account: String`→`bookletLabel: String` in `TransactionFeature.retrieveTransactionsByMonthAndYear` (interface + implementation); renamed local variable `registeredAccount`→`registeredBooklet` in `TransactionFeature.editTransaction`; updated all KDoc comments across `TransactionFeature`, `BookletFeature`, `StatsFeature`, `UserFeature`, `BookletRepository`, `TransactionRepository`, `PrevisionalTransactionFilter` and `TrendCalculator`.
+- **Domain tests**: Renamed all local variables, inner class names, test data labels and test names from account to booklet across `BookletFeatureTest`, `TransactionFeatureTest`, `StatsFeatureTest`, `RegularTransactionFeatureTest`, `FileImportExportFeatureTest`, `UserFeatureTest`, `FeatureTest`, `PrevisionalTransactionFilterTest`, `TrendCalculatorTest` and `BookletTest`.
+- **Infra tests**: Renamed all local variables, test data strings, test names and method calls from account to booklet across `TransactionRepositoryJpaAdapterTest`, `RegularTransactionRepositoryDataJpaAdapterTest`, `RegularTransactionStateForTestAdapter`, `InfraUserTest`, `SpaControllerTest`, `TransactionAdapterSqlTest`, `BookletJpaRepositoryAdapterTest`, `DatasourceMapperTest`, `BookletControllerTest` and `TransactionControllerTest`.
+- Full test suite passes across all layers after all migrations and renames.
+
 ## 2026-04-04
 
 - Updated `AGENTS.md` with a new mandatory implementation strategy section defining the required execution order for all features/fixes: strict TDD cycle (red/green/refactor with incremental steps), domain-first design (entity/port/contracts and domain tests with in-memory fakes), then infra SPI/database implementation and tests, then infra API implementation and API behavior tests, and mandatory final full-stack validation (API + Domain + Database).
+
+## 2026-04-04
+
+- Completed comprehensive rename of "account" to "booklet" across all layers (domain, infra, client).
+- **Domain**: Renamed `AccountMonthlyCycleSetting`→`BookletMonthlyCycleSetting`, `AccountMonthlyCycleUpdate`→`BookletMonthlyCycleUpdate`, `accountCycles`→`bookletCycles` in `UserSettings`; renamed `AccountRepository` port to `BookletRepository` with all methods; renamed `UserRepository.findUserByIdWithAccounts`→`findUserByIdWithBooklets`; updated `Booklet` constructor param `labelAccount`→`label`; added `MonthlyAccountStatsOutput` field renames `accountId`→`bookletId`, `accountLabel`→`bookletLabel`; updated `TransactionRepository` SPI param names `accountLabel`→`bookletLabel`, `accountId`→`bookletId`.
+- **Database**: Added migration `V15__rename_account_to_booklet.sql` to rename the `account` table to `booklet`, its primary key column `id_account`→`id_booklet`, and the foreign key column `sheet.account_id_account`→`sheet.account_id_booklet`.
+- **Infra**: Renamed all JPA entities, repositories, adapters, mappers, DTOs and API controllers to use booklet naming; updated API URLs from `/api/account`→`/api/booklet` and stats endpoint path param `{accountId}`→`{bookletId}`; renamed session cycle DTOs `AccountMonthlyCycle*`→`BookletMonthlyCycle*`.
+- **Client**: Renamed page files and routes from `account` to `booklet`; updated all composables, types, components and test files to use booklet naming consistently.
+- Full test suite passes across all layers (462 domain tests, 272 infra integration tests).
 
 ## 2026-04-03
 

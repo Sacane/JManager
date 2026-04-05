@@ -93,10 +93,10 @@ class IdTest {
         val owner = userRepo.save(user)
 
         val booklet = BookletResource(label = "my acc")
-        booklet.idAccount = null
+        booklet.idBooklet = null
         booklet.owner = owner
         val saved = bookletRepo.save(booklet)
-        assertThat(saved.idAccount).isNotNull()
+        assertThat(saved.idBooklet).isNotNull()
     }
 
     @Test
@@ -104,7 +104,7 @@ class IdTest {
         val owner = userRepo.save(UserResource("owner_tx", "pwd", "owner_tx@test.com"))
         val booklet = bookletRepo.save(BookletResource(label = "acc tx", owner = owner))
 
-        val tx = TransactionResource(label = "tx", account = booklet)
+        val tx = TransactionResource(label = "tx", booklet = booklet)
         tx.idSheet = null
         val saved = transactionRepo.save(tx)
         assertThat(saved.idSheet).isNotNull()
@@ -140,7 +140,7 @@ class IdTest {
             recurrenceRule = recurrence,
             tag = null,
             personalTag = null,
-            accounts = mutableSetOf(booklet),
+            booklets = mutableSetOf(booklet),
             owner = owner
         )
 

@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.models.AccountMonthlyCycleUpdate
+import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.spi.Hasher
@@ -29,7 +29,7 @@ sealed interface UserFeature {
     /**
      * Authenticate a user with the given pseudonym and password.
      *
-     * @param pseudonym The user's pseudonym or username used to identify the account.
+     * @param pseudonym The user's pseudonym or username used to identify the user.
      * @param userPassword The plain-text password to verify against the stored credentials.
      * @return Result containing a UserToken on success (including an access token), or an
      *         appropriate failure state (e.g. NOT_FOUND, USER_UNAUTHORIZED).
@@ -45,10 +45,10 @@ sealed interface UserFeature {
     fun logout(token: String): Result<Nothing>
 
     /**
-     * Register a new user account.
+     * Register a new user.
      *
-     * @param username Desired username for the new account.
-     * @param password Desired password for the new account (will be hashed by the domain).
+     * @param username Desired username for the new user.
+     * @param password Desired password for the new user (will be hashed by the domain).
      * @param confirmPassword Confirmation of the password; must match `password`.
      * @return Result containing the created User on success, or a failure state when
      *         validation or persistence fails.
@@ -58,7 +58,7 @@ sealed interface UserFeature {
     /**
      * Create an administrator user if one does not already exist.
      *
-     * This is typically used at application bootstrap to ensure an admin account is present.
+     * This is typically used at application bootstrap to ensure an admin user is present.
      *
      * @param username Desired admin username.
      * @param password Desired admin password.
@@ -75,17 +75,17 @@ sealed interface UserFeature {
     fun getSettings(token: String): Result<UserSettings>
 
     /**
-     * Update user settings for projection and account monthly cycles.
+     * Update user settings for projection and booklet monthly cycles.
      *
      * @param token Authentication token identifying the requester.
      * @param projectionWindowDays global projection window in days (7..60)
-        * @param accountCycles monthly cycle configuration per account (start day required, end day optional)
+     * @param bookletCycles monthly cycle configuration per booklet (start day required, end day optional)
      * @return Result containing updated settings on success.
      */
     fun updateSettings(
         token: String,
         projectionWindowDays: Int,
-        accountCycles: Map<UUID, AccountMonthlyCycleUpdate>
+        bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
     ): Result<UserSettings>
 }
 
@@ -181,7 +181,7 @@ class UserFeatureImpl(
     }
 
     override fun getSettings(token: String): Result<UserSettings> = session.authenticate(token) { userId ->
-        val user = userRepository.findUserByIdWithAccounts(userId)
+        val user = userRepository.findUserByIdWithBooklets(userId)
             ?: return@authenticate domainFailure(
                 ResultState.USER_NOT_FOUND,
                 "L'utilisateur n'existe pas",
@@ -194,7 +194,7 @@ class UserFeatureImpl(
     override fun updateSettings(
         token: String,
         projectionWindowDays: Int,
-        accountCycles: Map<UUID, AccountMonthlyCycleUpdate>
+        bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
     ): Result<UserSettings> = session.authenticate(token) { userId ->
         if (projectionWindowDays !in 7..60) {
             return@authenticate domainFailure(
@@ -204,10 +204,10 @@ class UserFeatureImpl(
             )
         }
 
-        val invalidAccountCycle = accountCycles.entries.firstOrNull { (_, cycle) ->
+        val invalidBookletCycle = bookletCycles.entries.firstOrNull { (_, cycle) ->
             cycle.monthlyPeriodStartDay !in 1..31
         }
-        if (invalidAccountCycle != null) {
+        if (invalidBookletCycle != null) {
             return@authenticate domainFailure(
                 ResultState.INVALID,
                 "Le jour de début de période doit être compris entre 1 et 31",
@@ -215,10 +215,10 @@ class UserFeatureImpl(
             )
         }
 
-        val invalidAccountCycleEndDay = accountCycles.entries.firstOrNull { (_, cycle) ->
+        val invalidBookletCycleEndDay = bookletCycles.entries.firstOrNull { (_, cycle) ->
             cycle.monthlyPeriodEndDay != null && cycle.monthlyPeriodEndDay !in 1..31
         }
-        if (invalidAccountCycleEndDay != null) {
+        if (invalidBookletCycleEndDay != null) {
             return@authenticate domainFailure(
                 ResultState.INVALID,
                 "Le jour de fin de période doit être compris entre 1 et 31",
@@ -226,49 +226,49 @@ class UserFeatureImpl(
             )
         }
 
-        val user = userRepository.findUserByIdWithAccounts(userId)
+        val user = userRepository.findUserByIdWithBooklets(userId)
             ?: return@authenticate domainFailure(
                 ResultState.USER_NOT_FOUND,
                 "L'utilisateur n'existe pas",
                 "domain.user.settings.user_not_found"
             )
 
-        val accountsById = user.booklets.mapNotNull { account ->
-            account.id?.let { id -> id to account }
+        val bookletsById = user.booklets.mapNotNull { booklet ->
+            booklet.id?.let { id -> id to booklet }
         }.toMap()
 
-        val missingAccounts = accountsById.keys - accountCycles.keys
-        if (missingAccounts.isNotEmpty()) {
+        val missingBooklets = bookletsById.keys - bookletCycles.keys
+        if (missingBooklets.isNotEmpty()) {
             return@authenticate domainFailure(
                 ResultState.INVALID,
-                "Chaque compte doit avoir un cycle mensuel configuré",
-                "domain.user.settings.missing_account_cycles"
+                "Chaque livret doit avoir un cycle mensuel configuré",
+                "domain.user.settings.missing_booklet_cycles"
             )
         }
 
-        for ((accountId, accountCycle) in accountCycles) {
-            val account = accountsById[accountId]
+        for ((bookletId, bookletCycle) in bookletCycles) {
+            val booklet = bookletsById[bookletId]
                 ?: return@authenticate domainFailure(
                     ResultState.FORBIDDEN,
-                    "Vous n'avez pas accès au compte $accountId",
-                    "domain.user.settings.account_forbidden"
+                    "Vous n'avez pas accès au livret $bookletId",
+                    "domain.user.settings.booklet_forbidden"
                 )
 
             val updated = bookletRepository.updateMonthlyPeriodStartDay(
-                accountId,
-                accountCycle.monthlyPeriodStartDay,
-                accountCycle.monthlyPeriodEndDay,
+                bookletId,
+                bookletCycle.monthlyPeriodStartDay,
+                bookletCycle.monthlyPeriodEndDay,
             )
             if (!updated) {
                 return@authenticate domainFailure(
                     ResultState.INFRASTRUCTURE_ERROR,
-                    "Impossible de mettre à jour le cycle du compte $accountId",
-                    "domain.user.settings.account_update_failed"
+                    "Impossible de mettre à jour le cycle du livret $bookletId",
+                    "domain.user.settings.booklet_update_failed"
                 )
             }
-            account.updateMonthlyPeriodConfiguration(
-                accountCycle.monthlyPeriodStartDay,
-                accountCycle.monthlyPeriodEndDay,
+            booklet.updateMonthlyPeriodConfiguration(
+                bookletCycle.monthlyPeriodStartDay,
+                bookletCycle.monthlyPeriodEndDay,
             )
         }
 
@@ -287,11 +287,11 @@ class UserFeatureImpl(
 
     private fun User.toSettings(): UserSettings = UserSettings(
         projectionWindowDays = projectionWindowDays,
-        accountCycles = booklets.mapNotNull { booklet ->
-            val accountId = booklet.id ?: return@mapNotNull null
-            fr.sacane.jmanager.domain.models.AccountMonthlyCycleSetting(
-                accountId = accountId,
-                accountLabel = booklet.label,
+        bookletCycles = booklets.mapNotNull { booklet ->
+            val bookletId = booklet.id ?: return@mapNotNull null
+            fr.sacane.jmanager.domain.models.BookletMonthlyCycleSetting(
+                bookletId = bookletId,
+                bookletLabel = booklet.label,
                 monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
                 monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
             )

@@ -15,7 +15,7 @@ interface PrevisionalTransactionFilter {
      * @param booklets the list of booklets containing transactions to be filtered
      * @param startDate the starting date of the range for filtering transactions
      * @param endDate the ending date of the range for filtering transactions
-     * @return a result containing the filtered previsional transactions, grouped by account,
+     * @return a result containing the filtered previsional transactions, grouped by booklet,
      *         along with the total amount, total income, and total expenses within the specified range
      */
     fun filterPrevisionalTransactions(
@@ -27,7 +27,7 @@ interface PrevisionalTransactionFilter {
 
 data class PrevisionalTransactionResult(
     val transactions: List<Transaction>,
-    val groupedByAccount: Map<String, List<Transaction>>,
+    val groupedByBooklet: Map<String, List<Transaction>>,
     val totalAmount: Amount,
     val totalIncome: Amount,
     val totalExpenses: Amount,
@@ -52,7 +52,7 @@ class PrevisionalTransactionFilterImpl : PrevisionalTransactionFilter {
                 }
         }.sortedBy { it.date }
 
-        val groupedByAccount = booklets.associate { booklet ->
+        val groupedByBooklet = booklets.associate { booklet ->
             booklet.label to booklet.transactions.filter { transaction ->
                 transaction.isPreview &&
                         !transaction.date.isBefore(startDate) &&
@@ -85,7 +85,7 @@ class PrevisionalTransactionFilterImpl : PrevisionalTransactionFilter {
 
         return PrevisionalTransactionResult(
             transactions = previsionalTransactions,
-            groupedByAccount = groupedByAccount,
+            groupedByBooklet = groupedByBooklet,
             totalAmount = Amount(totalAmount),
             totalIncome = Amount(totalIncome),
             totalExpenses = Amount(totalExpenses),

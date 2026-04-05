@@ -25,7 +25,7 @@ import java.util.*
 object FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
     private val  inMemoryTrackerRepository: RegularTransactionTrackerRepository = InMemoryRegularTrackerRepository(inMemoryDatabase)
-    private val fakeAccountRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)
+    private val  bookletRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)
     private val transactionRepository: InMemoryTransactionRepository = InMemoryTransactionRepository(inMemoryDatabase)
     private val transactionQueryRepository: TransactionQueryRepository = InMemoryTransactionQueryRepository(inMemoryDatabase)
     private val userRepository: InMemoryUserRepository = InMemoryUserRepository(inMemoryDatabase)
@@ -63,7 +63,7 @@ object FakeFactory {
 
     private val bookletBalanceQueryRepository: BookletBalanceQueryRepository = object : BookletBalanceQueryRepository {
         override fun findPersistedBalances(bookletId: UUID): BookletBalanceQueryRepository.PersistedBalances? {
-            val booklet = inMemoryDatabase.findAccountById(bookletId) ?: return null
+            val booklet = inMemoryDatabase.findBookletById(bookletId) ?: return null
             return BookletBalanceQueryRepository.PersistedBalances(
                 label = booklet.label,
                 amount = booklet.amount.value,
@@ -71,10 +71,10 @@ object FakeFactory {
         }
     }
 
-    val accountFeature = BookletFeatureImpl(
+    val bookletFeature = BookletFeatureImpl(
         userRepository,
         sessionManager,
-        fakeAccountRepository,
+        bookletRepository,
         inMemoryRegularTransactionRepository,
         inMemoryRegularTransactionGenerator,
         manager,
@@ -82,8 +82,8 @@ object FakeFactory {
         transactionQueryRepository,
         bookletBalanceQueryRepository
     )
-    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, fakeAccountRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
-    val sessionFeature = UserFeatureImpl(userRepository, fakeAccountRepository, sessionManager, DefaultHasher, tokenGenerator)
+    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
+    val sessionFeature = UserFeatureImpl(userRepository, bookletRepository, sessionManager, DefaultHasher, tokenGenerator)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
     val regularTransactionFeature = RegularTransactionFeatureImpl(
         inMemoryRegularTransactionRepository,
@@ -94,7 +94,7 @@ object FakeFactory {
     val fileImportExportFeature = FileImportExportFeatureImpl(
         csvFileReader,
         transactionRepository,
-        fakeAccountRepository,
+        bookletRepository,
         inMemoryTagRepository,
         sessionManager,
         manager
@@ -104,7 +104,7 @@ object FakeFactory {
         StatsFeatureImpl(
             session = sessionManager(),
             userRepository = fakeUserRepository(),
-            bookletRepository = fakeAccountRepository,
+            bookletRepository = bookletRepository,
             monthlyStatsCalculator = MonthlyStatsCalculatorImpl(),
             categoryDistributionCalculator = CategoryDistributionCalculatorImpl(inMemoryTagRepository),
             trendCalculator = TrendCalculatorImpl(),
@@ -112,14 +112,14 @@ object FakeFactory {
         )
     }
 
-    fun accountState(): State<AccountByOwner>{
-        return fakeAccountRepository
+    fun bookletState(): State<BookletsByOwner>{
+        return bookletRepository
     }
 
     fun sessionState(): InMemorySessionManager = sessionManager
 
     fun clearAll() {
-        fakeAccountRepository.clear()
+        bookletRepository.clear()
         userRepository.clear()
         transactionRepository.clear()
         inMemoryTagRepository.clear()
@@ -129,7 +129,7 @@ object FakeFactory {
         return userRepository
     }
 
-    fun fakeTransactionRepository(): State<IdUserAccountByTransaction> {
+    fun fakeTransactionRepository(): State<IdBookletByTransaction> {
         return transactionRepository
     }
 

@@ -32,7 +32,7 @@ class SpaConfiguration {
 @Controller
 class SpaController {
 
-    @GetMapping(value = ["/", "/dashboard", "/dashboard/**", "/account", "/account/**",
+    @GetMapping(value = ["/", "/dashboard", "/dashboard/**", "/booklet", "/booklet/**",
                           "/login", "/admin", "/admin/**", "/tag", "/tag/**",
                           "/user", "/user/**", "/regular-transaction", "/regular-transaction/**"])
     fun forward(): String {

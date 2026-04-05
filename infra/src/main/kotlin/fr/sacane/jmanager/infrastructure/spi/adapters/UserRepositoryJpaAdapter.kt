@@ -11,7 +11,7 @@ import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asExistingResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithPasswords
-import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithSimpleAccounts
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithSimpleBooklets
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
@@ -34,9 +34,9 @@ class UserRepositoryJpaAdapter (
         return user.toModel()
     }
     @Transactional
-    override fun findUserByIdWithAccounts(userId: UserId): User? {
+    override fun findUserByIdWithBooklets(userId: UserId): User? {
         val id = userId.value ?: return null
-        return userPostgresRepository.findByIdWithAccount(id)?.toModelWithSimpleAccounts()
+        return userPostgresRepository.findByIdWithBooklets(id)?.toModelWithSimpleBooklets()
     }
 
     @Transactional

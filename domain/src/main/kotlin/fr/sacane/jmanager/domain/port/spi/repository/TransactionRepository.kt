@@ -9,22 +9,22 @@ import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
 /**
- * SPI contract for transaction persistence and account-related retrievals.
+ * SPI contract for transaction persistence and booklet-related retrievals.
  *
  * Implementations provide concrete storage operations for transactions and related
- * account (booklet) reads. The domain depends on this abstraction to persist and
+ * booklet reads. The domain depends on this abstraction to persist and
  * query transaction sheets without coupling to a specific datastore.
  */
 interface TransactionRepository {
     /**
-     * Persist a transaction for the given user and account label.
+     * Persist a transaction for the given user and booklet label.
      *
      * @param userId Domain user identifier
-     * @param accountLabel Label of the account (booklet) where the transaction is created
+     * @param bookletLabel Label of the booklet where the transaction is created
      * @param transaction Transaction entity to persist
      * @return Persisted Transaction with any assigned identifiers, or null on failure
      */
-    fun persist(userId: UserId, accountLabel: String, transaction: Transaction): Transaction?
+    fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction?
 
     /**
      * Delete multiple transaction sheets by their identifiers.
@@ -42,22 +42,22 @@ interface TransactionRepository {
     fun findTransactionById(transactionId: UUID): Transaction?
 
     /**
-     * Save (update) a transaction for a given account id.
+     * Save (update) a transaction for a given booklet id.
      *
-     * @param accountId UUID of the account owning the transaction
+     * @param bookletId UUID of the booklet owning the transaction
      * @param transaction Transaction to save
      * @return Saved Transaction or null on failure
      */
-    fun save(accountId: UUID, transaction: Transaction): Transaction?
+    fun save(bookletId: UUID, transaction: Transaction): Transaction?
 
     /**
-     * Retrieve a Booklet aggregate with its transaction sheets by account label and user.
+     * Retrieve a Booklet aggregate with its transaction sheets by booklet label and user.
      *
-     * @param label Account label
+     * @param label Booklet label
      * @param userId Domain user identifier
      * @return Booklet aggregate or null when not found
      */
-    fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet?
+    fun findBookletByLabelWithSheets(label: String, userId: UserId): Booklet?
 
     /**
      * Retrieve a Booklet aggregate with transactions by its id.
@@ -65,7 +65,7 @@ interface TransactionRepository {
      * @param id UUID of the booklet
      * @return Booklet aggregate or null when not found
      */
-    fun findAccountWithTransactionById(id: UUID): Booklet?
+    fun findBookletByIdWithTransactions(id: UUID): Booklet?
 
     /**
      * Find all transactions for a given booklet id.

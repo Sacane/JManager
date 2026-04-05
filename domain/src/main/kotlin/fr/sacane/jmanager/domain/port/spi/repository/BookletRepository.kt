@@ -8,7 +8,7 @@ import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
 /**
- * SPI contract for persistence and retrieval operations related to Booklet (account) aggregates.
+ * SPI contract for persistence and retrieval operations related to Booklet aggregates.
  *
  * Implementations provide concrete adapters (JPA, JDBC, in-memory, etc.) that persist and
  * retrieve Booklet aggregates used by the domain use-cases. The domain depends on this abstraction
@@ -35,27 +35,27 @@ interface BookletRepository {
     /**
      * Retrieve a booklet with its transactions eagerly loaded by id.
      *
-     * @param accountId UUID of the booklet
+     * @param bookletId UUID of the booklet
      * @return Booklet with transactions or null if not found
      */
-    fun findAccountByIdWithTransactions(accountId: UUID): Booklet?
+    fun findBookletByIdWithTransactions(bookletId: UUID): Booklet?
 
     /**
      * Retrieve a booklet by label for the given user, including transactions.
      *
      * @param userId Owner user id
-     * @param accountLabel Label of the account to find
+     * @param bookletLabel Label of the booklet to find
      * @return Booklet with transactions or null if not found
      */
-    fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Booklet?
+    fun findBookletByLabelWithTransactions(userId: UserId, bookletLabel: String): Booklet?
 
     /**
-     * Delete an account by its UUID. Implementations should also handle any cascade
+     * Delete a booklet by its UUID. Implementations should also handle any cascade
      * or cleanup semantics appropriate to the persistence layer.
      *
-     * @param accountId UUID of the account to delete
+     * @param bookletId UUID of the booklet to delete
      */
-    fun deleteAccountById(accountId: UUID)
+    fun deleteBookletById(bookletId: UUID)
 
     /**
      * Insert or update a booklet aggregate.
@@ -75,12 +75,12 @@ interface BookletRepository {
     /**
      * Update monthly cycle settings for a booklet.
      *
-     * @param accountId UUID of the account to update
+     * @param bookletId UUID of the booklet to update
      * @param monthlyPeriodStartDay configured period start day (1..31)
      * @param monthlyPeriodEndDay configured period end day (1..31) or null to keep default behavior
      * @return true when one row was updated, false otherwise
      */
-    fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int? = null): Boolean
+    fun updateMonthlyPeriodStartDay(bookletId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int? = null): Boolean
 
     /**
      * Retrieve all booklets owned by a user.

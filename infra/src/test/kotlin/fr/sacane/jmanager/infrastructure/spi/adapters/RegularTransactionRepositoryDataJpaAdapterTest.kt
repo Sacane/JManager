@@ -10,7 +10,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.regular.RegularTransactionRepositoryDataJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.JpaRegularTransactionTrackerRepository
 import fr.sacane.jmanager.infrastructure.spi.entity.transaction.RegularTransactionTrackerEntity
@@ -33,7 +33,7 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
     @Autowired private val regularTransactionAdapter: RegularTransactionRepositoryDataJpaAdapter,
     @Autowired private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
     @Autowired private val trackerRepository: JpaRegularTransactionTrackerRepository,
-    @Autowired private val accountStateTestAdapter: AccountStateTestAdapter,
+    @Autowired private val bookletStateTestAdapter: BookletStateTestAdapter,
     @Autowired private val tagRepository: TagRepository
 ) : AuthenticatedUserTest() {
 
@@ -43,12 +43,12 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
     @BeforeEach
     fun setupBooklet() {
         val newBooklet = Booklet(
-            labelAccount = "Test Account",
+            label = "Test Booklet",
             amount = fr.sacane.jmanager.domain.models.Amount(1000L),
             owner = user,
         )
-        accountStateTestAdapter.init(listOf(newBooklet))
-        booklet = accountStateTestAdapter.get().find { it.label == "Test Account" }!!
+        bookletStateTestAdapter.init(listOf(newBooklet))
+        booklet = bookletStateTestAdapter.get().find { it.label == "Test Booklet" }!!
         defaultTag = tagRepository.defaultTag()!!
     }
 
@@ -56,7 +56,7 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
     fun cleanUp() {
         trackerRepository.deleteAll()
         regularTransactionRepository.deleteAll()
-        accountStateTestAdapter.clear()
+        bookletStateTestAdapter.clear()
     }
 
     @Nested
@@ -249,21 +249,21 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
     }
 
     @Nested
-    inner class GetAllRegularUsedByAccountTest {
+    inner class GetAllRegularUsedByBookletTest {
 
         @Test
-        fun `should retrieve regular transactions used by specific account`() {
+        fun `should retrieve regular transactions used by specific booklet`() {
             val secondBooklet = Booklet(
-                labelAccount = "Second Account",
+                label = "Second Booklet",
                 amount = Amount(500L),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(secondBooklet))
-            val savedSecondBooklet = accountStateTestAdapter.get().find { it.label == "Second Account" }!!
+            bookletStateTestAdapter.init(listOf(secondBooklet))
+            val savedSecondBooklet = bookletStateTestAdapter.get().find { it.label == "Second Booklet" }!!
 
             val transaction1 = RegularTransaction(
                 tag = defaultTag,
-                label = "Transaction for first account",
+                label = "Transaction for first booklet",
                 amount = Amount(100L),
                 isIncome = true,
                 id = RegularTransactionId(UUID.randomUUID().toString()),
@@ -274,7 +274,7 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
 
             val transaction2 = RegularTransaction(
                 tag = defaultTag,
-                label = "Transaction for second account",
+                label = "Transaction for second booklet",
                 amount = Amount(200L),
                 isIncome = false,
                 id = RegularTransactionId(UUID.randomUUID().toString()),
@@ -286,16 +286,16 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
             regularTransactionAdapter.saveRegularTransaction(user!!.id, transaction1, listOf(booklet.id!!))
             regularTransactionAdapter.saveRegularTransaction(user!!.id, transaction2, listOf(savedSecondBooklet.id!!))
 
-            val result = regularTransactionAdapter.getAllRegularUsedByAccount(user!!.id, booklet.id!!)
+            val result = regularTransactionAdapter.getAllRegularUsedByBooklet(user!!.id, booklet.id!!)
 
             assertNotNull(result)
             assertEquals(1, result!!.size)
-            assertEquals("Transaction for first account", result[0].label)
+            assertEquals("Transaction for first booklet", result[0].label)
         }
 
         @Test
-        fun `should return empty list when account has no regular transactions`() {
-            val result = regularTransactionAdapter.getAllRegularUsedByAccount(user!!.id, booklet.id!!)
+        fun `should return empty list when booklet has no regular transactions`() {
+            val result = regularTransactionAdapter.getAllRegularUsedByBooklet(user!!.id, booklet.id!!)
 
             assertNotNull(result)
             assertTrue(result!!.isEmpty())
@@ -463,12 +463,12 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
         @Test
         fun `should update associated booklets when editing regular transaction`() {
             val secondBooklet = Booklet(
-                labelAccount = "Second Booklet",
+                label = "Second Booklet",
                 amount = Amount(500L),
                 owner = user,
             )
-            accountStateTestAdapter.init(listOf(secondBooklet))
-            val savedSecondBooklet = accountStateTestAdapter.get().find { it.label == "Second Booklet" }!!
+            bookletStateTestAdapter.init(listOf(secondBooklet))
+            val savedSecondBooklet = bookletStateTestAdapter.get().find { it.label == "Second Booklet" }!!
 
             val originalTransaction = RegularTransaction(
                 label = "Booklet Switch",
@@ -495,8 +495,8 @@ class RegularTransactionRepositoryDataJpaAdapterTest(
 
             assertNotNull(result)
 
-            val firstBookletRegulars = regularTransactionAdapter.getAllRegularUsedByAccount(user!!.id, booklet.id!!)
-            val secondBookletRegulars = regularTransactionAdapter.getAllRegularUsedByAccount(user!!.id, savedSecondBooklet.id!!)
+            val firstBookletRegulars = regularTransactionAdapter.getAllRegularUsedByBooklet(user!!.id, booklet.id!!)
+            val secondBookletRegulars = regularTransactionAdapter.getAllRegularUsedByBooklet(user!!.id, savedSecondBooklet.id!!)
 
             assertTrue(firstBookletRegulars?.none { it.id == saved.id } ?: true)
             assertTrue(secondBookletRegulars?.any { it.id == saved.id } == true)

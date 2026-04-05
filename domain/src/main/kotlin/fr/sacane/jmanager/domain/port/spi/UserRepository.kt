@@ -25,12 +25,12 @@ interface UserRepository {
     fun findUserById(userId: UserId): User?
 
     /**
-     * Find a user by domain identifier and eagerly load their accounts/booklets.
+     * Find a user by domain identifier and eagerly load their booklets.
      *
      * @param userId domain UserId
-     * @return User aggregate with accounts or null if not found
+     * @return User aggregate with booklets or null if not found
      */
-    fun findUserByIdWithAccounts(userId: UserId): User?
+    fun findUserByIdWithBooklets(userId: UserId): User?
 
     /**
      * Find a user by their pseudonym/username.

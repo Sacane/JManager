@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import useBooklet from '../../composables/useBooklet'
@@ -11,58 +11,58 @@ const confirm = useConfirm()
 const router = useRouter()
 const { isScopeLoading, withLoading } = useLoading()
 
-const { fetch, deleteAccount, createAccount } = useBooklet()
-const loadAccountsScope = LOADING_SCOPES.accountIndex.load
-const createAccountScope = LOADING_SCOPES.accountIndex.create
-const deleteAccountScope = LOADING_SCOPES.accountIndex.delete
-const isLoadingAccounts = computed(() => isScopeLoading(loadAccountsScope))
-const isCreatingAccount = computed(() => isScopeLoading(createAccountScope))
-const isDeletingAccount = computed(() => isScopeLoading(deleteAccountScope))
+const { fetch, deleteBooklet, createBooklet } = useBooklet()
+const loadBookletsScope = LOADING_SCOPES.bookletIndex.load
+const createBookletScope = LOADING_SCOPES.bookletIndex.create
+const deleteBookletScope = LOADING_SCOPES.bookletIndex.delete
+const isLoadingBooklets = computed(() => isScopeLoading(loadBookletsScope))
+const isCreatingBooklet = computed(() => isScopeLoading(createBookletScope))
+const isDeletingBooklet = computed(() => isScopeLoading(deleteBookletScope))
 const isAnyBookletActionLoading = computed(() =>
-  isLoadingAccounts.value
-  || isCreatingAccount.value
-  || isDeletingAccount.value,
+  isLoadingBooklets.value
+  || isCreatingBooklet.value
+  || isDeletingBooklet.value,
 )
-const isAccountFilled = ref<boolean>(false)
+const isBookletsFilled = ref<boolean>(false)
 const data = ref<Array<{
   id: string
-  labelAccount: string
+  label: string
   amount: string
   currency: string
 }>>([])
 
 onMounted(async () => {
-  await loadAccounts()
+  await loadBooklets()
 })
 
-async function loadAccounts() {
+async function loadBooklets() {
   await withLoading(async () => {
-    const accountArray = await fetch()
-    format(accountArray)
-    isAccountFilled.value = accountArray.length > 0
-  }, loadAccountsScope)
+    const bookletArray = await fetch()
+    format(bookletArray)
+    isBookletsFilled.value = bookletArray.length > 0
+  }, loadBookletsScope)
 }
 
-function format(accounts: Array<BookletDTO>) {
-  data.value = accounts.map((account: BookletDTO) => {
+function format(booklets: Array<BookletDTO>) {
+  data.value = booklets.map((booklet: BookletDTO) => {
     return {
-      id: String(account.id || ''),
-      labelAccount: account.labelAccount,
-      amount: `${account.amount}`,
-      currency: account.currency || '€',
+      id: String(booklet.id || ''),
+      label: booklet.label,
+      amount: `${booklet.amount}`,
+      currency: booklet.currency || '€',
     }
   })
 }
 
-function onCardClick(accountId: string) {
-  router.push(`/account/${accountId}`)
+function onCardClick(bookletId: string) {
+  router.push(`/booklet/${bookletId}`)
 }
 
-async function applyDelete(accountId: string) {
+async function applyDelete(bookletId: string) {
   await withLoading(async () => {
-    await deleteAccount(accountId)
-    await loadAccounts()
-  }, deleteAccountScope)
+    await deleteBooklet(bookletId)
+    await loadBooklets()
+  }, deleteBookletScope)
 }
 
 function openConfirmDeleteDialog(id: string, bookletLabel: string) {
@@ -77,26 +77,26 @@ function openConfirmDeleteDialog(id: string, bookletLabel: string) {
   })
 }
 
-const isAddAccountDialogOpen = ref<boolean>(false)
+const isAddBookletDialogOpen = ref<boolean>(false)
 
-function handleAccountCreation(account: { label: string, digit: number }) {
+function handleBookletCreation(booklet: { label: string, digit: number }) {
   withLoading(async () => {
     try {
-      await createAccount(account.label, account.digit, '€')
-      await loadAccounts()
+      await createBooklet(booklet.label, booklet.digit, '€')
+      await loadBooklets()
     } finally {
-      isAddAccountDialogOpen.value = false
+      isAddBookletDialogOpen.value = false
     }
-  }, createAccountScope)
+  }, createBookletScope)
 }
 
 function cancel() {
-  isAddAccountDialogOpen.value = false
+  isAddBookletDialogOpen.value = false
 }
 
-function openAccountDialog() {
+function openBookletDialog() {
   if (isAnyBookletActionLoading.value) return
-  isAddAccountDialogOpen.value = true
+  isAddBookletDialogOpen.value = true
 }
 
 function amountClass(amount: string) {
@@ -136,9 +136,9 @@ function formatAmount(amount: string) {
         label="Nouveau livret"
         icon="pi pi-plus"
         class="add-button"
-        :loading="isCreatingAccount"
+        :loading="isCreatingBooklet"
         :disabled="isAnyBookletActionLoading"
-        @click="openAccountDialog"
+        @click="openBookletDialog"
       />
       <Button
         v-else
@@ -150,7 +150,7 @@ function formatAmount(amount: string) {
     </div>
 
     <!-- Empty State -->
-    <div v-if="!isAccountFilled" class="empty-state">
+    <div v-if="!isBookletsFilled" class="empty-state">
       <div class="empty-illustration">
         <i class="pi pi-wallet" />
       </div>
@@ -165,13 +165,13 @@ function formatAmount(amount: string) {
         icon="pi pi-plus"
         size="large"
         class="empty-action-button"
-        :loading="isCreatingAccount"
+        :loading="isCreatingBooklet"
         :disabled="isAnyBookletActionLoading"
-        @click="openAccountDialog"
+        @click="openBookletDialog"
       />
     </div>
 
-    <div v-if="isLoadingAccounts" class="loading-container">
+    <div v-if="isLoadingBooklets" class="loading-container">
       <ProgressSpinner
         style="width: 48px; height: 48px"
         stroke-width="4"
@@ -186,10 +186,10 @@ function formatAmount(amount: string) {
       <div class="booklets-grid">
         <!-- Existing Booklets -->
         <div
-          v-for="account in data"
-          :key="account.id"
+          v-for="booklet in data"
+          :key="booklet.id"
           class="booklet-card"
-          @click="onCardClick(account.id)"
+          @click="onCardClick(booklet.id)"
         >
           <div class="card-inner">
             <!-- Card Header -->
@@ -199,7 +199,7 @@ function formatAmount(amount: string) {
                   <i class="pi pi-wallet" />
                 </div>
                 <h3 class="booklet-name">
-                  {{ capitalizeFirst(account.labelAccount) }}
+                  {{ capitalizeFirst(booklet.label) }}
                 </h3>
               </div>
               <Button
@@ -208,19 +208,19 @@ function formatAmount(amount: string) {
                 text
                 rounded
                 severity="danger"
-                :loading="isDeletingAccount"
+                :loading="isDeletingBooklet"
                 :disabled="isAnyBookletActionLoading"
-                @click.stop="openConfirmDeleteDialog(account.id, account.labelAccount)"
+                @click.stop="openConfirmDeleteDialog(booklet.id, booklet.label)"
               />
             </div>
 
             <!-- Card Body -->
             <div class="card-middle">
               <div class="booklet-amount">
-                <span class="amount-value" :class="amountClass(account.amount)">
-                  {{ formatAmount(account.amount) }}
+                <span class="amount-value" :class="amountClass(booklet.amount)">
+                  {{ formatAmount(booklet.amount) }}
                 </span>
-                <span class="amount-currency">{{ account.currency }}</span>
+                <span class="amount-currency">{{ booklet.currency }}</span>
               </div>
             </div>
 
@@ -239,7 +239,7 @@ function formatAmount(amount: string) {
           v-if="data.length < 6"
           class="booklet-card add-card"
           :class="{ 'disabled-card': isAnyBookletActionLoading }"
-          @click="openAccountDialog"
+          @click="openBookletDialog"
         >
           <div class="add-card-content">
             <div class="add-icon">
@@ -253,8 +253,8 @@ function formatAmount(amount: string) {
     </div>
 
     <BookletBookingDialog
-      :visible="isAddAccountDialogOpen"
-      @create-account="handleAccountCreation"
+      :visible="isAddBookletDialogOpen"
+      @create-booklet="handleBookletCreation"
       @cancel="cancel"
     />
   </div>

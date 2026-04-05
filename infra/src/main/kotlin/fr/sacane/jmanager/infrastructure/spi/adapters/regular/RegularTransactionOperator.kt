@@ -84,7 +84,7 @@ class RegularTransactionOperator(
         existing.frequencyProperty = regularTransaction.frequencyProperty.toResource()
         existing.recurrenceRule = RecurrenceRuleEntity.fromDomain(regularTransaction.recurrenceRule)
 
-        existing.accounts.toList().forEach { booklet ->
+        existing.booklets.toList().forEach { booklet ->
             existing.removeBooklet(booklet)
         }
 

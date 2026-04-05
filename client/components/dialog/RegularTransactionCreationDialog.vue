@@ -194,14 +194,14 @@ function handleTabKey(event: KeyboardEvent) {
           id="booklets"
           v-model="regularTrForm.selectedBooklets"
           :options="booklets"
-          option-label="labelAccount"
+          option-label="label"
           placeholder="Sélectionner un ou plusieurs livrets"
           class="w-full"
           display="chip"
         >
           <template #option="slotProps">
             <div class="flex items-center gap-2">
-              <span>{{ slotProps.option.labelAccount }}</span>
+              <span>{{ slotProps.option.label }}</span>
             </div>
           </template>
         </MultiSelect>

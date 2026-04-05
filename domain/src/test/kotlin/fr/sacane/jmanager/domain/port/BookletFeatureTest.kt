@@ -1,10 +1,10 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.*
-import fr.sacane.jmanager.domain.fake.AccountByOwner
+import fr.sacane.jmanager.domain.fake.BookletsByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.fake.IdUserAccount
-import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.fake.IdUserBooklet
+import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.UserRegularTransaction
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -30,11 +30,11 @@ class BookletFeatureTest: FeatureTest() {
 
     companion object{
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
-        private var bookletFeature: BookletFeature = FakeFactory.accountFeature
+        private var bookletFeature: BookletFeature = FakeFactory.bookletFeature
         private val user = userRepository.register("jojo", "test") as User
         private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
         private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
-        private val accountState: State<AccountByOwner> = FakeFactory.accountState()
+        private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
         private fun connectUser(user: User) {
             FakeFactory.sessionManager().addSession(user.id, session)
         }
@@ -46,11 +46,11 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Nested
-    inner class AccountFeatureAuthTest: AuthenticationTest {
+    inner class BookletFeatureAuthTest: AuthenticationTest {
         private val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         override val action: List<Result<out Any>>
             get() = listOf(
-                bookletFeature.findAccountById(UUID.randomUUID(), UUID.randomUUID().toString()),
+                bookletFeature.findBookletById(UUID.randomUUID(), UUID.randomUUID().toString()),
                 bookletFeature.save(UUID.randomUUID().toString(), element)
             )
     }
@@ -60,10 +60,10 @@ class BookletFeatureTest: FeatureTest() {
         connectUser(user)
         val id = UUID.randomUUID()
         val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id= id)
-        accountState.init(listOf(
-            AccountByOwner(listOf(element), user.id)
+        bookletState.init(listOf(
+            BookletsByOwner(listOf(element), user.id)
         ))
-        bookletFeature.findAccountById(id, session.tokenValue)
+        bookletFeature.findBookletById(id, session.tokenValue)
             .assertTrue {
                 this.label == "test"
             }
@@ -73,17 +73,17 @@ class BookletFeatureTest: FeatureTest() {
     fun `Given an existing booklet it could be edit`() {
         connectUser(user)
         val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
-        accountState.init(listOf(
-            AccountByOwner(listOf(element), user.id)
+        bookletState.init(listOf(
+            BookletsByOwner(listOf(element), user.id)
         ))
         val booklet = Booklet(
             Amount(BigDecimal(102)),
-            labelAccount = element.label,
+            label = element.label,
             initialSold = element.initialSold,
             owner = user,
             id= element.id,
         )
-        val response = bookletFeature.editAccount(booklet = booklet, session.tokenValue)
+        val response = bookletFeature.editBooklet(booklet = booklet, session.tokenValue)
 
         val expectedAnswer = Amount(BigDecimal(102))
 
@@ -95,20 +95,20 @@ class BookletFeatureTest: FeatureTest() {
         val otherUser = userRepository.register("jojo",  "test") as User
         connectUser(otherUser)
         val element = Booklet( Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
-        accountState.init(listOf(
-            AccountByOwner(listOf(element), otherUser.id)
+        bookletState.init(listOf(
+            BookletsByOwner(listOf(element), otherUser.id)
         ))
 
-        bookletFeature.deleteAccountById(element.id!!, session.tokenValue).assertTrue {
-            val accounts = accountState.getStates()
+        bookletFeature.deleteBookletById(element.id!!, session.tokenValue).assertTrue {
+            val bookletsList = bookletState.getStates()
 
-            val expectedAccountSize = 0
-            val actualAccountSize = accounts.find { it.userId == otherUser.id }?.booklet?.size ?: throw Error()
-            expectedAccountSize == actualAccountSize
+            val expectedBookletSize = 0
+            val actualBookletSize = bookletsList.find { it.userId == otherUser.id }?.booklets?.size ?: throw Error()
+            expectedBookletSize == actualBookletSize
         }
 
-        val accounts = accountState.getStates()
-        val ofUser = accounts.find { it.userId == otherUser.id }!!
+        val bookletsList = bookletState.getStates()
+        val ofUser = bookletsList.find { it.userId == otherUser.id }!!
 
         assertNull(ofUser.existsById(UUID.randomUUID()))
     }
@@ -117,8 +117,8 @@ class BookletFeatureTest: FeatureTest() {
     fun `As an booklet's owner, I can retrieve it by its label`() {
         launchWithConnectedUserInstance {
             val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = Companion.user, id = UUID.randomUUID())
-            accountState.init(listOf(
-                AccountByOwner(listOf(element), this.user.id)
+            bookletState.init(listOf(
+                BookletsByOwner(listOf(element), this.user.id)
             ))
             bookletFeature.findByLabelAndUserId(tokenValue, element.label)
                 .assertTrue {
@@ -128,24 +128,24 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As an account's owner,  I can retrieve All of my Registered Booklets`() {
-        launchWithConnectedUserWithoutAccount {
+    fun `As a booklet's owner,  I can retrieve All of my Registered Booklets`() {
+        launchWithConnectedUserWithoutBooklet {
 
             val booklet = Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
             val booklet2 = Booklet(Amount.fromString("100", "€".asCurrency()), "test2", owner = user, id = UUID.randomUUID())
             val booklet3 = Booklet( Amount.fromString("100", "€".asCurrency()), "test3", owner = user, id= UUID.randomUUID())
             val booklet4 = Booklet( Amount.fromString("100", "€".asCurrency()), "test4", owner = user, id = UUID.randomUUID())
-            val expectedAccount = listOf(
+            val expectedBookletList = listOf(
                 booklet,
                 booklet2,
                 booklet3,
                 booklet4
             )
-            accountState.init(listOf(
-                AccountByOwner(expectedAccount, userId)
+            bookletState.init(listOf(
+                BookletsByOwner(expectedBookletList, userId)
             ))
 
-            bookletFeature.findAllRegisteredAccounts(tokenValue)
+            bookletFeature.findAllRegisteredBooklets(tokenValue)
                 .assertContainsAtPosition(0, booklet)
                 .assertContainsAtPosition(1, booklet2)
                 .assertContainsAtPosition(2, booklet3)
@@ -156,28 +156,28 @@ class BookletFeatureTest: FeatureTest() {
 
     @Test
     fun `As a Jmanager user, I can create new booklet`() {
-        launchWithConnectedUserWithoutAccount {
+        launchWithConnectedUserWithoutBooklet {
             val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
 
             bookletFeature.save(tokenValue, bookletToSave)
                 .assertTrue {
                     val expectedAmount = Amount(100)
-                    val expectedLabelAccount = "test1"
-                    this.amount == expectedAmount && this.label == expectedLabelAccount
+                    val expectedLabel = "test1"
+                    this.amount == expectedAmount && this.label == expectedLabel
                 }
         }
     }
 
     @Test
     fun `As a simple user, I cannot create more than six booklets`() {
-        launchWithConnectedUserWithoutAccount {
+        launchWithConnectedUserWithoutBooklet {
             val bookletLists = mutableListOf<Booklet>()
             repeat(6) {
                 val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test$it", owner = user, id = UUID.randomUUID())
                 bookletLists.add(bookletToSave)
             }
-            accountState.init(listOf(
-                AccountByOwner(bookletLists, userId)
+            bookletState.init(listOf(
+                BookletsByOwner(bookletLists, userId)
             ))
 
             val result = bookletFeature.save(
@@ -191,12 +191,12 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As an account's owner, I cannot register an existing booklet with the same label`() {
+    fun `As a booklet's owner, I cannot register an existing booklet with the same label`() {
         val otherUser = userRepository.register("jojo","test") as User
         connectUser(otherUser)
 
-        accountState.init(listOf(
-            AccountByOwner(listOf(Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())), otherUser.id)
+        bookletState.init(listOf(
+            BookletsByOwner(listOf(Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())), otherUser.id)
         ))
 
         val bookletToSave = Booklet( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())
@@ -213,12 +213,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Test Account",
+                    label = "Test Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
@@ -237,9 +237,9 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
                 FakeFactory.fakeTransactionRepository()
-                    .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, bookletId), mutableListOf(transaction1))))
+                    .init(listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), mutableListOf(transaction1))))
                 FakeFactory.fakeTransactionRepository()
-                    .init(listOf(IdUserAccountByTransaction(IdUserAccount(user.id, bookletId), mutableListOf(transaction2))))
+                    .init(listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), mutableListOf(transaction2))))
 
 
                 FakeFactory.regularTransactionState.init(emptyList())
@@ -265,12 +265,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Test Account",
+                    label = "Test Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
@@ -291,8 +291,8 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository()
                     .init(
                         listOf(
-                            IdUserAccountByTransaction(
-                                IdUserAccount(user.id, bookletId),
+                            IdBookletByTransaction(
+                                IdUserBooklet(user.id, bookletId),
                                 mutableListOf(transaction1, transaction2)
                             )
                         )
@@ -321,12 +321,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Mixed Account",
+                    label = "Mixed Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
@@ -364,8 +364,8 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository()
                     .init(
                         listOf(
-                            IdUserAccountByTransaction(
-                                IdUserAccount(user.id, bookletId),
+                            IdBookletByTransaction(
+                                IdUserBooklet(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3, transaction4
                                 )
@@ -392,12 +392,12 @@ class BookletFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Preview Account",
+                    label = "Preview Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
@@ -426,8 +426,8 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository()
                     .init(
                         listOf(
-                            IdUserAccountByTransaction(
-                                IdUserAccount(user.id, bookletId),
+                            IdBookletByTransaction(
+                                IdUserBooklet(user.id, bookletId),
                                 mutableListOf(transaction1, transaction2, transaction3)
                             )
                         )
@@ -456,12 +456,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 2000.toAmount(),
-                    labelAccount = "Separation Test",
+                    label = "Separation Test",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
@@ -507,8 +507,8 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository()
                     .init(
                         listOf(
-                            IdUserAccountByTransaction(
-                                IdUserAccount(user.id, bookletId),
+                            IdBookletByTransaction(
+                                IdUserBooklet(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3, transaction4, transaction5
                                 )
@@ -539,12 +539,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Regular Account",
+                    label = "Regular Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTransaction1 = RegularTransaction(
                     label = "Monthly Salary",
@@ -594,12 +594,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 500.toAmount(),
-                    labelAccount = "Empty Account",
+                    label = "Empty Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 FakeFactory.regularTransactionState.init(emptyList())
 
@@ -615,7 +615,7 @@ class BookletFeatureTest: FeatureTest() {
                 result.assertTrue { this.currentTransactions.isEmpty() }
                 result.assertTrue { this.previsionalTransactions.isEmpty() }
                 result.assertTrue { this.realSold == 500.toAmount() }
-                result.assertTrue { this.label == "Empty Account" }
+                result.assertTrue { this.label == "Empty Booklet" }
             }
         }
 
@@ -641,12 +641,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Month Filter Test",
+                    label = "Month Filter Test",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
@@ -684,8 +684,8 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository()
                     .init(
                         listOf(
-                            IdUserAccountByTransaction(
-                                IdUserAccount(user.id, bookletId),
+                            IdBookletByTransaction(
+                                IdUserBooklet(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3, transaction4
                                 )
@@ -717,12 +717,12 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Future Sold Test",
+                    label = "Future Sold Test",
                     owner = user.toUser(),
                     id = bookletId
                 )
 
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val transaction1 = Transaction(
                     id = UUID.randomUUID(),
@@ -752,8 +752,8 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository()
                     .init(
                         listOf(
-                            IdUserAccountByTransaction(
-                                IdUserAccount(user.id, bookletId),
+                            IdBookletByTransaction(
+                                IdUserBooklet(user.id, bookletId),
                                 mutableListOf(
                                     transaction1, transaction2, transaction3
                                 )
@@ -782,11 +782,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "RT CRUD Account",
+                    label = "RT CRUD Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 FakeFactory.regularTransactionState.init(emptyList())
 
@@ -834,14 +834,14 @@ class BookletFeatureTest: FeatureTest() {
         fun `Should not expose regular transactions of other user (multi-tenant isolation)`() {
             launchWithConnectedUserInstance {
                 val bookletIdMine = UUID.randomUUID()
-                val bookletMine = Booklet(1000.toAmount(), "My Account", owner = user.toUser(), id = bookletIdMine)
+                val bookletMine = Booklet(1000.toAmount(), "My Booklet", owner = user.toUser(), id = bookletIdMine)
                 val otherUser = userRepository.register("other${UUID.randomUUID()}", "pw") as User
                 val bookletIdOther = UUID.randomUUID()
-                val bookletOther = Booklet(1000.toAmount(), "Other Account", owner = otherUser, id = bookletIdOther)
+                val bookletOther = Booklet(1000.toAmount(), "Other Booklet", owner = otherUser, id = bookletIdOther)
 
-                accountState.init(listOf(
-                    AccountByOwner(listOf(bookletMine), user.id),
-                    AccountByOwner(listOf(bookletOther), otherUser.id)
+                bookletState.init(listOf(
+                    BookletsByOwner(listOf(bookletMine), user.id),
+                    BookletsByOwner(listOf(bookletOther), otherUser.id)
                 ))
 
                 val rtMine = RegularTransaction(
@@ -888,11 +888,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "RT Calculation Account",
+                    label = "RT Calculation Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularIncome = RegularTransaction(
                     label = "Monthly Salary",
@@ -925,11 +925,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Multi RT Account",
+                    label = "Multi RT Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val rt1 = RegularTransaction(
                     label = "RT Start Day 1",
@@ -986,11 +986,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Combined Account",
+                    label = "Combined Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val currentTx = Transaction(
                     id = UUID.randomUUID(),
@@ -1011,8 +1011,8 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.fakeTransactionRepository().init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, bookletId),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, bookletId),
                             mutableListOf(currentTx, previewTx)
                         )
                     )
@@ -1053,11 +1053,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Future RT Account",
+                    label = "Future RT Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val futureRT = RegularTransaction(
                     label = "Future RT",
@@ -1087,11 +1087,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 2000.toAmount(),
-                    labelAccount = "No Double Count",
+                    label = "No Double Count",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
                 val regularIncome = RegularTransaction(
@@ -1129,8 +1129,8 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.fakeTransactionRepository().init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, bookletId),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, bookletId),
                             mutableListOf(febConfirmed, marConfirmed)
                         )
                     )
@@ -1155,11 +1155,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 2000.toAmount(),
-                    labelAccount = "No Double Count Balances",
+                    label = "No Double Count Balances",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTransactionId = RegularTransactionId("${user.id.value}-salary-balances")
                 val regularIncome = RegularTransaction(
@@ -1188,8 +1188,8 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.fakeTransactionRepository().init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, bookletId),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, bookletId),
                             mutableListOf(marConfirmed)
                         )
                     )
@@ -1214,11 +1214,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Range Coverage",
+                    label = "Range Coverage",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val febPreviewIncome = Transaction(
                     id = UUID.randomUUID(),
@@ -1231,8 +1231,8 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.fakeTransactionRepository().init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, bookletId),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, bookletId),
                             mutableListOf(febPreviewIncome)
                         )
                     )
@@ -1260,11 +1260,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Current Month No Null Id",
+                    label = "Current Month No Null Id",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTx = RegularTransaction(
                     label = "Current month regular",
@@ -1299,11 +1299,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Future Month Virtual Id",
+                    label = "Future Month Virtual Id",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTx = RegularTransaction(
                     label = "Future month regular",
@@ -1338,11 +1338,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Explicit Range Tx",
+                    label = "Explicit Range Tx",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val txAtStart = Transaction(
                     id = UUID.randomUUID(),
@@ -1371,8 +1371,8 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.fakeTransactionRepository().init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, bookletId),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, bookletId),
                             mutableListOf(txAtStart, txAtEnd, txAfterEnd)
                         )
                     )
@@ -1400,11 +1400,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Explicit Range Balance",
+                    label = "Explicit Range Balance",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val inRangePreview = Transaction(
                     id = UUID.randomUUID(),
@@ -1425,8 +1425,8 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.fakeTransactionRepository().init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            IdUserAccount(user.id, bookletId),
+                        IdBookletByTransaction(
+                            IdUserBooklet(user.id, bookletId),
                             mutableListOf(inRangePreview, outOfRangePreview)
                         )
                     )
@@ -1453,11 +1453,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Past Default Range",
+                    label = "Past Default Range",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTx = RegularTransaction(
                     label = "Monthly salary",
@@ -1496,11 +1496,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Past Custom Cycle",
+                    label = "Past Custom Cycle",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTx = RegularTransaction(
                     label = "Monthly salary",
@@ -1539,11 +1539,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Future Custom Cycle",
+                    label = "Future Custom Cycle",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 val regularTx = RegularTransaction(
                     label = "Monthly salary",
@@ -1587,11 +1587,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Cycle Offset Start Boundary",
+                    label = "Cycle Offset Start Boundary",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 // Monthly-on-5: without fix, March 5 would be generated by the full-month MARCH loop.
                 // With fix, March 5 is before the cycle start (March 28) → must NOT be generated.
@@ -1635,11 +1635,11 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    labelAccount = "Cycle Offset End Boundary",
+                    label = "Cycle Offset End Boundary",
                     owner = user.toUser(),
                     id = bookletId
                 )
-                accountState.init(listOf(AccountByOwner(listOf(booklet), user.id)))
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
                 // Monthly-on-29: without fix, April 29 would be generated by the full-month APRIL loop.
                 // With fix, April 29 is after the cycle end (April 27) → must NOT be generated.

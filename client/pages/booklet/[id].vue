@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
@@ -24,8 +24,8 @@ const { isScopeLoading, withLoading } = useLoading()
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 const actualSheets = ref<TransactionCreationDTO[]>([])
 const tags = ref<TagDTO[]>([])
-const accountMonthlyPeriodStartDay = ref(1)
-const accountMonthlyPeriodEndDay = ref<number | null>(null)
+const bookletMonthlyPeriodStartDay = ref(1)
+const bookletMonthlyPeriodEndDay = ref<number | null>(null)
 
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
@@ -92,13 +92,13 @@ const selectedTransactionsAmountLabel = computed(() => {
 })
 
 const displayLabel = computed(() => capitalizeFirst(bookletData.label))
-const loadBookletScope = LOADING_SCOPES.accountDetails.load
-const bookTransactionScope = LOADING_SCOPES.accountDetails.createTransaction
-const editTransactionScope = LOADING_SCOPES.accountDetails.editTransaction
-const fetchTransactionScope = LOADING_SCOPES.accountDetails.fetchTransaction
-const deleteTransactionScope = LOADING_SCOPES.accountDetails.deleteTransaction
-const confirmPreviewScope = LOADING_SCOPES.accountDetails.confirmPreview
-const exportCsvScope = LOADING_SCOPES.accountDetails.exportCsv
+const loadBookletScope = LOADING_SCOPES.bookletDetails.load
+const bookTransactionScope = LOADING_SCOPES.bookletDetails.createTransaction
+const editTransactionScope = LOADING_SCOPES.bookletDetails.editTransaction
+const fetchTransactionScope = LOADING_SCOPES.bookletDetails.fetchTransaction
+const deleteTransactionScope = LOADING_SCOPES.bookletDetails.deleteTransaction
+const confirmPreviewScope = LOADING_SCOPES.bookletDetails.confirmPreview
+const exportCsvScope = LOADING_SCOPES.bookletDetails.exportCsv
 const isBookletLoading = computed(() => isScopeLoading(loadBookletScope))
 const isBookTransactionLoading = computed(() => isScopeLoading(bookTransactionScope))
 const isEditTransactionLoading = computed(() => isScopeLoading(editTransactionScope))
@@ -178,34 +178,34 @@ function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number 
   return Math.min(31, Math.max(1, Math.trunc(value)))
 }
 
-async function loadAccountCycleSetting(accountId: string) {
+async function loadBookletCycleSetting(bookletId: string) {
   try {
     const settings = await getUserSettings()
     if (!settings) {
-      accountMonthlyPeriodStartDay.value = 1
-      accountMonthlyPeriodEndDay.value = null
+      bookletMonthlyPeriodStartDay.value = 1
+      bookletMonthlyPeriodEndDay.value = null
       return
     }
 
-    const accountCycle = settings.accountCycles.find(cycle => cycle.accountId === accountId)
-    accountMonthlyPeriodStartDay.value = normalizeMonthlyPeriodStartDay(accountCycle?.monthlyPeriodStartDay)
-    accountMonthlyPeriodEndDay.value = normalizeMonthlyPeriodEndDay(accountCycle?.monthlyPeriodEndDay)
+    const bookletCycle = settings.bookletCycles.find(cycle => cycle.bookletId === bookletId)
+    bookletMonthlyPeriodStartDay.value = normalizeMonthlyPeriodStartDay(bookletCycle?.monthlyPeriodStartDay)
+    bookletMonthlyPeriodEndDay.value = normalizeMonthlyPeriodEndDay(bookletCycle?.monthlyPeriodEndDay)
   } catch {
-    accountMonthlyPeriodStartDay.value = 1
-    accountMonthlyPeriodEndDay.value = null
+    bookletMonthlyPeriodStartDay.value = 1
+    bookletMonthlyPeriodEndDay.value = null
   }
 }
 
 async function loadBookletData() {
   await withLoading(async () => {
     try {
-      const accountId = (route.params as any)?.id as string
+      const bookletId = (route.params as any)?.id as string
       const month = numberFromMonth(bookletData.month) as number
       const cycleRange = resolveMonthlyCycleRangeForTargetMonth(
         bookletData.year,
         month,
-        accountMonthlyPeriodStartDay.value,
-        accountMonthlyPeriodEndDay.value,
+        bookletMonthlyPeriodStartDay.value,
+        bookletMonthlyPeriodEndDay.value,
       )
       const dateRange = {
         startDate: toIsoLocalDate(cycleRange.start),
@@ -213,12 +213,12 @@ async function loadBookletData() {
       }
 
       const [balances, transactionsRes] = await Promise.all([
-        findBalancesByIdMonthAndYear(accountId, month, bookletData.year, dateRange),
-        findTransactionsByIdMonthAndYear(accountId, month, bookletData.year, dateRange),
+        findBalancesByIdMonthAndYear(bookletId, month, bookletData.year, dateRange),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, dateRange),
       ])
 
       bookletData.label = balances.label
-      bookletData.id = accountId
+      bookletData.id = bookletId
       bookletData.realSold = Number.parseFloat(balances.realSold)
       bookletData.previewSold = Number.parseFloat(balances.previewSold)
 
@@ -502,9 +502,9 @@ function onCsvImportSuccess(result: CsvImportResultDTO) {
 }
 
 onMounted(async () => {
-  const accountId = (route.params as any)?.id as string
+  const bookletId = (route.params as any)?.id as string
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
-  await loadAccountCycleSetting(accountId)
+  await loadBookletCycleSetting(bookletId)
   await loadBookletData()
   await retrieveTags()
   currentTransaction.tagDTO = await tag.getDefaultTag()
@@ -526,7 +526,7 @@ onUnmounted(() => {
       <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-8">
           <div class="flex items-center gap-4 flex-1 min-w-0 md:gap-3">
-            <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/account')" />
+            <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/booklet')" />
             <div class="flex-1 min-w-0">
               <h1 class="text-2xl font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 md:(text-xl mb-1)">
                 {{ displayLabel }}

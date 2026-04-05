@@ -20,7 +20,7 @@ class SpaControllerTest {
     }
 
     @Test
-    fun `should forward account route to index html`() {
+    fun `should forward booklet route to index html`() {
         val result = controller.forward()
         assertEquals("forward:/index.html", result)
     }

@@ -1,6 +1,6 @@
-import { shallowMount } from '@vue/test-utils'
+﻿import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import AccountDetailsPage from '../../pages/account/[id].vue'
+import BookletDetailsPage from '../../pages/booklet/[id].vue'
 
 vi.mock('~/composables/useTransaction', () => ({
   default: () => ({
@@ -49,9 +49,9 @@ const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({ transac
 
 const getSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 15,
-  accountCycles: [
+  bookletCycles: [
     {
-      accountId: 'booklet-1',
+      bookletId: 'booklet-1',
       label: 'Compte courant',
       monthlyPeriodStartDay: 28,
       monthlyPeriodEndDay: null,
@@ -95,7 +95,7 @@ function mountPage(activeScopes: string[] = []) {
   }))
   vi.stubGlobal('navigateTo', vi.fn())
 
-  const wrapper = shallowMount(AccountDetailsPage, {
+  const wrapper = shallowMount(BookletDetailsPage, {
     global: {
       mocks: {
         useDate: () => ({
@@ -125,7 +125,7 @@ function mountPage(activeScopes: string[] = []) {
   return { wrapper }
 }
 
-describe('pages/account/[id] loading states', () => {
+describe('pages/booklet/[id] loading states', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
@@ -137,13 +137,13 @@ describe('pages/account/[id] loading states', () => {
   })
 
   it('shows inline loading feedback when account load scope is active', () => {
-    const { wrapper } = mountPage(['account.loadBookletData'])
+    const { wrapper } = mountPage(['booklet.loadBookletData'])
 
     expect(wrapper.text()).toContain('Chargement des transactions...')
   })
 
   it('shows export button loading state when csv export scope is active', () => {
-    const { wrapper } = mountPage(['account.exportCsv'])
+    const { wrapper } = mountPage(['booklet.exportCsv'])
 
     const exportButton = wrapper.findAll('button').find(btn => btn.attributes('aria-label') === 'Exporter CSV')
     expect(exportButton).toBeDefined()
@@ -181,9 +181,9 @@ describe('pages/account/[id] loading states', () => {
   it('queries account with explicit monthly end day when configured', async () => {
     getSettingsMock.mockResolvedValueOnce({
       projectionWindowDays: 15,
-      accountCycles: [
+      bookletCycles: [
         {
-          accountId: 'booklet-1',
+          bookletId: 'booklet-1',
           label: 'Compte courant',
           monthlyPeriodStartDay: 28,
           monthlyPeriodEndDay: 30,
@@ -210,9 +210,9 @@ describe('pages/account/[id] loading states', () => {
   it('keeps current month range with default cycle settings', async () => {
     getSettingsMock.mockResolvedValueOnce({
       projectionWindowDays: 15,
-      accountCycles: [
+      bookletCycles: [
         {
-          accountId: 'booklet-1',
+          bookletId: 'booklet-1',
           label: 'Compte courant',
           monthlyPeriodStartDay: 1,
           monthlyPeriodEndDay: null,

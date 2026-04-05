@@ -45,7 +45,7 @@ class TransactionController(
     ): ResponseEntity<TransactionResponse> {
         return transactionFeature.bookTransaction(
             currentUser.token,
-            userBookletResponse.accountLabel,
+            userBookletResponse.bookletLabel,
             userBookletResponse.transactionResult.toModel()
         ).map {
             it.toDTO()
@@ -54,16 +54,16 @@ class TransactionController(
 
     @DeleteMapping
     fun deleteByIds(
-        @RequestBody sheetIds: AccountTransactionsIdRequest
+        @RequestBody sheetIds: BookletTransactionsIdRequest
     ): ResponseEntity<TransactionDeletionResponse> =
         transactionFeature
-            .deleteSheetsByIds(sheetIds.accountId.toUUID(), sheetIds.transactionIds.toUUIDs(), currentUser.token)
+            .deleteSheetsByIds(sheetIds.bookletId.toUUID(), sheetIds.transactionIds.toUUIDs(), currentUser.token)
             .map { it.toDTO() }
             .toHttpResponse()
 
 
     @GetMapping
-    fun getTransactionsByMonthAndYearAndAccountId(
+    fun getTransactionsByMonthAndYearAndBookletId(
         @RequestParam("month", required = false) month: Month?,
         @RequestParam("year") year: Int,
         @RequestParam("bookletId") bookletId: String,
@@ -108,10 +108,10 @@ class TransactionController(
 
     @PatchMapping
     fun patchTransaction(
-        @RequestBody dto: UserAccountIdsTransactionRequest
+        @RequestBody dto: UserBookletIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Start editing transaction => ${dto.transaction}")
-        return transactionFeature.editTransaction(java.util.UUID.fromString(dto.accountId), dto.transaction.toModel(), currentUser.token)
+        return transactionFeature.editTransaction(java.util.UUID.fromString(dto.bookletId), dto.transaction.toModel(), currentUser.token)
             .map {
                 it.toDTO()
             }.toHttpResponse()
@@ -135,7 +135,7 @@ class TransactionController(
         logger.info("Confirming preview Transaction...")
         return transactionFeature.confirmPreviewTransaction(
             transactionId = java.util.UUID.fromString(command.transactionID),
-            accountID = java.util.UUID.fromString(command.accountID),
+            bookletID = java.util.UUID.fromString(command.bookletID),
             newAmount = command.newAmount?.toAmount(),
             newDate = command.newDate,
             token = currentUser.token
@@ -251,14 +251,14 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
         this.transaction.amount.value.toString(),
         this.transaction.isIncome,
         this.transaction.tag!!.toDTO(),
-        this.accountAmount.value.toString(),
+        this.bookletAmount.value.toString(),
         this.transaction.isPreview
     )
 }
 
 @Serializable
 data class ConfirmPreviewRequest(
-    val accountID: String,
+    val bookletID: String,
     val transactionID: String,
     @Serializable(with = BigDecimalSerializer::class)
     val newAmount: BigDecimal?,
@@ -274,5 +274,5 @@ data class TransactionDeletionResponse(
 
 private fun TransactionDeletionResult.toDTO(): TransactionDeletionResponse = TransactionDeletionResponse(
     deletedIds = deletedIds.map { it.toString() },
-    amount = accountAmount.value.toString(),
+    amount = bookletAmount.value.toString(),
 )

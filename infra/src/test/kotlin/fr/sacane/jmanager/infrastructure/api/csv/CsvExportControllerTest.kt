@@ -6,8 +6,8 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
-import fr.sacane.jmanager.infrastructure.api.setup.AccountStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import io.restassured.http.ContentType
 import io.restassured.module.kotlin.extensions.Given
@@ -29,7 +29,7 @@ import java.util.*
 @DisplayName("CSV Export Controller Tests")
 class CsvExportControllerTest(
     @param:LocalServerPort val port: Int,
-    @param:Autowired val accountStateAdapter: AccountStateTestAdapter,
+    @param:Autowired val bookletStateAdapter: BookletStateTestAdapter,
     @param:Autowired val transactionStateAdapter: TransactionStateTestAdapter,
     @param:Autowired val objectMapper: ObjectMapper
 ) : AuthenticatedUserTest() {
@@ -39,17 +39,17 @@ class CsvExportControllerTest(
 
     @BeforeEach
     fun setupBooklet() {
-        accountStateAdapter.init(
+        bookletStateAdapter.init(
             listOf(
                 Booklet(
                     id = null,
                     amount = Amount.fromString("1000.00"),
-                    labelAccount = "Test Booklet",
+                    label = "Test Booklet",
                     owner = user,
                 )
             )
         )
-        bookletId = accountStateAdapter.get().first().id!!.toString()
+        bookletId = bookletStateAdapter.get().first().id!!.toString()
 
         val alimentationTag = Tag("Alimentation & Restaurant", isDefault = true)
         val transportTag = Tag("Transport", isDefault = true)
@@ -93,9 +93,9 @@ class CsvExportControllerTest(
 
         transactionStateAdapter.init(
             listOf(
-                AccountTransaction(
-                    accountOwnerId = user?.id ?: error("User not initialized"),
-                    accountName = "Test Booklet",
+                BookletTransaction(
+                    bookletOwnerId = user?.id ?: error("User not initialized"),
+                    bookletName = "Test Booklet",
                     transactions = testTransactions,
                     token = token
                 )
@@ -106,7 +106,7 @@ class CsvExportControllerTest(
     @AfterEach
     fun clear() {
         transactionStateAdapter.clear()
-        accountStateAdapter.clear()
+        bookletStateAdapter.clear()
     }
 
     @Nested

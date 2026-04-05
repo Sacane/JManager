@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
-import fr.sacane.jmanager.infrastructure.spi.adapters.utils.AccountMapper
+import fr.sacane.jmanager.infrastructure.spi.adapters.utils.BookletMapper
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
@@ -13,67 +13,67 @@ import java.util.UUID
 
 @Repository
 class BookletJpaRepositoryAdapter(
-    private val accountRepository: BookletJpaRepository,
+    private val bookletRepository: BookletJpaRepository,
     private val userRepository: UserPostgresRepository,
-    private val accountMapper: AccountMapper
+    private val bookletMapper: BookletMapper
 ): BookletRepository {
     @Transactional
     override fun editFromAnother(booklet: Booklet): Booklet? {
         val id = booklet.id ?: return null
-        val accountFromDatabase = accountRepository.findByIdWithSheets(id) ?: return null
-        accountFromDatabase.amount = booklet.amount.value
-        return accountFromDatabase.toModel()
+        val bookletFromDatabase = bookletRepository.findByIdWithSheets(id) ?: return null
+        bookletFromDatabase.amount = booklet.amount.value
+        return bookletFromDatabase.toModel()
     }
 
     @Transactional
     override fun save(ownerId: UserId, booklet: Booklet): Booklet? {
         val id = ownerId.value ?: return null
-        val user = userRepository.findByIdWithAccount(id) ?: return null
-        val accountResource = accountMapper.asResource(booklet)
-        val accountSaved = accountRepository.save(accountResource)
-        user.addAccount(accountSaved)
-        return accountSaved.toModel()
+        val user = userRepository.findByIdWithBooklets(id) ?: return null
+        val bookletResource = bookletMapper.asResource(booklet)
+        val bookletSaved = bookletRepository.save(bookletResource)
+        user.addBooklet(bookletSaved)
+        return bookletSaved.toModel()
     }
 
     @Transactional
-    override fun findAccountByIdWithTransactions(accountId: UUID): Booklet? {
-        val accountResponse = accountRepository.findByIdWithSheets(accountId)
-        return accountResponse?.toModel()
+    override fun findBookletByIdWithTransactions(bookletId: UUID): Booklet? {
+        val bookletResponse = bookletRepository.findByIdWithSheets(bookletId)
+        return bookletResponse?.toModel()
     }
 
     @Transactional
-    override fun findAccountByLabelWithTransactions(userId: UserId, accountLabel: String): Booklet? {
+    override fun findBookletByLabelWithTransactions(userId: UserId, bookletLabel: String): Booklet? {
         val id = userId.value ?: return null
-        return accountRepository.findByOwnerAndLabelWithSheets(id, accountLabel)?.toModel()
+        return bookletRepository.findByOwnerAndLabelWithSheets(id, bookletLabel)?.toModel()
     }
 
     @Transactional
-    override fun deleteAccountById(accountId: UUID) {
-        val account = accountRepository.findByIdWithRegularTransactions(accountId) ?: return
-        account.clearAllRegularTransactions()
-        accountRepository.deleteById(accountId)
+    override fun deleteBookletById(bookletId: UUID) {
+        val booklet = bookletRepository.findByIdWithRegularTransactions(bookletId) ?: return
+        booklet.clearAllRegularTransactions()
+        bookletRepository.deleteById(bookletId)
     }
 
     @Transactional
     override fun upsert(booklet: Booklet): Booklet {
-        return accountRepository.save(accountMapper.asResource(booklet)).also {
+        return bookletRepository.save(bookletMapper.asResource(booklet)).also {
             for(transaction in it.sheets) {
-                transaction.account = it
+                transaction.booklet = it
             }
         }.toModel()
     }
     override fun update(booklet: Booklet) {
         val id = booklet.id ?: return
-        accountRepository.update(booklet.label, booklet.amount.value, id)
+        bookletRepository.update(booklet.label, booklet.amount.value, id)
     }
 
     @Transactional
-    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
-        return accountRepository.updateMonthlyPeriodStartDay(accountId, monthlyPeriodStartDay, monthlyPeriodEndDay) > 0
+    override fun updateMonthlyPeriodStartDay(bookletId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
+        return bookletRepository.updateMonthlyPeriodStartDay(bookletId, monthlyPeriodStartDay, monthlyPeriodEndDay) > 0
     }
 
     @Transactional
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
-        return userId.value?.let { id -> accountRepository.findAllBookletsByUserId(id).map { it.toModel() } } ?: emptyList()
+        return userId.value?.let { id -> bookletRepository.findAllBookletsByUserId(id).map { it.toModel() } } ?: emptyList()
     }
 }

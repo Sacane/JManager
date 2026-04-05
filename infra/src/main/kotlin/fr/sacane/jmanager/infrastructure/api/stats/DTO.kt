@@ -6,9 +6,9 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
-data class MonthlyAccountStatsDTO(
-    val accountId: UUID,
-    val accountLabel: String,
+data class MonthlyBookletStatsDTO(
+    val bookletId: UUID,
+    val bookletLabel: String,
     val year: Int,
     val monthlyData: List<MonthlyDataDTO>
 )
@@ -44,12 +44,12 @@ data class MonthlyTrendDTO(
     val expenses: String,
     val balance: String,
     val cumulativeBalance: String,
-    val totalAccounts: Int
+    val totalBooklets: Int
 )
 
 data class PrevisionalTransactionsDTO(
     val transactions: List<TransactionDTO>,
-    val groupedByAccount: Map<String, List<TransactionDTO>>,
+    val groupedByBooklet: Map<String, List<TransactionDTO>>,
     val totalAmount: String,
     val totalIncome: String,
     val totalExpenses: String,
@@ -71,9 +71,9 @@ data class TransactionDTO(
     val regularTransactionId: String?
 )
 
-fun MonthlyAccountStatsOutput.toDTO() = MonthlyAccountStatsDTO(
-    accountId = accountId,
-    accountLabel = accountLabel,
+fun MonthlyBookletStatsOutput.toDTO() = MonthlyBookletStatsDTO(
+    bookletId = bookletId,
+    bookletLabel = bookletLabel,
     year = year,
     monthlyData = monthlyData.map { it.toDTO() }
 )
@@ -109,12 +109,12 @@ fun MonthlyTrend.toDTO() = MonthlyTrendDTO(
     expenses = expenses.toStringValue(),
     balance = balance.toStringValue(),
     cumulativeBalance = cumulativeBalance.toStringValue(),
-    totalAccounts = totalAccounts
+    totalBooklets = totalBooklets
 )
 
 fun PrevisionalTransactionsOutput.toDTO(defaultTag: Tag) = PrevisionalTransactionsDTO(
     transactions = transactions.map { it.toTransactionDTO(defaultTag) },
-    groupedByAccount = groupedByAccount.mapValues { (_, transactions) ->
+    groupedByBooklet = groupedByBooklet.mapValues { (_, transactions) ->
         transactions.map { it.toTransactionDTO(defaultTag) }
     },
     totalAmount = totalAmount.toStringValue(),

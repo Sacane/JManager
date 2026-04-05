@@ -2,8 +2,8 @@ package fr.sacane.jmanager.domain.usecase
 
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.fake.IdUserAccount
-import fr.sacane.jmanager.domain.fake.IdUserAccountByTransaction
+import fr.sacane.jmanager.domain.fake.IdUserBooklet
+import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.InMemoryTransactionRepository
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -26,7 +26,7 @@ class RegularTransactionComputerTest : FeatureTest() {
     private lateinit var transactionRepository: InMemoryTransactionRepository
     private lateinit var trackerRepository: RegularTransactionTrackerRepository
     private lateinit var regularTransactionGenerator: RegularTransactionGenerator
-    private val transactionState: State<IdUserAccountByTransaction> = FakeFactory.fakeTransactionRepository()
+    private val transactionState: State<IdBookletByTransaction> = FakeFactory.fakeTransactionRepository()
 
     @BeforeEach
     fun setup() {
@@ -539,8 +539,8 @@ class RegularTransactionComputerTest : FeatureTest() {
                 // Save the confirmed transaction in the repository
                 transactionState.init(
                     listOf(
-                        IdUserAccountByTransaction(
-                            id = IdUserAccount(user.id, booklet.id!!),
+                        IdBookletByTransaction(
+                            id = IdUserBooklet(user.id, booklet.id!!),
                             transactions = mutableListOf(confirmedTransaction)
                         )
                     )

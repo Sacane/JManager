@@ -97,7 +97,7 @@ onUnmounted(() => {
             </NuxtLink>
 
             <NuxtLink
-              to="/account"
+              to="/booklet"
               class="nav-item"
               active-class="nav-item-active"
               @click="closeOnNavigateIfMobile()"

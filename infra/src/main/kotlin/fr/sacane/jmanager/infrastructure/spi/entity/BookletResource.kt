@@ -8,7 +8,7 @@ import kotlin.collections.toList
 
 
 @Entity
-@Table(name = "account")
+@Table(name = "booklet")
 class BookletResource(
     @Column(name = "amount")
     var amount: BigDecimal = BigDecimal(0.0),
@@ -18,17 +18,17 @@ class BookletResource(
     var monthlyPeriodStartDay: Int = 1,
     @Column(name = "monthly_period_end_day")
     var monthlyPeriodEndDay: Int? = null,
-    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "account")
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "booklet")
     var sheets: MutableList<TransactionResource> = mutableListOf(),
     @ManyToOne
     var owner: UserResource? = null,
     var initialSold: BigDecimal = BigDecimal.ZERO,
-    @ManyToMany(mappedBy = "accounts", fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @ManyToMany(mappedBy = "booklets", fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     var regularTransactions: MutableSet<RegularTransactionEntity> = mutableSetOf(),
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id_account")
-    var idAccount: UUID? = null
+    @Column(name = "id_booklet")
+    var idBooklet: UUID? = null
 ) {
     fun clearAllRegularTransactions() {
         regularTransactions.toList().forEach { transaction ->

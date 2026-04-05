@@ -18,7 +18,7 @@ interface BookletBalanceJpaRepository : Repository<BookletResource, UUID> {
         """
         SELECT acc.label AS label, acc.amount AS amount
         FROM BookletResource acc
-        WHERE acc.idAccount = :id
+        WHERE acc.idBooklet = :id
         """
     )
     fun findPersistedBalances(@Param("id") id: UUID): PersistedBalancesRow?

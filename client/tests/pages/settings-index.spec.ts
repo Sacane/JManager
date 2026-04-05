@@ -4,9 +4,9 @@ import SettingsPage from '../../pages/settings/index.vue'
 
 const getSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 21,
-  accountCycles: [
+  bookletCycles: [
     {
-      accountId: 'acc-1',
+      bookletId: 'acc-1',
       label: 'Compte principal',
       monthlyPeriodStartDay: 28,
       monthlyPeriodEndDay: null,
@@ -16,9 +16,9 @@ const getSettingsMock = vi.fn().mockResolvedValue({
 
 const updateSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 30,
-  accountCycles: [
+  bookletCycles: [
     {
-      accountId: 'acc-1',
+      bookletId: 'acc-1',
       label: 'Compte principal',
       monthlyPeriodStartDay: 27,
       monthlyPeriodEndDay: 26,
@@ -81,9 +81,9 @@ describe('pages/settings/index', () => {
 
     expect(updateSettingsMock).toHaveBeenCalledWith({
       projectionWindowDays: 30,
-      accountCycles: [
+      bookletCycles: [
         {
-          accountId: 'acc-1',
+          bookletId: 'acc-1',
           monthlyPeriodStartDay: 27,
           monthlyPeriodEndDay: 26,
         },

@@ -2,19 +2,19 @@ package fr.sacane.jmanager.domain.models
 
 import java.util.UUID
 
-data class AccountMonthlyCycleSetting(
-    val accountId: UUID,
-    val accountLabel: String,
+data class BookletMonthlyCycleSetting(
+    val bookletId: UUID,
+    val bookletLabel: String,
     val monthlyPeriodStartDay: Int,
     val monthlyPeriodEndDay: Int?,
 )
 
-data class AccountMonthlyCycleUpdate(
+data class BookletMonthlyCycleUpdate(
     val monthlyPeriodStartDay: Int,
     val monthlyPeriodEndDay: Int?,
 )
 
 data class UserSettings(
     val projectionWindowDays: Int,
-    val accountCycles: List<AccountMonthlyCycleSetting>,
+    val bookletCycles: List<BookletMonthlyCycleSetting>,
 )

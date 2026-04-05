@@ -15,7 +15,7 @@ class BookletTest {
         val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = initialAmount,
-            labelAccount = "Compte principal",
+            label = "Compte principal",
             id = bookletId
         )
 
@@ -226,7 +226,7 @@ class BookletTest {
         val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 1000.toAmount(),
-            labelAccount = "My Account",
+            label = "My Booklet",
             id = bookletId
         )
 
@@ -234,7 +234,7 @@ class BookletTest {
 
         assertTrue(stringRepresentation.contains(bookletId.toString()))
         assertTrue(stringRepresentation.contains("1000"))
-        assertTrue(stringRepresentation.contains("My Account"))
+        assertTrue(stringRepresentation.contains("My Booklet"))
     }
 
     @Test

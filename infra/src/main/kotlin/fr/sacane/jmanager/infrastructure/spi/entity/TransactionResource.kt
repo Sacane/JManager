@@ -21,8 +21,8 @@ class TransactionResource(
     @Column(name="expenses", scale = 2)
     var value: BigDecimal = BigDecimal(0.0),
     var isIncome: Boolean? = false,
-    @Column(name="account_amount", scale = 2)
-    var accountAmount: BigDecimal = BigDecimal(0.0),
+    @Column(name="booklet_amount", scale = 2)
+    var bookletAmount: BigDecimal = BigDecimal(0.0),
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     var tag: DefaultTagResource? = null,
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
@@ -34,7 +34,7 @@ class TransactionResource(
     @Column(name="regular_transaction_id")
     var regularTransactionId: UUID? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    var account: BookletResource? = null,
+    var booklet: BookletResource? = null,
     ){
     override fun toString(): String {
         return """
@@ -42,7 +42,7 @@ class TransactionResource(
             label : $label
             date: $date
             value: $value
-            accountAmount: $accountAmount
+            bookletAmount: $bookletAmount
         """.trimIndent()
     }
 }

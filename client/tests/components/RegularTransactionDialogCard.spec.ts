@@ -184,7 +184,7 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
       props: {
         modelValue: true,
         transaction: createTransaction({ bookletIds: ['booklet-1'] }),
-        booklets: [{ id: 'booklet-1', amount: 200, labelAccount: 'Compte principal', currency: 'EUR' }],
+        booklets: [{ id: 'booklet-1', amount: 200, label: 'Compte principal', currency: 'EUR' }],
       },
       global: {
         stubs: {
@@ -216,8 +216,8 @@ describe('components/dialog/RegularTransactionDialogCard', () => {
         modelValue: true,
         transaction: createTransaction({ bookletIds: ['booklet-1'] }),
         booklets: [
-          { id: 'booklet-1', amount: 200, labelAccount: 'Compte principal', currency: 'EUR' },
-          { id: 'booklet-2', amount: 300, labelAccount: 'Compte secondaire', currency: 'EUR' },
+          { id: 'booklet-1', amount: 200, label: 'Compte principal', currency: 'EUR' },
+          { id: 'booklet-2', amount: 300, label: 'Compte secondaire', currency: 'EUR' },
         ],
       },
       global: {

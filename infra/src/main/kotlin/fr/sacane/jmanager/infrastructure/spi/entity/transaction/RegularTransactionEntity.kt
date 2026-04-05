@@ -46,9 +46,9 @@ data class RegularTransactionEntity(
     @JoinTable(
         name = "regular_transaction_booklet",
         joinColumns = [JoinColumn(name = "transaction_id")],
-        inverseJoinColumns = [JoinColumn(name = "id_account", nullable = false)]
+        inverseJoinColumns = [JoinColumn(name = "id_booklet", nullable = false)]
     )
-    var accounts: MutableSet<BookletResource> = mutableSetOf(),
+    var booklets: MutableSet<BookletResource> = mutableSetOf(),
 
     @ManyToOne(fetch = FetchType.LAZY)
     override val owner: UserResource? = null
@@ -64,17 +64,17 @@ data class RegularTransactionEntity(
             tag = this.tag?.toDomain() ?: this.personalTag?.toDomain(),
             frequencyProperty = frequencyProperty!!.toDomain(),
             recurrenceRule = recurrenceRule!!.toDomain(),
-            associatedBooklets = this.accounts.map { it.toSimpleModel() }
+            associatedBooklets = this.booklets.map { it.toSimpleModel() }
         )
     }
 
-    fun addBooklet(account: BookletResource) {
-        accounts.add(account)
-        account.regularTransactions.add(this)
+    fun addBooklet(booklet: BookletResource) {
+        booklets.add(booklet)
+        booklet.regularTransactions.add(this)
     }
 
-    fun removeBooklet(account: BookletResource) {
-        accounts.removeIf { it.idAccount == account.idAccount }
+    fun removeBooklet(booklet: BookletResource) {
+        booklets.removeIf { it.idBooklet == booklet.idBooklet }
     }
 }
 

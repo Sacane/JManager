@@ -21,7 +21,7 @@ class RegularTransactionStateForTestAdapter(
     private val regularTransactionJpaRepository: RegularTransactionResourceJpaRepository
 ): State<BookletRegularTransactionInput, RegularTransaction> {
     override fun get(): Collection<RegularTransaction> {
-        return regularTransactionJpaRepository.findAllWithAccounts().map { it.toDomain() }
+        return regularTransactionJpaRepository.findAllWithBooklets().map { it.toDomain() }
     }
 
     @Transactional
