@@ -63,7 +63,7 @@ class TrendCalculatorImpl : TrendCalculator {
                 expenses = Amount(expenses),
                 balance = Amount(balance),
                 cumulativeBalance = Amount(cumulativeBalance),
-                totalAccounts = booklets.size
+                totalBooklets = booklets.size
             )
         }
     }

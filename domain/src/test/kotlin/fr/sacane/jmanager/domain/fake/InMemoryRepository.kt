@@ -30,7 +30,7 @@ class InMemoryTransactionRepository(
 
 
     override fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction? {
-        val booklet = inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklets?.find { it.label == bookletLabel } ?: return null
+        val booklet = inMemoryDatabase.bookletsByOwner().find { it.userId == userId }?.booklets?.find { it.label == bookletLabel } ?: return null
         val userBookletId = booklet.id?.let { IdUserBooklet(userId, it) } ?: return null
         inMemoryDatabase.addTransaction(userBookletId, transaction)
 
@@ -55,16 +55,16 @@ class InMemoryTransactionRepository(
         return transactionWithId
     }
 
-    override fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet? {
-        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, label)
+    override fun findBookletByLabelWithSheets(label: String, userId: UserId): Booklet? {
+        return inMemoryDatabase.findBookletByOwnerAndLabel(userId, label)
     }
 
-    override fun findAccountWithTransactionById(id: UUID): Booklet? {
-        return inMemoryDatabase.findAccountById(id)
+    override fun findBookletByIdWithTransactions(id: UUID): Booklet? {
+        return inMemoryDatabase.findBookletById(id)
     }
 
     override fun findTransactionsByBookletId(bookletId: UUID): List<Transaction>? {
-        return inMemoryDatabase.findAccountById(bookletId)?.transactions
+        return inMemoryDatabase.findBookletById(bookletId)?.transactions
     }
 
     override fun findTransactionsByBookletYearAndMonth(
@@ -72,7 +72,7 @@ class InMemoryTransactionRepository(
         year: Int,
         month: Month
     ): List<Transaction>? {
-        return inMemoryDatabase.findAccountById(bookletId)?.retrieveSheetSurroundAndSortedByDate(month, year)
+        return inMemoryDatabase.findBookletById(bookletId)?.retrieveSheetSurroundAndSortedByDate(month, year)
     }
 
     override fun getStates(): Collection<IdBookletByTransaction> {
@@ -99,7 +99,7 @@ class InMemoryUserRepository (
 
     override fun findUserByIdWithBooklets(userId: UserId): User? {
         val user = inMemoryDatabase.users[userId]?.user ?: return null
-        val booklets = inMemoryDatabase.accountsByOwner().find { it.userId == userId }
+        val booklets = inMemoryDatabase.bookletsByOwner().find { it.userId == userId }
         if(booklets != null) {
             for(booklet in booklets.booklets) {
                 user.addBooklet(booklet)
@@ -176,20 +176,20 @@ class InMemoryBookletRepository(
         return booklet
     }
     override fun save(ownerId: UserId, booklet: Booklet): Booklet {
-        inMemoryDatabase.addAccount(ownerId, booklet)
+        inMemoryDatabase.addBooklet(ownerId, booklet)
         return booklet
     }
 
     override fun findBookletByIdWithTransactions(bookletId: UUID): Booklet? {
-        return inMemoryDatabase.findAccountById(bookletId)
+        return inMemoryDatabase.findBookletById(bookletId)
     }
 
     override fun findBookletByLabelWithTransactions(userId: UserId, bookletLabel: String): Booklet? {
-        return inMemoryDatabase.findAccountByOwnerAndLabel(userId, bookletLabel)
+        return inMemoryDatabase.findBookletByOwnerAndLabel(userId, bookletLabel)
     }
 
     override fun deleteBookletById(bookletId: UUID) {
-        inMemoryDatabase.removeAccountById(bookletId)
+        inMemoryDatabase.removeBookletById(bookletId)
     }
 
     override fun upsert(booklet: Booklet): Booklet {
@@ -203,27 +203,27 @@ class InMemoryBookletRepository(
         upsert(booklet)
     }
 
-    override fun updateMonthlyPeriodStartDay(accountId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
-        val account = inMemoryDatabase.findAccountById(accountId) ?: return false
-        account.updateMonthlyPeriodConfiguration(monthlyPeriodStartDay, monthlyPeriodEndDay)
-        upsert(account)
+    override fun updateMonthlyPeriodStartDay(bookletId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
+        val booklet = inMemoryDatabase.findBookletById(bookletId) ?: return false
+        booklet.updateMonthlyPeriodConfiguration(monthlyPeriodStartDay, monthlyPeriodEndDay)
+        upsert(booklet)
         return true
     }
 
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
-        return inMemoryDatabase.accountsByOwner().find { it.userId == userId }?.booklets ?: emptyList()
+        return inMemoryDatabase.bookletsByOwner().find { it.userId == userId }?.booklets ?: emptyList()
     }
 
     override fun getStates(): Collection<BookletsByOwner> {
-        return inMemoryDatabase.accountsByOwner()
+        return inMemoryDatabase.bookletsByOwner()
     }
 
     override fun clear() {
-        inMemoryDatabase.clearAccounts()
+        inMemoryDatabase.clearBooklets()
     }
 
     override fun init(initialState: Collection<BookletsByOwner>) {
-        inMemoryDatabase.initAccounts(initialState)
+        inMemoryDatabase.initBooklets(initialState)
     }
 }
 

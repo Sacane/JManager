@@ -41,17 +41,17 @@ export default function useBooklet() {
     return deleteQuery(`booklet/${id}`, undefined)
   }
 
-  async function findById(accountId: string): Promise<BookletDTO> {
-    return get(`booklet/${accountId}`)
+  async function findById(bookletId: string): Promise<BookletDTO> {
+    return get(`booklet/${bookletId}`)
   }
 
   async function findByIdMonthAndYear(
-    accountId: string,
+    bookletId: string,
     month: number,
     year: number,
     dateRange: BookletDateRangeQuery = {},
   ): Promise<BookletReport> {
-    return get(`booklet/report/${accountId}`, {
+    return get(`booklet/report/${bookletId}`, {
       month,
       year,
       ...dateRange,
@@ -59,12 +59,12 @@ export default function useBooklet() {
   }
 
   async function findBalancesByIdMonthAndYear(
-    accountId: string,
+    bookletId: string,
     month: number,
     year: number,
     dateRange: BookletDateRangeQuery = {},
   ): Promise<BookletBalancesDTO> {
-    return get(`booklet/${accountId}/balances`, {
+    return get(`booklet/${bookletId}/balances`, {
       month,
       year,
       ...dateRange,
@@ -72,12 +72,12 @@ export default function useBooklet() {
   }
 
   async function findTransactionsByIdMonthAndYear(
-    accountId: string,
+    bookletId: string,
     month: number,
     year: number,
     dateRange: BookletDateRangeQuery = {},
   ): Promise<BookletTransactionsDTO> {
-    return get(`booklet/${accountId}/transactions`, {
+    return get(`booklet/${bookletId}/transactions`, {
       month,
       year,
       ...dateRange,

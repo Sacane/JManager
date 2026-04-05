@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.CategoryDistributionOutput
 import fr.sacane.jmanager.domain.models.Booklet
-import fr.sacane.jmanager.domain.models.MonthlyAccountStatsOutput
+import fr.sacane.jmanager.domain.models.MonthlyBookletStatsOutput
 import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
 import fr.sacane.jmanager.domain.models.UserId
@@ -35,15 +35,15 @@ import java.util.logging.Logger
  */
 sealed interface StatsFeature {
     /**
-     * Retrieves the monthly account statistics for a specific account and year.
+     * Retrieves the monthly booklet statistics for a specific booklet and year.
      *
-     * @param accountId The unique identifier of the account.
+     * @param bookletId The unique identifier of the booklet.
      * @param year The year for which the statistics are to be retrieved.
      * @param token The authentication token for verifying requester access.
-     * @return A Result object containing the monthly account statistics wrapped in
+     * @return A Result object containing the monthly booklet statistics wrapped in
      *         MonthlyAccountStatsOutput if successful, or an appropriate error state otherwise.
      */
-    fun getMonthlyAccountStats(accountId: UUID, year: Int, token: String): Result<MonthlyAccountStatsOutput>
+    fun getMonthlyBookletStats(bookletId: UUID, year: Int, token: String): Result<MonthlyBookletStatsOutput>
 
     /**
      * Retrieves the distribution of expenses across various categories for the authenticated user.
@@ -54,7 +54,7 @@ sealed interface StatsFeature {
      */
     fun getCategoryDistribution(
         token: String,
-        accountId: UUID? = null,
+        bookletId: UUID? = null,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
     ): Result<CategoryDistributionOutput>
@@ -69,7 +69,7 @@ sealed interface StatsFeature {
      */
     fun getTrendStats(
         token: String,
-        accountId: UUID? = null,
+        bookletId: UUID? = null,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
     ): Result<TrendStatsOutput>
@@ -87,7 +87,7 @@ sealed interface StatsFeature {
         token: String,
         startDate: LocalDate,
         endDate: LocalDate,
-        accountId: UUID? = null
+        bookletId: UUID? = null
     ): Result<PrevisionalTransactionsOutput>
 }
 
@@ -130,24 +130,24 @@ class StatsFeatureImpl(
 
     private fun <S> withScopedBooklets(
         userId: UserId,
-        accountId: UUID?,
+        bookletId: UUID?,
         onSuccess: (List<Booklet>) -> Result<S>
     ): Result<S> {
-        if (accountId == null) {
+        if (bookletId == null) {
             return onSuccess(bookletRepository.findBookletsForUser(userId))
         }
 
-        val booklet = bookletRepository.findBookletByIdWithTransactions(accountId)
+        val booklet = bookletRepository.findBookletByIdWithTransactions(bookletId)
             ?: return domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
-                "Le compte $accountId est introuvable",
+                "Le livret $bookletId est introuvable",
                 "domain.stats.booklet_not_found"
             )
 
         if (booklet.owner?.id != userId) {
             return domainFailure(
                 ResultState.FORBIDDEN,
-                "Vous n'avez pas accès à ce compte",
+                "Vous n'avez pas accès à ce livret",
                 "domain.stats.forbidden"
             )
         }
@@ -155,24 +155,24 @@ class StatsFeatureImpl(
         return onSuccess(listOf(booklet))
     }
 
-    override fun getMonthlyAccountStats(
-        accountId: UUID,
+    override fun getMonthlyBookletStats(
+        bookletId: UUID,
         year: Int,
         token: String
-    ): Result<MonthlyAccountStatsOutput> = session.authenticate(token) { userId ->
-        LOGGER.info("Fetching monthly stats for account $accountId and year $year")
+    ): Result<MonthlyBookletStatsOutput> = session.authenticate(token) { userId ->
+        LOGGER.info("Fetching monthly stats for booklet $bookletId and year $year")
 
-        val booklet = bookletRepository.findBookletByIdWithTransactions(accountId)
+        val booklet = bookletRepository.findBookletByIdWithTransactions(bookletId)
             ?: return@authenticate domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
-                "Le compte $accountId est introuvable",
+                "Le livret $bookletId est introuvable",
                 "domain.stats.monthly.booklet_not_found"
             )
 
         if (booklet.owner?.id != userId) {
             return@authenticate domainFailure(
                 ResultState.FORBIDDEN,
-                "Vous n'avez pas accès à ce compte",
+                "Vous n'avez pas accès à ce livret",
                 "domain.stats.monthly.forbidden"
             )
         }
@@ -185,8 +185,8 @@ class StatsFeatureImpl(
         LOGGER.info("Monthly stats calculated: ${monthlyData.size} months processed")
 
         success(
-            MonthlyAccountStatsOutput(
-                bookletId = accountId,
+            MonthlyBookletStatsOutput(
+                bookletId = bookletId,
                 bookletLabel = booklet.label,
                 year = year,
                 monthlyData = monthlyData
@@ -196,7 +196,7 @@ class StatsFeatureImpl(
 
     override fun getCategoryDistribution(
         token: String,
-        accountId: UUID?,
+        bookletId: UUID?,
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Result<CategoryDistributionOutput> = session.authenticate(token) { userId ->
@@ -206,7 +206,7 @@ class StatsFeatureImpl(
             return@authenticate domainFailure(ResultState.INVALID, detail, key)
         }
 
-        withScopedBooklets(userId, accountId) { scopedBooklets ->
+        withScopedBooklets(userId, bookletId) { scopedBooklets ->
             val allTransactions = scopedBooklets.flatMap { booklet ->
                 booklet.transactions
             }
@@ -232,7 +232,7 @@ class StatsFeatureImpl(
 
     override fun getTrendStats(
         token: String,
-        accountId: UUID?,
+        bookletId: UUID?,
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Result<TrendStatsOutput> = session.authenticate(token) { userId ->
@@ -242,7 +242,7 @@ class StatsFeatureImpl(
             return@authenticate domainFailure(ResultState.INVALID, detail, key)
         }
 
-        withScopedBooklets(userId, accountId) { scopedBooklets ->
+        withScopedBooklets(userId, bookletId) { scopedBooklets ->
             val monthlyTrends = trendCalculator.calculateTrend(
                 booklets = scopedBooklets,
                 startDate = startDate,
@@ -271,7 +271,7 @@ class StatsFeatureImpl(
         token: String,
         startDate: LocalDate,
         endDate: LocalDate,
-        accountId: UUID?
+        bookletId: UUID?
     ): Result<PrevisionalTransactionsOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching previsional transactions from $startDate to $endDate for user $userId")
 
@@ -283,7 +283,7 @@ class StatsFeatureImpl(
             )
         }
 
-        withScopedBooklets(userId, accountId) { scopedBooklets ->
+        withScopedBooklets(userId, bookletId) { scopedBooklets ->
             val result = previsionalTransactionFilter.filterPrevisionalTransactions(
                 booklets = scopedBooklets,
                 startDate = startDate,
@@ -303,7 +303,7 @@ class StatsFeatureImpl(
             success(
                 PrevisionalTransactionsOutput(
                     transactions = result.transactions,
-                    groupedByAccount = result.groupedByAccount,
+                    groupedByBooklet = result.groupedByBooklet,
                     totalAmount = result.totalAmount,
                     totalIncome = result.totalIncome,
                     totalExpenses = result.totalExpenses,

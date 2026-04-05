@@ -15,7 +15,7 @@ class InMemoryTransactionQueryRepository(
         from: LocalDate,
         to: LocalDate
     ): List<Transaction> {
-        val booklet = inMemoryDatabase.findAccountById(bookletId) ?: return emptyList()
+        val booklet = inMemoryDatabase.findBookletById(bookletId) ?: return emptyList()
         // mimic DB ordering: date asc then lastModified asc
         return booklet.transactions
             .filter { !it.date.isBefore(from) && !it.date.isAfter(to) }

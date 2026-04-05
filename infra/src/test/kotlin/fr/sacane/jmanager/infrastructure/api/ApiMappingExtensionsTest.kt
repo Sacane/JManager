@@ -32,7 +32,7 @@ class ApiMappingExtensionsTest {
         val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 1000.toAmount(),
-            label = "Main Account",
+            label = "Main Booklet",
             id = bookletId
         )
         booklet.addTransaction(transaction)
@@ -41,7 +41,7 @@ class ApiMappingExtensionsTest {
 
         assertEquals(bookletId.toString(), dto.id)
         assertEquals(BigDecimal("1100.00"), dto.amount)
-        assertEquals("Main Account", dto.label)
+        assertEquals("Main Booklet", dto.label)
         assertEquals("€", dto.currency)
         assertEquals(1, dto.transactions?.size)
     }
@@ -50,7 +50,7 @@ class ApiMappingExtensionsTest {
     fun `Booklet toDTO should throw exception when id is null`() {
         val booklet = Booklet(
             amount = 1000.toAmount(),
-            label = "No ID Account",
+            label = "No ID Booklet",
             id = null
         )
 

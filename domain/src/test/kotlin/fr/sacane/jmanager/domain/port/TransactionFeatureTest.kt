@@ -31,9 +31,9 @@ class TransactionFeatureTest: FeatureTest() {
     }
 
     @Nested
-    inner class SaveTransactionInAccountFeatureTest {
+    inner class SaveTransactionInBookletFeatureTest {
         @Test
-        fun `When I add a new transaction, it should persist it and update the account amount when its income and outcome`() {
+        fun `When I add a new transaction, it should persist it and update the booklet amount when its income and outcome`() {
             launchWithConnectedUserInstance {
                 val transactionToSave = generateTransaction("test", 100.toAmount(), true)
                 val transactionToSave2 = generateTransaction("test", 50.toAmount(), false)
@@ -46,16 +46,16 @@ class TransactionFeatureTest: FeatureTest() {
                         this.transaction.amount == transactionToSave2.amount && this.transaction.label == transactionToSave2.label
                     }
 
-                val accountStates = bookletState.getStates()
-                val accountByOwnerTarget = accountStates.find { it.userId == user.id }
-                val accountExpected = accountByOwnerTarget?.booklets?.find { it.id == booklet.id }
-                assertNotNull(accountExpected)
-                assertEquals(Amount(50), accountExpected?.amount)
+                val bookletStates = bookletState.getStates()
+                val bookletByOwnerTarget = bookletStates.find { it.userId == user.id }
+                val bookletExpected = bookletByOwnerTarget?.booklets?.find { it.id == booklet.id }
+                assertNotNull(bookletExpected)
+                assertEquals(Amount(50), bookletExpected?.amount)
             }
         }
 
         @Test
-        fun `When I add a transaction in an account that already have some, its position should be coherent regarding the date`() {
+        fun `When I add a transaction in a booklet that already have some, its position should be coherent regarding the date`() {
             launchWithConnectedUserInstance {
                 initTransactions(listOf(
                     generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
@@ -85,7 +85,7 @@ class TransactionFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `When I add a transaction in the middle of an account that already have some, its position should be coherent regarding the date`() {
+        fun `When I add a transaction in the middle of a booklet that already have some, its position should be coherent regarding the date`() {
             launchWithConnectedUserInstance {
                 initTransactions(listOf(
                     generateTransaction("test1", 100.toAmount(), true, "01/01/2024".toDate()),
@@ -244,7 +244,7 @@ class TransactionFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `Giving a user that save a transaction, when we edit it, the new amount of the account should take in count`() {
+        fun `Giving a user that save a transaction, when we edit it, the new amount of the booklet should take in count`() {
             launchWithConnectedUserInstance {
                 val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
                 initTransactions(listOf(
@@ -255,9 +255,9 @@ class TransactionFeatureTest: FeatureTest() {
                 transactionFeature.editTransaction(booklet.id!!, transaction2.copy(amount = 105.toAmount()), tokenValue)
                     .assertSuccess()
 
-                val actualAccount = bookletState.getStates().find { it.userId == user.id }?.booklets?.find { it.id == booklet.id }
+                val actualBooklet = bookletState.getStates().find { it.userId == user.id }?.booklets?.find { it.id == booklet.id }
 
-                assertEquals(205.toAmount(), actualAccount!!.amount)
+                assertEquals(205.toAmount(), actualBooklet!!.amount)
             }
         }
         @Test
@@ -273,13 +273,13 @@ class TransactionFeatureTest: FeatureTest() {
     @Nested
     inner class BookingPreviewTransaction {
         @Test
-        fun `booking a preview transaction should not change the real amount of an account`() {
+        fun `booking a preview transaction should not change the real amount of a booklet`() {
             launchWithConnectedUserInstance {
                 val transactionPreviewTest = Transaction(UUID.randomUUID(), "test#0", "01/01/2024".toDate(), 100.toAmount(), true, isPreview = true)
                 transactionFeature.bookTransaction(tokenValue, booklet.label, transactionPreviewTest)
                     .assertSuccess()
-                val actualAccount = bookletState.getStates().find { it.userId == user.id }?.booklets?.find { it.id == booklet.id }
-                val actualAmount = actualAccount?.amount ?: 10.toAmount().negate()
+                val actualBooklet = bookletState.getStates().find { it.userId == user.id }?.booklets?.find { it.id == booklet.id }
+                val actualAmount = actualBooklet?.amount ?: 10.toAmount().negate()
 
                 org.junit.jupiter.api.assertAll(
                     { assertEquals(0.toAmount(), actualAmount) }
@@ -290,7 +290,7 @@ class TransactionFeatureTest: FeatureTest() {
     @Nested
     inner class DeleteByIdFeature {
         @Test
-        fun `Giving a user with existing transaction, when we delete it, the new amount of the account should take in count`() {
+        fun `Giving a user with existing transaction, when we delete it, the new amount of the booklet should take in count`() {
             launchWithConnectedUserInstance {
                 val transaction = generateTransaction("test0", 100.toAmount(), true, "02/01/2024".toDate())
                 val transaction2 = generateTransaction("test2", 100.toAmount(), true, "02/01/2024".toDate())
@@ -313,7 +313,7 @@ class TransactionFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `delete transaction with invalid account must return not found`() {
+        fun `delete transaction with invalid booklet must return not found`() {
             launchWithConnectedUserInstance {
                 transactionFeature.deleteSheetsByIds(UUID.randomUUID(), listOf(
                     UUID.randomUUID(), UUID.randomUUID()
@@ -407,7 +407,7 @@ class TransactionFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `confirm preview with new amount should update transaction and account amount`() {
+        fun `confirm preview with new amount should update transaction and booklet amount`() {
             launchWithConnectedUserInstance {
                 val transactionPreviewTest = generateTransaction("test#1", 100.toAmount(), true, "01/01/2024".toDate(), isPreview = true)
                 transactionState.init(
@@ -436,8 +436,8 @@ class TransactionFeatureTest: FeatureTest() {
                 assertFalse(updated!!.isPreview)
                 assertEquals(newAmount, updated.amount)
 
-                val actualAccount = bookletState.getStates().find { it.userId == user.id }?.booklets?.find { it.id == booklet.id }
-                assertEquals(newAmount, actualAccount?.amount)
+                val actualBooklet = bookletState.getStates().find { it.userId == user.id }?.booklets?.find { it.id == booklet.id }
+                assertEquals(newAmount, actualBooklet?.amount)
             }
         }
 

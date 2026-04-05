@@ -154,7 +154,7 @@ class UserFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `Update settings with non owned account must fail`() {
+        fun `Update settings with non owned booklet must fail`() {
             userFeature.register("John", "test", "test")
             val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
 
@@ -165,11 +165,11 @@ class UserFeatureTest: FeatureTest() {
             )
 
             result.assertFailure(ResultState.FORBIDDEN)
-            assertEquals("domain.user.settings.account_forbidden", result.errorInfo?.key)
+            assertEquals("domain.user.settings.booklet_forbidden", result.errorInfo?.key)
         }
 
         @Test
-        fun `Update settings without cycle for each owned account must fail`() {
+        fun `Update settings without cycle for each owned booklet must fail`() {
             launchWithConnectedUserInstance {
                 val result = userFeature.updateSettings(
                     token = tokenValue,
@@ -178,7 +178,7 @@ class UserFeatureTest: FeatureTest() {
                 )
 
                 result.assertFailure(ResultState.INVALID)
-                assertEquals("domain.user.settings.missing_account_cycles", result.errorInfo?.key)
+                assertEquals("domain.user.settings.missing_booklet_cycles", result.errorInfo?.key)
             }
         }
 
@@ -197,7 +197,7 @@ class UserFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `Update settings with cycle for each owned account must succeed`() {
+        fun `Update settings with cycle for each owned booklet must succeed`() {
             launchWithConnectedUserInstance {
                 val result = userFeature.updateSettings(
                     token = tokenValue,

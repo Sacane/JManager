@@ -50,11 +50,11 @@ const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = u
 const { getSettings: getUserSettings } = useUserSettings()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
-const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByAccount.v1'
+const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByBooklet.v1'
 
 // Refs
-const isAccountDialogOpen = ref(false)
-const accounts = ref<BookletDTO[]>([])
+const isBookletDialogOpen = ref(false)
+const booklets = ref<BookletDTO[]>([])
 const regularTransactions = ref<RegularTransactionDTO[]>([])
 const tags = ref<TagDTO[]>([])
 const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
@@ -64,11 +64,11 @@ const previousTrendStats = ref<TrendStatsDTO | null>(null)
 const evolutionTrendStats = ref<TrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
-const selectedAccountId = ref<string | number | null>(null)
+const selectedBookletId = ref<string | number | null>(null)
 const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
 const periodAnchorDate = ref(new Date())
 const hasInitializedDashboard = ref(false)
-const budgetTargetsByAccount = ref<Record<string, number>>({})
+const budgetTargetsByBooklet = ref<Record<string, number>>({})
 const budgetTargetInput = ref<number | undefined>(undefined)
 const projectionWindowDays = ref(15)
 const bookletMonthlyCycleById = ref<Record<string, { startDay: number, endDay: number | null }>>({})
@@ -96,36 +96,36 @@ useIntersectionObserver(chartsRef, ([entry]) => {
 
 // Computed values
 const totalBalance = computed(() =>
-  accounts.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount.toString()), 0.00),
+  booklets.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount.toString()), 0.00),
 )
 
-const selectedAccount = computed(() =>
-  accounts.value.find(account => account.id === selectedAccountId.value) ?? null,
+const selectedBooklet = computed(() =>
+  booklets.value.find(booklet => booklet.id === selectedBookletId.value) ?? null,
 )
 
-const scopedAccountId = computed(() => {
-  if (selectedAccountId.value === null) {
+const scopedBookletId = computed(() => {
+  if (selectedBookletId.value === null) {
     return undefined
   }
 
-  const raw = String(selectedAccountId.value)
+  const raw = String(selectedBookletId.value)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
   return uuidRegex.test(raw) ? raw : undefined
 })
 
-const selectedAccountBalance = computed(() => {
-  if (!selectedAccount.value) {
+const selectedBookletBalance = computed(() => {
+  if (!selectedBooklet.value) {
     return totalBalance.value
   }
-  return Number.parseFloat(selectedAccount.value.amount.toString())
+  return Number.parseFloat(selectedBooklet.value.amount.toString())
 })
 
 const selectedMonthlyPeriodStartDay = computed(() => {
-  if (!selectedAccountId.value) {
+  if (!selectedBookletId.value) {
     return 1
   }
 
-  const configured = bookletMonthlyCycleById.value[String(selectedAccountId.value)]?.startDay
+  const configured = bookletMonthlyCycleById.value[String(selectedBookletId.value)]?.startDay
   if (!configured) {
     return 1
   }
@@ -134,11 +134,11 @@ const selectedMonthlyPeriodStartDay = computed(() => {
 })
 
 const selectedMonthlyPeriodEndDay = computed(() => {
-  if (!selectedAccountId.value) {
+  if (!selectedBookletId.value) {
     return null
   }
 
-  const configured = bookletMonthlyCycleById.value[String(selectedAccountId.value)]?.endDay
+  const configured = bookletMonthlyCycleById.value[String(selectedBookletId.value)]?.endDay
   if (configured === null || configured === undefined) {
     return null
   }
@@ -350,20 +350,20 @@ const totalNonRegularUpcoming = computed(() =>
 
 const totalUpcomingNet = computed(() => totalRegularUpcoming.value + totalNonRegularUpcoming.value)
 
-const selectedAccountBudgetKey = computed(() => {
-  if (selectedAccountId.value === null || selectedAccountId.value === undefined) {
+const selectedBookletBudgetKey = computed(() => {
+  if (selectedBookletId.value === null || selectedBookletId.value === undefined) {
     return null
   }
 
-  return String(selectedAccountId.value)
+  return String(selectedBookletId.value)
 })
 
 const selectedBudgetTarget = computed(() => {
-  if (!selectedAccountBudgetKey.value) {
+  if (!selectedBookletBudgetKey.value) {
     return 0
   }
 
-  return budgetTargetsByAccount.value[selectedAccountBudgetKey.value] ?? 0
+  return budgetTargetsByBooklet.value[selectedBookletBudgetKey.value] ?? 0
 })
 
 const isBudgetConfigured = computed(() => selectedBudgetTarget.value > 0)
@@ -399,7 +399,7 @@ const periodProjectionNet = computed(() => {
 })
 
 const projectedEndPeriodBalance = computed(() =>
-  selectedAccountBalance.value + periodProjectionNet.value,
+  selectedBookletBalance.value + periodProjectionNet.value,
 )
 
 const dashboardAlerts = computed(() => {
@@ -693,11 +693,11 @@ onBeforeUnmount(() => {
 })
 
 // Functions
-function handleAccountCreation(account: { label: string, digit: number }) {
-  createBooklet(account.label, account.digit, '€')
+function handleBookletCreation(booklet: { label: string, digit: number }) {
+  createBooklet(booklet.label, booklet.digit, '€')
     .then((acc) => {
-      if (accounts.value.length < 10) {
-        accounts.value.push(acc)
+      if (booklets.value.length < 10) {
+        booklets.value.push(acc)
       }
       toast.success('Le compte a bien été créé')
       navigateTo(`/booklet/${acc.id}`)
@@ -706,7 +706,7 @@ function handleAccountCreation(account: { label: string, digit: number }) {
 }
 
 function cancel() {
-  isAccountDialogOpen.value = false
+  isBookletDialogOpen.value = false
 }
 
 function loadBudgetTargets() {
@@ -717,17 +717,17 @@ function loadBudgetTargets() {
   try {
     const rawValue = window.localStorage.getItem(BUDGET_STORAGE_KEY)
     if (!rawValue) {
-      budgetTargetsByAccount.value = {}
+      budgetTargetsByBooklet.value = {}
       return
     }
 
     const parsed = JSON.parse(rawValue)
     if (parsed && typeof parsed === 'object') {
-      budgetTargetsByAccount.value = parsed as Record<string, number>
+      budgetTargetsByBooklet.value = parsed as Record<string, number>
     }
   } catch (error) {
     console.error('Unable to load budget targets', error)
-    budgetTargetsByAccount.value = {}
+    budgetTargetsByBooklet.value = {}
   }
 }
 
@@ -736,36 +736,36 @@ function persistBudgetTargets() {
     return
   }
 
-  window.localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetTargetsByAccount.value))
+  window.localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetTargetsByBooklet.value))
 }
 
 function syncBudgetInputFromSelection() {
-  if (!selectedAccountBudgetKey.value) {
+  if (!selectedBookletBudgetKey.value) {
     budgetTargetInput.value = undefined
     return
   }
 
-  const configuredBudget = budgetTargetsByAccount.value[selectedAccountBudgetKey.value]
+  const configuredBudget = budgetTargetsByBooklet.value[selectedBookletBudgetKey.value]
   budgetTargetInput.value = configuredBudget && configuredBudget > 0 ? configuredBudget : undefined
 }
 
 function saveBudgetTarget() {
-  if (!selectedAccountBudgetKey.value) {
+  if (!selectedBookletBudgetKey.value) {
     return
   }
 
   const nextValue = Number(budgetTargetInput.value ?? 0)
   if (Number.isNaN(nextValue) || nextValue <= 0) {
-    const { [selectedAccountBudgetKey.value]: _, ...remainingBudgets } = budgetTargetsByAccount.value
-    budgetTargetsByAccount.value = remainingBudgets
+    const { [selectedBookletBudgetKey.value]: _, ...remainingBudgets } = budgetTargetsByBooklet.value
+    budgetTargetsByBooklet.value = remainingBudgets
     budgetTargetInput.value = undefined
     persistBudgetTargets()
     return
   }
 
-  budgetTargetsByAccount.value = {
-    ...budgetTargetsByAccount.value,
-    [selectedAccountBudgetKey.value]: Number(nextValue.toFixed(2)),
+  budgetTargetsByBooklet.value = {
+    ...budgetTargetsByBooklet.value,
+    [selectedBookletBudgetKey.value]: Number(nextValue.toFixed(2)),
   }
   budgetTargetInput.value = Number(nextValue.toFixed(2))
   persistBudgetTargets()
@@ -775,14 +775,14 @@ async function loadDashboardData() {
   await withLoading(async () => {
     try {
       // Load basic data
-      const [accountsData, regularTransData, tagsData, settingsData] = await Promise.all([
+      const [bookletsData, regularTransData, tagsData, settingsData] = await Promise.all([
         fetchBooklets().catch(() => []),
         getRegularTransaction().catch(() => []),
         getAllTags().catch(() => []),
         getUserSettings().catch(() => null),
       ])
 
-      accounts.value = Array.isArray(accountsData) ? accountsData : []
+      booklets.value = Array.isArray(bookletsData) ? bookletsData : []
       regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
       tags.value = Array.isArray(tagsData) ? tagsData : []
 
@@ -799,9 +799,9 @@ async function loadDashboardData() {
         )
       }
 
-      if (!selectedAccountId.value && accounts.value.length > 0) {
-        const firstAccountId = accounts.value[0]?.id
-        selectedAccountId.value = firstAccountId ?? null
+      if (!selectedBookletId.value && booklets.value.length > 0) {
+        const firstBookletId = booklets.value[0]?.id
+        selectedBookletId.value = firstBookletId ?? null
       }
 
       await loadStatsData()
@@ -834,37 +834,37 @@ async function loadStatsData() {
     ? getPrevisionalTransactions(
         format(projectionStart, 'yyyy-MM-dd'),
         format(projectionEnd, 'yyyy-MM-dd'),
-        scopedAccountId.value,
+        scopedBookletId.value,
       ).catch(() => null)
     : Promise.resolve(null)
 
   const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData] = await Promise.all([
     getCategoryDistribution({
-      accountId: scopedAccountId.value,
+      bookletId: scopedBookletId.value,
       startDate,
       endDate,
     }).catch(() => null),
     getCategoryDistribution({
-      accountId: scopedAccountId.value,
+      bookletId: scopedBookletId.value,
       startDate: previousStartDate,
       endDate: previousEndDate,
     }).catch(() => null),
     getTrendStats({
-      accountId: scopedAccountId.value,
+      bookletId: scopedBookletId.value,
       startDate,
       endDate,
     }).catch(() => null),
     getTrendStats({
-      accountId: scopedAccountId.value,
+      bookletId: scopedBookletId.value,
       startDate: previousStartDate,
       endDate: previousEndDate,
     }).catch(() => null),
     getTrendStats({
-      accountId: scopedAccountId.value,
+      bookletId: scopedBookletId.value,
       startDate: evolutionStartDate,
       endDate: evolutionEndDate,
     }).catch(() => null),
-    getPrevisionalTransactions(upcomingStartDate, upcomingEndDate, scopedAccountId.value).catch(() => null),
+    getPrevisionalTransactions(upcomingStartDate, upcomingEndDate, scopedBookletId.value).catch(() => null),
     periodProjectionPromise,
   ])
 
@@ -900,14 +900,14 @@ onMounted(() => {
   loadDashboardData()
 })
 
-watch([selectedAccountId, selectedPeriod, periodAnchorDate], () => {
-  if (!hasInitializedDashboard.value || accounts.value.length === 0) {
+watch([selectedBookletId, selectedPeriod, periodAnchorDate], () => {
+  if (!hasInitializedDashboard.value || booklets.value.length === 0) {
     return
   }
   loadStatsData()
 })
 
-watch(selectedAccountId, () => {
+watch(selectedBookletId, () => {
   syncBudgetInputFromSelection()
 })
 </script>
@@ -922,7 +922,7 @@ watch(selectedAccountId, () => {
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
           <p class="text-base" style="color: var(--text-secondary);">
-            Vue {{ selectedPeriodLabel }} • {{ selectedAccount?.label || 'Tous les comptes' }}
+            Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label || 'Tous les comptes' }}
           </p>
           <div class="flex items-center gap-2.5 mt-3 flex-wrap">
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
@@ -934,16 +934,16 @@ watch(selectedAccountId, () => {
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
               Solde prévisionnel court terme: {{ totalUpcomingNet.toFixed(2) }} €
             </span>
-            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedAccountBalance ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedBookletBalance ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
               Projection fin de période:
               {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
             </span>
           </div>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
-          <select v-model="selectedAccountId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
-            <option v-for="account in accounts" :key="account.id" :value="account.id">
-              {{ account.label }}
+          <select v-model="selectedBookletId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
+            <option v-for="booklet in booklets" :key="booklet.id" :value="booklet.id">
+              {{ booklet.label }}
             </option>
           </select>
           <div class="period-toggle flex items-center rounded-lg p-1">
@@ -996,10 +996,10 @@ watch(selectedAccountId, () => {
               Solde du compte
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ selectedAccountBalance.toFixed(2) }} €
+              {{ selectedBookletBalance.toFixed(2) }} €
             </p>
             <p class="text-xs" style="color: var(--text-tertiary);">
-              {{ selectedAccount?.label || 'Compte sélectionné' }}
+              {{ selectedBooklet?.label || 'Compte sélectionné' }}
             </p>
           </div>
         </div>
@@ -1158,44 +1158,44 @@ watch(selectedAccountId, () => {
               <i class="pi pi-book text-purple-600" />
               Mes livrets
             </h2>
-            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isAccountDialogOpen = true">
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
               <i class="pi pi-plus" />
               Nouveau
             </button>
           </div>
           <div class="max-h-87.5 overflow-y-auto">
-            <div v-if="accounts.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+            <div v-if="booklets.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
               <i class="pi pi-inbox text-5xl" style="color: var(--text-muted);" />
               <p class="m-0" style="color: var(--text-secondary);">
                 Aucun livret créé
               </p>
-              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isAccountDialogOpen = true">
+              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
                 Créer mon premier livret
               </button>
             </div>
             <div v-else class="flex flex-col gap-3">
               <div
-                v-for="account in accounts.slice(0, 4)"
-                :key="account.id"
+                v-for="booklet in booklets.slice(0, 4)"
+                :key="booklet.id"
                 class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all hover:translate-x-1.5"
                 style="background-color: var(--bg-tertiary);"
-                @click="navigateTo(`/booklet/${account.id}`)"
+                @click="navigateTo(`/booklet/${booklet.id}`)"
               >
                 <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
                   <i class="pi pi-wallet" />
                 </div>
                 <div class="flex-1">
                   <p class="font-semibold m-0 mb-1" style="color: var(--text-primary);">
-                    {{ account.label }}
+                    {{ booklet.label }}
                   </p>
                   <p class="text-sm m-0" style="color: var(--text-secondary);">
-                    {{ Number.parseFloat(account.amount.toString()).toFixed(2) }} €
+                    {{ Number.parseFloat(booklet.amount.toString()).toFixed(2) }} €
                   </p>
                 </div>
                 <i class="pi pi-chevron-right" style="color: var(--text-tertiary);" />
               </div>
-              <button v-if="accounts.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed rounded-lg font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600" style="border-color: var(--border-color); color: var(--text-secondary);" @click="navigateTo('/accounts')">
-                Voir tous les livrets ({{ accounts.length }})
+              <button v-if="booklets.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed rounded-lg font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600" style="border-color: var(--border-color); color: var(--text-secondary);" @click="navigateTo('/booklet')">
+                Voir tous les livrets ({{ booklets.length }})
               </button>
             </div>
           </div>
@@ -1503,8 +1503,8 @@ watch(selectedAccountId, () => {
 
   <BookletBookingDialog
     :digit="0.00"
-    :visible="isAccountDialogOpen"
-    @create-account="handleAccountCreation"
+    :visible="isBookletDialogOpen"
+    @create-booklet="handleBookletCreation"
     @cancel="cancel"
   />
 </template>

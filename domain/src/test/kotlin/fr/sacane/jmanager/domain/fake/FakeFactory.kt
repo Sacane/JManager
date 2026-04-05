@@ -63,7 +63,7 @@ object FakeFactory {
 
     private val bookletBalanceQueryRepository: BookletBalanceQueryRepository = object : BookletBalanceQueryRepository {
         override fun findPersistedBalances(bookletId: UUID): BookletBalanceQueryRepository.PersistedBalances? {
-            val booklet = inMemoryDatabase.findAccountById(bookletId) ?: return null
+            val booklet = inMemoryDatabase.findBookletById(bookletId) ?: return null
             return BookletBalanceQueryRepository.PersistedBalances(
                 label = booklet.label,
                 amount = booklet.amount.value,

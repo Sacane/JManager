@@ -9,9 +9,9 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionJpaReposito
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 
-data class AccountTransaction(
-    val accountOwnerId: UserId,
-    val accountName: String,
+data class BookletTransaction(
+    val bookletOwnerId: UserId,
+    val bookletName: String,
     val transactions: List<Transaction>,
     val token: String,
 )
@@ -20,7 +20,7 @@ data class AccountTransaction(
 class TransactionStateTestAdapter(
     private val transactionJpaRepository: TransactionJpaRepository,
     private val transactionFeature: TransactionFeature
-): State<AccountTransaction, Transaction> {
+): State<BookletTransaction, Transaction> {
     @Transactional
     override fun get(): Collection<Transaction> {
         return transactionJpaRepository.findAll()
@@ -31,10 +31,10 @@ class TransactionStateTestAdapter(
         transactionJpaRepository.deleteAll()
     }
 
-    override fun init(initialState: Collection<AccountTransaction>) {
+    override fun init(initialState: Collection<BookletTransaction>) {
         initialState.forEach {
             it.transactions.forEach { tr ->
-                transactionFeature.bookTransaction(it.token, it.accountName, tr)
+                transactionFeature.bookTransaction(it.token, it.bookletName, tr)
             }
         }
     }

@@ -274,13 +274,13 @@ class BookletFeatureImpl(
                 "domain.booklet.save.maximum_size_reached"
             )
         }
-        val accountSaved = bookletRepository.save(it, booklet)
+        val bookletSaved = bookletRepository.save(it, booklet)
             ?: return@authenticate domainFailure(
                 ResultState.INFRASTRUCTURE_ERROR,
                 "Erreur lors de la sauvegarde du compte",
                 "domain.booklet.save.infrastructure_error"
             )
-        success(accountSaved)
+        success(bookletSaved)
     }
 
     override fun loadTransactionsForBookletForAMonth(
@@ -308,7 +308,7 @@ class BookletFeatureImpl(
             val fetchBookletMs = Duration.ofNanos(System.nanoTime() - fetchBookletStartNs).toMillis()
 
             val fetchRegularStartNs = System.nanoTime()
-            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByBooklet(userId, bookletId)
                 ?: emptyList()
             val fetchRegularMs = Duration.ofNanos(System.nanoTime() - fetchRegularStartNs).toMillis()
 
@@ -540,7 +540,7 @@ class BookletFeatureImpl(
                 )
             }
 
-            val regularTransactions = regularTransactionRepository.getAllRegularUsedByAccount(userId, bookletId)
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByBooklet(userId, bookletId)
                 ?: emptyList()
 
             val baseBooklet = Booklet(

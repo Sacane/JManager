@@ -22,13 +22,13 @@ interface RegularTransactionRepository {
     fun getAllRegularTransactions(userId: UserId): List<RegularTransaction>
 
     /**
-     * Retrieve all regular transactions used by a specific account/booklet for the given user.
+     * Retrieve all regular transactions used by a specific booklet for the given user.
      *
      * @param userId Domain user identifier
-     * @param accountID UUID of the booklet/account
+     * @param bookletID UUID of the booklet
      * @return List of RegularTransaction or null if none exist
      */
-    fun getAllRegularUsedByAccount(userId: UserId, accountID: UUID): List<RegularTransaction>?
+    fun getAllRegularUsedByBooklet(userId: UserId, bookletID: UUID): List<RegularTransaction>?
 
     /**
      * Persist a new regular transaction and associate it with a set of booklet identifiers.

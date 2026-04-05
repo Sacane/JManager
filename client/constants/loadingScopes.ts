@@ -6,19 +6,19 @@ export const LOADING_SCOPES = {
   dashboard: {
     initial: 'dashboard.initial',
   },
-  accountIndex: {
-    load: 'account.index.load',
-    create: 'account.index.create',
-    delete: 'account.index.delete',
+  bookletIndex: {
+    load: 'booklet.index.load',
+    create: 'booklet.index.create',
+    delete: 'booklet.index.delete',
   },
-  accountDetails: {
-    load: 'account.loadBookletData',
-    createTransaction: 'account.bookTransaction',
-    fetchTransaction: 'account.fetchTransaction',
-    editTransaction: 'account.editTransaction',
-    deleteTransaction: 'account.deleteTransaction',
-    confirmPreview: 'account.confirmPreview',
-    exportCsv: 'account.exportCsv',
+  bookletDetails: {
+    load: 'booklet.loadBookletData',
+    createTransaction: 'booklet.bookTransaction',
+    fetchTransaction: 'booklet.fetchTransaction',
+    editTransaction: 'booklet.editTransaction',
+    deleteTransaction: 'booklet.deleteTransaction',
+    confirmPreview: 'booklet.confirmPreview',
+    exportCsv: 'booklet.exportCsv',
   },
   tag: {
     load: 'tag.load',

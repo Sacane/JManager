@@ -15,7 +15,7 @@ class UserResource(
     @Column(unique = true, nullable = true)
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
-    var accounts: MutableList<BookletResource> = mutableListOf(),
+    var booklets: MutableList<BookletResource> = mutableListOf(),
     @OneToMany(mappedBy = "owner")
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
     @Column(name = "creation_date", nullable = false, updatable = false)
@@ -37,9 +37,9 @@ class UserResource(
     @Column(name = "id_user")
     var idUser: UUID? = null,
 ) {
-    fun addAccount(bookletResource: BookletResource) {
+    fun addBooklet(bookletResource: BookletResource) {
         bookletResource.owner = this
-        accounts.add(bookletResource)
+        booklets.add(bookletResource)
     }
     fun addTag(tag: TagPersonalResource) {
         tag.owner = this

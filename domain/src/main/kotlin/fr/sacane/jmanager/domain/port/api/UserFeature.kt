@@ -242,7 +242,7 @@ class UserFeatureImpl(
             return@authenticate domainFailure(
                 ResultState.INVALID,
                 "Chaque livret doit avoir un cycle mensuel configuré",
-                "domain.user.settings.missing_account_cycles"
+                "domain.user.settings.missing_booklet_cycles"
             )
         }
 
@@ -251,7 +251,7 @@ class UserFeatureImpl(
                 ?: return@authenticate domainFailure(
                     ResultState.FORBIDDEN,
                     "Vous n'avez pas accès au livret $bookletId",
-                    "domain.user.settings.account_forbidden"
+                    "domain.user.settings.booklet_forbidden"
                 )
 
             val updated = bookletRepository.updateMonthlyPeriodStartDay(
@@ -263,7 +263,7 @@ class UserFeatureImpl(
                 return@authenticate domainFailure(
                     ResultState.INFRASTRUCTURE_ERROR,
                     "Impossible de mettre à jour le cycle du livret $bookletId",
-                    "domain.user.settings.account_update_failed"
+                    "domain.user.settings.booklet_update_failed"
                 )
             }
             booklet.updateMonthlyPeriodConfiguration(

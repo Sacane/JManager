@@ -10,12 +10,12 @@ import java.util.UUID
 @Repository
 interface RegularTransactionResourceJpaRepository: JpaRepository<RegularTransactionEntity, UUID> {
 
-	@Query("SELECT DISTINCT rt FROM RegularTransactionEntity rt LEFT JOIN FETCH rt.accounts")
-	fun findAllWithAccounts(): List<RegularTransactionEntity>
+	@Query("SELECT DISTINCT rt FROM RegularTransactionEntity rt LEFT JOIN FETCH rt.booklets")
+	fun findAllWithBooklets(): List<RegularTransactionEntity>
 
-	@Query("SELECT DISTINCT rt FROM RegularTransactionEntity rt LEFT JOIN FETCH rt.accounts WHERE rt.owner.idUser = :userId")
-	fun findAllByOwnerIdWithAccounts(userId: UUID): List<RegularTransactionEntity>
+	@Query("SELECT DISTINCT rt FROM RegularTransactionEntity rt LEFT JOIN FETCH rt.booklets WHERE rt.owner.idUser = :userId")
+	fun findAllByOwnerIdWithBooklets(userId: UUID): List<RegularTransactionEntity>
 
-	@Query("SELECT DISTINCT rt FROM RegularTransactionEntity rt LEFT JOIN FETCH rt.accounts WHERE rt.transactionId = :id")
-	fun findByIdWithAccounts(id: UUID): RegularTransactionEntity?
+	@Query("SELECT DISTINCT rt FROM RegularTransactionEntity rt LEFT JOIN FETCH rt.booklets WHERE rt.transactionId = :id")
+	fun findByIdWithBooklets(id: UUID): RegularTransactionEntity?
 }

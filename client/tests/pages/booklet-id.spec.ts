@@ -1,6 +1,6 @@
 ﻿import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import AccountDetailsPage from '../../pages/booklet/[id].vue'
+import BookletDetailsPage from '../../pages/booklet/[id].vue'
 
 vi.mock('~/composables/useTransaction', () => ({
   default: () => ({
@@ -95,7 +95,7 @@ function mountPage(activeScopes: string[] = []) {
   }))
   vi.stubGlobal('navigateTo', vi.fn())
 
-  const wrapper = shallowMount(AccountDetailsPage, {
+  const wrapper = shallowMount(BookletDetailsPage, {
     global: {
       mocks: {
         useDate: () => ({
@@ -137,13 +137,13 @@ describe('pages/booklet/[id] loading states', () => {
   })
 
   it('shows inline loading feedback when account load scope is active', () => {
-    const { wrapper } = mountPage(['account.loadBookletData'])
+    const { wrapper } = mountPage(['booklet.loadBookletData'])
 
     expect(wrapper.text()).toContain('Chargement des transactions...')
   })
 
   it('shows export button loading state when csv export scope is active', () => {
-    const { wrapper } = mountPage(['account.exportCsv'])
+    const { wrapper } = mountPage(['booklet.exportCsv'])
 
     const exportButton = wrapper.findAll('button').find(btn => btn.attributes('aria-label') === 'Exporter CSV')
     expect(exportButton).toBeDefined()

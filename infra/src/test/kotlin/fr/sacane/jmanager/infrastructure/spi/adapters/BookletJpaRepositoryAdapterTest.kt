@@ -27,7 +27,7 @@ class BookletJpaRepositoryAdapterTest(
     }
 
     @Test
-    fun `save should persist account and attach to user`() {
+    fun `save should persist booklet and attach to user`() {
         val booklet = Booklet(label = "acct-test-save", amount = Amount(100L), owner = user)
         val saved = bookletJpaRepositoryAdapter.save(user!!.id, booklet)
         assertThat(saved).isNotNull
@@ -54,7 +54,7 @@ class BookletJpaRepositoryAdapterTest(
     }
 
     @Test
-    fun `upsert should persist transactions linked to account`() {
+    fun `upsert should persist transactions linked to booklet`() {
         val booklet = Booklet(label = "acct-upsert", amount = Amount(10L), owner = user)
         val up = bookletJpaRepositoryAdapter.upsert(booklet)
         assertThat(up).isNotNull

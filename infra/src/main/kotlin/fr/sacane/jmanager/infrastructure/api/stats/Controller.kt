@@ -24,20 +24,20 @@ class StatsController(
     }
 
     @GetMapping("/monthly/{bookletId}/{year}")
-    fun getMonthlyAccountStats(
+    fun getMonthlyBookletStats(
         @PathVariable bookletId: String,
         @PathVariable year: Int
-    ): ResponseEntity<MonthlyAccountStatsDTO> {
-        LOGGER.info("Requesting monthly stats for account $bookletId and year $year")
+    ): ResponseEntity<MonthlyBookletStatsDTO> {
+        LOGGER.info("Requesting monthly stats for booklet $bookletId and year $year")
 
-        return statsFeature.getMonthlyAccountStats(bookletId.toUUID(), year, currentUser.token)
+        return statsFeature.getMonthlyBookletStats(bookletId.toUUID(), year, currentUser.token)
             .map { it.toDTO() }
             .toHttpResponse()
     }
 
     @GetMapping("/category-distribution")
     fun getCategoryDistribution(
-        @RequestParam(required = false) accountId: UUID?,
+        @RequestParam(required = false) bookletId: UUID?,
         @RequestParam(required = false) startDate: LocalDate?,
         @RequestParam(required = false) endDate: LocalDate?
     ): ResponseEntity<CategoryDistributionDTO> {
@@ -45,7 +45,7 @@ class StatsController(
 
         return statsFeature.getCategoryDistribution(
             token = currentUser.token,
-            accountId = accountId,
+            bookletId = bookletId,
             startDate = startDate,
             endDate = endDate
         )
@@ -55,7 +55,7 @@ class StatsController(
 
     @GetMapping("/trends")
     fun getTrendStats(
-        @RequestParam(required = false) accountId: UUID?,
+        @RequestParam(required = false) bookletId: UUID?,
         @RequestParam(required = false) startDate: LocalDate?,
         @RequestParam(required = false) endDate: LocalDate?
     ): ResponseEntity<TrendStatsDTO> {
@@ -63,7 +63,7 @@ class StatsController(
 
         return statsFeature.getTrendStats(
             token = currentUser.token,
-            accountId = accountId,
+            bookletId = bookletId,
             startDate = startDate,
             endDate = endDate
         )
@@ -75,12 +75,12 @@ class StatsController(
     fun getPrevisionalTransactions(
         @RequestParam startDate: LocalDate,
         @RequestParam endDate: LocalDate,
-        @RequestParam(required = false) accountId: UUID?
+        @RequestParam(required = false) bookletId: UUID?
     ): ResponseEntity<PrevisionalTransactionsDTO> {
         LOGGER.info("Requesting previsional transactions from $startDate to $endDate")
         val defaultTag = tagFeature.defaultTag(currentUser.token).mapNotNullOrFailure() ?: throw NotFoundException(
             ResultState.TAG_NOT_FOUND.code, "Default tag not found")
-        return statsFeature.getPrevisionalTransactions(currentUser.token, startDate, endDate, accountId)
+        return statsFeature.getPrevisionalTransactions(currentUser.token, startDate, endDate, bookletId)
             .map {
                 it.toDTO(defaultTag)
             }

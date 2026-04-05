@@ -23,7 +23,7 @@ class TrendCalculatorTest {
     @Test
     fun `calculateTrend should return 12 months of data`() {
         val booklets = listOf(
-            Booklet(1000.toAmount(), "Account")
+            Booklet(1000.toAmount(), "Booklet")
         )
 
         val trends = calculator.calculateTrend(booklets)
@@ -34,7 +34,7 @@ class TrendCalculatorTest {
     @Test
     fun `calculateTrend should return empty amounts when no transactions`() {
         val booklets = listOf(
-            Booklet(1000.toAmount(), "Empty Account")
+            Booklet(1000.toAmount(), "Empty Booklet")
         )
 
         val trends = calculator.calculateTrend(booklets)
@@ -49,7 +49,7 @@ class TrendCalculatorTest {
     @Test
     fun `calculateTrend should ignore preview transactions`() {
         val currentDate = LocalDate.now()
-        val booklet = Booklet(1000.toAmount(), "Account")
+        val booklet = Booklet(1000.toAmount(), "Booklet")
 
         booklet.addTransaction(
             Transaction(
@@ -77,7 +77,7 @@ class TrendCalculatorTest {
     @Test
     fun `calculateTrend should calculate correct income and expenses for current month`() {
         val currentDate = LocalDate.now()
-        val booklet = Booklet(1000.toAmount(), "Account")
+        val booklet = Booklet(1000.toAmount(), "Booklet")
 
         booklet.addTransaction(
             Transaction(UUID.randomUUID(), "Income", currentDate, 500.toAmount(), isIncome = true)
@@ -101,7 +101,7 @@ class TrendCalculatorTest {
     fun `calculateTrend should accumulate balance correctly across months`() {
         val currentDate = LocalDate.now()
         val lastMonth = currentDate.minusMonths(1)
-        val booklet = Booklet(1000.toAmount(), "Account")
+        val booklet = Booklet(1000.toAmount(), "Booklet")
 
 
         booklet.addTransaction(
@@ -139,8 +139,8 @@ class TrendCalculatorTest {
     @Test
     fun `calculateTrend should aggregate transactions from multiple booklets`() {
         val currentDate = LocalDate.now()
-        val booklet1 = Booklet(1000.toAmount(), "Account 1")
-        val booklet2 = Booklet(2000.toAmount(), "Account 2")
+        val booklet1 = Booklet(1000.toAmount(), "Booklet 1")
+        val booklet2 = Booklet(2000.toAmount(), "Booklet 2")
 
         booklet1.addTransaction(
             Transaction(UUID.randomUUID(), "Income 1", currentDate, 300.toAmount(), isIncome = true)
@@ -156,27 +156,27 @@ class TrendCalculatorTest {
         }
         assertNotNull(currentMonthTrend)
         assertEquals(500.toAmount(), currentMonthTrend!!.income)
-        assertEquals(2, currentMonthTrend.totalAccounts)
+        assertEquals(2, currentMonthTrend.totalBooklets)
     }
 
     @Test
-    fun `calculateTrend should set correct totalAccounts`() {
+    fun `calculateTrend should set correct totalBooklets`() {
         val booklets = listOf(
-            Booklet(1000.toAmount(), "Account 1"),
-            Booklet(2000.toAmount(), "Account 2"),
-            Booklet(3000.toAmount(), "Account 3")
+            Booklet(1000.toAmount(), "Booklet 1"),
+            Booklet(2000.toAmount(), "Booklet 2"),
+            Booklet(3000.toAmount(), "Booklet 3")
         )
 
         val trends = calculator.calculateTrend(booklets)
 
         trends.forEach { trend ->
-            assertEquals(3, trend.totalAccounts)
+            assertEquals(3, trend.totalBooklets)
         }
     }
 
     @Test
     fun `calculateTrend should cover last 12 months including current month`() {
-        val booklets = listOf(Booklet(1000.toAmount(), "Account"))
+        val booklets = listOf(Booklet(1000.toAmount(), "Booklet"))
         val trends = calculator.calculateTrend(booklets)
         val currentDate = LocalDate.now()
 
@@ -195,7 +195,7 @@ class TrendCalculatorTest {
     @Test
     fun `calculateTrend should calculate correct balance as income minus expenses`() {
         val currentDate = LocalDate.now()
-        val booklet = Booklet(1000.toAmount(), "Account")
+        val booklet = Booklet(1000.toAmount(), "Booklet")
 
         booklet.addTransaction(
             Transaction(UUID.randomUUID(), "Income", currentDate, 1000.toAmount(), isIncome = true)
@@ -218,7 +218,7 @@ class TrendCalculatorTest {
     @Test
     fun `calculateTrend should handle months without transactions`() {
         val twoMonthsAgo = LocalDate.now().minusMonths(2)
-        val booklet = Booklet(1000.toAmount(), "Account")
+        val booklet = Booklet(1000.toAmount(), "Booklet")
 
         booklet.addTransaction(
             Transaction(UUID.randomUUID(), "Old income", twoMonthsAgo, 500.toAmount(), isIncome = true)

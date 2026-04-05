@@ -1,6 +1,6 @@
 ﻿import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import AccountPage from '../../pages/booklet/index.vue'
+import BookletPage from '../../pages/booklet/index.vue'
 
 const fetchMock = vi.fn().mockResolvedValue([])
 const deleteBookletMock = vi.fn().mockResolvedValue(undefined)
@@ -14,7 +14,7 @@ vi.mock('../../composables/useBooklet', () => ({
   }),
 }))
 
-function mountAccountPage(activeScopes: string[] = []) {
+function mountBookletPage(activeScopes: string[] = []) {
   vi.stubGlobal('definePageMeta', vi.fn())
   vi.stubGlobal('useConfirm', () => ({ require: vi.fn() }))
   vi.stubGlobal('useRouter', () => ({ push: vi.fn() }))
@@ -24,7 +24,7 @@ function mountAccountPage(activeScopes: string[] = []) {
     withLoading: async <T>(action: () => Promise<T>) => action(),
   }))
 
-  const wrapper = shallowMount(AccountPage, {
+  const wrapper = shallowMount(BookletPage, {
     global: {
       stubs: {
         ConfirmDialog: true,
@@ -43,13 +43,13 @@ function mountAccountPage(activeScopes: string[] = []) {
 
 describe('pages/booklet/index loading states', () => {
   it('shows list loading feedback when account load scope is active', () => {
-    const { wrapper } = mountAccountPage(['account.index.load'])
+    const { wrapper } = mountBookletPage(['booklet.index.load'])
 
     expect(wrapper.text()).toContain('Chargement des livrets...')
   })
 
   it('shows add button in loading state when account creation scope is active', () => {
-    const { wrapper } = mountAccountPage(['account.index.create'])
+    const { wrapper } = mountBookletPage(['booklet.index.create'])
 
     const addButton = wrapper.findAll('button').find(btn => btn.attributes('data-label') === 'Nouveau livret')
     expect(addButton).toBeDefined()

@@ -97,7 +97,7 @@ internal fun User.asResource(password: String): UserResource {
         username = username,
         password = password,
         email = email,
-        accounts = mutableListOf(),
+        booklets = mutableListOf(),
         tags = tags.map { it.toPersonalTag() }.toMutableList(),
         projectionWindowDays = projectionWindowDays,
     )
@@ -141,12 +141,12 @@ internal fun UserResource.toModel()
     isEnabled = isEnabled,
     projectionWindowDays = projectionWindowDays,
 )
-internal fun UserResource.toModelWithSimpleAccounts()
+internal fun UserResource.toModelWithSimpleBooklets()
         : User = User(
     id = UserId(this.idUser),
     username = this.username,
     email = this.email,
-    booklets = this.accounts.map { account -> account.toSimpleModel() }.toMutableList(),
+    booklets = this.booklets.map { it.toSimpleModel() }.toMutableList(),
     projectionWindowDays = projectionWindowDays,
 )
 
@@ -191,7 +191,7 @@ internal fun User.asExistingResource(): UserResource
         = UserResource(idUser = this.id.value,
     username = username,
     email = email,
-    accounts = this.booklets.map {it.asResource()}.toMutableList(),
+    booklets = this.booklets.map {it.asResource()}.toMutableList(),
     tags = this.tags.map { it.toPersonalTag() }.toMutableList(),
     projectionWindowDays = this.projectionWindowDays,
 )

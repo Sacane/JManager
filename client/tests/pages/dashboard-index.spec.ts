@@ -41,7 +41,7 @@ const getTrendStatsMock = vi.fn().mockResolvedValue({
 
 const getPrevisionalTransactionsMock = vi.fn().mockResolvedValue({
   transactions: [],
-  groupedByAccount: {},
+  groupedByBooklet: {},
   totalAmount: '0.00',
   totalIncome: '0.00',
   totalExpenses: '0.00',
@@ -57,7 +57,7 @@ const getUserSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 15,
   bookletCycles: [
     {
-      accountId: '11111111-1111-4111-8111-111111111111',
+      bookletId: '11111111-1111-4111-8111-111111111111',
       label: 'Compte principal',
       monthlyPeriodStartDay: 1,
       monthlyPeriodEndDay: null,
@@ -127,7 +127,7 @@ describe('pages/dashboard/index tags insights', () => {
     getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
     getPrevisionalTransactionsMock.mockResolvedValue({
       transactions: [],
-      groupedByAccount: {},
+      groupedByBooklet: {},
       totalAmount: '0.00',
       totalIncome: '0.00',
       totalExpenses: '0.00',
@@ -142,7 +142,7 @@ describe('pages/dashboard/index tags insights', () => {
       projectionWindowDays: 15,
       bookletCycles: [
         {
-          accountId: '11111111-1111-4111-8111-111111111111',
+          bookletId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
           monthlyPeriodStartDay: 1,
           monthlyPeriodEndDay: null,
@@ -179,7 +179,7 @@ describe('pages/dashboard/index tags insights', () => {
       projectionWindowDays: 21,
       bookletCycles: [
         {
-          accountId: '11111111-1111-4111-8111-111111111111',
+          bookletId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
           monthlyPeriodStartDay: 28,
           monthlyPeriodEndDay: null,
@@ -192,7 +192,7 @@ describe('pages/dashboard/index tags insights', () => {
     await flushPromises()
 
     expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
-      accountId: '11111111-1111-4111-8111-111111111111',
+      bookletId: '11111111-1111-4111-8111-111111111111',
       startDate: '2026-02-28',
       endDate: '2026-03-27',
     }))
@@ -212,7 +212,7 @@ describe('pages/dashboard/index tags insights', () => {
       projectionWindowDays: 21,
       bookletCycles: [
         {
-          accountId: '11111111-1111-4111-8111-111111111111',
+          bookletId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
           monthlyPeriodStartDay: 28,
           monthlyPeriodEndDay: null,
@@ -225,7 +225,7 @@ describe('pages/dashboard/index tags insights', () => {
     await flushPromises()
 
     expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
-      accountId: '11111111-1111-4111-8111-111111111111',
+      bookletId: '11111111-1111-4111-8111-111111111111',
       startDate: '2026-03-28',
       endDate: '2026-04-27',
     }))
@@ -239,7 +239,7 @@ describe('pages/dashboard/index tags insights', () => {
       projectionWindowDays: 21,
       bookletCycles: [
         {
-          accountId: '11111111-1111-4111-8111-111111111111',
+          bookletId: '11111111-1111-4111-8111-111111111111',
           label: 'Compte principal',
           monthlyPeriodStartDay: 28,
           monthlyPeriodEndDay: 30,
@@ -252,7 +252,7 @@ describe('pages/dashboard/index tags insights', () => {
     await flushPromises()
 
     expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
-      accountId: '11111111-1111-4111-8111-111111111111',
+      bookletId: '11111111-1111-4111-8111-111111111111',
       startDate: '2026-03-28',
       endDate: '2026-04-30',
     }))

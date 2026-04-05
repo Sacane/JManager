@@ -10,7 +10,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
+import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.transaction.*
 import fr.sacane.jmanager.infrastructure.generateCookie
@@ -107,7 +107,7 @@ class TransactionControllerTest(
         }
 
         @Test
-        fun `Create a transaction with an unknown account must send 404`() {
+        fun `Create a transaction with an unknown booklet must send 404`() {
             val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
@@ -149,9 +149,9 @@ class TransactionControllerTest(
             bookletStateTestAdapter.init(
                 listOf(element)
             )
-            val justInputAccount = bookletStateTestAdapter.get().find { it.label == "test" }!!
+            val justInputBooklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
             transactionStateTestAdapter.init(listOf(
-                AccountTransaction(user!!.id, justInputAccount.label, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount(200.00.toBigDecimal()), false)), token.asTokenUUID())
+                BookletTransaction(user!!.id, justInputBooklet.label, listOf(Transaction(null, "testTransaction", LocalDate.now(), Amount(200.00.toBigDecimal()), false)), token.asTokenUUID())
             ))
             val justInputTransaction = transactionStateTestAdapter.get().find { it.label == "testTransaction" }!!
 
@@ -218,7 +218,7 @@ class TransactionControllerTest(
             )
             transactionStateTestAdapter.init(
                 listOf(
-                    AccountTransaction(
+                    BookletTransaction(
                         user!!.id,
                         "test",
                         transactions,
@@ -313,10 +313,10 @@ class TransactionControllerTest(
                 Transaction(null, "test5", LocalDate.of(2024, Month.JUNE, 20), Amount.fromString("100.00"), false),
                 Transaction(null, "test6", LocalDate.of(2024, Month.MAY, 20), Amount.fromString("100.00"), false),
             )
-            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
             transactionStateTestAdapter.init(
                 listOf(
-                    AccountTransaction(
+                    BookletTransaction(
                         user!!.id,
                         "test",
                         transactions,
@@ -325,8 +325,8 @@ class TransactionControllerTest(
                 )
             )
             val ids = transactionStateTestAdapter.get().mapNotNull { it.id }
-            val request = AccountTransactionsIdRequest(
-                account.id!!.toString(),
+            val request = BookletTransactionsIdRequest(
+                booklet.id!!.toString(),
                 ids.map { it.toString() }
             )
             Given {
@@ -345,8 +345,8 @@ class TransactionControllerTest(
             assertEquals(0, transactionStateTestAdapter.get().size)
         }
         @Test
-        fun `Request deletion for an non-existing account must send 404`() {
-            val request = AccountTransactionsIdRequest(
+        fun `Request deletion for a non-existing booklet must send 404`() {
+            val request = BookletTransactionsIdRequest(
                 UUID.randomUUID().toString(),
                 listOf()
             )
@@ -374,7 +374,7 @@ class TransactionControllerTest(
 
             transactionStateTestAdapter.init(
                 listOf(
-                    AccountTransaction(
+                    BookletTransaction(
                         user!!.id,
                         "test",
                         transactions,
@@ -383,15 +383,15 @@ class TransactionControllerTest(
                 )
             )
 
-            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
             val transactionToDelete = transactionStateTestAdapter.get().first { it.label == "to-delete" }
             val transactionToKeep = transactionStateTestAdapter.get().first { it.label == "to-keep" }
 
             assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToDelete.id!!))
             assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToKeep.id!!))
 
-            val request = AccountTransactionsIdRequest(
-                account.id!!.toString(),
+            val request = BookletTransactionsIdRequest(
+                booklet.id!!.toString(),
                 listOf(transactionToDelete.id!!.toString())
             )
 
@@ -428,15 +428,15 @@ class TransactionControllerTest(
             )
             transactionStateTestAdapter.init(
                 listOf(
-                    AccountTransaction(user!!.id, "test", transactions, token.asTokenUUID())
+                    BookletTransaction(user!!.id, "test", transactions, token.asTokenUUID())
                 )
             )
 
-            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
-            val bookletId = account.id
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
+            val bookletId = booklet.id
             val transactionToPatch = transactionStateTestAdapter.get()
                 .find { it.label == "test2" }!!
-            val body = UserAccountIdsTransactionRequest(
+            val body = UserBookletIdsTransactionRequest(
                 bookletId = bookletId!!.toString(),
                 transaction = transactionToPatch.toDTO()
                     .copy(
@@ -474,7 +474,7 @@ class TransactionControllerTest(
             )
             transactionStateTestAdapter.init(
                 listOf(
-                    AccountTransaction(
+                    BookletTransaction(
                         user!!.id,
                         "test",
                         transactions,
@@ -482,11 +482,11 @@ class TransactionControllerTest(
                     )
                 )
             )
-            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
             val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
 
             val body = ConfirmPreviewRequest(
-                account.id!!.toString(),
+                booklet.id!!.toString(),
                 transaction.id!!.toString(),
                 null,
                 null
@@ -515,7 +515,7 @@ class TransactionControllerTest(
             )
             transactionStateTestAdapter.init(
                 listOf(
-                    AccountTransaction(
+                    BookletTransaction(
                         user!!.id,
                         "test",
                         transactions,
@@ -523,11 +523,11 @@ class TransactionControllerTest(
                     )
                 )
             )
-            val account = bookletStateTestAdapter.get().find { it.label == "test" }!!
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
             val transaction = transactionStateTestAdapter.get().find { it.label == "test2" }!!
 
             val body = ConfirmPreviewRequest(
-                account.id!!.toString(),
+                booklet.id!!.toString(),
                 transaction.id!!.toString(),
                 null,
                 LocalDate.of(2024, Month.JUNE, 10)

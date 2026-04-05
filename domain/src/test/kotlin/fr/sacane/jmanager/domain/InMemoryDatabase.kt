@@ -102,54 +102,54 @@ class InMemoryDatabase {
         }
     }
 
-    fun addAccount(ownerId: UserId, booklet: Booklet) {
+    fun addBooklet(ownerId: UserId, booklet: Booklet) {
         if(userByBooklet[ownerId] == null) {
             userByBooklet[ownerId] = mutableListOf()
         }
         userByBooklet[ownerId]?.add(booklet)
         bookletsByTransaction[booklet.id!!] = mutableListOf()
     }
-    fun removeAccountById(accountId: UUID) {
+    fun removeBookletById(bookletId: UUID) {
         userByBooklet.forEach {
-            it.value.removeIf { account -> account.id == accountId }
+            it.value.removeIf { booklet -> booklet.id == bookletId }
         }
-        bookletsByTransaction.remove(accountId)
+        bookletsByTransaction.remove(bookletId)
     }
 
     fun upsert(booklet: Booklet) {
-        val accountId = booklet.id
-        userByBooklet[booklet.owner?.id]?.find { it.id == accountId }?.updateFrom(booklet)
-        bookletsByTransaction[accountId!!] = booklet.transactions.toMutableList()
+        val bookletId = booklet.id
+        userByBooklet[booklet.owner?.id]?.find { it.id == bookletId }?.updateFrom(booklet)
+        bookletsByTransaction[bookletId!!] = booklet.transactions.toMutableList()
     }
 
-    fun findAccountById(accountId: UUID): Booklet? {
+    fun findBookletById(bookletId: UUID): Booklet? {
 
         var targetBooklet: Booklet? = null
         userByBooklet.forEach {
-            val account = it.value.find { acc -> acc.id == accountId }
-            if(account != null) {
-                val transactions = bookletsByTransaction[accountId] ?: mutableListOf()
+            val found = it.value.find { acc -> acc.id == bookletId }
+            if(found != null) {
+                val transactions = bookletsByTransaction[bookletId] ?: mutableListOf()
                 targetBooklet = Booklet(
-                    account.amount,
-                    account.label,
+                    found.amount,
+                    found.label,
                     transactions,
-                    initialSold = account.initialSold,
-                    owner = account.owner,
-                    id = accountId,
-                    monthlyPeriodStartDay = account.monthlyPeriodStartDay,
-                    monthlyPeriodEndDay = account.monthlyPeriodEndDay,
+                    initialSold = found.initialSold,
+                    owner = found.owner,
+                    id = bookletId,
+                    monthlyPeriodStartDay = found.monthlyPeriodStartDay,
+                    monthlyPeriodEndDay = found.monthlyPeriodEndDay,
                 )
             }
         }
         return targetBooklet
     }
 
-    fun clearAccounts() {
+    fun clearBooklets() {
         userByBooklet.clear()
         bookletsByTransaction.clear()
     }
 
-    private fun accountsWithTransactions(): List<Booklet> {
+    private fun bookletsWithTransactions(): List<Booklet> {
         val bookletList = mutableSetOf<Booklet>()
         val result = mutableListOf<Booklet>()
         userByBooklet.forEach { (_, value) -> bookletList.addAll(value) }
@@ -171,22 +171,22 @@ class InMemoryDatabase {
         return result
     }
 
-    fun accountsByOwner(): Collection<BookletsByOwner> {
+    fun bookletsByOwner(): Collection<BookletsByOwner> {
         return userByBooklet.map { BookletsByOwner(it.value, it.key) }
     }
 
-    fun initAccounts(initialState: Collection<BookletsByOwner>) {
+    fun initBooklets(initialState: Collection<BookletsByOwner>) {
         initialState.forEach { accByOwn ->
             accByOwn.booklets.forEach {
-                addAccount(accByOwn.userId, it)
+                addBooklet(accByOwn.userId, it)
             }
         }
     }
 
     fun addTransaction(userBookletId: IdUserBooklet, transaction: Transaction) {
-        val account = userByBooklet[userBookletId.userId]?.find { it.id == userBookletId.bookletId } ?: throw IllegalArgumentException("Booklet not found")
-        account.addTransaction(transaction)
-        bookletsByTransaction[account.id]?.add(transaction)
+        val booklet = userByBooklet[userBookletId.userId]?.find { it.id == userBookletId.bookletId } ?: throw IllegalArgumentException("Booklet not found")
+        booklet.addTransaction(transaction)
+        bookletsByTransaction[booklet.id]?.add(transaction)
     }
     fun addMassiveTransaction(collection: Collection<IdBookletByTransaction>){
         collection.forEach { idByTr ->
@@ -203,7 +203,7 @@ class InMemoryDatabase {
     }
 
     fun findTransactionById(transactionId: UUID): Transaction? {
-        return accountsWithTransactions().flatMap { it.transactions }
+        return bookletsWithTransactions().flatMap { it.transactions }
             .find { it.id == transactionId }
     }
 
@@ -236,18 +236,18 @@ class InMemoryDatabase {
         return result.map { IdBookletByTransaction(it.key, it.value) }
     }
 
-    fun findAccountByOwnerAndLabel(userId: UserId, accountLabel: String): Booklet?
-            = accountsWithTransactions().find { it.owner?.id == userId && it.label == accountLabel }
+    fun findBookletByOwnerAndLabel(userId: UserId, bookletLabel: String): Booklet?
+            = bookletsWithTransactions().find { it.owner?.id == userId && it.label == bookletLabel }
 
 
     fun clearTransactions() {
         bookletsByTransaction.clear()
     }
 
-    fun saveTransaction(accountId: UUID, transaction: Transaction) {
-        if (bookletsByTransaction[accountId] == null) {
-            bookletsByTransaction[accountId] = mutableListOf()
+    fun saveTransaction(bookletId: UUID, transaction: Transaction) {
+        if (bookletsByTransaction[bookletId] == null) {
+            bookletsByTransaction[bookletId] = mutableListOf()
         }
-        bookletsByTransaction[accountId]?.add(transaction)
+        bookletsByTransaction[bookletId]?.add(transaction)
     }
 }

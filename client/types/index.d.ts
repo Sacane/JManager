@@ -20,7 +20,7 @@ declare global {
     color: ColorDTO
     tagDTO: TagDTO
     isPreview: boolean
-    accountAmount: string
+    bookletAmount: string
     regularTransactionId?: string | null
   }
 
@@ -123,8 +123,8 @@ declare global {
   }
 
   interface MonthlyAccountStatsDTO {
-    accountId: string
-    accountLabel: string
+    bookletId: string
+    bookletLabel: string
     year: number
     monthlyData: MonthlyDataDTO[]
   }
@@ -160,12 +160,12 @@ declare global {
     expenses: string
     balance: string
     cumulativeBalance: string
-    totalAccounts: number
+    totalBooklets: number
   }
 
   interface PrevisionalTransactionsDTO {
     transactions: StatsTransactionDTO[]
-    groupedByAccount: Record<string, StatsTransactionDTO[]>
+    groupedByBooklet: Record<string, StatsTransactionDTO[]>
     totalAmount: string
     totalIncome: string
     totalExpenses: string

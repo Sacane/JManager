@@ -112,8 +112,8 @@ class SessionController(
     } catch (_: IllegalArgumentException) {
         throw InvalidRequestException(
             ResultState.INVALID.code,
-            "L'identifiant de compte '$bookletId' est invalide",
-            "domain.user.settings.invalid_account_id",
+            "L'identifiant de livret '$bookletId' est invalide",
+            "domain.user.settings.invalid_booklet_id",
         )
     }
 }

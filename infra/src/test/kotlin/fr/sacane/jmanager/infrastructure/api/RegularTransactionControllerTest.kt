@@ -14,7 +14,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTr
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
+import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTrackerStateRepository
@@ -992,9 +992,9 @@ class RegularTransactionControllerTest(
 
             transactionStateTestAdapter.init(
                 listOf(
-                    AccountTransaction(
-                        accountOwnerId = user!!.id,
-                        accountName = bookletA.label,
+                    BookletTransaction(
+                        bookletOwnerId = user!!.id,
+                        bookletName = bookletA.label,
                         token = token,
                         transactions = listOf(
                             Transaction(
@@ -1008,9 +1008,9 @@ class RegularTransactionControllerTest(
                             )
                         )
                     ),
-                    AccountTransaction(
-                        accountOwnerId = user!!.id,
-                        accountName = bookletB.label,
+                    BookletTransaction(
+                        bookletOwnerId = user!!.id,
+                        bookletName = bookletB.label,
                         token = token,
                         transactions = listOf(
                             Transaction(

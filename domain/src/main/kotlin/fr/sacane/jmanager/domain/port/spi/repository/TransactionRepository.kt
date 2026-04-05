@@ -57,7 +57,7 @@ interface TransactionRepository {
      * @param userId Domain user identifier
      * @return Booklet aggregate or null when not found
      */
-    fun findAccountWithSheetByLabelAndUser(label: String, userId: UserId): Booklet?
+    fun findBookletByLabelWithSheets(label: String, userId: UserId): Booklet?
 
     /**
      * Retrieve a Booklet aggregate with transactions by its id.
@@ -65,7 +65,7 @@ interface TransactionRepository {
      * @param id UUID of the booklet
      * @return Booklet aggregate or null when not found
      */
-    fun findAccountWithTransactionById(id: UUID): Booklet?
+    fun findBookletByIdWithTransactions(id: UUID): Booklet?
 
     /**
      * Find all transactions for a given booklet id.

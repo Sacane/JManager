@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
+import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TagStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.generateCookie
@@ -67,10 +67,10 @@ class StatsControllerTest(
     }
 
     @Nested
-    inner class GetMonthlyAccountStatsEndpointTest {
+    inner class GetMonthlyBookletStatsEndpointTest {
 
         @Test
-        fun `Get monthly account stats must send 200 and return stats`() {
+        fun `Get monthly booklet stats must send 200 and return stats`() {
             val year = LocalDate.now().year
 
             transactionStateTestAdapter.init(
@@ -110,7 +110,7 @@ class StatsControllerTest(
         }
 
         @Test
-        fun `Get monthly account stats with unknown booklet must send 404`() {
+        fun `Get monthly booklet stats with unknown booklet must send 404`() {
             val year = LocalDate.now().year
 
             Given {
@@ -125,7 +125,7 @@ class StatsControllerTest(
         }
 
         @Test
-        fun `Get monthly account stats with unauthenticated user must send 404`() {
+        fun `Get monthly booklet stats with unauthenticated user must send 404`() {
             val year = LocalDate.now().year
 
             Given {
@@ -305,7 +305,7 @@ class StatsControllerTest(
                 statusCode(200)
                 body(
                     "transactions", notNullValue(),
-                    "groupedByAccount", notNullValue(),
+                    "groupedByBooklet", notNullValue(),
                     "totalAmount", notNullValue(),
                     "totalIncome", notNullValue(),
                     "totalExpenses", notNullValue(),
@@ -366,8 +366,8 @@ class StatsControllerTest(
     }
     private fun createTransaction(
         inputs: List<TransactionTestInput> = listOf()
-    ): List<AccountTransaction> {
-        return listOf(AccountTransaction(
+    ): List<BookletTransaction> {
+        return listOf(BookletTransaction(
             transactions = inputs.mapIndexed { index, it ->
                 Transaction(
                     id = null,
@@ -378,8 +378,8 @@ class StatsControllerTest(
                     tag = defaultTag
                 )
             },
-            accountOwnerId = user!!.id,
-            accountName = booklet.label,
+            bookletOwnerId = user!!.id,
+            bookletName = booklet.label,
             token = token.asTokenUUID()
         ))
     }

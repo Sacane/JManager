@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
+import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import io.restassured.http.ContentType
 import io.restassured.module.kotlin.extensions.Given
@@ -93,9 +93,9 @@ class CsvExportControllerTest(
 
         transactionStateAdapter.init(
             listOf(
-                AccountTransaction(
-                    accountOwnerId = user?.id ?: error("User not initialized"),
-                    accountName = "Test Booklet",
+                BookletTransaction(
+                    bookletOwnerId = user?.id ?: error("User not initialized"),
+                    bookletName = "Test Booklet",
                     transactions = testTransactions,
                     token = token
                 )

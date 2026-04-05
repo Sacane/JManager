@@ -152,7 +152,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `Update user settings with invalid account id must return 400`() {
+        fun `Update user settings with invalid booklet id must return 400`() {
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 15,
                 bookletCycles = listOf(BookletMonthlyCycleUpdateDTO(bookletId = "not-a-uuid", monthlyPeriodStartDay = 20)),
@@ -171,7 +171,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `Update user settings with non owned account must return 403`() {
+        fun `Update user settings with non owned booklet must return 403`() {
             val body = UserSettingsUpdateDTO(
                 projectionWindowDays = 15,
                 bookletCycles = listOf(
@@ -195,7 +195,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `Update user settings without cycles for owned accounts must return 400`() {
+        fun `Update user settings without cycles for owned booklets must return 400`() {
             BookletStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
 
             val body = UserSettingsUpdateDTO(
@@ -216,7 +216,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `Update user settings with owned account must persist and be readable`() {
+        fun `Update user settings with owned booklet must persist and be readable`() {
             BookletStateTestAdapter.init(listOf(Booklet(1000.toAmount(), "Compte principal", owner = user)))
             val bookletId = BookletStateTestAdapter.get().first().id!!.toString()
 

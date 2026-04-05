@@ -54,13 +54,13 @@ class FileImportExportFeatureTest : FeatureTest() {
     @DisplayName("Should fail when user does not own the booklet")
     fun `validateCsvFile should fail when user does not own the booklet`() {
         launchWithConnectedUserInstance {
-            val otherUser = createAccount(
+            val otherUser = createBooklet(
                 User(
                     UserId(UUID.randomUUID()),
                     "otherUser",
                     "other@test.fr"
                 ),
-                "other account",
+                "other booklet",
                 100.toAmount()
             )
 
@@ -343,13 +343,13 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     fun `importTransactionsFromCsv should fail when user does not own the booklet`() {
         launchWithConnectedUserInstance {
-            val otherUser = createAccount(
+            val otherUser = createBooklet(
                 User(
                     UserId(UUID.randomUUID()),
                     "otherUser",
                     "other@test.fr"
                 ),
-                "other account",
+                "other booklet",
                 100.toAmount()
             )
 

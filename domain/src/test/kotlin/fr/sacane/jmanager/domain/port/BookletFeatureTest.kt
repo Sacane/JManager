@@ -46,7 +46,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Nested
-    inner class AccountFeatureAuthTest: AuthenticationTest {
+    inner class BookletFeatureAuthTest: AuthenticationTest {
         private val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         override val action: List<Result<out Any>>
             get() = listOf(
@@ -100,15 +100,15 @@ class BookletFeatureTest: FeatureTest() {
         ))
 
         bookletFeature.deleteBookletById(element.id!!, session.tokenValue).assertTrue {
-            val accounts = bookletState.getStates()
+            val bookletsList = bookletState.getStates()
 
-            val expectedAccountSize = 0
-            val actualAccountSize = accounts.find { it.userId == otherUser.id }?.booklets?.size ?: throw Error()
-            expectedAccountSize == actualAccountSize
+            val expectedBookletSize = 0
+            val actualBookletSize = bookletsList.find { it.userId == otherUser.id }?.booklets?.size ?: throw Error()
+            expectedBookletSize == actualBookletSize
         }
 
-        val accounts = bookletState.getStates()
-        val ofUser = accounts.find { it.userId == otherUser.id }!!
+        val bookletsList = bookletState.getStates()
+        val ofUser = bookletsList.find { it.userId == otherUser.id }!!
 
         assertNull(ofUser.existsById(UUID.randomUUID()))
     }
@@ -128,21 +128,21 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As an account's owner,  I can retrieve All of my Registered Booklets`() {
-        launchWithConnectedUserWithoutAccount {
+    fun `As a booklet's owner,  I can retrieve All of my Registered Booklets`() {
+        launchWithConnectedUserWithoutBooklet {
 
             val booklet = Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
             val booklet2 = Booklet(Amount.fromString("100", "€".asCurrency()), "test2", owner = user, id = UUID.randomUUID())
             val booklet3 = Booklet( Amount.fromString("100", "€".asCurrency()), "test3", owner = user, id= UUID.randomUUID())
             val booklet4 = Booklet( Amount.fromString("100", "€".asCurrency()), "test4", owner = user, id = UUID.randomUUID())
-            val expectedAccount = listOf(
+            val expectedBookletList = listOf(
                 booklet,
                 booklet2,
                 booklet3,
                 booklet4
             )
             bookletState.init(listOf(
-                BookletsByOwner(expectedAccount, userId)
+                BookletsByOwner(expectedBookletList, userId)
             ))
 
             bookletFeature.findAllRegisteredBooklets(tokenValue)
@@ -156,21 +156,21 @@ class BookletFeatureTest: FeatureTest() {
 
     @Test
     fun `As a Jmanager user, I can create new booklet`() {
-        launchWithConnectedUserWithoutAccount {
+        launchWithConnectedUserWithoutBooklet {
             val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
 
             bookletFeature.save(tokenValue, bookletToSave)
                 .assertTrue {
                     val expectedAmount = Amount(100)
-                    val expectedLabelAccount = "test1"
-                    this.amount == expectedAmount && this.label == expectedLabelAccount
+                    val expectedLabel = "test1"
+                    this.amount == expectedAmount && this.label == expectedLabel
                 }
         }
     }
 
     @Test
     fun `As a simple user, I cannot create more than six booklets`() {
-        launchWithConnectedUserWithoutAccount {
+        launchWithConnectedUserWithoutBooklet {
             val bookletLists = mutableListOf<Booklet>()
             repeat(6) {
                 val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test$it", owner = user, id = UUID.randomUUID())
@@ -191,7 +191,7 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Test
-    fun `As an account's owner, I cannot register an existing booklet with the same label`() {
+    fun `As a booklet's owner, I cannot register an existing booklet with the same label`() {
         val otherUser = userRepository.register("jojo","test") as User
         connectUser(otherUser)
 
@@ -213,7 +213,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Test Account",
+                    label = "Test Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -265,7 +265,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Test Account",
+                    label = "Test Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -321,7 +321,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Mixed Account",
+                    label = "Mixed Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -392,7 +392,7 @@ class BookletFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Preview Account",
+                    label = "Preview Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -539,7 +539,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Regular Account",
+                    label = "Regular Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -594,7 +594,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 500.toAmount(),
-                    label = "Empty Account",
+                    label = "Empty Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -615,7 +615,7 @@ class BookletFeatureTest: FeatureTest() {
                 result.assertTrue { this.currentTransactions.isEmpty() }
                 result.assertTrue { this.previsionalTransactions.isEmpty() }
                 result.assertTrue { this.realSold == 500.toAmount() }
-                result.assertTrue { this.label == "Empty Account" }
+                result.assertTrue { this.label == "Empty Booklet" }
             }
         }
 
@@ -782,7 +782,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "RT CRUD Account",
+                    label = "RT CRUD Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -834,10 +834,10 @@ class BookletFeatureTest: FeatureTest() {
         fun `Should not expose regular transactions of other user (multi-tenant isolation)`() {
             launchWithConnectedUserInstance {
                 val bookletIdMine = UUID.randomUUID()
-                val bookletMine = Booklet(1000.toAmount(), "My Account", owner = user.toUser(), id = bookletIdMine)
+                val bookletMine = Booklet(1000.toAmount(), "My Booklet", owner = user.toUser(), id = bookletIdMine)
                 val otherUser = userRepository.register("other${UUID.randomUUID()}", "pw") as User
                 val bookletIdOther = UUID.randomUUID()
-                val bookletOther = Booklet(1000.toAmount(), "Other Account", owner = otherUser, id = bookletIdOther)
+                val bookletOther = Booklet(1000.toAmount(), "Other Booklet", owner = otherUser, id = bookletIdOther)
 
                 bookletState.init(listOf(
                     BookletsByOwner(listOf(bookletMine), user.id),
@@ -888,7 +888,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "RT Calculation Account",
+                    label = "RT Calculation Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -925,7 +925,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Multi RT Account",
+                    label = "Multi RT Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -986,7 +986,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Combined Account",
+                    label = "Combined Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )
@@ -1053,7 +1053,7 @@ class BookletFeatureTest: FeatureTest() {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
-                    label = "Future RT Account",
+                    label = "Future RT Booklet",
                     owner = user.toUser(),
                     id = bookletId
                 )

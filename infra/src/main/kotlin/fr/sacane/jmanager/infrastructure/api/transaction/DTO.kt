@@ -10,7 +10,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 @Serializable
-data class UserAccountIdsTransactionRequest(
+data class UserBookletIdsTransactionRequest(
     val bookletId: String,
     val transaction: TransactionResult
 )
@@ -47,19 +47,19 @@ data class TransactionResponse(
     val value: String,
     val isIncome: Boolean,
     val tagDTO: TagDTO,
-    val accountAmount: String,
+    val bookletAmount: String,
     val isPreview: Boolean
 )
 
 @Serializable
 data class UserBookletResponse(
-    val accountLabel: String,
+    val bookletLabel: String,
     val transactionResult: TransactionResult
 )
 
 @Serializable
-data class AccountTransactionsIdRequest(
-    val accountId: String,
+data class BookletTransactionsIdRequest(
+    val bookletId: String,
     val transactionIds: List<String>
 )
 

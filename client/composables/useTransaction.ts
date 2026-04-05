@@ -9,20 +9,20 @@ export default function useTransaction() {
   const { deleteQuery, post, get, patch } = useQuery()
   const dateUse = useDate()
 
-  async function findByDate(month: string | undefined, year: number, accountLabel: string) {
+  async function findByDate(month: string | undefined, year: number, bookletLabel: string) {
     return get('transaction', {
       month: month ?? dateUse.monthFromNumber(new Date().getMonth() + 1),
       year,
-      accountLabel,
+      bookletLabel,
     })
   }
   async function findTransactionById(id: string): Promise<TransactionResultDTO> {
     return get(`transaction/${id}`)
   }
 
-  function saveTransaction(accountLabel: string, transactionCreationDTO: TransactionCreationDTO): Promise<TransactionResultDTO> {
+  function saveTransaction(bookletLabel: string, transactionCreationDTO: TransactionCreationDTO): Promise<TransactionResultDTO> {
     return post('transaction', {
-      accountLabel,
+      bookletLabel,
       transactionResult: {
         ...transactionCreationDTO,
         date: format(transactionCreationDTO.date, 'yyyy-MM-dd'),
@@ -30,16 +30,16 @@ export default function useTransaction() {
     })
   }
 
-  function deleteTransaction(accountId: string, ids: Array<string>): Promise<TransactionDeletionDTO> {
+  function deleteTransaction(bookletId: string, ids: Array<string>): Promise<TransactionDeletionDTO> {
     return deleteQuery(`transaction`, {
-      accountId,
+      bookletId,
       transactionIds: ids,
     })
   }
 
-  function editTransaction(transactionCreationDTO: TransactionCreationDTO, accountId: string): Promise<TransactionResultDTO> {
+  function editTransaction(transactionCreationDTO: TransactionCreationDTO, bookletId: string): Promise<TransactionResultDTO> {
     return patch('transaction', {
-      accountId,
+      bookletId,
       transaction: {
         ...transactionCreationDTO,
         date: format(transactionCreationDTO.date, 'yyyy-MM-dd'),
@@ -47,10 +47,10 @@ export default function useTransaction() {
     })
   }
 
-  function confirmPreviewTransaction(accountId: string, transactionId: string, amount: number | null, date: Date | null): Promise<TransactionResultDTO> {
+  function confirmPreviewTransaction(bookletId: string, transactionId: string, amount: number | null, date: Date | null): Promise<TransactionResultDTO> {
     return patch(`transaction/confirm`, {
       transactionID: transactionId,
-      accountID: accountId,
+      bookletID: bookletId,
       newAmount: amount,
       newDate: date ? format(date, 'yyyy-MM-dd') : null,
     })

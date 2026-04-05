@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const emit = defineEmits(['visible', 'createBooklet', 'cancel'])
 
-const accountData = ref({
+const bookletData = ref({
   label: '',
   digit: null,
 })
@@ -10,10 +10,10 @@ const validationButtonRef = ref(null)
 const inputNumberRef = ref(null)
 
 function createBooklet() {
-  if (accountData.value.digit === null) {
+  if (bookletData.value.digit === null) {
     return
   }
-  emit('createBooklet', accountData.value)
+  emit('createBooklet', bookletData.value)
   closeDialog()
 }
 
@@ -53,12 +53,12 @@ function handleTabKey(event: KeyboardEvent) {
     <div class="mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libellé du livret</label>
-        <InputText id="label" v-model="accountData.label" type="text" autocomplete="off" />
+        <InputText id="label" v-model="bookletData.label" type="text" autocomplete="off" />
       </div>
 
       <div id="labelAmount" class="flex flex-col gap-3">
         <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
-        <InputNumber ref="inputNumberRef" v-model="accountData.digit" placeholder="0,00" class="w-full" :max-fraction-digits="2" :min-fraction-digits="2" @keydown="handleTabKey" />
+        <InputNumber ref="inputNumberRef" v-model="bookletData.digit" placeholder="0,00" class="w-full" :max-fraction-digits="2" :min-fraction-digits="2" @keydown="handleTabKey" />
       </div>
       <Button ref="validationButtonRef" label="Créer" class="mt-6 w-full bg-purple-600 text-white btn-primary" @click="createBooklet" />
       <Button label="Annuler" class="cancel-btn mt-6 w-full text-white" @click="closeDialog" />

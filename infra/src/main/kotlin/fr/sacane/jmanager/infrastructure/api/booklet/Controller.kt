@@ -34,31 +34,31 @@ class BookletController (
 
     @PostMapping
     fun saveBooklet(
-        @RequestBody userAccount: BookletBookingRequest
+        @RequestBody bookletRequest: BookletBookingRequest
     ): ResponseEntity<BookletInfoDTO> {
-        LOGGER.info("Booking a new Booklet ${userAccount.label} starting at ${userAccount.amount}${userAccount.currency} for user ${currentUser.id}")
+        LOGGER.info("Booking a new Booklet ${bookletRequest.label} starting at ${bookletRequest.amount}${bookletRequest.currency} for user ${currentUser.id}")
         return feature.save(
             currentUser.token,
-            Booklet(amount = userAccount.amount.toAmount(userAccount.currency.asCurrency()), label = userAccount.label)
+            Booklet(amount = bookletRequest.amount.toAmount(bookletRequest.currency.asCurrency()), label = bookletRequest.label)
         ).map { BookletInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
 
     @GetMapping
     fun getAllBooklets(): ResponseEntity<List<BookletDTO>> {
-        LOGGER.info("Requesting all accounts...")
+        LOGGER.info("Requesting all booklets...")
 
         val response = feature.findAllRegisteredBooklets(
             currentUser.token
         )
-        return response.map { accounts ->
-            accounts.map {
+        return response.map { booklets ->
+            booklets.map {
                 it.toDTO()
             }
         }.toHttpResponse()
     }
 
     @DeleteMapping(path = ["{bookletId}"])
-    fun deleteAccount(
+    fun deleteBooklet(
         @PathVariable bookletId: String
     ): ResponseEntity<Nothing> = feature.deleteBookletById(bookletId.toUUID(), currentUser.token).toHttpResponse()
 
@@ -66,24 +66,24 @@ class BookletController (
     fun findBookletById(
         @PathVariable("bookletID") bookletID: String
     ): ResponseEntity<BookletDTO> {
-        LOGGER.info("Requesting account with ID $bookletID")
+        LOGGER.info("Requesting booklet with ID $bookletID")
         return feature.findBookletById(bookletID.toUUID(), currentUser.token)
             .map { it.toDTO() }.toHttpResponse()
     }
 
-    @GetMapping("report/{accountID}")
+    @GetMapping("report/{bookletID}")
     fun findBookletReportByIdMonthAndYear(
-        @PathVariable("accountID") accountID: String,
+        @PathVariable("bookletID") bookletID: String,
         @RequestParam("month") month: Int,
         @RequestParam("year") year: Int,
         @RequestParam("startDate", required = false) startDate: LocalDate?,
         @RequestParam("endDate", required = false) endDate: LocalDate?,
     ): ResponseEntity<BookletReport> {
         validateDateRange(startDate, endDate)
-        LOGGER.info("Requesting account report for booklet $accountID")
+        LOGGER.info("Requesting report for booklet $bookletID")
         val result = feature.loadTransactionsForBookletForAMonth(
             token = currentUser.token,
-            bookletId = accountID.toUUID(),
+            bookletId = bookletID.toUUID(),
             month = Month.of(month),
             year = year,
             startDate = startDate,
@@ -100,20 +100,20 @@ class BookletController (
         return report.toHttpResponse()
     }
 
-    @GetMapping("{accountID}/balances")
+    @GetMapping("{bookletID}/balances")
     fun findBookletBalancesByMonthAndYear(
-        @PathVariable("accountID") accountID: String,
+        @PathVariable("bookletID") bookletID: String,
         @RequestParam("month") month: Int,
         @RequestParam("year") year: Int,
         @RequestParam("startDate", required = false) startDate: LocalDate?,
         @RequestParam("endDate", required = false) endDate: LocalDate?,
     ): ResponseEntity<BookletBalancesResponse> {
         validateDateRange(startDate, endDate)
-        LOGGER.info("Requesting account balances for booklet $accountID")
+        LOGGER.info("Requesting balances for booklet $bookletID")
         return feature
             .loadBalancesForBookletForAMonth(
                 token = currentUser.token,
-                bookletId = accountID.toUUID(),
+                bookletId = bookletID.toUUID(),
                 month = Month.of(month),
                 year = year,
                 startDate = startDate,
@@ -123,20 +123,20 @@ class BookletController (
             .toHttpResponse()
     }
 
-    @GetMapping("{accountID}/transactions")
+    @GetMapping("{bookletID}/transactions")
     fun findBookletTransactionsByMonthAndYear(
-        @PathVariable("accountID") accountID: String,
+        @PathVariable("bookletID") bookletID: String,
         @RequestParam("month") month: Int,
         @RequestParam("year") year: Int,
         @RequestParam("startDate", required = false) startDate: LocalDate?,
         @RequestParam("endDate", required = false) endDate: LocalDate?,
     ): ResponseEntity<BookletTransactionsResponse> {
         validateDateRange(startDate, endDate)
-        LOGGER.info("Requesting account transactions for booklet $accountID")
+        LOGGER.info("Requesting transactions for booklet $bookletID")
         return feature
             .loadTransactionsForBookletForAMonth(
                 token = currentUser.token,
-                bookletId = accountID.toUUID(),
+                bookletId = bookletID.toUUID(),
                 month = Month.of(month),
                 year = year,
                 startDate = startDate,

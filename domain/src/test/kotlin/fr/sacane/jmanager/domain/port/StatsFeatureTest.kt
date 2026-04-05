@@ -45,7 +45,7 @@ class StatsFeatureTest : FeatureTest() {
     inner class StatsFeatureAuthTest : AuthenticationTest {
         override val action: List<Result<out Any>>
             get() = listOf(
-                statsFeature.getMonthlyAccountStats(UUID.randomUUID(), 2025, session.tokenValue),
+                statsFeature.getMonthlyBookletStats(UUID.randomUUID(), 2025, session.tokenValue),
                 statsFeature.getCategoryDistribution(session.tokenValue),
                 statsFeature.getTrendStats(session.tokenValue),
                 statsFeature.getPrevisionalTransactions(session.tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3))
@@ -53,10 +53,10 @@ class StatsFeatureTest : FeatureTest() {
     }
 
     @Nested
-    inner class MonthlyAccountStatsTest {
+    inner class MonthlyBookletStatsTest {
 
         @Test
-        fun `Should return monthly stats for a given account and year`() {
+        fun `Should return monthly stats for a given booklet and year`() {
             launchWithConnectedUserInstance {
                 val transactions = listOf(
                     generateTransaction("Salary", Amount(BigDecimal("2000")), true, LocalDate.of(2025, 1, 15)),
@@ -65,7 +65,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
+                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
                         this.year == 2025 && this.monthlyData.size == 12
                     }
@@ -81,7 +81,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
+                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
                         val januaryData = this.monthlyData.find { it.month == 1 }
                         januaryData != null
@@ -94,7 +94,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return empty stats when no transactions exist for the year`() {
             launchWithConnectedUserInstance {
-                statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
+                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
                         this.monthlyData.all {
                             it.income.value.compareTo(BigDecimal.ZERO) == 0 &&
@@ -105,9 +105,9 @@ class StatsFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `Should fail when account does not exist`() {
+        fun `Should fail when booklet does not exist`() {
             launchWithConnectedUserInstance {
-                val result = statsFeature.getMonthlyAccountStats(UUID.randomUUID(), 2025, tokenValue)
+                val result = statsFeature.getMonthlyBookletStats(UUID.randomUUID(), 2025, tokenValue)
 
                 result.assertFailure()
                 assertEquals("domain.stats.monthly.booklet_not_found", result.errorInfo?.key)
@@ -123,7 +123,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getMonthlyAccountStats(booklet.id!!, 2025, tokenValue)
+                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
                     .assertTrue {
                         val januaryData = this.monthlyData.find { it.month == 1 }
                         januaryData != null && januaryData.income.value.compareTo(BigDecimal.ZERO) == 0
@@ -196,7 +196,7 @@ class StatsFeatureTest : FeatureTest() {
 
         @Test
         fun `Should return empty distribution when no transactions exist`() {
-            launchWithConnectedUserWithoutAccount {
+            launchWithConnectedUserWithoutBooklet {
                 val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), userId)))
 
@@ -248,27 +248,27 @@ class StatsFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `Should scope category distribution to selected account`() {
+        fun `Should scope category distribution to selected booklet`() {
             launchWithConnectedUserInstance {
                 val foodTag = Tag(id = UUID.randomUUID(), label = "Food", isDefault = false)
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
 
                 val secondBooklet = Booklet(
                     Amount.fromString("500", "€".asCurrency()),
-                    "account2",
+                    "booklet2",
                     owner = user.toUser(),
                     id = UUID.randomUUID()
                 )
 
-                val firstAccountTransaction = generateTransactionWithTag(
+                val firstBookletTransaction = generateTransactionWithTag(
                     "Groceries",
                     Amount(BigDecimal("-100")),
                     LocalDate.of(2025, 1, 10),
                     foodTag
                 )
-                initTransactions(listOf(firstAccountTransaction))
+                initTransactions(listOf(firstBookletTransaction))
 
-                val secondAccountTransaction = generateTransactionWithTag(
+                val secondBookletTransaction = generateTransactionWithTag(
                     "Restaurant",
                     Amount(BigDecimal("-200")),
                     LocalDate.of(2025, 1, 12),
@@ -279,12 +279,12 @@ class StatsFeatureTest : FeatureTest() {
                     listOf(
                         IdBookletByTransaction(
                             IdUserBooklet(user.id, secondBooklet.id!!),
-                            mutableListOf(secondAccountTransaction)
+                            mutableListOf(secondBookletTransaction)
                         )
                     )
                 )
 
-                statsFeature.getCategoryDistribution(tokenValue, accountId = booklet.id)
+                statsFeature.getCategoryDistribution(tokenValue, bookletId = booklet.id)
                     .assertTrue {
                         this.totalExpenses == Amount(BigDecimal("100"))
                     }
@@ -346,7 +346,7 @@ class StatsFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `Should include all user accounts in trend calculation`() {
+        fun `Should include all user booklets in trend calculation`() {
             launchWithConnectedUserInstance {
                 val currentDate = LocalDate.now()
                 val transactions1 = listOf(
@@ -356,7 +356,7 @@ class StatsFeatureTest : FeatureTest() {
 
                 val booklet2 = Booklet(
                     Amount.fromString("500", "€".asCurrency()),
-                    "account2",
+                    "booklet2",
                     owner = user.toUser(),
                     id = UUID.randomUUID()
                 )
@@ -369,7 +369,7 @@ class StatsFeatureTest : FeatureTest() {
 
                 statsFeature.getTrendStats(tokenValue)
                     .assertTrue {
-                        this.monthlyTrends.all { it.totalAccounts == 2 }
+                        this.monthlyTrends.all { it.totalBooklets == 2 }
                     }
             }
         }
@@ -412,7 +412,7 @@ class StatsFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `Should scope trend stats to selected account and period`() {
+        fun `Should scope trend stats to selected booklet and period`() {
             launchWithConnectedUserInstance {
                 val janDate = LocalDate.of(2025, 1, 5)
                 val febDate = LocalDate.of(2025, 2, 5)
@@ -425,11 +425,11 @@ class StatsFeatureTest : FeatureTest() {
 
                 statsFeature.getTrendStats(
                     token = tokenValue,
-                    accountId = booklet.id,
+                    bookletId = booklet.id,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = LocalDate.of(2025, 2, 28)
                 ).assertTrue {
-                    this.monthlyTrends.size == 2 && this.monthlyTrends.all { it.totalAccounts == 1 }
+                    this.monthlyTrends.size == 2 && this.monthlyTrends.all { it.totalBooklets == 1 }
                 }
             }
         }
@@ -493,7 +493,7 @@ class StatsFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `Should group previsional transactions by account`() {
+        fun `Should group previsional transactions by booklet`() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
@@ -502,7 +502,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions1)
 
-                val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "account2", owner = user.toUser(), id = UUID.randomUUID())
+                val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "booklet2", owner = user.toUser(), id = UUID.randomUUID())
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet2), user.id)))
                 transactionState.init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, booklet2.id!!), mutableListOf(generateTransaction("Future Bill", Amount(BigDecimal("100")), false, startDate.plusMonths(1), isPreview = true))))
@@ -510,7 +510,7 @@ class StatsFeatureTest : FeatureTest() {
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
                     .assertTrue {
-                        this.groupedByAccount.keys.size == 2
+                        this.groupedByBooklet.keys.size == 2
                     }
             }
         }
@@ -581,7 +581,7 @@ class StatsFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `Should scope previsional transactions to selected account`() {
+        fun `Should scope previsional transactions to selected booklet`() {
             launchWithConnectedUserInstance {
                 val startDate = LocalDate.now()
                 val endDate = startDate.plusMonths(3)
@@ -594,7 +594,7 @@ class StatsFeatureTest : FeatureTest() {
 
                 val secondBooklet = Booklet(
                     Amount.fromString("500", "€".asCurrency()),
-                    "account2",
+                    "booklet2",
                     owner = user.toUser(),
                     id = UUID.randomUUID()
                 )
@@ -612,7 +612,7 @@ class StatsFeatureTest : FeatureTest() {
 
                 statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate, booklet.id)
                     .assertTrue {
-                        this.groupedByAccount.keys.size == 1
+                        this.groupedByBooklet.keys.size == 1
                     }
             }
         }

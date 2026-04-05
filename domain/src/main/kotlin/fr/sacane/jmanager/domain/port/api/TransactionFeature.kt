@@ -31,14 +31,14 @@ import java.util.logging.Logger
  */
 sealed interface TransactionFeature {
     /**
-     * Book (create) a transaction for the account identified by its label.
+     * Book (create) a transaction for the booklet identified by its label.
      *
      * @param token Authentication token identifying the requester.
-     * @param accountLabel Label of the account (booklet) where the transaction will be added.
+     * @param bookletLabel Label of the booklet where the transaction will be added.
      * @param transaction The Transaction to persist.
      * @return Result containing a TransactionResumeResult on success, or an error state on failure.
      */
-    fun bookTransaction(token: String, accountLabel: String, transaction: Transaction): Result<TransactionResumeResult>
+    fun bookTransaction(token: String, bookletLabel: String, transaction: Transaction): Result<TransactionResumeResult>
 
     /**
      * Retrieve transactions for a specific month and year for the given account label.
@@ -52,14 +52,14 @@ sealed interface TransactionFeature {
     fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, account: String): Result<List<Transaction>>
 
     /**
-     * Edit an existing transaction belonging to a specific account.
+     * Edit an existing transaction belonging to a specific booklet.
      *
-     * @param accountID The UUID of the account containing the transaction.
+     * @param bookletID The UUID of the booklet containing the transaction.
      * @param transaction The Transaction object with updated values (must include id).
      * @param token Authentication token identifying the requester.
      * @return Result containing a TransactionResumeResult on success, or an error state on failure.
      */
-    fun editTransaction(accountID: UUID, transaction: Transaction, token: String): Result<TransactionResumeResult>
+    fun editTransaction(bookletID: UUID, transaction: Transaction, token: String): Result<TransactionResumeResult>
 
     /**
      * Find a transaction by its unique identifier.
@@ -71,26 +71,26 @@ sealed interface TransactionFeature {
     fun findById(id: UUID, token: String): Result<Transaction>
 
     /**
-     * Delete multiple transaction sheets by their identifiers for a given account.
+     * Delete multiple transaction sheets by their identifiers for a given booklet.
      *
-     * @param accountID The UUID of the account which owns the transaction sheets.
+     * @param bookletID The UUID of the booklet which owns the transaction sheets.
      * @param sheetIds List of UUIDs corresponding to the transaction sheets to delete.
      * @param token Authentication token identifying the requester.
-     * @return Result with no value on success, or an error state if the account or sheets are not found.
+     * @return Result with no value on success, or an error state if the booklet or sheets are not found.
      */
-    fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult>
+    fun deleteSheetsByIds(bookletID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult>
 
     /**
      * Confirm a provisional (preview) transaction, converting it into a real transaction.
      *
      * @param token Authentication token identifying the requester.
-     * @param accountID UUID of the account containing the preview transaction.
+     * @param bookletID UUID of the booklet containing the preview transaction.
      * @param transactionId UUID of the preview transaction to confirm.
      * @return Result containing a TransactionResumeResult on success, or an appropriate failure state.
      */
     fun confirmPreviewTransaction(
         token: String,
-        accountID: UUID,
+        bookletID: UUID,
         transactionId: UUID,
         newAmount: Amount?,
         newDate: LocalDate?
@@ -123,7 +123,7 @@ class TransactionFeatureImpl(
     }
 
     override fun editTransaction(
-        accountID: UUID,
+        bookletID: UUID,
         transaction: Transaction,
         token: String
     ): Result<TransactionResumeResult> = session.authenticate(token, roleUser){
@@ -135,9 +135,9 @@ class TransactionFeatureImpl(
                     "domain.transaction.edit.id_missing"
                 )
             }
-            val registeredAccount = bookletRepository.findBookletByIdWithTransactions(accountID)
+            val registeredAccount = bookletRepository.findBookletByIdWithTransactions(bookletID)
                 ?: return@executeInTransaction domainNotFound(
-                    "Le compte $accountID n'existe pas",
+                    "Le livret $bookletID n'existe pas",
                     "domain.transaction.edit.booklet_not_found"
                 )
             val transactionFromDatabase = registeredAccount.findTransactionById(transaction.id)?.copy()
@@ -161,18 +161,18 @@ class TransactionFeatureImpl(
 
     override fun bookTransaction(
         token: String,
-        accountLabel: String,
+        bookletLabel: String,
         transaction: Transaction
     ): Result<TransactionResumeResult> = session.authenticate(token) { id ->
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             logger.info("Request for a transaction with id $id")
-            val account = bookletRepository.findBookletByLabelWithTransactions(id, accountLabel)
+            val booklet = bookletRepository.findBookletByLabelWithTransactions(id, bookletLabel)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,
-                    "Le compte $accountLabel n'existe pas",
+                    "Le livret $bookletLabel n'existe pas",
                     "domain.transaction.book.booklet_not_found"
                 )
-            val newTr =  transactionRepository.save(account.id!!, transaction)
+            val newTr =  transactionRepository.save(booklet.id!!, transaction)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.INFRASTRUCTURE_ERROR,
                     "Erreur est survenu lors de la transaction",
@@ -190,10 +190,10 @@ class TransactionFeatureImpl(
                     tag = tagRepository.defaultTag()
                 )
             } else newTr
-            account.addTransaction(toSaveTransaction)
-            bookletRepository.update(account)
-            logger.info("Transaction $newTr has been created, the booklet sold has been updated : $account")
-            success(TransactionResumeResult(newTr, account.amount))
+            booklet.addTransaction(toSaveTransaction)
+            bookletRepository.update(booklet)
+            logger.info("Transaction $newTr has been created, the booklet sold has been updated : $booklet")
+            success(TransactionResumeResult(newTr, booklet.amount))
         }
     }
 
@@ -203,7 +203,7 @@ class TransactionFeatureImpl(
         year: Int,
         account: String
     ): Result<List<Transaction>> = session.authenticate(token) {
-        success(transactionRepository.findAccountWithSheetByLabelAndUser(account, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
+        success(transactionRepository.findBookletByLabelWithSheets(account, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
             ?: return@authenticate domainNotFound(
                 "Aucun compte ne correspond au label indiqué",
                 "domain.transaction.retrieve.booklet_not_found"
@@ -225,13 +225,13 @@ class TransactionFeatureImpl(
         success(sheet)
     }
 
-    override fun deleteSheetsByIds(accountID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
+    override fun deleteSheetsByIds(bookletID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
         return session.authenticate(token) {
             infraTransactionManager.executeInTransaction(transactionRepository) {
-                val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(accountID)
+                val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
                     ?: return@executeInTransaction domainFailure(
                         ResultState.BOOKLET_NOT_FOUND,
-                        "Account $accountID n'existe pas",
+                        "Booklet $bookletID n'existe pas",
                         "domain.transaction.delete.booklet_not_found"
                     )
 
@@ -248,7 +248,7 @@ class TransactionFeatureImpl(
                 if (transactionsToDelete.size != sheetIds.size) {
                     return@executeInTransaction domainFailure(
                         ResultState.TRANSACTION_NOT_FOUND,
-                        "Certaines transactions à supprimer sont introuvables pour le compte $accountID",
+                        "Certaines transactions à supprimer sont introuvables pour le livret $bookletID",
                         "domain.transaction.delete.some_not_found"
                     )
                 }
@@ -257,7 +257,7 @@ class TransactionFeatureImpl(
                     if (transaction.regularTransactionId != null) {
                         trackerRepository.markMonthAsExcluded(
                             regularTransactionId = transaction.regularTransactionId,
-                            bookletId = accountID,
+                            bookletId = bookletID,
                             year = transaction.date.year,
                             month = transaction.date.month
                         )
@@ -274,7 +274,7 @@ class TransactionFeatureImpl(
                 return@executeInTransaction success(
                     TransactionDeletionResult(
                         deletedIds = sheetIds,
-                        accountAmount = booklet.amount,
+                        bookletAmount = booklet.amount,
                     )
                 )
             }
@@ -283,19 +283,19 @@ class TransactionFeatureImpl(
 
     override fun confirmPreviewTransaction(
         token: String,
-        accountID: UUID,
+        bookletID: UUID,
         transactionId: UUID,
         newAmount: Amount?,
         newDate: LocalDate?
     ): Result<TransactionResumeResult> = session.authenticate(token) {
         return@authenticate infraTransactionManager.executeInTransaction(Any()) {
-            val account = bookletRepository.findBookletByIdWithTransactions(accountID)
+            val booklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,
-                    "Booklet $accountID not found",
+                    "Booklet $bookletID not found",
                     "domain.transaction.confirm.booklet_not_found"
                 )
-            val transaction = account.findTransactionById(transactionId)
+            val transaction = booklet.findTransactionById(transactionId)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,
                     "Transaction not found",
@@ -310,7 +310,7 @@ class TransactionFeatureImpl(
                 )
             }
 
-            account.removeTransactionById(transactionId)
+            booklet.removeTransactionById(transactionId)
             if (newAmount != null) {
                 transaction.amount = newAmount
             }
@@ -319,17 +319,17 @@ class TransactionFeatureImpl(
             }
             transaction.isPreview = false
 
-            transactionRepository.save(accountID, transaction)
+            transactionRepository.save(bookletID, transaction)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.INFRASTRUCTURE_ERROR,
                     "Could not confirm transaction $transactionId",
                     "domain.transaction.confirm.save_failed"
                 )
 
-            account.addTransaction(transaction)
-            // Update only account balances/label to avoid JPA collection merge side-effects.
-            bookletRepository.update(account)
-            return@executeInTransaction success(TransactionResumeResult(transaction, account.amount))
+            booklet.addTransaction(transaction)
+            // Update only booklet balances/label to avoid JPA collection merge side-effects.
+            bookletRepository.update(booklet)
+            return@executeInTransaction success(TransactionResumeResult(transaction, booklet.amount))
         }
     }
 
@@ -337,5 +337,5 @@ class TransactionFeatureImpl(
 
 data class TransactionDeletionResult(
     val deletedIds: List<UUID>,
-    val accountAmount: Amount,
+    val bookletAmount: Amount,
 )

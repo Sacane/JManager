@@ -16,8 +16,8 @@ interface UserPostgresRepository: CrudRepository<UserResource, UUID> {
     @Transactional
     fun deleteByUsername(username: String)
 
-    @Query("SELECT user FROM UserResource user LEFT JOIN FETCH user.accounts WHERE user.idUser = :id")
-    fun findByIdWithAccount(id: UUID): UserResource?
+    @Query("SELECT user FROM UserResource user LEFT JOIN FETCH user.booklets WHERE user.idUser = :id")
+    fun findByIdWithBooklets(id: UUID): UserResource?
 
     @Query("SELECT user FROM UserResource user LEFT JOIN FETCH user.tags WHERE user.idUser = :id")
     fun findByIdWithTags(id: UUID?): UserResource?

@@ -10,7 +10,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.infrastructure.api.booklet.BookletBookingRequest
 import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
-import fr.sacane.jmanager.infrastructure.api.setup.AccountTransaction
+import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
@@ -47,7 +47,7 @@ class BookletControllerTest(
     @Nested
     inner class BookingBookletTest {
         @Test
-        fun `Should create an account with its label and amount then send 200`() {
+        fun `Should create a booklet with its label and amount then send 200`() {
             val body = BookletBookingRequest("test", 1000.toDouble(), "€")
             Given {
                 port(port)
@@ -107,7 +107,7 @@ class BookletControllerTest(
     @Nested
     inner class DeleteBookletTest {
         @Test
-        fun `Request delete account from its ID should return 200`() {
+        fun `Request delete booklet from its ID should return 200`() {
             bookletStateAdapter.init(
                 listOf(
                     Booklet(
@@ -118,14 +118,14 @@ class BookletControllerTest(
                     )
                 )
             )
-            val accountID = bookletStateAdapter.get().first().id!!
+            val bookletID = bookletStateAdapter.get().first().id!!
 
             Given {
                 port(port)
                 cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                delete("/api/booklet/$accountID")
+                delete("/api/booklet/$bookletID")
             } Then {
                 statusCode(200)
             }
@@ -133,7 +133,7 @@ class BookletControllerTest(
         }
 
         @Test
-        fun `Delete account from an ID of an account that does not exists should return 404`() {
+        fun `Delete booklet from an ID of a booklet that does not exists should return 404`() {
             Given {
                 port(port)
                 cookie("token", token)
@@ -145,7 +145,7 @@ class BookletControllerTest(
             }
         }
         @Test
-        fun `Delete account from an ID of an account by a user that does not exists should return 404`() {
+        fun `Delete booklet from an ID of a booklet by a user that does not exists should return 404`() {
             Given {
                 port(port)
                 cookie(generateCookie(token))
@@ -172,14 +172,14 @@ class BookletControllerTest(
                     )
                 )
             )
-            val account = bookletStateAdapter.get().first()
+            val booklet = bookletStateAdapter.get().first()
 
             Given {
                 port(port)
                 cookie("token", token)
                 header("Content-Type", "application/json")
             } When {
-                get("/api/booklet/${account.id}")
+                get("/api/booklet/${booklet.id}")
             } Then {
                 statusCode(200)
                 body(
@@ -346,7 +346,7 @@ class BookletControllerTest(
             val currentDate = LocalDate.now()
             bookletStateAdapter.init(listOf(booklet))
             transactionStateTestAdapter.init(
-                listOf(AccountTransaction(
+                listOf(BookletTransaction(
                     user!!.id,
                     booklet.label,
                     transactions = listOf(
@@ -410,7 +410,7 @@ class BookletControllerTest(
             val element = Booklet(
                 id = null,
                 amount = Amount.fromString("1000.00"),
-                label = "Test Account",
+                label = "Test Booklet",
                 owner = user,
             )
             bookletStateAdapter.init(
@@ -440,7 +440,7 @@ class BookletControllerTest(
                     Booklet(
                         id = null,
                         amount = Amount.fromString("500.00"),
-                        label = "Test Account",
+                        label = "Test Booklet",
                         owner = user,
                     )
                 )

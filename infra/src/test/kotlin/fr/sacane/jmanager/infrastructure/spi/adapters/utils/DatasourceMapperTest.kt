@@ -203,7 +203,7 @@ class DatasourceMapperTest {
         val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 1000.toAmount(),
-            label = "Main Account",
+            label = "Main Booklet",
             id = bookletId
         )
         booklet.addTransaction(transaction)
@@ -211,7 +211,7 @@ class DatasourceMapperTest {
         val resource = booklet.asResource()
 
         assertEquals(bookletId, resource.idBooklet)
-        assertEquals("Main Account", resource.label)
+        assertEquals("Main Booklet", resource.label)
         assertEquals(1, resource.sheets.size)
         assertEquals("Test transaction", resource.sheets[0].label)
     }
@@ -221,14 +221,14 @@ class DatasourceMapperTest {
         val bookletId = UUID.randomUUID()
         val booklet = Booklet(
             amount = 500.toAmount(),
-            label = "Empty Account",
+            label = "Empty Booklet",
             id = bookletId
         )
 
         val resource = booklet.asResource()
 
         assertEquals(bookletId, resource.idBooklet)
-        assertEquals("Empty Account", resource.label)
+        assertEquals("Empty Booklet", resource.label)
         assertTrue(resource.sheets.isEmpty())
     }
 

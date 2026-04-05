@@ -6,7 +6,7 @@ const getSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 21,
   bookletCycles: [
     {
-      accountId: 'acc-1',
+      bookletId: 'acc-1',
       label: 'Compte principal',
       monthlyPeriodStartDay: 28,
       monthlyPeriodEndDay: null,
@@ -18,7 +18,7 @@ const updateSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 30,
   bookletCycles: [
     {
-      accountId: 'acc-1',
+      bookletId: 'acc-1',
       label: 'Compte principal',
       monthlyPeriodStartDay: 27,
       monthlyPeriodEndDay: 26,
@@ -83,7 +83,7 @@ describe('pages/settings/index', () => {
       projectionWindowDays: 30,
       bookletCycles: [
         {
-          accountId: 'acc-1',
+          bookletId: 'acc-1',
           monthlyPeriodStartDay: 27,
           monthlyPeriodEndDay: 26,
         },

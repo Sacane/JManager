@@ -174,7 +174,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should book a monthly transaction linked to multiple booklets`() {
             launchWithConnectedUserInstance {
-                val secondBooklet = createAccount(user.toUser(), "Compte épargne", 1000.toAmount())
+                val secondBooklet = createBooklet(user.toUser(), "Compte épargne", 1000.toAmount())
 
                 val monthlyTransaction = RegularTransaction(
                     label = "Épargne automatique",

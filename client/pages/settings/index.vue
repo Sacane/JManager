@@ -142,15 +142,15 @@ onMounted(() => {
           Aucun compte disponible pour configurer un cycle mensuel.
         </div>
 
-        <div v-else class="account-cycle-list">
-          <div v-for="cycle in bookletCycles" :key="cycle.bookletId" class="account-cycle-item">
-            <div class="account-cycle-info">
-              <p class="account-cycle-label" :title="cycle.label">
+        <div v-else class="booklet-cycle-list">
+          <div v-for="cycle in bookletCycles" :key="cycle.bookletId" class="booklet-cycle-item">
+            <div class="booklet-cycle-info">
+              <p class="booklet-cycle-label" :title="cycle.label">
                 {{ cycle.label }}
               </p>
             </div>
 
-            <div class="account-cycle-controls">
+            <div class="booklet-cycle-controls">
               <div class="cycle-field">
                 <span class="cycle-field-label">Début</span>
                 <select v-model.number="cycle.monthlyPeriodStartDay" class="cycle-select" :data-test="`cycle-select-${cycle.bookletId}`">
@@ -250,13 +250,13 @@ onMounted(() => {
   padding: 0.55rem 0.7rem;
 }
 
-.account-cycle-list {
+.booklet-cycle-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.account-cycle-item {
+.booklet-cycle-item {
   display: grid;
   grid-template-columns: 1fr minmax(240px, 360px);
   gap: 0.75rem;
@@ -267,7 +267,7 @@ onMounted(() => {
   background-color: var(--bg-tertiary);
 }
 
-.account-cycle-controls {
+.booklet-cycle-controls {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
@@ -309,7 +309,7 @@ onMounted(() => {
   font-style: italic;
 }
 
-.account-cycle-label {
+.booklet-cycle-label {
   margin: 0;
   color: var(--text-primary);
   font-weight: 700;
@@ -319,7 +319,7 @@ onMounted(() => {
   min-width: 0;
 }
 
-.account-cycle-info {
+.booklet-cycle-info {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -353,11 +353,11 @@ onMounted(() => {
 }
 
 @media (max-width: 640px) {
-  .account-cycle-item {
+  .booklet-cycle-item {
     grid-template-columns: 1fr;
   }
 
-  .account-cycle-controls {
+  .booklet-cycle-controls {
     grid-template-columns: 1fr;
   }
 }
