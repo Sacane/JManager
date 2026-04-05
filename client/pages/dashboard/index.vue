@@ -915,7 +915,7 @@ watch(selectedBookletId, () => {
 <template>
   <div class="w-full min-h-screen p-5 relative" style="background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);">
     <!-- Header Section -->
-    <div class="mb-8">
+    <div>
       <div class="flex justify-between items-center flex-wrap gap-5">
         <div>
           <h1 class="text-4xl font-extrabold mb-2" style="color: var(--text-primary);">
