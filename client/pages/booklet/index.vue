@@ -31,6 +31,8 @@ const data = ref<Array<{
   currency: string
 }>>([])
 
+const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useBookletOrder(data)
+
 onMounted(async () => {
   await loadBooklets()
 })
@@ -44,14 +46,12 @@ async function loadBooklets() {
 }
 
 function format(booklets: Array<BookletDTO>) {
-  data.value = booklets.map((booklet: BookletDTO) => {
-    return {
-      id: String(booklet.id || ''),
-      label: booklet.label,
-      amount: `${booklet.amount}`,
-      currency: booklet.currency || '€',
-    }
-  })
+  data.value = booklets.map((booklet: BookletDTO) => ({
+    id: String(booklet.id || ''),
+    label: booklet.label,
+    amount: `${booklet.amount}`,
+    currency: booklet.currency || '€',
+  }))
 }
 
 function onCardClick(bookletId: string) {
@@ -186,10 +186,16 @@ function formatAmount(amount: string) {
       <div class="booklets-grid">
         <!-- Existing Booklets -->
         <div
-          v-for="booklet in data"
+          v-for="(booklet, index) in orderedItems"
           :key="booklet.id"
           class="booklet-card"
+          :class="{ 'is-dragging': draggedIndex === index, 'drag-over': dragOverIndex === index && draggedIndex !== index }"
+          draggable="true"
           @click="onCardClick(booklet.id)"
+          @dragstart="onDragStart($event, index)"
+          @dragover="onDragOver($event, index)"
+          @drop="onDrop($event, index)"
+          @dragend="onDragEnd"
         >
           <div class="card-inner">
             <!-- Card Header -->
@@ -202,16 +208,25 @@ function formatAmount(amount: string) {
                   {{ capitalizeFirst(booklet.label) }}
                 </h3>
               </div>
-              <Button
-                icon="pi pi-trash"
-                class="delete-btn"
-                text
-                rounded
-                severity="danger"
-                :loading="isDeletingBooklet"
-                :disabled="isAnyBookletActionLoading"
-                @click.stop="openConfirmDeleteDialog(booklet.id, booklet.label)"
-              />
+              <div class="card-actions">
+                <button
+                  v-tooltip.top="'Réorganiser'"
+                  class="drag-handle"
+                  @click.stop
+                >
+                  <i class="pi pi-bars" />
+                </button>
+                <Button
+                  icon="pi pi-trash"
+                  class="delete-btn"
+                  text
+                  rounded
+                  severity="danger"
+                  :loading="isDeletingBooklet"
+                  :disabled="isAnyBookletActionLoading"
+                  @click.stop="openConfirmDeleteDialog(booklet.id, booklet.label)"
+                />
+              </div>
             </div>
 
             <!-- Card Body -->
@@ -498,6 +513,19 @@ function formatAmount(amount: string) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
+  &.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.97) !important;
+    box-shadow: none !important;
+    border-color: var(--border-color) !important;
+  }
+
+  &.drag-over {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(130, 42, 204, 0.2), 0 12px 40px var(--shadow-lg) !important;
+    transform: translateY(-4px) !important;
+  }
+
   &:hover {
     transform: translateY(-4px);
     border-color: var(--primary);
@@ -556,6 +584,41 @@ function formatAmount(amount: string) {
   box-shadow: 0 8px 20px var(--shadow-purple);
   transition: transform 0.3s ease;
   flex-shrink: 0;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: grab;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  padding: 0;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:hover {
+    color: var(--primary);
+    background: rgba(130, 42, 204, 0.1);
+  }
+
+  i {
+    font-size: 0.9rem;
+  }
 }
 
 .delete-btn {

@@ -160,10 +160,10 @@ class BookletFeatureImpl(
     }
 
     override fun findBookletById(
-        bookletID: UUID,
+        bookletId: UUID,
         token: String
     ): Result<Booklet> = session.authenticate(token) {
-        bookletRepository.findBookletByIdWithTransactions(bookletID)?.run {
+        bookletRepository.findBookletByIdWithTransactions(bookletId)?.run {
             success(this)
         } ?: domainFailure(
             ResultState.BOOKLET_NOT_FOUND,
@@ -200,19 +200,19 @@ class BookletFeatureImpl(
     }
 
     override fun deleteBookletById(
-        bookletID: UUID,
+        bookletId: UUID,
         token: String
     ): Result<Nothing> = session.authenticate(token) {
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
-            if(bookletRepository.findBookletByIdWithTransactions(bookletID) == null){
+            if(bookletRepository.findBookletByIdWithTransactions(bookletId) == null){
                 return@executeInTransaction domainFailure(
                     ResultState.NOT_FOUND,
-                    "Le livret $bookletID n'existe pas",
+                    "Le livret $bookletId n'existe pas",
                     "domain.booklet.delete.not_found"
                 )
             }
-            bookletRepository.deleteBookletById(bookletID)
-            trackerRepository.deleteTrackerByBookletId(bookletID)
+            bookletRepository.deleteBookletById(bookletId)
+            trackerRepository.deleteTrackerByBookletId(bookletId)
             return@executeInTransaction success()
         }
     }
@@ -325,7 +325,7 @@ class BookletFeatureImpl(
                 )
             }
 
-            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            if (startDate != null && startDate.isAfter(endDate)) {
                 return@executeInTransaction domainFailure(
                     ResultState.BAD_REQUEST,
                     "startDate cannot be after endDate",

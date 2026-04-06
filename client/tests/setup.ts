@@ -1,6 +1,6 @@
 import { config } from '@vue/test-utils'
-import { computed, onMounted, onUnmounted, reactive, ref, watch, watchEffect } from 'vue'
 import { afterEach, beforeEach, vi } from 'vitest'
+import { computed, onMounted, onUnmounted, reactive, ref, watch, watchEffect } from 'vue'
 
 // Simulate common Nuxt auto-imported Vue APIs used directly in components.
 vi.stubGlobal('ref', ref)
@@ -10,6 +10,18 @@ vi.stubGlobal('watch', watch)
 vi.stubGlobal('watchEffect', watchEffect)
 vi.stubGlobal('onMounted', onMounted)
 vi.stubGlobal('onUnmounted', onUnmounted)
+
+// Stub auto-imported composables that require Nuxt runtime context.
+vi.stubGlobal('useLocalStorage', (key: string, defaultValue: any) => ref(defaultValue))
+vi.stubGlobal('useBookletOrder', (items: any) => ({
+  orderedItems: computed(() => items.value),
+  draggedIndex: ref(null),
+  dragOverIndex: ref(null),
+  onDragStart: vi.fn(),
+  onDragOver: vi.fn(),
+  onDrop: vi.fn(),
+  onDragEnd: vi.fn(),
+}))
 
 config.global.stubs = {
   Transition: false,
