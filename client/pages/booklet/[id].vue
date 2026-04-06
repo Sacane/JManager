@@ -643,6 +643,24 @@ onUnmounted(() => {
               :disabled="isAnyActionLoading"
               @click="openCsvExportDialog"
             />
+            <template v-if="hasSelection">
+              <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] text-sm font-semibold whitespace-nowrap shrink-0">
+                <i class="pi pi-check-square text-[var(--primary)] text-xs" />
+                <span class="text-[var(--text-secondary)]">{{ selectedSheets.length }}</span>
+                <span class="w-px h-4 bg-[var(--border-color)] inline-block" />
+                <span :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">{{ selectedTransactionsAmountLabel }}</span>
+              </span>
+              <Button
+                v-tooltip.bottom="`Supprimer (${selectedSheets.length})`"
+                outlined
+                class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
+                icon="pi pi-trash"
+                :loading="isDeleteTransactionLoading"
+                :disabled="isAnyActionLoading"
+                @click="confirmDeleteButton"
+              />
+            </template>
           </div>
         </template>
       </div>
@@ -666,20 +684,28 @@ onUnmounted(() => {
         />
       </div>
 
-      <div class="flex flex-col gap-3 mb-5 md:mb-4">
+      <div v-if="isMobile" class="flex flex-col gap-3 mb-5 md:mb-4">
         <Transition name="fade">
-          <div v-if="hasSelection" class="flex flex-col gap-3 lg:(flex-row items-center justify-end gap-3)">
-            <div class="flex items-center justify-between gap-6 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm lg:justify-start">
+          <div v-if="hasSelection" class="flex items-center gap-3">
+            <div class="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm flex-1">
               <div class="flex items-center gap-2">
                 <i class="pi pi-check-square text-[var(--primary)] text-sm" />
-                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedSheets.length }} transaction{{ selectedSheets.length > 1 ? 's' : '' }} sélectionnée{{ selectedSheets.length > 1 ? 's' : '' }}</span>
+                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedSheets.length }} sélectionnée{{ selectedSheets.length > 1 ? 's' : '' }}</span>
               </div>
               <div class="w-px h-6 bg-[var(--border-color)]" />
               <span class="text-base font-extrabold" :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">
                 {{ selectedTransactionsAmountLabel }}
               </span>
             </div>
-            <Button class="w-full lg:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" :loading="isDeleteTransactionLoading" :disabled="isAnyActionLoading" @click="confirmDeleteButton" />
+            <Button
+              v-tooltip.bottom="`Supprimer (${selectedSheets.length})`"
+              outlined
+              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
+              icon="pi pi-trash"
+              :loading="isDeleteTransactionLoading"
+              :disabled="isAnyActionLoading"
+              @click="confirmDeleteButton"
+            />
           </div>
         </Transition>
       </div>
