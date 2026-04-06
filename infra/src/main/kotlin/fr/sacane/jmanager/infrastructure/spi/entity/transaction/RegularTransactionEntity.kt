@@ -37,10 +37,10 @@ data class RegularTransactionEntity(
     var recurrenceRule: RecurrenceRuleEntity? = null,
 
     @ManyToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
-    override val tag: DefaultTagResource? = null,
+    override var tag: DefaultTagResource? = null,
 
     @ManyToOne(cascade = [CascadeType.MERGE, CascadeType.PERSIST])
-    override val personalTag: TagPersonalResource? = null,
+    override var personalTag: TagPersonalResource? = null,
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @JoinTable(

@@ -27,11 +27,11 @@ abstract class AbstractRegularTransactionResource(
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     @JoinColumn(name = "tag_id", referencedColumnName = "idTag")
-    open val tag: DefaultTagResource? = null,
+    open var tag: DefaultTagResource? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST])
     @JoinColumn(name = "personal_tag_id", referencedColumnName = "idTag")
-    open val personalTag:TagPersonalResource? = null,
+    open var personalTag:TagPersonalResource? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     open val owner: UserResource? = null,
 

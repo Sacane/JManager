@@ -84,6 +84,23 @@ class RegularTransactionOperator(
         existing.frequencyProperty = regularTransaction.frequencyProperty.toResource()
         existing.recurrenceRule = RecurrenceRuleEntity.fromDomain(regularTransaction.recurrenceRule)
 
+        when (val tagResource = tagMapperAdapter.mapToResource(
+            regularTransaction.tag ?: defaultTagRepository.findUnknownTag()?.toDomain()!!
+        )) {
+            is DefaultTagResource -> {
+                existing.tag = tagResource
+                existing.personalTag = null
+            }
+            is TagPersonalResource -> {
+                existing.tag = null
+                existing.personalTag = tagResource
+            }
+            null -> {
+                existing.tag = defaultTagPostgresRepository.findUnknownTag()
+                existing.personalTag = null
+            }
+        }
+
         existing.booklets.toList().forEach { booklet ->
             existing.removeBooklet(booklet)
         }
