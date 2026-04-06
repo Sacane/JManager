@@ -15,6 +15,8 @@ const toast = useJToast()
 const booklets = ref<BookletDTO[]>([])
 const sum = computed(() => booklets.value.reduce((acc: number, curr: BookletDTO) => acc + Number.parseFloat(curr.amount.toString()), 0.00))
 
+const { orderedItems: orderedBooklets, draggedIndex: indexDraggedIndex, dragOverIndex: indexDragOverIndex, onDragStart: onBookletDragStart, onDragOver: onBookletDragOver, onDrop: onBookletDrop, onDragEnd: onBookletDragEnd } = useBookletOrder(booklets)
+
 const heroRef = ref(null)
 const featuresRef = ref(null)
 const statsRef = ref(null)
@@ -100,10 +102,19 @@ onMounted(() => {
               </div>
               <div class="booklets-grid">
                 <div
-                  v-for="booklet in booklets"
+                  v-for="(booklet, index) in orderedBooklets"
                   :key="booklet.id"
                   class="booklet-card"
+                  :class="{
+                    'is-dragging': indexDraggedIndex === index,
+                    'drag-over': indexDragOverIndex === index && indexDraggedIndex !== index
+                  }"
+                  draggable="true"
                   @click="navigateTo(`/booklet/${booklet.id}`)"
+                  @dragstart="onBookletDragStart($event, index)"
+                  @dragover="onBookletDragOver($event, index)"
+                  @drop="onBookletDrop($event, index)"
+                  @dragend="onBookletDragEnd"
                 >
                   <div class="booklet-icon">
                     <i class="pi pi-book" />
@@ -117,6 +128,7 @@ onMounted(() => {
                     </p>
                   </div>
                   <div class="booklet-arrow">
+                    <i class="pi pi-bars drag-icon" />
                     <i class="pi pi-arrow-right" />
                   </div>
                 </div>
@@ -616,6 +628,18 @@ onMounted(() => {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+
+  &.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.97) !important;
+    box-shadow: none !important;
+  }
+
+  &.drag-over {
+    border-color: rgba(224, 216, 36, 0.9) !important;
+    box-shadow: 0 0 0 3px rgba(224, 216, 36, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    transform: translateX(8px) !important;
+  }
 }
 
 .booklet-card::before {
@@ -687,18 +711,31 @@ onMounted(() => {
 }
 
 .booklet-arrow {
-  width: 36px;
+  width: auto;
+  min-width: 36px;
   height: 36px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   font-size: 16px;
   color: white;
   flex-shrink: 0;
   transition: all 0.3s ease;
   z-index: 1;
+  padding: 0 8px;
+}
+
+.drag-icon {
+  font-size: 13px;
+  opacity: 0.6;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .booklet-card:hover .booklet-arrow {

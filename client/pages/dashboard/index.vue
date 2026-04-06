@@ -55,6 +55,8 @@ const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByBooklet.v1'
 // Refs
 const isBookletDialogOpen = ref(false)
 const booklets = ref<BookletDTO[]>([])
+
+const { orderedItems: orderedBooklets, draggedIndex: dashboardDraggedIndex, dragOverIndex: dashboardDragOverIndex, onDragStart: onBookletDragStart, onDragOver: onBookletDragOver, onDrop: onBookletDrop, onDragEnd: onBookletDragEnd } = useBookletOrder(booklets)
 const regularTransactions = ref<RegularTransactionDTO[]>([])
 const tags = ref<TagDTO[]>([])
 const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
@@ -1175,11 +1177,20 @@ watch(selectedBookletId, () => {
             </div>
             <div v-else class="flex flex-col gap-3">
               <div
-                v-for="booklet in booklets.slice(0, 4)"
+                v-for="(booklet, index) in orderedBooklets.slice(0, 4)"
                 :key="booklet.id"
-                class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all hover:translate-x-1.5"
+                class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all"
+                :class="[
+                  dashboardDraggedIndex === index ? 'opacity-40 scale-97' : 'hover:translate-x-1.5',
+                  dashboardDragOverIndex === index && dashboardDraggedIndex !== index ? 'ring-2 ring-purple-500 ring-offset-1' : ''
+                ]"
                 style="background-color: var(--bg-tertiary);"
+                draggable="true"
                 @click="navigateTo(`/booklet/${booklet.id}`)"
+                @dragstart="onBookletDragStart($event, index)"
+                @dragover="onBookletDragOver($event, index)"
+                @drop="onBookletDrop($event, index)"
+                @dragend="onBookletDragEnd"
               >
                 <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
                   <i class="pi pi-wallet" />
@@ -1192,6 +1203,7 @@ watch(selectedBookletId, () => {
                     {{ Number.parseFloat(booklet.amount.toString()).toFixed(2) }} €
                   </p>
                 </div>
+                <i class="pi pi-bars mr-1 cursor-grab text-sm" style="color: var(--text-tertiary);" />
                 <i class="pi pi-chevron-right" style="color: var(--text-tertiary);" />
               </div>
               <button v-if="booklets.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed rounded-lg font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600" style="border-color: var(--border-color); color: var(--text-secondary);" @click="navigateTo('/booklet')">
