@@ -524,8 +524,8 @@ onUnmounted(() => {
   <div class="flex flex-col bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-5 md:(py-3 pb-8)">
     <div class="flex flex-col w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8">
       <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-8">
-          <div class="flex items-center gap-4 flex-1 min-w-0 md:gap-3">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-4">
+          <div class="flex items-center gap-4 min-w-0 md:gap-3">
             <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/booklet')" />
             <div class="flex-1 min-w-0">
               <h1 class="text-2xl font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 md:(text-xl mb-1)">
@@ -549,24 +549,59 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="flex w-full md:w-auto gap-3 md:gap-2">
+            <div class="flex w-full md:w-auto gap-2 items-center">
               <Select
                 v-model="displayMonth"
                 :options="useDate().months.map(u => translate(u))"
                 placeholder="Mois"
-                class="flex-1 min-w-0 w-full md:(flex-none min-w-[140px] w-auto) border-1 rounded-lg bg-transparent"
+                class="flex-1 min-w-0 w-full md:(flex-none min-w-[120px] w-auto) border-1 rounded-lg bg-transparent"
                 @change="onMonthChange"
               />
               <DatePicker
                 v-model="bookletData.dateYear"
                 view="year"
                 date-format="yy"
-                class="flex-1 min-w-0 w-full md:(flex-none min-w-[140px] w-auto) rounded-[14px] min-h-[46px] cursor-pointer bg-transparent"
+                class="flex-1 min-w-0 w-full md:(flex-none min-w-[220px] w-[220px]) rounded-[14px] min-h-[46px] cursor-pointer bg-transparent"
                 placeholder="Année"
                 :show-icon="true"
                 icon-display="input"
                 @date-select="onYearChange"
               />
+              <template v-if="!isMobile">
+                <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
+                <div class="flex items-center gap-1 shrink-0">
+                  <button
+                    v-tooltip.bottom="`Tout (${transactionsCount})`"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
+                    :class="transactionFilter === 'all'
+                      ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-transparent shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
+                      : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-[var(--primary)] hover:border-[var(--primary)]'"
+                    @click="transactionFilter = 'all'"
+                  >
+                    <i class="pi pi-list" />
+                  </button>
+                  <button
+                    v-tooltip.bottom="`Confirmées (${transactionsCount - previewTransactionsCount})`"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
+                    :class="transactionFilter === 'confirmed'
+                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
+                      : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-emerald-600 hover:border-emerald-500'"
+                    @click="transactionFilter = 'confirmed'"
+                  >
+                    <i class="pi pi-check-circle" />
+                  </button>
+                  <button
+                    v-tooltip.bottom="`Prévisionnelles (${previewTransactionsCount})`"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
+                    :class="transactionFilter === 'preview'
+                      ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white border-transparent shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
+                      : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-amber-600 hover:border-amber-500'"
+                    @click="transactionFilter = 'preview'"
+                  >
+                    <i class="pi pi-clock" />
+                  </button>
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -574,6 +609,7 @@ onUnmounted(() => {
 
       <!-- Filtres + Actions desktop -->
       <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+        <template v-if="isMobile">
         <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1 shrink-0">Afficher :</span>
         <button
           class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
@@ -605,11 +641,21 @@ onUnmounted(() => {
           <i class="pi pi-clock mr-2" />
           Prévisionnelles ({{ previewTransactionsCount }})
         </button>
+        </template>
 
         <!-- Actions icon-only : desktop uniquement -->
         <template v-if="!isMobile">
           <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
           <div class="flex items-center gap-1.5 shrink-0 ml-auto">
+            <template v-if="hasSelection">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] text-sm font-semibold whitespace-nowrap shrink-0">
+                <i class="pi pi-check-square text-[var(--primary)] text-xs" />
+                <span class="text-[var(--text-secondary)]">{{ selectedSheets.length }}</span>
+                <span class="w-px h-4 bg-[var(--border-color)] inline-block" />
+                <span :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">{{ selectedTransactionsAmountLabel }}</span>
+              </span>
+              <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
+            </template>
             <Button
               v-tooltip.bottom="'Nouvelle transaction'"
               class="btn-primary !w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0"
@@ -643,6 +689,17 @@ onUnmounted(() => {
               :disabled="isAnyActionLoading"
               @click="openCsvExportDialog"
             />
+            <template v-if="hasSelection">
+              <Button
+                v-tooltip.bottom="`Supprimer (${selectedSheets.length})`"
+                outlined
+                class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
+                icon="pi pi-trash"
+                :loading="isDeleteTransactionLoading"
+                :disabled="isAnyActionLoading"
+                @click="confirmDeleteButton"
+              />
+            </template>
           </div>
         </template>
       </div>
@@ -666,20 +723,28 @@ onUnmounted(() => {
         />
       </div>
 
-      <div class="flex flex-col gap-3 mb-5 md:mb-4">
+      <div v-if="isMobile" class="flex flex-col gap-3 mb-5 md:mb-4">
         <Transition name="fade">
-          <div v-if="hasSelection" class="flex flex-col gap-3 lg:(flex-row items-center justify-end gap-3)">
-            <div class="flex items-center justify-between gap-6 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm lg:justify-start">
+          <div v-if="hasSelection" class="flex items-center gap-3">
+            <div class="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm flex-1">
               <div class="flex items-center gap-2">
                 <i class="pi pi-check-square text-[var(--primary)] text-sm" />
-                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedSheets.length }} transaction{{ selectedSheets.length > 1 ? 's' : '' }} sélectionnée{{ selectedSheets.length > 1 ? 's' : '' }}</span>
+                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedSheets.length }} sélectionnée{{ selectedSheets.length > 1 ? 's' : '' }}</span>
               </div>
               <div class="w-px h-6 bg-[var(--border-color)]" />
               <span class="text-base font-extrabold" :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">
                 {{ selectedTransactionsAmountLabel }}
               </span>
             </div>
-            <Button class="w-full lg:w-auto" icon="pi pi-trash" :label="`Supprimer (${selectedSheets.length})`" severity="danger" :loading="isDeleteTransactionLoading" :disabled="isAnyActionLoading" @click="confirmDeleteButton" />
+            <Button
+              v-tooltip.bottom="`Supprimer (${selectedSheets.length})`"
+              outlined
+              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
+              icon="pi pi-trash"
+              :loading="isDeleteTransactionLoading"
+              :disabled="isAnyActionLoading"
+              @click="confirmDeleteButton"
+            />
           </div>
         </Transition>
       </div>
