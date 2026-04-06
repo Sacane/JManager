@@ -1143,4 +1143,299 @@ class RegularTransactionControllerTest(
             }
         }
     }
+
+    @Nested
+    inner class LinkBookletEndpointTest {
+
+        @Test
+        fun `Link booklet to regular transaction must return 200 and updated transaction`() {
+            bookletStateTestAdapter.init(
+                listOf(
+                    Booklet(200.toAmount(), "booklet-a", owner = user),
+                    Booklet(300.toAmount(), "booklet-b", owner = user)
+                )
+            )
+            val booklets = bookletStateTestAdapter.get().toList()
+            val bookletA = booklets.first { it.label == "booklet-a" }
+            val bookletB = booklets.first { it.label == "booklet-b" }
+
+            val regularTransaction = RegularTransaction(
+                id = RegularTransactionId(""),
+                label = "Salaire",
+                amount = 2000.00.toAmount(),
+                isIncome = true,
+                tag = tagDTO.toDomain(),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
+                recurrenceRule = RecurrenceRule.Monthly(1)
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = bookletA.id!!.toString(),
+                        regularTransaction = regularTransaction
+                    )
+                )
+            )
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+            val transactionId = createdTransaction.id.value
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                post("/api/transaction/regular/{transactionId}/link/{bookletId}", mapOf("transactionId" to transactionId, "bookletId" to bookletB.id!!.toString()))
+            } Then {
+                statusCode(200)
+                body("bookletIds", hasItems(bookletA.id!!.toString(), bookletB.id!!.toString()))
+            }
+
+            val updated = regularTransactionStateForTestAdapter.get().first { it.id.value == transactionId }
+            assertEquals(2, updated.associatedBooklets.size)
+            assertTrue(updated.associatedBooklets.any { it.id == bookletA.id })
+            assertTrue(updated.associatedBooklets.any { it.id == bookletB.id })
+        }
+
+        @Test
+        fun `Link booklet to non-existing transaction must return 404`() {
+            bookletStateTestAdapter.init(listOf(Booklet(200.toAmount(), "b", owner = user)))
+            val booklet = bookletStateTestAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                post(
+                    "/api/transaction/regular/{transactionId}/link/{bookletId}",
+                    mapOf("transactionId" to UUID.randomUUID().toString(), "bookletId" to booklet.id!!.toString())
+                )
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Link already-linked booklet must return 400`() {
+            bookletStateTestAdapter.init(listOf(Booklet(200.toAmount(), "b", owner = user)))
+            val booklet = bookletStateTestAdapter.get().first()
+
+            val regularTransaction = RegularTransaction(
+                id = RegularTransactionId(""),
+                label = "Loyer",
+                amount = 700.00.toAmount(),
+                isIncome = false,
+                tag = tagDTO.toDomain(),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
+                recurrenceRule = RecurrenceRule.Monthly(5)
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = booklet.id!!.toString(),
+                        regularTransaction = regularTransaction
+                    )
+                )
+            )
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                post(
+                    "/api/transaction/regular/{transactionId}/link/{bookletId}",
+                    mapOf("transactionId" to createdTransaction.id.value, "bookletId" to booklet.id!!.toString())
+                )
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Link with unauthenticated user must return 404`() {
+            Given {
+                port(port)
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
+            } When {
+                post(
+                    "/api/transaction/regular/{transactionId}/link/{bookletId}",
+                    mapOf("transactionId" to UUID.randomUUID().toString(), "bookletId" to UUID.randomUUID().toString())
+                )
+            } Then {
+                statusCode(404)
+            }
+        }
+    }
+
+    @Nested
+    inner class UnlinkBookletEndpointTest {
+
+        @Test
+        fun `Unlink booklet from regular transaction must return 200 and updated transaction`() {
+            bookletStateTestAdapter.init(
+                listOf(
+                    Booklet(200.toAmount(), "booklet-a", owner = user),
+                    Booklet(300.toAmount(), "booklet-b", owner = user)
+                )
+            )
+            val booklets = bookletStateTestAdapter.get().toList()
+            val bookletA = booklets.first { it.label == "booklet-a" }
+            val bookletB = booklets.first { it.label == "booklet-b" }
+
+            val request = MonthlyRegularTransactionRequest(
+                label = "Abonnement",
+                value = BigDecimal(50.00),
+                startDate = LocalDate.now(),
+                isIncome = false,
+                tagDTO = tagDTO,
+                frequencyProperty = FrequencyPropertyDTO(
+                    type = FrequencyPropertyType.FOREVER,
+                    untilDate = null,
+                    times = null
+                ),
+                repeatDay = 1,
+                bookletIds = listOf(bookletA.id!!.toString(), bookletB.id!!.toString())
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(request))
+            } When {
+                post("/api/transaction/monthly")
+            } Then {
+                statusCode(200)
+            }
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first { it.label == "Abonnement" }
+            val transactionId = createdTransaction.id.value
+
+            regularTrackerStateRepository.init(
+                listOf(
+                    RegularTransactionTracker(
+                        regularTransactionId = createdTransaction.id,
+                        bookletId = bookletA.id!!,
+                        lastGeneratedDate = LocalDate.now().minusMonths(1),
+                        numberOfGeneratedTransaction = 1
+                    ),
+                    RegularTransactionTracker(
+                        regularTransactionId = createdTransaction.id,
+                        bookletId = bookletB.id!!,
+                        lastGeneratedDate = LocalDate.now().minusMonths(1),
+                        numberOfGeneratedTransaction = 1
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete(
+                    "/api/transaction/regular/{transactionId}/link/{bookletId}",
+                    mapOf("transactionId" to transactionId, "bookletId" to bookletB.id!!.toString())
+                )
+            } Then {
+                statusCode(200)
+                body("bookletIds", hasItems(bookletA.id!!.toString()))
+            }
+
+            val updated = regularTransactionStateForTestAdapter.get().first { it.id.value == transactionId }
+            assertEquals(1, updated.associatedBooklets.size)
+            assertTrue(updated.associatedBooklets.any { it.id == bookletA.id })
+            assertTrue(updated.associatedBooklets.none { it.id == bookletB.id })
+
+            val remainingTrackers = regularTrackerStateRepository.get()
+            assertTrue(remainingTrackers.none { it.regularTransactionId.value == transactionId && it.bookletId == bookletB.id })
+        }
+
+        @Test
+        fun `Unlink booklet from non-existing transaction must return 404`() {
+            bookletStateTestAdapter.init(listOf(Booklet(200.toAmount(), "b", owner = user)))
+            val booklet = bookletStateTestAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete(
+                    "/api/transaction/regular/{transactionId}/link/{bookletId}",
+                    mapOf("transactionId" to UUID.randomUUID().toString(), "bookletId" to booklet.id!!.toString())
+                )
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Unlink non-linked booklet must return 400`() {
+            bookletStateTestAdapter.init(
+                listOf(
+                    Booklet(200.toAmount(), "booklet-a", owner = user),
+                    Booklet(300.toAmount(), "booklet-b", owner = user)
+                )
+            )
+            val booklets = bookletStateTestAdapter.get().toList()
+            val bookletA = booklets.first { it.label == "booklet-a" }
+            val bookletB = booklets.first { it.label == "booklet-b" }
+
+            val regularTransaction = RegularTransaction(
+                id = RegularTransactionId(""),
+                label = "Loyer",
+                amount = 700.00.toAmount(),
+                isIncome = false,
+                tag = tagDTO.toDomain(),
+                frequencyProperty = FrequencyProperty.Forever(),
+                startDate = LocalDate.now(),
+                recurrenceRule = RecurrenceRule.Monthly(5)
+            )
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = bookletA.id!!.toString(),
+                        regularTransaction = regularTransaction
+                    )
+                )
+            )
+
+            val createdTransaction = regularTransactionStateForTestAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete(
+                    "/api/transaction/regular/{transactionId}/link/{bookletId}",
+                    mapOf("transactionId" to createdTransaction.id.value, "bookletId" to bookletB.id!!.toString())
+                )
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Unlink with unauthenticated user must return 404`() {
+            Given {
+                port(port)
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
+            } When {
+                delete(
+                    "/api/transaction/regular/{transactionId}/link/{bookletId}",
+                    mapOf("transactionId" to UUID.randomUUID().toString(), "bookletId" to UUID.randomUUID().toString())
+                )
+            } Then {
+                statusCode(404)
+            }
+        }
+    }
 }

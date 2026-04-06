@@ -119,4 +119,35 @@ class RegularTransactionOperator(
         logger.info("Update regular transaction in postgres database {}", existing)
         return regularTransactionResourceJpaRepository.save(existing)
     }
+
+    @Transactional
+    fun link(
+        existing: RegularTransactionEntity,
+        bookletId: java.util.UUID,
+        userId: UserId
+    ): RegularTransactionEntity {
+        val booklet = bookletJpaRepository.findByIdWithRegularTransactions(bookletId)
+            ?: throw NotFoundException(ResultState.NOT_FOUND.code, "Booklet with id $bookletId not found")
+
+        if (booklet.owner?.idUser != userId.value) {
+            throw NotFoundException(ResultState.NOT_FOUND.code, "Booklet with id $bookletId not found")
+        }
+
+        existing.addBooklet(booklet)
+        logger.info("Linked booklet {} to regular transaction {}", bookletId, existing.transactionId)
+        return regularTransactionResourceJpaRepository.save(existing)
+    }
+
+    @Transactional
+    fun unlink(
+        existing: RegularTransactionEntity,
+        bookletId: java.util.UUID
+    ): RegularTransactionEntity {
+        val booklet = existing.booklets.find { it.idBooklet == bookletId }
+        if (booklet != null) {
+            existing.removeBooklet(booklet)
+        }
+        logger.info("Unlinked booklet {} from regular transaction {}", bookletId, existing.transactionId)
+        return regularTransactionResourceJpaRepository.save(existing)
+    }
 }

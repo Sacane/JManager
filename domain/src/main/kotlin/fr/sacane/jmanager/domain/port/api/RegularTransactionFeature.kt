@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.utils.DomainError
@@ -84,6 +85,28 @@ sealed interface RegularTransactionFeature {
      * @return Result containing deleted transaction ids, or a failure when any id is missing.
      */
     fun deleteRegularTransactions(token: String, transactionIds: List<String>): Result<List<String>>
+
+    /**
+     * Link a booklet to an existing regular transaction.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param transactionId Identifier of the regular transaction.
+     * @param bookletId UUID of the booklet to link.
+     * @return Result containing the updated RegularTransaction on success, or an error state.
+     */
+    fun linkRegularTransactionToBooklet(token: String, transactionId: String, bookletId: UUID): Result<RegularTransaction>
+
+    /**
+     * Unlink a booklet from an existing regular transaction.
+     * Removing the link also deletes the generation tracker for that pair,
+     * so no more virtual/preview transactions will be generated for this booklet.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param transactionId Identifier of the regular transaction.
+     * @param bookletId UUID of the booklet to unlink.
+     * @return Result containing the updated RegularTransaction on success, or an error state.
+     */
+    fun unlinkRegularTransactionFromBooklet(token: String, transactionId: String, bookletId: UUID): Result<RegularTransaction>
 }
 
 @DomainService
@@ -91,7 +114,8 @@ class RegularTransactionFeatureImpl(
     private val regularTransactionRepository: RegularTransactionRepository,
     private val tagRepository: TagRepository,
     private val session: SessionManager,
-    private val unitOfWork: UnitOfWorkTransactionProvider
+    private val unitOfWork: UnitOfWorkTransactionProvider,
+    private val trackerRepository: RegularTransactionTrackerRepository
 ) : RegularTransactionFeature {
 
     private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
@@ -204,6 +228,66 @@ class RegularTransactionFeatureImpl(
             }
 
             return@executeInTransaction success(ids)
+        }
+    }
+
+    override fun linkRegularTransactionToBooklet(
+        token: String,
+        transactionId: String,
+        bookletId: UUID
+    ): Result<RegularTransaction> = session.authenticate(token) { userId ->
+        return@authenticate unitOfWork.executeInTransaction(transactionId) {
+            val existing = regularTransactionRepository.getRegularTransactionById(userId, RegularTransactionId(it))
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_NOT_FOUND,
+                    "La transaction $transactionId n'existe pas",
+                    "domain.regular_transaction.link.not_found"
+                )
+            if (existing.associatedBooklets.any { b -> b.id == bookletId }) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BAD_REQUEST,
+                    "Le livret $bookletId est déjà lié à cette transaction",
+                    "domain.regular_transaction.link.already_linked"
+                )
+            }
+            val updated = regularTransactionRepository.linkBooklet(userId, RegularTransactionId(it), bookletId)
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.NOT_FOUND,
+                    "Le livret $bookletId est introuvable",
+                    "domain.regular_transaction.link.booklet_not_found"
+                )
+            return@executeInTransaction success(updated)
+        }
+    }
+
+    override fun unlinkRegularTransactionFromBooklet(
+        token: String,
+        transactionId: String,
+        bookletId: UUID
+    ): Result<RegularTransaction> = session.authenticate(token) { userId ->
+        return@authenticate unitOfWork.executeInTransaction(transactionId) {
+            val existing = regularTransactionRepository.getRegularTransactionById(userId, RegularTransactionId(it))
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_NOT_FOUND,
+                    "La transaction $transactionId n'existe pas",
+                    "domain.regular_transaction.unlink.not_found"
+                )
+            if (existing.associatedBooklets.none { b -> b.id == bookletId }) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BAD_REQUEST,
+                    "Le livret $bookletId n'est pas lié à cette transaction",
+                    "domain.regular_transaction.unlink.not_linked"
+                )
+            }
+            val updated = regularTransactionRepository.unlinkBooklet(userId, RegularTransactionId(it), bookletId)
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.NOT_FOUND,
+                    "Le livret $bookletId est introuvable",
+                    "domain.regular_transaction.unlink.booklet_not_found"
+                )
+            // Delete the tracker so no virtual transactions are generated for this pair anymore.
+            trackerRepository.deleteTrackerByPair(RegularTransactionId(it), bookletId)
+            return@executeInTransaction success(updated)
         }
     }
 }

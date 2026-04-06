@@ -67,4 +67,24 @@ interface RegularTransactionRepository {
      * @return true if deletion succeeded, false otherwise
      */
     fun deleteRegularTransaction(userId: UserId, transactionId: RegularTransactionId): Boolean
+
+    /**
+     * Link a booklet to an existing regular transaction.
+     *
+     * @param userId Domain user identifier
+     * @param transactionId Identifier of the regular transaction
+     * @param bookletId UUID of the booklet to link
+     * @return Updated RegularTransaction with the new booklet in its list, or null if not found
+     */
+    fun linkBooklet(userId: UserId, transactionId: RegularTransactionId, bookletId: UUID): RegularTransaction?
+
+    /**
+     * Unlink a booklet from an existing regular transaction.
+     *
+     * @param userId Domain user identifier
+     * @param transactionId Identifier of the regular transaction
+     * @param bookletId UUID of the booklet to unlink
+     * @return Updated RegularTransaction without the given booklet, or null if not found
+     */
+    fun unlinkBooklet(userId: UserId, transactionId: RegularTransactionId, bookletId: UUID): RegularTransaction?
 }

@@ -98,8 +98,33 @@ class RegularTransactionRepositoryDataJpaAdapter(
         regularTransactionRepository.delete(existing)
         return true
     }
-}
 
+    @Transactional
+    override fun linkBooklet(userId: UserId, transactionId: RegularTransactionId, bookletId: UUID): RegularTransaction? {
+        val id = transactionId.value.asUUID()
+        val existing = regularTransactionRepository.findByIdOrNull(id) ?: return null
+
+        if (existing.owner?.idUser != userId.value) {
+            return null
+        }
+
+        regularTransactionOperator.link(existing, bookletId, userId)
+        return regularTransactionRepository.findByIdWithBooklets(id)?.toDomain()
+    }
+
+    @Transactional
+    override fun unlinkBooklet(userId: UserId, transactionId: RegularTransactionId, bookletId: UUID): RegularTransaction? {
+        val id = transactionId.value.asUUID()
+        val existing = regularTransactionRepository.findByIdOrNull(id) ?: return null
+
+        if (existing.owner?.idUser != userId.value) {
+            return null
+        }
+
+        regularTransactionOperator.unlink(existing, bookletId)
+        return regularTransactionRepository.findByIdWithBooklets(id)?.toDomain()
+    }
+}
 private fun String.asUUID(): UUID {
     return UUID.fromString(this)
 }

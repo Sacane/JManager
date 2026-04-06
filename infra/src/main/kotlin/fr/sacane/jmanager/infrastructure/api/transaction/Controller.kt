@@ -241,6 +241,36 @@ class TransactionController(
                 logger.info("Bulk regular transactions deletion finished")
             }
     }
+
+    @PostMapping("/regular/{transactionId}/link/{bookletId}")
+    fun linkRegularTransactionToBooklet(
+        @PathVariable transactionId: String,
+        @PathVariable bookletId: String
+    ): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Linking booklet $bookletId to regular transaction $transactionId")
+        return regularTransactionFeature.linkRegularTransactionToBooklet(
+            currentUser.token,
+            transactionId,
+            java.util.UUID.fromString(bookletId)
+        ).map { it.toDTO() }
+            .toHttpResponse()
+            .also { logger.info("Booklet linked successfully") }
+    }
+
+    @DeleteMapping("/regular/{transactionId}/link/{bookletId}")
+    fun unlinkRegularTransactionFromBooklet(
+        @PathVariable transactionId: String,
+        @PathVariable bookletId: String
+    ): ResponseEntity<RegularTransactionDTO> {
+        logger.info("Unlinking booklet $bookletId from regular transaction $transactionId")
+        return regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+            currentUser.token,
+            transactionId,
+            java.util.UUID.fromString(bookletId)
+        ).map { it.toDTO() }
+            .toHttpResponse()
+            .also { logger.info("Booklet unlinked successfully") }
+    }
 }
 
 fun TransactionResumeResult.toDTO(): TransactionResponse {

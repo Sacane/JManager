@@ -7,7 +7,7 @@ definePageMeta({
 })
 
 const { fetch } = useBooklet()
-const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById, updateRegularTransaction, deleteRegularTransaction, deleteRegularTransactions } = useRegularTransaction()
+const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById, updateRegularTransaction, deleteRegularTransaction, deleteRegularTransactions, linkRegularTransactionToBooklet, unlinkRegularTransactionFromBooklet } = useRegularTransaction()
 const transactions = ref<RegularTransactionDTO[]>([])
 const { frequencyToString } = useDate()
 const jToast = useJToast()
@@ -220,6 +220,83 @@ function checkMobile() {
 
 const transactionsCount = computed(() => transactions.value.length)
 const selectedTransactionsCount = computed(() => selectedTransactions.value.length)
+
+// ── Link dialog ──────────────────────────────────────────────────────────────
+const isLinkDialogVisible = ref(false)
+const linkTargetTransaction = ref<RegularTransactionDTO | null>(null)
+const selectedBookletToLink = ref<string | null>(null)
+const isLinkLoading = ref(false)
+
+const unlinkedBooklets = computed(() => {
+  if (!linkTargetTransaction.value) return []
+  const linked = new Set(linkTargetTransaction.value.bookletIds ?? [])
+  return booklets.value
+    .filter(b => b.id !== undefined && !linked.has(String(b.id)))
+    .map(b => ({ id: String(b.id), label: b.label }))
+})
+
+function getUnlinkedBookletsFor(transaction: RegularTransactionDTO) {
+  const linked = new Set(transaction.bookletIds ?? [])
+  return booklets.value.filter(b => b.id !== undefined && !linked.has(String(b.id)))
+}
+
+function openLinkDialog(transaction: RegularTransactionDTO) {
+  linkTargetTransaction.value = transaction
+  selectedBookletToLink.value = null
+  isLinkDialogVisible.value = true
+}
+
+async function handleLink() {
+  if (!linkTargetTransaction.value || !selectedBookletToLink.value) return
+  isLinkLoading.value = true
+  try {
+    const updated = await linkRegularTransactionToBooklet(linkTargetTransaction.value.id, selectedBookletToLink.value)
+    const index = transactions.value.findIndex(t => t.id === updated.id)
+    if (index !== -1) transactions.value[index] = updated
+    isLinkDialogVisible.value = false
+    jToast.success('Livret lié avec succès')
+  } catch (err: any) {
+    jToast.errorAxios(err)
+  } finally {
+    isLinkLoading.value = false
+  }
+}
+
+// ── Unlink dialog ─────────────────────────────────────────────────────────────
+const isUnlinkDialogVisible = ref(false)
+const unlinkTargetTransaction = ref<RegularTransactionDTO | null>(null)
+const selectedBookletToUnlink = ref<string | null>(null)
+const isUnlinkLoading = ref(false)
+
+const linkedBookletsForUnlink = computed(() => {
+  if (!unlinkTargetTransaction.value) return []
+  const ids = unlinkTargetTransaction.value.bookletIds ?? []
+  return booklets.value
+    .filter(b => b.id !== undefined && ids.includes(String(b.id)))
+    .map(b => ({ id: String(b.id), label: b.label }))
+})
+
+function openUnlinkDialog(transaction: RegularTransactionDTO) {
+  unlinkTargetTransaction.value = transaction
+  selectedBookletToUnlink.value = null
+  isUnlinkDialogVisible.value = true
+}
+
+async function handleUnlink() {
+  if (!unlinkTargetTransaction.value || !selectedBookletToUnlink.value) return
+  isUnlinkLoading.value = true
+  try {
+    const updated = await unlinkRegularTransactionFromBooklet(unlinkTargetTransaction.value.id, selectedBookletToUnlink.value)
+    const index = transactions.value.findIndex(t => t.id === updated.id)
+    if (index !== -1) transactions.value[index] = updated
+    isUnlinkDialogVisible.value = false
+    jToast.success('Livret délié avec succès')
+  } catch (err: any) {
+    jToast.errorAxios(err)
+  } finally {
+    isUnlinkLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -337,6 +414,31 @@ const selectedTransactionsCount = computed(() => selectedTransactions.value.leng
             <Tag :value="slotProps.data.tagDTO.label" :style="getTagStyle(slotProps.data.tagDTO.colorDTO)" />
           </template>
         </Column>
+
+        <Column header="Actions" :style="{ minWidth: '160px' }" frozen align-frozen="right">
+          <template #body="{ data }">
+            <div class="flex items-center gap-2">
+              <Button
+                v-tooltip.top="'Lier à un livret'"
+                icon="pi pi-link"
+                size="small"
+                severity="secondary"
+                outlined
+                :disabled="getUnlinkedBookletsFor(data).length === 0"
+                @click.stop="openLinkDialog(data)"
+              />
+              <Button
+                v-tooltip.top="'Délier d\'un livret'"
+                icon="pi pi-minus-circle"
+                size="small"
+                severity="warning"
+                outlined
+                :disabled="!(data.bookletIds?.length)"
+                @click.stop="openUnlinkDialog(data)"
+              />
+            </div>
+          </template>
+        </Column>
       </DataTable>
     </div>
 
@@ -408,6 +510,26 @@ const selectedTransactionsCount = computed(() => selectedTransactions.value.leng
                 class="text-0.8rem px-3 py-1.5 md:text-0.85rem md:px-3.5 md:py-1.75"
               />
             </div>
+
+            <div class="flex gap-2 pt-2" style="border-top: 1px solid var(--border-color);">
+              <Button
+                icon="pi pi-link"
+                size="small"
+                severity="secondary"
+                outlined
+                label="Lier"
+                @click.stop="openLinkDialog(transaction)"
+              />
+              <Button
+                v-if="transaction.bookletIds?.length"
+                icon="pi pi-minus-circle"
+                size="small"
+                severity="warning"
+                outlined
+                label="Délier"
+                @click.stop="openUnlinkDialog(transaction)"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -424,11 +546,91 @@ const selectedTransactionsCount = computed(() => selectedTransactions.value.leng
     <RegularTransactionDialogCard
       v-model="isEditDialogVisible"
       :transaction="selectedTransaction"
-      :booklets="booklets"
       :loading="loadingTransaction"
       @save="handleEditSave"
       @delete="handleDelete"
     />
+
+    <!-- Link dialog -->
+    <Dialog
+      v-model:visible="isLinkDialogVisible"
+      modal
+      header="🔗 Lier à un livret"
+      :style="{ width: '28rem' }"
+      :breakpoints="{ '575px': '90vw' }"
+      :draggable="false"
+    >
+      <div class="flex flex-col gap-4 py-2">
+        <p class="m-0 text-sm" style="color: var(--text-secondary);">
+          Sélectionnez un livret à associer à cette transaction régulière.
+        </p>
+        <Select
+          v-model="selectedBookletToLink"
+          :options="unlinkedBooklets"
+          option-label="label"
+          option-value="id"
+          placeholder="Choisir un livret"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          label="Annuler"
+          icon="pi pi-times"
+          severity="secondary"
+          outlined
+          @click="isLinkDialogVisible = false"
+        />
+        <Button
+          label="Lier"
+          icon="pi pi-check"
+          :disabled="!selectedBookletToLink || isLinkLoading"
+          :loading="isLinkLoading"
+          @click="handleLink"
+        />
+      </template>
+    </Dialog>
+
+    <!-- Unlink dialog -->
+    <Dialog
+      v-model:visible="isUnlinkDialogVisible"
+      modal
+      header="⛓️‍💥 Délier un livret"
+      :style="{ width: '28rem' }"
+      :breakpoints="{ '575px': '90vw' }"
+      :draggable="false"
+    >
+      <div class="flex flex-col gap-4 py-2">
+        <p class="m-0 text-sm" style="color: var(--text-secondary);">
+          Sélectionnez le livret à dissocier. Les transactions virtuelles associées ne seront plus générées.
+        </p>
+        <Select
+          v-model="selectedBookletToUnlink"
+          :options="linkedBookletsForUnlink"
+          option-label="label"
+          option-value="id"
+          placeholder="Choisir un livret"
+          class="w-full"
+        />
+      </div>
+      <template #footer>
+        <Button
+          label="Annuler"
+          icon="pi pi-times"
+          severity="secondary"
+          outlined
+          @click="isUnlinkDialogVisible = false"
+        />
+        <Button
+          label="Délier"
+          icon="pi pi-link"
+          severity="warning"
+          :disabled="!selectedBookletToUnlink || isUnlinkLoading"
+          :loading="isUnlinkLoading"
+          @click="handleUnlink"
+        />
+      </template>
+    </Dialog>
 
     <ConfirmDialog />
   </div>

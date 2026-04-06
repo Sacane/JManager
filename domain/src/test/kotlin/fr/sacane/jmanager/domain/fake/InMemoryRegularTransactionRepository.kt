@@ -89,4 +89,21 @@ class InMemoryRegularTransactionRepository(
         return inMemoryDatabase.deleteRegularTransaction(userId, transactionId)
     }
 
+    override fun linkBooklet(userId: UserId, transactionId: RegularTransactionId, bookletId: UUID): RegularTransaction? {
+        val existing = inMemoryDatabase.getRegularTransactionById(userId, transactionId) ?: return null
+        val booklet = inMemoryDatabase.findBookletById(bookletId) ?: return null
+        val updated = existing.copy(associatedBooklets = existing.associatedBooklets + booklet)
+        val currentBookletIds = inMemoryDatabase.getBookletIdsForRegularTransaction(userId, transactionId)
+        inMemoryDatabase.updateRegularTransaction(userId, updated, currentBookletIds + bookletId)
+        return inMemoryDatabase.getRegularTransactionById(userId, transactionId)
+    }
+
+    override fun unlinkBooklet(userId: UserId, transactionId: RegularTransactionId, bookletId: UUID): RegularTransaction? {
+        val existing = inMemoryDatabase.getRegularTransactionById(userId, transactionId) ?: return null
+        val updated = existing.copy(associatedBooklets = existing.associatedBooklets.filter { it.id != bookletId })
+        val currentBookletIds = inMemoryDatabase.getBookletIdsForRegularTransaction(userId, transactionId)
+        inMemoryDatabase.updateRegularTransaction(userId, updated, currentBookletIds.filter { it != bookletId })
+        return inMemoryDatabase.getRegularTransactionById(userId, transactionId)
+    }
+
 }

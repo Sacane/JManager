@@ -27,6 +27,14 @@ export default function useRegularTransaction() {
     return deleteQuery('transaction/regular', request)
   }
 
+  async function linkRegularTransactionToBooklet(transactionId: string, bookletId: string): Promise<RegularTransactionDTO> {
+    return post(`transaction/regular/${transactionId}/link/${bookletId}`, {})
+  }
+
+  async function unlinkRegularTransactionFromBooklet(transactionId: string, bookletId: string): Promise<RegularTransactionDTO> {
+    return deleteQuery(`transaction/regular/${transactionId}/link/${bookletId}`, {})
+  }
+
   return {
     getRegularTransaction,
     saveMonthlyTransaction,
@@ -34,5 +42,7 @@ export default function useRegularTransaction() {
     updateRegularTransaction,
     deleteRegularTransaction,
     deleteRegularTransactions,
+    linkRegularTransactionToBooklet,
+    unlinkRegularTransactionFromBooklet,
   }
 }
