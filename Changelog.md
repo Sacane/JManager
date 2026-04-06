@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-06
+
+- Fixed bug where editing the tag of a regular transaction had no effect (200 OK returned but tag reverted to original value): `tag` and `personalTag` fields were declared `val` (immutable) in `AbstractRegularTransactionResource` and `RegularTransactionEntity`, making mutation impossible; changed both to `var`. Added full tag-mapping logic in `RegularTransactionOperator.update()` mirroring the existing `save()` behaviour (DefaultTag / PersonalTag / fallback to unknown tag), so the correct tag is now persisted on every update.
+- Booklet detail page (desktop): moved transaction filter buttons (All / Confirmed / Forecasted) from the bottom bar into the header, next to the month/year pickers, as compact icon-only buttons with tooltip counts. Bottom bar now shows filters only on mobile. Year picker compacted to free horizontal space.
+- Booklet detail page: delete action when transactions are selected now shows as an icon-only button aligned with the other action icons; selection count and computed amount appear as a pill to the left of the action group (desktop), or inline above the table (mobile) — no more separate labelled "Supprimer" button.
+
 ## 2026-04-05
 
 - Completed the full "account → booklet" rename across every remaining layer and file.

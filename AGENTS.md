@@ -69,7 +69,7 @@ JManager/
 
 ## Implementation Strategy (Mandatory)
 
-Whenever implementing a new feature or a fix, the following order is mandatory:
+Whenever implementing a new feature or a fix in backend side, the following order is mandatory:
 
 1. **TDD first, always**:
    - Start with a failing test (**red**).
