@@ -10,9 +10,10 @@ These rules apply to all frontend work in this repository.
 ## Testing Discipline
 
 - After every code change, add or update tests to match the new behavior.
-- Run tests after each meaningful change.
+- **Always re-run the full frontend test suite (`pnpm test`) at the end of every implementation session**, before considering the work done.
 - Iterate on implementation and tests until the frontend test suite is fully green.
 - Do not consider a task done if tests are failing.
+- When adding a new composable or utility that Nuxt auto-imports, ensure it is also stubbed via `vi.stubGlobal` in `tests/setup.ts` so all existing page and component tests continue to pass without changes.
 
 ## Reuse and Code Quality
 
