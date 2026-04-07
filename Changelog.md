@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-08
+
+- **Regenerate deleted previsional transactions**: Added the ability to regenerate previsional transactions that were previously deleted by the user for a given month/year, for all regular transactions linked to a booklet.
+  - **Domain SPI**: Added `unmarkMonthAsExcluded(regularTransactionId, bookletId, year, month)` to `RegularTransactionTrackerRepository` port.
+  - **Domain fake**: Implemented `unmarkMonthAsExcluded` in `InMemoryRegularTrackerRepository`.
+  - **Domain feature**: Added `regenerateDeletedPrevisionalTransactions(token, bookletId, month, year)` to `BookletFeature` interface and implemented in `BookletFeatureImpl` (un-marks the exclusion for each tracker where the target month was excluded, then re-runs the previsional transaction generator).
+  - **Bug fix**: `RegularTransactionComputer.generateMissingPrevisionalTransactions` was erasing `excludedMonths` when upserting the tracker (defaulting to `emptySet()`); fixed to preserve the existing `excludedMonths` set.
+  - **Infra SPI**: Implemented `unmarkMonthAsExcluded` in `RegularTransactionTrackerRepositoryAdapter`.
+  - **Infra API**: Added `POST /api/booklet/{bookletID}/transactions/regenerate?month=X&year=Y` endpoint in `BookletController`, returning the list of regenerated transactions.
+  - **Frontend**: Added `regenerateDeletedPrevisionalTransactions` in `useBooklet.ts`; added `regenerate` loading scope to `LOADING_SCOPES`; added "Régénérer" button in the booklet detail page action bar (icon-only desktop, labelled mobile) calling the new endpoint and reloading the booklet data.
+  - Full test suite (domain 42 tests + infra 2 new API tests + frontend 83 tests) green after all changes.
+
 ## 2026-04-07
 
 - **Regular Transaction Link/Unlink feature**: Added dedicated endpoints and UI to link or unlink a regular transaction to/from a booklet, replacing the previous booklet management inside the update modal.

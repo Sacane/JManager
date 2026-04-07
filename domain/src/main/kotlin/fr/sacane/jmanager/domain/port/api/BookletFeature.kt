@@ -137,6 +137,24 @@ sealed interface BookletFeature {
         startDate: LocalDate? = null,
         endDate: LocalDate? = null,
     ): Result<BookletBalances>
+
+    /**
+     * Re-generates previsional transactions for a given month that were previously deleted by the user.
+     * Un-marks the month as excluded in the tracker so the generator can recreate them.
+     * No duplicate is created if a confirmed or preview transaction already exists for that period.
+     *
+     * @param token Authentication token identifying the requester.
+     * @param bookletId UUID of the booklet to target.
+     * @param month Target month to regenerate.
+     * @param year Target year to regenerate.
+     * @return Result containing the list of newly created previsional transactions, or a failure state.
+     */
+    fun regenerateDeletedPrevisionalTransactions(
+        token: String,
+        bookletId: UUID,
+        month: Month,
+        year: Int
+    ): Result<List<Transaction>>
 }
 
 @DomainService
@@ -577,6 +595,38 @@ class BookletFeatureImpl(
                     previewSold = previsionalSold
                 )
             )
+        }
+    }
+
+    override fun regenerateDeletedPrevisionalTransactions(
+        token: String,
+        bookletId: UUID,
+        month: Month,
+        year: Int
+    ): Result<List<Transaction>> = session.authenticate(token) { userId ->
+        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+            bookletRepository.findBookletByIdWithTransactions(bookletId)
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Requested booklet is not registered",
+                    "domain.booklet.regenerate.not_found"
+                )
+            val regularTransactions = regularTransactionRepository.getAllRegularUsedByBooklet(userId, bookletId)
+                ?: emptyList()
+            val targetYearMonth = YearMonth.of(year, month)
+            regularTransactions.forEach { rt ->
+                val tracker = trackerRepository.findTracker(rt.id, bookletId)
+                if (tracker?.excludedMonths?.contains(targetYearMonth) == true) {
+                    trackerRepository.unmarkMonthAsExcluded(rt.id, bookletId, year, month)
+                }
+            }
+            val regenerated = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                bookletId,
+                regularTransactions,
+                month,
+                year
+            )
+            return@executeInTransaction success(regenerated)
         }
     }
 

@@ -13,6 +13,7 @@ import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
+import fr.sacane.jmanager.infrastructure.api.setup.RegularTrackerStateRepository
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
 import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given
@@ -559,6 +560,71 @@ class BookletControllerTest(
                 queryParam("year", currentDate.year)
             } When {
                 get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+            }
+        }
+    }
+
+    @Nested
+    inner class RegenerateDeletedPrevisionalTransactionsTest {
+
+        @Autowired
+        private lateinit var regularTrackerStateRepository: RegularTrackerStateRepository
+
+        @AfterEach
+        fun clearTrackers() {
+            regularTrackerStateRepository.clear()
+        }
+
+        @Test
+        fun `POST regenerate on non-existing booklet should return 404`() {
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", 1)
+                queryParam("year", 2024)
+            } When {
+                post("/api/booklet/00000000-0000-0000-0000-000000000000/transactions/regenerate")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `POST regenerate on existing booklet with excluded month should return 200`() {
+            val currentDate = LocalDate.now()
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Test", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+
+            regularTransactionStateAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = savedBooklet.id!!.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = RegularTransactionId(java.util.UUID.randomUUID().toString()),
+                            label = "Loyer",
+                            amount = Amount.fromString("800.00"),
+                            isIncome = false,
+                            startDate = currentDate.withDayOfMonth(1),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            recurrenceRule = RecurrenceRule.Monthly(1)
+                        )
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+            } When {
+                post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
             } Then {
                 statusCode(200)
             }

@@ -8,7 +8,7 @@ import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({ layout: 'sidebar-layout' })
 
-const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear } = useBooklet()
+const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear, regenerateDeletedPrevisionalTransactions } = useBooklet()
 const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
@@ -95,6 +95,7 @@ const fetchTransactionScope = LOADING_SCOPES.bookletDetails.fetchTransaction
 const deleteTransactionScope = LOADING_SCOPES.bookletDetails.deleteTransaction
 const confirmPreviewScope = LOADING_SCOPES.bookletDetails.confirmPreview
 const exportCsvScope = LOADING_SCOPES.bookletDetails.exportCsv
+const regenerateScope = LOADING_SCOPES.bookletDetails.regenerate
 const isBookletLoading = computed(() => isScopeLoading(loadBookletScope))
 const isBookTransactionLoading = computed(() => isScopeLoading(bookTransactionScope))
 const isEditTransactionLoading = computed(() => isScopeLoading(editTransactionScope))
@@ -102,6 +103,7 @@ const isFetchTransactionLoading = computed(() => isScopeLoading(fetchTransaction
 const isDeleteTransactionLoading = computed(() => isScopeLoading(deleteTransactionScope))
 const isConfirmPreviewLoading = computed(() => isScopeLoading(confirmPreviewScope))
 const isExportCsvLoading = computed(() => isScopeLoading(exportCsvScope))
+const isRegenerateLoading = computed(() => isScopeLoading(regenerateScope))
 const isAnyActionLoading = computed(() =>
   isBookletLoading.value
   || isBookTransactionLoading.value
@@ -109,7 +111,8 @@ const isAnyActionLoading = computed(() =>
   || isFetchTransactionLoading.value
   || isDeleteTransactionLoading.value
   || isConfirmPreviewLoading.value
-  || isExportCsvLoading.value,
+  || isExportCsvLoading.value
+  || isRegenerateLoading.value,
 )
 
 const filteredTransactions = computed(() => {
@@ -382,6 +385,20 @@ function onConfirmPreview(transaction: TransactionCreationDTO) {
   isConfirmPreviewDialogVisible.value = true
 }
 
+async function regenerate() {
+  await withLoading(async () => {
+    try {
+      const bookletId = (route.params as any)?.id as string
+      const month = numberFromMonth(bookletData.month) as number
+      await regenerateDeletedPrevisionalTransactions(bookletId, month, bookletData.year)
+      await loadBookletData()
+      toast.success('Transactions prévisionnelles régénérées avec succès')
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
+    }
+  }, regenerateScope)
+}
+
 function rowClass(row: TransactionCreationDTO): string {
   if (row.isPreview) return 'preview-row'
   return ''
@@ -640,6 +657,15 @@ onUnmounted(() => {
               :disabled="isAnyActionLoading"
               @click="openCsvExportDialog"
             />
+            <Button
+              v-tooltip.bottom="'Régénérer les transactions prévisionnelles supprimées'"
+              outlined
+              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-violet-500 text-violet-600 hover:bg-violet-500/10 transition-all"
+              icon="pi pi-refresh"
+              :loading="isRegenerateLoading"
+              :disabled="isAnyActionLoading"
+              @click="regenerate"
+            />
             <template v-if="hasSelection">
               <Button
                 v-tooltip.bottom="`Supprimer (${selectedSheets.length})`"
@@ -671,6 +697,15 @@ onUnmounted(() => {
           label="Prévisionnelle"
           :disabled="isAnyActionLoading"
           @click="openPreviewCreationDialog"
+        />
+        <Button
+          outlined
+          class="flex-1 border-violet-500 text-violet-600 hover:bg-violet-500/10 font-semibold transition-all"
+          icon="pi pi-refresh"
+          label="Régénérer"
+          :loading="isRegenerateLoading"
+          :disabled="isAnyActionLoading"
+          @click="regenerate"
         />
       </div>
 

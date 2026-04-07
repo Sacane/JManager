@@ -150,6 +150,24 @@ class BookletController (
             .toHttpResponse()
     }
 
+    @PostMapping("{bookletID}/transactions/regenerate")
+    fun regenerateDeletedPrevisionalTransactions(
+        @PathVariable("bookletID") bookletID: String,
+        @RequestParam("month") month: Int,
+        @RequestParam("year") year: Int,
+    ): ResponseEntity<List<TransactionResult>> {
+        LOGGER.info("Regenerating deleted previsional transactions for booklet $bookletID, month=$month, year=$year")
+        return feature
+            .regenerateDeletedPrevisionalTransactions(
+                token = currentUser.token,
+                bookletId = bookletID.toUUID(),
+                month = Month.of(month),
+                year = year
+            )
+            .map { transactions -> transactions.map { it.toDTO() } }
+            .toHttpResponse()
+    }
+
     private fun validateDateRange(startDate: LocalDate?, endDate: LocalDate?) {
         if ((startDate == null) != (endDate == null)) {
             throw InvalidRequestException(
