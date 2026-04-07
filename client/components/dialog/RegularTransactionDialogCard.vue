@@ -6,6 +6,7 @@ interface Props {
   modelValue: boolean
   transaction: RegularTransactionDTO | null
   loading?: boolean
+  booklets?: BookletDTO[]
 }
 
 interface Emits {
@@ -321,6 +322,26 @@ function handleDelete() {
                 />
               </div>
             </Transition>
+          </div>
+        </div>
+
+        <div v-if="booklets && booklets.length > 0" class="section-card">
+          <div class="section-header">
+            <i class="pi pi-wallet" />
+            <h3>Livrets associés</h3>
+          </div>
+          <div class="section-content">
+            <div class="form-field">
+              <MultiSelect
+                v-model="formData.bookletIds"
+                :options="booklets.map(b => ({ label: b.label, value: b.id }))"
+                option-label="label"
+                option-value="value"
+                placeholder="Sélectionner des livrets"
+                data-test="booklet-selector"
+                class="w-full"
+              />
+            </div>
           </div>
         </div>
 

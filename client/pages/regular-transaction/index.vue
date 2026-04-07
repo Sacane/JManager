@@ -240,6 +240,11 @@ function getUnlinkedBookletsFor(transaction: RegularTransactionDTO) {
   return booklets.value.filter(b => b.id !== undefined && !linked.has(String(b.id)))
 }
 
+function getLinkedActiveBookletsFor(transaction: RegularTransactionDTO) {
+  const ids = new Set(transaction.bookletIds ?? [])
+  return booklets.value.filter(b => b.id !== undefined && ids.has(String(b.id)))
+}
+
 function openLinkDialog(transaction: RegularTransactionDTO) {
   linkTargetTransaction.value = transaction
   selectedBookletToLink.value = null
@@ -420,6 +425,7 @@ async function handleUnlink() {
             <div class="flex items-center gap-2">
               <Button
                 v-tooltip.top="'Lier à un livret'"
+                data-test="btn-link"
                 icon="pi pi-link"
                 size="small"
                 severity="secondary"
@@ -429,11 +435,12 @@ async function handleUnlink() {
               />
               <Button
                 v-tooltip.top="'Délier d\'un livret'"
+                data-test="btn-unlink"
                 icon="pi pi-minus-circle"
                 size="small"
                 severity="warning"
                 outlined
-                :disabled="!(data.bookletIds?.length)"
+                :disabled="getLinkedActiveBookletsFor(data).length === 0"
                 @click.stop="openUnlinkDialog(data)"
               />
             </div>
@@ -518,10 +525,11 @@ async function handleUnlink() {
                 severity="secondary"
                 outlined
                 label="Lier"
+                :disabled="getUnlinkedBookletsFor(transaction).length === 0"
                 @click.stop="openLinkDialog(transaction)"
               />
               <Button
-                v-if="transaction.bookletIds?.length"
+                v-if="getLinkedActiveBookletsFor(transaction).length > 0"
                 icon="pi pi-minus-circle"
                 size="small"
                 severity="warning"
