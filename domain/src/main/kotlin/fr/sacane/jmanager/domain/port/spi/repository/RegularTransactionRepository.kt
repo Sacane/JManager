@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port.spi.repository
 
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
@@ -87,4 +88,20 @@ interface RegularTransactionRepository {
      * @return Updated RegularTransaction without the given booklet, or null if not found
      */
     fun unlinkBooklet(userId: UserId, transactionId: RegularTransactionId, bookletId: UUID): RegularTransaction?
+
+    /**
+     * Check whether any regular transaction references the given personal tag.
+     *
+     * @param tagId UUID of the personal tag to check
+     * @return true if at least one regular transaction uses the tag
+     */
+    fun isPersonalTagUsed(tagId: UUID): Boolean
+
+    /**
+     * Replace every occurrence of the given personal tag in regular transactions with the supplied default tag.
+     *
+     * @param tagId UUID of the personal tag to replace
+     * @param defaultTag Tag to assign as replacement
+     */
+    fun replacePersonalTagByDefault(tagId: UUID, defaultTag: Tag)
 }

@@ -2,6 +2,14 @@
 
 ## 2026-04-07
 
+- **Tag deletion warning with forced reassignment**: Deleting a personal tag that is already assigned to transactions or regular transactions now returns a 409 Conflict (instead of silently succeeding) so the frontend can warn the user. A `force=true` query parameter enables confirmed deletion: all matching transactions (regular and normal) are reassigned to the default tag (`Aucune`) before the tag is deleted.
+  - **Domain**: Added `TAG_IN_USE(2005)` to `ResultState`; extended `TransactionRepository` and `RegularTransactionRepository` SPI ports with `isPersonalTagUsed(tagId)` and `replacePersonalTagByDefault(tagId, defaultTag)`; updated `TagFeature.deleteTag` signature to accept `force: Boolean = false` and injected both transaction repos into `TagFeatureImpl`; guard logic: TAG_IN_USE when in use and force=false, reassign before deletion when force=true.
+  - **Domain tests**: Added two new `DeleteTagFeatureTest` cases — "used tag without force → TAG_IN_USE" and "used tag with force → success + reassigned to default tag".
+  - **Infra SPI**: Added `existsByPersonalTagId` and `replacePersonalTagByDefaultId` native-SQL queries to `TransactionJpaRepository` and `RegularTransactionResourceJpaRepository`; implemented new port methods in `TransactionRepositoryJpaAdapter` and `RegularTransactionRepositoryDataJpaAdapter`.
+  - **Infra API**: Added `ConflictException`; mapped `TAG_IN_USE` → HTTP 409 in `ApiMappingExtensions` and added `@ExceptionHandler(ConflictException)` in `ProblemDetailHandler`; updated `TagController.deleteTag` to accept `?force=true` request param.
+  - **Infra API tests**: Added two new `DeleteTagEndpointTest` cases — "used tag without force → 409" and "used tag with force → 200 + transaction reassigned to default".
+  - Full test suite (domain + infra) green after all changes.
+
 - **Regular Transaction Link/Unlink feature**: Added dedicated endpoints and UI to link or unlink a regular transaction to/from a booklet, replacing the previous booklet management inside the update modal.
   - **Domain**: Added `linkBooklet` / `unlinkBooklet` to `RegularTransactionRepository` SPI port; added `deleteTrackerByPair` to `RegularTransactionTrackerRepository` SPI port; added `linkRegularTransactionToBooklet` / `unlinkRegularTransactionFromBooklet` to `RegularTransactionFeature` port and implemented in `RegularTransactionFeatureImpl` (guards: already-linked → 400, not-linked → 400, not-found → 404). Unlink automatically deletes the tracker entry for the pair to stop virtual/preview transaction generation for that booklet.
   - **Infra SPI**: Added `deleteByRegularTransactionIdAndBookletId` JPA method to `JpaRegularTransactionTrackerRepository`; added `link` / `unlink` transactional operations to `RegularTransactionOperator`; implemented `linkBooklet` / `unlinkBooklet` in `RegularTransactionRepositoryDataJpaAdapter`.

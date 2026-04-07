@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.fake
 import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.RegularByBooklet
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
@@ -104,6 +105,14 @@ class InMemoryRegularTransactionRepository(
         val currentBookletIds = inMemoryDatabase.getBookletIdsForRegularTransaction(userId, transactionId)
         inMemoryDatabase.updateRegularTransaction(userId, updated, currentBookletIds.filter { it != bookletId })
         return inMemoryDatabase.getRegularTransactionById(userId, transactionId)
+    }
+
+    override fun isPersonalTagUsed(tagId: UUID): Boolean {
+        return inMemoryDatabase.isRegularPersonalTagUsed(tagId)
+    }
+
+    override fun replacePersonalTagByDefault(tagId: UUID, defaultTag: Tag) {
+        inMemoryDatabase.replaceRegularPersonalTagByDefault(tagId, defaultTag)
     }
 
 }

@@ -1,10 +1,12 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters.regular
 
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
@@ -17,7 +19,8 @@ class RegularTransactionRepositoryDataJpaAdapter(
     private val userPostgresRepository: UserPostgresRepository,
     private val regularTransactionOperator: RegularTransactionOperator,
     private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
-    private val regularTransactionTrackerRepository: RegularTransactionTrackerRepository
+    private val regularTransactionTrackerRepository: RegularTransactionTrackerRepository,
+    private val defaultTagPostgresRepository: DefaultTagPostgresRepository
 ): RegularTransactionRepository {
     companion object {
         private val logger = org.slf4j.LoggerFactory.getLogger(RegularTransactionRepositoryDataJpaAdapter::class.java)
@@ -123,6 +126,17 @@ class RegularTransactionRepositoryDataJpaAdapter(
 
         regularTransactionOperator.unlink(existing, bookletId)
         return regularTransactionRepository.findByIdWithBooklets(id)?.toDomain()
+    }
+
+    @Transactional
+    override fun isPersonalTagUsed(tagId: UUID): Boolean {
+        return regularTransactionRepository.existsByPersonalTagId(tagId)
+    }
+
+    @Transactional
+    override fun replacePersonalTagByDefault(tagId: UUID, defaultTag: Tag) {
+        val defaultTagResource = defaultTagPostgresRepository.findAll().firstOrNull { it.name == defaultTag.label } ?: return
+        regularTransactionRepository.replacePersonalTagByDefaultId(tagId, defaultTagResource.idTag!!)
     }
 }
 private fun String.asUUID(): UUID {

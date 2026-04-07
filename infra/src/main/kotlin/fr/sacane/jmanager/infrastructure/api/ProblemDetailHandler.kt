@@ -87,6 +87,18 @@ class ProblemDetailHandler {
         )
     }
 
+    @ExceptionHandler(ConflictException::class)
+    fun onConflictException(ex: ConflictException): ResponseEntity<ProblemDetail> {
+        logException("Conflict", ex.cause?.message ?: ex.message)
+        return buildResponse(
+            status = HttpStatus.CONFLICT,
+            title = "Conflict",
+            detail = ex.message,
+            code = ex.errCode,
+            errorKey = ex.errKey,
+        )
+    }
+
     @ExceptionHandler(Exception::class)
     fun onIrregularException(ex: Exception): ResponseEntity<ProblemDetail> {
         logException("Internal server error", ex.cause?.message ?: ex.message)
