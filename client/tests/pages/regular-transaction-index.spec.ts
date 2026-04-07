@@ -8,6 +8,17 @@ vi.mock('~/composables/useDate', () => ({
   }),
 }))
 
+const ClickableButtonStub = {
+  props: ['label', 'disabled', 'loading'],
+  emits: ['click'],
+  template: '<button :data-label="label" :disabled="disabled" @click="!disabled && $emit(\'click\')">{{ label }}<slot /></button>',
+}
+
+const DialogWithFooterStub = {
+  props: ['visible'],
+  template: '<div v-if="visible"><slot /><slot name="footer" /></div>',
+}
+
 function flushPromises() {
   return new Promise(resolve => setTimeout(resolve, 0))
 }
@@ -60,6 +71,9 @@ function mountPage(options?: {
     ? vi.fn().mockRejectedValue(options.bulkDeleteReject)
     : vi.fn().mockResolvedValue(undefined)
 
+  const linkRegularTransactionToBooklet = vi.fn().mockResolvedValue(createRegularTransaction('rt-1'))
+  const unlinkRegularTransactionFromBooklet = vi.fn().mockResolvedValue(createRegularTransaction('rt-1'))
+
   const success = vi.fn()
   const errorAxios = vi.fn()
   const warn = vi.fn()
@@ -74,6 +88,8 @@ function mountPage(options?: {
     updateRegularTransaction,
     deleteRegularTransaction,
     deleteRegularTransactions,
+    linkRegularTransactionToBooklet,
+    unlinkRegularTransactionFromBooklet,
   }))
   vi.stubGlobal('useJToast', () => ({ success, errorAxios, warn }))
   vi.stubGlobal('useConfirm', () => ({ require }))
@@ -99,6 +115,8 @@ function mountPage(options?: {
       updateRegularTransaction,
       deleteRegularTransaction,
       deleteRegularTransactions,
+      linkRegularTransactionToBooklet,
+      unlinkRegularTransactionFromBooklet,
       success,
       errorAxios,
       warn,
@@ -293,3 +311,103 @@ describe('pages/regular-transaction/index', () => {
     expect(mocks.errorAxios).toHaveBeenCalledWith(bulkDeleteError)
   })
 })
+
+function mountPageForDialogTests(options?: { linkReject?: any, unlinkReject?: any }) {
+  const activeBooklet = { id: 'booklet-1', amount: 200, label: 'Compte principal', currency: 'EUR' }
+  const transactionAllLinked = createRegularTransaction('rt-all-linked') // bookletIds: ['booklet-1']
+  const transactionNoneLinked = { ...createRegularTransaction('rt-none-linked'), bookletIds: [] as string[] }
+
+  const fetch = vi.fn().mockResolvedValue([activeBooklet])
+  const getRegularTransaction = vi.fn().mockResolvedValue([transactionAllLinked, transactionNoneLinked])
+  const linkRegularTransactionToBooklet = options?.linkReject
+    ? vi.fn().mockRejectedValue(options.linkReject)
+    : vi.fn().mockResolvedValue({ ...transactionAllLinked })
+  const unlinkRegularTransactionFromBooklet = options?.unlinkReject
+    ? vi.fn().mockRejectedValue(options.unlinkReject)
+    : vi.fn().mockResolvedValue({ ...transactionNoneLinked })
+
+  const success = vi.fn()
+  const errorAxios = vi.fn()
+
+  vi.stubGlobal('definePageMeta', vi.fn())
+  vi.stubGlobal('useBooklet', () => ({ fetch }))
+  vi.stubGlobal('useRegularTransaction', () => ({
+    getRegularTransaction,
+    saveMonthlyTransaction: vi.fn(),
+    getRegularTransactionById: vi.fn(),
+    updateRegularTransaction: vi.fn(),
+    deleteRegularTransaction: vi.fn(),
+    deleteRegularTransactions: vi.fn(),
+    linkRegularTransactionToBooklet,
+    unlinkRegularTransactionFromBooklet,
+  }))
+  vi.stubGlobal('useJToast', () => ({ success, errorAxios, warn: vi.fn() }))
+  vi.stubGlobal('useConfirm', () => ({ require: vi.fn() }))
+
+  const wrapper = shallowMount(RegularTransactionPage, {
+    global: {
+      stubs: {
+        // Rend le slot nommé "body" avec les deux transactions de test
+        DataTable: { template: '<div><slot /><slot name="empty" /></div>' },
+        Column: {
+          props: ['header'],
+          template: `<div v-if="header === 'Actions'">
+            <slot name="body" :data="{ id: 'rt-all-linked', bookletIds: ['booklet-1'] }" />
+            <slot name="body" :data="{ id: 'rt-none-linked', bookletIds: [] }" />
+          </div>`,
+        },
+        Button: ClickableButtonStub,
+        Tag: { template: '<span><slot /></span>' },
+        Dialog: DialogWithFooterStub,
+        Select: { props: ['modelValue'], emits: ['update:modelValue'], template: '<select />' },
+        ConfirmDialog: true,
+        RegularTransactionCreationDialog: { name: 'RegularTransactionCreationDialog', props: ['loading'], template: '<div />' },
+        RegularTransactionDialogCard: { name: 'RegularTransactionDialogCard', template: '<div />' },
+      },
+    },
+  })
+
+  return { wrapper, mocks: { linkRegularTransactionToBooklet, unlinkRegularTransactionFromBooklet, success, errorAxios } }
+}
+
+describe('pages/regular-transaction/index – link/unlink button conditions', () => {
+  it('link button is disabled when all active booklets are already linked', async () => {
+    const { wrapper } = mountPageForDialogTests()
+    await flushPromises()
+
+    const linkButtons = wrapper.findAll('[data-test="btn-link"]')
+    const allLinkedBtn = linkButtons.find(b => b.attributes('data-label') === undefined
+      && b.element.closest
+      && wrapper.findAll('[data-test="btn-link"]')[0] === b)
+    // Premier btn-link correspond à rt-all-linked (bookletIds=['booklet-1'] == tous les livrets actifs)
+    expect(linkButtons[0].attributes('disabled')).toBeDefined()
+  })
+
+  it('link button is enabled when at least one active booklet is not yet linked', async () => {
+    const { wrapper } = mountPageForDialogTests()
+    await flushPromises()
+
+    const linkButtons = wrapper.findAll('[data-test="btn-link"]')
+    // Deuxième btn-link correspond à rt-none-linked (bookletIds=[] → booklet-1 pas encore lié)
+    expect(linkButtons[1].attributes('disabled')).toBeUndefined()
+  })
+
+  it('unlink button is enabled when at least one active booklet is linked', async () => {
+    const { wrapper } = mountPageForDialogTests()
+    await flushPromises()
+
+    const unlinkButtons = wrapper.findAll('[data-test="btn-unlink"]')
+    // Premier btn-unlink correspond à rt-all-linked (bookletIds=['booklet-1'] → 1 livret actif lié)
+    expect(unlinkButtons[0].attributes('disabled')).toBeUndefined()
+  })
+
+  it('unlink button is disabled when no active booklet is linked', async () => {
+    const { wrapper } = mountPageForDialogTests()
+    await flushPromises()
+
+    const unlinkButtons = wrapper.findAll('[data-test="btn-unlink"]')
+    // Deuxième btn-unlink correspond à rt-none-linked (bookletIds=[] → aucun livret actif lié)
+    expect(unlinkButtons[1].attributes('disabled')).toBeDefined()
+  })
+})
+

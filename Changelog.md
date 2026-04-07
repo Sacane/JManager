@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-04-07
+
+- **Regular Transaction Link/Unlink feature**: Added dedicated endpoints and UI to link or unlink a regular transaction to/from a booklet, replacing the previous booklet management inside the update modal.
+  - **Domain**: Added `linkBooklet` / `unlinkBooklet` to `RegularTransactionRepository` SPI port; added `deleteTrackerByPair` to `RegularTransactionTrackerRepository` SPI port; added `linkRegularTransactionToBooklet` / `unlinkRegularTransactionFromBooklet` to `RegularTransactionFeature` port and implemented in `RegularTransactionFeatureImpl` (guards: already-linked → 400, not-linked → 400, not-found → 404). Unlink automatically deletes the tracker entry for the pair to stop virtual/preview transaction generation for that booklet.
+  - **Infra SPI**: Added `deleteByRegularTransactionIdAndBookletId` JPA method to `JpaRegularTransactionTrackerRepository`; added `link` / `unlink` transactional operations to `RegularTransactionOperator`; implemented `linkBooklet` / `unlinkBooklet` in `RegularTransactionRepositoryDataJpaAdapter`.
+  - **Infra API**: Added `POST /api/transaction/regular/{transactionId}/link/{bookletId}` and `DELETE /api/transaction/regular/{transactionId}/link/{bookletId}` endpoints in `TransactionController`.
+  - **Frontend**: Added `linkRegularTransactionToBooklet` / `unlinkRegularTransactionFromBooklet` in `useRegularTransaction.ts`; removed the booklet multi-select from the update modal (`RegularTransactionDialogCard`); added Link and Unlink action buttons per row in the regular transaction DataTable with dedicated dialog modals.
+  - Full test suite (domain + infra) green after all changes.
+
 ## 2026-04-06
 
 - Fixed bug where editing the tag of a regular transaction had no effect (200 OK returned but tag reverted to original value): `tag` and `personalTag` fields were declared `val` (immutable) in `AbstractRegularTransactionResource` and `RegularTransactionEntity`, making mutation impossible; changed both to `var`. Added full tag-mapping logic in `RegularTransactionOperator.update()` mirroring the existing `save()` behaviour (DefaultTag / PersonalTag / fallback to unknown tag), so the correct tag is now persisted on every update.

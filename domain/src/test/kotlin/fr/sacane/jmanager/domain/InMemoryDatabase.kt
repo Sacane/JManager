@@ -102,6 +102,17 @@ class InMemoryDatabase {
         }
     }
 
+    fun deleteTrackerByPair(regularTransactionId: RegularTransactionId, bookletId: UUID) {
+        trackers[bookletId]?.removeIf { it.regularTransactionId == regularTransactionId }
+    }
+
+    fun getBookletIdsForRegularTransaction(userId: UserId, transactionId: RegularTransactionId): List<UUID> {
+        return regularTransactionsByUser[userId]
+            ?.find { it.transaction.id == transactionId }
+            ?.bookletIds
+            ?: emptyList()
+    }
+
     fun addBooklet(ownerId: UserId, booklet: Booklet) {
         if(userByBooklet[ownerId] == null) {
             userByBooklet[ownerId] = mutableListOf()

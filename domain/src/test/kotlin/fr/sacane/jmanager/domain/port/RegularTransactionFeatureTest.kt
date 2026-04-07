@@ -509,4 +509,166 @@ class RegularTransactionFeatureTest : FeatureTest() {
         }
 //        }
     }
+
+    @Nested
+    inner class LinkBookletTest {
+
+        @Test
+        fun `should link a booklet to a regular transaction successfully`() {
+            launchWithConnectedUserInstance {
+                val transaction = RegularTransaction(
+                    label = "Salaire",
+                    amount = 2500.toAmount(),
+                    isIncome = true,
+                    id = RegularTransactionId("${user.id}-link-1"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction)))
+
+                val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+                    tokenValue,
+                    transaction.id.value,
+                    booklet.id!!
+                )
+
+                result.assertSuccess()
+                result.onSuccess { updated ->
+                    assertTrue(updated.associatedBooklets.any { it.id == booklet.id })
+                }
+            }
+        }
+
+        @Test
+        fun `should fail when linking booklet to a non-existing transaction`() {
+            launchWithConnectedUserInstance {
+                val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+                    tokenValue,
+                    "non-existing-id",
+                    booklet.id!!
+                )
+
+                result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
+                assertEquals("domain.regular_transaction.link.not_found", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `should fail when linking an already linked booklet`() {
+            launchWithConnectedUserInstance {
+                val transaction = RegularTransaction(
+                    label = "Loyer",
+                    amount = 700.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id}-link-already"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5),
+                    associatedBooklets = listOf(booklet)
+                )
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction, listOf(booklet.id!!))))
+
+                val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+                    tokenValue,
+                    transaction.id.value,
+                    booklet.id!!
+                )
+
+                result.assertFailure(ResultState.BAD_REQUEST)
+                assertEquals("domain.regular_transaction.link.already_linked", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `should fail with unauthorized when token is invalid`() {
+            val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+                "invalid-token",
+                "some-id",
+                UUID.randomUUID()
+            )
+            result.assertFailure(ResultState.UNAUTHORIZED)
+        }
+    }
+
+    @Nested
+    inner class UnlinkBookletTest {
+
+        @Test
+        fun `should unlink a booklet from a regular transaction successfully`() {
+            launchWithConnectedUserInstance {
+                val transaction = RegularTransaction(
+                    label = "Abonnement streaming",
+                    amount = 12.99.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id}-unlink-1"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1),
+                    associatedBooklets = listOf(booklet)
+                )
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction, listOf(booklet.id!!))))
+
+                val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+                    tokenValue,
+                    transaction.id.value,
+                    booklet.id!!
+                )
+
+                result.assertSuccess()
+                result.onSuccess { updated ->
+                    assertTrue(updated.associatedBooklets.none { it.id == booklet.id })
+                }
+            }
+        }
+
+        @Test
+        fun `should fail when unlinking booklet from a non-existing transaction`() {
+            launchWithConnectedUserInstance {
+                val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+                    tokenValue,
+                    "non-existing-id",
+                    booklet.id!!
+                )
+
+                result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
+                assertEquals("domain.regular_transaction.unlink.not_found", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `should fail when unlinking a booklet that is not linked`() {
+            launchWithConnectedUserInstance {
+                val transaction = RegularTransaction(
+                    label = "Dépense non liée",
+                    amount = 50.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id}-unlink-notlinked"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction)))
+
+                val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+                    tokenValue,
+                    transaction.id.value,
+                    booklet.id!!
+                )
+
+                result.assertFailure(ResultState.BAD_REQUEST)
+                assertEquals("domain.regular_transaction.unlink.not_linked", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `should fail with unauthorized when token is invalid`() {
+            val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+                "invalid-token",
+                "some-id",
+                UUID.randomUUID()
+            )
+            result.assertFailure(ResultState.UNAUTHORIZED)
+        }
+    }
 }

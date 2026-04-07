@@ -89,7 +89,8 @@ object FakeFactory {
         inMemoryRegularTransactionRepository,
         inMemoryTagRepository,
         sessionManager,
-        manager
+        manager,
+        inMemoryTrackerRepository
     )
     val fileImportExportFeature = FileImportExportFeatureImpl(
         csvFileReader,

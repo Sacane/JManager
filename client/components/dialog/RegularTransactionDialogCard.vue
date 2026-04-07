@@ -5,8 +5,8 @@ import { getTagStyle } from '~/utils/util'
 interface Props {
   modelValue: boolean
   transaction: RegularTransactionDTO | null
-  booklets?: OnlyBookletInfo[]
   loading?: boolean
+  booklets?: BookletDTO[]
 }
 
 interface Emits {
@@ -87,24 +87,6 @@ const untilDateValue = computed({
 const hasChanges = computed(() => {
   if (!originalData.value) return false
   return JSON.stringify(formData.value) !== originalData.value
-})
-
-const bookletOptions = computed(() => {
-  return (props.booklets ?? [])
-    .filter(booklet => booklet.id !== undefined && booklet.id !== null)
-    .map(booklet => ({
-      label: booklet.label,
-      value: String(booklet.id),
-    }))
-})
-
-const linkedBooklets = computed(() => {
-  const ids = formData.value.bookletIds ?? []
-  if (!ids.length) return []
-  return ids.map((id) => {
-    const booklet = props.booklets?.find(b => String(b.id) === id)
-    return booklet?.label ?? id
-  })
 })
 
 watch(() => props.transaction, (newTransaction) => {
@@ -343,6 +325,26 @@ function handleDelete() {
           </div>
         </div>
 
+        <div v-if="booklets && booklets.length > 0" class="section-card">
+          <div class="section-header">
+            <i class="pi pi-wallet" />
+            <h3>Livrets associés</h3>
+          </div>
+          <div class="section-content">
+            <div class="form-field">
+              <MultiSelect
+                v-model="formData.bookletIds"
+                :options="booklets.map(b => ({ label: b.label, value: b.id }))"
+                option-label="label"
+                option-value="value"
+                placeholder="Sélectionner des livrets"
+                data-test="booklet-selector"
+                class="w-full"
+              />
+            </div>
+          </div>
+        </div>
+
         <div class="section-card">
           <div class="section-header">
             <i class="pi pi-bookmark" />
@@ -377,47 +379,6 @@ function handleDelete() {
                 </template>
               </Select>
             </div>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-header">
-            <i class="pi pi-wallet" />
-            <h3>Livrets associés</h3>
-          </div>
-          <div class="section-content">
-            <div class="form-field">
-              <label for="bookletIds" class="field-label">
-                <i class="pi pi-list" />
-                Modifier les livrets liés
-              </label>
-              <MultiSelect
-                id="bookletIds"
-                v-model="formData.bookletIds"
-                data-test="booklet-selector"
-                :options="bookletOptions"
-                option-label="label"
-                option-value="value"
-                display="chip"
-                filter
-                placeholder="Sélectionner les livrets"
-                class="w-full"
-              />
-            </div>
-
-            <div v-if="linkedBooklets.length" class="flex flex-col gap-2">
-              <div
-                v-for="bookletLabel in linkedBooklets"
-                :key="bookletLabel"
-                class="flex items-center gap-2"
-              >
-                <i class="pi pi-check-circle text-green-500" />
-                <span>{{ bookletLabel }}</span>
-              </div>
-            </div>
-            <span v-else class="text-sm text-color-secondary">
-              Aucun livret associé.
-            </span>
           </div>
         </div>
       </div>

@@ -88,6 +88,7 @@ interface JpaRegularTransactionTrackerRepository : JpaRepository<RegularTransact
     fun findAllByBookletId(bookletId: UUID): List<RegularTransactionTrackerEntity>
     fun deleteAllByBookletId(bookletId: UUID)
     fun deleteAllByRegularTransactionId(regularTransactionId: String)
+    fun deleteByRegularTransactionIdAndBookletId(regularTransactionId: String, bookletId: UUID)
 }
 
 @Service
@@ -131,6 +132,10 @@ class RegularTransactionTrackerRepositoryAdapter(
 
     override fun deleteTrackerByRegularTransactionId(regularTransactionId: RegularTransactionId) {
         jpaRepository.deleteAllByRegularTransactionId(regularTransactionId.value)
+    }
+
+    override fun deleteTrackerByPair(regularTransactionId: RegularTransactionId, bookletId: UUID) {
+        jpaRepository.deleteByRegularTransactionIdAndBookletId(regularTransactionId.value, bookletId)
     }
 
     override fun markMonthAsExcluded(

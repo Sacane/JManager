@@ -64,4 +64,14 @@ interface RegularTransactionTrackerRepository {
         year: Int,
         month: Month
     )
+
+    /**
+     * Deletes the tracker for a specific regular transaction / booklet pair.
+     * This must be called when unlinking a regular transaction from a booklet
+     * to ensure no virtual transactions are generated for that pair anymore.
+     *
+     * @param regularTransactionId The identifier of the regular transaction.
+     * @param bookletId The identifier of the booklet.
+     */
+    fun deleteTrackerByPair(regularTransactionId: RegularTransactionId, bookletId: UUID)
 }
