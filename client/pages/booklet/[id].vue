@@ -4,13 +4,11 @@ import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
-import { resolveMonthlyCycleRangeForTargetMonth, toIsoLocalDate } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({ layout: 'sidebar-layout' })
 
 const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear } = useBooklet()
-const { getSettings: getUserSettings } = useUserSettings()
 const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
@@ -24,8 +22,6 @@ const { isScopeLoading, withLoading } = useLoading()
 const selectedSheets = ref<TransactionCreationDTO[]>([])
 const actualSheets = ref<TransactionCreationDTO[]>([])
 const tags = ref<TagDTO[]>([])
-const bookletMonthlyPeriodStartDay = ref(1)
-const bookletMonthlyPeriodEndDay = ref<number | null>(null)
 
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
@@ -162,59 +158,15 @@ function resetTransaction() {
   })
 }
 
-function normalizeMonthlyPeriodStartDay(value: number | undefined): number {
-  if (value === undefined || Number.isNaN(value)) {
-    return 1
-  }
-
-  return Math.min(31, Math.max(1, Math.trunc(value)))
-}
-
-function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number | null {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return null
-  }
-
-  return Math.min(31, Math.max(1, Math.trunc(value)))
-}
-
-async function loadBookletCycleSetting(bookletId: string) {
-  try {
-    const settings = await getUserSettings()
-    if (!settings) {
-      bookletMonthlyPeriodStartDay.value = 1
-      bookletMonthlyPeriodEndDay.value = null
-      return
-    }
-
-    const bookletCycle = settings.bookletCycles.find(cycle => cycle.bookletId === bookletId)
-    bookletMonthlyPeriodStartDay.value = normalizeMonthlyPeriodStartDay(bookletCycle?.monthlyPeriodStartDay)
-    bookletMonthlyPeriodEndDay.value = normalizeMonthlyPeriodEndDay(bookletCycle?.monthlyPeriodEndDay)
-  } catch {
-    bookletMonthlyPeriodStartDay.value = 1
-    bookletMonthlyPeriodEndDay.value = null
-  }
-}
-
 async function loadBookletData() {
   await withLoading(async () => {
     try {
       const bookletId = (route.params as any)?.id as string
       const month = numberFromMonth(bookletData.month) as number
-      const cycleRange = resolveMonthlyCycleRangeForTargetMonth(
-        bookletData.year,
-        month,
-        bookletMonthlyPeriodStartDay.value,
-        bookletMonthlyPeriodEndDay.value,
-      )
-      const dateRange = {
-        startDate: toIsoLocalDate(cycleRange.start),
-        endDate: toIsoLocalDate(cycleRange.end),
-      }
 
       const [balances, transactionsRes] = await Promise.all([
-        findBalancesByIdMonthAndYear(bookletId, month, bookletData.year, dateRange),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, dateRange),
+        findBalancesByIdMonthAndYear(bookletId, month, bookletData.year),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year),
       ])
 
       bookletData.label = balances.label
@@ -504,7 +456,6 @@ function onCsvImportSuccess(result: CsvImportResultDTO) {
 onMounted(async () => {
   const bookletId = (route.params as any)?.id as string
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
-  await loadBookletCycleSetting(bookletId)
   await loadBookletData()
   await retrieveTags()
   currentTransaction.tagDTO = await tag.getDefaultTag()
@@ -610,37 +561,37 @@ onUnmounted(() => {
       <!-- Filtres + Actions desktop -->
       <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
         <template v-if="isMobile">
-        <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1 shrink-0">Afficher :</span>
-        <button
-          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
-          :class="transactionFilter === 'all'
-            ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
-            : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--primary)]'"
-          @click="transactionFilter = 'all'"
-        >
-          <i class="pi pi-list mr-2" />
-          Tout ({{ transactionsCount }})
-        </button>
-        <button
-          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
-          :class="transactionFilter === 'confirmed'
-            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
-            : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-emerald-600'"
-          @click="transactionFilter = 'confirmed'"
-        >
-          <i class="pi pi-check-circle mr-2" />
-          Confirmées ({{ transactionsCount - previewTransactionsCount }})
-        </button>
-        <button
-          class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
-          :class="transactionFilter === 'preview'
-            ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
-            : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-amber-600'"
-          @click="transactionFilter = 'preview'"
-        >
-          <i class="pi pi-clock mr-2" />
-          Prévisionnelles ({{ previewTransactionsCount }})
-        </button>
+          <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1 shrink-0">Afficher :</span>
+          <button
+            class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
+            :class="transactionFilter === 'all'
+              ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
+              : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--primary)]'"
+            @click="transactionFilter = 'all'"
+          >
+            <i class="pi pi-list mr-2" />
+            Tout ({{ transactionsCount }})
+          </button>
+          <button
+            class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
+            :class="transactionFilter === 'confirmed'
+              ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
+              : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-emerald-600'"
+            @click="transactionFilter = 'confirmed'"
+          >
+            <i class="pi pi-check-circle mr-2" />
+            Confirmées ({{ transactionsCount - previewTransactionsCount }})
+          </button>
+          <button
+            class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
+            :class="transactionFilter === 'preview'
+              ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
+              : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-amber-600'"
+            @click="transactionFilter = 'preview'"
+          >
+            <i class="pi pi-clock mr-2" />
+            Prévisionnelles ({{ previewTransactionsCount }})
+          </button>
         </template>
 
         <!-- Actions icon-only : desktop uniquement -->
