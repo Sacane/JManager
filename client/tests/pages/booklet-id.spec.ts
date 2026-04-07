@@ -47,18 +47,6 @@ const findBalancesByIdMonthAndYearMock = vi.fn().mockResolvedValue({
 
 const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({ transactions: [] })
 
-const getSettingsMock = vi.fn().mockResolvedValue({
-  projectionWindowDays: 15,
-  bookletCycles: [
-    {
-      bookletId: 'booklet-1',
-      label: 'Compte courant',
-      monthlyPeriodStartDay: 28,
-      monthlyPeriodEndDay: null,
-    },
-  ],
-})
-
 function flushPromises() {
   return new Promise<void>(resolve => queueMicrotask(resolve))
 }
@@ -78,9 +66,6 @@ function mountPage(activeScopes: string[] = []) {
   vi.stubGlobal('useBooklet', () => ({
     findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
     findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
-  }))
-  vi.stubGlobal('useUserSettings', () => ({
-    getSettings: getSettingsMock,
   }))
   vi.stubGlobal('useTag', () => ({
     getAllTags: vi.fn().mockResolvedValue([defaultTag]),
@@ -151,97 +136,21 @@ describe('pages/booklet/[id] loading states', () => {
     expect(exportButton?.attributes('disabled')).toBeDefined()
   })
 
-  it('queries account balances and transactions with cycle-aware date range', async () => {
+  it('queries account balances and transactions for calendar month', async () => {
     mountPage()
 
     await flushPromises()
     await flushPromises()
 
-    expect(getSettingsMock).toHaveBeenCalledTimes(1)
     expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
       'booklet-1',
       3,
       2026,
-      {
-        startDate: '2026-02-28',
-        endDate: '2026-03-27',
-      },
     )
     expect(findTransactionsByIdMonthAndYearMock).toHaveBeenCalledWith(
       'booklet-1',
       3,
       2026,
-      {
-        startDate: '2026-02-28',
-        endDate: '2026-03-27',
-      },
-    )
-  })
-
-  it('queries account with explicit monthly end day when configured', async () => {
-    getSettingsMock.mockResolvedValueOnce({
-      projectionWindowDays: 15,
-      bookletCycles: [
-        {
-          bookletId: 'booklet-1',
-          label: 'Compte courant',
-          monthlyPeriodStartDay: 28,
-          monthlyPeriodEndDay: 30,
-        },
-      ],
-    })
-
-    mountPage()
-
-    await flushPromises()
-    await flushPromises()
-
-    expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
-      'booklet-1',
-      3,
-      2026,
-      {
-        startDate: '2026-02-28',
-        endDate: '2026-03-30',
-      },
-    )
-  })
-
-  it('keeps current month range with default cycle settings', async () => {
-    getSettingsMock.mockResolvedValueOnce({
-      projectionWindowDays: 15,
-      bookletCycles: [
-        {
-          bookletId: 'booklet-1',
-          label: 'Compte courant',
-          monthlyPeriodStartDay: 1,
-          monthlyPeriodEndDay: null,
-        },
-      ],
-    })
-
-    mountPage()
-
-    await flushPromises()
-    await flushPromises()
-
-    expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
-      'booklet-1',
-      3,
-      2026,
-      {
-        startDate: '2026-03-01',
-        endDate: '2026-03-31',
-      },
-    )
-    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenCalledWith(
-      'booklet-1',
-      3,
-      2026,
-      {
-        startDate: '2026-03-01',
-        endDate: '2026-03-31',
-      },
     )
   })
 })
