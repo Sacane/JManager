@@ -144,9 +144,28 @@ class BookletController (
             )
             .map { res ->
                 BookletTransactionsResponse(
-                    transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() }
+                    transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() },
+                    hasRegenerableTransactions = res.hasRegenerableTransactions
                 )
             }
+            .toHttpResponse()
+    }
+
+    @PostMapping("{bookletID}/transactions/regenerate")
+    fun regenerateDeletedPrevisionalTransactions(
+        @PathVariable("bookletID") bookletID: String,
+        @RequestParam("month") month: Int,
+        @RequestParam("year") year: Int,
+    ): ResponseEntity<List<TransactionResult>> {
+        LOGGER.info("Regenerating deleted previsional transactions for booklet $bookletID, month=$month, year=$year")
+        return feature
+            .regenerateDeletedPrevisionalTransactions(
+                token = currentUser.token,
+                bookletId = bookletID.toUUID(),
+                month = Month.of(month),
+                year = year
+            )
+            .map { transactions -> transactions.map { it.toDTO() } }
             .toHttpResponse()
     }
 
@@ -184,7 +203,8 @@ data class BookletBalancesResponse(
 
 @Serializable
 data class BookletTransactionsResponse(
-    val transactions: List<TransactionResult>
+    val transactions: List<TransactionResult>,
+    val hasRegenerableTransactions: Boolean
 )
 
 private fun BookletBalances.toDTO(): BookletBalancesResponse = BookletBalancesResponse(
