@@ -496,13 +496,18 @@ class BookletFeatureImpl(
                 !rt.startDate.isAfter(resolvedRangeEnd)
             }
 
+            val hasRegenerableTransactions = trackersByRegularId.values.any { tracker ->
+                tracker.excludedMonths.contains(targetYearMonth)
+            }
+
             val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
                 currentTransactions = transactions.second,
                 previsionalTransactions = combinedPrevisionalTransactions,
                 regularTransactions = filteredRegularTransactions,
                 realSold = booklet.amount,
-                previsionalSold = previsionalSold
+                previsionalSold = previsionalSold,
+                hasRegenerableTransactions = hasRegenerableTransactions
             )
 
             val totalMs = Duration.ofNanos(System.nanoTime() - totalStartNs).toMillis()
@@ -683,5 +688,6 @@ data class BookletLoadingResult(
     val previsionalTransactions: List<Transaction>,
     val regularTransactions: List<RegularTransaction>,
     val realSold: Amount,
-    val previsionalSold: Amount
+    val previsionalSold: Amount,
+    val hasRegenerableTransactions: Boolean = false
 )

@@ -15,11 +15,13 @@ import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.BookletRegularTransactionInput
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTrackerStateRepository
 import fr.sacane.jmanager.infrastructure.api.setup.RegularTransactionStateForTestAdapter
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
 import fr.sacane.jmanager.infrastructure.generateCookie
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
+import java.time.YearMonth
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
@@ -575,6 +577,78 @@ class BookletControllerTest(
         @AfterEach
         fun clearTrackers() {
             regularTrackerStateRepository.clear()
+        }
+
+        @Test
+        fun `GET transactions should return hasRegenerableTransactions false when no month is excluded`() {
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Test Regen Flag", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("hasRegenerableTransactions", equalTo(false))
+            }
+        }
+
+        @Test
+        fun `GET transactions should return hasRegenerableTransactions true when a month is excluded for a regular transaction`() {
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Test Regen Flag True", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+
+            val regularTxId = RegularTransactionId(java.util.UUID.randomUUID().toString())
+            regularTransactionStateAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = savedBooklet.id!!.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = regularTxId,
+                            label = "Loyer",
+                            amount = Amount.fromString("800.00"),
+                            isIncome = false,
+                            startDate = LocalDate.of(2024, 1, 1),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            recurrenceRule = RecurrenceRule.Monthly(5)
+                        )
+                    )
+                )
+            )
+
+            regularTrackerStateRepository.init(
+                listOf(
+                    RegularTransactionTracker(
+                        regularTransactionId = regularTxId,
+                        bookletId = savedBooklet.id!!,
+                        lastGeneratedDate = LocalDate.of(2024, 1, 5),
+                        numberOfGeneratedTransaction = 1,
+                        excludedMonths = setOf(YearMonth.of(2024, 1))
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", 1)
+                queryParam("year", 2024)
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("hasRegenerableTransactions", equalTo(true))
+            }
         }
 
         @Test

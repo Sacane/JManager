@@ -34,6 +34,7 @@ const isConfirmPreviewDialogVisible = ref(false)
 const newAmountForPreview = ref<number | null>(null)
 const newDateForPreview = ref<Date | null>(null)
 const transactionToConfirm = ref<TransactionCreationDTO | null>(null)
+const hasRegenerableTransactions = ref(false)
 
 const bookletData = reactive({
   id: '',
@@ -180,6 +181,7 @@ async function loadBookletData() {
       actualSheets.value = transactionsRes.transactions
         .map(asDisplayableTransaction)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      hasRegenerableTransactions.value = transactionsRes.hasRegenerableTransactions
     } catch (err) {
       toast.errorAxios(err as AxiosError)
       console.error(err)
@@ -658,6 +660,7 @@ onUnmounted(() => {
               @click="openCsvExportDialog"
             />
             <Button
+              v-if="hasRegenerableTransactions"
               v-tooltip.bottom="'Régénérer les transactions prévisionnelles supprimées'"
               outlined
               class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-violet-500 text-violet-600 hover:bg-violet-500/10 transition-all"
@@ -699,6 +702,7 @@ onUnmounted(() => {
           @click="openPreviewCreationDialog"
         />
         <Button
+          v-if="hasRegenerableTransactions"
           outlined
           class="flex-1 border-violet-500 text-violet-600 hover:bg-violet-500/10 font-semibold transition-all"
           icon="pi pi-refresh"

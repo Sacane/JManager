@@ -1679,6 +1679,88 @@ class BookletFeatureTest: FeatureTest() {
             }
         }
 
+        @Test
+        fun `loadTransactions should signal hasRegenerableTransactions when a month is excluded for a regular transaction`() {
+            launchWithConnectedUserInstance {
+                val bookletId = booklet.id!!
+                val bookletInstance = Booklet(
+                    amount = 1000.toAmount(),
+                    label = "Test Booklet",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Loyer",
+                    amount = 900.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-has-regen-test"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                FakeFactory.trackerRepository().markMonthAsExcluded(
+                    regularTx.id, bookletId, 2024, java.time.Month.FEBRUARY
+                )
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = java.time.Month.FEBRUARY,
+                    year = 2024,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
+                )
+
+                result.assertTrue { this.hasRegenerableTransactions }
+            }
+        }
+
+        @Test
+        fun `loadTransactions should not signal hasRegenerableTransactions when no month is excluded`() {
+            launchWithConnectedUserInstance {
+                val bookletId = booklet.id!!
+                val bookletInstance = Booklet(
+                    amount = 1000.toAmount(),
+                    label = "Test Booklet",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Loyer",
+                    amount = 900.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-no-regen-test"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = java.time.Month.FEBRUARY,
+                    year = 2024,
+                    startingMonth = java.time.Month.JANUARY,
+                    startingYear = 2025
+                )
+
+                result.assertTrue { !this.hasRegenerableTransactions }
+            }
+        }
+
     }
 
     @Nested

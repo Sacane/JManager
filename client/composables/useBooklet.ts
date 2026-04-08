@@ -13,6 +13,7 @@ export interface BookletBalancesDTO {
 
 export interface BookletTransactionsDTO {
   transactions: TransactionResultDTO[]
+  hasRegenerableTransactions: boolean
 }
 
 export interface BookletDateRangeQuery {

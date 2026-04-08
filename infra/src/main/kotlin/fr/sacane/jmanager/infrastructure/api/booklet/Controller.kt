@@ -144,7 +144,8 @@ class BookletController (
             )
             .map { res ->
                 BookletTransactionsResponse(
-                    transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() }
+                    transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() },
+                    hasRegenerableTransactions = res.hasRegenerableTransactions
                 )
             }
             .toHttpResponse()
@@ -202,7 +203,8 @@ data class BookletBalancesResponse(
 
 @Serializable
 data class BookletTransactionsResponse(
-    val transactions: List<TransactionResult>
+    val transactions: List<TransactionResult>,
+    val hasRegenerableTransactions: Boolean
 )
 
 private fun BookletBalances.toDTO(): BookletBalancesResponse = BookletBalancesResponse(

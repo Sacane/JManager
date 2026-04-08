@@ -9,8 +9,8 @@
   - **Bug fix**: `RegularTransactionComputer.generateMissingPrevisionalTransactions` was erasing `excludedMonths` when upserting the tracker (defaulting to `emptySet()`); fixed to preserve the existing `excludedMonths` set.
   - **Infra SPI**: Implemented `unmarkMonthAsExcluded` in `RegularTransactionTrackerRepositoryAdapter`.
   - **Infra API**: Added `POST /api/booklet/{bookletID}/transactions/regenerate?month=X&year=Y` endpoint in `BookletController`, returning the list of regenerated transactions.
-  - **Frontend**: Added `regenerateDeletedPrevisionalTransactions` in `useBooklet.ts`; added `regenerate` loading scope to `LOADING_SCOPES`; added "Régénérer" button in the booklet detail page action bar (icon-only desktop, labelled mobile) calling the new endpoint and reloading the booklet data.
-  - Full test suite (domain 42 tests + infra 2 new API tests + frontend 83 tests) green after all changes.
+  - **Frontend**: Added `regenerateDeletedPrevisionalTransactions` in `useBooklet.ts`; added `hasRegenerableTransactions: boolean` to `BookletTransactionsDTO`; added `regenerate` loading scope to `LOADING_SCOPES`; added "Régénérer" button in the booklet detail page action bar (icon-only desktop, labelled mobile), visible only when `hasRegenerableTransactions == true` (i.e. at least one regular transaction has the current month excluded).
+  - Full test suite (domain 44 tests + infra 4 new API tests + frontend 83 tests) green after all changes; also fixed a kotlinx-serialization `encodeDefaults = false` issue by removing the default value from `BookletTransactionsResponse.hasRegenerableTransactions`.
 
 ## 2026-04-07
 
