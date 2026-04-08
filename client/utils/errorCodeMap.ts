@@ -37,6 +37,7 @@ const errorMessagesByCode: Record<number, ErrorMessage> = {
   2002: { summary: 'Tag deja utilise', detail: 'Le libelle du tag est deja utilise.' },
   2003: { summary: 'Action non autorisee', detail: 'Le tag par defaut ne peut pas etre modifie.' },
   2004: { summary: 'Limite atteinte', detail: 'La taille maximale du compte est atteinte.' },
+  2005: { summary: 'Tag utilisé', detail: 'Ce tag est utilisé dans des transactions existantes.' },
   3001: { summary: 'Authentification requise', detail: 'Vous devez etre connecte pour continuer.' },
   3002: { summary: 'Non autorise', detail: 'Vous n etes pas autorise a effectuer cette action.' },
   3003: { summary: 'Identifiants invalides', detail: 'Le mot de passe fourni est invalide.' },
