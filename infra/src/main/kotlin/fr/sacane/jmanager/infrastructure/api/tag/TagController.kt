@@ -32,9 +32,10 @@ class TagController(
 
     @DeleteMapping("{tagId}")
     fun deleteTag(
-        @PathVariable("tagId") tagId: String
+        @PathVariable("tagId") tagId: String,
+        @RequestParam(required = false, defaultValue = "false") force: Boolean
     ): ResponseEntity<Nothing>
-       = tagFeature.deleteTag(currentUser.token, tagId.toUUID())
+       = tagFeature.deleteTag(currentUser.token, tagId.toUUID(), force)
            .toHttpResponse()
 
     @GetMapping("/default")

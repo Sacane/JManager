@@ -123,6 +123,40 @@ async function add() {
   }, addTagScope)
 }
 
+async function performDeleteTag(row: DataDisplay, force: boolean = false): Promise<void> {
+  await withLoading(async () => {
+    try {
+      await deleteTag(row.id, force)
+      const indexDelTag = tags.value.findIndex(e => e.id === row.id)
+      if (indexDelTag !== -1) {
+        tags.value.splice(indexDelTag, 1)
+      }
+      toast.success('Tag supprimé avec succès')
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        confirm.require({
+          message: 'Ce tag est utilisé dans des transactions existantes. Si vous confirmez la suppression, toutes ces transactions seront rattachées au tag par défaut "Aucune".',
+          header: 'Tag utilisé dans des transactions',
+          icon: 'pi pi-exclamation-triangle',
+          rejectProps: {
+            label: 'Annuler',
+            severity: 'secondary',
+            outlined: true,
+          },
+          acceptProps: {
+            label: 'Supprimer et remplacer',
+            severity: 'danger',
+          },
+          accept: () => performDeleteTag(row, true),
+        })
+      }
+      else {
+        toast.errorAxios(error)
+      }
+    }
+  }, deleteTagScope)
+}
+
 function onDeleteClick(row: DataDisplay): void {
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer ce tag ?',
@@ -137,20 +171,7 @@ function onDeleteClick(row: DataDisplay): void {
       label: 'Supprimer',
       severity: 'danger',
     },
-    accept: async () => {
-      await withLoading(async () => {
-        try {
-          await deleteTag(row.id)
-          const indexDelTag = tags.value.findIndex(e => e.id === row.id)
-          if (indexDelTag !== -1) {
-            tags.value.splice(indexDelTag, 1)
-          }
-          toast.success('Tag supprimé avec succès')
-        } catch (error) {
-          toast.errorAxios(error as any)
-        }
-      }, deleteTagScope)
-    },
+    accept: () => performDeleteTag(row),
   })
 }
 

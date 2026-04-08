@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -73,6 +74,14 @@ class InMemoryTransactionRepository(
         month: Month
     ): List<Transaction>? {
         return inMemoryDatabase.findBookletById(bookletId)?.retrieveSheetSurroundAndSortedByDate(month, year)
+    }
+
+    override fun isPersonalTagUsed(tagId: UUID): Boolean {
+        return inMemoryDatabase.isPersonalTagUsed(tagId)
+    }
+
+    override fun replacePersonalTagByDefault(tagId: UUID, defaultTag: Tag) {
+        inMemoryDatabase.replacePersonalTagByDefault(tagId, defaultTag)
     }
 
     override fun getStates(): Collection<IdBookletByTransaction> {
