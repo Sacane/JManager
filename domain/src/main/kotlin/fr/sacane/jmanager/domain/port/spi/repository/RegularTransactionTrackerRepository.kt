@@ -66,6 +66,22 @@ interface RegularTransactionTrackerRepository {
     )
 
     /**
+     * Removes the exclusion mark for a specific month and year for a regular transaction in a booklet.
+     * This allows the transaction to be regenerated for that month if it was previously excluded.
+     *
+     * @param regularTransactionId The identifier of the regular transaction.
+     * @param bookletId The identifier of the booklet.
+     * @param year The year to un-exclude.
+     * @param month The month to un-exclude.
+     */
+    fun unmarkMonthAsExcluded(
+        regularTransactionId: RegularTransactionId,
+        bookletId: UUID,
+        year: Int,
+        month: Month
+    )
+
+    /**
      * Deletes the tracker for a specific regular transaction / booklet pair.
      * This must be called when unlinking a regular transaction from a booklet
      * to ensure no virtual transactions are generated for that pair anymore.

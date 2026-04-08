@@ -161,4 +161,17 @@ class RegularTransactionTrackerRepositoryAdapter(
             upsertTracker(newTracker)
         }
     }
+
+    override fun unmarkMonthAsExcluded(
+        regularTransactionId: RegularTransactionId,
+        bookletId: UUID,
+        year: Int,
+        month: Month
+    ) {
+        val tracker = findTracker(regularTransactionId, bookletId) ?: return
+        val updatedTracker = tracker.copy(
+            excludedMonths = tracker.excludedMonths - YearMonth.of(year, month)
+        )
+        upsertTracker(updatedTracker)
+    }
 }

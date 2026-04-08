@@ -19,6 +19,7 @@ export const LOADING_SCOPES = {
     deleteTransaction: 'booklet.deleteTransaction',
     confirmPreview: 'booklet.confirmPreview',
     exportCsv: 'booklet.exportCsv',
+    regenerate: 'booklet.regenerate',
   },
   tag: {
     load: 'tag.load',

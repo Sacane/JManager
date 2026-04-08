@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-08
+
+- **Regenerate deleted previsional transactions**: Added the ability to regenerate previsional transactions that were previously deleted by the user for a given month/year, for all regular transactions linked to a booklet.
+  - **Domain SPI**: Added `unmarkMonthAsExcluded(regularTransactionId, bookletId, year, month)` to `RegularTransactionTrackerRepository` port.
+  - **Domain fake**: Implemented `unmarkMonthAsExcluded` in `InMemoryRegularTrackerRepository`.
+  - **Domain feature**: Added `regenerateDeletedPrevisionalTransactions(token, bookletId, month, year)` to `BookletFeature` interface and implemented in `BookletFeatureImpl` (un-marks the exclusion for each tracker where the target month was excluded, then re-runs the previsional transaction generator).
+  - **Bug fix**: `RegularTransactionComputer.generateMissingPrevisionalTransactions` was erasing `excludedMonths` when upserting the tracker (defaulting to `emptySet()`); fixed to preserve the existing `excludedMonths` set.
+  - **Infra SPI**: Implemented `unmarkMonthAsExcluded` in `RegularTransactionTrackerRepositoryAdapter`.
+  - **Infra API**: Added `POST /api/booklet/{bookletID}/transactions/regenerate?month=X&year=Y` endpoint in `BookletController`, returning the list of regenerated transactions.
+  - **Frontend**: Added `regenerateDeletedPrevisionalTransactions` in `useBooklet.ts`; added `hasRegenerableTransactions: boolean` to `BookletTransactionsDTO`; added `regenerate` loading scope to `LOADING_SCOPES`; added "Régénérer" button in the booklet detail page action bar (icon-only desktop, labelled mobile), visible only when `hasRegenerableTransactions == true` (i.e. at least one regular transaction has the current month excluded).
+  - Full test suite (domain 44 tests + infra 4 new API tests + frontend 83 tests) green after all changes; also fixed a kotlinx-serialization `encodeDefaults = false` issue by removing the default value from `BookletTransactionsResponse.hasRegenerableTransactions`.
+
 ## 2026-04-07
 
 - **Tag deletion warning with forced reassignment**: Deleting a personal tag that is assigned to transactions or regular transactions now shows a confirmation dialog informing the user. If the user confirms, all affected transactions are reassigned to the default tag (`Aucune`) and the tag is deleted. The backend returns 409 Conflict when the tag is in use (without `force=true`); a second call with `?force=true` performs the reassignment and deletion.

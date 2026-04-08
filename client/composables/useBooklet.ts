@@ -13,6 +13,7 @@ export interface BookletBalancesDTO {
 
 export interface BookletTransactionsDTO {
   transactions: TransactionResultDTO[]
+  hasRegenerableTransactions: boolean
 }
 
 export interface BookletDateRangeQuery {
@@ -84,6 +85,14 @@ export default function useBooklet() {
     })
   }
 
+  async function regenerateDeletedPrevisionalTransactions(
+    bookletId: string,
+    month: number,
+    year: number,
+  ): Promise<TransactionResultDTO[]> {
+    return post(`booklet/${bookletId}/transactions/regenerate?month=${month}&year=${year}`, undefined)
+  }
+
   return {
     createBooklet,
     fetch: findAllBooklet,
@@ -93,5 +102,6 @@ export default function useBooklet() {
     findByIdMonthAndYear,
     findBalancesByIdMonthAndYear,
     findTransactionsByIdMonthAndYear,
+    regenerateDeletedPrevisionalTransactions,
   }
 }

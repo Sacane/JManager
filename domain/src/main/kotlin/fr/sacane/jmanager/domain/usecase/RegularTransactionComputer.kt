@@ -170,7 +170,8 @@ class RegularTransactionGeneratorService(
                     regularTransactionId = regularTxId,
                     bookletId = bookletId,
                     lastGeneratedDate = calendarMonthEnd,
-                    numberOfGeneratedTransaction = tracker?.numberOfGeneratedTransaction?.plus(transactionsToCreate.size) ?: transactionsToCreate.size
+                    numberOfGeneratedTransaction = tracker?.numberOfGeneratedTransaction?.plus(transactionsToCreate.size) ?: transactionsToCreate.size,
+                    excludedMonths = tracker?.excludedMonths ?: emptySet()
                 )
                 trackerRepository.upsertTracker(newTracker)
             }
