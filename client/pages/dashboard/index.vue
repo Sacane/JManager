@@ -506,14 +506,9 @@ const categoryExpensesData = computed(() => {
     datasets: [
       {
         data: sortedCategories.map(cat => Number.parseFloat(cat.totalAmount)),
-        backgroundColor: [
-          '#822acc',
-          '#10b981',
-          '#f59e0b',
-          '#3b82f6',
-          '#ef4444',
-          '#8b5cf6',
-        ],
+        backgroundColor: sortedCategories.map(cat =>
+          `rgb(${cat.colorDTO.red}, ${cat.colorDTO.green}, ${cat.colorDTO.blue})`,
+        ),
         borderWidth: 0,
       },
     ],
@@ -1182,7 +1177,7 @@ watch(selectedBookletId, () => {
                 class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all"
                 :class="[
                   dashboardDraggedIndex === index ? 'opacity-40 scale-97' : 'hover:translate-x-1.5',
-                  dashboardDragOverIndex === index && dashboardDraggedIndex !== index ? 'ring-2 ring-purple-500 ring-offset-1' : ''
+                  dashboardDragOverIndex === index && dashboardDraggedIndex !== index ? 'ring-2 ring-purple-500 ring-offset-1' : '',
                 ]"
                 style="background-color: var(--bg-tertiary);"
                 draggable="true"

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-04-08
+
+- **Fix: tag colors in "dépenses par catégorie" chart**: The pie/doughnut chart on the dashboard was displaying hardcoded colors instead of the actual colors saved by the user for each tag.
+  - **Domain**: Added `tagColor: java.awt.Color` field to `CategoryData` model. Updated `CategoryDistributionCalculatorImpl` to group transactions by `Triple(label, id, color)` and propagate the tag color into each `CategoryData` instance.
+  - **Domain tests**: Added `assertEquals(Color.RED/GREEN, categories[i].tagColor)` assertions to the single-category and multi-category distribution tests.
+  - **Infra DTO**: Added `colorDTO: ColorDTO` field to `CategoryDataDTO`; updated the `CategoryData.toDTO()` mapper to call `tagColor.toDTO()`.
+  - **Infra API tests**: Updated `GetCategoryDistributionEndpointTest` to assert that `categories[0].colorDTO` is not null.
+  - **Frontend types**: Added `colorDTO: { red: number, green: number, blue: number }` to `CategoryDataDTO` interface.
+  - **Frontend**: Replaced the 6 hardcoded `backgroundColor` values in `categoryExpensesData` computed with `rgb(colorDTO.red, colorDTO.green, colorDTO.blue)` derived from the tag's actual color. Full test suite green.
+
 ## 2026-04-07
 
 - **Tag deletion warning with forced reassignment**: Deleting a personal tag that is assigned to transactions or regular transactions now shows a confirmation dialog informing the user. If the user confirms, all affected transactions are reassigned to the default tag (`Aucune`) and the tag is deleted. The backend returns 409 Conflict when the tag is in use (without `force=true`); a second call with `?force=true` performs the reassignment and deletion.

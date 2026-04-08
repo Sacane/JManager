@@ -73,6 +73,7 @@ class CategoryDistributionCalculatorTest {
         assertEquals(1, categories.size)
         assertEquals("Shopping", categories[0].tagLabel)
         assertEquals(tagId, categories[0].tagId)
+        assertEquals(Color.RED, categories[0].tagColor)
         assertEquals(80.toAmount(), categories[0].totalAmount)
         assertEquals(BigDecimal("100.0000"), categories[0].percentage)
         assertEquals(2, categories[0].transactionCount)
@@ -96,11 +97,13 @@ class CategoryDistributionCalculatorTest {
         assertEquals(200.toAmount(), totalExpenses)
 
         assertEquals("Shopping", categories[0].tagLabel)
+        assertEquals(Color.RED, categories[0].tagColor)
         assertEquals(150.toAmount(), categories[0].totalAmount)
         assertEquals(BigDecimal("75.0000"), categories[0].percentage)
         assertEquals(2, categories[0].transactionCount)
 
         assertEquals("Food", categories[1].tagLabel)
+        assertEquals(Color.GREEN, categories[1].tagColor)
         assertEquals(50.toAmount(), categories[1].totalAmount)
         assertEquals(BigDecimal("25.0000"), categories[1].percentage)
         assertEquals(1, categories[1].transactionCount)

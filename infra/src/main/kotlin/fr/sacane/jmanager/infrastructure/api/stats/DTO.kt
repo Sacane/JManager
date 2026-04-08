@@ -2,6 +2,8 @@ package fr.sacane.jmanager.infrastructure.api.stats
 
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
+import fr.sacane.jmanager.infrastructure.api.toDTO
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -28,6 +30,7 @@ data class CategoryDistributionDTO(
 data class CategoryDataDTO(
     val tagLabel: String,
     val tagId: UUID?,
+    val colorDTO: ColorDTO,
     val totalAmount: String,
     val percentage: BigDecimal,
     val transactionCount: Int
@@ -93,6 +96,7 @@ fun CategoryDistributionOutput.toDTO() = CategoryDistributionDTO(
 fun CategoryData.toDTO() = CategoryDataDTO(
     tagLabel = tagLabel,
     tagId = tagId,
+    colorDTO = tagColor.toDTO(),
     totalAmount = totalAmount.toStringValue(),
     percentage = percentage,
     transactionCount = transactionCount
