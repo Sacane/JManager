@@ -84,7 +84,7 @@ object FakeFactory {
     )
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
     val sessionFeature = UserFeatureImpl(userRepository, bookletRepository, sessionManager, DefaultHasher, tokenGenerator)
-    private val tagFeature = TagFeatureImpl(inMemoryTagRepository, sessionManager)
+    private val tagFeature = TagFeatureImpl(inMemoryTagRepository, transactionRepository, inMemoryRegularTransactionRepository, sessionManager)
     val regularTransactionFeature = RegularTransactionFeatureImpl(
         inMemoryRegularTransactionRepository,
         inMemoryTagRepository,

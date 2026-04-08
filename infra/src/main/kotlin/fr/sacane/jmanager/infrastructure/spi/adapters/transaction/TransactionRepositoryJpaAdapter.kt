@@ -123,4 +123,15 @@ class TransactionRepositoryJpaAdapter(
         return transactionQueryJpaRepository.findByBookletIdAndDateBetween(bookletId, from, to)
             .map { it.toModel() }
     }
+
+    @Transactional
+    override fun isPersonalTagUsed(tagId: java.util.UUID): Boolean {
+        return transactionJpaRepository.existsByPersonalTagId(tagId)
+    }
+
+    @Transactional
+    override fun replacePersonalTagByDefault(tagId: java.util.UUID, defaultTag: Tag) {
+        val defaultTagResource = tagRepository.findAll().firstOrNull { it.name == defaultTag.label } ?: return
+        transactionJpaRepository.replacePersonalTagByDefaultId(tagId, defaultTagResource.idTag!!)
+    }
 }

@@ -261,4 +261,34 @@ class InMemoryDatabase {
         }
         bookletsByTransaction[bookletId]?.add(transaction)
     }
+
+    fun isPersonalTagUsed(tagId: UUID): Boolean {
+        return bookletsByTransaction.values.flatten().any { t ->
+            t.tag?.id == tagId && t.tag?.isDefault == false
+        }
+    }
+
+    fun replacePersonalTagByDefault(tagId: UUID, defaultTag: Tag) {
+        bookletsByTransaction.forEach { (_, transactions) ->
+            transactions.replaceAll { t ->
+                if (t.tag?.id == tagId && t.tag?.isDefault == false) t.copy(tag = defaultTag) else t
+            }
+        }
+    }
+
+    fun isRegularPersonalTagUsed(tagId: UUID): Boolean {
+        return regularTransactionsByUser.values.flatten().any { rb ->
+            rb.transaction.tag?.id == tagId && rb.transaction.tag?.isDefault == false
+        }
+    }
+
+    fun replaceRegularPersonalTagByDefault(tagId: UUID, defaultTag: Tag) {
+        regularTransactionsByUser.forEach { (_, rbList) ->
+            rbList.replaceAll { rb ->
+                if (rb.transaction.tag?.id == tagId && rb.transaction.tag?.isDefault == false) {
+                    rb.copy(transaction = rb.transaction.copy(tag = defaultTag))
+                } else rb
+            }
+        }
+    }
 }

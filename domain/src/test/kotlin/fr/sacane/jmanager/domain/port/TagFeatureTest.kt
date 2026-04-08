@@ -5,12 +5,14 @@ import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.UserTag
+import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -72,6 +74,38 @@ class TagFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 tagFeature.deleteTag(this.tokenValue, UUID.randomUUID())
                     .assertFailure()
+            }
+        }
+
+        @Test
+        fun `Delete a personal tag used in a transaction without force must return TAG_IN_USE`() {
+            launchWithConnectedUserInstance {
+                val tagId = UUID.randomUUID()
+                val tag = Tag("usedTag", id = tagId)
+                tagState.init(UserTag(this.user.id, mutableListOf(tag)))
+                initTransactions(listOf(generateTransaction("tx1", Amount(50L), false, tag = tag)))
+
+                val result = tagFeature.deleteTag(this.tokenValue, tagId, force = false)
+
+                result.assertFailure(ResultState.TAG_IN_USE)
+                assertEquals("domain.tag.delete.tag_in_use", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Delete a personal tag used in a transaction with force must succeed and reassign to default tag`() {
+            launchWithConnectedUserInstance {
+                val tagId = UUID.randomUUID()
+                val tag = Tag("usedTag", id = tagId)
+                tagState.init(UserTag(this.user.id, mutableListOf(tag)))
+                val transaction = generateTransaction("tx1", Amount(50L), false, tag = tag)
+                initTransactions(listOf(transaction))
+
+                tagFeature.deleteTag(this.tokenValue, tagId, force = true)
+                    .assertSuccess()
+
+                val updated = FakeFactory.transactionRepository().findTransactionById(transaction.id!!)
+                assertTrue(updated?.tag?.isDefault == true, "Transaction tag should be replaced with the default tag")
             }
         }
     }

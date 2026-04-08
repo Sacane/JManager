@@ -73,6 +73,11 @@ internal fun <T> Result<T>.toHttpResponse()
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,
     )
+    ResultState.TAG_IN_USE -> throw ConflictException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
     ResultState.TIMEOUT  -> throw TimeOutException(
         this.errorInfo?.code ?: this.status.code,
         this.errorInfo?.detail ?: this.message,

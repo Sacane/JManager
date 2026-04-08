@@ -6,7 +6,9 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
@@ -54,11 +56,17 @@ sealed interface TagFeature {
     /**
      * Delete a tag by its identifier.
      *
+     * If the tag is currently assigned to one or more transactions or regular transactions and
+     * [force] is `false`, the operation is rejected with [fr.sacane.jmanager.domain.utils.ResultState.TAG_IN_USE].
+     * When [force] is `true`, all transactions (regular and normal) that reference the tag are
+     * reassigned to the default tag before the deletion is performed.
+     *
      * @param token Authentication token identifying the user session.
      * @param tagId Unique identifier of the tag to delete.
-     * @return Result with no value on success, or a notFound failure when the tag was not found.
+     * @param force When true, reassign affected transactions to the default tag and proceed with deletion.
+     * @return Result with no value on success, or a failure when the tag was not found or is in use without force.
      */
-    fun deleteTag(token: String, tagId: UUID): Result<Nothing>
+    fun deleteTag(token: String, tagId: UUID, force: Boolean = false): Result<Nothing>
 
     /**
      * Retrieve the global default tag.
@@ -86,6 +94,8 @@ sealed interface TagFeature {
 @DomainService
 class TagFeatureImpl(
     private val tagRepository: TagRepository,
+    private val transactionRepository: TransactionRepository,
+    private val regularTransactionRepository: RegularTransactionRepository,
     private val session: SessionManager
 ): TagFeature {
     private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
@@ -120,7 +130,21 @@ class TagFeatureImpl(
         tagRepository.saveAll(defaultTags)
     }
 
-    override fun deleteTag(token: String, tagId: UUID): Result<Nothing> = session.authenticate(token){
+    override fun deleteTag(token: String, tagId: UUID, force: Boolean): Result<Nothing> = session.authenticate(token){
+        val isUsedInTransactions = transactionRepository.isPersonalTagUsed(tagId)
+        val isUsedInRegular = regularTransactionRepository.isPersonalTagUsed(tagId)
+        if ((isUsedInTransactions || isUsedInRegular) && !force) {
+            return@authenticate domainFailure(
+                ResultState.TAG_IN_USE,
+                "Tag with id $tagId is used in existing transactions",
+                "domain.tag.delete.tag_in_use"
+            )
+        }
+        if (force && (isUsedInTransactions || isUsedInRegular)) {
+            val defaultTag = tagRepository.defaultTag()
+            if (isUsedInTransactions) transactionRepository.replacePersonalTagByDefault(tagId, defaultTag)
+            if (isUsedInRegular) regularTransactionRepository.replacePersonalTagByDefault(tagId, defaultTag)
+        }
         if(!tagRepository.deleteById(tagId)) {
             return@authenticate domainFailure(
                 ResultState.NOT_FOUND,

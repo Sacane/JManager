@@ -1,9 +1,15 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
+import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.BookletTransaction
 import fr.sacane.jmanager.infrastructure.api.setup.TagStateTestAdapter
+import fr.sacane.jmanager.infrastructure.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.infrastructure.api.setup.UserTagsRequest
 
 import fr.sacane.jmanager.infrastructure.api.tag.ColorDTO
@@ -16,6 +22,7 @@ import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
@@ -24,6 +31,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.awt.Color
+import java.time.LocalDate
 import java.util.UUID
 
 
@@ -32,7 +40,9 @@ import java.util.UUID
 class TagControllerTest (
     @LocalServerPort val port: Int,
     @Autowired val state: TagStateTestAdapter,
-    @Autowired val objectMapper: ObjectMapper
+    @Autowired val objectMapper: ObjectMapper,
+    @Autowired val bookletStateTestAdapter: BookletStateTestAdapter,
+    @Autowired val transactionStateTestAdapter: TransactionStateTestAdapter
 ): AuthenticatedUserTest() {
 
     @Autowired
@@ -40,6 +50,8 @@ class TagControllerTest (
 
     @AfterEach
     fun clear() {
+        transactionStateTestAdapter.clear()
+        bookletStateTestAdapter.clear()
         state.clear()
     }
     @Nested
@@ -188,6 +200,56 @@ class TagControllerTest (
             } Then {
                 statusCode(404)
             }
+        }
+
+        @Test
+        fun `Delete tag used in a transaction without force must return 409`() {
+            tagStateTestAdapter.init(listOf(
+                UserTagsRequest(user!!.id, listOf(Tag("reserved", color = Color(10, 10, 10))))
+            ))
+            val targetTag = state.get().find { it.label == "reserved" } ?: fail("Tag not found")
+            bookletStateTestAdapter.init(listOf(Booklet(Amount(0L), "test-booklet", owner = user)))
+            transactionStateTestAdapter.init(listOf(
+                BookletTransaction(user!!.id, "test-booklet",
+                    listOf(Transaction(null, "tx1", LocalDate.now(), Amount(10L), false, tag = targetTag)),
+                    token)
+            ))
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/tag/${targetTag.id}")
+            } Then {
+                statusCode(409)
+            }
+        }
+
+        @Test
+        fun `Delete tag used in a transaction with force must return 200 and reassign to default tag`() {
+            tagStateTestAdapter.init(listOf(
+                UserTagsRequest(user!!.id, listOf(Tag("reserved", color = Color(10, 10, 10))))
+            ))
+            val targetTag = state.get().find { it.label == "reserved" } ?: fail("Tag not found")
+            bookletStateTestAdapter.init(listOf(Booklet(Amount(0L), "test-booklet", owner = user)))
+            transactionStateTestAdapter.init(listOf(
+                BookletTransaction(user!!.id, "test-booklet",
+                    listOf(Transaction(null, "tx1", LocalDate.now(), Amount(10L), false, tag = targetTag)),
+                    token)
+            ))
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/tag/${targetTag.id}?force=true")
+            } Then {
+                statusCode(200)
+            }
+
+            state.get().find { it.label == "reserved" }.apply { assertNull(this) }
+            val transactions = transactionStateTestAdapter.get()
+            assertTrue(transactions.all { it.tag?.isDefault == true }, "All transactions should now use the default tag")
         }
     }
 
