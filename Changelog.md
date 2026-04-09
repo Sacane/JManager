@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-09
+- **Fix: incorrect monthly expenses/income with a custom monthly cycle**: On the dashboard, the "Monthly expenses" and "Monthly income" KPIs were including transactions outside the selected date range when a custom monthly cycle (start day ≠ 1st of month) was configured.
+  - **Root cause**: `TrendCalculatorImpl.calculateTrend` filtered transactions by calendar month only (year/month), ignoring the exact day boundaries of `startDate`/`endDate`. A range 28/02–27/03 would therefore include all transactions from the entire February and the entire March.
+  - **Domain fix**: Added `(startDate == null || !transaction.date.isBefore(startDate)) && (endDate == null || !transaction.date.isAfter(endDate))` to the transaction filter in `TrendCalculatorImpl`, aligning its behaviour with the already-correct `CategoryDistributionCalculatorImpl`.
+  - **Domain tests**: Added two tests to `TrendCalculatorTest`: one for transactions before `startDate` (must be excluded) and one for transactions after `endDate` (must be excluded).
+
 ## 2026-04-08
 - **Fix: tag colors in "dépenses par catégorie" chart**: The pie/doughnut chart on the dashboard was displaying hardcoded colors instead of the actual colors saved by the user for each tag.
     - **Domain**: Added `tagColor: java.awt.Color` field to `CategoryData` model. Updated `CategoryDistributionCalculatorImpl` to group transactions by `Triple(label, id, color)` and propagate the tag color into each `CategoryData` instance.
