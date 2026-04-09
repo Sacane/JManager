@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-10
+- **Fix: dashboard quarter/year period uses future months instead of rolling past window**
+  - **Root cause**: `currentDateRange` for `quarter` used `startOfQuarter` / `endOfQuarter` (calendar quarter, e.g. Apr–Jun for April), and for `year` used `startOfYear` / `endOfYear` (Jan–Dec). Both included future months instead of showing the most recent completed period.
+  - **Frontend fix**: Changed `currentDateRange` to rolling windows: quarter = 3 months ending at the anchor month (`startOfMonth(anchor - 2 months)` → `endOfMonth(anchor)`); year = 12 months ending at the anchor month (`startOfMonth(anchor - 11 months)` → `endOfMonth(anchor)`).
+  - **Frontend fix**: Updated `previousDateRange` to match the rolling logic: previous quarter = months −5 to −3; previous year = months −23 to −12.
+  - **Frontend fix**: Updated `selectedPeriodLabel` to display the actual rolling range (e.g. "fév - avr 2026" for quarter, "mai 2025 - avr 2026" for year) instead of calendar-based labels ("T2 2026", "2026").
+  - **Domain tests** (rolling-window, 6 new): added to `TrendCalculatorTest` — covers exact month boundaries for 3-month window, for 12-month window, KPI aggregation over 3 months, and exclusion of transactions before/after each window. Full domain test suite: 18 tests, all green.
+
 ## 2026-04-09
 - **Fix: incorrect monthly expenses/income with a custom monthly cycle**: On the dashboard, the "Monthly expenses" and "Monthly income" KPIs were including transactions outside the selected date range when a custom monthly cycle (start day ≠ 1st of month) was configured.
   - **Root cause**: `TrendCalculatorImpl.calculateTrend` filtered transactions by calendar month only (year/month), ignoring the exact day boundaries of `startDate`/`endDate`. A range 28/02–27/03 would therefore include all transactions from the entire February and the entire March.

@@ -283,5 +283,156 @@ class TrendCalculatorTest {
         assertNotNull(marchTrend)
         assertEquals(150.toAmount(), marchTrend!!.income)
     }
+
+    // -----------------------------------------------------------------------
+    // Rolling-window (quarter = last 3 months, year = last 12 months)
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun `rolling 3-month window covers exactly the 3 months ending at the anchor month`() {
+        // anchor April 2026 → window Feb 2026 – Apr 2026
+        val startDate = LocalDate.of(2026, 2, 1)
+        val endDate   = LocalDate.of(2026, 4, 30)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Feb income",  LocalDate.of(2026, 2, 15), 100.toAmount(), isIncome = true)
+        )
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Mar expense", LocalDate.of(2026, 3, 10), 200.toAmount(), isIncome = false)
+        )
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Apr income",  LocalDate.of(2026, 4, 5),  300.toAmount(), isIncome = true)
+        )
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        assertEquals(3, trends.size)
+        val months = trends.map { it.month }.sorted()
+        assertEquals(listOf(2, 3, 4), months)
+    }
+
+    @Test
+    fun `rolling 3-month window excludes transactions outside the window`() {
+        // anchor April 2026 → window Feb – Apr 2026; Jan and May must be excluded
+        val startDate = LocalDate.of(2026, 2, 1)
+        val endDate   = LocalDate.of(2026, 4, 30)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        // outside – before window
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Jan expense", LocalDate.of(2026, 1, 20), 500.toAmount(), isIncome = false)
+        )
+        // inside window
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Mar income",  LocalDate.of(2026, 3, 5),  150.toAmount(), isIncome = true)
+        )
+        // outside – after window (future)
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "May income",  LocalDate.of(2026, 5, 1),  250.toAmount(), isIncome = true)
+        )
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        val totalIncome   = trends.sumOf { it.income.value.toLong() }
+        val totalExpenses = trends.sumOf { it.expenses.value.toLong() }
+
+        assertEquals(150L, totalIncome)
+        assertEquals(0L,   totalExpenses)
+    }
+
+    @Test
+    fun `rolling 3-month window KPIs are the sum of each month KPIs`() {
+        // anchor April 2026 → window Feb – Apr 2026
+        val startDate = LocalDate.of(2026, 2, 1)
+        val endDate   = LocalDate.of(2026, 4, 30)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Feb income",  LocalDate.of(2026, 2, 5),  200.toAmount(), isIncome = true)
+        )
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Mar expense", LocalDate.of(2026, 3, 12), 100.toAmount(), isIncome = false)
+        )
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Apr income",  LocalDate.of(2026, 4, 20), 400.toAmount(), isIncome = true)
+        )
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Apr expense", LocalDate.of(2026, 4, 25), 50.toAmount(),  isIncome = false)
+        )
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        val totalIncome   = trends.sumOf { it.income.value.toInt() }
+        val totalExpenses = trends.sumOf { it.expenses.value.toInt() }
+
+        assertEquals(600, totalIncome)   // 200 + 0 + 400
+        assertEquals(150, totalExpenses) // 0 + 100 + 50
+    }
+
+    @Test
+    fun `rolling 12-month window covers exactly 12 months ending at the anchor month`() {
+        // anchor April 2026 → window May 2025 – Apr 2026
+        val startDate = LocalDate.of(2025, 5, 1)
+        val endDate   = LocalDate.of(2026, 4, 30)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        assertEquals(12, trends.size)
+        val firstMonth = trends.minByOrNull { YearMonth.of(it.year, it.month) }!!
+        val lastMonth  = trends.maxByOrNull { YearMonth.of(it.year, it.month) }!!
+        assertEquals(YearMonth.of(2025, 5), YearMonth.of(firstMonth.year, firstMonth.month))
+        assertEquals(YearMonth.of(2026, 4), YearMonth.of(lastMonth.year,  lastMonth.month))
+    }
+
+    @Test
+    fun `rolling 12-month window excludes transactions before the window`() {
+        // anchor April 2026 → window May 2025 – Apr 2026
+        // A transaction from April 2025 (13 months ago) must be ignored
+        val startDate = LocalDate.of(2025, 5, 1)
+        val endDate   = LocalDate.of(2026, 4, 30)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        // outside – one month before window
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Apr 2025 expense", LocalDate.of(2025, 4, 15), 300.toAmount(), isIncome = false)
+        )
+        // inside – first month of window
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "May 2025 income",  LocalDate.of(2025, 5, 10), 200.toAmount(), isIncome = true)
+        )
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        val totalExpenses = trends.sumOf { it.expenses.value.toInt() }
+        val totalIncome   = trends.sumOf { it.income.value.toInt() }
+
+        assertEquals(0,   totalExpenses)
+        assertEquals(200, totalIncome)
+    }
+
+    @Test
+    fun `rolling 12-month window excludes transactions after the anchor month`() {
+        // anchor April 2026 → window May 2025 – Apr 2026
+        // A transaction from May 2026 (future) must be ignored
+        val startDate = LocalDate.of(2025, 5, 1)
+        val endDate   = LocalDate.of(2026, 4, 30)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        // inside – last month of window
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Apr 2026 income", LocalDate.of(2026, 4, 20), 500.toAmount(), isIncome = true)
+        )
+        // outside – one month after window
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "May 2026 income", LocalDate.of(2026, 5, 1),  999.toAmount(), isIncome = true)
+        )
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        val totalIncome = trends.sumOf { it.income.value.toInt() }
+        assertEquals(500, totalIncome)
+    }
 }
 

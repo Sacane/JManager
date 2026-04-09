@@ -13,7 +13,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import { addDays, addMonths, endOfQuarter, endOfYear, format, isAfter, startOfQuarter, startOfYear, subMonths } from 'date-fns'
+import { addDays, addMonths, endOfMonth, format, isAfter, startOfMonth, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
@@ -180,10 +180,11 @@ const selectedPeriodLabel = computed(() => {
     return format(periodAnchorDate.value, 'MMMM yyyy', { locale: fr })
   }
   if (selectedPeriod.value === 'quarter') {
-    const quarter = Math.floor(periodAnchorDate.value.getMonth() / 3) + 1
-    return `T${quarter} ${periodAnchorDate.value.getFullYear()}`
+    const start = subMonths(periodAnchorDate.value, 2)
+    return `${format(start, 'MMM', { locale: fr })} - ${format(periodAnchorDate.value, 'MMM yyyy', { locale: fr })}`
   }
-  return `${periodAnchorDate.value.getFullYear()}`
+  const yearStart = subMonths(periodAnchorDate.value, 11)
+  return `${format(yearStart, 'MMM yyyy', { locale: fr })} - ${format(periodAnchorDate.value, 'MMM yyyy', { locale: fr })}`
 })
 
 const periodMetricLabel = computed(() =>
@@ -201,14 +202,14 @@ const currentDateRange = computed(() => {
 
   if (selectedPeriod.value === 'quarter') {
     return {
-      start: startOfQuarter(periodAnchorDate.value),
-      end: endOfQuarter(periodAnchorDate.value),
+      start: startOfMonth(subMonths(periodAnchorDate.value, 2)),
+      end: endOfMonth(periodAnchorDate.value),
     }
   }
 
   return {
-    start: startOfYear(periodAnchorDate.value),
-    end: endOfYear(periodAnchorDate.value),
+    start: startOfMonth(subMonths(periodAnchorDate.value, 11)),
+    end: endOfMonth(periodAnchorDate.value),
   }
 })
 
@@ -222,17 +223,15 @@ const previousDateRange = computed(() => {
   }
 
   if (selectedPeriod.value === 'quarter') {
-    const previousAnchor = subMonths(periodAnchorDate.value, 3)
     return {
-      start: startOfQuarter(previousAnchor),
-      end: endOfQuarter(previousAnchor),
+      start: startOfMonth(subMonths(periodAnchorDate.value, 5)),
+      end: endOfMonth(subMonths(periodAnchorDate.value, 3)),
     }
   }
 
-  const previousAnchor = subMonths(periodAnchorDate.value, 12)
   return {
-    start: startOfYear(previousAnchor),
-    end: endOfYear(previousAnchor),
+    start: startOfMonth(subMonths(periodAnchorDate.value, 23)),
+    end: endOfMonth(subMonths(periodAnchorDate.value, 12)),
   }
 })
 
