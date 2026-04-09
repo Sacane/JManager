@@ -41,7 +41,9 @@ class TrendCalculatorImpl : TrendCalculator {
                 booklet.transactions.filter { transaction ->
                     !transaction.isPreview &&
                             transaction.date.year == yearMonth.year &&
-                            transaction.date.month == yearMonth.month
+                            transaction.date.month == yearMonth.month &&
+                            (startDate == null || !transaction.date.isBefore(startDate)) &&
+                            (endDate == null || !transaction.date.isAfter(endDate))
                 }
             }
 

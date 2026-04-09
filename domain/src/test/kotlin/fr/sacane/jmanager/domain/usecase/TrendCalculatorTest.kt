@@ -235,5 +235,53 @@ class TrendCalculatorTest {
         assertEquals(0.toAmount(), lastMonthTrend.expenses)
         assertEquals(0.toAmount(), lastMonthTrend.balance)
     }
+
+    @Test
+    fun `calculateTrend should exclude transactions before startDate within the same calendar month`() {
+        // Bug scenario: custom cycle starting on the 28th.
+        // Transactions on Feb 1-27 must NOT be counted when startDate = Feb-28.
+        val startDate = LocalDate.of(2026, 2, 28)
+        val endDate   = LocalDate.of(2026, 3, 27)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        // This transaction is in February but BEFORE startDate — must be excluded
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Before start", LocalDate.of(2026, 2, 10), 300.toAmount(), isIncome = false)
+        )
+        // This transaction is on startDate — must be included
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "On start", LocalDate.of(2026, 2, 28), 100.toAmount(), isIncome = false)
+        )
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        val febTrend = trends.find { it.month == 2 && it.year == 2026 }
+        assertNotNull(febTrend)
+        assertEquals(100.toAmount(), febTrend!!.expenses)
+    }
+
+    @Test
+    fun `calculateTrend should exclude transactions after endDate within the same calendar month`() {
+        // Bug scenario: custom cycle ending on the 27th.
+        // Transactions on Mar 28-31 must NOT be counted when endDate = Mar-27.
+        val startDate = LocalDate.of(2026, 2, 28)
+        val endDate   = LocalDate.of(2026, 3, 27)
+        val booklet   = Booklet(1000.toAmount(), "Booklet")
+
+        // This transaction is on endDate — must be included
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "On end", LocalDate.of(2026, 3, 27), 150.toAmount(), isIncome = true)
+        )
+        // This transaction is in March but AFTER endDate — must be excluded
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "After end", LocalDate.of(2026, 3, 31), 400.toAmount(), isIncome = true)
+        )
+
+        val trends = calculator.calculateTrend(listOf(booklet), startDate, endDate)
+
+        val marchTrend = trends.find { it.month == 3 && it.year == 2026 }
+        assertNotNull(marchTrend)
+        assertEquals(150.toAmount(), marchTrend!!.income)
+    }
 }
 
