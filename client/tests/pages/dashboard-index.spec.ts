@@ -27,8 +27,8 @@ const fetchBookletsMock = vi.fn().mockResolvedValue([
 
 const categoryCurrent = {
   categories: [
-    { tagLabel: 'Courses', tagId: 'tag-1', totalAmount: '200.00', percentage: 50, transactionCount: 2 },
-    { tagLabel: 'Transport', tagId: 'tag-2', totalAmount: '100.00', percentage: 25, transactionCount: 1 },
+    { tagLabel: 'Courses', tagId: 'tag-1', colorDTO: { red: 255, green: 0, blue: 0 }, totalAmount: '200.00', percentage: 50, transactionCount: 2 },
+    { tagLabel: 'Transport', tagId: 'tag-2', colorDTO: { red: 0, green: 0, blue: 255 }, totalAmount: '100.00', percentage: 25, transactionCount: 1 },
   ],
   totalExpenses: '400.00',
 }
