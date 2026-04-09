@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-10
+- **Fix: intermittent/partial transaction selection in monthly booklet view**: Selecting all transactions (or selecting multiple rows) could behave inconsistently when some transactions had no persistent `id` (virtual/preview rows).
+  - **Root cause**: Selection logic relied on `id` equality only. Rows with `id = null` were treated as the same item, causing incomplete or unstable multi-selection behavior.
+  - **Frontend fix**: Added a deterministic per-row `selectionKey` for display rows, switched desktop `DataTable` selection to `data-key="selectionKey"`, and updated mobile selection helpers (`toggleSelection`, `isSelected`) to compare rows by `selectionKey` instead of raw `id`.
+  - **Stability improvement**: Selection is now reconciled after list reloads so stale selected rows are dropped if they are no longer present in the refreshed dataset.
+  - **Frontend tests**: Added regression coverage in `client/tests/pages/booklet-id.spec.ts` to verify that multiple preview transactions with `id = null` can be selected independently.
+
 ## 2026-04-09
 - **Fix: incorrect monthly expenses/income with a custom monthly cycle**: On the dashboard, the "Monthly expenses" and "Monthly income" KPIs were including transactions outside the selected date range when a custom monthly cycle (start day ≠ 1st of month) was configured.
   - **Root cause**: `TrendCalculatorImpl.calculateTrend` filtered transactions by calendar month only (year/month), ignoring the exact day boundaries of `startDate`/`endDate`. A range 28/02–27/03 would therefore include all transactions from the entire February and the entire March.

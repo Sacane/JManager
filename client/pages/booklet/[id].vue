@@ -19,8 +19,16 @@ const { deleteTransaction, confirmPreviewTransaction, saveTransaction, editTrans
 const { downloadCsvExport } = useCsvImport()
 const { isScopeLoading, withLoading } = useLoading()
 
-const selectedSheets = ref<TransactionCreationDTO[]>([])
-const actualSheets = ref<TransactionCreationDTO[]>([])
+type DisplayTransaction = TransactionResultDTO & {
+  selectionKey: string
+  expensesRepresentation: string
+  incomeRepresentation: string
+  expenseSortValue: number | null
+  incomeSortValue: number | null
+}
+
+const selectedSheets = ref<DisplayTransaction[]>([])
+const actualSheets = ref<DisplayTransaction[]>([])
 const tags = ref<TagDTO[]>([])
 
 const isCreationDialogVisible = ref(false)
@@ -33,7 +41,7 @@ const selectedTagFilter = ref<string>('')
 const isConfirmPreviewDialogVisible = ref(false)
 const newAmountForPreview = ref<number | null>(null)
 const newDateForPreview = ref<Date | null>(null)
-const transactionToConfirm = ref<TransactionCreationDTO | null>(null)
+const transactionToConfirm = ref<DisplayTransaction | null>(null)
 const hasRegenerableTransactions = ref(false)
 
 const bookletData = reactive({
@@ -129,7 +137,7 @@ const filteredTransactions = computed(() => {
   return result
 })
 
-function asDisplayableTransaction(transaction: TransactionResultDTO): any {
+function asDisplayableTransaction(transaction: TransactionResultDTO, index = 0): DisplayTransaction {
   const fallbackTag: TagDTO = {
     tagId: undefined,
     label: 'Aucune',
@@ -138,16 +146,31 @@ function asDisplayableTransaction(transaction: TransactionResultDTO): any {
   }
 
   const numericValue = Number.parseFloat(transaction?.value?.toString() ?? '0')
+  const tagDTO = transaction.tagDTO ?? fallbackTag
+  const selectionKey = transaction.id != null
+    ? `id:${transaction.id}`
+    : `virtual:${index}:${transaction.date}:${transaction.label}:${numericValue}:${transaction.isIncome}:${transaction.isPreview}:${tagDTO.tagId ?? 'no-tag'}`
+
   return {
     ...transaction,
     id: transaction.id,
+    selectionKey,
     expensesRepresentation: !transaction.isIncome ? `${numericValue.toFixed(2)} €` : '-',
     incomeRepresentation: transaction.isIncome ? `${numericValue.toFixed(2)} €` : '-',
     expenseSortValue: !transaction.isIncome ? numericValue : null,
     incomeSortValue: transaction.isIncome ? numericValue : null,
     date: transaction.date,
-    tagDTO: transaction.tagDTO ?? fallbackTag,
+    tagDTO,
   }
+}
+
+function transactionSelectionKey(transaction: TransactionCreationDTO | DisplayTransaction | any): string {
+  const maybeId = transaction?.id
+  if (maybeId != null) return `id:${maybeId}`
+  if (transaction?.selectionKey) return String(transaction.selectionKey)
+
+  const fallbackValue = Number.parseFloat(transaction?.value?.toString() ?? '0')
+  return `virtual:fallback:${transaction?.date ?? ''}:${transaction?.label ?? ''}:${fallbackValue}:${transaction?.isIncome ?? false}:${transaction?.isPreview ?? false}:${transaction?.tagDTO?.tagId ?? 'no-tag'}`
 }
 
 function resetTransaction() {
@@ -178,9 +201,13 @@ async function loadBookletData() {
       bookletData.realSold = Number.parseFloat(balances.realSold)
       bookletData.previewSold = Number.parseFloat(balances.previewSold)
 
-      actualSheets.value = transactionsRes.transactions
-        .map(asDisplayableTransaction)
+      const nextSheets = transactionsRes.transactions
+        .map((transaction, index) => asDisplayableTransaction(transaction, index))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+      actualSheets.value = nextSheets
+      const nextSheetKeys = new Set(nextSheets.map(transactionSelectionKey))
+      selectedSheets.value = selectedSheets.value.filter(t => nextSheetKeys.has(transactionSelectionKey(t)))
       hasRegenerableTransactions.value = transactionsRes.hasRegenerableTransactions
     } catch (err) {
       toast.errorAxios(err as AxiosError)
@@ -336,7 +363,7 @@ async function confirmPreview() {
   await withLoading(async () => {
     try {
       const finalAmount = newAmountForPreview.value ?? transaction.value
-      const baseDate = transaction.date instanceof Date ? transaction.date : new Date(transaction.date)
+      const baseDate = new Date(transaction.date)
       const finalDate = newDateForPreview.value ?? baseDate
 
       if (finalAmount == null) {
@@ -358,8 +385,11 @@ async function confirmPreview() {
         }
       } else {
         await saveTransaction(bookletData.label, {
-          ...transaction,
           id: null,
+          label: transaction.label,
+          tagDTO: transaction.tagDTO,
+          regularTransactionId: transaction.regularTransactionId,
+          isIncome: transaction.isIncome,
           isPreview: false,
           value: finalAmount,
           date: finalDate,
@@ -380,9 +410,9 @@ async function confirmPreview() {
   }, confirmPreviewScope)
 }
 
-function onConfirmPreview(transaction: TransactionCreationDTO) {
+function onConfirmPreview(transaction: DisplayTransaction) {
   transactionToConfirm.value = transaction
-  const parsedDate = transaction.date instanceof Date ? transaction.date : new Date(transaction.date)
+  const parsedDate = new Date(transaction.date)
   newDateForPreview.value = Number.isNaN(parsedDate.getTime()) ? null : parsedDate
   isConfirmPreviewDialogVisible.value = true
 }
@@ -401,19 +431,21 @@ async function regenerate() {
   }, regenerateScope)
 }
 
-function rowClass(row: TransactionCreationDTO): string {
+function rowClass(row: DisplayTransaction): string {
   if (row.isPreview) return 'preview-row'
   return ''
 }
 
-function toggleSelection(transaction: TransactionCreationDTO) {
-  const index = selectedSheets.value.findIndex(t => t.id === transaction.id)
+function toggleSelection(transaction: DisplayTransaction) {
+  const transactionKey = transactionSelectionKey(transaction)
+  const index = selectedSheets.value.findIndex(t => transactionSelectionKey(t) === transactionKey)
   if (index === -1) selectedSheets.value.push(transaction)
   else selectedSheets.value.splice(index, 1)
 }
 
-function isSelected(transaction: TransactionCreationDTO): boolean {
-  return selectedSheets.value.some(t => t.id === transaction.id)
+function isSelected(transaction: DisplayTransaction): boolean {
+  const transactionKey = transactionSelectionKey(transaction)
+  return selectedSheets.value.some(t => transactionSelectionKey(t) === transactionKey)
 }
 
 function checkMobile() {
@@ -748,6 +780,7 @@ onUnmounted(() => {
         <DataTable
           v-model:selection="selectedSheets"
           :value="filteredTransactions"
+          data-key="selectionKey"
           :row-class="rowClass"
           scrollable
           scroll-height="flex"
@@ -890,7 +923,7 @@ onUnmounted(() => {
         <div v-else class="p-1 flex flex-col gap-3 md:(gap-4 p-0)">
           <div
             v-for="(transaction, tIndex) in filteredTransactions"
-            :key="transaction.id || `t-${tIndex}`"
+            :key="transaction.selectionKey || transaction.id || `t-${tIndex}`"
             class="relative bg-[var(--card-bg)] rounded-xl p-4 shadow border-2 border-[var(--card-border)] transition-all overflow-hidden hover:shadow-lg active:scale-[0.98]"
             :class="[
               transaction.isPreview ? 'bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-400/20' : '',

@@ -47,6 +47,21 @@ const findBalancesByIdMonthAndYearMock = vi.fn().mockResolvedValue({
 
 const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({ transactions: [] })
 
+function createTransaction(overrides: Partial<TransactionResultDTO> = {}): TransactionResultDTO {
+  return {
+    id: 'tx-1',
+    label: 'Transaction',
+    value: 10.00,
+    isIncome: false,
+    date: '2026-03-20',
+    color: { red: 255, green: 255, blue: 255 },
+    tagDTO: defaultTag,
+    isPreview: false,
+    bookletAmount: '1500.00',
+    ...overrides,
+  }
+}
+
 function flushPromises() {
   return new Promise<void>(resolve => queueMicrotask(resolve))
 }
@@ -152,5 +167,43 @@ describe('pages/booklet/[id] loading states', () => {
       3,
       2026,
     )
+  })
+})
+
+describe('pages/booklet/[id] selection behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('selects multiple preview transactions even when id is null', async () => {
+    findTransactionsByIdMonthAndYearMock.mockResolvedValueOnce({
+      transactions: [
+        createTransaction({ id: null, label: 'Loyer', value: 800.00, isPreview: true, date: '2026-03-05' }),
+        createTransaction({ id: null, label: 'Abonnement', value: 15.99, isPreview: true, date: '2026-03-10' }),
+      ],
+      hasRegenerableTransactions: true,
+    })
+
+    const { wrapper } = mountPage()
+
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const first = vm.filteredTransactions[0]
+    const second = vm.filteredTransactions[1]
+
+    vm.toggleSelection(first)
+    vm.toggleSelection(second)
+
+    expect(vm.selectedSheets).toHaveLength(2)
+    expect(vm.isSelected(first)).toBe(true)
+    expect(vm.isSelected(second)).toBe(true)
   })
 })
