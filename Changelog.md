@@ -1,6 +1,13 @@
 # Changelog
 
 ## 2026-04-08
+- **Fix: tag colors in "dépenses par catégorie" chart**: The pie/doughnut chart on the dashboard was displaying hardcoded colors instead of the actual colors saved by the user for each tag.
+    - **Domain**: Added `tagColor: java.awt.Color` field to `CategoryData` model. Updated `CategoryDistributionCalculatorImpl` to group transactions by `Triple(label, id, color)` and propagate the tag color into each `CategoryData` instance.
+    - **Domain tests**: Added `assertEquals(Color.RED/GREEN, categories[i].tagColor)` assertions to the single-category and multi-category distribution tests.
+    - **Infra DTO**: Added `colorDTO: ColorDTO` field to `CategoryDataDTO`; updated the `CategoryData.toDTO()` mapper to call `tagColor.toDTO()`.
+    - **Infra API tests**: Updated `GetCategoryDistributionEndpointTest` to assert that `categories[0].colorDTO` is not null.
+    - **Frontend types**: Added `colorDTO: { red: number, green: number, blue: number }` to `CategoryDataDTO` interface.
+    - **Frontend**: Replaced the 6 hardcoded `backgroundColor` values in `categoryExpensesData` computed with `rgb(colorDTO.red, colorDTO.green, colorDTO.blue)` derived from the tag's actual color. Full test suite green.
 
 - **Regenerate deleted previsional transactions**: Added the ability to regenerate previsional transactions that were previously deleted by the user for a given month/year, for all regular transactions linked to a booklet.
   - **Domain SPI**: Added `unmarkMonthAsExcluded(regularTransactionId, bookletId, year, month)` to `RegularTransactionTrackerRepository` port.

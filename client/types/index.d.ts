@@ -144,6 +144,7 @@ declare global {
   interface CategoryDataDTO {
     tagLabel: string
     tagId: string | null
+    colorDTO: { red: number, green: number, blue: number }
     totalAmount: string
     percentage: number
     transactionCount: number

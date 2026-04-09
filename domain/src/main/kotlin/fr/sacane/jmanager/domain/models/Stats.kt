@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.domain.models
 
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import java.awt.Color
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -28,6 +29,7 @@ data class CategoryDistributionOutput(
 data class CategoryData(
     val tagLabel: String,
     val tagId: UUID?,
+    val tagColor: Color,
     val totalAmount: Amount,
     val percentage: BigDecimal,
     val transactionCount: Int

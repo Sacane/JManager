@@ -175,6 +175,7 @@ class StatsControllerTest(
                 statusCode(200)
                 body(
                     "categories", notNullValue(),
+                    "categories[0].colorDTO", notNullValue(),
                     "totalExpenses", notNullValue()
                 )
             }

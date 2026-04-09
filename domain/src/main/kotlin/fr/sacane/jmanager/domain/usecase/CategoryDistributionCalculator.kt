@@ -54,7 +54,7 @@ class CategoryDistributionCalculatorImpl(
 
         val groupedByTag = expenseTransactions.groupBy { transaction ->
             val tag = transaction.tag ?: tagRepository.defaultTag()
-            tag.label to tag.id!!
+            Triple(tag.label, tag.id!!, tag.color)
         }
 
         val categoryData = groupedByTag.map { (tagInfo, transactions) ->
@@ -68,6 +68,7 @@ class CategoryDistributionCalculatorImpl(
             CategoryData(
                 tagLabel = tagInfo.first,
                 tagId = tagInfo.second,
+                tagColor = tagInfo.third,
                 totalAmount = Amount(tagTotal),
                 percentage = percentage,
                 transactionCount = transactions.size
