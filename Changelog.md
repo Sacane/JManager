@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-11
+- **Security: String length enforcement across all layers**
+  - **DTO fix**: `BookletBookingRequest.label` `@Size(max=100)` changed to `@Size(max=30)` to match the database `VARCHAR(30)` constraint. Prevented potential data truncation errors.
+  - **JPA entities**: Added explicit `@Column(length=)` annotations to `UserResource` (username=100, password=255, email=255), `TransactionResource` (label=255), and `AbstractTagResource` (name=50) for database-level defense in depth.
+  - **Frontend**: Added `maxlength` attributes on all user-facing text inputs — login username/password (100), booklet booking label (30), transaction label (100), regular transaction label (100), tag create/edit labels (50). Prevents oversized input from reaching the backend.
+
 ## 2026-04-10
 - **Security: HikariCP connection pooling (B3-05)**
   - Replaced `DriverManagerDataSource` with `HikariDataSource` in `DatasourceConfig`. Enables connection pooling with configurable pool size, connection timeout, idle timeout, and leak detection threshold.

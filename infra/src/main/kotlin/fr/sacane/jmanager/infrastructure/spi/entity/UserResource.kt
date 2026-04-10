@@ -8,11 +8,11 @@ import java.util.UUID
 @Table(name="user_resource")
 @Entity
 class UserResource(
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     var username: String = "",
-    @Column
+    @Column(length = 255)
     var password: String = "",
-    @Column(unique = true, nullable = true)
+    @Column(unique = true, nullable = true, length = 255)
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var booklets: MutableList<BookletResource> = mutableListOf(),

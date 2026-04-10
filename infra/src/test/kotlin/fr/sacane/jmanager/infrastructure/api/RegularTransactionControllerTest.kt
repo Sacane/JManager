@@ -309,7 +309,7 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Create a monthly transaction with unauthenticated user must send 404`() {
+        fun `Create a monthly transaction with unauthenticated user must send 401`() {
             val request = MonthlyRegularTransactionRequest(
                 label = "Test",
                 value = BigDecimal(100.00),
@@ -333,7 +333,7 @@ class RegularTransactionControllerTest(
             } When {
                 post("/api/transaction/monthly")
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -402,7 +402,7 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Get regular transaction with unauthenticated user must send 404`() {
+        fun `Get regular transaction with unauthenticated user must send 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
@@ -410,7 +410,7 @@ class RegularTransactionControllerTest(
             } When {
                 get("/api/transaction/regular/{id}", mapOf("id" to "00000000-0000-0000-0000-000000000000"))
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -491,7 +491,7 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Get all regular transactions with unauthenticated user must send 404`() {
+        fun `Get all regular transactions with unauthenticated user must send 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
@@ -499,7 +499,7 @@ class RegularTransactionControllerTest(
             } When {
                 get("/api/transaction/regular")
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -620,7 +620,7 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Update regular transaction with unauthenticated user must send 404`() {
+        fun `Update regular transaction with unauthenticated user must send 401`() {
             val updateRequest = mapOf(
                 "id" to UUID.randomUUID().toString(),
                 "label" to "Updated Label",
@@ -654,7 +654,7 @@ class RegularTransactionControllerTest(
             } When {
                 patch("/api/transaction/regular")
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
 
@@ -862,14 +862,14 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Delete regular transaction with unauthenticated user must send 404`() {
+        fun `Delete regular transaction with unauthenticated user must send 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
             } When {
                 delete("/api/transaction/regular/{id}", mapOf("id" to UUID.randomUUID().toString()))
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
 
@@ -1259,7 +1259,7 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Link with unauthenticated user must return 404`() {
+        fun `Link with unauthenticated user must return 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
@@ -1269,7 +1269,7 @@ class RegularTransactionControllerTest(
                     mapOf("transactionId" to UUID.randomUUID().toString(), "bookletId" to UUID.randomUUID().toString())
                 )
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -1424,7 +1424,7 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Unlink with unauthenticated user must return 404`() {
+        fun `Unlink with unauthenticated user must return 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
@@ -1434,7 +1434,7 @@ class RegularTransactionControllerTest(
                     mapOf("transactionId" to UUID.randomUUID().toString(), "bookletId" to UUID.randomUUID().toString())
                 )
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }

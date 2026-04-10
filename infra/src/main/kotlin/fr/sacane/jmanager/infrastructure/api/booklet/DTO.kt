@@ -29,7 +29,7 @@ data class BookletInfoDTO(
 @Serializable
 data class BookletBookingRequest(
     @field:NotBlank
-    @field:Size(max = 100)
+    @field:Size(max = 30)
     val label: String,
     @field:Positive
     val amount: Double,

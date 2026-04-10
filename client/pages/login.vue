@@ -57,6 +57,7 @@ async function log() {
               type="text"
               class="w-full"
               placeholder="Entrez votre nom d'utilisateur"
+              maxlength="100"
             />
           </div>
 
@@ -71,6 +72,7 @@ async function log() {
               type="password"
               class="w-full"
               placeholder="Entrez votre mot de passe"
+              maxlength="100"
             />
           </div>
 
