@@ -28,7 +28,9 @@ class BookletResource(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_booklet")
-    var idBooklet: UUID? = null
+    var idBooklet: UUID? = null,
+    @Version
+    var version: Long = 0
 ) {
     fun clearAllRegularTransactions() {
         regularTransactions.toList().forEach { transaction ->

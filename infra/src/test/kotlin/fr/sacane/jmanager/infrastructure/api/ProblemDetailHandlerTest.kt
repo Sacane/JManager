@@ -41,7 +41,7 @@ class ProblemDetailHandlerTest {
         val pd = resp.body!!
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Method type mismatch")
-        assertThat(pd.detail).contains("Invalid type parameter")
+        assertThat(pd.detail).contains("Invalid type for the provided parameter")
         assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_VALIDATION)
         assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_VALIDATION))
     }
@@ -49,14 +49,17 @@ class ProblemDetailHandlerTest {
     @Test
     fun `method argument not valid returns bad request`() {
         val ex = Mockito.mock(MethodArgumentNotValidException::class.java)
+        val bindingResult = Mockito.mock(org.springframework.validation.BindingResult::class.java)
         Mockito.`when`(ex.message).thenReturn("Validation failed")
+        Mockito.`when`(ex.bindingResult).thenReturn(bindingResult)
+        Mockito.`when`(bindingResult.fieldErrors).thenReturn(emptyList())
         val resp = handler.handleValidationErrors(ex)
 
         assertThat(resp.statusCode.value()).isEqualTo(HttpStatus.BAD_REQUEST.value())
         val pd = resp.body!!
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Method argument not valid")
-        assertThat(pd.detail).contains("invalid value")
+        assertThat(pd.detail).isEqualTo("Invalid request body")
         assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.REQUEST_VALIDATION)
         assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.REQUEST_VALIDATION))
     }
@@ -70,8 +73,7 @@ class ProblemDetailHandlerTest {
         val pd = resp.body!!
         assertThat(pd.status).isEqualTo(HttpStatus.BAD_REQUEST.value())
         assertThat(pd.title).isEqualTo("Invalid given currency")
-        assertThat(pd.detail).contains("Oops, something went wrong")
-        assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.INVALID_CURRENCY)
+        assertThat(pd.detail).contains("The provided currency is not supported")
         assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.INVALID_CURRENCY))
     }
 
@@ -180,7 +182,7 @@ class ProblemDetailHandlerTest {
         val pd = resp.body!!
         assertThat(pd.status).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
         assertThat(pd.title).isEqualTo("Internal server error")
-        assertThat(pd.detail).contains("Oops, something went wrong")
+        assertThat(pd.detail).contains("An unexpected internal error occurred")
         assertThat(pd.properties!!["code"]).isEqualTo(ResultState.INTERNAL_SERVER_ERROR.code)
         assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ResultState.INTERNAL_SERVER_ERROR.code))
     }
@@ -249,7 +251,7 @@ class ProblemDetailHandlerTest {
         val pd = resp.body!!
         assertThat(pd.status).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
         assertThat(pd.title).isEqualTo("Internal server error")
-        assertThat(pd.detail).contains("Oops, something went wrong")
+        assertThat(pd.detail).contains("An unexpected internal error occurred")
         assertThat(pd.properties!!["code"]).isEqualTo(ErrorCatalog.INTERNAL_UNEXPECTED)
         assertThat(pd.properties!!["errorKey"]).isEqualTo(ErrorCatalog.keyForCode(ErrorCatalog.INTERNAL_UNEXPECTED))
     }

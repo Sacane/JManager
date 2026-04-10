@@ -123,7 +123,7 @@ class TransactionControllerTest(
         }
 
         @Test
-        fun `Create a transaction with an unauthenticated user must send 404`() {
+        fun `Create a transaction with an unauthenticated user must send 401`() {
             val body = UserBookletResponse("test", TransactionResult(null, "transactionTest", BigDecimal(100.00), "€", true, LocalDate.now(), null, false))
 
             Given {
@@ -134,7 +134,7 @@ class TransactionControllerTest(
             } When {
                 post("/api/transaction")
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -188,7 +188,7 @@ class TransactionControllerTest(
         }
 
         @Test
-        fun `Request for an unauthenticated user must send 404`() {
+        fun `Request for an unauthenticated user must send 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
@@ -197,7 +197,7 @@ class TransactionControllerTest(
             } When {
                 get("/api/transaction/{id}", mapOf("id" to "12"))
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -348,7 +348,7 @@ class TransactionControllerTest(
         fun `Request deletion for a non-existing booklet must send 404`() {
             val request = BookletTransactionsIdRequest(
                 UUID.randomUUID().toString(),
-                listOf()
+                listOf(UUID.randomUUID().toString())
             )
             Given {
                 port(port)

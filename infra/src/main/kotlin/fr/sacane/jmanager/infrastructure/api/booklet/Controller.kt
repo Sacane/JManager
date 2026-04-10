@@ -15,6 +15,8 @@ import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import kotlinx.serialization.Serializable
+import jakarta.validation.Valid
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
@@ -32,9 +34,9 @@ class BookletController (
         private val LOGGER: Logger = Logger.getLogger("BookletController")
     }
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun saveBooklet(
-        @RequestBody bookletRequest: BookletBookingRequest
+        @Valid @RequestBody bookletRequest: BookletBookingRequest
     ): ResponseEntity<BookletInfoDTO> {
         LOGGER.info("Booking a new Booklet ${bookletRequest.label} starting at ${bookletRequest.amount}${bookletRequest.currency} for user ${currentUser.id}")
         return feature.save(

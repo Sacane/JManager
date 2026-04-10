@@ -14,7 +14,7 @@ class TransactionResource(
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(unique = true, name = "id_sheet", nullable = false)
     var idSheet: UUID? = null,
-    @Column(name = "label_sheet")
+    @Column(name = "label_sheet", length = 255)
     var label: String,
     @Column(name="date")
     var date: LocalDate = LocalDate.now(),
@@ -35,6 +35,8 @@ class TransactionResource(
     var regularTransactionId: UUID? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     var booklet: BookletResource? = null,
+    @Version
+    var version: Long = 0
     ){
     override fun toString(): String {
         return """

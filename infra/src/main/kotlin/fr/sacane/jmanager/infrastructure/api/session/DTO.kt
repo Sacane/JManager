@@ -1,5 +1,9 @@
 package fr.sacane.jmanager.infrastructure.api.session
 
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -13,14 +17,24 @@ data class UserDTO(
 
 @Serializable
 data class RegisteredUserDTO(
+    @field:NotBlank
+    @field:Size(min = 1, max = 100)
     val username: String,
+    @field:NotBlank
+    @field:Size(min = 1, max = 100)
     val password: String,
+    @field:NotBlank
+    @field:Size(min = 1, max = 100)
     val confirmPassword: String
 )
 
 @Serializable
 data class UserPasswordDTO(
+    @field:NotBlank
+    @field:Size(min = 1, max = 100)
     val username: String,
+    @field:NotBlank
+    @field:Size(min = 1, max = 100)
     val password: String
 )
 
@@ -48,13 +62,20 @@ data class BookletMonthlyCycleDTO(
 
 @Serializable
 data class UserSettingsUpdateDTO(
+    @field:Min(7)
+    @field:Max(60)
     val projectionWindowDays: Int,
     val bookletCycles: List<BookletMonthlyCycleUpdateDTO>,
 )
 
 @Serializable
 data class BookletMonthlyCycleUpdateDTO(
+    @field:NotBlank
     val bookletId: String,
+    @field:Min(1)
+    @field:Max(31)
     val monthlyPeriodStartDay: Int,
+    @field:Min(1)
+    @field:Max(31)
     val monthlyPeriodEndDay: Int? = null,
 )

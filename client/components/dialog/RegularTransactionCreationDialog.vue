@@ -151,7 +151,7 @@ function handleTabKey(event: KeyboardEvent) {
     <div v-else class="h-full mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libellé</label>
-        <InputText id="label" v-model="regularTrForm.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" />
+        <InputText id="label" v-model="regularTrForm.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" maxlength="100" />
       </div>
       <div class="mt5 flex flex-col gap-3">
         <label for="selectionType">Selectionner le type de transaction</label>

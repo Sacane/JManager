@@ -63,10 +63,15 @@ class CsvTransactionExporter {
 
 
     private fun escapeCsvField(field: String): String {
-        if (field.contains(CSV_SEPARATOR) || field.contains("\"") || field.contains("\n")) {
-            return "\"${field.replace("\"", "\"\"")}\""
+        var sanitized = field
+        // Protect against CSV formula injection (=, +, -, @, \t, \r can trigger formulas in spreadsheet apps)
+        if (sanitized.isNotEmpty() && sanitized[0] in charArrayOf('=', '+', '-', '@', '\t', '\r')) {
+            sanitized = "'$sanitized"
         }
-        return field
+        if (sanitized.contains(CSV_SEPARATOR) || sanitized.contains("\"") || sanitized.contains("\n")) {
+            return "\"${sanitized.replace("\"", "\"\"")}\""
+        }
+        return sanitized
     }
 }
 

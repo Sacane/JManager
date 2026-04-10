@@ -2,6 +2,8 @@ package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
+import jakarta.validation.ConstraintViolationException
+import org.hibernate.StaleObjectStateException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpStatus
@@ -59,7 +61,7 @@ class ProblemDetailHandler {
         return buildResponse(
             status = HttpStatus.BAD_REQUEST,
             title = "Method type mismatch",
-            detail = "Invalid type parameter : ${ex.message}",
+            detail = "Invalid type for the provided parameter",
             code = ErrorCatalog.REQUEST_VALIDATION
         )
     }
@@ -67,10 +69,23 @@ class ProblemDetailHandler {
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationErrors(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail> {
         logException("Method argument not valid", ex.cause?.message ?: ex.message)
+        val fieldErrors = ex.bindingResult.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }
         return buildResponse(
             status = HttpStatus.BAD_REQUEST,
             title = "Method argument not valid",
-            detail = "invalid value : ${ex.message}",
+            detail = if (fieldErrors.isNotBlank()) fieldErrors else "Invalid request body",
+            code = ErrorCatalog.REQUEST_VALIDATION
+        )
+    }
+
+    @ExceptionHandler(ConstraintViolationException::class)
+    fun handleConstraintViolation(ex: ConstraintViolationException): ResponseEntity<ProblemDetail> {
+        val violations = ex.constraintViolations.joinToString("; ") { "${it.propertyPath}: ${it.message}" }
+        logException("Constraint violation", violations)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Constraint violation",
+            detail = violations,
             code = ErrorCatalog.REQUEST_VALIDATION
         )
     }
@@ -81,7 +96,7 @@ class ProblemDetailHandler {
         return buildResponse(
             status = HttpStatus.INTERNAL_SERVER_ERROR,
             title = "Internal server error",
-            detail = "Oops, something went wrong. It's our problem : ${ex.message}",
+            detail = "An unexpected internal error occurred",
             code = ex.errCode,
             errorKey = ex.errKey,
         )
@@ -99,13 +114,24 @@ class ProblemDetailHandler {
         )
     }
 
+    @ExceptionHandler(StaleObjectStateException::class)
+    fun onOptimisticLockException(ex: StaleObjectStateException): ResponseEntity<ProblemDetail> {
+        logException("Optimistic lock conflict", ex.message)
+        return buildResponse(
+            status = HttpStatus.CONFLICT,
+            title = "Conflict",
+            detail = "The resource was modified by another request. Please retry.",
+            code = ErrorCatalog.INTERNAL_UNEXPECTED
+        )
+    }
+
     @ExceptionHandler(Exception::class)
     fun onIrregularException(ex: Exception): ResponseEntity<ProblemDetail> {
         logException("Internal server error", ex.cause?.message ?: ex.message)
         return buildResponse(
             status = HttpStatus.INTERNAL_SERVER_ERROR,
             title = "Internal server error",
-            detail = "Oops, something went wrong. It's our problem : ${ex.message}",
+            detail = "An unexpected internal error occurred",
             code = ErrorCatalog.INTERNAL_UNEXPECTED
         )
     }
@@ -116,7 +142,7 @@ class ProblemDetailHandler {
         return buildResponse(
             status = HttpStatus.BAD_REQUEST,
             title = "Invalid given currency",
-            detail = "Oops, something went wrong. It's our problem : ${ex.message}",
+            detail = "The provided currency is not supported",
             code = ErrorCatalog.INVALID_CURRENCY
         )
     }
@@ -136,7 +162,7 @@ class ProblemDetailHandler {
         return buildResponse(
             status = HttpStatus.BAD_REQUEST,
             title = "Bad Request",
-            detail = "Invalid argument : ${ex.message}",
+            detail = "Invalid argument provided",
             code = ErrorCatalog.REQUEST_VALIDATION
         )
     }

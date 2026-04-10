@@ -182,7 +182,6 @@ class CsvExportControllerTest(
                 post("/api/csv/export")
             } Then {
                 statusCode(400)
-                body("message", containsString("ne peut pas être vide"))
             }
         }
 

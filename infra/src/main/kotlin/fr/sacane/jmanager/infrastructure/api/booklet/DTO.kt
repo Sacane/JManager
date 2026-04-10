@@ -2,6 +2,9 @@ package fr.sacane.jmanager.infrastructure.api.booklet
 
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.Size
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 
@@ -25,7 +28,11 @@ data class BookletInfoDTO(
 
 @Serializable
 data class BookletBookingRequest(
+    @field:NotBlank
+    @field:Size(max = 30)
     val label: String,
+    @field:Positive
     val amount: Double,
+    @field:NotBlank
     val currency: String
 )

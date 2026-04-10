@@ -1,6 +1,51 @@
 # Changelog
 
+## 2026-04-11
+- **Security: String length enforcement across all layers**
+  - **DTO fix**: `BookletBookingRequest.label` `@Size(max=100)` changed to `@Size(max=30)` to match the database `VARCHAR(30)` constraint. Prevented potential data truncation errors.
+  - **JPA entities**: Added explicit `@Column(length=)` annotations to `UserResource` (username=100, password=255, email=255), `TransactionResource` (label=255), and `AbstractTagResource` (name=50) for database-level defense in depth.
+  - **Frontend**: Added `maxlength` attributes on all user-facing text inputs — login username/password (100), booklet booking label (30), transaction label (100), regular transaction label (100), tag create/edit labels (50). Prevents oversized input from reaching the backend.
+
 ## 2026-04-10
+- **Security: HikariCP connection pooling (B3-05)**
+  - Replaced `DriverManagerDataSource` with `HikariDataSource` in `DatasourceConfig`. Enables connection pooling with configurable pool size, connection timeout, idle timeout, and leak detection threshold.
+- **Security: Restrict Content-Type on JSON endpoints (B1-09)**
+  - Added `consumes = [MediaType.APPLICATION_JSON_VALUE]` to all `@PostMapping`, `@PutMapping`, `@PatchMapping`, and `@DeleteMapping` endpoints that accept `@RequestBody` across session, booklet, tag, transaction, and CSV controllers. Prevents unexpected content-type deserialization.
+- **Security: Validate year parameter in StatsController (B1-07)**
+  - Added `@Min(1900) @Max(2100)` validation on the `year` `@PathVariable` in `getMonthlyBookletStats()`. Added `@Validated` on `StatsController`.
+- **Security: Limit HTTP POST body size (B1-10)**
+  - Added `server.tomcat.max-http-post-size=2097152` (2 MB) to `application.properties`. Limits the maximum size of JSON request bodies accepted by Tomcat.
+- **Security: Generic login error message (F-03)**
+  - Changed the login failure message from a specific "Le nom d'utilisateur et le mot de passe ne correspondent pas" to the generic "Identifiants incorrects" to prevent user enumeration.
+- **Security: CSV formula injection protection (F-05)**
+  - `CsvTransactionExporter.escapeCsvField()` now sanitizes fields starting with `=`, `+`, `-`, `@`, `\t`, or `\r` by prepending a single quote. Prevents CSV formula injection when exported files are opened in spreadsheet applications.
+- **Security: Bean Validation on all API input DTOs (B1-01)**
+  - Added `jakarta.validation` annotations (`@NotBlank`, `@Size`, `@Min`, `@Max`, `@Positive`, `@NotEmpty`, `@Valid`) to all DTOs used as `@RequestBody` inputs: `UserPasswordDTO`, `RegisteredUserDTO`, `UserSettingsUpdateDTO`, `BookletMonthlyCycleUpdateDTO`, `BookletBookingRequest`, `UserTagRequest`, `ColorDTO`, `TagDTO`, `TransactionResult`, `UserBookletIdsTransactionRequest`, `BookletTransactionsIdRequest`, `MonthlyRegularTransactionRequest`, `UpdateRegularTransactionRequest`, `RegularTransactionsDeletionRequest`, `CsvExportRequestDTO`, `ConfirmPreviewRequest`.
+  - Added `@Valid` annotation to all `@RequestBody` parameters across all controllers (session, booklet, transaction, tag, csv).
+  - Added `spring-boot-starter-validation` dependency to `infra/build.gradle.kts`.
+- **Security: Hide internal exception details from API responses (B1-04)**
+  - `ProblemDetailHandler`: replaced `ex.message` in generic error responses with safe static messages (`"An unexpected internal error occurred"`, `"Invalid type for the provided parameter"`, `"The provided currency is not supported"`, `"Invalid argument provided"`). Internal details remain logged server-side.
+  - `MethodArgumentNotValidException` handler now returns field-level validation errors (`field: message`) instead of raw exception messages.
+  - Updated all corresponding `ProblemDetailHandlerTest` assertions.
+- **Security: Ownership verification on booklet operations (B3-01/B3-02)**
+  - Added `userOwnsBooklet()` helper in `BookletFeatureImpl` to verify that a booklet belongs to the requesting user before allowing `deleteBookletById` or `editBooklet`. Returns `FORBIDDEN` with a domain error key if ownership check fails.
+  - Added domain tests: `Deleting a booklet owned by another user should be forbidden`, `Editing a booklet owned by another user should be forbidden`. Fixed pre-existing test that was using wrong user/token pairing.
+- **Security: Login button loading state (F-01)**
+  - Added `:loading` and `:disabled` binding to the login button in `login.vue`. The button shows a spinner while the login request is in flight and is disabled when credentials are empty or a request is already running.
+- **Security: Rate limiting on login endpoint (B2-01)**
+  - Implemented an in-memory `LoginRateLimiter` component that blocks an IP after 5 failed login attempts within a 15-minute sliding window. Returns HTTP 429 when rate-limited. Attempts are cleared on successful login.
+- **Security: JWT filter returns 401 instead of 404 (B2-05)**
+  - `JwtCookieAuthenticationFilter` now returns HTTP 401 Unauthorized (instead of 404 Not Found) when the token references a non-existent user or when an authentication error occurs. Prevents leaking user existence information.
+- **Security: Mask token in logs (B2-06)**
+  - `JwtTokenGenerator.readToken()` no longer logs the raw token value on error. Replaced `println` with a proper `Logger` that only logs the exception type.
+- **Security: SameSite cookie attribute (B2-04)**
+  - Login and logout cookies now use Spring `ResponseCookie` with `SameSite=Strict`, `Secure` (configurable per profile), and `HttpOnly` attributes. Defends against CSRF attacks.
+- **Security: Validate admin pagination parameters (B1-03)**
+  - Added `@Min(0)` on `page` and `@Min(1) @Max(100)` on `size` in `AdminController.getCreatedUsers()`. Added `@Validated` on the controller and a `ConstraintViolationException` handler in `ProblemDetailHandler`.
+- **Security: Replace localStorage with sessionStorage (F-02)**
+  - User authentication data (`id`, `username`, `roles`) is now stored in `sessionStorage` instead of `localStorage` in `useAuth.ts` and `useQuery.ts`. Reduces XSS exposure: data is tab-scoped and cleared when the tab closes.
+- **Security: Optimistic locking on booklet and transaction entities (B3-03/B3-04)**
+  - Added `@Version` column to `BookletResource` and `TransactionResource` JPA entities. Flyway migration `V19` adds `version` columns. Prevents silent data loss from concurrent balance updates (race condition). Added `StaleObjectStateException` handler in `ProblemDetailHandler` returning HTTP 409 Conflict.
 - **Fix: dashboard quarter/year period uses future months instead of rolling past window**
   - **Root cause**: `currentDateRange` for `quarter` used `startOfQuarter` / `endOfQuarter` (calendar quarter, e.g. Apr–Jun for April), and for `year` used `startOfYear` / `endOfYear` (Jan–Dec). Both included future months instead of showing the most recent completed period.
   - **Frontend fix**: Changed `currentDateRange` to rolling windows: quarter = 3 months ending at the anchor month (`startOfMonth(anchor - 2 months)` → `endOfMonth(anchor)`); year = 12 months ending at the anchor month (`startOfMonth(anchor - 11 months)` → `endOfMonth(anchor)`).

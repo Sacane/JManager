@@ -8,6 +8,7 @@ sealed class AbstractTagResource(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var idTag: UUID? = null,
+    @Column(length = 50)
     var name: String = "",
     @Embedded
     var color: Color = Color(0, 0, 0),

@@ -9,11 +9,16 @@ const userAuth = reactive({
 })
 
 const hasFailedlogin = ref(false)
+const isLogging = ref(false)
 
-function log() {
-  login(userAuth, (e) => {
+async function log() {
+  if (isLogging.value) return
+  isLogging.value = true
+  hasFailedlogin.value = false
+  await login(userAuth, (e) => {
     hasFailedlogin.value = true
     toastr.errorAxios(e)
+    isLogging.value = false
   })
 }
 </script>
@@ -52,6 +57,7 @@ function log() {
               type="text"
               class="w-full"
               placeholder="Entrez votre nom d'utilisateur"
+              maxlength="100"
             />
           </div>
 
@@ -66,15 +72,16 @@ function log() {
               type="password"
               class="w-full"
               placeholder="Entrez votre mot de passe"
+              maxlength="100"
             />
           </div>
 
           <div v-if="hasFailedlogin" class="error-message">
             <i class="pi pi-exclamation-circle mr-2" />
-            Le nom d'utilisateur et le mot de passe ne correspondent pas
+            Identifiants incorrects
           </div>
 
-          <Button type="submit" class="w-full submit-btn" size="large">
+          <Button type="submit" class="w-full submit-btn" size="large" :loading="isLogging" :disabled="isLogging || !userAuth.username || !userAuth.password">
             <i class="pi pi-sign-in mr-2" />
             Se connecter
           </Button>

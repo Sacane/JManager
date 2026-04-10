@@ -9,12 +9,17 @@ import io.jsonwebtoken.Jwts
 import org.springframework.beans.factory.annotation.Value
 import java.time.ZoneId
 import java.util.*
+import java.util.logging.Logger
 import javax.crypto.spec.SecretKeySpec
 
 class JwtTokenGenerator(
     @Value("\${auth.secret}")
     private val secret: String
 ): TokenGenerator {
+
+    companion object {
+        private val LOGGER = Logger.getLogger(JwtTokenGenerator::class.java.name)
+    }
 
     private val signingKey: SecretKeySpec
         get() {
@@ -70,7 +75,7 @@ class JwtTokenGenerator(
                 }
             )
         } catch (e: Exception) {
-            println("Error reading token $token: ${e.message}")
+            LOGGER.warning("Error reading token: ${e.javaClass.simpleName}")
             null
         }
     }

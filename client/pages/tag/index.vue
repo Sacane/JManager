@@ -386,6 +386,7 @@ function edit() {
             placeholder="Ex: Courses, Essence, Loisirs..."
             class="w-full"
             autocomplete="off"
+            maxlength="50"
           />
         </div>
 
@@ -441,6 +442,7 @@ function edit() {
             v-model="tagToEdit.label"
             class="w-full"
             autocomplete="off"
+            maxlength="50"
           />
         </div>
 

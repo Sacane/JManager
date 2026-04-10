@@ -125,7 +125,7 @@ class StatsControllerTest(
         }
 
         @Test
-        fun `Get monthly booklet stats with unauthenticated user must send 404`() {
+        fun `Get monthly booklet stats with unauthenticated user must send 401`() {
             val year = LocalDate.now().year
 
             Given {
@@ -135,7 +135,7 @@ class StatsControllerTest(
             } When {
                 get("/api/stats/monthly/{bookletId}/{year}", mapOf("bookletId" to booklet.id!!, "year" to year))
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -198,7 +198,7 @@ class StatsControllerTest(
         }
 
         @Test
-        fun `Get category distribution with unauthenticated user must send 404`() {
+        fun `Get category distribution with unauthenticated user must send 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
@@ -206,7 +206,7 @@ class StatsControllerTest(
             } When {
                 get("/api/stats/category-distribution")
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -273,7 +273,7 @@ class StatsControllerTest(
         }
 
         @Test
-        fun `Get trend stats with unauthenticated user must send 404`() {
+        fun `Get trend stats with unauthenticated user must send 401`() {
             Given {
                 port(port)
                 cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
@@ -281,7 +281,7 @@ class StatsControllerTest(
             } When {
                 get("/api/stats/trends")
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
     }
@@ -335,7 +335,7 @@ class StatsControllerTest(
         }
 
         @Test
-        fun `Get previsional transactions with unauthenticated user must send 404`() {
+        fun `Get previsional transactions with unauthenticated user must send 401`() {
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
 
@@ -348,7 +348,7 @@ class StatsControllerTest(
             } When {
                 get("/api/stats/previsional")
             } Then {
-                statusCode(404)
+                statusCode(401)
             }
         }
 

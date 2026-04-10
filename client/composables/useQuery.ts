@@ -102,7 +102,7 @@ export default function useQuery() {
       // const message = axiosError.response?.data.message
       if (status === 401 || status === 403) {
         // toast.error(message)
-        localStorage.removeItem('user')
+        sessionStorage.removeItem('user')
         logout().then(() => {
           navigateTo('/login')
         })

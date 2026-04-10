@@ -53,7 +53,7 @@ function handleTabKey(event: KeyboardEvent) {
     <div class="mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libellé du livret</label>
-        <InputText id="label" v-model="bookletData.label" type="text" autocomplete="off" />
+        <InputText id="label" v-model="bookletData.label" type="text" autocomplete="off" maxlength="30" />
       </div>
 
       <div id="labelAmount" class="flex flex-col gap-3">

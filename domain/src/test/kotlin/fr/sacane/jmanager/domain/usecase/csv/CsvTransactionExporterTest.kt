@@ -279,5 +279,30 @@ class CsvTransactionExporterTest {
         val lines = csvContent.split("\n")
         assertTrue(lines[1].endsWith(";Alimentation & Restaurant"))
     }
+
+    @Test
+    fun `exportToCsv should sanitize labels starting with formula injection characters`() {
+        val dangerousLabels = listOf("=CMD()", "+CMD()", "-CMD()", "@SUM(A1)")
+
+        dangerousLabels.forEach { dangerousLabel ->
+            val transaction = Transaction(
+                id = UUID.randomUUID(),
+                label = dangerousLabel,
+                date = LocalDate.of(2025, 1, 15),
+                amount = Amount(BigDecimal("100.00")),
+                isIncome = false
+            )
+
+            val csvContent = exporter.exportToCsv(listOf(transaction))
+            val lines = csvContent.split("\n")
+            val labelField = lines[1].split(";")[1]
+
+            assertFalse(
+                labelField.startsWith("=") || labelField.startsWith("+") ||
+                labelField.startsWith("-") || labelField.startsWith("@"),
+                "Label '$dangerousLabel' should be sanitized but got '$labelField'"
+            )
+        }
+    }
 }
 

@@ -181,6 +181,7 @@ function handleDelete() {
                 v-model="formData.label"
                 placeholder="Ex: Salaire, Loyer, Abonnement..."
                 class="w-full"
+                maxlength="100"
               />
             </div>
 
