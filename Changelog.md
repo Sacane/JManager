@@ -14,6 +14,20 @@
   - Added domain tests: `Deleting a booklet owned by another user should be forbidden`, `Editing a booklet owned by another user should be forbidden`. Fixed pre-existing test that was using wrong user/token pairing.
 - **Security: Login button loading state (F-01)**
   - Added `:loading` and `:disabled` binding to the login button in `login.vue`. The button shows a spinner while the login request is in flight and is disabled when credentials are empty or a request is already running.
+- **Security: Rate limiting on login endpoint (B2-01)**
+  - Implemented an in-memory `LoginRateLimiter` component that blocks an IP after 5 failed login attempts within a 15-minute sliding window. Returns HTTP 429 when rate-limited. Attempts are cleared on successful login.
+- **Security: JWT filter returns 401 instead of 404 (B2-05)**
+  - `JwtCookieAuthenticationFilter` now returns HTTP 401 Unauthorized (instead of 404 Not Found) when the token references a non-existent user or when an authentication error occurs. Prevents leaking user existence information.
+- **Security: Mask token in logs (B2-06)**
+  - `JwtTokenGenerator.readToken()` no longer logs the raw token value on error. Replaced `println` with a proper `Logger` that only logs the exception type.
+- **Security: SameSite cookie attribute (B2-04)**
+  - Login and logout cookies now use Spring `ResponseCookie` with `SameSite=Strict`, `Secure` (configurable per profile), and `HttpOnly` attributes. Defends against CSRF attacks.
+- **Security: Validate admin pagination parameters (B1-03)**
+  - Added `@Min(0)` on `page` and `@Min(1) @Max(100)` on `size` in `AdminController.getCreatedUsers()`. Added `@Validated` on the controller and a `ConstraintViolationException` handler in `ProblemDetailHandler`.
+- **Security: Replace localStorage with sessionStorage (F-02)**
+  - User authentication data (`id`, `username`, `roles`) is now stored in `sessionStorage` instead of `localStorage` in `useAuth.ts` and `useQuery.ts`. Reduces XSS exposure: data is tab-scoped and cleared when the tab closes.
+- **Security: Optimistic locking on booklet and transaction entities (B3-03/B3-04)**
+  - Added `@Version` column to `BookletResource` and `TransactionResource` JPA entities. Flyway migration `V19` adds `version` columns. Prevents silent data loss from concurrent balance updates (race condition). Added `StaleObjectStateException` handler in `ProblemDetailHandler` returning HTTP 409 Conflict.
 - **Fix: dashboard quarter/year period uses future months instead of rolling past window**
   - **Root cause**: `currentDateRange` for `quarter` used `startOfQuarter` / `endOfQuarter` (calendar quarter, e.g. Apr–Jun for April), and for `year` used `startOfYear` / `endOfYear` (Jan–Dec). Both included future months instead of showing the most recent completed period.
   - **Frontend fix**: Changed `currentDateRange` to rolling windows: quarter = 3 months ending at the anchor month (`startOfMonth(anchor - 2 months)` → `endOfMonth(anchor)`); year = 12 months ending at the anchor month (`startOfMonth(anchor - 11 months)` → `endOfMonth(anchor)`).

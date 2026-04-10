@@ -2,6 +2,8 @@ package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
+import jakarta.validation.ConstraintViolationException
+import org.hibernate.StaleObjectStateException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpStatus
@@ -76,6 +78,18 @@ class ProblemDetailHandler {
         )
     }
 
+    @ExceptionHandler(ConstraintViolationException::class)
+    fun handleConstraintViolation(ex: ConstraintViolationException): ResponseEntity<ProblemDetail> {
+        val violations = ex.constraintViolations.joinToString("; ") { "${it.propertyPath}: ${it.message}" }
+        logException("Constraint violation", violations)
+        return buildResponse(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Constraint violation",
+            detail = violations,
+            code = ErrorCatalog.REQUEST_VALIDATION
+        )
+    }
+
     @ExceptionHandler(InternalServerErrorException::class)
     fun onInternalServerErrorException(ex: InternalServerErrorException): ResponseEntity<ProblemDetail> {
         logException("Internal server error", ex.cause?.message ?: ex.message)
@@ -97,6 +111,17 @@ class ProblemDetailHandler {
             detail = ex.message,
             code = ex.errCode,
             errorKey = ex.errKey,
+        )
+    }
+
+    @ExceptionHandler(StaleObjectStateException::class)
+    fun onOptimisticLockException(ex: StaleObjectStateException): ResponseEntity<ProblemDetail> {
+        logException("Optimistic lock conflict", ex.message)
+        return buildResponse(
+            status = HttpStatus.CONFLICT,
+            title = "Conflict",
+            detail = "The resource was modified by another request. Please retry.",
+            code = ErrorCatalog.INTERNAL_UNEXPECTED
         )
     }
 

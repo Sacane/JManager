@@ -21,7 +21,7 @@ interface UserRegister {
 
 export default function useAuth() {
   const user: Ref<User | null> = ref(null)
-  const storedUser: User | undefined = JSON.parse(localStorage.getItem('user') as string)
+  const storedUser: User | undefined = JSON.parse(sessionStorage.getItem('user') as string)
   const isAuthenticated = ref<boolean>(false)
   const isAdmin = computed(() => user.value?.roles.includes('ADMIN'))
   const config = useRuntimeConfig()
@@ -53,7 +53,7 @@ export default function useAuth() {
         roles,
         email: '',
       }
-      localStorage.setItem('user', JSON.stringify(user.value))
+      sessionStorage.setItem('user', JSON.stringify(user.value))
       isAuthenticated.value = true
       navigateTo('/')
     } catch (e: any) {
@@ -69,7 +69,7 @@ export default function useAuth() {
       user.value = null
       isAuthenticated.value = false
       navigateTo('/login')
-      localStorage.removeItem('user')
+      sessionStorage.removeItem('user')
     } catch (e: any) {
       handleError(e)
     }

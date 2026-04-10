@@ -35,6 +35,8 @@ class TransactionResource(
     var regularTransactionId: UUID? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     var booklet: BookletResource? = null,
+    @Version
+    var version: Long = 0
     ){
     override fun toString(): String {
         return """
