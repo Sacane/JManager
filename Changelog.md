@@ -1,6 +1,18 @@
 # Changelog
 
 ## 2026-04-10
+- **Security: HikariCP connection pooling (B3-05)**
+  - Replaced `DriverManagerDataSource` with `HikariDataSource` in `DatasourceConfig`. Enables connection pooling with configurable pool size, connection timeout, idle timeout, and leak detection threshold.
+- **Security: Restrict Content-Type on JSON endpoints (B1-09)**
+  - Added `consumes = [MediaType.APPLICATION_JSON_VALUE]` to all `@PostMapping`, `@PutMapping`, `@PatchMapping`, and `@DeleteMapping` endpoints that accept `@RequestBody` across session, booklet, tag, transaction, and CSV controllers. Prevents unexpected content-type deserialization.
+- **Security: Validate year parameter in StatsController (B1-07)**
+  - Added `@Min(1900) @Max(2100)` validation on the `year` `@PathVariable` in `getMonthlyBookletStats()`. Added `@Validated` on `StatsController`.
+- **Security: Limit HTTP POST body size (B1-10)**
+  - Added `server.tomcat.max-http-post-size=2097152` (2 MB) to `application.properties`. Limits the maximum size of JSON request bodies accepted by Tomcat.
+- **Security: Generic login error message (F-03)**
+  - Changed the login failure message from a specific "Le nom d'utilisateur et le mot de passe ne correspondent pas" to the generic "Identifiants incorrects" to prevent user enumeration.
+- **Security: CSV formula injection protection (F-05)**
+  - `CsvTransactionExporter.escapeCsvField()` now sanitizes fields starting with `=`, `+`, `-`, `@`, `\t`, or `\r` by prepending a single quote. Prevents CSV formula injection when exported files are opened in spreadsheet applications.
 - **Security: Bean Validation on all API input DTOs (B1-01)**
   - Added `jakarta.validation` annotations (`@NotBlank`, `@Size`, `@Min`, `@Max`, `@Positive`, `@NotEmpty`, `@Valid`) to all DTOs used as `@RequestBody` inputs: `UserPasswordDTO`, `RegisteredUserDTO`, `UserSettingsUpdateDTO`, `BookletMonthlyCycleUpdateDTO`, `BookletBookingRequest`, `UserTagRequest`, `ColorDTO`, `TagDTO`, `TransactionResult`, `UserBookletIdsTransactionRequest`, `BookletTransactionsIdRequest`, `MonthlyRegularTransactionRequest`, `UpdateRegularTransactionRequest`, `RegularTransactionsDeletionRequest`, `CsvExportRequestDTO`, `ConfirmPreviewRequest`.
   - Added `@Valid` annotation to all `@RequestBody` parameters across all controllers (session, booklet, transaction, tag, csv).

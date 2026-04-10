@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -40,7 +41,7 @@ class SessionController(
         val LOGGER: Logger = Logger.getLogger(SessionController::class.java.name)
     }
 
-    @PostMapping(path= ["/auth"])
+    @PostMapping(path= ["/auth"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun login(
         @Valid @RequestBody userDTO: UserPasswordDTO,
         httpRequest: HttpServletRequest,
@@ -95,7 +96,7 @@ class SessionController(
                 SecurityContextHolder.clearContext()
             }.toHttpResponse()
     }
-    @PostMapping(path= ["/create"])
+    @PostMapping(path = ["/create"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun createUser(@Valid @RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
         val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
         return response.map { u -> u.toDTO() }.toHttpResponse()
@@ -108,7 +109,7 @@ class SessionController(
             .toHttpResponse()
     }
 
-    @PutMapping(path = ["/settings"])
+    @PutMapping(path = ["/settings"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun updateUserSettings(
         @Valid @RequestBody settings: UserSettingsUpdateDTO,
     ): ResponseEntity<UserSettingsDTO> {

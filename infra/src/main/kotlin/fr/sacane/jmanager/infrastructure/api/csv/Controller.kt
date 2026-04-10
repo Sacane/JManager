@@ -128,7 +128,7 @@ class CsvImportController(
         return null
     }
 
-    @PostMapping("export")
+    @PostMapping("export", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun exportTransactionsToCsv(
         @Valid @RequestBody request: CsvExportRequestDTO
     ): ResponseEntity<*> {

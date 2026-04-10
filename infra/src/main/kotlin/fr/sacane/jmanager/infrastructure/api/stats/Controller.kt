@@ -7,7 +7,10 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.NotFoundException
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.util.UUID
@@ -15,6 +18,7 @@ import java.util.logging.Logger
 
 @RestController
 @RequestMapping("/api/stats")
+@Validated
 class StatsController(
     private val statsFeature: StatsFeature,
     private val tagFeature: TagFeature
@@ -26,7 +30,7 @@ class StatsController(
     @GetMapping("/monthly/{bookletId}/{year}")
     fun getMonthlyBookletStats(
         @PathVariable bookletId: String,
-        @PathVariable year: Int
+        @PathVariable @Min(1900) @Max(2100) year: Int
     ): ResponseEntity<MonthlyBookletStatsDTO> {
         LOGGER.info("Requesting monthly stats for booklet $bookletId and year $year")
 

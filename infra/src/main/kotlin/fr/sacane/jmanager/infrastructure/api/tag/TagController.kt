@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.*
 import jakarta.validation.Valid
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -17,7 +18,7 @@ class TagController(
     val tagFeature: TagFeature
 ) {
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun addPersonalTag(
         @Valid @RequestBody userTagRequest: UserTagRequest
     ): ResponseEntity<TagDTO>
@@ -43,7 +44,7 @@ class TagController(
     fun defaultTag(): ResponseEntity<TagDTO> = tagFeature.defaultTag(currentUser.token)
         .map { it.toDTO() }.toHttpResponse()
 
-    @PatchMapping
+    @PatchMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun editTag(
         @Valid @RequestBody tagDTO: TagDTO
     ): ResponseEntity<TagDTO> {

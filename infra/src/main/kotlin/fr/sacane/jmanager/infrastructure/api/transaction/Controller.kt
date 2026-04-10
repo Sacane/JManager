@@ -20,6 +20,7 @@ import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import kotlinx.serialization.Serializable
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
@@ -41,7 +42,7 @@ class TransactionController(
     }
 
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun createTransaction(
         @Valid @RequestBody userBookletResponse: UserBookletResponse
     ): ResponseEntity<TransactionResponse> {
@@ -54,7 +55,7 @@ class TransactionController(
         }.toHttpResponse()
     }
 
-    @DeleteMapping
+    @DeleteMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteByIds(
         @Valid @RequestBody sheetIds: BookletTransactionsIdRequest
     ): ResponseEntity<TransactionDeletionResponse> =
@@ -108,7 +109,7 @@ class TransactionController(
         }
     }
 
-    @PatchMapping
+    @PatchMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun patchTransaction(
         @Valid @RequestBody dto: UserBookletIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
@@ -130,7 +131,7 @@ class TransactionController(
                 it.toDTO()
             }.toHttpResponse()
 
-    @PatchMapping("/confirm")
+    @PatchMapping("/confirm", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun confirmPreviewTransaction(
         @Valid @RequestBody command: ConfirmPreviewRequest
     ): ResponseEntity<TransactionResponse> {
@@ -156,7 +157,7 @@ class TransactionController(
             .toHttpResponse()
     }
 
-    @PostMapping("/monthly")
+    @PostMapping("/monthly", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun createMonthlyTransaction(
         @Valid @RequestBody request: MonthlyRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
@@ -195,7 +196,7 @@ class TransactionController(
         }
     }
 
-    @PatchMapping("/regular")
+    @PatchMapping("/regular", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun updateRegularTransaction(
         @Valid @RequestBody request: UpdateRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
@@ -231,7 +232,7 @@ class TransactionController(
             }
     }
 
-    @DeleteMapping("/regular")
+    @DeleteMapping("/regular", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteRegularTransactions(@Valid @RequestBody request: RegularTransactionsDeletionRequest): ResponseEntity<RegularTransactionsDeletionResponse> {
         logger.info("Bulk deleting ${request.transactionIds.size} regular transaction(s)")
         return regularTransactionFeature.deleteRegularTransactions(currentUser.token, request.transactionIds)

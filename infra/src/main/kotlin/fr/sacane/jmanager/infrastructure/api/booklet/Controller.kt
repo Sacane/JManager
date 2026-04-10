@@ -16,6 +16,7 @@ import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import fr.sacane.jmanager.infrastructure.api.transaction.TransactionResult
 import kotlinx.serialization.Serializable
 import jakarta.validation.Valid
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
@@ -33,7 +34,7 @@ class BookletController (
         private val LOGGER: Logger = Logger.getLogger("BookletController")
     }
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun saveBooklet(
         @Valid @RequestBody bookletRequest: BookletBookingRequest
     ): ResponseEntity<BookletInfoDTO> {

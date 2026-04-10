@@ -76,7 +76,7 @@ async function log() {
 
           <div v-if="hasFailedlogin" class="error-message">
             <i class="pi pi-exclamation-circle mr-2" />
-            Le nom d'utilisateur et le mot de passe ne correspondent pas
+            Identifiants incorrects
           </div>
 
           <Button type="submit" class="w-full submit-btn" size="large" :loading="isLogging" :disabled="isLogging || !userAuth.username || !userAuth.password">
