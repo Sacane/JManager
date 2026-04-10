@@ -94,23 +94,22 @@ class BookletFeatureTest: FeatureTest() {
 
     @Test
     fun `As an owner of an booklet, I can delete it`() {
-        val otherUser = userRepository.register("jojo",  "test") as User
-        connectUser(otherUser)
+        connectUser(user)
         val element = Booklet( Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         bookletState.init(listOf(
-            BookletsByOwner(listOf(element), otherUser.id)
+            BookletsByOwner(listOf(element), user.id)
         ))
 
         bookletFeature.deleteBookletById(element.id!!, session.tokenValue).assertTrue {
             val bookletsList = bookletState.getStates()
 
             val expectedBookletSize = 0
-            val actualBookletSize = bookletsList.find { it.userId == otherUser.id }?.booklets?.size ?: throw Error()
+            val actualBookletSize = bookletsList.find { it.userId == user.id }?.booklets?.size ?: throw Error()
             expectedBookletSize == actualBookletSize
         }
 
         val bookletsList = bookletState.getStates()
-        val ofUser = bookletsList.find { it.userId == otherUser.id }!!
+        val ofUser = bookletsList.find { it.userId == user.id }!!
 
         assertNull(ofUser.existsById(UUID.randomUUID()))
     }
@@ -204,6 +203,33 @@ class BookletFeatureTest: FeatureTest() {
         val bookletToSave = Booklet( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())
         bookletFeature.save(session.tokenValue, bookletToSave)
             .assertFailure()
+    }
+
+    @Test
+    fun `Deleting a booklet owned by another user should be forbidden`() {
+        connectUser(user)
+        val victimUser = userRepository.register("victim", "pass") as User
+        val victimBooklet = Booklet(Amount.fromString("500", "€".asCurrency()), "victim-booklet", owner = victimUser, id = UUID.randomUUID())
+        bookletState.init(listOf(
+            BookletsByOwner(listOf(victimBooklet), victimUser.id)
+        ))
+
+        val result = bookletFeature.deleteBookletById(victimBooklet.id!!, session.tokenValue)
+        result.assertFailure(ResultState.FORBIDDEN)
+    }
+
+    @Test
+    fun `Editing a booklet owned by another user should be forbidden`() {
+        connectUser(user)
+        val victimUser = userRepository.register("victim2", "pass") as User
+        val victimBooklet = Booklet(Amount.fromString("500", "€".asCurrency()), "victim-booklet2", owner = victimUser, id = UUID.randomUUID())
+        bookletState.init(listOf(
+            BookletsByOwner(listOf(victimBooklet), victimUser.id)
+        ))
+
+        val editedBooklet = Booklet(Amount.fromString("999", "€".asCurrency()), "hacked", owner = victimUser, id = victimBooklet.id)
+        val result = bookletFeature.editBooklet(editedBooklet, session.tokenValue)
+        result.assertFailure(ResultState.FORBIDDEN)
     }
 
     @Nested

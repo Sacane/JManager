@@ -4,11 +4,13 @@ import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
 import fr.sacane.jmanager.domain.models.csv.CsvValidationIssue
 import fr.sacane.jmanager.domain.models.csv.CsvImportResult
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
+import jakarta.validation.constraints.NotEmpty
 import kotlinx.serialization.Serializable
 
 
 @Serializable
 data class CsvExportRequestDTO(
+    @field:NotEmpty
     val transactionIds: List<String>
 )
 

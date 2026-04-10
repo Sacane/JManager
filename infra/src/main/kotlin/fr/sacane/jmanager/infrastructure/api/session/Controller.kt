@@ -12,6 +12,7 @@ import fr.sacane.jmanager.infrastructure.api.toDTO
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.security.core.context.SecurityContextHolder
@@ -35,7 +36,7 @@ class SessionController(
 
     @PostMapping(path= ["/auth"])
     fun login(
-        @RequestBody userDTO: UserPasswordDTO,
+        @Valid @RequestBody userDTO: UserPasswordDTO,
         httpResponse: HttpServletResponse
     ): ResponseEntity<UserStorageDTO> {
         val domainResult = loginFeature.login(userDTO.username, userDTO.password)
@@ -74,7 +75,7 @@ class SessionController(
             }.toHttpResponse()
     }
     @PostMapping(path= ["/create"])
-    fun createUser(@RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
+    fun createUser(@Valid @RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
         val response = loginFeature.register(userDTO.username, userDTO.password, userDTO.confirmPassword)
         return response.map { u -> u.toDTO() }.toHttpResponse()
     }
@@ -88,7 +89,7 @@ class SessionController(
 
     @PutMapping(path = ["/settings"])
     fun updateUserSettings(
-        @RequestBody settings: UserSettingsUpdateDTO,
+        @Valid @RequestBody settings: UserSettingsUpdateDTO,
     ): ResponseEntity<UserSettingsDTO> {
         val bookletCycles = settings.bookletCycles.associate { cycle ->
             val bookletId = parseBookletId(cycle.bookletId)

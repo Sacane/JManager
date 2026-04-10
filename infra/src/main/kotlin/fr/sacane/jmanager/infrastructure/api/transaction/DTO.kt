@@ -5,13 +5,19 @@ import fr.sacane.jmanager.infrastructure.api.tag.TagDTO
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
 import fr.sacane.jmanager.infrastructure.configuration.FrequencyPropertyTypeSerializer
 import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.Size
 import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.time.LocalDate
 
 @Serializable
 data class UserBookletIdsTransactionRequest(
+    @field:NotBlank
     val bookletId: String,
+    @field:Valid
     val transaction: TransactionResult
 )
 
@@ -19,6 +25,8 @@ data class UserBookletIdsTransactionRequest(
 @Serializable
 data class TransactionResult(
     val id: String?,
+    @field:NotBlank
+    @field:Size(max = 100)
     val label: String,
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
@@ -26,6 +34,7 @@ data class TransactionResult(
     val isIncome: Boolean,
     @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
+    @field:Valid
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean,
     val regularTransactionId: String? = null
@@ -59,7 +68,9 @@ data class UserBookletResponse(
 
 @Serializable
 data class BookletTransactionsIdRequest(
+    @field:NotBlank
     val bookletId: String,
+    @field:NotEmpty
     val transactionIds: List<String>
 )
 
@@ -80,14 +91,19 @@ data class RegularTransactionDTO(
 
 @Serializable
 data class MonthlyRegularTransactionRequest (
+    @field:NotBlank
+    @field:Size(max = 100)
     val label: String,
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
     @Serializable(with = LocalDateSerializer::class)
     val startDate: LocalDate,
     val isIncome: Boolean,
+    @field:Valid
     val tagDTO: TagDTO,
+    @field:Valid
     val frequencyProperty: FrequencyPropertyDTO,
+    @field:NotEmpty
     val bookletIds: List<String>,
     val repeatDay: Int?,
 )
@@ -126,21 +142,28 @@ data class FrequencyPropertyDTO(
 
 @Serializable
 data class UpdateRegularTransactionRequest(
+    @field:NotBlank
     val id: String,
+    @field:NotBlank
+    @field:Size(max = 100)
     val label: String,
     @Serializable(with = BigDecimalSerializer::class)
     val value: BigDecimal,
     @Serializable(with = LocalDateSerializer::class)
     val startDate: LocalDate,
     val isIncome: Boolean,
+    @field:Valid
     val tagDTO: TagDTO,
+    @field:Valid
     val frequencyProperty: FrequencyPropertyDTO,
+    @field:NotEmpty
     val bookletIds: List<String>,
     val recurrenceRule: RecurrenceRuleDTO
 )
 
 @Serializable
 data class RegularTransactionsDeletionRequest(
+    @field:NotEmpty
     val transactionIds: List<String>
 )
 

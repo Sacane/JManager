@@ -17,6 +17,8 @@ import fr.sacane.jmanager.domain.toUUIDs
 import fr.sacane.jmanager.infrastructure.api.*
 import fr.sacane.jmanager.infrastructure.configuration.BigDecimalSerializer
 import fr.sacane.jmanager.infrastructure.configuration.LocalDateSerializer
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import kotlinx.serialization.Serializable
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -41,7 +43,7 @@ class TransactionController(
 
     @PostMapping
     fun createTransaction(
-        @RequestBody userBookletResponse: UserBookletResponse
+        @Valid @RequestBody userBookletResponse: UserBookletResponse
     ): ResponseEntity<TransactionResponse> {
         return transactionFeature.bookTransaction(
             currentUser.token,
@@ -54,7 +56,7 @@ class TransactionController(
 
     @DeleteMapping
     fun deleteByIds(
-        @RequestBody sheetIds: BookletTransactionsIdRequest
+        @Valid @RequestBody sheetIds: BookletTransactionsIdRequest
     ): ResponseEntity<TransactionDeletionResponse> =
         transactionFeature
             .deleteSheetsByIds(sheetIds.bookletId.toUUID(), sheetIds.transactionIds.toUUIDs(), currentUser.token)
@@ -108,7 +110,7 @@ class TransactionController(
 
     @PatchMapping
     fun patchTransaction(
-        @RequestBody dto: UserBookletIdsTransactionRequest
+        @Valid @RequestBody dto: UserBookletIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Start editing transaction => ${dto.transaction}")
         return transactionFeature.editTransaction(java.util.UUID.fromString(dto.bookletId), dto.transaction.toModel(), currentUser.token)
@@ -130,7 +132,7 @@ class TransactionController(
 
     @PatchMapping("/confirm")
     fun confirmPreviewTransaction(
-        @RequestBody command: ConfirmPreviewRequest
+        @Valid @RequestBody command: ConfirmPreviewRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Confirming preview Transaction...")
         return transactionFeature.confirmPreviewTransaction(
@@ -156,7 +158,7 @@ class TransactionController(
 
     @PostMapping("/monthly")
     fun createMonthlyTransaction(
-        @RequestBody request: MonthlyRegularTransactionRequest
+        @Valid @RequestBody request: MonthlyRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
         logger.info("Creating monthly transaction $request from userID ${currentUser.id}")
         if (request.bookletIds.isEmpty()) {
@@ -195,7 +197,7 @@ class TransactionController(
 
     @PatchMapping("/regular")
     fun updateRegularTransaction(
-        @RequestBody request: UpdateRegularTransactionRequest
+        @Valid @RequestBody request: UpdateRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
         logger.info("Updating regular transaction ${request.id}")
         return regularTransactionFeature.updateRegularTransaction(
@@ -230,7 +232,7 @@ class TransactionController(
     }
 
     @DeleteMapping("/regular")
-    fun deleteRegularTransactions(@RequestBody request: RegularTransactionsDeletionRequest): ResponseEntity<RegularTransactionsDeletionResponse> {
+    fun deleteRegularTransactions(@Valid @RequestBody request: RegularTransactionsDeletionRequest): ResponseEntity<RegularTransactionsDeletionResponse> {
         logger.info("Bulk deleting ${request.transactionIds.size} regular transaction(s)")
         return regularTransactionFeature.deleteRegularTransactions(currentUser.token, request.transactionIds)
             .map { deletedIds ->
@@ -288,7 +290,9 @@ fun TransactionResumeResult.toDTO(): TransactionResponse {
 
 @Serializable
 data class ConfirmPreviewRequest(
+    @field:NotBlank
     val bookletID: String,
+    @field:NotBlank
     val transactionID: String,
     @Serializable(with = BigDecimalSerializer::class)
     val newAmount: BigDecimal?,

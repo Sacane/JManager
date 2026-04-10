@@ -9,11 +9,16 @@ const userAuth = reactive({
 })
 
 const hasFailedlogin = ref(false)
+const isLogging = ref(false)
 
-function log() {
-  login(userAuth, (e) => {
+async function log() {
+  if (isLogging.value) return
+  isLogging.value = true
+  hasFailedlogin.value = false
+  await login(userAuth, (e) => {
     hasFailedlogin.value = true
     toastr.errorAxios(e)
+    isLogging.value = false
   })
 }
 </script>
@@ -74,7 +79,7 @@ function log() {
             Le nom d'utilisateur et le mot de passe ne correspondent pas
           </div>
 
-          <Button type="submit" class="w-full submit-btn" size="large">
+          <Button type="submit" class="w-full submit-btn" size="large" :loading="isLogging" :disabled="isLogging || !userAuth.username || !userAuth.password">
             <i class="pi pi-sign-in mr-2" />
             Se connecter
           </Button>

@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.*
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -18,7 +19,7 @@ class TagController(
 
     @PostMapping
     fun addPersonalTag(
-        @RequestBody userTagRequest: UserTagRequest
+        @Valid @RequestBody userTagRequest: UserTagRequest
     ): ResponseEntity<TagDTO>
     = tagFeature.addTag(token = currentUser.token, userTagRequest.tagLabel.asPersonalTag(userTagRequest.colorDTO.asAwtColor()))
             .map { it.toDTO() }.toHttpResponse()
@@ -44,7 +45,7 @@ class TagController(
 
     @PatchMapping
     fun editTag(
-        @RequestBody tagDTO: TagDTO
+        @Valid @RequestBody tagDTO: TagDTO
     ): ResponseEntity<TagDTO> {
         return tagFeature.editTag(currentUser.token, tagDTO.toDomain())
             .map { it.toDTO() }.toHttpResponse()

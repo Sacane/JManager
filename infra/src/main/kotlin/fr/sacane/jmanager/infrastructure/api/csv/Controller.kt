@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.toHttpResponse
+import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -129,7 +130,7 @@ class CsvImportController(
 
     @PostMapping("export")
     fun exportTransactionsToCsv(
-        @RequestBody request: CsvExportRequestDTO
+        @Valid @RequestBody request: CsvExportRequestDTO
     ): ResponseEntity<*> {
         LOGGER.info("Exporting ${request.transactionIds.size} transactions to CSV")
 

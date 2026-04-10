@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.BookletBalances
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.*
@@ -177,6 +178,11 @@ class BookletFeatureImpl(
         return fr.sacane.jmanager.domain.utils.failure(state, DomainError(state.code, key, detail))
     }
 
+    private fun userOwnsBooklet(userId: UserId, bookletId: UUID): Boolean {
+        val userBooklets = bookletRepository.findBookletsForUser(userId)
+        return userBooklets.any { it.id == bookletId }
+    }
+
     override fun findBookletById(
         bookletId: UUID,
         token: String
@@ -193,12 +199,19 @@ class BookletFeatureImpl(
     override fun editBooklet(
         booklet: Booklet,
         token: String
-    ): Result<Booklet> = session.authenticate(token) {
+    ): Result<Booklet> = session.authenticate(token) { userId ->
         val bookletID = booklet.id ?: return@authenticate domainFailure(
             ResultState.BOOKLET_NOT_FOUND,
             "Le livret ${booklet.label} est introuvable en base",
             "domain.booklet.edit.id_missing"
         )
+        if (!userOwnsBooklet(userId, bookletID)) {
+            return@authenticate domainFailure(
+                ResultState.FORBIDDEN,
+                "Vous n'avez pas accès à ce livret",
+                "domain.booklet.edit.forbidden"
+            )
+        }
         val oldBooklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
             ?: return@authenticate domainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
@@ -220,13 +233,20 @@ class BookletFeatureImpl(
     override fun deleteBookletById(
         bookletId: UUID,
         token: String
-    ): Result<Nothing> = session.authenticate(token) {
+    ): Result<Nothing> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             if(bookletRepository.findBookletByIdWithTransactions(bookletId) == null){
                 return@executeInTransaction domainFailure(
                     ResultState.NOT_FOUND,
                     "Le livret $bookletId n'existe pas",
                     "domain.booklet.delete.not_found"
+                )
+            }
+            if (!userOwnsBooklet(userId, bookletId)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.FORBIDDEN,
+                    "Vous n'avez pas accès à ce livret",
+                    "domain.booklet.delete.forbidden"
                 )
             }
             bookletRepository.deleteBookletById(bookletId)

@@ -1,6 +1,19 @@
 # Changelog
 
 ## 2026-04-10
+- **Security: Bean Validation on all API input DTOs (B1-01)**
+  - Added `jakarta.validation` annotations (`@NotBlank`, `@Size`, `@Min`, `@Max`, `@Positive`, `@NotEmpty`, `@Valid`) to all DTOs used as `@RequestBody` inputs: `UserPasswordDTO`, `RegisteredUserDTO`, `UserSettingsUpdateDTO`, `BookletMonthlyCycleUpdateDTO`, `BookletBookingRequest`, `UserTagRequest`, `ColorDTO`, `TagDTO`, `TransactionResult`, `UserBookletIdsTransactionRequest`, `BookletTransactionsIdRequest`, `MonthlyRegularTransactionRequest`, `UpdateRegularTransactionRequest`, `RegularTransactionsDeletionRequest`, `CsvExportRequestDTO`, `ConfirmPreviewRequest`.
+  - Added `@Valid` annotation to all `@RequestBody` parameters across all controllers (session, booklet, transaction, tag, csv).
+  - Added `spring-boot-starter-validation` dependency to `infra/build.gradle.kts`.
+- **Security: Hide internal exception details from API responses (B1-04)**
+  - `ProblemDetailHandler`: replaced `ex.message` in generic error responses with safe static messages (`"An unexpected internal error occurred"`, `"Invalid type for the provided parameter"`, `"The provided currency is not supported"`, `"Invalid argument provided"`). Internal details remain logged server-side.
+  - `MethodArgumentNotValidException` handler now returns field-level validation errors (`field: message`) instead of raw exception messages.
+  - Updated all corresponding `ProblemDetailHandlerTest` assertions.
+- **Security: Ownership verification on booklet operations (B3-01/B3-02)**
+  - Added `userOwnsBooklet()` helper in `BookletFeatureImpl` to verify that a booklet belongs to the requesting user before allowing `deleteBookletById` or `editBooklet`. Returns `FORBIDDEN` with a domain error key if ownership check fails.
+  - Added domain tests: `Deleting a booklet owned by another user should be forbidden`, `Editing a booklet owned by another user should be forbidden`. Fixed pre-existing test that was using wrong user/token pairing.
+- **Security: Login button loading state (F-01)**
+  - Added `:loading` and `:disabled` binding to the login button in `login.vue`. The button shows a spinner while the login request is in flight and is disabled when credentials are empty or a request is already running.
 - **Fix: dashboard quarter/year period uses future months instead of rolling past window**
   - **Root cause**: `currentDateRange` for `quarter` used `startOfQuarter` / `endOfQuarter` (calendar quarter, e.g. Apr–Jun for April), and for `year` used `startOfYear` / `endOfYear` (Jan–Dec). Both included future months instead of showing the most recent completed period.
   - **Frontend fix**: Changed `currentDateRange` to rolling windows: quarter = 3 months ending at the anchor month (`startOfMonth(anchor - 2 months)` → `endOfMonth(anchor)`); year = 12 months ending at the anchor month (`startOfMonth(anchor - 11 months)` → `endOfMonth(anchor)`).
