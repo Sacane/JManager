@@ -83,7 +83,7 @@ class DatasourceMapperTest {
         assertEquals(LocalDate.of(2024, 6, 15), resource.date)
         assertEquals(BigDecimal("100.00"), resource.value)
         assertFalse(resource.isIncome!!)
-        assertEquals(txId, resource.idSheet)
+        assertEquals(txId, resource.idTransaction)
         assertNotNull(resource.tag)
         assertEquals("Shopping", resource.tag?.name)
     }
@@ -163,7 +163,7 @@ class DatasourceMapperTest {
     fun `TransactionResource should convert to Transaction model`() {
         val resource = TransactionResource(label = "Salary")
         val id = UUID.randomUUID()
-        resource.idSheet = id
+        resource.idTransaction = id
         resource.date = LocalDate.of(2024, 8, 1)
         resource.value = BigDecimal("3000.00")
         resource.isIncome = true
@@ -212,8 +212,8 @@ class DatasourceMapperTest {
 
         assertEquals(bookletId, resource.idBooklet)
         assertEquals("Main Booklet", resource.label)
-        assertEquals(1, resource.sheets.size)
-        assertEquals("Test transaction", resource.sheets[0].label)
+        assertEquals(1, resource.transactions.size)
+        assertEquals("Test transaction", resource.transactions[0].label)
     }
 
     @Test
@@ -229,14 +229,14 @@ class DatasourceMapperTest {
 
         assertEquals(bookletId, resource.idBooklet)
         assertEquals("Empty Booklet", resource.label)
-        assertTrue(resource.sheets.isEmpty())
+        assertTrue(resource.transactions.isEmpty())
     }
 
     @Test
     fun `BookletResource should convert to Booklet model`() {
         val transactionResource = TransactionResource(label = "Test")
         val txId = UUID.randomUUID()
-        transactionResource.idSheet = txId
+        transactionResource.idTransaction = txId
         transactionResource.date = LocalDate.now()
         transactionResource.value = BigDecimal("100.00")
         transactionResource.isIncome = true
@@ -246,7 +246,7 @@ class DatasourceMapperTest {
             idBooklet = bookletId,
             amount = BigDecimal("2000.00"),
             label = "Test Booklet",
-            sheets = mutableListOf(transactionResource),
+            transactions = mutableListOf(transactionResource),
             initialSold = BigDecimal("2000.00")
         )
 
@@ -296,7 +296,7 @@ class DatasourceMapperTest {
     @Test
     fun `TransactionResource with personal tag should convert to Transaction model`() {
         val resource = TransactionResource(label = "Personal expense")
-        resource.idSheet = UUID.randomUUID()
+        resource.idTransaction = UUID.randomUUID()
         resource.date = LocalDate.of(2024, 9, 1)
         resource.value = BigDecimal("250.00")
         resource.isIncome = false
@@ -320,7 +320,7 @@ class DatasourceMapperTest {
     @Test
     fun `TransactionResource without tag should use default Aucune tag`() {
         val resource = TransactionResource(label = "No tag")
-        resource.idSheet = UUID.randomUUID()
+        resource.idTransaction = UUID.randomUUID()
         resource.date = LocalDate.now()
         resource.value = BigDecimal("100.00")
         resource.isIncome = true

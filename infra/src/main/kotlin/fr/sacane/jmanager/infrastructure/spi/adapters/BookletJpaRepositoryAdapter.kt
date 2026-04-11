@@ -20,7 +20,7 @@ class BookletJpaRepositoryAdapter(
     @Transactional
     override fun editFromAnother(booklet: Booklet): Booklet? {
         val id = booklet.id ?: return null
-        val bookletFromDatabase = bookletRepository.findByIdWithSheets(id) ?: return null
+        val bookletFromDatabase = bookletRepository.findByIdWithTransactions(id) ?: return null
         bookletFromDatabase.amount = booklet.amount.value
         return bookletFromDatabase.toModel()
     }
@@ -37,14 +37,14 @@ class BookletJpaRepositoryAdapter(
 
     @Transactional
     override fun findBookletByIdWithTransactions(bookletId: UUID): Booklet? {
-        val bookletResponse = bookletRepository.findByIdWithSheets(bookletId)
+        val bookletResponse = bookletRepository.findByIdWithTransactions(bookletId)
         return bookletResponse?.toModel()
     }
 
     @Transactional
     override fun findBookletByLabelWithTransactions(userId: UserId, bookletLabel: String): Booklet? {
         val id = userId.value ?: return null
-        return bookletRepository.findByOwnerAndLabelWithSheets(id, bookletLabel)?.toModel()
+        return bookletRepository.findByOwnerAndLabelWithTransactions(id, bookletLabel)?.toModel()
     }
 
     @Transactional
@@ -57,7 +57,7 @@ class BookletJpaRepositoryAdapter(
     @Transactional
     override fun upsert(booklet: Booklet): Booklet {
         return bookletRepository.save(bookletMapper.asResource(booklet)).also {
-            for(transaction in it.sheets) {
+            for(transaction in it.transactions) {
                 transaction.booklet = it
             }
         }.toModel()

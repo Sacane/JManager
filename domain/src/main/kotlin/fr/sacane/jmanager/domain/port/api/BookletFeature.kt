@@ -425,9 +425,9 @@ class BookletFeatureImpl(
 
             val updateBookletMs = 0L
 
-            val monthSheetStartNs = System.nanoTime()
+            val monthTransactionStartNs = System.nanoTime()
             val allTransactionsForPeriod = transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, resolvedRangeStart, resolvedRangeEnd)
-            val monthSheetMs = Duration.ofNanos(System.nanoTime() - monthSheetStartNs).toMillis()
+            val monthTransactionMs = Duration.ofNanos(System.nanoTime() - monthTransactionStartNs).toMillis()
 
             val dedupRangeStart = if (hasExplicitDateRange) {
                 resolvedRangeStart
@@ -537,7 +537,7 @@ class BookletFeatureImpl(
                 - bookletId: $bookletId
                 - period: $month/$year (range=$resolvedRangeStart..$resolvedRangeEnd)
                 - sizes: monthTransactions=${allTransactionsForPeriod.size}, current=${transactions.second.size}, preview=${transactions.first.size}, virtualPreview=${virtualTransactionsForTargetPeriod.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
-                - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs (generated=$generatedCount), updateBooklet=$updateBookletMs, monthQuery=$monthSheetMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
+                - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs (generated=$generatedCount), updateBooklet=$updateBookletMs, monthQuery=$monthTransactionMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
                 """.trimIndent()
             )
 

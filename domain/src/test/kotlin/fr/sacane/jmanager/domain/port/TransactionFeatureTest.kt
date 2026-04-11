@@ -299,7 +299,7 @@ class TransactionFeatureTest: FeatureTest() {
                 initTransactions(listOf(
                     transaction, transaction2, transaction3, transaction4
                 ))
-                transactionFeature.deleteSheetsByIds(booklet.id!!, listOf(
+                transactionFeature.deleteTransactionsByIds(booklet.id!!, listOf(
                     transaction.id!!, transaction2.id!!
                 ), tokenValue)
                     .assertSuccess()
@@ -315,7 +315,7 @@ class TransactionFeatureTest: FeatureTest() {
         @Test
         fun `delete transaction with invalid booklet must return not found`() {
             launchWithConnectedUserInstance {
-                transactionFeature.deleteSheetsByIds(UUID.randomUUID(), listOf(
+                transactionFeature.deleteTransactionsByIds(UUID.randomUUID(), listOf(
                     UUID.randomUUID(), UUID.randomUUID()
                 ), tokenValue)
                     .assertFailure(ResultState.BOOKLET_NOT_FOUND)
@@ -331,7 +331,7 @@ class TransactionFeatureTest: FeatureTest() {
 
                 initTransactions(listOf(previewTransaction))
 
-                transactionFeature.deleteSheetsByIds(booklet.id!!, listOf(previewTransaction.id!!), tokenValue)
+                transactionFeature.deleteTransactionsByIds(booklet.id!!, listOf(previewTransaction.id!!), tokenValue)
                     .assertSuccess()
 
                 val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id)

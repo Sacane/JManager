@@ -11,21 +11,21 @@ import java.util.UUID
 
 @Repository
 interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
-    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.sheets sheets WHERE b.owner.idUser = :userId AND b.label = :label")
-    fun findSheetsByLabelForUser(label: String, userId: UUID): BookletResource?
+    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions tr WHERE b.owner.idUser = :userId AND b.label = :label")
+    fun findTransactionsByLabelForUser(label: String, userId: UUID): BookletResource?
 
 
     @Query("""
         SELECT DISTINCT b FROM BookletResource b
-        LEFT JOIN FETCH b.sheets s
-        LEFT JOIN FETCH s.personalTag
-        LEFT JOIN FETCH s.tag
+        LEFT JOIN FETCH b.transactions t
+        LEFT JOIN FETCH t.personalTag
+        LEFT JOIN FETCH t.tag
         WHERE b.idBooklet = :id
     """)
-    fun findByIdWithSheets(id: UUID): BookletResource?
+    fun findByIdWithTransactions(id: UUID): BookletResource?
 
-    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.sheets WHERE b.owner.idUser = :userId AND b.label = :label")
-    fun findByOwnerAndLabelWithSheets(userId: UUID, @Param("label") label: String): BookletResource?
+    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions WHERE b.owner.idUser = :userId AND b.label = :label")
+    fun findByOwnerAndLabelWithTransactions(userId: UUID, @Param("label") label: String): BookletResource?
 
     @Modifying
     @Query("UPDATE BookletResource b SET b.label = :label, b.amount = :amount WHERE b.idBooklet = :id")
@@ -35,12 +35,12 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
     @Query("UPDATE BookletResource b SET b.monthlyPeriodStartDay = :monthlyPeriodStartDay, b.monthlyPeriodEndDay = :monthlyPeriodEndDay WHERE b.idBooklet = :id")
     fun updateMonthlyPeriodStartDay(@Param("id") id: UUID, @Param("monthlyPeriodStartDay") monthlyPeriodStartDay: Int, @Param("monthlyPeriodEndDay") monthlyPeriodEndDay: Int?): Int
 
-    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.sheets WHERE b.idBooklet = :id")
+    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions WHERE b.idBooklet = :id")
     fun findTransactionsById(id: UUID): BookletResource?
 
     @Query("SELECT b FROM BookletResource b LEFT JOIN FETCH b.regularTransactions WHERE b.idBooklet = :id")
     fun findByIdWithRegularTransactions(id: UUID): BookletResource?
 
-    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.sheets LEFT JOIN FETCH b.regularTransactions WHERE b.owner.idUser = :userId")
+    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions LEFT JOIN FETCH b.regularTransactions WHERE b.owner.idUser = :userId")
     fun findAllBookletsByUserId(userId: UUID): List<BookletResource>
 }

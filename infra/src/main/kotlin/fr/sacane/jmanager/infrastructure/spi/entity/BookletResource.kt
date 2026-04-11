@@ -19,7 +19,7 @@ class BookletResource(
     @Column(name = "monthly_period_end_day")
     var monthlyPeriodEndDay: Int? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "booklet")
-    var sheets: MutableList<TransactionResource> = mutableListOf(),
+    var transactions: MutableList<TransactionResource> = mutableListOf(),
     @ManyToOne
     var owner: UserResource? = null,
     var initialSold: BigDecimal = BigDecimal.ZERO,

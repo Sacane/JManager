@@ -57,10 +57,10 @@ class TransactionController(
 
     @DeleteMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteByIds(
-        @Valid @RequestBody sheetIds: BookletTransactionsIdRequest
+        @Valid @RequestBody transactionIds: BookletTransactionsIdRequest
     ): ResponseEntity<TransactionDeletionResponse> =
         transactionFeature
-            .deleteSheetsByIds(sheetIds.bookletId.toUUID(), sheetIds.transactionIds.toUUIDs(), currentUser.token)
+            .deleteTransactionsByIds(transactionIds.bookletId.toUUID(), transactionIds.transactionIds.toUUIDs(), currentUser.token)
             .map { it.toDTO() }
             .toHttpResponse()
 
@@ -86,7 +86,7 @@ class TransactionController(
 
         return response.map {
             TransactionListResponse(
-                transactions = (it.currentTransactions + it.previsionalTransactions).map { sheet -> sheet.toDTO() },
+                transactions = (it.currentTransactions + it.previsionalTransactions).map { transaction -> transaction.toDTO() },
                 amount = it.realSold.value.toString() ,
                 previewAmount = it.previsionalSold.value.toString()
             )

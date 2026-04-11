@@ -35,7 +35,7 @@ class Booklet(
         get() = _regularTransactions
 
     override fun equals(other: Any?): Boolean = (other is Booklet) && label == other.label
-    fun sheets(): List<Transaction>{
+    fun transactionsSnapshot(): List<Transaction>{
         return transactions.toList()
     }
     fun findTransactionById(id : UUID) : Transaction? {
@@ -76,7 +76,7 @@ class Booklet(
         return label.hashCode()
     }
 
-    fun retrieveSheetSurroundAndSortedByDate(month: Month, year: Int): List<Transaction>{
+    fun retrieveTransactionsSortedByDate(month: Month, year: Int): List<Transaction>{
         val (standardTransaction, previewTransaction) = transactions
             .filter { it.date.month == month && it.date.year == year }
             .sortedWith(compareBy<Transaction>{it.date}.thenBy { it.lastModified })
@@ -117,8 +117,8 @@ class Booklet(
         _transactions.removeIf { tr -> transactionId == tr.id }
     }
 
-    fun removeTransactionIf(sheetOnList: (s: Transaction) -> Boolean) {
-        _transactions.filter(sheetOnList).forEach {
+    fun removeTransactionIf(transactionOnList: (s: Transaction) -> Boolean) {
+        _transactions.filter(transactionOnList).forEach {
             removeTransaction(it)
         }
     }

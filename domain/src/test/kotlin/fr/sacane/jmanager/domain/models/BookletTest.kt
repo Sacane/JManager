@@ -125,28 +125,28 @@ class BookletTest {
     }
 
     @Test
-    fun `retrieveSheetSurroundAndSortedByDate should filter by month and year`() {
+    fun `retrieveTransactionsSortedByDate should filter by month and year`() {
         val booklet = Booklet(1000.toAmount(), "Test")
 
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Jan transaction", LocalDate.of(2024, 1, 15), 100.toAmount(), true))
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Feb transaction", LocalDate.of(2024, 2, 15), 100.toAmount(), true))
         booklet.addTransaction(Transaction(UUID.randomUUID(), "March transaction", LocalDate.of(2024, 3, 15), 100.toAmount(), true))
 
-        val marchTransactions = booklet.retrieveSheetSurroundAndSortedByDate(Month.MARCH, 2024)
+        val marchTransactions = booklet.retrieveTransactionsSortedByDate(Month.MARCH, 2024)
 
         assertEquals(1, marchTransactions.size)
         assertEquals("March transaction", marchTransactions[0].label)
     }
 
     @Test
-    fun `retrieveSheetSurroundAndSortedByDate should sort transactions by date`() {
+    fun `retrieveTransactionsSortedByDate should sort transactions by date`() {
         val booklet = Booklet(1000.toAmount(), "Test")
 
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Later", LocalDate.of(2024, 3, 20), 100.toAmount(), true))
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Earlier", LocalDate.of(2024, 3, 10), 100.toAmount(), true))
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Middle", LocalDate.of(2024, 3, 15), 100.toAmount(), true))
 
-        val transactions = booklet.retrieveSheetSurroundAndSortedByDate(Month.MARCH, 2024)
+        val transactions = booklet.retrieveTransactionsSortedByDate(Month.MARCH, 2024)
 
         assertEquals(3, transactions.size)
         assertEquals("Earlier", transactions[0].label)
@@ -155,13 +155,13 @@ class BookletTest {
     }
 
     @Test
-    fun `retrieveSheetSurroundAndSortedByDate should put preview transactions last`() {
+    fun `retrieveTransactionsSortedByDate should put preview transactions last`() {
         val booklet = Booklet(1000.toAmount(), "Test")
 
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Standard", LocalDate.of(2024, 3, 15), 100.toAmount(), true, isPreview = false))
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Preview", LocalDate.of(2024, 3, 10), 100.toAmount(), true, isPreview = true))
 
-        val transactions = booklet.retrieveSheetSurroundAndSortedByDate(Month.MARCH, 2024)
+        val transactions = booklet.retrieveTransactionsSortedByDate(Month.MARCH, 2024)
 
         assertEquals(2, transactions.size)
         assertEquals("Standard", transactions[0].label)
@@ -183,13 +183,13 @@ class BookletTest {
     }
 
     @Test
-    fun `sheets should return a copy of transactions`() {
+    fun `transactionsSnapshot should return a copy of transactions`() {
         val booklet = Booklet(1000.toAmount(), "Test")
         booklet.addTransaction(Transaction(UUID.randomUUID(), "Transaction", LocalDate.now(), 100.toAmount(), true))
 
-        val sheets = booklet.sheets()
+        val transactionsSnapshot = booklet.transactionsSnapshot()
 
-        assertEquals(booklet.transactions.size, sheets.size)
+        assertEquals(booklet.transactions.size, transactionsSnapshot.size)
     }
 
     @Test

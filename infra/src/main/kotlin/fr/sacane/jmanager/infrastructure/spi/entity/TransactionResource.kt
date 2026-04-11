@@ -8,13 +8,13 @@ import java.util.UUID
 
 
 @Entity
-@Table(name="sheet")
+@Table(name="transactions")
 class TransactionResource(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(unique = true, name = "id_sheet", nullable = false)
-    var idSheet: UUID? = null,
-    @Column(name = "label_sheet", length = 255)
+    @Column(unique = true, name = "id_transaction", nullable = false)
+    var idTransaction: UUID? = null,
+    @Column(name = "label_transaction", length = 255)
     var label: String,
     @Column(name="date")
     var date: LocalDate = LocalDate.now(),
@@ -40,7 +40,7 @@ class TransactionResource(
     ){
     override fun toString(): String {
         return """
-            id: $idSheet
+            id: $idTransaction
             label : $label
             date: $date
             value: $value

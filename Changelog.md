@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-04-11
+- **Refactor: replace legacy `Sheet` naming by `Transaction` across layers**
+  - **Domain**: renamed legacy APIs and methods (`deleteSheetsByIds`→`deleteTransactionsByIds`, `deleteAllSheetsById`→`deleteAllTransactionsById`, `findBookletByLabelWithSheets`→`findBookletByLabelWithTransactions`, `retrieveSheetSurroundAndSortedByDate`→`retrieveTransactionsSortedByDate`, `sheets()`→`transactionsSnapshot()`).
+  - **Infrastructure Kotlin/JPA**: renamed persistence field names (`idSheet`→`idTransaction`, `BookletResource.sheets`→`BookletResource.transactions`) and aligned repository/adapters method names accordingly.
+  - **Database**: added Flyway migration `V20__rename_sheet_to_transactions.sql` to rename table `sheet`→`transactions`, columns `id_sheet`→`id_transaction`, `label_sheet`→`label_transaction`, linked-table foreign key columns, and related index/constraint names.
+  - **Frontend**: renamed legacy client symbols (`SheetDTO`→`TransactionDTO`, `SheetAverageDTO`→`TransactionAverageDTO`, `selectedSheets`/`actualSheets`→`selectedTransactions`/`actualTransactions`) for coherent naming with backend/domain.
+
 - **Refactor start: session/auth multi-client foundation (cookie + bearer)**
   - **Infra auth filter**: `JwtCookieAuthenticationFilter` now extracts the token from either `Authorization: Bearer <token>` or the `token` cookie (cookie fallback preserved). This enables non-browser clients without breaking the existing web flow.
   - **Domain auth use-case**: added refresh-token driven rotation in `UserFeatureImpl` (`UserFeature.refresh(refreshToken: UUID)`), with refresh blacklist of used tokens and new refresh-token issuance.

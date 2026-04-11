@@ -71,14 +71,14 @@ sealed interface TransactionFeature {
     fun findById(id: UUID, token: String): Result<Transaction>
 
     /**
-     * Delete multiple transaction sheets by their identifiers for a given booklet.
+     * Delete multiple transactions by their identifiers for a given booklet.
      *
-     * @param bookletID The UUID of the booklet which owns the transaction sheets.
-     * @param sheetIds List of UUIDs corresponding to the transaction sheets to delete.
+     * @param bookletID The UUID of the booklet which owns the transactions.
+     * @param transactionIds List of UUIDs corresponding to the transactions to delete.
      * @param token Authentication token identifying the requester.
-     * @return Result with no value on success, or an error state if the booklet or sheets are not found.
+     * @return Result with no value on success, or an error state if the booklet or transactions are not found.
      */
-    fun deleteSheetsByIds(bookletID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult>
+    fun deleteTransactionsByIds(bookletID: UUID, transactionIds: List<UUID>, token: String): Result<TransactionDeletionResult>
 
     /**
      * Confirm a provisional (preview) transaction, converting it into a real transaction.
@@ -203,7 +203,7 @@ class TransactionFeatureImpl(
         year: Int,
         bookletLabel: String
     ): Result<List<Transaction>> = session.authenticate(token) {
-        success(transactionRepository.findBookletByLabelWithSheets(bookletLabel, it)?.retrieveSheetSurroundAndSortedByDate(month, year)
+        success(transactionRepository.findBookletByLabelWithTransactions(bookletLabel, it)?.retrieveTransactionsSortedByDate(month, year)
             ?: return@authenticate domainNotFound(
                 "Aucun compte ne correspond au label indiqué",
                 "domain.transaction.retrieve.booklet_not_found"
@@ -216,16 +216,16 @@ class TransactionFeatureImpl(
         token: String
     ): Result<Transaction> = session.authenticate(token, roleUser) {
         logger.info("Request for a transaction with id $id")
-        val sheet = transactionRepository.findTransactionById(id)
+        val transaction = transactionRepository.findTransactionById(id)
             ?: return@authenticate domainFailure(
                 ResultState.TRANSACTION_NOT_FOUND,
                 "La transaction $id n'existe pas",
                 "domain.transaction.find.not_found"
             )
-        success(sheet)
+        success(transaction)
     }
 
-    override fun deleteSheetsByIds(bookletID: UUID, sheetIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
+    override fun deleteTransactionsByIds(bookletID: UUID, transactionIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
         return session.authenticate(token) {
             infraTransactionManager.executeInTransaction(transactionRepository) {
                 val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
@@ -235,7 +235,7 @@ class TransactionFeatureImpl(
                         "domain.transaction.delete.booklet_not_found"
                     )
 
-                if (sheetIds.isEmpty()) {
+                if (transactionIds.isEmpty()) {
                     return@executeInTransaction domainFailure(
                         ResultState.TRANSACTION_ENTRY_ERROR,
                         "Aucune transaction à supprimer",
@@ -244,8 +244,8 @@ class TransactionFeatureImpl(
                 }
 
                 // Ensure all requested ids belong to this booklet before mutating balances.
-                val transactionsToDelete = booklet.transactions.filter { sheetIds.contains(it.id) }
-                if (transactionsToDelete.size != sheetIds.size) {
+                val transactionsToDelete = booklet.transactions.filter { transactionIds.contains(it.id) }
+                if (transactionsToDelete.size != transactionIds.size) {
                     return@executeInTransaction domainFailure(
                         ResultState.TRANSACTION_NOT_FOUND,
                         "Certaines transactions à supprimer sont introuvables pour le livret $bookletID",
@@ -265,15 +265,15 @@ class TransactionFeatureImpl(
                     }
                 }
 
-                transactionRepository.deleteAllSheetsById(sheetIds)
+                transactionRepository.deleteAllTransactionsById(transactionIds)
 
-                val isSheetOnList: (s: Transaction) -> Boolean = { sheetIds.contains(it.id) }
-                booklet.removeTransactionIf(isSheetOnList)
+                val isTransactionOnList: (s: Transaction) -> Boolean = { transactionIds.contains(it.id) }
+                booklet.removeTransactionIf(isTransactionOnList)
                 bookletRepository.update(booklet)
 
                 return@executeInTransaction success(
                     TransactionDeletionResult(
-                        deletedIds = sheetIds,
+                        deletedIds = transactionIds,
                         bookletAmount = booklet.amount,
                     )
                 )

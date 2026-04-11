@@ -1,4 +1,5 @@
--- Add regular_transaction_id column to sheet table to track which regular transaction generated a previsional transaction
+-- Legacy schema step: adds regular_transaction_id to table sheet (renamed to transactions in V20)
+-- Tracks which regular transaction generated a previsional transaction
 ALTER TABLE sheet ADD COLUMN regular_transaction_id VARCHAR(255);
 
 -- Add index for better query performance when checking for duplicates

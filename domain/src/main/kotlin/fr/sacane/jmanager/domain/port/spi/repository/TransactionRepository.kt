@@ -14,7 +14,7 @@ import java.util.UUID
  *
  * Implementations provide concrete storage operations for transactions and related
  * booklet reads. The domain depends on this abstraction to persist and
- * query transaction sheets without coupling to a specific datastore.
+ * query transactions without coupling to a specific datastore.
  */
 interface TransactionRepository {
     /**
@@ -28,11 +28,11 @@ interface TransactionRepository {
     fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction?
 
     /**
-     * Delete multiple transaction sheets by their identifiers.
+     * Delete multiple transactions by their identifiers.
      *
-     * @param sheetIds List of UUIDs corresponding to transaction sheets to delete
+     * @param transactionIds List of UUIDs corresponding to transactions to delete
      */
-    fun deleteAllSheetsById(sheetIds: List<UUID>)
+    fun deleteAllTransactionsById(transactionIds: List<UUID>)
 
     /**
      * Find a transaction by its UUID.
@@ -52,13 +52,13 @@ interface TransactionRepository {
     fun save(bookletId: UUID, transaction: Transaction): Transaction?
 
     /**
-     * Retrieve a Booklet aggregate with its transaction sheets by booklet label and user.
+     * Retrieve a Booklet aggregate with its transactions by booklet label and user.
      *
      * @param label Booklet label
      * @param userId Domain user identifier
      * @return Booklet aggregate or null when not found
      */
-    fun findBookletByLabelWithSheets(label: String, userId: UserId): Booklet?
+    fun findBookletByLabelWithTransactions(label: String, userId: UserId): Booklet?
 
     /**
      * Retrieve a Booklet aggregate with transactions by its id.

@@ -1,59 +1,60 @@
--- Migration V8: Convertir regular_transaction_id de VARCHAR(255) vers UUID
--- Cette migration corrige le type de la colonne pour correspondre au type de regular_transaction.transaction_id
+-- Migration V8: Convert regular_transaction_id from VARCHAR(255) to UUID
+-- This migration aligns the column type with regular_transaction.transaction_id
+-- Historical context: this migration targets table sheet (renamed to transactions in V20)
 
--- Étape 1 : Nettoyer les données invalides (IDs qui ne sont pas des UUIDs valides)
--- Supprimer les transactions prévisionnelles avec des IDs invalides ou inexistants
+-- Step 1: Clean invalid data (IDs that are not valid UUIDs)
+-- Remove previsional transactions with invalid or non-existing IDs
 DELETE FROM sheet
 WHERE regular_transaction_id IS NOT NULL
 AND (
-    -- ID n'est pas un UUID valide
+    -- ID is not a valid UUID
     regular_transaction_id !~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
     OR
-    -- ID ne correspond à aucune transaction régulière
+    -- ID does not match any regular transaction
     NOT EXISTS (
         SELECT 1 FROM regular_transaction rt
         WHERE rt.transaction_id::text = regular_transaction_id
     )
 );
 
--- Étape 2 : Créer une nouvelle colonne temporaire de type UUID
+-- Step 2: Create a temporary UUID column
 ALTER TABLE sheet ADD COLUMN regular_transaction_id_uuid UUID;
 
--- Étape 3 : Migrer les données valides vers la nouvelle colonne
+-- Step 3: Migrate valid data to the new column
 UPDATE sheet
 SET regular_transaction_id_uuid = regular_transaction_id::uuid
 WHERE regular_transaction_id IS NOT NULL
 AND regular_transaction_id ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
 
--- Étape 4 : Supprimer l'ancienne colonne et l'index
+-- Step 4: Drop the old column and index
 DROP INDEX IF EXISTS idx_sheet_regular_transaction_id;
 ALTER TABLE sheet DROP COLUMN regular_transaction_id;
 
--- Étape 5 : Renommer la nouvelle colonne
+-- Step 5: Rename the new column
 ALTER TABLE sheet RENAME COLUMN regular_transaction_id_uuid TO regular_transaction_id;
 
--- Étape 6 : Recréer l'index sur la colonne UUID
+-- Step 6: Recreate the index on the UUID column
 CREATE INDEX idx_sheet_regular_transaction_id ON sheet(regular_transaction_id);
 
--- Étape 7 : Ajouter une contrainte de clé étrangère pour garantir l'intégrité référentielle
--- Cela empêchera la création de transactions prévisionnelles avec un ID inexistant
+-- Step 7: Add a foreign key constraint to enforce referential integrity
+-- This prevents creating previsional transactions with a non-existing ID
 ALTER TABLE sheet
 ADD CONSTRAINT fk_sheet_regular_transaction
 FOREIGN KEY (regular_transaction_id)
 REFERENCES regular_transaction(transaction_id)
-ON DELETE SET NULL;  -- Si la transaction régulière est supprimée, mettre NULL
+ON DELETE SET NULL;  -- If the regular transaction is deleted, set NULL
 
--- Étape 8 : Ajouter un commentaire explicatif
+-- Step 8: Add an explanatory column comment
 COMMENT ON COLUMN sheet.regular_transaction_id IS
-'UUID de la transaction régulière source (si cette transaction provient d''une transaction régulière). Type UUID pour correspondre à regular_transaction.transaction_id';
+'Source regular transaction UUID (when this transaction is generated from a regular transaction). UUID type aligns with regular_transaction.transaction_id';
 
--- Vérification après migration
+-- Post-migration verification
 DO $$
 DECLARE
     invalid_count INTEGER;
     orphan_count INTEGER;
 BEGIN
-    -- Compter les transactions avec des IDs invalides (ne devrait pas y en avoir)
+    -- Count transactions with orphan regular_transaction_id values (should be zero)
     SELECT COUNT(*) INTO invalid_count
     FROM sheet
     WHERE regular_transaction_id IS NOT NULL
@@ -63,16 +64,16 @@ BEGIN
     );
 
     IF invalid_count > 0 THEN
-        RAISE WARNING 'Attention: % transaction(s) prévisionnelle(s) avec un regular_transaction_id orphelin détecté(es)', invalid_count;
+        RAISE WARNING 'Warning: % previsional transaction(s) with orphan regular_transaction_id detected', invalid_count;
     ELSE
-        RAISE NOTICE 'Migration réussie: Tous les regular_transaction_id sont valides';
+        RAISE NOTICE 'Migration successful: all regular_transaction_id values are valid';
     END IF;
 
-    -- Afficher un résumé
+    -- Display summary
     SELECT COUNT(*) INTO orphan_count
     FROM sheet
     WHERE regular_transaction_id IS NOT NULL;
 
-    RAISE NOTICE 'Total de transactions prévisionnelles avec regular_transaction_id: %', orphan_count;
+    RAISE NOTICE 'Total previsional transactions with regular_transaction_id: %', orphan_count;
 END $$;
 

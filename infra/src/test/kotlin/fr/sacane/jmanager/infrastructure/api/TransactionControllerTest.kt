@@ -387,8 +387,8 @@ class TransactionControllerTest(
             val transactionToDelete = transactionStateTestAdapter.get().first { it.label == "to-delete" }
             val transactionToKeep = transactionStateTestAdapter.get().first { it.label == "to-keep" }
 
-            assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToDelete.id!!))
-            assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToKeep.id!!))
+            assertNotNull(transactionJpaRepository.findTransactionResourceByIdTransaction(transactionToDelete.id!!))
+            assertNotNull(transactionJpaRepository.findTransactionResourceByIdTransaction(transactionToKeep.id!!))
 
             val request = BookletTransactionsIdRequest(
                 booklet.id!!.toString(),
@@ -407,8 +407,8 @@ class TransactionControllerTest(
                 body("deletedIds.size()", equalTo(1))
             }
 
-            assertNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToDelete.id!!))
-            assertNotNull(transactionJpaRepository.findSheetResourceByIdSheet(transactionToKeep.id!!))
+            assertNull(transactionJpaRepository.findTransactionResourceByIdTransaction(transactionToDelete.id!!))
+            assertNotNull(transactionJpaRepository.findTransactionResourceByIdTransaction(transactionToKeep.id!!))
         }
     }
     @Nested

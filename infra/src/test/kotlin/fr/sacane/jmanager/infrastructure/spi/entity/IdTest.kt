@@ -105,9 +105,9 @@ class IdTest {
         val booklet = bookletRepo.save(BookletResource(label = "acc tx", owner = owner))
 
         val tx = TransactionResource(label = "tx", booklet = booklet)
-        tx.idSheet = null
+        tx.idTransaction = null
         val saved = transactionRepo.save(tx)
-        assertThat(saved.idSheet).isNotNull()
+        assertThat(saved.idTransaction).isNotNull()
     }
 
     @Test

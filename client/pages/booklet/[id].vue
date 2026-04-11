@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import type { AxiosError } from 'axios'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
@@ -31,8 +31,8 @@ type DisplayTransaction = TransactionResultDTO & {
   incomeSortValue: number | null
 }
 
-const selectedSheets = ref<DisplayTransaction[]>([])
-const actualSheets = ref<DisplayTransaction[]>([])
+const selectedTransactions = ref<DisplayTransaction[]>([])
+const actualTransactions = ref<DisplayTransaction[]>([])
 const tags = ref<TagDTO[]>([])
 
 const isCreationDialogVisible = ref(false)
@@ -77,14 +77,14 @@ const displayMonth = computed({
     }
   },
 })
-const transactionsCount = computed(() => actualSheets.value.length)
+const transactionsCount = computed(() => actualTransactions.value.length)
 const tagFilterOptions = computed(() => [
   { label: 'Tous les tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
   ...tags.value.map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
 ])
-const previewTransactionsCount = computed(() => actualSheets.value.filter(t => t.isPreview).length)
-const hasSelection = computed(() => selectedSheets.value.length > 0)
-const selectedTransactionsAmount = computed(() => selectedSheets.value.reduce((total, transaction) => {
+const previewTransactionsCount = computed(() => actualTransactions.value.filter(t => t.isPreview).length)
+const hasSelection = computed(() => selectedTransactions.value.length > 0)
+const selectedTransactionsAmount = computed(() => selectedTransactions.value.reduce((total, transaction) => {
   const amount = Number.parseFloat(transaction?.value?.toString() ?? '0')
   return total + (transaction.isIncome ? amount : -amount)
 }, 0))
@@ -129,7 +129,7 @@ const isAnyActionLoading = computed(() =>
 )
 
 const filteredTransactions = computed(() => {
-  let result = actualSheets.value
+  let result = actualTransactions.value
   if (transactionFilter.value === 'preview') {
     result = result.filter(t => t.isPreview)
   } else if (transactionFilter.value === 'confirmed') {
@@ -205,13 +205,13 @@ async function loadBookletData() {
       bookletData.realSold = Number.parseFloat(balances.realSold)
       bookletData.previewSold = Number.parseFloat(balances.previewSold)
 
-      const nextSheets = transactionsRes.transactions
+      const nextTransactions = transactionsRes.transactions
         .map((transaction, index) => asDisplayableTransaction(transaction, index))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-      actualSheets.value = nextSheets
-      const nextSheetKeys = new Set(nextSheets.map(transactionSelectionKey))
-      selectedSheets.value = selectedSheets.value.filter(t => nextSheetKeys.has(transactionSelectionKey(t)))
+      actualTransactions.value = nextTransactions
+      const nextTransactionKeys = new Set(nextTransactions.map(transactionSelectionKey))
+      selectedTransactions.value = selectedTransactions.value.filter(t => nextTransactionKeys.has(transactionSelectionKey(t)))
       hasRegenerableTransactions.value = transactionsRes.hasRegenerableTransactions
     } catch (err) {
       toast.errorAxios(err as AxiosError)
@@ -255,8 +255,8 @@ async function bookTransaction(transaction: TransactionCreationDTO) {
       const result = await saveTransaction(bookletData.label, transaction)
 
       const newTransaction = asDisplayableTransaction(result)
-      actualSheets.value.push(newTransaction)
-      actualSheets.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      actualTransactions.value.push(newTransaction)
+      actualTransactions.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
       await loadBookletData()
 
@@ -299,9 +299,9 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
     try {
       const result: TransactionResultDTO = await editTransaction(transaction, bookletData.id)
 
-      const index = actualSheets.value.findIndex(item => item?.id === result.id)
+      const index = actualTransactions.value.findIndex(item => item?.id === result.id)
       if (index !== -1) {
-        actualSheets.value[index] = asDisplayableTransaction(result)
+        actualTransactions.value[index] = asDisplayableTransaction(result)
       }
 
       await loadBookletData()
@@ -318,13 +318,13 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
 async function confirmDelete() {
   await withLoading(async () => {
     try {
-      const idsToDelete = selectedSheets.value
-        .map(sheet => sheet.id)
+      const idsToDelete = selectedTransactions.value
+        .map(transaction => transaction.id)
         .filter((id): id is string => id != null)
 
       if (idsToDelete.length === 0) {
         toast.warn('La sélection contient uniquement des transactions virtuelles non supprimables.')
-        selectedSheets.value = []
+        selectedTransactions.value = []
         return
       }
 
@@ -335,8 +335,8 @@ async function confirmDelete() {
 
       // Update list locally (no reload)
       const deleted = new Set(res.deletedIds)
-      actualSheets.value = actualSheets.value.filter(t => !deleted.has(t.id as string))
-      selectedSheets.value = []
+      actualTransactions.value = actualTransactions.value.filter(t => !deleted.has(t.id as string))
+      selectedTransactions.value = []
 
       await loadBookletData()
 
@@ -351,7 +351,7 @@ function confirmDeleteButton() {
   if (!hasSelection.value) return
 
   confirm.require({
-    message: `Êtes-vous sûr de vouloir supprimer ${selectedSheets.value.length} transaction${selectedSheets.value.length > 1 ? 's' : ''} ?`,
+    message: `Êtes-vous sûr de vouloir supprimer ${selectedTransactions.value.length} transaction${selectedTransactions.value.length > 1 ? 's' : ''} ?`,
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: 'Supprimer',
@@ -383,9 +383,9 @@ async function confirmPreview() {
       if (transaction.id) {
         const result = await confirmPreviewTransaction(bookletData.id, transaction.id, newAmountForPreview.value, finalDate)
 
-        const index = actualSheets.value.findIndex(item => item?.id === result.id)
+        const index = actualTransactions.value.findIndex(item => item?.id === result.id)
         if (index !== -1) {
-          actualSheets.value[index] = asDisplayableTransaction(result)
+          actualTransactions.value[index] = asDisplayableTransaction(result)
         }
       } else {
         await saveTransaction(bookletData.label, {
@@ -442,14 +442,14 @@ function rowClass(row: DisplayTransaction): string {
 
 function toggleSelection(transaction: DisplayTransaction) {
   const transactionKey = transactionSelectionKey(transaction)
-  const index = selectedSheets.value.findIndex(t => transactionSelectionKey(t) === transactionKey)
-  if (index === -1) selectedSheets.value.push(transaction)
-  else selectedSheets.value.splice(index, 1)
+  const index = selectedTransactions.value.findIndex(t => transactionSelectionKey(t) === transactionKey)
+  if (index === -1) selectedTransactions.value.push(transaction)
+  else selectedTransactions.value.splice(index, 1)
 }
 
 function isSelected(transaction: DisplayTransaction): boolean {
   const transactionKey = transactionSelectionKey(transaction)
-  return selectedSheets.value.some(t => transactionSelectionKey(t) === transactionKey)
+  return selectedTransactions.value.some(t => transactionSelectionKey(t) === transactionKey)
 }
 
 function checkMobile() {
@@ -475,7 +475,7 @@ function openCsvImportDialog() {
 }
 
 function openCsvExportDialog() {
-  const nonPreviewTransactions = actualSheets.value.filter(t => !t.isPreview)
+  const nonPreviewTransactions = actualTransactions.value.filter(t => !t.isPreview)
   if (nonPreviewTransactions.length === 0) {
     toast.warn('Aucune transaction à exporter (les transactions prévisionnelles ne sont pas exportées)')
     return
@@ -656,7 +656,7 @@ onUnmounted(() => {
             <template v-if="hasSelection">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] text-sm font-semibold whitespace-nowrap shrink-0">
                 <i class="pi pi-check-square text-[var(--primary)] text-xs" />
-                <span class="text-[var(--text-secondary)]">{{ selectedSheets.length }}</span>
+                <span class="text-[var(--text-secondary)]">{{ selectedTransactions.length }}</span>
                 <span class="w-px h-4 bg-[var(--border-color)] inline-block" />
                 <span :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">{{ selectedTransactionsAmountLabel }}</span>
               </span>
@@ -707,7 +707,7 @@ onUnmounted(() => {
             />
             <template v-if="hasSelection">
               <Button
-                v-tooltip.bottom="`Supprimer (${selectedSheets.length})`"
+                v-tooltip.bottom="`Supprimer (${selectedTransactions.length})`"
                 outlined
                 class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
                 icon="pi pi-trash"
@@ -755,7 +755,7 @@ onUnmounted(() => {
             <div class="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm flex-1">
               <div class="flex items-center gap-2">
                 <i class="pi pi-check-square text-[var(--primary)] text-sm" />
-                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedSheets.length }} sélectionnée{{ selectedSheets.length > 1 ? 's' : '' }}</span>
+                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedTransactions.length }} sélectionnée{{ selectedTransactions.length > 1 ? 's' : '' }}</span>
               </div>
               <div class="w-px h-6 bg-[var(--border-color)]" />
               <span class="text-base font-extrabold" :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">
@@ -763,7 +763,7 @@ onUnmounted(() => {
               </span>
             </div>
             <Button
-              v-tooltip.bottom="`Supprimer (${selectedSheets.length})`"
+              v-tooltip.bottom="`Supprimer (${selectedTransactions.length})`"
               outlined
               class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
               icon="pi pi-trash"
@@ -782,7 +782,7 @@ onUnmounted(() => {
 
       <div v-if="!isMobile" class="sticky top-0 h-[100dvh] bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <DataTable
-          v-model:selection="selectedSheets"
+          v-model:selection="selectedTransactions"
           :value="filteredTransactions"
           data-key="selectionKey"
           :row-class="rowClass"

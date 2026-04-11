@@ -20,7 +20,7 @@ internal fun Booklet.toDTO(): BookletDTO = BookletDTO(
     this.id?.toString() ?: throw InternalServerErrorException(ErrorCatalog.INTERNAL_UNEXPECTED, "Impossible d'envoyer null au client"),
     this.amount.value,
     this.label,
-    this.sheets().map { sheet -> sheet.toDTO() },
+    this.transactionsSnapshot().map { transaction -> transaction.toDTO() },
     this.amount.currency.symbol
 )
 
