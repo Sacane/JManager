@@ -1,12 +1,39 @@
 # Changelog
 
 ## 2026-04-11
+- **Refactor start: session/auth multi-client foundation (cookie + bearer)**
+  - **Infra auth filter**: `JwtCookieAuthenticationFilter` now extracts the token from either `Authorization: Bearer <token>` or the `token` cookie (cookie fallback preserved). This enables non-browser clients without breaking the existing web flow.
+  - **Domain auth use-case**: added refresh-token driven rotation in `UserFeatureImpl` (`UserFeature.refresh(refreshToken: UUID)`), with refresh blacklist of used tokens and new refresh-token issuance.
+  - **Session API**: `POST /api/user/auth/refresh/{userId}` now authenticates with a dedicated refresh token (`refresh_token` cookie or header), no longer requiring an authenticated access token.
+  - **Non-browser compatibility**: refresh endpoint also supports explicit `X-Refresh-Token` header transport, and login/refresh responses now expose `refreshToken` in `UserStorageDTO` for clients that do not rely on cookies.
+  - **Cookies**: login/refresh now emit both `token` and `refresh_token` HttpOnly cookies (`refresh_token` max-age 7 days); logout clears both cookies.
+  - **Security**: `/api/user/auth/refresh/**` is now explicitly `permitAll` to allow refresh when access token is expired.
+  - **Infra tests**: added integration coverage for bearer authentication (`SessionControllerTest`, `AdminControllerTest`) and refresh endpoint behavior (cookie, bearer, and mismatched userId unauthorized case).
+  - **Frontend auth alignment**: updated `useAuth.ts` + `useQuery.ts` to consume the refresh endpoint contract (`response.data.token`), refresh persisted user state, and trigger refresh on domain timeout code `1` before logout.
+  - **Redis-ready session contract for refresh tokens** (without Redis implementation):
+    - `SessionManager` now exposes refresh-token lifecycle operations (`saveRefreshToken`, `authenticateRefreshToken`, `blacklistRefreshToken`, `findSessionByToken`) to keep refresh persistence behind a port.
+    - `InMemorySessionManager` now persists refresh tokens and a refresh-token blacklist in dedicated stores, including purge of expired refresh and blacklist entries.
+    - `UserFeatureImpl` now uses only `SessionManager` for refresh-token persistence/rotation/revocation on login, refresh, and logout.
+    - Added domain regression tests in `SessionManagerTest` and `UserFeatureTest` for refresh-token save/auth/blacklist/rotation behavior.
+
+- **Frontend auth: remove localStorage dependency (cookie-first bootstrap)**
+  - Added `POST /api/user/auth/refresh` (without `userId`) so browser clients can bootstrap/restore auth state from HttpOnly cookies only.
+  - `useAuth.ts` no longer reads/writes `localStorage` for user or refresh token; auth state is now held in Nuxt in-memory state and initialized through refresh bootstrap.
+  - `useQuery.ts` no longer mutates `localStorage` on 401/403 and delegates session teardown to `useAuth.logout()`.
+  - Added infra integration test coverage for `/api/user/auth/refresh` success path.
+  - Preserved Nuxt-native `defineNuxtRouteMiddleware` implementation in `client/middleware/*` and adapted Vitest setup with a macro stub for test runtime compatibility.
+
 - **Security: String length enforcement across all layers**
   - **DTO fix**: `BookletBookingRequest.label` `@Size(max=100)` changed to `@Size(max=30)` to match the database `VARCHAR(30)` constraint. Prevented potential data truncation errors.
   - **JPA entities**: Added explicit `@Column(length=)` annotations to `UserResource` (username=100, password=255, email=255), `TransactionResource` (label=255), and `AbstractTagResource` (name=50) for database-level defense in depth.
   - **Frontend**: Added `maxlength` attributes on all user-facing text inputs — login username/password (100), booklet booking label (30), transaction label (100), regular transaction label (100), tag create/edit labels (50). Prevents oversized input from reaching the backend.
 
 ## 2026-04-10
+- **Fix: unexpected logout on page reload (frontend auth race condition)**
+  - **Root cause**: concurrent session initialization paths (`useAuth` eager init + route middleware init) could trigger a refresh call overlap where one path observed `isAuthenticated=false` while another refresh was still in-flight, causing an unintended redirect to `/login`.
+  - **Frontend fix**: `useAuth.tryRefresh()` now serializes concurrent refresh attempts through a shared in-flight promise and all callers await the same result.
+  - **Frontend fix**: removed eager auto-initialization side effect in `useAuth`; session bootstrap remains explicit via route middleware (`initializeSession`) to avoid duplicate startup refresh calls.
+
 - **Security: HikariCP connection pooling (B3-05)**
   - Replaced `DriverManagerDataSource` with `HikariDataSource` in `DatasourceConfig`. Enables connection pooling with configurable pool size, connection timeout, idle timeout, and leak detection threshold.
 - **Security: Restrict Content-Type on JSON endpoints (B1-09)**

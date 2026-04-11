@@ -4,9 +4,13 @@ import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import authMiddleware from '~/middleware/auth'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
-definePageMeta({ layout: 'sidebar-layout' })
+definePageMeta({
+  layout: 'sidebar-layout',
+  middleware: [authMiddleware],
+})
 
 const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear, regenerateDeletedPrevisionalTransactions } = useBooklet()
 const route = useRoute()

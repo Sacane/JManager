@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
 import { onMounted, reactive, ref } from 'vue'
+import authMiddleware from '~/middleware/auth'
 import useTag from '~/composables/useTag'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { hexToRgb } from '~/utils/util'
 
 definePageMeta({
   layout: 'sidebar-layout',
+  middleware: [authMiddleware],
 })
 
 interface DataDisplay {

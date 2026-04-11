@@ -3,19 +3,18 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import useAdmin from '~/composables/useAdmin'
 import useAuth from '~/composables/useAuth'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import adminMiddleware from '~/middleware/admin'
+import authMiddleware from '~/middleware/auth'
 
 definePageMeta({
   layout: 'sidebar-layout',
+  middleware: [authMiddleware, adminMiddleware],
 })
 
-const { isAdmin, register } = useAuth()
+const { register } = useAuth()
 const { users, totalUsers, totalPages, currentPage, isLoading, fetchUsers } = useAdmin()
 const { isScopeLoading, withLoading } = useLoading()
 const toastr = useJToast()
-
-if (!isAdmin.value) {
-  navigateTo('/')
-}
 
 const newUser = ref({
   username: '',

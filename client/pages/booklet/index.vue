@@ -1,10 +1,12 @@
 ﻿<script setup lang="ts">
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import authMiddleware from '~/middleware/auth'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import useBooklet from '../../composables/useBooklet'
 
 definePageMeta({
   layout: 'sidebar-layout',
+  middleware: [authMiddleware],
 })
 
 const confirm = useConfirm()

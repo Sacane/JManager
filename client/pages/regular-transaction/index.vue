@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import useDate from '~/composables/useDate'
+import authMiddleware from '~/middleware/auth'
 import { getTagStyle } from '~/utils/util'
 
 definePageMeta({
   layout: 'sidebar-layout',
+  middleware: [authMiddleware],
 })
 
 const { fetch } = useBooklet()
@@ -65,7 +67,7 @@ async function onSave(transaction: MonthlyTransactionCreationRequest) {
     isCreationDialogVisible.value = false
     transactions.value.push(regularTransaction)
     jToast.success('La transaction mensuel a bien été généré')
-  } catch (err) {
+  } catch (err: any) {
     console.error(err)
     jToast.errorAxios(err)
   } finally {

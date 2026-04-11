@@ -38,7 +38,11 @@ class User(
         }
     }
 
-    fun withToken(token: String): UserToken = UserToken(MinimalUserRepresentation(id, username, email), token)
+    fun withToken(token: String, refreshToken: UUID? = null): UserToken = UserToken(
+        MinimalUserRepresentation(id, username, email),
+        token,
+        refreshToken,
+    )
     fun hasBooklet(label: String): Boolean = booklets.any { label == it.label }
     override fun toString(): String = "username: $username"
 

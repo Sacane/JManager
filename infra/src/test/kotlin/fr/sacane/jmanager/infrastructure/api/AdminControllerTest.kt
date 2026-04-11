@@ -71,6 +71,26 @@ class AdminControllerTest(
         }
 
         @Test
+        fun `Get users as admin with bearer token should return 200 with paginated users`() {
+            userFeature.register("user4", "test", "test")
+
+            Given {
+                port(port)
+                header("Authorization", "Bearer $adminToken")
+                header("Content-Type", "application/json")
+                queryParam("page", 0)
+                queryParam("size", 10)
+            } When {
+                get("/api/admin/users")
+            } Then {
+                statusCode(200)
+                body("pageNumber", equalTo(0))
+                body("pageSize", equalTo(10))
+                body("content[0].username", notNullValue())
+            }
+        }
+
+        @Test
         fun `Get users with pagination should return correct page size`() {
             repeat(5) { i ->
                 userFeature.register("user$i", "test", "test")

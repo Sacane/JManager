@@ -40,5 +40,6 @@ data class AccessToken(
 }
 data class UserToken(
     val user: MinimalUserRepresentation,
-    val token: String
+    val token: String,
+    val refreshToken: UUID? = null,
 )

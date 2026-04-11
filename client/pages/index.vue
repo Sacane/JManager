@@ -2,9 +2,11 @@
 import { useIntersectionObserver } from '@vueuse/core'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import authMiddleware from '~/middleware/auth'
 
 definePageMeta({
   layout: 'default',
+  middleware: [authMiddleware],
 })
 
 const { user } = useAuth()
@@ -24,20 +26,20 @@ const isHeroVisible = ref(false)
 const isFeaturesVisible = ref(false)
 const isStatsVisible = ref(false)
 
-useIntersectionObserver(heroRef, ([{ isIntersecting }]) => {
-  if (isIntersecting) {
+useIntersectionObserver(heroRef, ([entry]) => {
+  if (entry?.isIntersecting) {
     isHeroVisible.value = true
   }
 }, { threshold: 0.1 })
 
-useIntersectionObserver(featuresRef, ([{ isIntersecting }]) => {
-  if (isIntersecting) {
+useIntersectionObserver(featuresRef, ([entry]) => {
+  if (entry?.isIntersecting) {
     isFeaturesVisible.value = true
   }
 }, { threshold: 0.2 })
 
-useIntersectionObserver(statsRef, ([{ isIntersecting }]) => {
-  if (isIntersecting) {
+useIntersectionObserver(statsRef, ([entry]) => {
+  if (entry?.isIntersecting) {
     isStatsVisible.value = true
   }
 }, { threshold: 0.2 })
@@ -107,7 +109,7 @@ onMounted(() => {
                   class="booklet-card"
                   :class="{
                     'is-dragging': indexDraggedIndex === index,
-                    'drag-over': indexDragOverIndex === index && indexDraggedIndex !== index
+                    'drag-over': indexDragOverIndex === index && indexDraggedIndex !== index,
                   }"
                   draggable="true"
                   @click="navigateTo(`/booklet/${booklet.id}`)"

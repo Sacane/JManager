@@ -5,10 +5,12 @@ import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 import java.util.*
 
 class SessionManagerTest {
@@ -69,5 +71,35 @@ class SessionManagerTest {
         }
 
 
+    }
+
+    @Nested
+    inner class RefreshTokenManagementTest {
+
+        @Test
+        fun `Save and authenticate refresh token must return success`() {
+            val id = UserId(UUID.randomUUID())
+            val refreshToken = UUID.randomUUID()
+
+            sessionManager.saveRefreshToken(id, refreshToken, LocalDateTime.now().plusDays(1))
+
+            sessionManager.authenticateRefreshToken(refreshToken) {
+                return@authenticateRefreshToken success("success")
+            }.assertSuccess()
+        }
+
+        @Test
+        fun `Blacklisted refresh token must fail authentication`() {
+            val id = UserId(UUID.randomUUID())
+            val refreshToken = UUID.randomUUID()
+            val expiresAt = LocalDateTime.now().plusDays(1)
+
+            sessionManager.saveRefreshToken(id, refreshToken, expiresAt)
+            sessionManager.blacklistRefreshToken(refreshToken, expiresAt)
+
+            sessionManager.authenticateRefreshToken(refreshToken) {
+                return@authenticateRefreshToken success("success")
+            }.assertFailure(ResultState.UNAUTHORIZED)
+        }
     }
 }
