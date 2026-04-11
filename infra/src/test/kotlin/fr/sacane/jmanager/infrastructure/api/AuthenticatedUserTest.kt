@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.api
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.api.UserFeature
+import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.RestAssured
 import org.junit.jupiter.api.AfterEach
@@ -17,6 +18,7 @@ import org.testcontainers.utility.DockerImageName
 
 abstract class AuthenticatedUserTest {
     lateinit var token: String
+    lateinit var refreshToken: String
     var user: User? = null
 
     @Autowired
@@ -24,6 +26,9 @@ abstract class AuthenticatedUserTest {
 
     @Autowired
     private lateinit var session: UserFeature
+
+    @Autowired
+    private lateinit var sessionManager: SessionManager
 
     companion object {
         private val postgresContainer = PostgreSQLContainer(DockerImageName.parse("postgres:15-alpine"))
@@ -54,7 +59,11 @@ abstract class AuthenticatedUserTest {
     @BeforeEach
     fun beforeEach() {
         session.register("test", "test", "test").onSuccess { user = it }
-        session.login("test", "test").onSuccess { token = it.token }
+        session.login("test", "test").onSuccess {
+            token = it.token
+            refreshToken = sessionManager.findSessionByToken(it.token)?.refreshToken?.toString()
+                ?: error("Refresh token should be initialized for authenticated test user")
+        }
     }
 
     @AfterEach

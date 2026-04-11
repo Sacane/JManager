@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import authMiddleware from '~/middleware/auth'
 
 definePageMeta({
   layout: 'sidebar-layout',
+  middleware: [authMiddleware],
 })
 
 const { getSettings, updateSettings } = useUserSettings()
@@ -154,7 +156,9 @@ onMounted(() => {
               <div class="cycle-field">
                 <span class="cycle-field-label">Début</span>
                 <select v-model.number="cycle.monthlyPeriodStartDay" class="cycle-select" :data-test="`cycle-select-${cycle.bookletId}`">
-                  <option v-for="day in monthlyDayOptions()" :key="day" :value="day">{{ day }}</option>
+                  <option v-for="day in monthlyDayOptions()" :key="day" :value="day">
+                    {{ day }}
+                  </option>
                 </select>
                 <span class="cycle-field-hint">Démarre le mois précédent</span>
               </div>
@@ -162,8 +166,12 @@ onMounted(() => {
               <div class="cycle-field">
                 <span class="cycle-field-label">Fin</span>
                 <select v-model="cycle.monthlyPeriodEndDay" class="cycle-select" :data-test="`cycle-end-select-${cycle.bookletId}`">
-                  <option :value="null">Par défaut</option>
-                  <option v-for="day in monthlyDayOptions()" :key="`end-${day}`" :value="day">{{ day }}</option>
+                  <option :value="null">
+                    Par défaut
+                  </option>
+                  <option v-for="day in monthlyDayOptions()" :key="`end-${day}`" :value="day">
+                    {{ day }}
+                  </option>
                 </select>
               </div>
             </div>

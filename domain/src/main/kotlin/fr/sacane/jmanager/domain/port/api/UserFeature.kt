@@ -45,6 +45,14 @@ sealed interface UserFeature {
     fun logout(token: String): Result<Nothing>
 
     /**
+        * Refresh a session using a refresh token and issue a new access token.
+     *
+        * @param refreshToken Current valid refresh token.
+     * @return Result containing a UserToken with a newly issued access token.
+     */
+        fun refresh(refreshToken: UUID): Result<UserToken>
+
+    /**
      * Register a new user.
      *
      * @param username Desired username for the new user.
@@ -120,7 +128,10 @@ class UserFeatureImpl(
             LOGGER.info("User ${userWithPassword.user.username} logged")
             val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, userWithPassword.roles)
             session.addSession(user.id, accessToken)
-            return success(user.withToken(accessToken.tokenValue))
+            accessToken.refreshToken?.let {
+                session.saveRefreshToken(user.id, it, accessToken.refreshTokenLifetime)
+            }
+            return success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
         }
         LOGGER.warning("Failed to log user $pseudonym")
         return domainFailure(
@@ -132,9 +143,39 @@ class UserFeatureImpl(
 
     override fun logout(token: String)
     : Result<Nothing> = session.authenticate(token) {
+        val activeSession = session.findSessionByToken(token)
+        val refreshToken = activeSession?.refreshToken
+        if (refreshToken != null) {
+            session.blacklistRefreshToken(refreshToken, activeSession.refreshTokenLifetime)
+        }
         session.removeSession(it, token)
         success()
     }
+
+    override fun refresh(refreshToken: UUID): Result<UserToken> =
+        session.authenticateRefreshToken(refreshToken) { userId ->
+            val refreshTokenExpiry = session.getRefreshTokenExpiry(refreshToken)
+                ?: return@authenticateRefreshToken domainFailure(
+                    ResultState.UNAUTHORIZED,
+                    "Refresh token introuvable",
+                    "domain.user.refresh.missing_refresh_token"
+                )
+
+            val user = userRepository.findUserById(userId)
+                ?: return@authenticateRefreshToken domainFailure(
+                    ResultState.USER_NOT_FOUND,
+                    "L'utilisateur n'existe pas",
+                    "domain.user.refresh.user_not_found"
+                )
+
+            val accessToken = tokenGenerator.generateToken(user.id, user.username, user.roles)
+            session.blacklistRefreshToken(refreshToken, refreshTokenExpiry)
+            session.addSession(userId, accessToken)
+            accessToken.refreshToken?.let {
+                session.saveRefreshToken(userId, it, accessToken.refreshTokenLifetime)
+            }
+            success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
+        }
 
     override fun register(username: String, password: String, confirmPassword: String): Result<User> {
         if (password != confirmPassword) {

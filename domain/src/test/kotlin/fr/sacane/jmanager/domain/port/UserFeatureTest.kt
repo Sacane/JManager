@@ -10,9 +10,11 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.domain.port.spi.DefaultHasher
+import fr.sacane.jmanager.domain.utils.success
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -53,6 +55,24 @@ class UserFeatureTest: FeatureTest() {
             result.assertFailure(ResultState.USER_UNAUTHORIZED)
             assertEquals("domain.user.login.invalid_credentials", result.errorInfo?.key)
         }
+
+        @Test
+        fun `Login a user must persist refresh token in session manager`() {
+            val user = User(UserId(UUID.randomUUID()), "John", "john.doe@gmail.com")
+            userState.init(listOf(UserWithPassword(user, DefaultHasher.hash("test"))))
+
+            val loginResult = userFeature.login("John", "test")
+            loginResult.assertSuccess()
+
+            val accessToken = loginResult.mapNotNullOrFailure()!!.token
+            val activeSession = sessionFakeState.findSessionByToken(accessToken)
+            val refreshToken = activeSession?.refreshToken
+            assertNotNull(refreshToken)
+
+            sessionFakeState.authenticateRefreshToken(refreshToken!!) {
+                return@authenticateRefreshToken success("ok")
+            }.assertSuccess()
+        }
     }
     @Nested
     inner class LogoutFeatureTest {
@@ -68,6 +88,55 @@ class UserFeatureTest: FeatureTest() {
             sessionFakeState.addSession(user.id, token)
             userFeature.logout(token.tokenValue)
                 .assertSuccess()
+        }
+
+        @Test
+        fun `Logout must blacklist current refresh token`() {
+            val user = User(UserId(UUID.randomUUID()), "John", "")
+            userState.init(listOf(UserWithPassword(user, DefaultHasher.hash("test"))))
+
+            val loginResult = userFeature.login("John", "test")
+            val accessToken = loginResult.mapNotNullOrFailure()!!.token
+            val activeSession = sessionFakeState.findSessionByToken(accessToken)
+            val refreshToken = activeSession?.refreshToken
+            assertNotNull(refreshToken)
+
+            userFeature.logout(accessToken).assertSuccess()
+
+            sessionFakeState.authenticateRefreshToken(refreshToken!!) {
+                return@authenticateRefreshToken success("ok")
+            }.assertFailure(ResultState.UNAUTHORIZED)
+        }
+    }
+
+    @Nested
+    inner class RefreshFeatureTest {
+        @Test
+        fun `Refresh must rotate refresh token and blacklist previous one`() {
+            val user = User(UserId(UUID.randomUUID()), "John", "john.doe@gmail.com")
+            userState.init(listOf(UserWithPassword(user, DefaultHasher.hash("test"))))
+
+            val loginResult = userFeature.login("John", "test")
+            val initialAccessToken = loginResult.mapNotNullOrFailure()!!.token
+            val initialSession = sessionFakeState.findSessionByToken(initialAccessToken)
+            val initialRefreshToken = initialSession?.refreshToken
+            assertNotNull(initialRefreshToken)
+
+            val refreshResult = userFeature.refresh(initialRefreshToken!!)
+            refreshResult.assertSuccess()
+            val refreshedAccessToken = refreshResult.mapNotNullOrFailure()!!.token
+
+            val refreshedSession = sessionFakeState.findSessionByToken(refreshedAccessToken)
+            val refreshedRefreshToken = refreshedSession?.refreshToken
+            assertNotNull(refreshedRefreshToken)
+
+            sessionFakeState.authenticateRefreshToken(initialRefreshToken!!) {
+                return@authenticateRefreshToken success("ok")
+            }.assertFailure(ResultState.UNAUTHORIZED)
+
+            sessionFakeState.authenticateRefreshToken(refreshedRefreshToken!!) {
+                return@authenticateRefreshToken success("ok")
+            }.assertSuccess()
         }
     }
 

@@ -22,6 +22,7 @@ import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import useStats from '~/composables/useStats'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import authMiddleware from '~/middleware/auth'
 import { resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, rgbToHex } from '~/utils/util'
 
@@ -40,6 +41,7 @@ ChartJS.register(
 
 definePageMeta({
   layout: 'sidebar-layout',
+  middleware: [authMiddleware],
 })
 
 const { user } = useAuth()

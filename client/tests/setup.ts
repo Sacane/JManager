@@ -10,6 +10,7 @@ vi.stubGlobal('watch', watch)
 vi.stubGlobal('watchEffect', watchEffect)
 vi.stubGlobal('onMounted', onMounted)
 vi.stubGlobal('onUnmounted', onUnmounted)
+vi.stubGlobal('defineNuxtRouteMiddleware', (guard: any) => guard)
 
 // Stub auto-imported composables that require Nuxt runtime context.
 vi.stubGlobal('useLocalStorage', (key: string, defaultValue: any) => ref(defaultValue))

@@ -44,6 +44,7 @@ data class UserStorageDTO(
     val username: String,
     val email: String? = null,
     val token: String,
+    val refreshToken: String? = null,
 )
 
 @Serializable

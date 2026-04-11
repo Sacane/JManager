@@ -12,6 +12,7 @@ import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.CoreMatchers.notNullValue
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -51,6 +52,75 @@ class SessionControllerTest(
                 statusCode(200)
             }
         }
+
+        @Test
+        fun `Refresh a connected user with cookie must return 200 and token`() {
+            Given {
+                port(port)
+                cookie("refresh_token", refreshToken)
+                header("Content-Type", "application/json")
+            } When {
+                post("/api/user/auth/refresh/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+                body("token", notNullValue())
+            }
+        }
+
+        @Test
+        fun `Refresh a connected user with bearer must return 200 and token`() {
+            Given {
+                port(port)
+                header("Authorization", "Bearer $refreshToken")
+                header("Content-Type", "application/json")
+            } When {
+                post("/api/user/auth/refresh/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+                body("token", notNullValue())
+            }
+        }
+
+        @Test
+        fun `Refresh a connected user with X-Refresh-Token header must return 200 and token`() {
+            Given {
+                port(port)
+                header("X-Refresh-Token", refreshToken)
+                header("Content-Type", "application/json")
+            } When {
+                post("/api/user/auth/refresh/${user!!.id.value}")
+            } Then {
+                statusCode(200)
+                body("token", notNullValue())
+            }
+        }
+
+        @Test
+        fun `Refresh with another user id must return 401`() {
+            Given {
+                port(port)
+                cookie("refresh_token", refreshToken)
+                header("Content-Type", "application/json")
+            } When {
+                post("/api/user/auth/refresh/${UUID.randomUUID()}")
+            } Then {
+                statusCode(401)
+            }
+        }
+
+        @Test
+        fun `Refresh a connected user without user id must return 200 and token`() {
+            Given {
+                port(port)
+                cookie("refresh_token", refreshToken)
+                header("Content-Type", "application/json")
+            } When {
+                post("/api/user/auth/refresh")
+            } Then {
+                statusCode(200)
+                body("token", notNullValue())
+            }
+        }
     }
 
     @Nested
@@ -70,6 +140,20 @@ class SessionControllerTest(
 
     @Nested
     inner class UserSettingsEndpointTest {
+        @Test
+        fun `Get user settings with bearer token must return 200`() {
+            Given {
+                port(port)
+                header("Authorization", "Bearer $token")
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/user/settings")
+            } Then {
+                statusCode(200)
+                body("projectionWindowDays", equalTo(15))
+            }
+        }
+
         @Test
         fun `Get user settings for authenticated user must return 200`() {
             Given {

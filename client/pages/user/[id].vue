@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import authMiddleware from '~/middleware/auth'
+
 const route = useRoute()
 
 definePageMeta({
   layout: 'sidebar-layout',
+  middleware: [authMiddleware],
 })
 </script>
 

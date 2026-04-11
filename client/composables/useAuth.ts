@@ -1,5 +1,4 @@
 import type { AxiosError } from 'axios'
-import type { Ref } from 'vue'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 
@@ -19,17 +18,44 @@ interface UserRegister {
   confirmPassword: string
 }
 
+interface RefreshOptions {
+  redirectOnFailure?: boolean
+}
+
+let refreshRequestInFlight: Promise<boolean> | null = null
+
 export default function useAuth() {
-  const user: Ref<User | null> = ref(null)
-  const storedUser: User | undefined = JSON.parse(localStorage.getItem('user') as string)
-  const isAuthenticated = ref<boolean>(false)
-  const isAdmin = computed(() => user.value?.roles.includes('ADMIN'))
+  const user = useState<User | null>('auth:user', () => null)
+  const isAuthenticated = useState<boolean>('auth:isAuthenticated', () => false)
+  const isSessionInitialized = useState<boolean>('auth:sessionInitialized', () => false)
+  const isRefreshInProgress = useState<boolean>('auth:isRefreshInProgress', () => false)
+  const isAdmin = computed(() => user.value?.roles.includes('ADMIN') ?? false)
   const config = useRuntimeConfig()
   const host = config.public.apiUrl
-  if (storedUser) {
-    user.value = storedUser
+
+  function userFromToken(token: string): User {
+    const decoded = jwtDecode<{ sub: string, username: string, role: string, ADMIN: boolean, USER: boolean }>(token)
+    const roles = []
+    if (decoded.ADMIN) {
+      roles.push('ADMIN')
+    }
+    if (decoded.USER) {
+      roles.push('USER')
+    }
+    return {
+      id: decoded.sub,
+      username: decoded.username,
+      roles,
+      email: '',
+    }
+  }
+
+  function applyAuthenticatedUser(accessToken: string) {
+    user.value = userFromToken(accessToken)
     isAuthenticated.value = true
-  } else {
+  }
+
+  function clearAuthState() {
     user.value = null
     isAuthenticated.value = false
   }
@@ -37,54 +63,67 @@ export default function useAuth() {
   async function login(userAuth: UserAuth, onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
       const response = await axios.post(`${host}user/auth`, userAuth, { withCredentials: true })
-      // user.value = response.data
-      const result = response.data.token
-      const decoded = jwtDecode<{ sub: string, username: string, role: string, ADMIN: boolean, USER: boolean }>(result)
-      const roles = []
-      if (decoded.ADMIN) {
-        roles.push('ADMIN')
-      }
-      if (decoded.USER) {
-        roles.push('USER')
-      }
-      user.value = {
-        id: decoded.sub,
-        username: decoded.username,
-        roles,
-        email: '',
-      }
-      localStorage.setItem('user', JSON.stringify(user.value))
-      isAuthenticated.value = true
+      applyAuthenticatedUser(response.data.token)
+      isSessionInitialized.value = true
       navigateTo('/')
     } catch (e: any) {
       onError(e)
     }
   }
+
   async function logout() {
     const config = {
       withCredentials: true,
     }
     try {
       await axios.post(`${host}user/logout`, null, config)
-      user.value = null
-      isAuthenticated.value = false
-      navigateTo('/login')
-      localStorage.removeItem('user')
     } catch (e: any) {
-      handleError(e)
+      console.warn(e)
+    } finally {
+      clearAuthState()
+      isSessionInitialized.value = true
+      navigateTo('/login')
     }
   }
 
-  async function tryRefresh() {
-    try {
-      const response = await axios.post(`${host}user/auth/refresh/${user.value?.id}`, null)
-      user.value = response.data
-    } catch (e: any) {
-      isAuthenticated.value = false
-      navigateTo('/login')
-      console.error(e.toString())
+  async function tryRefresh(options: RefreshOptions = {}): Promise<boolean> {
+    const { redirectOnFailure = true } = options
+
+    if (refreshRequestInFlight) {
+      return refreshRequestInFlight
     }
+
+    refreshRequestInFlight = (async () => {
+      isRefreshInProgress.value = true
+      try {
+        const response = await axios.post(`${host}user/auth/refresh`, null, {
+          withCredentials: true,
+        })
+        applyAuthenticatedUser(response.data.token)
+        return true
+      } catch (e: any) {
+        clearAuthState()
+        if (redirectOnFailure) {
+          navigateTo('/login')
+        }
+        return false
+      } finally {
+        isRefreshInProgress.value = false
+        isSessionInitialized.value = true
+        refreshRequestInFlight = null
+      }
+    })()
+
+    return refreshRequestInFlight
   }
+
+  async function initializeSession(): Promise<boolean> {
+    if (isSessionInitialized.value) {
+      return isAuthenticated.value
+    }
+    return tryRefresh({ redirectOnFailure: false })
+  }
+
   // eslint-disable-next-line no-console
   async function register(registeredUser: UserRegister, onSuccess: () => void = () => console.log('success'), onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
@@ -98,12 +137,16 @@ export default function useAuth() {
   function handleError(error: Error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<any, any>
-      const status = axiosError.response?.data.status
-      if (status === 307) {
+      const httpStatus = axiosError.response?.status
+      const domainCode = axiosError.response?.data?.code
+      const legacyStatus = axiosError.response?.data?.status
+
+      if (domainCode === 1 || legacyStatus === 307) {
         tryRefresh().then()
         return
-      } else if (status === 401 || status === 403) {
-        isAuthenticated.value = false
+      } else if (httpStatus === 401 || httpStatus === 403) {
+        clearAuthState()
+        isSessionInitialized.value = true
         navigateTo('/login')
         return
       }
@@ -112,5 +155,5 @@ export default function useAuth() {
     throw error
   }
 
-  return { user: readonly(user), isAuthenticated, login, logout, register, isAdmin }
+  return { user: readonly(user), isAuthenticated: readonly(isAuthenticated), login, logout, register, isAdmin, tryRefresh, initializeSession }
 }

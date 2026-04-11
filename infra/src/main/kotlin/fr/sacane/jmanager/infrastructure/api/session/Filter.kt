@@ -30,7 +30,7 @@ class JwtCookieAuthenticationFilter(
         filterChain: FilterChain
     ) {
         try {
-        val jwt = request.cookies?.firstOrNull { it.name == "token" }?.value
+        val jwt = extractToken(request)
 
         if (jwt != null && SecurityContextHolder.getContext().authentication == null) {
             val token = tokenGenerator.readToken(jwt)
@@ -63,5 +63,16 @@ class JwtCookieAuthenticationFilter(
             response.contentType = "application/json"
             response.writer.write("""{"code":1050,"message":"Unauthorized"}""")
             SecurityContextHolder.clearContext()}
+    }
+
+    private fun extractToken(request: HttpServletRequest): String? {
+        val bearer = request.getHeader("Authorization")
+        if (!bearer.isNullOrBlank() && bearer.startsWith("Bearer ")) {
+            val token = bearer.removePrefix("Bearer ").trim()
+            if (token.isNotBlank()) {
+                return token
+            }
+        }
+        return request.cookies?.firstOrNull { it.name == "token" }?.value
     }
 }
