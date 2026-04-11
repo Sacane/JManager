@@ -38,8 +38,8 @@ class InMemoryTransactionRepository(
         return transaction
     }
 
-    override fun deleteAllSheetsById(sheetIds: List<UUID>) {
-        inMemoryDatabase.removeAllTransactionsById(sheetIds)
+    override fun deleteAllTransactionsById(transactionIds: List<UUID>) {
+        inMemoryDatabase.removeAllTransactionsById(transactionIds)
     }
 
     override fun findTransactionById(transactionId: UUID): Transaction? {
@@ -56,7 +56,7 @@ class InMemoryTransactionRepository(
         return transactionWithId
     }
 
-    override fun findBookletByLabelWithSheets(label: String, userId: UserId): Booklet? {
+    override fun findBookletByLabelWithTransactions(label: String, userId: UserId): Booklet? {
         return inMemoryDatabase.findBookletByOwnerAndLabel(userId, label)
     }
 
@@ -73,7 +73,7 @@ class InMemoryTransactionRepository(
         year: Int,
         month: Month
     ): List<Transaction>? {
-        return inMemoryDatabase.findBookletById(bookletId)?.retrieveSheetSurroundAndSortedByDate(month, year)
+        return inMemoryDatabase.findBookletById(bookletId)?.retrieveTransactionsSortedByDate(month, year)
     }
 
     override fun isPersonalTagUsed(tagId: UUID): Boolean {

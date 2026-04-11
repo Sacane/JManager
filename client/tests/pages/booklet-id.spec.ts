@@ -1,4 +1,4 @@
-﻿import { shallowMount } from '@vue/test-utils'
+import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import BookletDetailsPage from '../../pages/booklet/[id].vue'
 
@@ -202,7 +202,7 @@ describe('pages/booklet/[id] selection behavior', () => {
     vm.toggleSelection(first)
     vm.toggleSelection(second)
 
-    expect(vm.selectedSheets).toHaveLength(2)
+    expect(vm.selectedTransactions).toHaveLength(2)
     expect(vm.isSelected(first)).toBe(true)
     expect(vm.isSelected(second)).toBe(true)
   })

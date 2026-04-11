@@ -934,7 +934,7 @@ class RegularTransactionControllerTest(
         }
 
         @Test
-        fun `Delete regular transaction linked to multiple booklets must cleanup links and trackers while keeping generated sheets`() {
+        fun `Delete regular transaction linked to multiple booklets must cleanup links and trackers while keeping generated transactions`() {
             bookletStateTestAdapter.init(
                 listOf(
                     Booklet(200.toAmount(), "booklet-a", owner = user),

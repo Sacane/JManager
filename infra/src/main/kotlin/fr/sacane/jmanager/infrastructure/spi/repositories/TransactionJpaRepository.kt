@@ -10,21 +10,21 @@ import java.util.UUID
 
 @Repository
 interface TransactionJpaRepository : CrudRepository<TransactionResource, UUID> {
-    fun findSheetResourceByIdSheet(id: UUID): TransactionResource?
+    fun findTransactionResourceByIdTransaction(id: UUID): TransactionResource?
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM TransactionResource t WHERE t.idSheet IN :sheetIds")
-    fun deleteAllByIdSheetIn(@Param("sheetIds") sheetIds: List<UUID>): Int
+    @Query("DELETE FROM TransactionResource t WHERE t.idTransaction IN :transactionIds")
+    fun deleteAllByIdTransactionIn(@Param("transactionIds") transactionIds: List<UUID>): Int
 
     @Query(
-        value = "SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END FROM sheet WHERE personal_tag_id_tag = :tagId",
+        value = "SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END FROM transactions WHERE personal_tag_id_tag = :tagId",
         nativeQuery = true
     )
     fun existsByPersonalTagId(@Param("tagId") tagId: UUID): Boolean
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
-        value = "UPDATE sheet SET personal_tag_id_tag = NULL, tag_id_tag = :defaultTagId WHERE personal_tag_id_tag = :tagId",
+        value = "UPDATE transactions SET personal_tag_id_tag = NULL, tag_id_tag = :defaultTagId WHERE personal_tag_id_tag = :tagId",
         nativeQuery = true
     )
     fun replacePersonalTagByDefaultId(@Param("tagId") tagId: UUID, @Param("defaultTagId") defaultTagId: UUID)

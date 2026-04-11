@@ -34,7 +34,7 @@ class TransactionRepositoryJpaAdapter(
     @Transactional
     override fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction? {
         val id = userId.value ?: return null
-        val booklet = bookletJpaRepository.findByOwnerAndLabelWithSheets(id, bookletLabel) ?: return null
+        val booklet = bookletJpaRepository.findByOwnerAndLabelWithTransactions(id, bookletLabel) ?: return null
         val transactionResource: TransactionResource
         if (transaction.tag?.label == Tag.noneTag().label) {
             val noneTag = tagRepository.findUnknownTag()
@@ -52,7 +52,7 @@ class TransactionRepositoryJpaAdapter(
         return try {
             transactionResource.booklet = booklet
             val saved = transactionJpaRepository.save(transactionResource)
-            booklet.sheets.add(saved)
+            booklet.transactions.add(saved)
             booklet.amount = if (transactionResource.isIncome!!) transactionResource.value + booklet.amount else booklet.amount - transactionResource.value
             saved.toModel()
         } catch (_: Exception) {
@@ -74,13 +74,13 @@ class TransactionRepositoryJpaAdapter(
         return this.asResource(tag)
     }
     @Transactional
-    override fun deleteAllSheetsById(sheetIds: List<java.util.UUID>) {
-        if (sheetIds.isEmpty()) return
-        transactionJpaRepository.deleteAllByIdSheetIn(sheetIds)
+    override fun deleteAllTransactionsById(transactionIds: List<java.util.UUID>) {
+        if (transactionIds.isEmpty()) return
+        transactionJpaRepository.deleteAllByIdTransactionIn(transactionIds)
     }
 
     override fun findTransactionById(transactionId: java.util.UUID): Transaction? {
-        return transactionJpaRepository.findSheetResourceByIdSheet(transactionId)?.toModel()
+        return transactionJpaRepository.findTransactionResourceByIdTransaction(transactionId)?.toModel()
     }
 
 
@@ -99,9 +99,9 @@ class TransactionRepositoryJpaAdapter(
     }
 
     @Transactional
-    override fun findBookletByLabelWithSheets(label: String, userId: UserId): Booklet? {
+    override fun findBookletByLabelWithTransactions(label: String, userId: UserId): Booklet? {
         if(userId.value == null) return null
-        return bookletJpaRepository.findSheetsByLabelForUser(label, userId.value!!)
+        return bookletJpaRepository.findTransactionsByLabelForUser(label, userId.value!!)
             ?.toModel()
     }
 
@@ -110,7 +110,7 @@ class TransactionRepositoryJpaAdapter(
     }
 
     override fun findTransactionsByBookletId(bookletId: java.util.UUID): List<Transaction>? {
-        return bookletJpaRepository.findTransactionsById(bookletId)?.sheets?.map { it.toModel() }
+        return bookletJpaRepository.findTransactionsById(bookletId)?.transactions?.map { it.toModel() }
     }
 
     override fun findTransactionsByBookletYearAndMonth(

@@ -29,7 +29,7 @@ class BookletMapper(
                 label = booklet.label,
                 monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
                 monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
-                sheets = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
+                transactions = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
                 owner = userResource.get(),
                 initialSold = booklet.initialSold.value,
                 idBooklet = booklet.id,
@@ -40,7 +40,7 @@ class BookletMapper(
                 label = booklet.label,
                 monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
                 monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
-                sheets = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
+                transactions = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
                 initialSold = booklet.initialSold.value,
                 idBooklet = booklet.id,
             )
@@ -61,7 +61,7 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
     resource.date = this.date
     resource.value = amount.value
     resource.isIncome = isIncome
-    resource.idSheet = this.id
+    resource.idTransaction = this.id
     resource.lastModified = this.lastModified
     resource.regularTransactionId = this.regularTransactionId?.value?.toUuidOrNull()
     if(tagResource != null) {
@@ -76,10 +76,10 @@ internal fun Transaction.asResource(tagResource: AbstractTagResource? = null): T
 
 
 internal fun Booklet.asResource(): BookletResource {
-    val sheets = if (this.sheets().isEmpty()) {
+    val transactions = if (this.transactionsSnapshot().isEmpty()) {
         mutableListOf()
     } else {
-        sheets().map { it.asResource() }.toMutableList()
+        transactionsSnapshot().map { it.asResource() }.toMutableList()
     }
     return BookletResource(
         idBooklet = id,
@@ -87,7 +87,7 @@ internal fun Booklet.asResource(): BookletResource {
         label = label,
         monthlyPeriodStartDay = monthlyPeriodStartDay,
         monthlyPeriodEndDay = monthlyPeriodEndDay,
-        sheets = sheets,
+        transactions = transactions,
         initialSold = this.initialSold.value,
     )
 }
@@ -107,7 +107,7 @@ internal fun User.asResource(password: String): UserResource {
 
 internal fun TransactionResource.toModel(): Transaction
 = Transaction(
-    this.idSheet,
+    this.idTransaction,
     this.label,
     this.date,
     this.value.toAmount(),
@@ -122,7 +122,7 @@ internal fun BookletResource.toModel(): Booklet
 = Booklet(
     this.amount.toAmount(),
     this.label,
-    this.sheets.map { sheet -> sheet.toModel() }.toMutableList(),
+    this.transactions.map { transaction -> transaction.toModel() }.toMutableList(),
     owner = this.owner?.toModel(),
     initialSold = Amount(this.initialSold),
     id = this.idBooklet,

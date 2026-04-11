@@ -43,7 +43,7 @@ This ensures testability (mock SPI in unit tests) and portability (swap adapters
 
 - Use domain value objects and aggregates for signatures (e.g. `UserId`, `Booklet`, `Transaction`).
 - Prefer nullable return types or domain `Result` to indicate not-found vs error cases. Keep the semantic explicit in the method name and KDoc.
-- Keep method names intent-driven: `findAccountByIdWithTransactions`, `saveRegularTransaction`, `deleteAllSheetsById`.
+- Keep method names intent-driven: `findAccountByIdWithTransactions`, `saveRegularTransaction`, `deleteAllTransactionsById`.
 - When an operation may fail due to infra issues, return `null` or an optional and let the domain translate it to `ResultState.INFRASTRUCTURE_ERROR`.
 - For multi-repository atomic operations, provide or use a `UnitOfWorkTransactionProvider` SPI — do not mix transaction management into domain logic or adapters implicitly.
 

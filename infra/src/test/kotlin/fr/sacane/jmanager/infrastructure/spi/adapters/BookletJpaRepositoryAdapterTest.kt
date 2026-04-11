@@ -32,7 +32,7 @@ class BookletJpaRepositoryAdapterTest(
         val saved = bookletJpaRepositoryAdapter.save(user!!.id, booklet)
         assertThat(saved).isNotNull
         val userId = user!!.id.value ?: throw AssertionError("user id is null")
-        val persisted = bookletJpaRepository.findByOwnerAndLabelWithSheets(userId, booklet.label)
+        val persisted = bookletJpaRepository.findByOwnerAndLabelWithTransactions(userId, booklet.label)
         assertThat(persisted).isNotNull
         assertThat(persisted!!.label).isEqualTo(booklet.label)
     }
@@ -59,7 +59,7 @@ class BookletJpaRepositoryAdapterTest(
         val up = bookletJpaRepositoryAdapter.upsert(booklet)
         assertThat(up).isNotNull
         val uid = user!!.id.value ?: throw AssertionError("user id is null")
-        val persisted = bookletJpaRepository.findByOwnerAndLabelWithSheets(uid, booklet.label)
+        val persisted = bookletJpaRepository.findByOwnerAndLabelWithTransactions(uid, booklet.label)
         assertThat(persisted).isNotNull
     }
 

@@ -1,6 +1,6 @@
 declare global {
   // declare your types here
-  interface SheetDTO {
+  interface TransactionDTO {
     id: string
     label: string
     value: number
@@ -28,13 +28,13 @@ declare global {
     id: number | undefined
     amount: number
     label: string
-    transactions: Array<SheetDTO>
+    transactions: Array<TransactionDTO>
     currency?: string
   }
 
   type OnlyBookletInfo = Pick<BookletDTO, 'id' | 'amount' | 'label' | 'currency'>
 
-  interface SheetAverageDTO {
+  interface TransactionAverageDTO {
     transactions: TransactionCreationDTO[]
     sum: number
   }
