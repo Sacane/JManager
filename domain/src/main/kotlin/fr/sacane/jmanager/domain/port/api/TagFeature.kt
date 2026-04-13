@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
@@ -34,7 +35,7 @@ sealed interface TagFeature {
      *         - TAG_LABEL_ALREADY_TAKEN when the user already has a tag with the same label.
      *         - notFound when the user cannot be resolved.
      */
-    fun addTag(token: String, tag: Tag): Result<Tag>
+    fun addTag(token: SessionToken, tag: Tag): Result<Tag>
 
     /**
      * Retrieve all tags visible to the authenticated user.
@@ -44,7 +45,7 @@ sealed interface TagFeature {
      * @param token Authentication token identifying the user session.
      * @return Result containing a list of Tag on success.
      */
-    fun getAllTags(token: String): Result<List<Tag>>
+    fun getAllTags(token: SessionToken): Result<List<Tag>>
 
     /**
      * Ensure the application's default tags are present in the repository.
@@ -66,7 +67,7 @@ sealed interface TagFeature {
      * @param force When true, reassign affected transactions to the default tag and proceed with deletion.
      * @return Result with no value on success, or a failure when the tag was not found or is in use without force.
      */
-    fun deleteTag(token: String, tagId: UUID, force: Boolean = false): Result<Nothing>
+    fun deleteTag(token: SessionToken, tagId: UUID, force: Boolean = false): Result<Nothing>
 
     /**
      * Retrieve the global default tag.
@@ -74,7 +75,7 @@ sealed interface TagFeature {
      * @param token Authentication token identifying the user session.
      * @return Result containing the default Tag, or a notFound failure when no default tag exists.
      */
-    fun defaultTag(token: String): Result<Tag>
+    fun defaultTag(token: SessionToken): Result<Tag>
 
     /**
      * Update an existing tag.
@@ -88,7 +89,7 @@ sealed interface TagFeature {
      * @param tag Tag object containing updated fields (id must be provided).
      * @return Result containing the updated Tag on success, or appropriate failure states.
      */
-    fun editTag(token: String, tag: Tag): Result<Tag>
+    fun editTag(token: SessionToken, tag: Tag): Result<Tag>
 }
 
 @DomainService
@@ -102,7 +103,7 @@ class TagFeatureImpl(
         return failure(state, DomainError(state.code, key, detail))
     }
 
-    override fun addTag(token: String, tag: Tag): Result<Tag> = session.authenticate(token){
+    override fun addTag(token: SessionToken, tag: Tag): Result<Tag> = session.authenticate(token){
         if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
             return@authenticate domainFailure(
                 ResultState.TAG_LABEL_ALREADY_TAKEN,
@@ -119,7 +120,7 @@ class TagFeatureImpl(
         success(save)
     }
 
-    override fun getAllTags(token: String): Result<List<Tag>> = session.authenticate(token) {
+    override fun getAllTags(token: SessionToken): Result<List<Tag>> = session.authenticate(token) {
         success(tagRepository.getAllDefault(it))
     }
 
@@ -130,7 +131,7 @@ class TagFeatureImpl(
         tagRepository.saveAll(defaultTags)
     }
 
-    override fun deleteTag(token: String, tagId: UUID, force: Boolean): Result<Nothing> = session.authenticate(token){
+    override fun deleteTag(token: SessionToken, tagId: UUID, force: Boolean): Result<Nothing> = session.authenticate(token){
         val isUsedInTransactions = transactionRepository.isPersonalTagUsed(tagId)
         val isUsedInRegular = regularTransactionRepository.isPersonalTagUsed(tagId)
         if ((isUsedInTransactions || isUsedInRegular) && !force) {
@@ -155,12 +156,12 @@ class TagFeatureImpl(
         success()
     }
 
-    override fun defaultTag(token: String): Result<Tag> = session.authenticate(token) {
+    override fun defaultTag(token: SessionToken): Result<Tag> = session.authenticate(token) {
         val tagResult = tagRepository.defaultTag()
         return@authenticate success(tagResult)
     }
 
-    override fun editTag(token: String, tag: Tag): Result<Tag> = session.authenticate(token) {
+    override fun editTag(token: SessionToken, tag: Tag): Result<Tag> = session.authenticate(token) {
         if(tag.id == null || !tagRepository.existsById(tag.id)) {
             return@authenticate domainFailure(
                 ResultState.NOT_FOUND,

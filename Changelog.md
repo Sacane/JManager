@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-05-17
+- **Refactor: `SessionToken` value class — eliminate raw String tokens from domain port contracts**
+  - **New domain model**: introduced `SessionToken(@JvmInline value class)` in `domain.models`, wrapping the raw JWT string with a domain-meaningful type at zero runtime cost.
+  - **`SessionManager` port**: all interface methods (`authenticate`, `removeSession`, `findSessionByToken`, `getSession`) now accept `SessionToken` instead of `String`. The raw string is unwrapped only inside `InMemorySessionManager` where JWT parsing is needed (`token.value`).
+  - **All 8 domain features** (Booklet, Transaction, User, Admin, Tag, RegularTransaction, Stats, FileImportExport): interface signatures and `@DomainService` implementation overrides updated to `SessionToken`.
+  - **All 7 infra controllers** (session, booklet, admin, tag, stats, transaction, csv): conversion boundary is now explicit — `SessionToken(currentUser.token)` at each call site; infra `UserDetail.token: String` unchanged.
+  - **All domain and infra test files** updated to pass `SessionToken(...)` at feature/port call sites. `FeatureTest.BookletTokenUserId.tokenValue` and `TokenUserId.tokenValue` changed to `SessionToken`.
+
+- **Tests: explicit sliding lifetime coverage for `AccessToken`**
+  - Added `domain/src/test/.../models/AccessTokenTest.kt` with 5 business-rule tests:
+    - fresh token is not expired
+    - past-expiration token is expired
+    - `updateLifetime()` extends expiry to `now + TOKEN_LIFETIME_IN_MINUTES` and revives an expired token (sliding window)
+    - `updateTokenLifetime()` extends refresh token lifetime by `REFRESH_TOKEN_LIFETIME_IN_DAYS`
+
 ## 2026-04-11
 - **Refactor: replace legacy `Sheet` naming by `Transaction` across layers**
   - **Domain**: renamed legacy APIs and methods (`deleteSheetsByIds`→`deleteTransactionsByIds`, `deleteAllSheetsById`→`deleteAllTransactionsById`, `findBookletByLabelWithSheets`→`findBookletByLabelWithTransactions`, `retrieveSheetSurroundAndSortedByDate`→`retrieveTransactionsSortedByDate`, `sheets()`→`transactionsSnapshot()`).

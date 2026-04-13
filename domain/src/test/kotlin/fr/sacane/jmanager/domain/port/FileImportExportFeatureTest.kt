@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
@@ -23,7 +24,7 @@ class FileImportExportFeatureTest : FeatureTest() {
         val invalidToken = "invalid-token"
 
         val result = fileImportExportFeature.validateCsvFile(
-            invalidToken,
+            SessionToken(invalidToken),
             UUID.randomUUID(),
             "csv content"
         )
@@ -314,7 +315,7 @@ class FileImportExportFeatureTest : FeatureTest() {
         val invalidToken = "invalid-token"
 
         val result = fileImportExportFeature.importTransactionsFromCsv(
-            invalidToken,
+            SessionToken(invalidToken),
             UUID.randomUUID(),
             "csv content"
         )

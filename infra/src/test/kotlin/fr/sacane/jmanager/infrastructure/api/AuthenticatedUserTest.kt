@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.asTokenUUID
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.domain.port.spi.SessionManager
@@ -61,14 +62,14 @@ abstract class AuthenticatedUserTest {
         session.register("test", "test", "test").onSuccess { user = it }
         session.login("test", "test").onSuccess {
             token = it.token
-            refreshToken = sessionManager.findSessionByToken(it.token)?.refreshToken?.toString()
+            refreshToken = sessionManager.findSessionByToken(SessionToken(it.token))?.refreshToken?.toString()
                 ?: error("Refresh token should be initialized for authenticated test user")
         }
     }
 
     @AfterEach
     fun tearDown() {
-        session.logout(token.asTokenUUID())
+        session.logout(SessionToken(token.asTokenUUID()))
         userPostgresRepository.deleteAll()
     }
 }

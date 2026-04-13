@@ -12,6 +12,7 @@ import fr.sacane.jmanager.domain.models.csv.CsvLineResult
 import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.CsvFileReader
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
@@ -48,7 +49,7 @@ sealed interface FileImportExportFeature {
      * @return Result containing CsvValidationReport with warnings or error with first critical issue
      */
     fun validateCsvFile(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         csvContent: String,
         month: Int? = null,
@@ -67,7 +68,7 @@ sealed interface FileImportExportFeature {
      * @return Result containing CsvImportResult with created transactions and potential errors
      */
     fun importTransactionsFromCsv(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         csvContent: String,
         skipValidation: Boolean = false,
@@ -83,7 +84,7 @@ sealed interface FileImportExportFeature {
      * @return Result containing CSV content as string with proper formatting
      */
     fun exportTransactionsToCsv(
-        token: String,
+        token: SessionToken,
         transactions: List<Transaction>
     ): Result<String>
 }
@@ -118,7 +119,7 @@ class FileImportExportFeatureImpl(
     }
 
     override fun validateCsvFile(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         csvContent: String,
         month: Int?,
@@ -157,7 +158,7 @@ class FileImportExportFeatureImpl(
     }
 
     override fun importTransactionsFromCsv(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         csvContent: String,
         skipValidation: Boolean,
@@ -316,7 +317,7 @@ class FileImportExportFeatureImpl(
     }
 
     override fun exportTransactionsToCsv(
-        token: String,
+        token: SessionToken,
         transactions: List<Transaction>
     ): Result<String> {
         return sessionManager.authenticate(token) { _ ->

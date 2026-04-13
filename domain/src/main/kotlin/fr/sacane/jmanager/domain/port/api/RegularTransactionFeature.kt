@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvid
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
@@ -33,7 +34,7 @@ sealed interface RegularTransactionFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing a list of RegularTransaction on success.
      */
-    fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>>
+    fun getAllRegularTransactions(token: SessionToken): Result<List<RegularTransaction>>
 
     /**
      * Create (book) a new regular transaction and associate it with multiple booklets.
@@ -44,7 +45,7 @@ sealed interface RegularTransactionFeature {
      * @return Result containing the persisted RegularTransaction on success, or an error state.
      */
     fun bookRegularTransaction(
-        token: String,
+        token: SessionToken,
         regularTransaction: RegularTransaction,
         bookletIds: List<UUID>
     ): Result<RegularTransaction>
@@ -56,7 +57,7 @@ sealed interface RegularTransactionFeature {
      * @param transactionId The identifier of the regular transaction to retrieve.
      * @return Result containing the RegularTransaction on success, or TRANSACTION_NOT_FOUND when missing.
      */
-    fun getRegularTransactionById(token: String, transactionId: String): Result<RegularTransaction>
+    fun getRegularTransactionById(token: SessionToken, transactionId: String): Result<RegularTransaction>
 
     /**
      * Update an existing regular transaction.
@@ -66,7 +67,7 @@ sealed interface RegularTransactionFeature {
         * @param bookletIds Booklet identifiers to associate with this regular transaction.
      * @return Result containing the updated RegularTransaction on success, or an error state if not found.
      */
-        fun updateRegularTransaction(token: String, regularTransaction: RegularTransaction, bookletIds: List<UUID>): Result<RegularTransaction>
+        fun updateRegularTransaction(token: SessionToken, regularTransaction: RegularTransaction, bookletIds: List<UUID>): Result<RegularTransaction>
 
     /**
      * Delete a regular transaction by its identifier.
@@ -75,7 +76,7 @@ sealed interface RegularTransactionFeature {
      * @param transactionId Identifier of the regular transaction to delete.
      * @return Result containing a boolean indicating deletion success, or a failure when not found.
      */
-    fun deleteRegularTransaction(token: String, transactionId: String): Result<Boolean>
+    fun deleteRegularTransaction(token: SessionToken, transactionId: String): Result<Boolean>
 
     /**
      * Delete multiple regular transactions in a single operation.
@@ -84,7 +85,7 @@ sealed interface RegularTransactionFeature {
      * @param transactionIds Identifiers of regular transactions to delete.
      * @return Result containing deleted transaction ids, or a failure when any id is missing.
      */
-    fun deleteRegularTransactions(token: String, transactionIds: List<String>): Result<List<String>>
+    fun deleteRegularTransactions(token: SessionToken, transactionIds: List<String>): Result<List<String>>
 
     /**
      * Link a booklet to an existing regular transaction.
@@ -94,7 +95,7 @@ sealed interface RegularTransactionFeature {
      * @param bookletId UUID of the booklet to link.
      * @return Result containing the updated RegularTransaction on success, or an error state.
      */
-    fun linkRegularTransactionToBooklet(token: String, transactionId: String, bookletId: UUID): Result<RegularTransaction>
+    fun linkRegularTransactionToBooklet(token: SessionToken, transactionId: String, bookletId: UUID): Result<RegularTransaction>
 
     /**
      * Unlink a booklet from an existing regular transaction.
@@ -106,7 +107,7 @@ sealed interface RegularTransactionFeature {
      * @param bookletId UUID of the booklet to unlink.
      * @return Result containing the updated RegularTransaction on success, or an error state.
      */
-    fun unlinkRegularTransactionFromBooklet(token: String, transactionId: String, bookletId: UUID): Result<RegularTransaction>
+    fun unlinkRegularTransactionFromBooklet(token: SessionToken, transactionId: String, bookletId: UUID): Result<RegularTransaction>
 }
 
 @DomainService
@@ -123,7 +124,7 @@ class RegularTransactionFeatureImpl(
     }
 
 
-    override fun getAllRegularTransactions(token: String): Result<List<RegularTransaction>> {
+    override fun getAllRegularTransactions(token: SessionToken): Result<List<RegularTransaction>> {
         return session.authenticate(token) {
             val transactions = regularTransactionRepository.getAllRegularTransactions(it)
             return@authenticate success(transactions)
@@ -131,7 +132,7 @@ class RegularTransactionFeatureImpl(
     }
 
     override fun bookRegularTransaction(
-        token: String,
+        token: SessionToken,
         regularTransaction: RegularTransaction,
         bookletIds: List<UUID>
     ): Result<RegularTransaction> = session.authenticate(token = token){ userId ->
@@ -150,7 +151,7 @@ class RegularTransactionFeatureImpl(
 
 
     override fun getRegularTransactionById(
-        token: String,
+        token: SessionToken,
         transactionId: String
     ): Result<RegularTransaction> = session.authenticate(token) {
         val result = regularTransactionRepository.getRegularTransactionById(
@@ -165,7 +166,7 @@ class RegularTransactionFeatureImpl(
     }
 
     override fun updateRegularTransaction(
-        token: String,
+        token: SessionToken,
         regularTransaction: RegularTransaction,
         bookletIds: List<UUID>
     ): Result<RegularTransaction> = session.authenticate(token) { userId ->
@@ -181,7 +182,7 @@ class RegularTransactionFeatureImpl(
     }
 
     override fun deleteRegularTransaction(
-        token: String,
+        token: SessionToken,
         transactionId: String
     ): Result<Boolean> = session.authenticate(token) { userId ->
         return@authenticate unitOfWork.executeInTransaction(transactionId) {
@@ -198,7 +199,7 @@ class RegularTransactionFeatureImpl(
     }
 
     override fun deleteRegularTransactions(
-        token: String,
+        token: SessionToken,
         transactionIds: List<String>
     ): Result<List<String>> = session.authenticate(token) { userId ->
         if (transactionIds.isEmpty()) {
@@ -232,7 +233,7 @@ class RegularTransactionFeatureImpl(
     }
 
     override fun linkRegularTransactionToBooklet(
-        token: String,
+        token: SessionToken,
         transactionId: String,
         bookletId: UUID
     ): Result<RegularTransaction> = session.authenticate(token) { userId ->
@@ -261,7 +262,7 @@ class RegularTransactionFeatureImpl(
     }
 
     override fun unlinkRegularTransactionFromBooklet(
-        token: String,
+        token: SessionToken,
         transactionId: String,
         bookletId: UUID
     ): Result<RegularTransaction> = session.authenticate(token) { userId ->

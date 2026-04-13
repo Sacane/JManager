@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
@@ -38,7 +39,7 @@ sealed interface TransactionFeature {
      * @param transaction The Transaction to persist.
      * @return Result containing a TransactionResumeResult on success, or an error state on failure.
      */
-    fun bookTransaction(token: String, bookletLabel: String, transaction: Transaction): Result<TransactionResumeResult>
+    fun bookTransaction(token: SessionToken, bookletLabel: String, transaction: Transaction): Result<TransactionResumeResult>
 
     /**
      * Retrieve transactions for a specific month and year for the given booklet label.
@@ -49,7 +50,7 @@ sealed interface TransactionFeature {
      * @param bookletLabel The label of the booklet to fetch transactions from.
      * @return Result containing the list of Transaction objects on success, or a not found error.
      */
-    fun retrieveTransactionsByMonthAndYear(token: String, month: Month, year: Int, bookletLabel: String): Result<List<Transaction>>
+    fun retrieveTransactionsByMonthAndYear(token: SessionToken, month: Month, year: Int, bookletLabel: String): Result<List<Transaction>>
 
     /**
      * Edit an existing transaction belonging to a specific booklet.
@@ -59,7 +60,7 @@ sealed interface TransactionFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing a TransactionResumeResult on success, or an error state on failure.
      */
-    fun editTransaction(bookletID: UUID, transaction: Transaction, token: String): Result<TransactionResumeResult>
+    fun editTransaction(bookletID: UUID, transaction: Transaction, token: SessionToken): Result<TransactionResumeResult>
 
     /**
      * Find a transaction by its unique identifier.
@@ -68,7 +69,7 @@ sealed interface TransactionFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing the Transaction on success, or TRANSACTION_NOT_FOUND on failure.
      */
-    fun findById(id: UUID, token: String): Result<Transaction>
+    fun findById(id: UUID, token: SessionToken): Result<Transaction>
 
     /**
      * Delete multiple transactions by their identifiers for a given booklet.
@@ -78,7 +79,7 @@ sealed interface TransactionFeature {
      * @param token Authentication token identifying the requester.
      * @return Result with no value on success, or an error state if the booklet or transactions are not found.
      */
-    fun deleteTransactionsByIds(bookletID: UUID, transactionIds: List<UUID>, token: String): Result<TransactionDeletionResult>
+    fun deleteTransactionsByIds(bookletID: UUID, transactionIds: List<UUID>, token: SessionToken): Result<TransactionDeletionResult>
 
     /**
      * Confirm a provisional (preview) transaction, converting it into a real transaction.
@@ -89,7 +90,7 @@ sealed interface TransactionFeature {
      * @return Result containing a TransactionResumeResult on success, or an appropriate failure state.
      */
     fun confirmPreviewTransaction(
-        token: String,
+        token: SessionToken,
         bookletID: UUID,
         transactionId: UUID,
         newAmount: Amount?,
@@ -125,7 +126,7 @@ class TransactionFeatureImpl(
     override fun editTransaction(
         bookletID: UUID,
         transaction: Transaction,
-        token: String
+        token: SessionToken
     ): Result<TransactionResumeResult> = session.authenticate(token, roleUser){
         return@authenticate infraTransactionManager.executeInTransaction(transaction) {
             if (transaction.id == null) {
@@ -160,7 +161,7 @@ class TransactionFeatureImpl(
     }
 
     override fun bookTransaction(
-        token: String,
+        token: SessionToken,
         bookletLabel: String,
         transaction: Transaction
     ): Result<TransactionResumeResult> = session.authenticate(token) { id ->
@@ -198,7 +199,7 @@ class TransactionFeatureImpl(
     }
 
     override fun retrieveTransactionsByMonthAndYear(
-        token: String,
+        token: SessionToken,
         month: Month,
         year: Int,
         bookletLabel: String
@@ -213,7 +214,7 @@ class TransactionFeatureImpl(
 
     override fun findById(
         id: UUID,
-        token: String
+        token: SessionToken
     ): Result<Transaction> = session.authenticate(token, roleUser) {
         logger.info("Request for a transaction with id $id")
         val transaction = transactionRepository.findTransactionById(id)
@@ -225,7 +226,7 @@ class TransactionFeatureImpl(
         success(transaction)
     }
 
-    override fun deleteTransactionsByIds(bookletID: UUID, transactionIds: List<UUID>, token: String): Result<TransactionDeletionResult> {
+    override fun deleteTransactionsByIds(bookletID: UUID, transactionIds: List<UUID>, token: SessionToken): Result<TransactionDeletionResult> {
         return session.authenticate(token) {
             infraTransactionManager.executeInTransaction(transactionRepository) {
                 val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
@@ -282,7 +283,7 @@ class TransactionFeatureImpl(
     }
 
     override fun confirmPreviewTransaction(
-        token: String,
+        token: SessionToken,
         bookletID: UUID,
         transactionId: UUID,
         newAmount: Amount?,

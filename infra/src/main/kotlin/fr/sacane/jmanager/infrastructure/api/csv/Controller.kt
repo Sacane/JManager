@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.api.csv
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.api.FileImportExportFeature
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.currentUser
@@ -63,7 +64,7 @@ class CsvImportController(
         }
 
         return fileImportExportFeature.validateCsvFile(
-            token = currentUser.token,
+            token = SessionToken(currentUser.token),
             bookletId = bookletId.toUUID(),
             csvContent = csvContent,
             month = month,
@@ -96,7 +97,7 @@ class CsvImportController(
         }
 
         return fileImportExportFeature.importTransactionsFromCsv(
-            token = currentUser.token,
+            token = SessionToken(currentUser.token),
             bookletId = bookletId.toUUID(),
             csvContent = csvContent,
             skipValidation = skipValidation,
@@ -175,7 +176,7 @@ class CsvImportController(
             }
 
             val result = fileImportExportFeature.exportTransactionsToCsv(
-                token = currentUser.token,
+                token = SessionToken(currentUser.token),
                 transactions = transactions
             )
 

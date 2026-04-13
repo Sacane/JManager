@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.api.setup
 
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.api.TransactionFeature
@@ -34,7 +35,7 @@ class TransactionStateTestAdapter(
     override fun init(initialState: Collection<BookletTransaction>) {
         initialState.forEach {
             it.transactions.forEach { tr ->
-                transactionFeature.bookTransaction(it.token, it.bookletName, tr)
+                transactionFeature.bookTransaction(SessionToken(it.token), it.bookletName, tr)
             }
         }
     }

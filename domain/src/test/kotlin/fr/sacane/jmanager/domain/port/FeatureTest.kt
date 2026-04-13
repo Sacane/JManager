@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port
 import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.fake.BookletsByOwner
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserBooklet
 import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
@@ -58,20 +59,20 @@ open class FeatureTest {
         val john = createAndConnect("John")
         val booklet = createBooklet(User(john.user.id, john.user.username, null), "test", Amount(0))
         val token = john.token
-        action(BookletTokenUserId(john.user, token, booklet))
-        sessionManager.removeSession(john.user.id, token)
+        action(BookletTokenUserId(john.user, SessionToken(token), booklet))
+        sessionManager.removeSession(john.user.id, SessionToken(token))
     }
 
     fun launchWithConnectedUserWithoutBooklet(action: TokenUserId.() -> Unit){
         val john = createAndConnect("John")
         val token = john.token
-        action(TokenUserId(john.user.id, token))
-        sessionManager.removeSession(john.user.id, token)
+        action(TokenUserId(john.user.id, SessionToken(token)))
+        sessionManager.removeSession(john.user.id, SessionToken(token))
     }
 
     inner class BookletTokenUserId(
         val user: MinimalUserRepresentation,
-        val tokenValue: String,
+        val tokenValue: SessionToken,
         val booklet: Booklet
     ) {
         fun initTransactions(transactions: List<Transaction>) {
@@ -85,6 +86,6 @@ open class FeatureTest {
     }
     inner class TokenUserId(
         val userId: UserId,
-        val tokenValue: String
+        val tokenValue: SessionToken
     )
 }

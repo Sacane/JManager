@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.MonthlyBookletStatsOutput
 import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
@@ -43,7 +44,7 @@ sealed interface StatsFeature {
      * @return A Result object containing the monthly booklet statistics wrapped in
      *         MonthlyBookletStatsOutput if successful, or an appropriate error state otherwise.
      */
-    fun getMonthlyBookletStats(bookletId: UUID, year: Int, token: String): Result<MonthlyBookletStatsOutput>
+    fun getMonthlyBookletStats(bookletId: UUID, year: Int, token: SessionToken): Result<MonthlyBookletStatsOutput>
 
     /**
      * Retrieves the distribution of expenses across various categories for the authenticated user.
@@ -53,7 +54,7 @@ sealed interface StatsFeature {
      *         if successful, or an appropriate error state otherwise.
      */
     fun getCategoryDistribution(
-        token: String,
+        token: SessionToken,
         bookletId: UUID? = null,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
@@ -68,7 +69,7 @@ sealed interface StatsFeature {
      *         or an appropriate error state otherwise.
      */
     fun getTrendStats(
-        token: String,
+        token: SessionToken,
         bookletId: UUID? = null,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null
@@ -84,7 +85,7 @@ sealed interface StatsFeature {
      *         if successful, or an appropriate error state otherwise.
      */
     fun getPrevisionalTransactions(
-        token: String,
+        token: SessionToken,
         startDate: LocalDate,
         endDate: LocalDate,
         bookletId: UUID? = null
@@ -158,7 +159,7 @@ class StatsFeatureImpl(
     override fun getMonthlyBookletStats(
         bookletId: UUID,
         year: Int,
-        token: String
+        token: SessionToken
     ): Result<MonthlyBookletStatsOutput> = session.authenticate(token) { userId ->
         LOGGER.info("Fetching monthly stats for booklet $bookletId and year $year")
 
@@ -195,7 +196,7 @@ class StatsFeatureImpl(
     }
 
     override fun getCategoryDistribution(
-        token: String,
+        token: SessionToken,
         bookletId: UUID?,
         startDate: LocalDate?,
         endDate: LocalDate?
@@ -231,7 +232,7 @@ class StatsFeatureImpl(
     }
 
     override fun getTrendStats(
-        token: String,
+        token: SessionToken,
         bookletId: UUID?,
         startDate: LocalDate?,
         endDate: LocalDate?
@@ -268,7 +269,7 @@ class StatsFeatureImpl(
     }
 
     override fun getPrevisionalTransactions(
-        token: String,
+        token: SessionToken,
         startDate: LocalDate,
         endDate: LocalDate,
         bookletId: UUID?

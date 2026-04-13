@@ -12,6 +12,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.api.BookletFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
@@ -34,8 +35,9 @@ class BookletFeatureTest: FeatureTest() {
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
         private var bookletFeature: BookletFeature = FakeFactory.bookletFeature
         private val user = userRepository.register("jojo", "test") as User
-        private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
-        private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
+        private val tokenValueStr = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
+        private val tokenValue = SessionToken(tokenValueStr)
+        private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValueStr)
         private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
         private fun connectUser(user: User) {
             FakeFactory.sessionManager().addSession(user.id, session)
@@ -52,8 +54,8 @@ class BookletFeatureTest: FeatureTest() {
         private val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         override val action: List<Result<out Any>>
             get() = listOf(
-                bookletFeature.findBookletById(UUID.randomUUID(), UUID.randomUUID().toString()),
-                bookletFeature.save(UUID.randomUUID().toString(), element)
+                bookletFeature.findBookletById(UUID.randomUUID(), SessionToken(UUID.randomUUID().toString())),
+                bookletFeature.save(SessionToken(UUID.randomUUID().toString()), element)
             )
     }
 
@@ -65,7 +67,7 @@ class BookletFeatureTest: FeatureTest() {
         bookletState.init(listOf(
             BookletsByOwner(listOf(element), user.id)
         ))
-        bookletFeature.findBookletById(id, session.tokenValue)
+        bookletFeature.findBookletById(id, tokenValue)
             .assertTrue {
                 this.label == "test"
             }
@@ -85,7 +87,7 @@ class BookletFeatureTest: FeatureTest() {
             owner = user,
             id= element.id,
         )
-        val response = bookletFeature.editBooklet(booklet = booklet, session.tokenValue)
+        val response = bookletFeature.editBooklet(booklet = booklet, tokenValue)
 
         val expectedAnswer = Amount(BigDecimal(102))
 
@@ -100,7 +102,7 @@ class BookletFeatureTest: FeatureTest() {
             BookletsByOwner(listOf(element), user.id)
         ))
 
-        bookletFeature.deleteBookletById(element.id!!, session.tokenValue).assertTrue {
+        bookletFeature.deleteBookletById(element.id!!, tokenValue).assertTrue {
             val bookletsList = bookletState.getStates()
 
             val expectedBookletSize = 0
@@ -201,7 +203,7 @@ class BookletFeatureTest: FeatureTest() {
         ))
 
         val bookletToSave = Booklet( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())
-        bookletFeature.save(session.tokenValue, bookletToSave)
+        bookletFeature.save(tokenValue, bookletToSave)
             .assertFailure()
     }
 
@@ -214,7 +216,7 @@ class BookletFeatureTest: FeatureTest() {
             BookletsByOwner(listOf(victimBooklet), victimUser.id)
         ))
 
-        val result = bookletFeature.deleteBookletById(victimBooklet.id!!, session.tokenValue)
+        val result = bookletFeature.deleteBookletById(victimBooklet.id!!, tokenValue)
         result.assertFailure(ResultState.FORBIDDEN)
     }
 
@@ -228,7 +230,7 @@ class BookletFeatureTest: FeatureTest() {
         ))
 
         val editedBooklet = Booklet(Amount.fromString("999", "€".asCurrency()), "hacked", owner = victimUser, id = victimBooklet.id)
-        val result = bookletFeature.editBooklet(editedBooklet, session.tokenValue)
+        val result = bookletFeature.editBooklet(editedBooklet, tokenValue)
         result.assertFailure(ResultState.FORBIDDEN)
     }
 

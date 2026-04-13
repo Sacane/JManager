@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.UserRegularTransaction
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
@@ -77,7 +78,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail with unauthorized when token is invalid`() {
-            val result = regularTransactionFeature.getAllRegularTransactions("invalid-token")
+            val result = regularTransactionFeature.getAllRegularTransactions(SessionToken("invalid-token"))
             result.assertFailure(ResultState.UNAUTHORIZED)
         }
     }
@@ -212,7 +213,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
             )
 
             val result = regularTransactionFeature.bookRegularTransaction(
-                "invalid-token",
+                SessionToken("invalid-token"),
                 monthlyTransaction,
                 listOf(UUID.randomUUID())
             )
@@ -269,7 +270,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail with unauthorized when token is invalid`() {
             val result = regularTransactionFeature.getRegularTransactionById(
-                "invalid-token",
+                SessionToken("invalid-token"),
                 "some-id"
             )
 
@@ -330,7 +331,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail with unauthorized when token is invalid`() {
             val result = regularTransactionFeature.deleteRegularTransaction(
-                "invalid-token",
+                SessionToken("invalid-token"),
                 "some-id"
             )
 
@@ -583,7 +584,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail with unauthorized when token is invalid`() {
             val result = regularTransactionFeature.linkRegularTransactionToBooklet(
-                "invalid-token",
+                SessionToken("invalid-token"),
                 "some-id",
                 UUID.randomUUID()
             )
@@ -664,7 +665,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail with unauthorized when token is invalid`() {
             val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
-                "invalid-token",
+                SessionToken("invalid-token"),
                 "some-id",
                 UUID.randomUUID()
             )
