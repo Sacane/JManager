@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.models.UserSettings
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.InvalidRequestException
@@ -80,7 +81,7 @@ class SessionController(
         httpResponse: HttpServletResponse,
 
     ): ResponseEntity<Nothing> {
-        return loginFeature.logout(currentUser.token)
+        return loginFeature.logout(SessionToken(currentUser.token))
             .also {
                 clearCookie(httpResponse, "token")
                 clearCookie(httpResponse, "refresh_token")
@@ -138,7 +139,7 @@ class SessionController(
 
     @GetMapping(path = ["/settings"])
     fun getUserSettings(): ResponseEntity<UserSettingsDTO> {
-        return loginFeature.getSettings(currentUser.token)
+        return loginFeature.getSettings(SessionToken(currentUser.token))
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -156,7 +157,7 @@ class SessionController(
         }
 
         return loginFeature.updateSettings(
-            token = currentUser.token,
+            token = SessionToken(currentUser.token),
             projectionWindowDays = settings.projectionWindowDays,
             bookletCycles = bookletCycles,
         )

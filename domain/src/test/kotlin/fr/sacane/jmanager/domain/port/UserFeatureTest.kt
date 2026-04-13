@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -65,7 +66,7 @@ class UserFeatureTest: FeatureTest() {
             loginResult.assertSuccess()
 
             val accessToken = loginResult.mapNotNullOrFailure()!!.token
-            val activeSession = sessionFakeState.findSessionByToken(accessToken)
+            val activeSession = sessionFakeState.findSessionByToken(SessionToken(accessToken))
             val refreshToken = activeSession?.refreshToken
             assertNotNull(refreshToken)
 
@@ -86,7 +87,7 @@ class UserFeatureTest: FeatureTest() {
             )
             val token = tokenGenerator.generateToken(user.id, user.username)
             sessionFakeState.addSession(user.id, token)
-            userFeature.logout(token.tokenValue)
+            userFeature.logout(SessionToken(token.tokenValue))
                 .assertSuccess()
         }
 
@@ -97,11 +98,11 @@ class UserFeatureTest: FeatureTest() {
 
             val loginResult = userFeature.login("John", "test")
             val accessToken = loginResult.mapNotNullOrFailure()!!.token
-            val activeSession = sessionFakeState.findSessionByToken(accessToken)
+            val activeSession = sessionFakeState.findSessionByToken(SessionToken(accessToken))
             val refreshToken = activeSession?.refreshToken
             assertNotNull(refreshToken)
 
-            userFeature.logout(accessToken).assertSuccess()
+            userFeature.logout(SessionToken(accessToken)).assertSuccess()
 
             sessionFakeState.authenticateRefreshToken(refreshToken!!) {
                 return@authenticateRefreshToken success("ok")
@@ -118,7 +119,7 @@ class UserFeatureTest: FeatureTest() {
 
             val loginResult = userFeature.login("John", "test")
             val initialAccessToken = loginResult.mapNotNullOrFailure()!!.token
-            val initialSession = sessionFakeState.findSessionByToken(initialAccessToken)
+            val initialSession = sessionFakeState.findSessionByToken(SessionToken(initialAccessToken))
             val initialRefreshToken = initialSession?.refreshToken
             assertNotNull(initialRefreshToken)
 
@@ -126,7 +127,7 @@ class UserFeatureTest: FeatureTest() {
             refreshResult.assertSuccess()
             val refreshedAccessToken = refreshResult.mapNotNullOrFailure()!!.token
 
-            val refreshedSession = sessionFakeState.findSessionByToken(refreshedAccessToken)
+            val refreshedSession = sessionFakeState.findSessionByToken(SessionToken(refreshedAccessToken))
             val refreshedRefreshToken = refreshedSession?.refreshToken
             assertNotNull(refreshedRefreshToken)
 
@@ -187,7 +188,7 @@ class UserFeatureTest: FeatureTest() {
             userFeature.register("John", "test", "test")
             val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
 
-            userFeature.getSettings(token)
+            userFeature.getSettings(SessionToken(token))
                 .assertTrue {
                     projectionWindowDays == 15 && bookletCycles.isEmpty()
                 }
@@ -199,7 +200,7 @@ class UserFeatureTest: FeatureTest() {
             val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
 
             userFeature.updateSettings(
-                token = token,
+                token = SessionToken(token),
                 projectionWindowDays = 30,
                 bookletCycles = emptyMap(),
             ).assertTrue {
@@ -213,7 +214,7 @@ class UserFeatureTest: FeatureTest() {
             val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
 
             val result = userFeature.updateSettings(
-                token = token,
+                token = SessionToken(token),
                 projectionWindowDays = 6,
                 bookletCycles = emptyMap(),
             )
@@ -228,7 +229,7 @@ class UserFeatureTest: FeatureTest() {
             val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
 
             val result = userFeature.updateSettings(
-                token = token,
+                token = SessionToken(token),
                 projectionWindowDays = 20,
                 bookletCycles = mapOf(UUID.randomUUID() to BookletMonthlyCycleUpdate(10, null)),
             )

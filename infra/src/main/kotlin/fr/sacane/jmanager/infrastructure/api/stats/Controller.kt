@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.stats
 
 import fr.sacane.jmanager.domain.port.api.StatsFeature
 import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.NotFoundException
@@ -34,7 +35,7 @@ class StatsController(
     ): ResponseEntity<MonthlyBookletStatsDTO> {
         LOGGER.info("Requesting monthly stats for booklet $bookletId and year $year")
 
-        return statsFeature.getMonthlyBookletStats(bookletId.toUUID(), year, currentUser.token)
+        return statsFeature.getMonthlyBookletStats(bookletId.toUUID(), year, SessionToken(currentUser.token))
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -48,7 +49,7 @@ class StatsController(
         LOGGER.info("Requesting category distribution")
 
         return statsFeature.getCategoryDistribution(
-            token = currentUser.token,
+            token = SessionToken(currentUser.token),
             bookletId = bookletId,
             startDate = startDate,
             endDate = endDate
@@ -66,7 +67,7 @@ class StatsController(
         LOGGER.info("Requesting trend stats")
 
         return statsFeature.getTrendStats(
-            token = currentUser.token,
+            token = SessionToken(currentUser.token),
             bookletId = bookletId,
             startDate = startDate,
             endDate = endDate
@@ -82,9 +83,9 @@ class StatsController(
         @RequestParam(required = false) bookletId: UUID?
     ): ResponseEntity<PrevisionalTransactionsDTO> {
         LOGGER.info("Requesting previsional transactions from $startDate to $endDate")
-        val defaultTag = tagFeature.defaultTag(currentUser.token).mapNotNullOrFailure() ?: throw NotFoundException(
+        val defaultTag = tagFeature.defaultTag(SessionToken(currentUser.token)).mapNotNullOrFailure() ?: throw NotFoundException(
             ResultState.TAG_NOT_FOUND.code, "Default tag not found")
-        return statsFeature.getPrevisionalTransactions(currentUser.token, startDate, endDate, bookletId)
+        return statsFeature.getPrevisionalTransactions(SessionToken(currentUser.token), startDate, endDate, bookletId)
             .map {
                 it.toDTO(defaultTag)
             }

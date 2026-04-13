@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.infrastructure.api.*
 import jakarta.validation.Valid
@@ -22,14 +23,14 @@ class TagController(
     fun addPersonalTag(
         @Valid @RequestBody userTagRequest: UserTagRequest
     ): ResponseEntity<TagDTO>
-    = tagFeature.addTag(token = currentUser.token, userTagRequest.tagLabel.asPersonalTag(userTagRequest.colorDTO.asAwtColor()))
+    = tagFeature.addTag(token = SessionToken(currentUser.token), userTagRequest.tagLabel.asPersonalTag(userTagRequest.colorDTO.asAwtColor()))
             .map { it.toDTO() }.toHttpResponse()
 
 
     @GetMapping
     fun getAllTags(
     ): ResponseEntity<List<TagDTO>>
-    = tagFeature.getAllTags(currentUser.token).map { it.map { tag -> tag.toDTO() } }.toHttpResponse()
+    = tagFeature.getAllTags(SessionToken(currentUser.token)).map { it.map { tag -> tag.toDTO() } }.toHttpResponse()
 
 
     @DeleteMapping("{tagId}")
@@ -37,18 +38,18 @@ class TagController(
         @PathVariable("tagId") tagId: String,
         @RequestParam(required = false, defaultValue = "false") force: Boolean
     ): ResponseEntity<Nothing>
-       = tagFeature.deleteTag(currentUser.token, tagId.toUUID(), force)
+       = tagFeature.deleteTag(SessionToken(currentUser.token), tagId.toUUID(), force)
            .toHttpResponse()
 
     @GetMapping("/default")
-    fun defaultTag(): ResponseEntity<TagDTO> = tagFeature.defaultTag(currentUser.token)
+    fun defaultTag(): ResponseEntity<TagDTO> = tagFeature.defaultTag(SessionToken(currentUser.token))
         .map { it.toDTO() }.toHttpResponse()
 
     @PatchMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun editTag(
         @Valid @RequestBody tagDTO: TagDTO
     ): ResponseEntity<TagDTO> {
-        return tagFeature.editTag(currentUser.token, tagDTO.toDomain())
+        return tagFeature.editTag(SessionToken(currentUser.token), tagDTO.toDomain())
             .map { it.toDTO() }.toHttpResponse()
     }
 }

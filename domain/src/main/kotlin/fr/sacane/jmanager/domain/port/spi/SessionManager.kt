@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.spi
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.weight
 import fr.sacane.jmanager.domain.utils.Result
@@ -41,7 +42,7 @@ interface SessionManager{
      * @return Result<T> produced by the block when authentication succeeds or a domain error Result otherwise.
      */
     fun <T> authenticate(
-        token: String,
+        token: SessionToken,
         requiredRoles: List<Role> = listOf(Role.USER),
         block: (UserId) -> Result<T>
     ): Result<T>
@@ -52,7 +53,7 @@ interface SessionManager{
      * @param userId Domain user identifier.
      * @param token Raw token string to invalidate/remove.
      */
-    fun removeSession(userId: UserId, token: String)
+    fun removeSession(userId: UserId, token: SessionToken)
 
     /**
      * Find an active access-token session by raw token value.
@@ -60,7 +61,7 @@ interface SessionManager{
      * @param token Raw access token.
      * @return AccessToken session when found, null otherwise.
      */
-    fun findSessionByToken(token: String): AccessToken?
+    fun findSessionByToken(token: SessionToken): AccessToken?
 
     /**
      * Save a refresh token and associate it to a user.
@@ -122,26 +123,26 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
         val sessions = userSession.computeIfAbsent(userId.value!!) { mutableSetOf() }
         sessions.add(session)
     }
-    private fun getSession(userId: UserId, token: String): AccessToken? = synchronized(lock) {
+    private fun getSession(userId: UserId, token: SessionToken): AccessToken? = synchronized(lock) {
         return try {
-            userSession[userId.value]?.first { token == it.tokenValue }
+            userSession[userId.value]?.first { token.value == it.tokenValue }
         }catch (noSuchElementEx: NoSuchElementException){
             null
         }
     }
     override fun <T> authenticate(
-        token: String,
+        token: SessionToken,
         requiredRoles: List<Role>,
         block: (UserId) -> Result<T>
     ): Result<T> {
         val accessToken = synchronized(lock) {
-            val decodedToken = tokenGenerator.readToken(token) ?: return unauthorized("Le token est invalide, une erreur est survenu à la lecture")
-            val session = getSession(decodedToken.userId, decodedToken.tokenValue) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
+            val decodedToken = tokenGenerator.readToken(token.value) ?: return unauthorized("Le token est invalide, une erreur est survenu à la lecture")
+            val session = getSession(decodedToken.userId, SessionToken(decodedToken.tokenValue)) ?: return unauthorized("L'utilisateur n'est pas connecté à la session")
 
             val roles = session.roles
             if (roles.weight() < requiredRoles.weight()) return unauthorized("L'utilisateur n'a pas le rôle adéquat pour accéder à cette requête")
             if (session.isExpired()) return timeout("La session a expiré")
-            if (session.tokenValue != token) return unauthorized("Le token est invalide")
+            if (session.tokenValue != token.value) return unauthorized("Le token est invalide")
             session.updateLifetime()
             session.updateTokenLifetime()
             decodedToken
@@ -149,13 +150,13 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
         return block(accessToken.userId)
     }
 
-    override fun removeSession(userId: UserId, token: String): Unit = synchronized(lock){
-        userSession[userId.value]?.removeIf{it.tokenValue == token}
+    override fun removeSession(userId: UserId, token: SessionToken): Unit = synchronized(lock){
+        userSession[userId.value]?.removeIf{it.tokenValue == token.value}
     }
 
-    override fun findSessionByToken(token: String): AccessToken? = synchronized(lock) {
-        val decodedToken = tokenGenerator.readToken(token) ?: return null
-        getSession(decodedToken.userId, decodedToken.tokenValue)
+    override fun findSessionByToken(token: SessionToken): AccessToken? = synchronized(lock) {
+        val decodedToken = tokenGenerator.readToken(token.value) ?: return null
+        getSession(decodedToken.userId, SessionToken(decodedToken.tokenValue))
     }
 
     override fun saveRefreshToken(userId: UserId, refreshToken: UUID, expiresAt: LocalDateTime): Unit = synchronized(lock) {

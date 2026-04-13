@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.BookletBalances
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
@@ -45,7 +46,7 @@ sealed interface BookletFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing the found Booklet on success, or a failure state (e.g. BOOKLET_NOT_FOUND).
      */
-    fun findBookletById(bookletId: UUID, token: String): Result<Booklet>
+    fun findBookletById(bookletId: UUID, token: SessionToken): Result<Booklet>
 
     /**
      * Edit an existing booklet.
@@ -54,7 +55,7 @@ sealed interface BookletFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing the updated Booklet on success, or failure states when validation or persistence fails.
      */
-    fun editBooklet(booklet: Booklet, token: String): Result<Booklet>
+    fun editBooklet(booklet: Booklet, token: SessionToken): Result<Booklet>
 
     /**
      * Delete a booklet by its identifier.
@@ -63,7 +64,7 @@ sealed interface BookletFeature {
      * @param token Authentication token identifying the requester.
      * @return Result with no value on success, or an error state if the booklet does not exist.
      */
-    fun deleteBookletById(bookletId: UUID, token: String): Result<Nothing>
+    fun deleteBookletById(bookletId: UUID, token: SessionToken): Result<Nothing>
 
     /**
      * Find a booklet by its label for the authenticated user.
@@ -72,7 +73,7 @@ sealed interface BookletFeature {
      * @param label Label of the booklet to find.
      * @return Result containing the Booklet on success, or BOOKLET_LABEL_NOT_EXIST when not found.
      */
-    fun findByLabelAndUserId(token: String, label: String): Result<Booklet>
+    fun findByLabelAndUserId(token: SessionToken, label: String): Result<Booklet>
 
     /**
      * Retrieve all booklets registered for the authenticated user.
@@ -80,7 +81,7 @@ sealed interface BookletFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing the list of Booklet on success.
      */
-    fun findAllRegisteredBooklets(token: String): Result<List<Booklet>>
+    fun findAllRegisteredBooklets(token: SessionToken): Result<List<Booklet>>
 
     /**
      * Save a new booklet for the authenticated user.
@@ -89,7 +90,7 @@ sealed interface BookletFeature {
      * @param booklet Booklet object to save.
      * @return Result containing the saved Booklet on success, or a failure when the label already exists or persistence fails.
      */
-    fun save(token: String, booklet: Booklet): Result<Booklet>
+    fun save(token: SessionToken, booklet: Booklet): Result<Booklet>
 
     /**
      * Load transactions for a specific booklet for a given month and year.
@@ -105,7 +106,7 @@ sealed interface BookletFeature {
      * @return Result containing a BookletLoadingResult on success, or a failure state when the booklet is not found.
      */
     fun loadTransactionsForBookletForAMonth(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         month: Month,
         year: Int,
@@ -129,7 +130,7 @@ sealed interface BookletFeature {
      * @return Result containing the BookletBalances on success, or a failure state when the booklet is not found.
      */
     fun loadBalancesForBookletForAMonth(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         month: Month,
         year: Int,
@@ -151,7 +152,7 @@ sealed interface BookletFeature {
      * @return Result containing the list of newly created previsional transactions, or a failure state.
      */
     fun regenerateDeletedPrevisionalTransactions(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         month: Month,
         year: Int
@@ -185,7 +186,7 @@ class BookletFeatureImpl(
 
     override fun findBookletById(
         bookletId: UUID,
-        token: String
+        token: SessionToken
     ): Result<Booklet> = session.authenticate(token) {
         bookletRepository.findBookletByIdWithTransactions(bookletId)?.run {
             success(this)
@@ -198,7 +199,7 @@ class BookletFeatureImpl(
 
     override fun editBooklet(
         booklet: Booklet,
-        token: String
+        token: SessionToken
     ): Result<Booklet> = session.authenticate(token) { userId ->
         val bookletID = booklet.id ?: return@authenticate domainFailure(
             ResultState.BOOKLET_NOT_FOUND,
@@ -232,7 +233,7 @@ class BookletFeatureImpl(
 
     override fun deleteBookletById(
         bookletId: UUID,
-        token: String
+        token: SessionToken
     ): Result<Nothing> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             if(bookletRepository.findBookletByIdWithTransactions(bookletId) == null){
@@ -256,7 +257,7 @@ class BookletFeatureImpl(
     }
 
     override fun findByLabelAndUserId(
-        token: String,
+        token: SessionToken,
         label: String
     ): Result<Booklet> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithBooklets(it)
@@ -277,7 +278,7 @@ class BookletFeatureImpl(
     }
 
     override fun findAllRegisteredBooklets(
-        token: String
+        token: SessionToken
     ): Result<List<Booklet>> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithBooklets(it)
             ?: return@authenticate domainFailure(
@@ -289,7 +290,7 @@ class BookletFeatureImpl(
     }
 
     override fun save(
-        token: String,
+        token: SessionToken,
         booklet: Booklet
     ): Result<Booklet> = session.authenticate(token) {
         val user = userRepository.findUserByIdWithBooklets(it)
@@ -322,7 +323,7 @@ class BookletFeatureImpl(
     }
 
     override fun loadTransactionsForBookletForAMonth(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         month: Month,
         year: Int,
@@ -546,7 +547,7 @@ class BookletFeatureImpl(
     }
 
     override fun loadBalancesForBookletForAMonth(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         month: Month,
         year: Int,
@@ -624,7 +625,7 @@ class BookletFeatureImpl(
     }
 
     override fun regenerateDeletedPrevisionalTransactions(
-        token: String,
+        token: SessionToken,
         bookletId: UUID,
         month: Month,
         year: Int

@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.BookletBalances
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.api.BookletFeature
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.infrastructure.api.InvalidRequestException
@@ -40,7 +41,7 @@ class BookletController (
     ): ResponseEntity<BookletInfoDTO> {
         LOGGER.info("Booking a new Booklet ${bookletRequest.label} starting at ${bookletRequest.amount}${bookletRequest.currency} for user ${currentUser.id}")
         return feature.save(
-            currentUser.token,
+            SessionToken(currentUser.token),
             Booklet(amount = bookletRequest.amount.toAmount(bookletRequest.currency.asCurrency()), label = bookletRequest.label)
         ).map { BookletInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
@@ -50,7 +51,7 @@ class BookletController (
         LOGGER.info("Requesting all booklets...")
 
         val response = feature.findAllRegisteredBooklets(
-            currentUser.token
+            SessionToken(currentUser.token)
         )
         return response.map { booklets ->
             booklets.map {
@@ -62,14 +63,14 @@ class BookletController (
     @DeleteMapping(path = ["{bookletId}"])
     fun deleteBooklet(
         @PathVariable bookletId: String
-    ): ResponseEntity<Nothing> = feature.deleteBookletById(bookletId.toUUID(), currentUser.token).toHttpResponse()
+    ): ResponseEntity<Nothing> = feature.deleteBookletById(bookletId.toUUID(), SessionToken(currentUser.token)).toHttpResponse()
 
     @GetMapping("{bookletID}")
     fun findBookletById(
         @PathVariable("bookletID") bookletID: String
     ): ResponseEntity<BookletDTO> {
         LOGGER.info("Requesting booklet with ID $bookletID")
-        return feature.findBookletById(bookletID.toUUID(), currentUser.token)
+        return feature.findBookletById(bookletID.toUUID(), SessionToken(currentUser.token))
             .map { it.toDTO() }.toHttpResponse()
     }
 
@@ -84,7 +85,7 @@ class BookletController (
         validateDateRange(startDate, endDate)
         LOGGER.info("Requesting report for booklet $bookletID")
         val result = feature.loadTransactionsForBookletForAMonth(
-            token = currentUser.token,
+            token = SessionToken(currentUser.token),
             bookletId = bookletID.toUUID(),
             month = Month.of(month),
             year = year,
@@ -114,7 +115,7 @@ class BookletController (
         LOGGER.info("Requesting balances for booklet $bookletID")
         return feature
             .loadBalancesForBookletForAMonth(
-                token = currentUser.token,
+                token = SessionToken(currentUser.token),
                 bookletId = bookletID.toUUID(),
                 month = Month.of(month),
                 year = year,
@@ -137,7 +138,7 @@ class BookletController (
         LOGGER.info("Requesting transactions for booklet $bookletID")
         return feature
             .loadTransactionsForBookletForAMonth(
-                token = currentUser.token,
+                token = SessionToken(currentUser.token),
                 bookletId = bookletID.toUUID(),
                 month = Month.of(month),
                 year = year,
@@ -162,7 +163,7 @@ class BookletController (
         LOGGER.info("Regenerating deleted previsional transactions for booklet $bookletID, month=$month, year=$year")
         return feature
             .regenerateDeletedPrevisionalTransactions(
-                token = currentUser.token,
+                token = SessionToken(currentUser.token),
                 bookletId = bookletID.toUUID(),
                 month = Month.of(month),
                 year = year

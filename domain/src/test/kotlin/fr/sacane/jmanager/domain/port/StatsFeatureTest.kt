@@ -12,6 +12,7 @@ import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.api.StatsFeature
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
@@ -29,8 +30,9 @@ class StatsFeatureTest : FeatureTest() {
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
         private var statsFeature: StatsFeature = FakeFactory.statsFeature
         private val user = userRepository.register("jojo", "test") as User
-        private val tokenValue = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
-        private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValue)
+        private val tokenValueStr = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
+        private val tokenValue = SessionToken(tokenValueStr)
+        private val session: AccessToken = AccessToken(userId = user.id, user.username, tokenValueStr)
         private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
         private val transactionState = FakeFactory.fakeTransactionRepository()
 
@@ -45,10 +47,10 @@ class StatsFeatureTest : FeatureTest() {
     inner class StatsFeatureAuthTest : AuthenticationTest {
         override val action: List<Result<out Any>>
             get() = listOf(
-                statsFeature.getMonthlyBookletStats(UUID.randomUUID(), 2025, session.tokenValue),
-                statsFeature.getCategoryDistribution(session.tokenValue),
-                statsFeature.getTrendStats(session.tokenValue),
-                statsFeature.getPrevisionalTransactions(session.tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3))
+                statsFeature.getMonthlyBookletStats(UUID.randomUUID(), 2025, tokenValue),
+                statsFeature.getCategoryDistribution(tokenValue),
+                statsFeature.getTrendStats(tokenValue),
+                statsFeature.getPrevisionalTransactions(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3))
             )
     }
 

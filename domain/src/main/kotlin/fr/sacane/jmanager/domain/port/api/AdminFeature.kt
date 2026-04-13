@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.Page
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.roleAdmin
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.success
@@ -17,7 +18,7 @@ interface AdminFeature {
      * @param pageNumber zero-based page index
      * @param pageSize size of the page (must be >= 1)
      */
-    fun getUsers(token: String, pageNumber: Int = 0, pageSize: Int = 20): Result<Page<User>>
+    fun getUsers(token: SessionToken, pageNumber: Int = 0, pageSize: Int = 20): Result<Page<User>>
 }
 
 @DomainService
@@ -27,7 +28,7 @@ class AdminFeatureImpl(
     private val paginator: Paginator
 ) : AdminFeature {
 
-    override fun getUsers(token: String, pageNumber: Int, pageSize: Int): Result<Page<User>> =
+    override fun getUsers(token: SessionToken, pageNumber: Int, pageSize: Int): Result<Page<User>> =
         sessionManager.authenticate(token, requiredRoles = roleAdmin) { userId ->
             val page = paginator.paginate(pageNumber, pageSize) {
                 val allUsers = userRepository.findAll()

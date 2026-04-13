@@ -70,10 +70,10 @@ class AdminFeatureTest : FeatureTest() {
                 )
 
                 return listOf(
-                    adminFeature.getUsers(invalidToken),
-                    adminFeature.getUsers(normalToken),
-                    adminFeature.getUsers(invalidToken, 0, 10),
-                    adminFeature.getUsers(normalToken, 0, 10)
+                    adminFeature.getUsers(SessionToken(invalidToken)),
+                    adminFeature.getUsers(SessionToken(normalToken)),
+                    adminFeature.getUsers(SessionToken(invalidToken), 0, 10),
+                    adminFeature.getUsers(SessionToken(normalToken), 0, 10)
                 )
             }
     }
@@ -99,7 +99,7 @@ class AdminFeatureTest : FeatureTest() {
                 userRepository.init(listOf(UserWithPassword(user, "test")))
             }
 
-            adminFeature.getUsers(admin.token, 0, 10)
+            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
                 .assertTrue {
                     this.content.size == 5 && this.totalElements == 5L
                 }
@@ -117,7 +117,7 @@ class AdminFeatureTest : FeatureTest() {
                 UserWithPassword(user2, "test")
             ))
 
-            adminFeature.getUsers(admin.token, 0, 10)
+            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
                 .assertTrue {
                     this.content.size == 2 &&
                     this.content.none { it.username == "admin" }
@@ -141,7 +141,7 @@ class AdminFeatureTest : FeatureTest() {
                 userRepository.init(listOf(UserWithPassword(user, "test")))
             }
 
-            adminFeature.getUsers(admin.token, 0, 5)
+            adminFeature.getUsers(SessionToken(admin.token), 0, 5)
                 .assertTrue {
                     this.content.size == 5 &&
                     this.pageNumber == 0 &&
@@ -150,14 +150,14 @@ class AdminFeatureTest : FeatureTest() {
                     this.totalPages == 3
                 }
 
-            adminFeature.getUsers(admin.token, 1, 5)
+            adminFeature.getUsers(SessionToken(admin.token), 1, 5)
                 .assertTrue {
                     this.content.size == 5 &&
                     this.pageNumber == 1 &&
                     this.totalElements == 15L
                 }
 
-            adminFeature.getUsers(admin.token, 2, 5)
+            adminFeature.getUsers(SessionToken(admin.token), 2, 5)
                 .assertTrue {
                     this.content.size == 5 &&
                     this.pageNumber == 2 &&
@@ -194,7 +194,7 @@ class AdminFeatureTest : FeatureTest() {
                 UserWithPassword(user3, "test")
             ))
 
-            adminFeature.getUsers(admin.token, 0, 10)
+            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
                 .assertTrue {
                     this.content.size == 3 &&
                     this.content[0].username == "user2" &&
@@ -207,7 +207,7 @@ class AdminFeatureTest : FeatureTest() {
         fun `Get users with empty database should return empty page`() {
             val admin = createAndConnectAdmin("admin")
 
-            adminFeature.getUsers(admin.token, 0, 10)
+            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
                 .assertTrue {
                     this.content.isEmpty() &&
                     this.totalElements == 0L &&
@@ -227,7 +227,7 @@ class AdminFeatureTest : FeatureTest() {
                 userRepository.init(listOf(UserWithPassword(user, "test")))
             }
 
-            adminFeature.getUsers(admin.token)
+            adminFeature.getUsers(SessionToken(admin.token))
                 .assertTrue {
                     this.pageNumber == 0 &&
                     this.pageSize == 20 &&
@@ -244,7 +244,7 @@ class AdminFeatureTest : FeatureTest() {
             val user = User(UserId(UUID.randomUUID()), "user1", "user1@test.fr")
             userRepository.init(listOf(UserWithPassword(user, "test")))
 
-            adminFeature.getUsers(admin.token, 10, 10)
+            adminFeature.getUsers(SessionToken(admin.token), 10, 10)
                 .assertTrue {
                     this.content.isEmpty() &&
                     this.pageNumber == 10 &&

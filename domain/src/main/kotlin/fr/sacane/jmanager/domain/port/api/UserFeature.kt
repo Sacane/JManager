@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.models.UserSettings
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
@@ -42,7 +43,7 @@ sealed interface UserFeature {
      * @param token The session/access token to invalidate.
      * @return Result with no value on success, or an error if the token is invalid.
      */
-    fun logout(token: String): Result<Nothing>
+    fun logout(token: SessionToken): Result<Nothing>
 
     /**
         * Refresh a session using a refresh token and issue a new access token.
@@ -80,7 +81,7 @@ sealed interface UserFeature {
      * @param token Authentication token identifying the requester.
      * @return Result containing the current settings on success.
      */
-    fun getSettings(token: String): Result<UserSettings>
+    fun getSettings(token: SessionToken): Result<UserSettings>
 
     /**
      * Update user settings for projection and booklet monthly cycles.
@@ -91,7 +92,7 @@ sealed interface UserFeature {
      * @return Result containing updated settings on success.
      */
     fun updateSettings(
-        token: String,
+        token: SessionToken,
         projectionWindowDays: Int,
         bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
     ): Result<UserSettings>
@@ -141,7 +142,7 @@ class UserFeatureImpl(
         )
     }
 
-    override fun logout(token: String)
+    override fun logout(token: SessionToken)
     : Result<Nothing> = session.authenticate(token) {
         val activeSession = session.findSessionByToken(token)
         val refreshToken = activeSession?.refreshToken
@@ -221,7 +222,7 @@ class UserFeatureImpl(
         return success(adminUser)
     }
 
-    override fun getSettings(token: String): Result<UserSettings> = session.authenticate(token) { userId ->
+    override fun getSettings(token: SessionToken): Result<UserSettings> = session.authenticate(token) { userId ->
         val user = userRepository.findUserByIdWithBooklets(userId)
             ?: return@authenticate domainFailure(
                 ResultState.USER_NOT_FOUND,
@@ -233,7 +234,7 @@ class UserFeatureImpl(
     }
 
     override fun updateSettings(
-        token: String,
+        token: SessionToken,
         projectionWindowDays: Int,
         bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
     ): Result<UserSettings> = session.authenticate(token) { userId ->

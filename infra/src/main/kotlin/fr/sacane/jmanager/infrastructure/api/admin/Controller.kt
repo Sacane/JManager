@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.api.admin
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.models.Page
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.api.AdminFeature
 import fr.sacane.jmanager.infrastructure.api.currentUser
 import fr.sacane.jmanager.infrastructure.api.session.UserDTO
@@ -37,7 +38,7 @@ class AdminController(
     ): ResponseEntity<Page<UserDTO>> {
         LOGGER.info("Fetching recently created users")
         val token = currentUser.token
-        val users = adminFeature.getUsers(token, page, size)
+        val users = adminFeature.getUsers(SessionToken(token), page, size)
 
         return users.map {
             val content = it.content.map { user -> user.toDTO() }

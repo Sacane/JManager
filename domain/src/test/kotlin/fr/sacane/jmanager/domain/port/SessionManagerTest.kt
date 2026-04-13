@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -35,11 +36,12 @@ class SessionManagerTest {
             ))
             val accessToken = AccessToken(id, "test","${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
-            sessionState.authenticate(accessToken.tokenValue) {
+            sessionState.authenticate(SessionToken(accessToken.tokenValue)) {
                 return@authenticate success("success")
             }.assertSuccess()
         }
     }
+
     @Test
     fun `Remove a session must return success`() {
         val id = UserId(UUID.randomUUID())
@@ -48,8 +50,8 @@ class SessionManagerTest {
         ))
         val accessToken = AccessToken(id, "test","${UUID.randomUUID()}||${UUID.randomUUID()}||${Role.USER.name}||test")
         sessionManager.addSession(id, accessToken)
-        sessionManager.removeSession(id, accessToken.tokenValue)
-        sessionManager.authenticate(accessToken.tokenValue) {
+        sessionManager.removeSession(id, SessionToken(accessToken.tokenValue))
+        sessionManager.authenticate(SessionToken(accessToken.tokenValue)) {
             return@authenticate success("success")
         }.assertFailure()
     }
@@ -65,12 +67,10 @@ class SessionManagerTest {
             ))
             val accessToken = AccessToken(id, "test","${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
-            sessionManager.authenticate(accessToken.tokenValue) {
+            sessionManager.authenticate(SessionToken(accessToken.tokenValue)) {
                 return@authenticate success("success")
             }.assertSuccess()
         }
-
-
     }
 
     @Nested
