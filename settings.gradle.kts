@@ -1,2 +1,6 @@
+pluginManagement {
+    includeBuild("build-logic")
+}
+
 rootProject.name = "Jmanager"
-include(":domain", ":infra", "client")
+include(":domain", ":infrastructure", ":application", ":client")

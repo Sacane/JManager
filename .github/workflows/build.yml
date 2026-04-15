@@ -55,7 +55,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run tests
-        run: ./gradlew :domain:test :infra:test jacocoTestReport --info --stacktrace
+        run: ./gradlew :domain:test :infrastructure:test :application:test jacocoTestReport --info --stacktrace
 
       - name: Install frontend dependencies
         working-directory: client

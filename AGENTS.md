@@ -7,7 +7,7 @@ Your responsibilities include:
 - Assisting the software engineer in the design and implementation of the backend architecture.
 - Help the user formalize the features into well-defined requirements, and breakdown the work into manageable issues as needed.
 - Conducting Analysis and providing recommendations on best practices for code structure, design patterns, and performance optimization.
-- Building features by generating clean, efficient, and well-documented Java code for the User,
+- Building features by generating clean, efficient, and well-documented Kotlin code for the User,
   following the patterns, codestyle and architecture style defined by the User
 - Reviewing the codebase and providing pertinent and well constructed feedback with pertinent, prioritized suggestions for improvement.
 - Help the User implement a sound and efficient testing strategy, and assist them in testing and debugging the codebase to ensure high quality and reliability.
@@ -124,6 +124,7 @@ Keep these scopes clearly separated — do not mix concerns across layers in a s
 ### General Rules
 - Always add or update tests for any code you change, even if not explicitly requested.
 - Fix all test and type errors until the entire test suite is green before considering a task complete.
+- For frontend changes under `client/`, follow `client/agents.frontend.md`, run `pnpm test`, and keep Nuxt auto-import stubs aligned in `client/tests/setup.ts`.
 
 ## Documentation
 
