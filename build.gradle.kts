@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	kotlin("jvm") version "2.0.0"
-	id("com.github.johnrengelman.shadow") version "7.0.0"
+	id("com.github.johnrengelman.shadow")
 	// id("org.sonarqube") version "5.0.0.4638"
 	jacoco
 }

@@ -2,20 +2,22 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTra
 
 plugins {
     id("jmanager.kotlin-conventions")
-    id("org.springframework.boot") version "3.4.0"
-    id("io.spring.dependency-management") version "1.0.13.RELEASE"
-    kotlin("plugin.spring") version "2.0.0"
-    kotlin("plugin.noarg") version "2.0.0"
-    kotlin("plugin.jpa") version "2.0.0"
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
+    kotlin("plugin.spring")
+    kotlin("plugin.noarg")
+    kotlin("plugin.jpa")
 }
 
 noArg {
     annotation("jakarta.persistence.Entity")
 }
 
-val springBootVersion = "3.4.0"
-val flywayVersion = "11.14.1"
-val testcontainersVersion = "1.21.3"
+val springBootVersion: String by project
+val flywayVersion: String by project
+val jwtVersion: String by project
+val testcontainersVersion: String by project
+val mockitoVersion: String by project
 
 dependencies {
     implementation(project(":domain"))
@@ -27,13 +29,12 @@ dependencies {
     implementation("org.postgresql:postgresql")
     implementation("org.flywaydb:flyway-core:${flywayVersion}")
     implementation("org.flywaydb:flyway-database-postgresql:${flywayVersion}")
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
-    implementation("io.jsonwebtoken:jjwt-impl:0.12.6")
+    implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
+    implementation("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
-    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
-    runtimeOnly("org.flywaydb:flyway-database-postgresql:${flywayVersion}")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jwtVersion}")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
     testImplementation("org.springframework.boot:spring-boot-testcontainers:${springBootVersion}")
@@ -41,7 +42,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
     testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
     testImplementation("org.testcontainers:testcontainers:${testcontainersVersion}")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:${mockitoVersion}")
 }
 
 tasks.test {
