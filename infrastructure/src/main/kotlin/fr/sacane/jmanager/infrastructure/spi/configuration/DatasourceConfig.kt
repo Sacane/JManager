@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.application.configuration
+package fr.sacane.jmanager.infrastructure.spi.configuration
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -35,5 +35,4 @@ class DatasourceConfig {
     fun namedParameterJdbcTemplate(): NamedParameterJdbcTemplate {
         return NamedParameterJdbcTemplate(datasource())
     }
-
 }

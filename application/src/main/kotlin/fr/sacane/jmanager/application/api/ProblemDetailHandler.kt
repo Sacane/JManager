@@ -3,7 +3,7 @@ package fr.sacane.jmanager.application.api
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import jakarta.validation.ConstraintViolationException
-import org.hibernate.StaleObjectStateException
+import org.springframework.dao.OptimisticLockingFailureException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.TypeMismatchException
 import org.springframework.http.HttpStatus
@@ -114,8 +114,8 @@ class ProblemDetailHandler {
         )
     }
 
-    @ExceptionHandler(StaleObjectStateException::class)
-    fun onOptimisticLockException(ex: StaleObjectStateException): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(OptimisticLockingFailureException::class)
+    fun onOptimisticLockException(ex: OptimisticLockingFailureException): ResponseEntity<ProblemDetail> {
         logException("Optimistic lock conflict", ex.message)
         return buildResponse(
             status = HttpStatus.CONFLICT,
