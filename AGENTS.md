@@ -48,21 +48,36 @@ You MUST strictly adhere to the following guidelines:
 This project follows **Hexagonal Architecture** (also known as Ports & Adapters).
 
 - The **domain** layer is the core and must remain completely isolated — it must never depend on infrastructure concerns.
-- The **infra** layer contains adapters that implement the ports defined in the domain.
+- The **infrastructure** layer contains SPI adapters (persistence, external services) that implement the ports defined in the domain.
+- The **application** layer is the entry point that wires domain and infrastructure together (REST controllers, DTOs, security, Spring Boot app).
 - Always enforce the **closed rule**: no infrastructure dependency may leak into the domain.
 
 ### Project structure (up to main/test packages)
 
 ```text
 JManager/
-├─ domain/
+├─ application/      # Entry point — REST controllers, DTOs, security, Spring Boot app
 │  └─ src/
 │     ├─ main/
 │     └─ test/
-└─ infra/
-   └─ src/
-      ├─ main/
-      └─ test/
+├─ domain/           # Domain module — entities, value objects, use-cases, ports
+│  └─ src/
+│     ├─ main/
+│     └─ test/
+├─ infrastructure/   # Infrastructure module — persistence adapters, JPA, Flyway
+│  └─ src/
+│     ├─ main/
+│     └─ test/
+├─ build-logic/      # Gradle convention plugins (shared Kotlin/JaCoCo/test config)
+└─ client/           # Nuxt frontend
+```
+
+### Dependency graph
+
+```
+application  ──►  domain  ◄──  infrastructure
+     │                              ▲
+     └──────────────────────────────┘
 ```
 
 ## Testing Guidelines
