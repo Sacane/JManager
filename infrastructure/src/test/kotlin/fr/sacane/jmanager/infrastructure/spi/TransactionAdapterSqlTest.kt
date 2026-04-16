@@ -84,7 +84,7 @@ class TransactionAdapterSqlTest(
                 owner = user,
             )
             bookletStateTestAdapter.init(listOf(booklet))
-            val result = transactionRepositoryJpaAdapter.persist(userId = UserId(null), "unknown", transaction)
+            val result = transactionRepositoryJpaAdapter.persist(userId = user!!.id, "unknown", transaction)
             assertNull(result)
         }
     }
