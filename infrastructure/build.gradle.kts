@@ -33,6 +33,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
     testImplementation("org.springframework.boot:spring-boot-testcontainers:${springBootVersion}")
+    testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:junit-jupiter:${testcontainersVersion}")
     testImplementation("org.testcontainers:postgresql:${testcontainersVersion}")
