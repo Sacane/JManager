@@ -30,7 +30,6 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
     testImplementation("org.springframework.boot:spring-boot-testcontainers:${springBootVersion}")
     testImplementation("org.hamcrest:hamcrest:2.2")
-    testImplementation("com.h2database:h2")
     testImplementation("io.rest-assured:rest-assured:${restAssuredVersion}")
     testImplementation("io.rest-assured:kotlin-extensions:${restAssuredVersion}")
     testImplementation("org.mockito.kotlin:mockito-kotlin:${mockitoVersion}")
