@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
+import org.springframework.transaction.annotation.Transactional
 
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 @SpringBootTest
@@ -25,7 +26,7 @@ class TagRepositoryJpaAdapterTest(
     @AfterEach
     fun clear(){
         tagPersonalPostgresRepository.deleteAll()
-        defaultTagPostgresRepository.deleteAll()
+        defaultTagPostgresRepository.deleteByName("d1")
         tagStateTestAdapter.clear()
     }
 
