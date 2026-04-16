@@ -50,10 +50,10 @@ tasks {
     dependsOn(build)
 
     inputs.dir(file("${rootProject.projectDir}/client/.output/public"))
-    outputs.dir(file("${rootProject.projectDir}/infra/src/main/resources/static"))
+    outputs.dir(file("${rootProject.projectDir}/application/src/main/resources/static"))
 
     from("${rootProject.projectDir}/client/.output/public")
-    into("${rootProject.projectDir}/infra/src/main/resources/static")
+    into("${rootProject.projectDir}/application/src/main/resources/static")
   }
 
   register<Delete>("clean") {
@@ -63,7 +63,7 @@ tasks {
     delete(file("${rootProject.projectDir}/client/.nuxt"))
     delete(file("${rootProject.projectDir}/client/build"))
     delete(file("${rootProject.projectDir}/client/eslint-report.html"))
-    delete(file("${rootProject.projectDir}/infra/src/main/resources/static"))
+    delete(file("${rootProject.projectDir}/application/src/main/resources/static"))
   }
 }
 

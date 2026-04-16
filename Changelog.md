@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-04-15
+- **Refactor: Split infrastructure layer into `application/` and `infrastructure/` modules**
+  - Extracted the **application layer** (`application/`) from the monolithic `infra/` module: REST controllers, DTOs, mappers, security config, session management, Spring Boot entry point, and all API-related configuration.
+  - Extracted the **infrastructure layer** (`infrastructure/`) with SPI adapters, JPA entities, Spring Data repositories, Flyway migrations, and datasource configuration.
+  - Created **`build-logic/`** module with Gradle convention plugins centralizing Kotlin 2.0.0 / Java 21 / JaCoCo / test configuration across all modules.
+  - Updated dependency graph: `application → domain + infrastructure`, `infrastructure → domain`.
+  - Ensured cross-module JPA entity/repository discovery works with the new module split via the application/infrastructure configuration setup.
+  - Added infrastructure exception handler in `ProblemDetailHandler` to correctly map `infrastructure.spi.NotFoundException` to HTTP 404.
+  - Changed `internal` visibility to `public` on `DatasourceMapper` extension functions for cross-module accessibility.
+  - All 217 application tests, 76 infrastructure tests, and domain tests pass green.
+  - Updated CI workflow (`build.yml`) to run tests for all three backend modules.
+  - Updated `AGENTS.md` architecture documentation.
+
 ## 2026-05-17
 - **Refactor: `SessionToken` value class — eliminate raw String tokens from domain port contracts**
   - **New domain model**: introduced `SessionToken(@JvmInline value class)` in `domain.models`, wrapping the raw JWT string with a domain-meaningful type at zero runtime cost.

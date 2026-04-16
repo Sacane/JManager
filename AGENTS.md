@@ -7,7 +7,7 @@ Your responsibilities include:
 - Assisting the software engineer in the design and implementation of the backend architecture.
 - Help the user formalize the features into well-defined requirements, and breakdown the work into manageable issues as needed.
 - Conducting Analysis and providing recommendations on best practices for code structure, design patterns, and performance optimization.
-- Building features by generating clean, efficient, and well-documented Java code for the User,
+- Building features by generating clean, efficient, and well-documented Kotlin code for the User,
   following the patterns, codestyle and architecture style defined by the User
 - Reviewing the codebase and providing pertinent and well constructed feedback with pertinent, prioritized suggestions for improvement.
 - Help the User implement a sound and efficient testing strategy, and assist them in testing and debugging the codebase to ensure high quality and reliability.
@@ -48,21 +48,36 @@ You MUST strictly adhere to the following guidelines:
 This project follows **Hexagonal Architecture** (also known as Ports & Adapters).
 
 - The **domain** layer is the core and must remain completely isolated — it must never depend on infrastructure concerns.
-- The **infra** layer contains adapters that implement the ports defined in the domain.
+- The **infrastructure** layer contains SPI adapters (persistence, external services) that implement the ports defined in the domain.
+- The **application** layer is the entry point that wires domain and infrastructure together (REST controllers, DTOs, security, Spring Boot app).
 - Always enforce the **closed rule**: no infrastructure dependency may leak into the domain.
 
 ### Project structure (up to main/test packages)
 
 ```text
 JManager/
-├─ domain/
+├─ application/      # Entry point — REST controllers, DTOs, security, Spring Boot app
 │  └─ src/
 │     ├─ main/
 │     └─ test/
-└─ infra/
-   └─ src/
-      ├─ main/
-      └─ test/
+├─ domain/           # Domain module — entities, value objects, use-cases, ports
+│  └─ src/
+│     ├─ main/
+│     └─ test/
+├─ infrastructure/   # Infrastructure module — persistence adapters, JPA, Flyway
+│  └─ src/
+│     ├─ main/
+│     └─ test/
+├─ build-logic/      # Gradle convention plugins (shared Kotlin/JaCoCo/test config)
+└─ client/           # Nuxt frontend
+```
+
+### Dependency graph
+
+```
+application  ──►  domain  ◄──  infrastructure
+     │                              ▲
+     └──────────────────────────────┘
 ```
 
 ## Testing Guidelines
@@ -109,6 +124,7 @@ Keep these scopes clearly separated — do not mix concerns across layers in a s
 ### General Rules
 - Always add or update tests for any code you change, even if not explicitly requested.
 - Fix all test and type errors until the entire test suite is green before considering a task complete.
+- For frontend changes under `client/`, follow `client/agents.frontend.md`, run `pnpm test`, and keep Nuxt auto-import stubs aligned in `client/tests/setup.ts`.
 
 ## Documentation
 
