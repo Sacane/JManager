@@ -37,7 +37,7 @@ allprojects{
 // 		property("sonar.coverage.jacoco.xmlReportPaths",
 // 			listOf(
 // 				"$rootDir/domain/build/reports/jacoco/test/jacocoTestReport.xml",
-// 				"$rootDir/infra/build/reports/jacoco/test/jacocoTestReport.xml"
+// 				"$rootDir/infrastructure/build/reports/jacoco/test/jacocoTestReport.xml"
 // 			).joinToString(",")
 // 		)
 // 		property("sonar.javascript.lcov.reportPaths", "$rootDir/client/coverage/lcov.info")
@@ -83,13 +83,15 @@ tasks {
 		actions.clear()
 		dependsOn(":client:bundle")
 		dependsOn(":domain:assemble")
-		dependsOn(":infra:assemble")
+		dependsOn(":infrastructure:assemble")
+		dependsOn(":application:assemble")
 	}
 	build {
 		actions.clear()
 		dependsOn(":client:bundle")
 		dependsOn(":domain:assemble")
-		dependsOn(":infra:assemble")
-		dependsOn(":infra:shadowJar")
+		dependsOn(":infrastructure:assemble")
+		dependsOn(":application:assemble")
+		dependsOn(":application:shadowJar")
 	}
 }

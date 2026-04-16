@@ -102,12 +102,12 @@ docker run --rm -e POSTGRES_USER=jmanager -e POSTGRES_PASSWORD=jmanager -e POSTG
 
 ```bash
 # from the project root (Unix/macOS)
-./gradlew :infra:bootRun
+./gradlew :infrastructure:bootRun
 # on Windows (cmd.exe / PowerShell)
-gradlew.bat :infra:bootRun
+gradlew.bat :infrastructure:bootRun
 
 # or to create a standalone JAR
-./gradlew :infra:shadowJar
+./gradlew :infrastructure:shadowJar
 java -jar executables/Jmanager-<version>.jar
 ```
 
