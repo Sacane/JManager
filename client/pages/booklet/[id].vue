@@ -509,7 +509,6 @@ function onCsvImportSuccess(result: CsvImportResultDTO) {
 }
 
 onMounted(async () => {
-  const bookletId = (route.params as any)?.id as string
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
   await loadBookletData()
   await retrieveTags()
