@@ -1,0 +1,25 @@
+{
+  "servers": {
+    "nuxt": {
+        "type": "http",
+        "url": "https://mcp.nuxt.com/sse"
+    },
+    "nuxt-ui": { "url": "https://ui.nuxt.com/mcp" },
+    "context7": {
+        "command": "npx",
+        "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "sequential-thinking": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "serena": {
+        "command": "uvx",
+        "args": [
+            "serena",
+            "--context", "ide-assistant",
+            "--project", "${workspaceFolder}"
+        ]
+    }
+  }
+}

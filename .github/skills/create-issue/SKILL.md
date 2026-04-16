@@ -13,6 +13,7 @@ description: Create an issue in the form of a markdown file with title, descript
     4. Produce 1..N Gherkin scenarios covering happy path and edge cases.
     5. Create the issue in the `docs/features/{feature_name}/{module_name}_{issue_title}.md` file using the `templates/issue.md` template.
     6. Validate the issue using `.github/create-issue/validate_issue_format.py`.
+4. Be sure to not include implementation if the module is not impacted, and to not include testing scenarios if the module is not impacted. For example, if the request only impacts the domain module, do not include any implementation plan or testing scenario in the application and infrastructure issues.
 
 # Note
 - This skill is intended to create manageable issues. Typically, it should not span more than one module.

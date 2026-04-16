@@ -54,22 +54,54 @@ This project follows **Hexagonal Architecture** (also known as Ports & Adapters)
 
 ### Project structure (up to main/test packages)
 
-```text
-JManager/
-├─ application/      # Entry point — REST controllers, DTOs, security, Spring Boot app
+```markdown
+<repository_root>
+├─ application/                      # Application module (REST controllers, DTOs, API layer)
+│  ├─ build.gradle.kts
+│  ├─ src/
+│  │  ├─ main/
+│  │  │  ├─ java/
+│  │  │  └─ resources/
+│  │  └─ test/
+│  │  │  ├─ java/
+│  │  │  └─ resources/
+├─ domain/                           # Domain module (entities, value objects, use-cases, ports)
+│  ├─ build.gradle.kts
 │  └─ src/
 │     ├─ main/
+│     │  ├─ java/
+│     │  └─ resources/
 │     └─ test/
-├─ domain/           # Domain module — entities, value objects, use-cases, ports
+│        ├─ java/
+│        └─ resources/
+├─ infrastructure/                   # Infrastructure module (persistence, external adapters)
+│  ├─ build.gradle.kts
 │  └─ src/
 │     ├─ main/
+│     │  ├─ java/
+│     │  └─ resources/
 │     └─ test/
-├─ infrastructure/   # Infrastructure module — persistence adapters, JPA, Flyway
+│        ├─ java/
+│        └─ resources/
+├─ build-logic/                      # Gradle convention plugins and shared build logic
+│  ├─ build.gradle.kts
 │  └─ src/
-│     ├─ main/
-│     └─ test/
-├─ build-logic/      # Gradle convention plugins (shared Kotlin/JaCoCo/test config)
-└─ client/           # Nuxt frontend
+│     └─ main/
+│        └─ kotlin/
+├─ gradle/                           # Gradle wrapper and version-managed libs
+│  ├─ wrapper/
+│  └─ libs.versions.toml
+├─ docs/                             # Documentation folder
+│  ├─ agents/                        # Agent specific instructions and documentation
+│  └─ features/                      # Documentation related to individual features
+├─ gradlew
+├─ gradlew.bat
+├─ settings.gradle.kts
+├─ assets/                           # Static assets used by the project README
+├─ FEATURES.md                       # Feature list and planning
+├─ README.md                         # Project overview and quickstart
+└─ AGENTS.md                         # This file (agent instructions and guidelines)
+└─ client/                           # Nuxt frontend
 ```
 
 ### Dependency graph
@@ -138,3 +170,17 @@ Keep these scopes clearly separated — do not mix concerns across layers in a s
 - Always update `Changelog.md` whenever a feature or fix is implemented.
 - Entries must clearly describe what changed and why.
 - During a plan or agent mode, you must update changelog only when I the task is fully complete, if I undo your changes that means something need to be rework and you must iterate as in.
+
+## Development Guidelines
+
+You must follow the following guidelines in depends on the contexte you are working on : 
+
+- ./docs/agents/instructions/prompt.instruments.md for **every** prompts.
+- ./docs/agents/instructions/kotlin-coding-guidelines.md for all development tasks.
+- ./docs/agents/instructions/testing-guidelines.md whenever you are writing or reviewing tests.
+- ./docs/agents/instructions/agents-md-maintenance.md whenever you have to maintain guidelines.
+
+
+## Skills Guidelines
+
+- Whenever you are writing Issues for the project, you must follow the guidelines described in `.github/skills/create-issue/SKILL.md`
