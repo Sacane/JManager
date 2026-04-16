@@ -1,148 +1,148 @@
 # Kotlin Coding Guidelines
 
-Guidelines specifiques au projet JManager.
+Guidelines specific to the JManager project.
 
-## 1. Scope, objectifs et architecture
+## 1. Scope, Goals and Architecture
 
-Ces guidelines definissent les regles de code Kotlin a appliquer dans ce repository pour garantir:
-- coherence entre modules
-- clarte du code metier
-- evolutivite du systeme
-- testabilite elevee
+These guidelines define the Kotlin coding rules to apply in this repository to ensure:
+- consistency across modules
+- clarity of business code
+- system evolvability
+- high testability
 
-Le projet suit une architecture hexagonale avec trois modules principaux:
-- domain: coeur metier, pur Kotlin, sans dependance framework
-- infrastructure: adaptateurs techniques (persistance, integration, consommateurs externes), depend du domain
-- application: point d'entree et composition du backend, utilisant le domaine via les ports interfaces, depend du domaine et de l'infrastructure.
+The project follows a hexagonal architecture with three main modules:
+- domain: business core, pure Kotlin, no framework dependency
+- infrastructure: technical adapters (persistence, integration, external consumers), depends on domain
+- application: entry point and backend composition, uses the domain via port interfaces, depends on domain and infrastructure
 
-Contraintes structurantes:
-- JDK cible: 21
+Structural constraints:
+- Target JDK: 21
 - Build: Gradle Kotlin DSL
-- Tests: Kotlin test + execution sur JUnit Platform
+- Tests: Kotlin test + execution on JUnit Platform
 
-Principes directeurs:
-- Le metier vit dans domain et ne depend jamais d'un choix technique.
-- Les details techniques restent confines dans infrastructure.
-- application orchestre et assemble les composants sans contenir de logique metier complexe.
-- Le code privilegie la lisibilite, la simplicite et des invariants explicites plutot que la magie.
+Guiding principles:
+- Business logic lives in domain and never depends on any technical choice.
+- Technical details remain confined to infrastructure.
+- application orchestrates and assembles components without containing complex business logic.
+- Code favours readability, simplicity, and explicit invariants over magic.
 
-## 2. Style Kotlin et conventions de nommage
+## 2. Kotlin Style and Naming Conventions
 
-### 2.1 Regles de style general
+### 2.1 General Style Rules
 
-- Indentation: 4 espaces, pas de tabulations.
-- Encodage: UTF-8.
-- Un type principal (classe, interface, objet) par fichier.
-- Preferer val a var. Toute mutabilite doit etre justifiee.
-- Fonctions courtes, avec une responsabilite claire.
-- Eviter les booleens "magiques" en parametres. Preferer un type explicite (enum, value object).
-- Preferer les null-safety features Kotlin (?. ?: requireNotNull) plutot que des verifications null dispersees.
-- Lever des erreurs explicites et metier (voir section erreurs) plutot que IllegalStateException generique partout.
+- Indentation: 4 spaces, no tabs.
+- Encoding: UTF-8.
+- One primary type (class, interface, object) per file.
+- Prefer `val` over `var`. Any mutability must be justified.
+- Short functions with a single clear responsibility.
+- Avoid "magic" boolean parameters. Prefer an explicit type (enum, value object).
+- Prefer Kotlin null-safety features (`?.`, `?:`, `requireNotNull`) over scattered null checks.
+- Raise explicit business errors (see errors section) rather than generic `IllegalStateException` everywhere.
 
-### 2.2 Conventions de nommage Kotlin
+### 2.2 Kotlin Naming Conventions
 
-- Packages: lowercase, sans underscore, alignes sur le contexte metier.
-- Classes, interfaces, objets, enums: PascalCase.
-- Fonctions et proprietes: camelCase.
-- Constantes compile-time: UPPER_SNAKE_CASE.
-- Noms explicites, sans abreviations ambigues.
+- Packages: lowercase, no underscores, aligned with the business context.
+- Classes, interfaces, objects, enums: PascalCase.
+- Functions and properties: camelCase.
+- Compile-time constants: UPPER_SNAKE_CASE.
+- Explicit names, no ambiguous abbreviations.
 
-### 2.3 Nommage par couche
+### 2.3 Naming per Layer
 
 - domain:
-	- Entites et value objects en nom metier.
-	- Services metier nommes par intention.
-	- Aucun suffixe technique lie a un framework.
+	- Entities and value objects named after business concepts.
+	- Business services named by intent.
+	- No technical suffix tied to a framework.
 
 - application:
-	- Use cases suffixes par UseCase.
-	- Ports entrants nommes par role metier.
-	- Command/Query objets nommes avec intention.
-	- DTO techniques explicites sans fuite dans domain.
+	- Use cases suffixed with `UseCase`.
+	- Incoming ports named by business role.
+	- Command/Query objects named with intent.
+	- Explicit technical DTOs that do not leak into domain.
 
 - infrastructure:
-	- Adaptateurs techniques suffixes par leur nature (JpaXxxRepository, HttpXxxClient).
-	- DTO techniques explicites sans fuite dans domain.
+	- Technical adapters suffixed by their nature (`JpaXxxRepository`, `HttpXxxClient`).
+	- Explicit technical DTOs that do not leak into domain.
 
-### 2.4 Lisibilite et intention
+### 2.4 Readability and Intent
 
-- Un nom doit expliquer "pourquoi" et "quoi", pas "comment".
-- Eviter les noms vagues: data, info, manager, helper, util.
-- Preferer des API explicites a des fonctions generiques sur-parametrees.
-- Lorsque deux formulations sont possibles, choisir la plus proche du vocabulaire de FEATURES.md.
+- A name must explain "why" and "what", not "how".
+- Avoid vague names: `data`, `info`, `manager`, `helper`, `util`.
+- Prefer explicit APIs over over-parameterised generic functions.
+- When two formulations are possible, choose the one closest to the vocabulary of `FEATURES.md`.
 
-## 3. Modelisation du domaine et invariants
+## 3. Domain Modelling and Invariants
 
-### 3.1 Modele metier explicite
+### 3.1 Explicit Business Model
 
-- Le code du domaine exprime le langage metier de FEATURES.md, pas un vocabulaire technique.
-- Le comportement metier vit dans les objets du domaine, pas dans des services utilitaires generiques.
-- Chaque regle metier importante doit etre visible dans une methode nommee par intention.
+- Domain code expresses the business language of `FEATURES.md`, not a technical vocabulary.
+- Business behaviour lives in domain objects, not in generic utility services.
+- Every important business rule must be visible in a method named by intent.
 
-### 3.2 Entites et Value Objects
+### 3.2 Entities and Value Objects
 
-- Utiliser une entite quand l'identite et le cycle de vie sont centraux.
-- Utiliser un value object pour representer un concept immutable et valide par construction.
-- Eviter la primitive obsession:
-	- preferer des types metier dedies a String/Int bruts pour les identifiants et quantites critiques
-	- encapsuler les regles de validation dans ces types
+- Use an entity when identity and lifecycle are central.
+- Use a value object to represent an immutable concept, valid by construction.
+- Avoid primitive obsession:
+	- prefer dedicated business types over raw `String`/`Int` for identifiers and critical quantities
+	- encapsulate validation rules in these types
 
-### 3.3 Invariants metier: fail fast
+### 3.3 Business Invariants: Fail Fast
 
-- Un objet du domaine ne doit jamais exister dans un etat invalide.
-- Valider les invariants a la creation et a chaque transition d'etat.
-- Refuser immediatement une transition invalide via une erreur metier explicite.
-- Ne jamais deleguer une regle metier fondamentale a l'infrastructure.
+- A domain object must never exist in an invalid state.
+- Validate invariants on creation and at each state transition.
+- Immediately refuse an invalid transition via an explicit business error.
+- Never delegate a fundamental business rule to infrastructure.
 
-### 3.4 Transitions d'etat et API du domaine
+### 3.4 State Transitions and Domain API
 
-- Modeliser les transitions explicitement.
-- Chaque transition:
-	- verifie ses preconditions
-	- applique uniquement les changements autorises
-	- retourne un resultat exploitable par la couche application
-- Eviter les setters publics qui permettent des modifications arbitraires de l'etat.
+- Model transitions explicitly.
+- Each transition:
+	- verifies its preconditions
+	- applies only the authorised changes
+	- returns a result usable by the application layer
+- Avoid public setters that allow arbitrary state modifications.
 
-### 3.5 Temps, calculs et determinisme
+### 3.5 Time, Calculations and Determinism
 
-- Utiliser java.time (Instant, LocalDate, LocalTime, Duration) pour toute logique temporelle.
-- Injecter une Clock dans les use cases ou services de domaine qui dependent de l'heure courante.
-- Garder les calculs deterministes et testables: pas d'acces direct au temps systeme dans les regles metier.
+- Use `java.time` (`Instant`, `LocalDate`, `LocalTime`, `Duration`) for all temporal logic.
+- Inject a `Clock` into use cases or domain services that depend on the current time.
+- Keep calculations deterministic and testable: no direct access to system time within business rules.
 
-## 4. Gestion des erreurs et strategie de resultats
+## 4. Error Handling and Result Strategy
 
-### 4.1 Principes generaux
+### 4.1 General Principles
 
-- Une erreur metier est une information attendue du domaine, pas une surprise technique.
-- Une exception technique est reservee aux cas non recuperables ou aux defaillances d'infrastructure.
-- Ne pas utiliser Exception ou RuntimeException generiques pour porter des regles metier.
-- Les messages d'erreur doivent etre actionnables et alignes sur le vocabulaire metier.
+- A business error is expected domain information, not a technical surprise.
+- A technical exception is reserved for non-recoverable cases or infrastructure failures.
+- Do not use generic `Exception` or `RuntimeException` to carry business rules.
+- Error messages must be actionable and aligned with the business vocabulary.
 
-### 4.2 Erreurs metier dans domain
+### 4.2 Business Errors in domain
 
-- Modeliser les erreurs metier avec des types explicites (sealed interface/class recommandee).
-- Chaque invariant critique doit avoir un type d'erreur dedie.
-- Eviter les codes numeriques opaques dans le domaine.
-- Le domaine ne depend pas de details de transport (HTTP status, format JSON, etc.).
+- Model business errors with explicit types (sealed interface/class recommended).
+- Each critical invariant must have a dedicated error type.
+- Avoid opaque numeric codes in the domain.
+- The domain does not depend on transport details (HTTP status, JSON format, etc.).
 
-### 4.3 Resultats des use cases dans application
+### 4.3 Use Case Results in application
 
-- Les use cases retournent des resultats explicites (succes ou echec metier), pas un booleen ambigu.
-- Preferer un type de retour structure:
-	- sealed class UseCaseResult
-	- kotlin.Result uniquement pour des cas simples et sans perte de semantique metier
-- Une methode de use case doit rendre explicite ce que l'appelant peut traiter comme cas nominal et cas d'echec.
+- Use cases return explicit results (success or business failure), not an ambiguous boolean.
+- Prefer a structured return type:
+	- `sealed class UseCaseResult`
+	- `kotlin.Result` only for simple cases without loss of business semantics
+- A use case method must make explicit what the caller can handle as both the nominal case and failure cases.
 
-### 4.4 Frontieres techniques dans infrastructure
+### 4.4 Technical Boundaries in infrastructure
 
-- Capturer les erreurs techniques au plus pres de leur source (DB, HTTP client, messaging).
-- Mapper les erreurs techniques vers des erreurs applicatives/metier comprehensibles pour la couche superieure.
-- Ne jamais laisser remonter une exception de librairie externe vers domain.
-- Les retries/timeouts/circuit-breakers restent dans infrastructure, pas dans domain.
+- Capture technical errors as close to their source as possible (DB, HTTP client, messaging).
+- Map technical errors to application/business errors understandable by the upper layer.
+- Never let an external library exception bubble up into domain.
+- Retries, timeouts, and circuit-breakers remain in infrastructure, not in domain.
 
-### 4.5 Mapping et observabilite
+### 4.5 Mapping and Observability
 
-- Le mapping erreur -> reponse externe se fait au niveau application (ou adaptateur d'entree), jamais dans domain.
-- Journaliser les erreurs techniques avec contexte sans exposer de donnees sensibles.
-- Pour les erreurs metier attendues, journaliser au niveau adapte (souvent info/warn), pas en erreur systematique.
-- Conserver des messages utilisateur clairs et des messages techniques detailles separes.
+- Error-to-external-response mapping happens at the application layer (or input adapter), never in domain.
+- Log technical errors with context without exposing sensitive data.
+- For expected business errors, log at the appropriate level (often `info`/`warn`), not systematically as errors.
+- Keep clear user-facing messages and detailed technical messages separate.

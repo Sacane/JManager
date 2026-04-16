@@ -1,103 +1,103 @@
 # AGENTS.md Maintenance Strategy
 
-Strategie de maintenance du systeme de guidelines agent pour garder des instructions claires, coherentes, et applicables dans le temps.
+Maintenance strategy for the agent guidelines system to keep instructions clear, consistent, and actionable over time.
 
 ## 1. Scope
 
-Ce document couvre la maintenance des artefacts suivants:
+This document covers the maintenance of the following artefacts:
 - `AGENTS.md`
 - `docs/agents/instructions/*.md`
-- tout document de workflow agent lie au repository
+- any agent workflow document tied to the repository
 
-Ce document ne couvre pas:
-- les decisions metier produit (dans `FEATURES.md`)
-- les details d'implementation d'une feature specifique
+This document does not cover:
+- product business decisions (in `FEATURES.md`)
+- implementation details of a specific feature
 
-## 2. Objectifs
+## 2. Goals
 
-- Eviter la derive entre les instructions et la realite du codebase.
-- Assurer des regles actionnables, testables, et non contradictoires.
-- Reduire les ambiguites pour les humains et pour les agents.
-- Garder un systeme de guidelines simple a maintenir.
+- Prevent drift between instructions and the actual state of the codebase.
+- Ensure rules are actionable, testable, and non-contradictory.
+- Reduce ambiguity for both humans and agents.
+- Keep the guidelines system simple to maintain.
 
-## 3. Roles et responsabilites
+## 3. Roles and Responsibilities
 
-- Owner guidelines:
-  - valide la coherence globale des documents
-  - arbitre les conflits entre instructions
-  - planifie les revues periodiques
-- Contributeur:
-  - propose des mises a jour ciblees
-  - justifie tout changement par un probleme concret
-  - applique la checklist de qualite avant PR
+- Guidelines owner:
+  - validates overall document consistency
+  - arbitrates conflicts between instructions
+  - schedules periodic reviews
+- Contributor:
+  - proposes targeted updates
+  - justifies every change with a concrete problem
+  - applies the quality checklist before raising a PR
 - Reviewer:
-  - verifie l'absence de contradictions
-  - controle la clarte, la precision, et le caractere actionnable
-  - demande des exemples quand une regle est ambigue
+  - verifies the absence of contradictions
+  - checks clarity, precision, and actionability
+  - requests examples when a rule is ambiguous
 
-## 4. Triggers de mise a jour
+## 4. Update Triggers
 
-Une mise a jour est obligatoire quand au moins un cas arrive:
-- changement d'architecture (module, boundaries, conventions)
-- ajout/suppression d'un outil ou d'une contrainte technique
-- evolution du workflow de dev (tests, review, release)
-- bug recurrent lie a une instruction manquante ou trompeuse
-- conflit detecte entre deux documents de guidelines
+An update is mandatory when at least one of the following occurs:
+- architectural change (module, boundaries, conventions)
+- addition or removal of a tool or technical constraint
+- evolution of the development workflow (tests, review, release)
+- recurring bug linked to a missing or misleading instruction
+- conflict detected between two guidelines documents
 
-## 5. Cadence de maintenance
+## 5. Maintenance Cadence
 
-- Maintenance continue: chaque PR qui modifie un workflow met a jour les guidelines impactees.
-- Revue periodique: 1 revue mensuelle legere du systeme complet.
-- Revue majeure: 1 revue trimestrielle pour simplifier, deprecier, ou fusionner des regles.
+- Continuous maintenance: every PR that modifies a workflow must update the affected guidelines.
+- Periodic review: 1 light monthly review of the full system.
+- Major review: 1 quarterly review to simplify, deprecate, or merge rules.
 
-## 6. Workflow de changement
+## 6. Change Workflow
 
-1. Identifier le probleme
-- decrire le symptome observe
-- relier le symptome a une regle manquante, obsolete, ou contradictoire
+1. Identify the problem
+- describe the observed symptom
+- link the symptom to a missing, outdated, or contradictory rule
 
-2. Definir la proposition
-- preciser le document cible
-- ecrire la regle en termes actionnables (verbe + condition + resultat attendu)
-- limiter la portee au besoin reel
+2. Define the proposal
+- specify the target document
+- write the rule in actionable terms (verb + condition + expected result)
+- limit the scope to the actual need
 
-3. Implementer la mise a jour
-- modifier le minimum de fichiers necessaires
-- conserver le style editorial existant
-- ajouter un exemple concret si la regle est sensible a l'interpretation
+3. Implement the update
+- modify the minimum number of files necessary
+- preserve the existing editorial style
+- add a concrete example if the rule is open to interpretation
 
-4. Verifier la qualite
-- passer la checklist de la section 7
-- faire relire par au moins un reviewer
+4. Verify quality
+- run through the checklist in section 7
+- have at least one reviewer read the changes
 
-5. Tracer le changement
-- ajouter une entree courte dans la section historique (section 8)
-- reference au PR dans le message de commit ou la description de PR
+5. Trace the change
+- add a short entry in the maintenance history (section 8)
+- reference the PR in the commit message or PR description
 
-## 7. Checklist qualite
+## 7. Quality Checklist
 
-Avant merge, verifier:
-- [ ] la regle est claire et testable
-- [ ] la regle n'entre pas en conflit avec un autre document
-- [ ] le scope est explicite (ou, quand, pour qui)
-- [ ] les formulations vagues ont ete eliminees
-- [ ] les liens internes et chemins de fichiers sont valides
-- [ ] l'exemple (si present) est coherent avec le codebase actuel
+Before merging, verify:
+- [ ] the rule is clear and testable
+- [ ] the rule does not conflict with another document
+- [ ] the scope is explicit (where, when, for whom)
+- [ ] vague formulations have been eliminated
+- [ ] internal links and file paths are valid
+- [ ] the example (if present) is consistent with the current codebase
 
-## 8. Historique de maintenance
+## 8. Maintenance History
 
-Format recommande:
+Recommended format:
 
 ```text
-YYYY-MM-DD | type(change|cleanup|clarification|deprecation) | fichier(s) | resume court
+YYYY-MM-DD | type(change|cleanup|clarification|deprecation) | file(s) | short summary
 ```
 
-## 9. Regles de redaction
+## 9. Writing Rules
 
-- Preferer des phrases courtes et imperatives.
-- Une regle = une intention.
-- Eviter les formulations absolues non justifiees.
-- Eviter la duplication entre documents; lier vers la source de verite.
+- Prefer short, imperative sentences.
+- One rule = one intention.
+- Avoid unjustified absolute formulations.
+- Avoid duplication across documents; link to the source of truth.
 - Quand une regle devient obsolete, la supprimer au lieu de la laisser inactive.
 
 ## 10. Definition of Done (maintenance)
