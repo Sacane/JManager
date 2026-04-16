@@ -6,7 +6,7 @@
   - Extracted the **infrastructure layer** (`infrastructure/`) with SPI adapters, JPA entities, Spring Data repositories, Flyway migrations, and datasource configuration.
   - Created **`build-logic/`** module with Gradle convention plugins centralizing Kotlin 2.0.0 / Java 21 / JaCoCo / test configuration across all modules.
   - Updated dependency graph: `application → domain + infrastructure`, `infrastructure → domain`.
-  - Added `@EntityScan` and `@EnableJpaRepositories` in `JmanagerApplication` to bridge cross-module JPA discovery.
+  - Ensured cross-module JPA entity/repository discovery works with the new module split via the application/infrastructure configuration setup.
   - Added infrastructure exception handler in `ProblemDetailHandler` to correctly map `infrastructure.spi.NotFoundException` to HTTP 404.
   - Changed `internal` visibility to `public` on `DatasourceMapper` extension functions for cross-module accessibility.
   - All 217 application tests, 76 infrastructure tests, and domain tests pass green.
