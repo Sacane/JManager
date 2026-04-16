@@ -5,12 +5,13 @@ import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.application.api.session.JwtCookieAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.access.AccessDeniedHandlerImpl
+import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
@@ -19,13 +20,6 @@ class SecurityConfig(
     private val tokenGenerator: TokenGenerator,
     private val userDetailsService: UserRepository,
 ) {
-
-    @Bean
-    fun accessDeniedHandler(): AccessDeniedHandlerImpl {
-        val handler = AccessDeniedHandlerImpl()
-        handler.setErrorPage("/login")
-        return handler
-    }
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -46,7 +40,7 @@ class SecurityConfig(
             }
             httpBasic { disable() }
             exceptionHandling {
-                accessDeniedHandler()
+                authenticationEntryPoint = HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
             }
             addFilterBefore<UsernamePasswordAuthenticationFilter>(JwtCookieAuthenticationFilter(tokenGenerator, userDetailsService))
         }

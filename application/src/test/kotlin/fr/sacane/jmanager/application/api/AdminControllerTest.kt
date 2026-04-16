@@ -159,12 +159,12 @@ class AdminControllerTest(
             } When {
                 get("/api/admin/users")
             } Then {
-                statusCode(403)
+                statusCode(401)
             }
         }
 
         @Test
-        fun `Get users with invalid token should return 403`() {
+        fun `Get users with invalid token should return 401`() {
             Given {
                 port(port)
                 cookie("token", "invalid-token")
@@ -174,7 +174,7 @@ class AdminControllerTest(
             } When {
                 get("/api/admin/users")
             } Then {
-                statusCode(403)
+                statusCode(401)
             }
         }
 
