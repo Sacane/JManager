@@ -16,6 +16,7 @@ const jToast = useJToast()
 const booklets = ref<OnlyBookletInfo[]>([])
 const selectedTransactions = ref<RegularTransactionDTO[]>([])
 const isMobile = ref(false)
+const isSmallScreen = ref(false)
 const confirm = useConfirm()
 
 onMounted(() => {
@@ -218,6 +219,7 @@ function isSelected(transaction: RegularTransactionDTO): boolean {
 }
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768
+  isSmallScreen.value = window.innerWidth > 768 && window.innerWidth <= 1200
 }
 
 const transactionsCount = computed(() => transactions.value.length)
@@ -398,6 +400,13 @@ async function handleUnlink() {
           </template>
         </Column>
 
+        <!-- Small screen: Tag before Fréquence -->
+        <Column field="tag" header="Catégorie" :style="{ minWidth: '150px' }">
+          <template #body="slotProps">
+            <Tag :value="slotProps.data.tagDTO.label" :style="getTagStyle(slotProps.data.tagDTO.colorDTO)" />
+          </template>
+        </Column>
+
         <Column field="regularity" header="Fréquence" :style="{ minWidth: '130px' }">
           <template #body="slotProps">
             <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
@@ -407,7 +416,8 @@ async function handleUnlink() {
           </template>
         </Column>
 
-        <Column field="startDate" header="Date de début" :style="{ minWidth: '140px' }">
+        <!-- Normal screen: Date de début and Tag before Actions (frozen right) -->
+        <Column v-if="!isSmallScreen" field="startDate" header="Date de début" :style="{ minWidth: '140px' }">
           <template #body="{ data }">
             <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
               <i class="pi pi-calendar text-0.875rem text-purple-600" />
@@ -416,13 +426,7 @@ async function handleUnlink() {
           </template>
         </Column>
 
-        <Column field="tag" header="Catégorie" :style="{ minWidth: '150px' }">
-          <template #body="slotProps">
-            <Tag :value="slotProps.data.tagDTO.label" :style="getTagStyle(slotProps.data.tagDTO.colorDTO)" />
-          </template>
-        </Column>
-
-        <Column header="Actions" :style="{ minWidth: '160px' }" frozen align-frozen="right">
+        <Column header="Actions" :style="{ minWidth: '160px' }" :frozen="!isSmallScreen" :align-frozen="!isSmallScreen ? 'right' : undefined">
           <template #body="{ data }">
             <div class="flex items-center gap-2">
               <Button
@@ -445,6 +449,16 @@ async function handleUnlink() {
                 :disabled="getLinkedActiveBookletsFor(data).length === 0"
                 @click.stop="openUnlinkDialog(data)"
               />
+            </div>
+          </template>
+        </Column>
+
+        <!-- Small screen: Date de début last -->
+        <Column v-if="isSmallScreen" field="startDate" header="Date de début" :style="{ minWidth: '140px' }">
+          <template #body="{ data }">
+            <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
+              <i class="pi pi-calendar text-0.875rem text-purple-600" />
+              <span>{{ data.startDate }}</span>
             </div>
           </template>
         </Column>
