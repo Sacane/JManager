@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 import java.util.*
 import kotlin.collections.emptyList
 
@@ -1733,10 +1734,55 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.fakeTransactionRepository().init(emptyList())
 
+                val currentDate = LocalDate.now()
+                FakeFactory.trackerRepository().markMonthAsExcluded(
+                    regularTx.id, bookletId, currentDate.year, currentDate.month
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = currentDate.month,
+                    year = currentDate.year
+                )
+
+                result.assertTrue { this.hasRegenerableTransactions }
+            }
+        }
+
+        @Test
+        fun `loadTransactions should not signal hasRegenerableTransactions when the excluded month is a past month`() {
+            launchWithConnectedUserInstance {
+                val bookletId = booklet.id!!
+                val bookletInstance = Booklet(
+                    amount = 1000.toAmount(),
+                    label = "Test Booklet Past",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
+
+                val regularTx = RegularTransaction(
+                    label = "Loyer",
+                    amount = 900.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-past-regen-test"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+                FakeFactory.regularTransactionState.init(
+                    listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                // Mark a past month as excluded
                 FakeFactory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, 2024, java.time.Month.FEBRUARY
                 )
 
+                // Load for that same past month
                 val result = bookletFeature.loadTransactionsForBookletForAMonth(
                     token = tokenValue,
                     bookletId = bookletId,
@@ -1746,7 +1792,7 @@ class BookletFeatureTest: FeatureTest() {
                     startingYear = 2025
                 )
 
-                result.assertTrue { this.hasRegenerableTransactions }
+                result.assertTrue { !this.hasRegenerableTransactions }
             }
         }
 
@@ -1816,6 +1862,76 @@ class BookletFeatureTest: FeatureTest() {
         }
 
         @Test
+        fun `regenerate for a future month should return virtual transactions and unmark the tracker`() {
+            launchWithConnectedUserInstance {
+                val futureDate = LocalDate.now().plusMonths(2)
+                val bookletId = booklet.id!!
+                val bookletInstance = Booklet(
+                    amount = 1000.toAmount(),
+                    label = "Future Regen Booklet",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
+
+                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
+
+                FakeFactory.trackerRepository().markMonthAsExcluded(
+                    regularTx.id, bookletId, futureDate.year, futureDate.month
+                )
+                FakeFactory.fakeTransactionRepository().init(emptyList())
+
+                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = futureDate.month,
+                    year = futureDate.year
+                )
+
+                result.assertTrue { this.isNotEmpty() }
+                result.assertTrue { this.any { it.label == "Loyer" } }
+
+                val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
+                assertFalse(tracker?.excludedMonths?.contains(YearMonth.from(futureDate)) == true,
+                    "Future month should no longer be excluded after regeneration")
+            }
+        }
+
+        @Test
+        fun `regenerate for a past month should return empty list without modifying the tracker`() {
+            launchWithConnectedUserInstance {
+                val bookletId = booklet.id!!
+                val bookletInstance = Booklet(
+                    amount = 1000.toAmount(),
+                    label = "Past Regen Booklet",
+                    owner = user.toUser(),
+                    id = bookletId
+                )
+                bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
+
+                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
+
+                val pastYearMonth = YearMonth.of(2024, java.time.Month.MARCH)
+                FakeFactory.trackerRepository().markMonthAsExcluded(
+                    regularTx.id, bookletId, pastYearMonth.year, pastYearMonth.month
+                )
+
+                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                    token = tokenValue,
+                    bookletId = bookletId,
+                    month = pastYearMonth.month,
+                    year = pastYearMonth.year
+                )
+
+                result.assertTrue { this.isEmpty() }
+
+                val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
+                assertTrue(tracker?.excludedMonths?.contains(pastYearMonth) == true,
+                    "Past month tracker exclusion must remain unchanged")
+            }
+        }
+
+        @Test
         fun `regenerate for a non-existing booklet should return BOOKLET_NOT_FOUND`() {
             launchWithConnectedUserInstance {
                 FakeFactory.regularTransactionState.init(emptyList())
@@ -1830,8 +1946,9 @@ class BookletFeatureTest: FeatureTest() {
         }
 
         @Test
-        fun `regenerate for a month that was excluded should recreate the previsional transaction`() {
+        fun `regenerate for the current month should recreate previsional transactions`() {
             launchWithConnectedUserInstance {
+                val currentDate = LocalDate.now()
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -1841,32 +1958,33 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
 
-                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
+                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 1)
+                FakeFactory.fakeTransactionRepository().init(emptyList())
 
-                // Simulate: the user previously deleted the preview → month is excluded
                 FakeFactory.trackerRepository().markMonthAsExcluded(
-                    regularTx.id, bookletId, 2024, java.time.Month.JANUARY
+                    regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
 
                 val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
                     token = tokenValue,
                     bookletId = bookletId,
-                    month = java.time.Month.JANUARY,
-                    year = 2024
+                    month = currentDate.month,
+                    year = currentDate.year
                 )
 
                 result.assertTrue { this.isNotEmpty() }
                 result.assertTrue { this.any { it.label == "Loyer" && it.isPreview } }
 
-                // Tracker should no longer exclude Jan 2024
                 val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
-                assertFalse(tracker?.excludedMonths?.contains(java.time.YearMonth.of(2024, java.time.Month.JANUARY)) == true)
+                assertFalse(tracker?.excludedMonths?.contains(YearMonth.from(currentDate)) == true,
+                    "Current month should no longer be excluded after regeneration")
             }
         }
 
         @Test
         fun `regenerate should not create duplicate if confirmed transaction already exists for that month`() {
             launchWithConnectedUserInstance {
+                val currentDate = LocalDate.now()
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -1876,13 +1994,13 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
 
-                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
+                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 1)
 
-                // Existing confirmed transaction for same regular tx + month
+                // Existing confirmed transaction for same regular tx + current month
                 val confirmed = Transaction(
                     id = UUID.randomUUID(),
                     label = "Loyer",
-                    date = LocalDate.of(2024, 1, 5),
+                    date = currentDate.withDayOfMonth(1),
                     amount = 900.toAmount(),
                     isIncome = false,
                     isPreview = false,
@@ -1894,14 +2012,14 @@ class BookletFeatureTest: FeatureTest() {
 
                 // Month is excluded (user deleted the preview before confirming)
                 FakeFactory.trackerRepository().markMonthAsExcluded(
-                    regularTx.id, bookletId, 2024, java.time.Month.JANUARY
+                    regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
 
                 val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
                     token = tokenValue,
                     bookletId = bookletId,
-                    month = java.time.Month.JANUARY,
-                    year = 2024
+                    month = currentDate.month,
+                    year = currentDate.year
                 )
 
                 // No new transaction should be generated because a confirmed one already exists
@@ -1912,6 +2030,7 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `regenerate should not create duplicate if preview transaction already exists for that month`() {
             launchWithConnectedUserInstance {
+                val currentDate = LocalDate.now()
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -1921,13 +2040,13 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
 
-                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
+                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 1)
 
-                // Existing preview transaction for same regular tx + date
+                // Existing preview transaction for same regular tx + current month
                 val existingPreview = Transaction(
                     id = UUID.randomUUID(),
                     label = "Loyer",
-                    date = LocalDate.of(2024, 1, 5),
+                    date = currentDate.withDayOfMonth(1),
                     amount = 900.toAmount(),
                     isIncome = false,
                     isPreview = true,
@@ -1940,8 +2059,8 @@ class BookletFeatureTest: FeatureTest() {
                 val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
                     token = tokenValue,
                     bookletId = bookletId,
-                    month = java.time.Month.JANUARY,
-                    year = 2024
+                    month = currentDate.month,
+                    year = currentDate.year
                 )
 
                 result.assertTrue { this.isEmpty() }
@@ -1951,6 +2070,8 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `regenerate should only unmark the requested month — other excluded months remain excluded`() {
             launchWithConnectedUserInstance {
+                val currentDate = LocalDate.now()
+                val nextMonthDate = currentDate.plusMonths(1)
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -1960,32 +2081,33 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
 
-                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
+                val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 1)
+                FakeFactory.fakeTransactionRepository().init(emptyList())
 
-                // Exclude both January and February 2024
+                // Exclude current month and next month
                 FakeFactory.trackerRepository().markMonthAsExcluded(
-                    regularTx.id, bookletId, 2024, java.time.Month.JANUARY
+                    regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
                 FakeFactory.trackerRepository().markMonthAsExcluded(
-                    regularTx.id, bookletId, 2024, java.time.Month.FEBRUARY
+                    regularTx.id, bookletId, nextMonthDate.year, nextMonthDate.month
                 )
 
-                // Only regenerate January
+                // Only regenerate current month
                 bookletFeature.regenerateDeletedPrevisionalTransactions(
                     token = tokenValue,
                     bookletId = bookletId,
-                    month = java.time.Month.JANUARY,
-                    year = 2024
+                    month = currentDate.month,
+                    year = currentDate.year
                 ).assertSuccess()
 
                 val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
                 assertFalse(
-                    tracker?.excludedMonths?.contains(java.time.YearMonth.of(2024, java.time.Month.JANUARY)) == true,
-                    "January should no longer be excluded"
+                    tracker?.excludedMonths?.contains(YearMonth.from(currentDate)) == true,
+                    "Current month should no longer be excluded"
                 )
                 assertTrue(
-                    tracker?.excludedMonths?.contains(java.time.YearMonth.of(2024, java.time.Month.FEBRUARY)) == true,
-                    "February should still be excluded"
+                    tracker?.excludedMonths?.contains(YearMonth.from(nextMonthDate)) == true,
+                    "Next month should still be excluded"
                 )
             }
         }

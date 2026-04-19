@@ -15,7 +15,8 @@ description: Create an issue in the form of a markdown file with title, descript
     6. Validate the issue using `.github/create-issue/validate_issue_format.py`.
 4. Be sure to not include implementation if the module is not impacted, and to not include testing scenarios if the module is not impacted. For example, if the request only impacts the domain module, do not include any implementation plan or testing scenario in the application and infrastructure issues.
 5. client frontend is also a module. If the request impacts the user interface, create an issue for the client module with UI/UX acceptance criteria and testing scenarios.
-
+6. Write the issue in English, even if the request is in another language, to ensure consistency across the codebase and documentation.
+7. If the request changes the feature behaviour that is already described in `FEATURES.md`, you must update the feature description in `FEATURES.md` to keep it aligned with the new behavior described in the issue you created.
 # Note
 - This skill is intended to create manageable issues. Typically, it should not span more than one module.
 - If the request is too broad, propose the user to break it down per module

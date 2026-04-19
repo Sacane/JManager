@@ -16,6 +16,13 @@ export interface BookletTransactionsDTO {
   hasRegenerableTransactions: boolean
 }
 
+export type RegenerationType = 'PREVISIONAL' | 'VIRTUAL' | 'NONE'
+
+export interface RegenerateTransactionsResponseDTO {
+  transactions: TransactionResultDTO[]
+  type: RegenerationType
+}
+
 export interface BookletDateRangeQuery {
   startDate?: string
   endDate?: string
@@ -89,7 +96,7 @@ export default function useBooklet() {
     bookletId: string,
     month: number,
     year: number,
-  ): Promise<TransactionResultDTO[]> {
+  ): Promise<RegenerateTransactionsResponseDTO> {
     return post(`booklet/${bookletId}/transactions/regenerate?month=${month}&year=${year}`, undefined)
   }
 

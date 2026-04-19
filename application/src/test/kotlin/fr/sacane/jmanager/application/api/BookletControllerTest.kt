@@ -602,6 +602,7 @@ class BookletControllerTest(
 
         @Test
         fun `GET transactions should return hasRegenerableTransactions true when a month is excluded for a regular transaction`() {
+            val currentDate = LocalDate.now()
             val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Test Regen Flag True", owner = user)
             bookletStateAdapter.init(listOf(booklet))
             val savedBooklet = bookletStateAdapter.get().first()
@@ -630,9 +631,9 @@ class BookletControllerTest(
                     RegularTransactionTracker(
                         regularTransactionId = regularTxId,
                         bookletId = savedBooklet.id!!,
-                        lastGeneratedDate = LocalDate.of(2024, 1, 5),
+                        lastGeneratedDate = currentDate.withDayOfMonth(1),
                         numberOfGeneratedTransaction = 1,
-                        excludedMonths = setOf(YearMonth.of(2024, 1))
+                        excludedMonths = setOf(YearMonth.now())
                     )
                 )
             )
@@ -641,8 +642,8 @@ class BookletControllerTest(
                 port(port)
                 cookie("token", token)
                 header("Content-Type", "application/json")
-                queryParam("month", 1)
-                queryParam("year", 2024)
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
             } When {
                 get("/api/booklet/${savedBooklet.id}/transactions")
             } Then {
@@ -667,7 +668,7 @@ class BookletControllerTest(
         }
 
         @Test
-        fun `POST regenerate on existing booklet with excluded month should return 200`() {
+        fun `POST regenerate on existing booklet for current month should return 200 with type PREVISIONAL`() {
             val currentDate = LocalDate.now()
             val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Test", owner = user)
             bookletStateAdapter.init(listOf(booklet))
@@ -701,6 +702,80 @@ class BookletControllerTest(
                 post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
             } Then {
                 statusCode(200)
+                body("type", equalTo("PREVISIONAL"))
+            }
+        }
+
+        @Test
+        fun `POST regenerate on existing booklet for a future month should return 200 with type VIRTUAL`() {
+            val futureDate = LocalDate.now().plusMonths(2)
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Future Test", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+
+            val regularTxId = RegularTransactionId(java.util.UUID.randomUUID().toString())
+            regularTransactionStateAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = savedBooklet.id!!.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = regularTxId,
+                            label = "Loyer",
+                            amount = Amount.fromString("800.00"),
+                            isIncome = false,
+                            startDate = LocalDate.of(2024, 1, 1),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            recurrenceRule = RecurrenceRule.Monthly(5)
+                        )
+                    )
+                )
+            )
+
+            regularTrackerStateRepository.init(
+                listOf(
+                    RegularTransactionTracker(
+                        regularTransactionId = regularTxId,
+                        bookletId = savedBooklet.id!!,
+                        lastGeneratedDate = futureDate.withDayOfMonth(1),
+                        numberOfGeneratedTransaction = 1,
+                        excludedMonths = setOf(YearMonth.from(futureDate))
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", futureDate.monthValue)
+                queryParam("year", futureDate.year)
+            } When {
+                post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
+            } Then {
+                statusCode(200)
+                body("type", equalTo("VIRTUAL"))
+            }
+        }
+
+        @Test
+        fun `POST regenerate on existing booklet for a past month should return 200 with type NONE and empty transactions`() {
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Past Test", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", 1)
+                queryParam("year", 2024)
+            } When {
+                post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
+            } Then {
+                statusCode(200)
+                body("type", equalTo("NONE"))
+                body("transactions", org.hamcrest.Matchers.hasSize<Any>(0))
             }
         }
     }

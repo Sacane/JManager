@@ -426,9 +426,13 @@ async function regenerate() {
     try {
       const bookletId = (route.params as any)?.id as string
       const month = numberFromMonth(bookletData.month) as number
-      await regenerateDeletedPrevisionalTransactions(bookletId, month, bookletData.year)
+      const response = await regenerateDeletedPrevisionalTransactions(bookletId, month, bookletData.year)
       await loadBookletData()
-      toast.success('Transactions prévisionnelles régénérées avec succès')
+      if (response.type === 'PREVISIONAL') {
+        toast.success('Transactions prévisionnelles régénérées avec succès')
+      } else if (response.type === 'VIRTUAL') {
+        toast.success('Transactions virtuelles restaurées avec succès')
+      }
     } catch (err) {
       toast.errorAxios(err as AxiosError)
     }
@@ -696,7 +700,7 @@ onUnmounted(() => {
             />
             <Button
               v-if="hasRegenerableTransactions"
-              v-tooltip.bottom="'Régénérer les transactions prévisionnelles supprimées'"
+              v-tooltip.bottom="'Régénérer les transactions supprimées'"
               outlined
               class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-violet-500 text-violet-600 hover:bg-violet-500/10 transition-all"
               icon="pi pi-refresh"

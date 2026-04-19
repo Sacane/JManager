@@ -205,13 +205,32 @@ When the user loads balances for booklet ID, month March, year 2025
 Then the system returns BookletBalances with current and forecasted balance information
 ```
 
-### Scenario: Regenerate deleted provisional transactions
+### Scenario: Regenerate deleted provisional transactions for the current month
 ```gherkin
-Given an authenticated user who previously deleted provisional transactions for a month
-When the user requests regeneration of deleted provisional transactions for that month and year
-Then the system un-marks the month as excluded
-And recreates the provisional transactions without duplicating existing ones
+Given an authenticated user who previously deleted provisional transactions for the current month
+When the user requests regeneration of deleted provisional transactions for the current month and year
+Then the system un-marks the month as excluded in the tracker
+And recreates the previsional transactions (isPreview = true, persisted) without duplicating existing ones
 ```
+
+### Scenario: Regenerate deleted virtual transactions for a future month
+```gherkin
+Given an authenticated user who previously deleted virtual transactions for a future month
+When the user requests regeneration of deleted transactions for that future month and year
+Then the system un-marks the month as excluded in the tracker
+And returns the corresponding virtual transactions (computed on-the-fly, not persisted)
+And no previsional transaction is created in the database
+```
+
+### Scenario: Regeneration for a past month has no effect
+```gherkin
+Given an authenticated user who requests regeneration for a past month
+When the user requests regeneration of deleted transactions for that past month and year
+Then the system returns an empty list
+And the tracker is not modified
+```
+
+> **Golden rule**: a regular transaction can only generate **previsional transactions** (persisted) when the targeted month is the **current month**. For future months, only **virtual transactions** (computed, not persisted) are produced. Regeneration for past months has no effect.
 
 ---
 

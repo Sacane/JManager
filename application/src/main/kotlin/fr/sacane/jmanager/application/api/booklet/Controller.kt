@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.Month
+import java.time.YearMonth
 import java.util.logging.Logger
 
 
@@ -159,8 +160,15 @@ class BookletController (
         @PathVariable("bookletID") bookletID: String,
         @RequestParam("month") month: Int,
         @RequestParam("year") year: Int,
-    ): ResponseEntity<List<TransactionResult>> {
+    ): ResponseEntity<RegenerateTransactionsResponse> {
         LOGGER.info("Regenerating deleted previsional transactions for booklet $bookletID, month=$month, year=$year")
+        val targetYearMonth = YearMonth.of(year, Month.of(month))
+        val currentYearMonth = YearMonth.now()
+        val type = when {
+            targetYearMonth.isBefore(currentYearMonth) -> RegenerationType.NONE
+            targetYearMonth == currentYearMonth -> RegenerationType.PREVISIONAL
+            else -> RegenerationType.VIRTUAL
+        }
         return feature
             .regenerateDeletedPrevisionalTransactions(
                 token = SessionToken(currentUser.token),
@@ -168,7 +176,12 @@ class BookletController (
                 month = Month.of(month),
                 year = year
             )
-            .map { transactions -> transactions.map { it.toDTO() } }
+            .map { transactions ->
+                RegenerateTransactionsResponse(
+                    transactions = transactions.map { it.toDTO() },
+                    type = type
+                )
+            }
             .toHttpResponse()
     }
 
@@ -208,6 +221,15 @@ data class BookletBalancesResponse(
 data class BookletTransactionsResponse(
     val transactions: List<TransactionResult>,
     val hasRegenerableTransactions: Boolean
+)
+
+@Serializable
+enum class RegenerationType { PREVISIONAL, VIRTUAL, NONE }
+
+@Serializable
+data class RegenerateTransactionsResponse(
+    val transactions: List<TransactionResult>,
+    val type: RegenerationType
 )
 
 private fun BookletBalances.toDTO(): BookletBalancesResponse = BookletBalancesResponse(

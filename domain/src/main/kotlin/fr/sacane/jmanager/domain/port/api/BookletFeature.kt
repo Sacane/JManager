@@ -517,9 +517,10 @@ class BookletFeatureImpl(
                 !rt.startDate.isAfter(resolvedRangeEnd)
             }
 
-            val hasRegenerableTransactions = trackersByRegularId.values.any { tracker ->
-                tracker.excludedMonths.contains(targetYearMonth)
-            }
+            val hasRegenerableTransactions = !targetYearMonth.isBefore(YearMonth.now()) &&
+                trackersByRegularId.values.any { tracker ->
+                    tracker.excludedMonths.contains(targetYearMonth)
+                }
 
             val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
@@ -637,22 +638,45 @@ class BookletFeatureImpl(
                     "Requested booklet is not registered",
                     "domain.booklet.regenerate.not_found"
                 )
+            val currentYearMonth = YearMonth.now()
+            val targetYearMonth = YearMonth.of(year, month)
+
+            if (targetYearMonth.isBefore(currentYearMonth)) {
+                return@executeInTransaction success(emptyList<Transaction>())
+            }
+
             val regularTransactions = regularTransactionRepository.getAllRegularUsedByBooklet(userId, bookletId)
                 ?: emptyList()
-            val targetYearMonth = YearMonth.of(year, month)
             regularTransactions.forEach { rt ->
                 val tracker = trackerRepository.findTracker(rt.id, bookletId)
                 if (tracker?.excludedMonths?.contains(targetYearMonth) == true) {
                     trackerRepository.unmarkMonthAsExcluded(rt.id, bookletId, year, month)
                 }
             }
-            val regenerated = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
-                bookletId,
-                regularTransactions,
-                month,
-                year
-            )
-            return@executeInTransaction success(regenerated)
+
+            if (targetYearMonth == currentYearMonth) {
+                val regenerated = regularTransactionGeneratorService.generateMissingPrevisionalTransactions(
+                    bookletId,
+                    regularTransactions,
+                    month,
+                    year
+                )
+                return@executeInTransaction success(regenerated)
+            } else {
+                val rangeStart = LocalDate.of(year, month, 1)
+                val rangeEnd = YearMonth.of(year, month).atEndOfMonth()
+                val existingPhysicalTransactions = transactionQueryRepository.findByBookletIdAndDateBetween(bookletId, rangeStart, rangeEnd)
+                val virtual = regularTransactionGeneratorService.calculateVirtualTransactions(
+                    bookletId = bookletId,
+                    regularTransactions = regularTransactions,
+                    startMonth = month,
+                    startYear = year,
+                    endMonth = month,
+                    endYear = year,
+                    existingPhysicalTransactions = existingPhysicalTransactions
+                )
+                return@executeInTransaction success(virtual)
+            }
         }
     }
 
