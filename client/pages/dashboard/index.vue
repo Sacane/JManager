@@ -500,7 +500,6 @@ const categoryExpensesData = computed(() => {
   }
 
   const sortedCategories = categoryDistribution.value.categories.toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
-    .slice(0, 6)
 
   return {
     labels: sortedCategories.map(cat => cat.tagLabel),
@@ -531,7 +530,6 @@ const topTagsInsights = computed(() => {
 
   return currentCategories
     .toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
-    .slice(0, 5)
     .map((category) => {
       const currentAmount = Number.parseFloat(category.totalAmount)
       const previousAmount = previousMap.get(category.tagId ?? category.tagLabel) ?? 0

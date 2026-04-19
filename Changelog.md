@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-19
+- **Fix: Dashboard doughnut chart — display all tags, not just top 5/6**
+  - Removed `.slice(0, 6)` from `categoryExpensesData` computed in `client/pages/dashboard/index.vue`: the chart now renders one slice per tag regardless of count.
+  - Removed `.slice(0, 5)` from `topTagsInsights` computed: the "Top tags de la période" list now shows all tags for the period sorted by descending expense amount.
+  - Added 4 new Vitest component tests covering all Gherkin scenarios from the issue: ≤ 6 tags (no regression), > 6 tags (all shown), sort order preserved, empty state.
+  - Introduced `settleDashboard()` helper in `dashboard-index.spec.ts` to reliably drain nested `Promise.all` chains in the loading sequence.
+
 ## 2026-04-15
 - **Refactor: Split infrastructure layer into `application/` and `infrastructure/` modules**
   - Extracted the **application layer** (`application/`) from the monolithic `infra/` module: REST controllers, DTOs, mappers, security config, session management, Spring Boot entry point, and all API-related configuration.

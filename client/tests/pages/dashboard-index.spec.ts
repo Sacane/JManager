@@ -33,6 +33,33 @@ const categoryCurrent = {
   totalExpenses: '400.00',
 }
 
+function makeCategory(tagLabel: string, tagId: string, totalAmount: string, percentage: number) {
+  return {
+    tagLabel,
+    tagId,
+    colorDTO: { red: 100, green: 100, blue: 100 },
+    totalAmount,
+    percentage,
+    transactionCount: 1,
+  }
+}
+
+// 9 tags in non-sorted order; Tag1 is the highest (300) and Tag9 the lowest (10)
+const nineTagDistribution = {
+  categories: [
+    makeCategory('Tag3', 'tag-3', '150.00', 15),
+    makeCategory('Tag1', 'tag-1', '300.00', 30),
+    makeCategory('Tag9', 'tag-9', '10.00', 1),
+    makeCategory('Tag5', 'tag-5', '80.00', 8),
+    makeCategory('Tag2', 'tag-2', '200.00', 20),
+    makeCategory('Tag7', 'tag-7', '40.00', 4),
+    makeCategory('Tag4', 'tag-4', '100.00', 10),
+    makeCategory('Tag8', 'tag-8', '20.00', 2),
+    makeCategory('Tag6', 'tag-6', '60.00', 6),
+  ],
+  totalExpenses: '960.00',
+}
+
 const getCategoryDistributionMock = vi.fn().mockResolvedValue(categoryCurrent)
 
 const getTrendStatsMock = vi.fn().mockResolvedValue({
@@ -81,6 +108,15 @@ vi.mock('~/composables/useUserSettings', () => ({
 
 function flushPromises() {
   return new Promise<void>(resolve => queueMicrotask(resolve))
+}
+
+async function settleDashboard() {
+  // loadDashboardData chains: withLoading → Promise.all([booklets, settings, ...])
+  // → loadStatsData() → Promise.all([getCategoryDistribution x2, getTrendStats x3, ...])
+  // Each nested await requires at least one microtask tick; drain with multiple flushes.
+  for (let i = 0; i < 8; i++) {
+    await flushPromises()
+  }
 }
 
 function mountDashboardPage() {
@@ -256,5 +292,99 @@ describe('pages/dashboard/index tags insights', () => {
       startDate: '2026-03-28',
       endDate: '2026-04-30',
     }))
+  })
+})
+
+describe('pages/dashboard/index category distribution chart completeness', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+
+    fetchBookletsMock.mockResolvedValue([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        amount: 1200,
+        label: 'Compte principal',
+        transactions: [],
+      },
+    ])
+
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 15,
+      bookletCycles: [
+        {
+          bookletId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
+        },
+      ],
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // Scenario 1 — 6 or fewer tags: no regression
+  it('shows all tags in insights list when there are 4 categories', async () => {
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.text()).toContain('Courses')
+    expect(wrapper.text()).toContain('Transport')
+  })
+
+  // Scenario 2 — more than 6 tags: list shows all 9
+  it('shows all 9 tags in insights list when there are 9 categories', async () => {
+    getCategoryDistributionMock.mockResolvedValue(nineTagDistribution)
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    for (const cat of nineTagDistribution.categories) {
+      expect(wrapper.text()).toContain(cat.tagLabel)
+    }
+  })
+
+  // Scenario 3 — tags are ordered by descending amount in both chart and list
+  it('orders tags by descending expense amount in insights list', async () => {
+    getCategoryDistributionMock.mockResolvedValue(nineTagDistribution)
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const text = wrapper.text()
+    // Tag1 (300) must appear before Tag2 (200), which must appear before Tag3 (150)
+    const pos1 = text.indexOf('Tag1')
+    const pos2 = text.indexOf('Tag2')
+    const pos3 = text.indexOf('Tag3')
+    expect(pos1).toBeGreaterThan(-1)
+    expect(pos2).toBeGreaterThan(-1)
+    expect(pos3).toBeGreaterThan(-1)
+    expect(pos1).toBeLessThan(pos2)
+    expect(pos2).toBeLessThan(pos3)
+  })
+
+  // Scenario 4 — empty state: no regression
+  it('shows empty state message when there are no categories', async () => {
+    getCategoryDistributionMock.mockResolvedValue({ categories: [], totalExpenses: '0.00' })
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.text()).toContain('Aucun tag de dépense sur cette période')
   })
 })
