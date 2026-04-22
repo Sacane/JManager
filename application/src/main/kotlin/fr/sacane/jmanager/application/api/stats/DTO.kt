@@ -116,6 +116,32 @@ fun MonthlyTrend.toDTO() = MonthlyTrendDTO(
     totalBooklets = totalBooklets
 )
 
+data class DailyTrendStatsDTO(
+    val dailyTrends: List<DailyTrendDTO>
+)
+
+data class DailyTrendDTO(
+    val date: LocalDate,
+    val income: String,
+    val expenses: String,
+    val balance: String,
+    val cumulativeBalance: String,
+    val totalBooklets: Int
+)
+
+fun DailyTrendStatsOutput.toDTO() = DailyTrendStatsDTO(
+    dailyTrends = dailyTrends.map { it.toDTO() }
+)
+
+fun DailyTrend.toDTO() = DailyTrendDTO(
+    date = date,
+    income = income.toStringValue(),
+    expenses = expenses.toStringValue(),
+    balance = balance.toStringValue(),
+    cumulativeBalance = cumulativeBalance.toStringValue(),
+    totalBooklets = totalBooklets
+)
+
 fun PrevisionalTransactionsOutput.toDTO(defaultTag: Tag) = PrevisionalTransactionsDTO(
     transactions = transactions.map { it.toTransactionDTO(defaultTag) },
     groupedByBooklet = groupedByBooklet.mapValues { (_, transactions) ->

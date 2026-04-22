@@ -50,7 +50,8 @@ class StatsFeatureTest : FeatureTest() {
                 statsFeature.getMonthlyBookletStats(UUID.randomUUID(), 2025, tokenValue),
                 statsFeature.getCategoryDistribution(tokenValue),
                 statsFeature.getTrendStats(tokenValue),
-                statsFeature.getPrevisionalTransactions(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3))
+                statsFeature.getPrevisionalTransactions(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3)),
+                statsFeature.getDailyTrendStats(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(1))
             )
     }
 
@@ -667,5 +668,148 @@ class StatsFeatureTest : FeatureTest() {
             tag = tag,
             isPreview = false
         )
+    }
+
+    @Nested
+    inner class DailyTrendStatsTest {
+
+        @Test
+        fun `Should return daily trends for a standard month`() {
+            launchWithConnectedUserInstance {
+                val transactions = listOf(
+                    generateTransaction("Salary", Amount(BigDecimal("2000")), true, LocalDate.of(2025, 1, 5)),
+                    generateTransaction("Groceries", Amount(BigDecimal("100")), false, LocalDate.of(2025, 1, 12))
+                )
+                initTransactions(transactions)
+
+                statsFeature.getDailyTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 1, 1),
+                    endDate = LocalDate.of(2025, 1, 31),
+                    bookletId = booklet.id
+                ).assertTrue {
+                    this.dailyTrends.size == 31
+                }
+            }
+        }
+
+        @Test
+        fun `Should return daily trends for cross-month custom cycle`() {
+            launchWithConnectedUserInstance {
+                val transactions = listOf(
+                    generateTransaction("Income", Amount(BigDecimal("500")), true, LocalDate.of(2025, 5, 27)),
+                    generateTransaction("Expense", Amount(BigDecimal("200")), false, LocalDate.of(2025, 6, 3))
+                )
+                initTransactions(transactions)
+
+                statsFeature.getDailyTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 5, 25),
+                    endDate = LocalDate.of(2025, 6, 24),
+                    bookletId = booklet.id
+                ).assertTrue {
+                    this.dailyTrends.size == 31 &&
+                        this.dailyTrends.first().date == LocalDate.of(2025, 5, 25) &&
+                        this.dailyTrends.last().date == LocalDate.of(2025, 6, 24)
+                }
+            }
+        }
+
+        @Test
+        fun `Should exclude preview transactions from daily trends`() {
+            launchWithConnectedUserInstance {
+                val transactions = listOf(
+                    generateTransaction("Real", Amount(BigDecimal("100")), true, LocalDate.of(2025, 1, 5), isPreview = false),
+                    generateTransaction("Preview", Amount(BigDecimal("999")), true, LocalDate.of(2025, 1, 5), isPreview = true)
+                )
+                initTransactions(transactions)
+
+                statsFeature.getDailyTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 1, 1),
+                    endDate = LocalDate.of(2025, 1, 31),
+                    bookletId = booklet.id
+                ).assertTrue {
+                    val day5 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 5) }
+                    day5 != null && day5.income == Amount(BigDecimal("100"))
+                }
+            }
+        }
+
+        @Test
+        fun `Should return zero entries when no transactions in range`() {
+            launchWithConnectedUserInstance {
+                initTransactions(emptyList())
+
+                statsFeature.getDailyTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 3, 1),
+                    endDate = LocalDate.of(2025, 3, 31),
+                    bookletId = booklet.id
+                ).assertTrue {
+                    this.dailyTrends.size == 31 &&
+                        this.dailyTrends.all { it.income.value.compareTo(BigDecimal.ZERO) == 0 }
+                }
+            }
+        }
+
+        @Test
+        fun `Should fail when start date is after end date`() {
+            launchWithConnectedUserInstance {
+                val result = statsFeature.getDailyTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 6, 1),
+                    endDate = LocalDate.of(2025, 5, 1),
+                    bookletId = booklet.id
+                )
+
+                result.assertFailure()
+                assertEquals("domain.stats.daily_trend.invalid_date_range", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Should scope daily trends to selected booklet`() {
+            launchWithConnectedUserInstance {
+                val transactions = listOf(
+                    generateTransaction("B1 Income", Amount(BigDecimal("300")), true, LocalDate.of(2025, 1, 5))
+                )
+                initTransactions(transactions)
+
+                statsFeature.getDailyTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 1, 1),
+                    endDate = LocalDate.of(2025, 1, 31),
+                    bookletId = booklet.id
+                ).assertTrue {
+                    this.dailyTrends.all { it.totalBooklets == 1 }
+                }
+            }
+        }
+
+        @Test
+        fun `Should compute cumulative balance correctly across days`() {
+            launchWithConnectedUserInstance {
+                val transactions = listOf(
+                    generateTransaction("Income", Amount(BigDecimal("1000")), true, LocalDate.of(2025, 1, 1)),
+                    generateTransaction("Expense", Amount(BigDecimal("300")), false, LocalDate.of(2025, 1, 10))
+                )
+                initTransactions(transactions)
+
+                statsFeature.getDailyTrendStats(
+                    token = tokenValue,
+                    startDate = LocalDate.of(2025, 1, 1),
+                    endDate = LocalDate.of(2025, 1, 31),
+                    bookletId = booklet.id
+                ).assertTrue {
+                    val day1 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 1) }
+                    val day10 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 10) }
+                    val day31 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 31) }
+                    day1 != null && day1.cumulativeBalance.value.compareTo(BigDecimal("1000")) == 0 &&
+                        day10 != null && day10.cumulativeBalance.value.compareTo(BigDecimal("700")) == 0 &&
+                        day31 != null && day31.cumulativeBalance.value.compareTo(BigDecimal("700")) == 0
+                }
+            }
+        }
     }
 }

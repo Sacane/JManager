@@ -50,6 +50,19 @@ data class MonthlyTrend(
     val totalBooklets: Int
 )
 
+data class DailyTrendStatsOutput(
+    val dailyTrends: List<DailyTrend>
+)
+
+data class DailyTrend(
+    val date: java.time.LocalDate,
+    val income: Amount,
+    val expenses: Amount,
+    val balance: Amount,
+    val cumulativeBalance: Amount,
+    val totalBooklets: Int
+)
+
 data class PrevisionalTransactionsOutput(
     val transactions: List<Transaction>,
     val groupedByBooklet: Map<String, List<Transaction>>,

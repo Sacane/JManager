@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.CategoryDistributionOutput
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.DailyTrendStatsOutput
 import fr.sacane.jmanager.domain.models.MonthlyBookletStatsOutput
 import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
@@ -14,6 +15,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculator
+import fr.sacane.jmanager.domain.usecase.DailyTrendCalculator
 import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculator
 import fr.sacane.jmanager.domain.usecase.PrevisionalTransactionFilter
 import fr.sacane.jmanager.domain.usecase.TrendCalculator
@@ -90,6 +92,22 @@ sealed interface StatsFeature {
         endDate: LocalDate,
         bookletId: UUID? = null
     ): Result<PrevisionalTransactionsOutput>
+
+    /**
+     * Retrieves daily trend statistics for the authenticated user within a specified date range.
+     *
+     * @param token The authentication token used to verify the user's identity and access permissions.
+     * @param startDate The starting date of the range (inclusive, required).
+     * @param endDate The ending date of the range (inclusive, required).
+     * @param bookletId Optional booklet identifier to scope the calculation.
+     * @return A Result object containing daily trend data wrapped in DailyTrendStatsOutput.
+     */
+    fun getDailyTrendStats(
+        token: SessionToken,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        bookletId: UUID? = null
+    ): Result<DailyTrendStatsOutput>
 }
 
 
@@ -101,6 +119,7 @@ class StatsFeatureImpl(
     private val monthlyStatsCalculator: MonthlyStatsCalculator,
     private val categoryDistributionCalculator: CategoryDistributionCalculator,
     private val trendCalculator: TrendCalculator,
+    private val dailyTrendCalculator: DailyTrendCalculator,
     private val previsionalTransactionFilter: PrevisionalTransactionFilter
 ) : StatsFeature {
     companion object {
@@ -314,6 +333,39 @@ class StatsFeatureImpl(
                     totalNonRegularAmount = result.totalNonRegularAmount,
                     startDate = startDate,
                     endDate = endDate
+                )
+            )
+        }
+    }
+
+    override fun getDailyTrendStats(
+        token: SessionToken,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        bookletId: UUID?
+    ): Result<DailyTrendStatsOutput> = session.authenticate(token) { userId ->
+        LOGGER.info("Fetching daily trend stats from $startDate to $endDate for user $userId")
+
+        if (startDate.isAfter(endDate)) {
+            return@authenticate domainFailure(
+                ResultState.INVALID,
+                "La date de début doit être antérieure à la date de fin",
+                "domain.stats.daily_trend.invalid_date_range"
+            )
+        }
+
+        withScopedBooklets(userId, bookletId) { scopedBooklets ->
+            val dailyTrends = dailyTrendCalculator.calculateDailyTrend(
+                booklets = scopedBooklets,
+                startDate = startDate,
+                endDate = endDate
+            )
+
+            LOGGER.info("Daily trend stats calculated: ${dailyTrends.size} days processed")
+
+            success(
+                DailyTrendStatsOutput(
+                    dailyTrends = dailyTrends
                 )
             )
         }
