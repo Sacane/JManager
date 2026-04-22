@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
+import type { AppTableColumn } from '~/components/AppTable.vue'
 import { useConfirm } from 'primevue/useconfirm'
 import useCsvImport from '~/composables/useCsvImport'
 import useTransaction from '~/composables/useTransaction'
@@ -464,6 +465,16 @@ function toggleMobileMenu() {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
 }
 
+const bookletTransactionColumns: AppTableColumn[] = [
+  { selectionMode: 'multiple', style: { width: '3rem' } },
+  { field: 'date', header: 'Date', sortable: true, style: { minWidth: '120px' }, slotName: 'date' },
+  { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '200px' }, slotName: 'label' },
+  { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px' }, slotName: 'expenses' },
+  { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px' }, slotName: 'income' },
+  { style: { width: '180px', minWidth: '180px', maxWidth: '180px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
+  { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions' },
+]
+
 function openCsvImportFromMenu() {
   isMobileMenuOpen.value = false
   openCsvImportDialog()
@@ -784,15 +795,14 @@ onUnmounted(() => {
       </div>
 
       <div v-if="!isMobile" class="sticky top-0 h-[100dvh] bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
-        <DataTable
+        <AppTable
           v-model:selection="selectedTransactions"
-          :value="filteredTransactions"
+          :columns="bookletTransactionColumns"
+          :rows="filteredTransactions"
           data-key="selectionKey"
           :row-class="rowClass"
+          selectable
           scrollable
-          scroll-height="flex"
-          selection-mode="multiple"
-          :meta-key-selection="false"
           @row-dblclick="onEditTransaction"
         >
           <template #empty>
@@ -808,111 +818,98 @@ onUnmounted(() => {
             </div>
           </template>
 
-          <Column selection-mode="multiple" :style="{ width: '3rem' }" />
+          <template #body-date="{ data }">
+            <div class="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
+              <i class="pi pi-calendar text-[var(--primary)] text-sm" />
+              <span>{{ data.date }}</span>
+            </div>
+          </template>
 
-          <Column field="date" header="Date" :sortable="true" :style="{ minWidth: '120px' }">
-            <template #body="{ data }">
-              <div class="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
-                <i class="pi pi-calendar text-[var(--primary)] text-sm" />
-                <span>{{ data.date }}</span>
-              </div>
-            </template>
-          </Column>
+          <template #body-label="{ data }">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
+              <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm" title="Transaction prévisionnelle" />
+            </div>
+          </template>
 
-          <Column field="label" header="Libellé" :sortable="true" :style="{ minWidth: '200px' }">
-            <template #body="{ data }">
-              <div class="flex items-center gap-2">
-                <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
-                <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm" title="Transaction prévisionnelle" />
-              </div>
-            </template>
-          </Column>
+          <template #body-expenses="{ data }">
+            <span v-if="!data.isIncome" class="font-extrabold text-red-500">{{ data.expensesRepresentation }}</span>
+            <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
+          </template>
 
-          <Column field="expenseSortValue" header="Dépenses" :sortable="true" :style="{ minWidth: '120px' }">
-            <template #body="{ data }">
-              <span v-if="!data.isIncome" class="font-extrabold text-red-500">{{ data.expensesRepresentation }}</span>
-              <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
-            </template>
-          </Column>
+          <template #body-income="{ data }">
+            <span v-if="data.isIncome" class="font-extrabold text-emerald-500">{{ data.incomeRepresentation }}</span>
+            <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
+          </template>
 
-          <Column field="incomeSortValue" header="Recettes" :sortable="true" :style="{ minWidth: '120px' }">
-            <template #body="{ data }">
-              <span v-if="data.isIncome" class="font-extrabold text-emerald-500">{{ data.incomeRepresentation }}</span>
-              <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
-            </template>
-          </Column>
+          <template #header-tagFilter>
+            <div class="w-full" @click.stop>
+              <Select
+                v-model="selectedTagFilter"
+                :options="tagFilterOptions"
+                option-label="label"
+                option-value="value"
+                class="w-full text-xs"
+                size="small"
+              >
+                <template #value="{ value: val }">
+                  <span class="text-xs font-semibold" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+                    {{ val ? (tagFilterOptions.find(o => o.value === val)?.label ?? val) : 'Tag' }}
+                  </span>
+                </template>
+                <template #option="{ option }">
+                  <span v-if="!option.value" class="text-sm text-[var(--text-secondary)]">Tous les tags</span>
+                  <Tag
+                    v-else
+                    :value="option.label"
+                    :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
+                    class="text-xs"
+                  />
+                </template>
+              </Select>
+            </div>
+          </template>
 
-          <Column field="tagDTO" :style="{ width: '180px', minWidth: '180px', maxWidth: '180px' }">
-            <template #header>
-              <div class="w-full" @click.stop>
-                <Select
-                  v-model="selectedTagFilter"
-                  :options="tagFilterOptions"
-                  option-label="label"
-                  option-value="value"
-                  class="w-full text-xs"
-                  size="small"
-                >
-                  <template #value="{ value: val }">
-                    <span class="text-xs font-semibold" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
-                      {{ val ? (tagFilterOptions.find(o => o.value === val)?.label ?? val) : 'Tag' }}
-                    </span>
-                  </template>
-                  <template #option="{ option }">
-                    <span v-if="!option.value" class="text-sm text-[var(--text-secondary)]">Tous les tags</span>
-                    <Tag
-                      v-else
-                      :value="option.label"
-                      :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
-                      class="text-xs"
-                    />
-                  </template>
-                </Select>
-              </div>
-            </template>
-            <template #body="{ data }">
-              <div class="max-w-[148px] overflow-hidden">
-                <Tag
-                  :value="data.tagDTO.label"
-                  :style="getTagStyle(data.tagDTO.colorDTO)"
-                  class="block max-w-full truncate"
-                  :title="data.tagDTO.label"
-                />
-              </div>
-            </template>
-          </Column>
+          <template #body-tag="{ data }">
+            <div class="max-w-[148px] overflow-hidden">
+              <Tag
+                :value="data.tagDTO.label"
+                :style="getTagStyle(data.tagDTO.colorDTO)"
+                class="block max-w-full truncate"
+                :title="data.tagDTO.label"
+              />
+            </div>
+          </template>
 
-          <Column header="Actions" :style="{ width: '140px', textAlign: 'center' }">
-            <template #body="{ data }">
-              <div class="flex items-center justify-center gap-1">
-                <Button
-                  v-if="data.id"
-                  class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
-                  icon="pi pi-pencil"
-                  text
-                  rounded
-                  size="small"
-                  :disabled="isAnyActionLoading"
-                  title="Modifier la transaction"
-                  @click="onEditTransaction({ data })"
-                />
-                <Button
-                  v-if="data.isPreview"
-                  class="text-emerald-500 hover:bg-emerald-500/15"
-                  icon="pi pi-check"
-                  text
-                  rounded
-                  size="small"
-                  severity="success"
-                  :loading="isConfirmPreviewLoading"
-                  :disabled="isAnyActionLoading"
-                  title="Valider la transaction prévisionnel"
-                  @click="onConfirmPreview(data)"
-                />
-              </div>
-            </template>
-          </Column>
-        </DataTable>
+          <template #body-actions="{ data }">
+            <div class="flex items-center justify-center gap-1">
+              <Button
+                v-if="data.id"
+                class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
+                icon="pi pi-pencil"
+                text
+                rounded
+                size="small"
+                :disabled="isAnyActionLoading"
+                title="Modifier la transaction"
+                @click="onEditTransaction({ data })"
+              />
+              <Button
+                v-if="data.isPreview"
+                class="text-emerald-500 hover:bg-emerald-500/15"
+                icon="pi pi-check"
+                text
+                rounded
+                size="small"
+                severity="success"
+                :loading="isConfirmPreviewLoading"
+                :disabled="isAnyActionLoading"
+                title="Valider la transaction prévisionnel"
+                @click="onConfirmPreview(data)"
+              />
+            </div>
+          </template>
+        </AppTable>
       </div>
 
       <div v-else class="flex flex-col">
@@ -1184,95 +1181,6 @@ onUnmounted(() => {
   outline: none !important;
   box-shadow: none !important;
   border-color: var(--card-border) !important;
-}
-
-:deep(.p-datatable) .p-datatable-thead > tr > th {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  font-weight: 700;
-  padding: 16px;
-  border: none;
-  text-transform: uppercase;
-  font-size: 0.875rem;
-  letter-spacing: 0.05em;
-}
-:deep(.p-datatable) .p-datatable-tbody > tr {
-  transition: all 0.2s ease;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--card-bg);
-}
-:deep(.p-datatable) .p-datatable-tbody > tr:nth-child(even) {
-  background: rgba(130, 42, 204, 0.03);
-}
-.dark :deep(.p-datatable) .p-datatable-tbody > tr:nth-child(even) {
-  background: rgba(130, 42, 204, 0.08);
-}
-:deep(.p-datatable) .p-datatable-tbody > tr:hover {
-  background: var(--card-hover-bg) !important;
-}
-:deep(.p-datatable) .p-datatable-tbody > tr > td {
-  padding: 16px;
-  border: none;
-  color: var(--text-primary);
-}
-:deep(.p-datatable) .p-button.p-button-text.p-button-rounded {
-  width: 2.5rem;
-  height: 2.5rem;
-  transition: all 0.2s ease;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  opacity: 0.6;
-}
-:deep(.p-datatable) .p-button.p-button-text.p-button-rounded:hover {
-  transform: scale(1.1);
-  opacity: 1;
-  box-shadow: 0 2px 8px currentColor;
-}
-:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\] {
-  border-color: rgba(130, 42, 204, 0.4);
-}
-:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]:hover {
-  border-color: rgba(130, 42, 204, 0.8);
-  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
-}
-:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-emerald-500 {
-  border-color: rgba(16, 185, 129, 0.4);
-}
-:deep(.p-datatable) .p-button.p-button-text.p-button-rounded.text-emerald-500:hover {
-  border-color: rgba(16, 185, 129, 0.8);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-:deep(.p-datatable) .preview-row {
-  background: rgba(245, 158, 11, 0.08) !important;
-  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.45);
-}
-:deep(.p-datatable) .preview-row:nth-child(even) {
-  background: rgba(245, 158, 11, 0.15) !important;
-}
-:deep(.p-datatable) .preview-row:hover {
-  background: rgba(245, 158, 11, 0.20) !important;
-}
-@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
-  :deep(.p-datatable) .preview-row {
-    background: color-mix(in oklab, #f59e0b 12%, var(--card-bg)) !important;
-  }
-  :deep(.p-datatable) .preview-row:nth-child(even) {
-    background: color-mix(in oklab, #f59e0b 18%, var(--card-bg)) !important;
-  }
-  :deep(.p-datatable) .preview-row:hover {
-    background: color-mix(in oklab, #f59e0b 24%, var(--card-bg)) !important;
-  }
-}
-.dark :deep(.p-datatable) .preview-row {
-  background: rgba(245, 158, 11, 0.15) !important;
-  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.6);
-}
-.dark :deep(.p-datatable) .preview-row:nth-child(even) {
-  background: rgba(245, 158, 11, 0.22) !important;
-}
-.dark :deep(.p-datatable) .preview-row:hover {
-  background: rgba(245, 158, 11, 0.28) !important;
 }
 
 :deep(.p-button.btn-primary) {

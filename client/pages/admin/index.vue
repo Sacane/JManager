@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AppTableColumn } from '~/components/AppTable.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import useAdmin from '~/composables/useAdmin'
 import useAuth from '~/composables/useAuth'
@@ -114,6 +115,14 @@ function updateIsMobile() {
     isMobileWidth.value = window.innerWidth <= 1024
   }
 }
+
+const adminUserColumns: AppTableColumn[] = [
+  { field: 'username', header: 'Nom d\'utilisateur', sortable: true, slotName: 'username' },
+  { field: 'email', header: 'Email', slotName: 'email' },
+  { field: 'roles', header: 'Rôle', sortable: true, slotName: 'roles' },
+  { field: 'createdDate', header: 'Date de création', sortable: true, slotName: 'createdDate' },
+  { header: 'Actions', exportable: false, style: 'width: 80px', slotName: 'actions' },
+]
 
 onMounted(() => {
   loadUsers()
@@ -299,14 +308,13 @@ onBeforeUnmount(() => {
           </template>
         </div>
 
-        <DataTable
+        <AppTable
           v-else
-          :value="users"
+          :columns="adminUserColumns"
+          :rows="users"
+          data-key="id"
           :loading="isLoading"
-          striped-rows
-          responsive-layout="scroll"
           class="users-datatable"
-          :paginator="false"
         >
           <template #empty>
             <div class="empty-state">
@@ -332,58 +340,48 @@ onBeforeUnmount(() => {
             </div>
           </template>
 
-          <Column field="username" header="Nom d'utilisateur" :sortable="true">
-            <template #body="{ data }">
-              <div class="user-cell">
-                <div class="user-avatar-small">
-                  <i class="pi pi-user" />
-                </div>
-                <span class="username-text">{{ data.username }}</span>
+          <template #body-username="{ data }">
+            <div class="user-cell">
+              <div class="user-avatar-small">
+                <i class="pi pi-user" />
               </div>
-            </template>
-          </Column>
+              <span class="username-text">{{ data.username }}</span>
+            </div>
+          </template>
 
-          <Column field="email" header="Email">
-            <template #body="{ data }">
-              <span v-if="data.email" class="email-text">
-                <i class="pi pi-envelope" />
-                {{ data.email }}
-              </span>
-              <span v-else class="text-muted">N/A</span>
-            </template>
-          </Column>
+          <template #body-email="{ data }">
+            <span v-if="data.email" class="email-text">
+              <i class="pi pi-envelope" />
+              {{ data.email }}
+            </span>
+            <span v-else class="text-muted">N/A</span>
+          </template>
 
-          <Column field="roles" header="Rôle" :sortable="true">
-            <template #body="{ data }">
-              <Tag
-                :value="getRoleLabel(data.roles)"
-                :class="getRoleBadgeClass(data.roles)"
-                class="role-badge"
-              />
-            </template>
-          </Column>
+          <template #body-roles="{ data }">
+            <Tag
+              :value="getRoleLabel(data.roles)"
+              :class="getRoleBadgeClass(data.roles)"
+              class="role-badge"
+            />
+          </template>
 
-          <Column field="createdDate" header="Date de création" :sortable="true">
-            <template #body="{ data }">
-              <div class="date-cell">
-                <i class="pi pi-calendar" />
-                <span>{{ formatDateTime(data.createdDate) }}</span>
-              </div>
-            </template>
-          </Column>
+          <template #body-createdDate="{ data }">
+            <div class="date-cell">
+              <i class="pi pi-calendar" />
+              <span>{{ formatDateTime(data.createdDate) }}</span>
+            </div>
+          </template>
 
-          <Column header="Actions" :exportable="false" style="width: 80px">
-            <template #body>
-              <Button
-                icon="pi pi-ellipsis-v"
-                severity="secondary"
-                text
-                rounded
-                aria-label="Actions"
-              />
-            </template>
-          </Column>
-        </DataTable>
+          <template #body-actions>
+            <Button
+              icon="pi pi-ellipsis-v"
+              severity="secondary"
+              text
+              rounded
+              aria-label="Actions"
+            />
+          </template>
+        </AppTable>
 
         <div v-if="totalPages > 1" class="pagination-container">
           <Paginator
@@ -577,43 +575,7 @@ onBeforeUnmount(() => {
 }
 
 .users-datatable {
-  :deep(.p-datatable-wrapper) {
-    border-radius: 12px;
-    overflow: hidden;
-    background: var(--card-bg);
-  }
-
-  :deep(.p-datatable-thead > tr > th) {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
-    color: white;
-    font-weight: 600;
-    padding: 1rem;
-    border: none;
-    font-size: 0.95rem;
-  }
-
-  :deep(.p-datatable-tbody > tr) {
-    background: var(--card-bg);
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: var(--card-hover-bg) !important;
-    }
-
-    > td {
-      padding: 1rem;
-      border-bottom: 1px solid var(--border-color);
-      color: var(--text-primary);
-    }
-  }
-
-  :deep(.p-datatable-striped .p-datatable-tbody > tr:nth-child(even)) {
-    background: var(--bg-tertiary);
-
-    &:hover {
-      background: var(--card-hover-bg) !important;
-    }
-  }
+  width: 100%;
 }
 
 .user-cell {

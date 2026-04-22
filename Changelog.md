@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-04-22
+- **Feature: Reusable `AppTable` component (client)**
+  - Created `client/components/AppTable.vue`: a generic, typed wrapper around PrimeVue `DataTable` that consolidates all shared DataTable configuration and CSS overrides.
+  - Supports props: `columns: AppTableColumn[]`, `rows`, `dataKey`, `selectable`, `rowClass`, `scrollable`, `scrollHeight`, `loading`.
+  - Supports events: `row-dblclick`, `update:selection` (fully compatible with `v-model:selection`).
+  - Supports dynamic named slots: `#empty`, `#loading`, `#body-{slotName}`, `#header-{headerSlotName}`.
+  - Exported `AppTableColumn` TypeScript interface with: `field`, `header`, `sortable`, `style`, `headerStyle`, `slotName`, `headerSlotName`, `selectionMode`, `frozen`, `alignFrozen`, `exportable`.
+  - Bundles all shared `:deep()` CSS overrides (header gradient, zebra striping, hover, cell padding, action button styles, preview-row amber highlight).
+  - Added 15 Vitest unit tests in `client/tests/components/AppTable.spec.ts` covering: column rendering, empty state slot, selection toggle (enable/disable), selection column visibility, `row-dblclick` event, custom body/header slots, and `rowClass` application.
+  - Migrated `client/pages/booklet/[id].vue` to use `AppTable` — removed 80+ lines of duplicated DataTable template and CSS.
+  - Migrated `client/pages/admin/index.vue` to use `AppTable` — removed `.users-datatable` DataTable CSS overrides.
+  - Migrated `client/pages/regular-transaction/index.vue` to use `AppTable` with a computed `regularTransactionColumns` that handles responsive frozen column ordering — removed duplicated DataTable CSS.
+  - Updated `client/tests/pages/regular-transaction-index.spec.ts` to stub `AppTable` instead of `DataTable`/`Column`.
+  - All 102 client tests pass green.
+
 ## 2026-04-19
 - **Fix: Dashboard doughnut chart — display all tags, not just top 5/6**
   - Removed `.slice(0, 6)` from `categoryExpensesData` computed in `client/pages/dashboard/index.vue`: the chart now renders one slice per tag regardless of count.
