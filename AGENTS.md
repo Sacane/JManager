@@ -179,6 +179,7 @@ You must follow the following guidelines in depends on the contexte you are work
 - ./docs/agents/instructions/kotlin-coding-guidelines.md for all development tasks.
 - ./docs/agents/instructions/testing-guidelines.md whenever you are writing or reviewing tests.
 - ./docs/agents/instructions/agents-md-maintenance.md whenever you have to maintain guidelines.
+- ./docs/agents/instructions/frontend.instructions.md for **every** frontend change under `client/` (architecture, stack, testing, component duplication policy).
 
 
 ## Skills Guidelines

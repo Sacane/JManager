@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AppTableColumn } from '~/components/AppTable.vue'
 import useDate from '~/composables/useDate'
 import authMiddleware from '~/middleware/auth'
 import { getTagStyle } from '~/utils/util'
@@ -225,6 +226,35 @@ function checkMobile() {
 const transactionsCount = computed(() => transactions.value.length)
 const selectedTransactionsCount = computed(() => selectedTransactions.value.length)
 
+const regularTransactionColumns = computed<AppTableColumn[]>(() => {
+  const cols: AppTableColumn[] = [
+    { selectionMode: 'multiple', headerStyle: 'width: 3rem' },
+    { field: 'label', header: 'Libellé', style: { minWidth: '200px' }, slotName: 'label' },
+    { field: 'isIncome', header: 'Type', style: { minWidth: '130px' }, slotName: 'type' },
+    { field: 'value', header: 'Montant', style: { minWidth: '150px' }, slotName: 'montant' },
+    { field: 'tag', header: 'Catégorie', style: { minWidth: '150px' }, slotName: 'tag' },
+    { field: 'regularity', header: 'Fréquence', style: { minWidth: '130px' }, slotName: 'regularity' },
+  ]
+
+  if (!isSmallScreen.value) {
+    cols.push({ field: 'startDate', header: 'Date de début', style: { minWidth: '140px' }, slotName: 'startDate' })
+  }
+
+  cols.push({
+    header: 'Actions',
+    style: { minWidth: '160px' },
+    frozen: !isSmallScreen.value,
+    alignFrozen: !isSmallScreen.value ? 'right' : undefined,
+    slotName: 'actions',
+  })
+
+  if (isSmallScreen.value) {
+    cols.push({ field: 'startDate', header: 'Date de début', style: { minWidth: '140px' }, slotName: 'startDate' })
+  }
+
+  return cols
+})
+
 // ── Link dialog ──────────────────────────────────────────────────────────────
 const isLinkDialogVisible = ref(false)
 const linkTargetTransaction = ref<RegularTransactionDTO | null>(null)
@@ -345,17 +375,15 @@ async function handleUnlink() {
     </div>
 
     <div v-if="!isMobile" class="flex-1 rounded-5 overflow-hidden shadow-lg border" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
-      <DataTable
+      <AppTable
         v-model:selection="selectedTransactions"
-        :value="transactions"
+        :columns="regularTransactionColumns"
+        :rows="transactions"
         data-key="id"
-        selection-mode="multiple"
+        selectable
         scrollable
-        scroll-height="flex"
-        striped-rows
         @row-dblclick="handleRowDoubleClick"
       >
-        <Column selection-mode="multiple" header-style="width: 3rem" />
         <template #empty>
           <div class="flex flex-col items-center justify-center p-15 text-center md:p-10">
             <i class="pi pi-sync text-4rem mb-4" style="color: var(--text-muted);" />
@@ -374,95 +402,69 @@ async function handleUnlink() {
           </div>
         </template>
 
-        <Column field="label" header="Libellé" :style="{ minWidth: '200px' }">
-          <template #body="{ data }">
-            <div class="flex items-center gap-2">
-              <span class="font-semibold" style="color: var(--text-primary);">{{ data.label }}</span>
-            </div>
-          </template>
-        </Column>
+        <template #body-label="{ data }">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold" style="color: var(--text-primary);">{{ data.label }}</span>
+          </div>
+        </template>
 
-        <Column field="isIncome" header="Type" :style="{ minWidth: '130px' }">
-          <template #body="slotProps">
-            <Tag
-              :value="slotProps.data.isIncome ? 'Recette' : 'Dépense'"
-              :severity="slotProps.data.isIncome ? 'success' : 'danger'"
-              :icon="slotProps.data.isIncome ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"
+        <template #body-type="{ data }">
+          <Tag
+            :value="data.isIncome ? 'Recette' : 'Dépense'"
+            :severity="data.isIncome ? 'success' : 'danger'"
+            :icon="data.isIncome ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"
+          />
+        </template>
+
+        <template #body-montant="{ data }">
+          <span class="font-extrabold text-1.1rem font-mono" :class="data.isIncome ? 'text-green-500 before:content-[\'+_\']' : 'text-red-500 before:content-[\'-_\']'">
+            {{ Math.abs(data.value).toFixed(2) }} €
+          </span>
+        </template>
+
+        <template #body-tag="{ data }">
+          <Tag :value="data.tagDTO.label" :style="getTagStyle(data.tagDTO.colorDTO)" />
+        </template>
+
+        <template #body-regularity="{ data }">
+          <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
+            <i class="pi pi-clock text-0.875rem text-purple-600" />
+            <span>{{ frequencyToString(data.regularity) }}</span>
+          </div>
+        </template>
+
+        <template #body-startDate="{ data }">
+          <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
+            <i class="pi pi-calendar text-0.875rem text-purple-600" />
+            <span>{{ data.startDate }}</span>
+          </div>
+        </template>
+
+        <template #body-actions="{ data }">
+          <div class="flex items-center gap-2">
+            <Button
+              v-tooltip.top="'Lier à un livret'"
+              data-test="btn-link"
+              icon="pi pi-link"
+              size="small"
+              severity="secondary"
+              outlined
+              :disabled="getUnlinkedBookletsFor(data).length === 0"
+              @click.stop="openLinkDialog(data)"
             />
-          </template>
-        </Column>
-
-        <Column field="value" header="Montant" :style="{ minWidth: '150px' }">
-          <template #body="slotProps">
-            <span class="font-extrabold text-1.1rem font-mono" :class="slotProps.data.isIncome ? 'text-green-500 before:content-[\'+_\']' : 'text-red-500 before:content-[\'-_\']'">
-              {{ Math.abs(slotProps.data.value).toFixed(2) }} €
-            </span>
-          </template>
-        </Column>
-
-        <!-- Small screen: Tag before Fréquence -->
-        <Column field="tag" header="Catégorie" :style="{ minWidth: '150px' }">
-          <template #body="slotProps">
-            <Tag :value="slotProps.data.tagDTO.label" :style="getTagStyle(slotProps.data.tagDTO.colorDTO)" />
-          </template>
-        </Column>
-
-        <Column field="regularity" header="Fréquence" :style="{ minWidth: '130px' }">
-          <template #body="slotProps">
-            <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
-              <i class="pi pi-clock text-0.875rem text-purple-600" />
-              <span>{{ frequencyToString(slotProps.data.regularity) }}</span>
-            </div>
-          </template>
-        </Column>
-
-        <!-- Normal screen: Date de début and Tag before Actions (frozen right) -->
-        <Column v-if="!isSmallScreen" field="startDate" header="Date de début" :style="{ minWidth: '140px' }">
-          <template #body="{ data }">
-            <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
-              <i class="pi pi-calendar text-0.875rem text-purple-600" />
-              <span>{{ data.startDate }}</span>
-            </div>
-          </template>
-        </Column>
-
-        <Column header="Actions" :style="{ minWidth: '160px' }" :frozen="!isSmallScreen" :align-frozen="!isSmallScreen ? 'right' : undefined">
-          <template #body="{ data }">
-            <div class="flex items-center gap-2">
-              <Button
-                v-tooltip.top="'Lier à un livret'"
-                data-test="btn-link"
-                icon="pi pi-link"
-                size="small"
-                severity="secondary"
-                outlined
-                :disabled="getUnlinkedBookletsFor(data).length === 0"
-                @click.stop="openLinkDialog(data)"
-              />
-              <Button
-                v-tooltip.top="'Délier d\'un livret'"
-                data-test="btn-unlink"
-                icon="pi pi-minus-circle"
-                size="small"
-                severity="warning"
-                outlined
-                :disabled="getLinkedActiveBookletsFor(data).length === 0"
-                @click.stop="openUnlinkDialog(data)"
-              />
-            </div>
-          </template>
-        </Column>
-
-        <!-- Small screen: Date de début last -->
-        <Column v-if="isSmallScreen" field="startDate" header="Date de début" :style="{ minWidth: '140px' }">
-          <template #body="{ data }">
-            <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
-              <i class="pi pi-calendar text-0.875rem text-purple-600" />
-              <span>{{ data.startDate }}</span>
-            </div>
-          </template>
-        </Column>
-      </DataTable>
+            <Button
+              v-tooltip.top="'Délier d\'un livret'"
+              data-test="btn-unlink"
+              icon="pi pi-minus-circle"
+              size="small"
+              severity="warning"
+              outlined
+              :disabled="getLinkedActiveBookletsFor(data).length === 0"
+              @click.stop="openUnlinkDialog(data)"
+            />
+          </div>
+        </template>
+      </AppTable>
     </div>
 
     <!-- Liste des transactions (Mobile) -->
@@ -671,34 +673,6 @@ async function handleUnlink() {
 }
 :deep(.p-dropdown-trigger), :deep(.p-datepicker-trigger), :deep(.p-select-trigger), :deep(.p-icon) {
   color: var(--text-secondary) !important;
-}
-
-:deep(.p-datatable) .p-datatable-thead > tr > th {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: white;
-  font-weight: 700;
-  padding: 16px;
-  border: none;
-  text-transform: uppercase;
-  font-size: 0.875rem;
-  letter-spacing: 0.05em;
-}
-
-:deep(.p-datatable) .p-datatable-tbody > tr {
-  transition: all 0.2s ease;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--card-bg);
-  cursor: pointer;
-}
-
-:deep(.p-datatable) .p-datatable-tbody > tr:hover {
-  background: var(--card-hover-bg);
-}
-
-:deep(.p-datatable) .p-datatable-tbody > tr > td {
-  padding: 16px;
-  border: none;
-  color: var(--text-primary);
 }
 
 :deep(.p-tag) {

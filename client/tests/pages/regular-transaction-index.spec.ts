@@ -97,8 +97,7 @@ function mountPage(options?: {
   const wrapper = shallowMount(RegularTransactionPage, {
     global: {
       stubs: {
-        DataTable: { template: '<div><slot /><slot name="empty" /></div>' },
-        Column: { template: '<div><slot :data="{}" /></div>' },
+        AppTable: { template: '<div><slot name="empty" /></div>' },
         Button: { props: ['label'], template: '<button>{{ label }}<slot /></button>' },
         Tag: { template: '<span><slot /></span>' },
         ConfirmDialog: true,
@@ -347,13 +346,11 @@ function mountPageForDialogTests(options?: { linkReject?: any, unlinkReject?: an
   const wrapper = shallowMount(RegularTransactionPage, {
     global: {
       stubs: {
-        // Rend le slot nommé "body" avec les deux transactions de test
-        DataTable: { template: '<div><slot /><slot name="empty" /></div>' },
-        Column: {
-          props: ['header'],
-          template: `<div v-if="header === 'Actions'">
-            <slot name="body" :data="{ id: 'rt-all-linked', bookletIds: ['booklet-1'] }" />
-            <slot name="body" :data="{ id: 'rt-none-linked', bookletIds: [] }" />
+        // Rend le slot body-actions avec les deux transactions de test
+        AppTable: {
+          template: `<div>
+            <slot name="body-actions" :data="{ id: 'rt-all-linked', bookletIds: ['booklet-1'] }" />
+            <slot name="body-actions" :data="{ id: 'rt-none-linked', bookletIds: [] }" />
           </div>`,
         },
         Button: ClickableButtonStub,
@@ -376,8 +373,8 @@ describe('pages/regular-transaction/index – link/unlink button conditions', ()
     await flushPromises()
 
     const linkButtons = wrapper.findAll('[data-test="btn-link"]')
-    const allLinkedBtn = linkButtons.find(b => b.attributes('data-label') === undefined
-      && b.element.closest
+    linkButtons.find(b => b.attributes('data-label') === undefined
+      && b.element.closest()
       && wrapper.findAll('[data-test="btn-link"]')[0] === b)
     // Premier btn-link correspond à rt-all-linked (bookletIds=['booklet-1'] == tous les livrets actifs)
     expect(linkButtons[0].attributes('disabled')).toBeDefined()
@@ -410,4 +407,3 @@ describe('pages/regular-transaction/index – link/unlink button conditions', ()
     expect(unlinkButtons[1].attributes('disabled')).toBeDefined()
   })
 })
-
