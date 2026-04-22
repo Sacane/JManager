@@ -218,6 +218,25 @@ function handleBulkDelete() {
 function isSelected(transaction: RegularTransactionDTO): boolean {
   return selectedTransactions.value.some(t => t.id === transaction.id)
 }
+
+const selectedTagFilter = ref<string>('')
+
+const tagFilterOptions = computed(() => [
+  { label: 'Tous les tags', value: '', colorDTO: null as null | ColorDTO },
+  ...Array.from(
+    new Map(
+      transactions.value
+        .filter(t => t.tagDTO?.tagId)
+        .map(t => [t.tagDTO.tagId, t.tagDTO]),
+    ).values(),
+  ).map(tag => ({ label: tag.label ?? '', value: tag.tagId ?? '', colorDTO: tag.colorDTO })),
+])
+
+const filteredTransactions = computed(() => {
+  if (selectedTagFilter.value === '') return transactions.value
+  return transactions.value.filter(t => (t.tagDTO?.tagId ?? '') === selectedTagFilter.value)
+})
+
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768
   isSmallScreen.value = window.innerWidth > 768 && window.innerWidth <= 1200
@@ -229,15 +248,15 @@ const selectedTransactionsCount = computed(() => selectedTransactions.value.leng
 const regularTransactionColumns = computed<AppTableColumn[]>(() => {
   const cols: AppTableColumn[] = [
     { selectionMode: 'multiple', headerStyle: 'width: 3rem' },
-    { field: 'label', header: 'Libellé', style: { minWidth: '200px' }, slotName: 'label' },
+    { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '200px' }, slotName: 'label' },
     { field: 'isIncome', header: 'Type', style: { minWidth: '130px' }, slotName: 'type' },
-    { field: 'value', header: 'Montant', style: { minWidth: '150px' }, slotName: 'montant' },
-    { field: 'tag', header: 'Catégorie', style: { minWidth: '150px' }, slotName: 'tag' },
+    { field: 'value', header: 'Montant', sortable: true, style: { minWidth: '150px' }, slotName: 'montant' },
+    { style: { width: '180px', minWidth: '180px', maxWidth: '180px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
     { field: 'regularity', header: 'Fréquence', style: { minWidth: '130px' }, slotName: 'regularity' },
   ]
 
   if (!isSmallScreen.value) {
-    cols.push({ field: 'startDate', header: 'Date de début', style: { minWidth: '140px' }, slotName: 'startDate' })
+    cols.push({ field: 'startDate', header: 'Date de début', sortable: true, style: { minWidth: '140px' }, slotName: 'startDate' })
   }
 
   cols.push({
@@ -249,7 +268,7 @@ const regularTransactionColumns = computed<AppTableColumn[]>(() => {
   })
 
   if (isSmallScreen.value) {
-    cols.push({ field: 'startDate', header: 'Date de début', style: { minWidth: '140px' }, slotName: 'startDate' })
+    cols.push({ field: 'startDate', header: 'Date de début', sortable: true, style: { minWidth: '140px' }, slotName: 'startDate' })
   }
 
   return cols
@@ -378,7 +397,7 @@ async function handleUnlink() {
       <AppTable
         v-model:selection="selectedTransactions"
         :columns="regularTransactionColumns"
-        :rows="transactions"
+        :rows="filteredTransactions"
         data-key="id"
         selectable
         scrollable
@@ -422,8 +441,43 @@ async function handleUnlink() {
           </span>
         </template>
 
+        <template #header-tagFilter>
+          <div class="w-full" @click.stop>
+            <Select
+              v-model="selectedTagFilter"
+              :options="tagFilterOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full text-xs"
+              size="small"
+            >
+              <template #value="{ value: val }">
+                <span class="text-xs font-semibold" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+                  {{ val ? (tagFilterOptions.find(o => o.value === val)?.label ?? val) : 'Tag' }}
+                </span>
+              </template>
+              <template #option="{ option }">
+                <span v-if="!option.value" class="text-sm text-[var(--text-secondary)]">Tous les tags</span>
+                <Tag
+                  v-else
+                  :value="option.label"
+                  :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
+                  class="text-xs"
+                />
+              </template>
+            </Select>
+          </div>
+        </template>
+
         <template #body-tag="{ data }">
-          <Tag :value="data.tagDTO.label" :style="getTagStyle(data.tagDTO.colorDTO)" />
+          <div class="max-w-[148px] overflow-hidden">
+            <Tag
+              :value="data.tagDTO.label"
+              :style="getTagStyle(data.tagDTO.colorDTO)"
+              class="block max-w-full truncate"
+              :title="data.tagDTO.label"
+            />
+          </div>
         </template>
 
         <template #body-regularity="{ data }">
