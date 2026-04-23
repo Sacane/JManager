@@ -33,99 +33,12 @@ Guidelines to follow whenever working on any of the three backend layers: `domai
 
 ---
 
-## 2. Incremental Development Workflow
-
-Every change — feature, fix, or refactoring — must follow this strict sequence:
-
-### Step 1: Tests First
-
-- Write or update failing tests **before** touching production code.
-- Start from the layer closest to the business rule being changed (usually `domain`).
-- The test must clearly express the expected behaviour, not the implementation.
-
-### Step 2: Make It Work
-
-- Implement the minimum code required to make the tests pass.
-- At this stage, favour a **working solution** over a clean one.
-- Quick and direct code is acceptable here — the goal is a green test suite, not perfection.
-
-### Step 3: Refactoring Analysis (Mandatory)
-
-- Once all tests are green, **always** perform a refactoring analysis before considering the task done.
-- Review the new code and its surrounding context for:
-  - duplication that can be extracted
-  - naming that can be improved
-  - responsibilities that can be redistributed
-  - patterns that can be applied
-- This step is **never optional**. Skipping it is a defect in the process.
+> **Development workflow (TDD, SOLID, duplication, design patterns)** is defined in the cross-cutting file  
+> [`development-workflow.md`](development-workflow.md) and applies to all layers including backend.
 
 ---
 
-## 3. Code Duplication: Zero Tolerance
-
-Duplicated code is never acceptable. After every implementation, actively search for duplication at three levels:
-
-### 3.1 Method Extraction
-
-- If the same logic appears in two or more places, extract it into a dedicated method.
-- The method name must describe **intent**, not mechanics.
-
-### 3.2 Class Extraction
-
-- If several methods share the same data or collaborate on the same concept, extract them into a dedicated class (service, value object, helper object).
-- Respect the layer where the class belongs: shared business logic goes in `domain`, shared technical logic goes in `infrastructure`.
-
-### 3.3 Pattern Application
-
-- If duplication reveals a recurring structural problem, consider a design pattern (Strategy, Template Method, Factory, etc.).
-- Before applying a pattern, **ask the user for confirmation** — explain the duplication observed, the pattern proposed, and the expected benefit.
-
----
-
-## 4. SOLID Principles
-
-All backend code must respect the SOLID principles:
-
-### 4.1 Single Responsibility (SRP)
-
-- A class has one reason to change.
-- A use case handles one business operation. If a use case grows beyond a single flow, split it.
-
-### 4.2 Open/Closed (OCP)
-
-- Extend behaviour through new implementations (new adapters, new strategies), not by modifying existing classes.
-- Ports and sealed hierarchies are the primary extension points.
-
-### 4.3 Liskov Substitution (LSP)
-
-- Any implementation of a port must be fully substitutable for another without breaking the domain contract.
-- Fakes used in tests must respect the same invariants as real adapters.
-
-### 4.4 Interface Segregation (ISP)
-
-- Ports must be small and focused. A port that serves multiple unrelated use cases must be split.
-- Prefer several specific interfaces over one large general-purpose interface.
-
-### 4.5 Dependency Inversion (DIP)
-
-- Domain depends on abstractions (ports), never on concrete adapters.
-- Application wires concrete adapters to ports via dependency injection.
-- No `import` from `infrastructure` must appear in `domain` source files.
-
----
-
-## 5. Design Pattern Proposals
-
-- When the agent identifies an opportunity to apply a design pattern during implementation or refactoring, it **must not apply it silently**.
-- The agent must:
-  1. Describe the problem or smell observed (duplication, branching, coupling, etc.).
-  2. Name the pattern proposed and explain why it fits.
-  3. Wait for explicit user confirmation before proceeding.
-- Once confirmed, implement the pattern fully — including updating tests and all affected references.
-
----
-
-## 6. Domain Modelling and Invariants
+## 2. Domain Modelling and Invariants
 
 ### 6.1 Explicit Business Model
 
