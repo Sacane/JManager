@@ -12,6 +12,13 @@ definePageMeta({
 const { fetch } = useBooklet()
 const { getRegularTransaction, saveMonthlyTransaction, getRegularTransactionById, updateRegularTransaction, deleteRegularTransaction, deleteRegularTransactions, linkRegularTransactionToBooklet, unlinkRegularTransactionFromBooklet } = useRegularTransaction()
 const transactions = ref<RegularTransactionDTO[]>([])
+
+const PAGE_SIZE_KEY_RT = 'jmanager.pagination.regularTransactions.pageSize'
+const pageSizeOptions = [10, 20, 30, 50]
+const pageSize = useLocalStorage(PAGE_SIZE_KEY_RT, 10)
+const currentPage = ref(0)
+const totalElements = ref(0)
+const totalPages = ref(1)
 const { frequencyToString } = useDate()
 const jToast = useJToast()
 const booklets = ref<OnlyBookletInfo[]>([])
@@ -19,6 +26,19 @@ const selectedTransactions = ref<RegularTransactionDTO[]>([])
 const isMobile = ref(false)
 const isSmallScreen = ref(false)
 const confirm = useConfirm()
+
+function loadRegularTransactions(page: number = currentPage.value, size: number = pageSize.value) {
+  getRegularTransaction(page, size)
+    .then((res) => {
+      transactions.value = res.content
+      totalElements.value = res.totalElements
+      totalPages.value = res.totalPages
+      currentPage.value = res.pageNumber
+    })
+    .catch((err) => {
+      console.error(err)
+    })
+}
 
 onMounted(() => {
   fetch()
@@ -30,13 +50,7 @@ onMounted(() => {
         currency: booklet.currency,
       }))
     })
-  getRegularTransaction()
-    .then((res) => {
-      transactions.value = res
-    })
-    .catch((err) => {
-      console.error(err)
-    })
+  loadRegularTransactions()
 
   checkMobile()
   window.addEventListener('resize', checkMobile)
@@ -237,6 +251,16 @@ const filteredTransactions = computed(() => {
   return transactions.value.filter(t => (t.tagDTO?.tagId ?? '') === selectedTagFilter.value)
 })
 
+function onRtPageChange(event: { page: number }) {
+  currentPage.value = event.page
+  loadRegularTransactions(event.page)
+}
+
+function onRtPageSizeChange() {
+  currentPage.value = 0
+  loadRegularTransactions(0)
+}
+
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768
   isSmallScreen.value = window.innerWidth > 768 && window.innerWidth <= 1200
@@ -393,7 +417,7 @@ async function handleUnlink() {
       />
     </div>
 
-    <div v-if="!isMobile" class="flex-1 rounded-5 overflow-hidden shadow-lg border" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
+    <div v-if="!isMobile" class="flex-1 flex flex-col rounded-5 overflow-hidden shadow-lg border" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
       <AppTable
         v-model:selection="selectedTransactions"
         :columns="regularTransactionColumns"
@@ -401,6 +425,7 @@ async function handleUnlink() {
         data-key="id"
         selectable
         scrollable
+        scroll-height="flex"
         @row-dblclick="handleRowDoubleClick"
       >
         <template #empty>
@@ -519,6 +544,25 @@ async function handleUnlink() {
           </div>
         </template>
       </AppTable>
+      <div class="shrink-0 flex items-center justify-between flex-wrap gap-2 px-3 py-2 border-t" style="border-color: var(--card-border);">
+        <div class="flex items-center gap-2">
+          <span class="text-xs" style="color: var(--text-secondary);">Lignes par page&nbsp;:</span>
+          <Select
+            v-model="pageSize"
+            :options="pageSizeOptions"
+            class="w-20"
+            size="small"
+            @change="onRtPageSizeChange"
+          />
+        </div>
+        <Paginator
+          v-if="totalPages > 1"
+          :first="currentPage * pageSize"
+          :rows="pageSize"
+          :total-records="totalElements"
+          @page="onRtPageChange"
+        />
+      </div>
     </div>
 
     <!-- Liste des transactions (Mobile) -->

@@ -45,7 +45,14 @@ const findBalancesByIdMonthAndYearMock = vi.fn().mockResolvedValue({
   previewSold: '1700.00',
 })
 
-const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({ transactions: [] })
+const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({
+  transactions: [],
+  hasRegenerableTransactions: false,
+  pageNumber: 0,
+  pageSize: 10,
+  totalElements: 0,
+  totalPages: 1,
+})
 
 function createTransaction(overrides: Partial<TransactionResultDTO> = {}): TransactionResultDTO {
   return {
@@ -114,6 +121,7 @@ function mountPage(activeScopes: string[] = []) {
         DatePicker: true,
         Tag: true,
         Checkbox: true,
+        Paginator: true,
         Button: {
           props: ['label', 'disabled', 'loading'],
           template: '<button :data-label="label" :data-loading="String(loading)" :disabled="disabled"><slot /></button>',
@@ -166,6 +174,9 @@ describe('pages/booklet/[id] loading states', () => {
       'booklet-1',
       3,
       2026,
+      {},
+      0,
+      10,
     )
   })
 })
@@ -188,6 +199,10 @@ describe('pages/booklet/[id] selection behavior', () => {
         createTransaction({ id: null, label: 'Abonnement', value: 15.99, isPreview: true, date: '2026-03-10' }),
       ],
       hasRegenerableTransactions: true,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 2,
+      totalPages: 1,
     })
 
     const { wrapper } = mountPage()

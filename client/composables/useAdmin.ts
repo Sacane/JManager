@@ -10,14 +10,6 @@ export interface UserDTO {
   roles: string[]
 }
 
-export interface PageDTO<T> {
-  content: T[]
-  pageNumber: number
-  pageSize: number
-  totalElements: number
-  totalPages: number
-}
-
 export default function useAdmin() {
   const { get } = useQuery()
   const loadingScope = LOADING_SCOPES.admin.fetchUsers

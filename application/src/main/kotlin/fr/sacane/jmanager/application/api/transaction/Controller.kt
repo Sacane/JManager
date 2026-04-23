@@ -2,6 +2,7 @@ package fr.sacane.jmanager.application.api.transaction
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Page
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
@@ -73,6 +74,8 @@ class TransactionController(
         @RequestParam("bookletId") bookletId: String,
         @RequestParam("startDate", required = false) startDate: LocalDate?,
         @RequestParam("endDate", required = false) endDate: LocalDate?,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") size: Int,
         ): ResponseEntity<TransactionListResponse> {
         validateDateRange(startDate, endDate)
         logger.info("Request transactions from booklet $bookletId for month $month and year $year")
@@ -83,13 +86,19 @@ class TransactionController(
             year = year,
             startDate = startDate,
             endDate = endDate,
+            pageNumber = page,
+            pageSize = size,
         )
 
         return response.map {
             TransactionListResponse(
                 transactions = (it.currentTransactions + it.previsionalTransactions).map { transaction -> transaction.toDTO() },
-                amount = it.realSold.value.toString() ,
-                previewAmount = it.previsionalSold.value.toString()
+                amount = it.realSold.value.toString(),
+                previewAmount = it.previsionalSold.value.toString(),
+                pageNumber = it.pageNumber,
+                pageSize = it.pageSize,
+                totalElements = it.totalElements,
+                totalPages = it.totalPages,
             )
         }.toHttpResponse().also { logger.info("Transactions fetched successfully") }
     }
@@ -152,9 +161,12 @@ class TransactionController(
 
 
     @GetMapping("/regular")
-    fun getAllRegularTransactions(): ResponseEntity<List<RegularTransactionDTO>> {
-        return regularTransactionFeature.getAllRegularTransactions(SessionToken(currentUser.token))
-            .map { it.map { transaction -> transaction.toDTO() } }
+    fun getAllRegularTransactions(
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") size: Int,
+    ): ResponseEntity<Page<RegularTransactionDTO>> {
+        return regularTransactionFeature.getAllRegularTransactions(SessionToken(currentUser.token), page, size)
+            .map { p -> Page(p.content.map { it.toDTO() }, p.pageNumber, p.pageSize, p.totalElements, p.totalPages) }
             .toHttpResponse()
     }
 

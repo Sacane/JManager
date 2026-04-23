@@ -45,6 +45,10 @@ data class TransactionListResponse(
     val transactions: List<TransactionResult>,
     val amount: String,
     val previewAmount: String,
+    val pageNumber: Int = 0,
+    val pageSize: Int = 10,
+    val totalElements: Long = 0L,
+    val totalPages: Int = 1,
 )
 
 @Serializable

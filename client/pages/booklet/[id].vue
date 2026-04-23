@@ -49,6 +49,13 @@ const newDateForPreview = ref<Date | null>(null)
 const transactionToConfirm = ref<DisplayTransaction | null>(null)
 const hasRegenerableTransactions = ref(false)
 
+const PAGE_SIZE_KEY_BOOKLET = 'jmanager.pagination.bookletTransactions.pageSize'
+const pageSizeOptions = [10, 20, 30, 50]
+const pageSize = useLocalStorage(PAGE_SIZE_KEY_BOOKLET, 10)
+const currentPage = ref(0)
+const totalElements = ref(0)
+const totalPages = ref(1)
+
 const bookletData = reactive({
   id: '',
   label: '',
@@ -198,7 +205,7 @@ async function loadBookletData() {
 
       const [balances, transactionsRes] = await Promise.all([
         findBalancesByIdMonthAndYear(bookletId, month, bookletData.year),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, currentPage.value, pageSize.value),
       ])
 
       bookletData.label = balances.label
@@ -214,6 +221,8 @@ async function loadBookletData() {
       const nextTransactionKeys = new Set(nextTransactions.map(transactionSelectionKey))
       selectedTransactions.value = selectedTransactions.value.filter(t => nextTransactionKeys.has(transactionSelectionKey(t)))
       hasRegenerableTransactions.value = transactionsRes.hasRegenerableTransactions
+      totalElements.value = transactionsRes.totalElements
+      totalPages.value = transactionsRes.totalPages
     } catch (err) {
       toast.errorAxios(err as AxiosError)
       console.error(err)
@@ -230,11 +239,23 @@ async function retrieveTags() {
 }
 
 function onMonthChange() {
+  currentPage.value = 0
   loadBookletData()
 }
 
 function onYearChange() {
+  currentPage.value = 0
   bookletData.year = bookletData.dateYear.getFullYear()
+  loadBookletData()
+}
+
+function onPageChange(event: { page: number }) {
+  currentPage.value = event.page
+  loadBookletData()
+}
+
+function onBookletPageSizeChange() {
+  currentPage.value = 0
   loadBookletData()
 }
 
@@ -794,7 +815,7 @@ onUnmounted(() => {
         <span>Chargement des transactions...</span>
       </div>
 
-      <div v-if="!isMobile" class="sticky top-0 h-[100dvh] bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
+      <div v-if="!isMobile" class="sticky top-0 h-[100dvh] flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <AppTable
           v-model:selection="selectedTransactions"
           :columns="bookletTransactionColumns"
@@ -803,6 +824,7 @@ onUnmounted(() => {
           :row-class="rowClass"
           selectable
           scrollable
+          scroll-height="flex"
           @row-dblclick="onEditTransaction"
         >
           <template #empty>
@@ -910,6 +932,25 @@ onUnmounted(() => {
             </div>
           </template>
         </AppTable>
+        <div class="shrink-0 flex items-center justify-between flex-wrap gap-2 px-3 py-2 border-t border-[var(--card-border)]">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-[var(--text-secondary)]">Lignes par page&nbsp;:</span>
+            <Select
+              v-model="pageSize"
+              :options="pageSizeOptions"
+              class="w-20"
+              size="small"
+              @change="onBookletPageSizeChange"
+            />
+          </div>
+          <Paginator
+            v-if="totalPages > 1"
+            :first="currentPage * pageSize"
+            :rows="pageSize"
+            :total-records="totalElements"
+            @page="onPageChange"
+          />
+        </div>
       </div>
 
       <div v-else class="flex flex-col">

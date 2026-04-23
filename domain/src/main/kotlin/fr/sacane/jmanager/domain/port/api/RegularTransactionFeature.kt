@@ -1,8 +1,10 @@
 package fr.sacane.jmanager.domain.port.api
 
+import fr.sacane.jmanager.domain.Paginator
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Page
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
@@ -29,12 +31,14 @@ import java.util.UUID
 sealed interface RegularTransactionFeature {
 
     /**
-     * Retrieve all regular transactions for the authenticated user.
+     * Retrieve all regular transactions for the authenticated user, paginated.
      *
      * @param token Authentication token identifying the requester.
-     * @return Result containing a list of RegularTransaction on success.
+     * @param pageNumber Zero-based page number (default: 0).
+     * @param pageSize Number of items per page (default: 10).
+     * @return Result containing a Page of RegularTransaction on success.
      */
-    fun getAllRegularTransactions(token: SessionToken): Result<List<RegularTransaction>>
+    fun getAllRegularTransactions(token: SessionToken, pageNumber: Int = 0, pageSize: Int = 10): Result<Page<RegularTransaction>>
 
     /**
      * Create (book) a new regular transaction and associate it with multiple booklets.
@@ -116,7 +120,8 @@ class RegularTransactionFeatureImpl(
     private val tagRepository: TagRepository,
     private val session: SessionManager,
     private val unitOfWork: UnitOfWorkTransactionProvider,
-    private val trackerRepository: RegularTransactionTrackerRepository
+    private val trackerRepository: RegularTransactionTrackerRepository,
+    private val paginator: Paginator,
 ) : RegularTransactionFeature {
 
     private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
@@ -124,10 +129,12 @@ class RegularTransactionFeatureImpl(
     }
 
 
-    override fun getAllRegularTransactions(token: SessionToken): Result<List<RegularTransaction>> {
+    override fun getAllRegularTransactions(token: SessionToken, pageNumber: Int, pageSize: Int): Result<Page<RegularTransaction>> {
         return session.authenticate(token) {
-            val transactions = regularTransactionRepository.getAllRegularTransactions(it)
-            return@authenticate success(transactions)
+            val page = paginator.paginate(pageNumber, pageSize) {
+                regularTransactionRepository.getAllRegularTransactions(it)
+            }
+            return@authenticate success(page)
         }
     }
 

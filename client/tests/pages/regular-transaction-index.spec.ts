@@ -58,7 +58,13 @@ function mountPage(options?: {
   bulkDeleteReject?: any
 }) {
   const fetch = vi.fn().mockResolvedValue([])
-  const getRegularTransaction = vi.fn().mockResolvedValue([createRegularTransaction('rt-1')])
+  const getRegularTransaction = vi.fn().mockResolvedValue({
+    content: [createRegularTransaction('rt-1')],
+    pageNumber: 0,
+    pageSize: 10,
+    totalElements: 1,
+    totalPages: 1,
+  })
   const saveMonthlyTransaction = options?.saveReject
     ? vi.fn().mockRejectedValue(options.saveReject)
     : vi.fn().mockResolvedValue(createRegularTransaction('rt-new'))
@@ -101,6 +107,7 @@ function mountPage(options?: {
         Button: { props: ['label'], template: '<button>{{ label }}<slot /></button>' },
         Tag: { template: '<span><slot /></span>' },
         ConfirmDialog: true,
+        Paginator: true,
         RegularTransactionCreationDialog: { name: 'RegularTransactionCreationDialog', props: ['loading'], template: '<div />' },
         RegularTransactionDialogCard: { name: 'RegularTransactionDialogCard', template: '<div />' },
       },
@@ -317,7 +324,13 @@ function mountPageForDialogTests(options?: { linkReject?: any, unlinkReject?: an
   const transactionNoneLinked = { ...createRegularTransaction('rt-none-linked'), bookletIds: [] as string[] }
 
   const fetch = vi.fn().mockResolvedValue([activeBooklet])
-  const getRegularTransaction = vi.fn().mockResolvedValue([transactionAllLinked, transactionNoneLinked])
+  const getRegularTransaction = vi.fn().mockResolvedValue({
+    content: [transactionAllLinked, transactionNoneLinked],
+    pageNumber: 0,
+    pageSize: 10,
+    totalElements: 2,
+    totalPages: 1,
+  })
   const linkRegularTransactionToBooklet = options?.linkReject
     ? vi.fn().mockRejectedValue(options.linkReject)
     : vi.fn().mockResolvedValue({ ...transactionAllLinked })

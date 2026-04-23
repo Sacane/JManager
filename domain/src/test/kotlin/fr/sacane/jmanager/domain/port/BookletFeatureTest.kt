@@ -1838,6 +1838,160 @@ class BookletFeatureTest: FeatureTest() {
     }
 
     @Nested
+    inner class LoadTransactionsWithPaginationTest {
+
+        @Test
+        fun `should return first page of transactions when 25 transactions exist`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(amount = 1000.toAmount(), label = "Paginated Booklet", owner = user.toUser(), id = bookletId)
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
+
+                val transactions = (1..25).map { i ->
+                    Transaction(id = UUID.randomUUID(), label = "Transaction $i",
+                        date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
+                        isIncome = true, isPreview = false)
+                }
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
+                )
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                    pageNumber = 0, pageSize = 10
+                )
+
+                result.assertTrue { currentTransactions.size + previsionalTransactions.size == 10 }
+                result.assertTrue { totalElements == 25L }
+                result.assertTrue { totalPages == 3 }
+                result.assertTrue { pageNumber == 0 }
+                result.assertTrue { pageSize == 10 }
+            }
+        }
+
+        @Test
+        fun `should return last page with fewer items when total is not divisible by pageSize`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(amount = 1000.toAmount(), label = "Last Page Booklet", owner = user.toUser(), id = bookletId)
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
+
+                val transactions = (1..25).map { i ->
+                    Transaction(id = UUID.randomUUID(), label = "Transaction $i",
+                        date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
+                        isIncome = true, isPreview = false)
+                }
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
+                )
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                    pageNumber = 2, pageSize = 10
+                )
+
+                result.assertTrue { currentTransactions.size + previsionalTransactions.size == 5 }
+                result.assertTrue { totalElements == 25L }
+                result.assertTrue { totalPages == 3 }
+            }
+        }
+
+        @Test
+        fun `should use default page=0 and size=10 when no pagination params are given`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(amount = 1000.toAmount(), label = "Default Pagination Booklet", owner = user.toUser(), id = bookletId)
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
+
+                val transactions = (1..15).map { i ->
+                    Transaction(id = UUID.randomUUID(), label = "Transaction $i",
+                        date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
+                        isIncome = true, isPreview = false)
+                }
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
+                )
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025
+                )
+
+                result.assertTrue { pageNumber == 0 }
+                result.assertTrue { pageSize == 10 }
+                result.assertTrue { currentTransactions.size + previsionalTransactions.size == 10 }
+                result.assertTrue { totalElements == 15L }
+            }
+        }
+
+        @Test
+        fun `should return empty transaction list when requested page is out of range`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(amount = 1000.toAmount(), label = "Out of Range Booklet", owner = user.toUser(), id = bookletId)
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
+
+                val transactions = (1..5).map { i ->
+                    Transaction(id = UUID.randomUUID(), label = "Transaction $i",
+                        date = LocalDate.of(2025, 1, i), amount = 100.toAmount(),
+                        isIncome = true, isPreview = false)
+                }
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
+                )
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                    pageNumber = 5, pageSize = 10
+                )
+
+                result.assertTrue { currentTransactions.isEmpty() && previsionalTransactions.isEmpty() }
+                result.assertTrue { totalElements == 5L }
+            }
+        }
+
+        @Test
+        fun `should compute realSold on ALL transactions regardless of requested page`() {
+            launchWithConnectedUserInstance {
+                val bookletId = UUID.randomUUID()
+                val booklet = Booklet(amount = 1000.toAmount(), label = "Balance Invariance Booklet", owner = user.toUser(), id = bookletId)
+                bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
+
+                val transactions = (1..20).map { i ->
+                    Transaction(id = UUID.randomUUID(), label = "Income $i",
+                        date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
+                        isIncome = true, isPreview = false)
+                }
+                FakeFactory.fakeTransactionRepository().init(
+                    listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
+                )
+                FakeFactory.regularTransactionState.init(emptyList())
+
+                val page0Result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                    pageNumber = 0, pageSize = 10
+                )
+                val page1Result = bookletFeature.loadTransactionsForBookletForAMonth(
+                    tokenValue, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                    pageNumber = 1, pageSize = 10
+                )
+
+                // realSold = booklet.amount (stored balance) — unaffected by pagination
+                page0Result.assertTrue { realSold == page1Result.mapNotNullOrFailure()!!.realSold }
+            }
+        }
+    }
+
+    @Nested
     inner class RegenerateDeletedPrevisionalTransactionsTest {
 
         private fun buildRegularTransaction(
