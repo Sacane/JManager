@@ -48,7 +48,7 @@ const { user } = useAuth()
 const { createBooklet, fetch: fetchBooklets } = useBooklet()
 const { getRegularTransaction } = useRegularTransaction()
 const { getAllTags } = useTag()
-const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions } = useStats()
+const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions, getDailyTrendStats } = useStats()
 const { getSettings: getUserSettings } = useUserSettings()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
@@ -66,6 +66,7 @@ const previousCategoryDistribution = ref<CategoryDistributionDTO | null>(null)
 const trendStats = ref<TrendStatsDTO | null>(null)
 const previousTrendStats = ref<TrendStatsDTO | null>(null)
 const evolutionTrendStats = ref<TrendStatsDTO | null>(null)
+const dailyTrendStats = ref<DailyTrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const selectedBookletId = ref<string | number | null>(null)
@@ -239,11 +240,8 @@ const previousDateRange = computed(() => {
 
 const evolutionDateRange = computed(() => {
   if (selectedPeriod.value === 'month') {
-    const currentRange = currentDateRange.value
-    return {
-      start: addMonths(currentRange.start, -5),
-      end: currentRange.end,
-    }
+    // For month, daily trends are used instead of multi-month evolution
+    return currentDateRange.value
   }
 
   return {
@@ -449,11 +447,54 @@ const dashboardAlerts = computed(() => {
 
 // Chart data
 const expensesTrendData = computed(() => {
-  if (!evolutionTrendStats.value?.monthlyTrends.length) {
-    return {
-      labels: [],
-      datasets: [],
+  if (selectedPeriod.value === 'month') {
+    // Daily granularity for month view
+    if (!dailyTrendStats.value?.dailyTrends.length) {
+      return { labels: [], datasets: [] }
     }
+
+    const trends = dailyTrendStats.value.dailyTrends
+    const labels = trends.map((trend) => {
+      const [year, month, day] = trend.date.split('-').map(Number)
+      const d = new Date(year, month - 1, day)
+      return format(d, 'dd MMM', { locale: fr })
+    })
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Dépenses',
+          data: trends.map(t => Number.parseFloat(t.expenses)),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Revenus',
+          data: trends.map(t => Number.parseFloat(t.income)),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Solde cumulé',
+          data: trends.map(t => Number.parseFloat(t.cumulativeBalance)),
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.05)',
+          tension: 0.4,
+          fill: false,
+          borderDash: [5, 5],
+        },
+      ],
+    }
+  }
+
+  // Monthly granularity for quarter/year
+  if (!evolutionTrendStats.value?.monthlyTrends.length) {
+    return { labels: [], datasets: [] }
   }
 
   const sortedTrends = evolutionTrendStats.value.monthlyTrends.toSorted((a, b) => {
@@ -834,7 +875,7 @@ async function loadStatsData() {
       ).catch(() => null)
     : Promise.resolve(null)
 
-  const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData] = await Promise.all([
+  const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData, dailyTrendsData] = await Promise.all([
     getCategoryDistribution({
       bookletId: scopedBookletId.value,
       startDate,
@@ -855,13 +896,18 @@ async function loadStatsData() {
       startDate: previousStartDate,
       endDate: previousEndDate,
     }).catch(() => null),
-    getTrendStats({
-      bookletId: scopedBookletId.value,
-      startDate: evolutionStartDate,
-      endDate: evolutionEndDate,
-    }).catch(() => null),
+    selectedPeriod.value !== 'month'
+      ? getTrendStats({
+          bookletId: scopedBookletId.value,
+          startDate: evolutionStartDate,
+          endDate: evolutionEndDate,
+        }).catch(() => null)
+      : Promise.resolve(null),
     getPrevisionalTransactions(upcomingStartDate, upcomingEndDate, scopedBookletId.value).catch(() => null),
     periodProjectionPromise,
+    selectedPeriod.value === 'month'
+      ? getDailyTrendStats(startDate, endDate, scopedBookletId.value).catch(() => null)
+      : Promise.resolve(null),
   ])
 
   categoryDistribution.value = categoryData
@@ -869,6 +915,7 @@ async function loadStatsData() {
   trendStats.value = trendsData
   previousTrendStats.value = previousTrendsData
   evolutionTrendStats.value = evolutionTrendsData
+  dailyTrendStats.value = dailyTrendsData
   previsionalTransactions.value = previsionalData
   periodProjectionTransactions.value = periodProjectionData
 }

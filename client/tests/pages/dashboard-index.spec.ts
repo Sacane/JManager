@@ -80,6 +80,10 @@ const getPrevisionalTransactionsMock = vi.fn().mockResolvedValue({
   endDate: new Date(),
 })
 
+const getDailyTrendStatsMock = vi.fn().mockResolvedValue({
+  dailyTrends: [],
+})
+
 const getUserSettingsMock = vi.fn().mockResolvedValue({
   projectionWindowDays: 15,
   bookletCycles: [
@@ -97,6 +101,7 @@ vi.mock('~/composables/useStats', () => ({
     getCategoryDistribution: getCategoryDistributionMock,
     getTrendStats: getTrendStatsMock,
     getPrevisionalTransactions: getPrevisionalTransactionsMock,
+    getDailyTrendStats: getDailyTrendStatsMock,
   }),
 }))
 

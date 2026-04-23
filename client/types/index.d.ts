@@ -228,6 +228,19 @@ declare global {
     detectedValue: string | null
   }
 
+  interface DailyTrendStatsDTO {
+    dailyTrends: DailyTrendDTO[]
+  }
+
+  interface DailyTrendDTO {
+    date: string
+    income: string
+    expenses: string
+    balance: string
+    cumulativeBalance: string
+    totalBooklets: number
+  }
+
   interface CsvImportResultDTO {
     successCount: number
     failedCount: number
