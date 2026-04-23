@@ -91,4 +91,22 @@ class StatsController(
             }
             .toHttpResponse()
     }
+
+    @GetMapping("/daily-trends")
+    fun getDailyTrendStats(
+        @RequestParam startDate: LocalDate,
+        @RequestParam endDate: LocalDate,
+        @RequestParam(required = false) bookletId: UUID?
+    ): ResponseEntity<DailyTrendStatsDTO> {
+        LOGGER.info("Requesting daily trend stats from $startDate to $endDate")
+
+        return statsFeature.getDailyTrendStats(
+            token = SessionToken(currentUser.token),
+            startDate = startDate,
+            endDate = endDate,
+            bookletId = bookletId
+        )
+            .map { it.toDTO() }
+            .toHttpResponse()
+    }
 }

@@ -29,10 +29,19 @@ export default function useStats() {
     })
   }
 
+  async function getDailyTrendStats(startDate: string, endDate: string, bookletId?: string): Promise<DailyTrendStatsDTO> {
+    return get('stats/daily-trends', {
+      startDate,
+      endDate,
+      bookletId,
+    })
+  }
+
   return {
     getMonthlyAccountStats,
     getCategoryDistribution,
     getTrendStats,
     getPrevisionalTransactions,
+    getDailyTrendStats,
   }
 }

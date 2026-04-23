@@ -464,6 +464,22 @@ When the user requests trend statistics, optionally filtered by booklet and date
 Then the system returns a TrendStatsOutput with aggregated trend data over time
 ```
 
+### Scenario: Get daily trend statistics
+```gherkin
+Given an authenticated user with transactions in a given date range
+When the user requests daily trend statistics with a start date and end date, optionally filtered by booklet
+Then the system returns a DailyTrendStatsOutput containing one DailyTrend entry per day
+And each entry includes the day's income, expenses, balance, and cumulative balance
+```
+
+### Scenario: Get daily trend statistics respecting custom monthly cycle
+```gherkin
+Given an authenticated user whose booklet has a monthly cycle from day 26 to day 25
+When the user requests daily trend statistics for that custom range (e.g. 2024-12-26 to 2025-01-25)
+Then the system returns daily entries spanning the full custom cycle
+And cumulative balance is computed sequentially across the entire range
+```
+
 ### Scenario: Get provisional transactions forecast
 ```gherkin
 Given an authenticated user with regular transactions generating future previews

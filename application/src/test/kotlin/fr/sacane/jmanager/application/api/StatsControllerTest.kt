@@ -365,6 +365,154 @@ class StatsControllerTest(
             }
         }
     }
+
+    @Nested
+    inner class GetDailyTrendStatsEndpointTest {
+
+        @Test
+        fun `Get daily trend stats must send 200 and return daily trends`() {
+            val startDate = LocalDate.of(2025, 1, 1)
+            val endDate = LocalDate.of(2025, 1, 31)
+
+            transactionStateTestAdapter.init(
+                createTransaction(
+                    listOf(
+                        TransactionTestInput(
+                            label = "Salaire",
+                            amount = 2000.toAmount(),
+                            isIncome = true,
+                            date = LocalDate.of(2025, 1, 5)
+                        ),
+                        TransactionTestInput(
+                            label = "Courses",
+                            amount = 150.toAmount(),
+                            isIncome = false,
+                            date = LocalDate.of(2025, 1, 12)
+                        )
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("startDate", startDate.toString())
+                queryParam("endDate", endDate.toString())
+                queryParam("bookletId", booklet.id.toString())
+            } When {
+                get("/api/stats/daily-trends")
+            } Then {
+                statusCode(200)
+                body(
+                    "dailyTrends", notNullValue(),
+                    "dailyTrends.size()", equalTo(31),
+                    "dailyTrends[0].date", equalTo("2025-01-01"),
+                    "dailyTrends[0].income", notNullValue(),
+                    "dailyTrends[0].expenses", notNullValue(),
+                    "dailyTrends[0].balance", notNullValue(),
+                    "dailyTrends[0].cumulativeBalance", notNullValue(),
+                    "dailyTrends[0].totalBooklets", notNullValue()
+                )
+            }
+        }
+
+        @Test
+        fun `Get daily trend stats for custom cycle must send 200`() {
+            val startDate = LocalDate.of(2025, 5, 25)
+            val endDate = LocalDate.of(2025, 6, 24)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("startDate", startDate.toString())
+                queryParam("endDate", endDate.toString())
+            } When {
+                get("/api/stats/daily-trends")
+            } Then {
+                statusCode(200)
+                body(
+                    "dailyTrends", notNullValue(),
+                    "dailyTrends.size()", equalTo(31),
+                    "dailyTrends[0].date", equalTo("2025-05-25"),
+                    "dailyTrends[30].date", equalTo("2025-06-24")
+                )
+            }
+        }
+
+        @Test
+        fun `Get daily trend stats with no transactions must send 200 with zero entries`() {
+            val startDate = LocalDate.of(2025, 3, 1)
+            val endDate = LocalDate.of(2025, 3, 31)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("startDate", startDate.toString())
+                queryParam("endDate", endDate.toString())
+            } When {
+                get("/api/stats/daily-trends")
+            } Then {
+                statusCode(200)
+                body(
+                    "dailyTrends", notNullValue(),
+                    "dailyTrends.size()", equalTo(31)
+                )
+            }
+        }
+
+        @Test
+        fun `Get daily trend stats with invalid date range must send 400`() {
+            val startDate = LocalDate.of(2025, 6, 1)
+            val endDate = LocalDate.of(2025, 5, 1)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("startDate", startDate.toString())
+                queryParam("endDate", endDate.toString())
+            } When {
+                get("/api/stats/daily-trends")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Get daily trend stats without dates must send 400`() {
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/stats/daily-trends")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Get daily trend stats with unauthenticated user must send 401`() {
+            val startDate = LocalDate.of(2025, 1, 1)
+            val endDate = LocalDate.of(2025, 1, 31)
+
+            Given {
+                port(port)
+                cookie(generateCookie(tokenGenerator.generateToken(UserId(UUID.randomUUID()), "test", setOf(Role.USER)).tokenValue))
+                header("Content-Type", "application/json")
+                queryParam("startDate", startDate.toString())
+                queryParam("endDate", endDate.toString())
+            } When {
+                get("/api/stats/daily-trends")
+            } Then {
+                statusCode(401)
+            }
+        }
+    }
+
     private fun createTransaction(
         inputs: List<TransactionTestInput> = listOf()
     ): List<BookletTransaction> {

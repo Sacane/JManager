@@ -15,6 +15,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRe
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculatorImpl
+import fr.sacane.jmanager.domain.usecase.DailyTrendCalculatorImpl
 import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculatorImpl
 import fr.sacane.jmanager.domain.usecase.PrevisionalTransactionFilterImpl
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
@@ -109,6 +110,7 @@ object FakeFactory {
             monthlyStatsCalculator = MonthlyStatsCalculatorImpl(),
             categoryDistributionCalculator = CategoryDistributionCalculatorImpl(inMemoryTagRepository),
             trendCalculator = TrendCalculatorImpl(),
+            dailyTrendCalculator = DailyTrendCalculatorImpl(),
             previsionalTransactionFilter = PrevisionalTransactionFilterImpl()
         )
     }

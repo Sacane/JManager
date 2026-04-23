@@ -263,4 +263,95 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             assertThat(list!!.map { it.label }).containsExactlyInAnyOrder("A", "B")
         }
     }
+
+    @Nested
+    inner class UpdateTransactionTest {
+
+        @Test
+        fun `save an already persisted transaction must update it without optimistic lock error`() {
+            val booklet = Booklet(label = "acct-update", amount = Amount(1000L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
+
+            val uid = user!!.id
+            val persistedBooklet = transactionRepositoryJpaAdapter.findBookletByLabelWithTransactions(booklet.label, uid)
+            val bookletId = persistedBooklet!!.id!!
+
+            val original = Transaction(
+                id = null,
+                label = "original-label",
+                date = LocalDate.of(2025, 3, 10),
+                amount = Amount(200L),
+                isIncome = false,
+                tag = null,
+            )
+            val saved = transactionRepositoryJpaAdapter.save(bookletId, original)
+            assertThat(saved).isNotNull
+            assertThat(saved!!.id).isNotNull
+
+            val updated = Transaction(
+                id = saved.id,
+                label = "updated-label",
+                date = LocalDate.of(2025, 3, 15),
+                amount = Amount(350L),
+                isIncome = true,
+                tag = null,
+            )
+
+            val result = transactionRepositoryJpaAdapter.save(bookletId, updated)
+
+            assertThat(result).isNotNull
+            assertThat(result!!.id).isEqualTo(saved.id)
+            assertThat(result.label).isEqualTo("updated-label")
+            assertThat(result.date).isEqualTo(LocalDate.of(2025, 3, 15))
+            assertThat(result.amount.value.toLong()).isEqualTo(350L)
+            assertThat(result.isIncome).isTrue()
+        }
+
+        @Test
+        fun `save an already persisted transaction twice must succeed without version conflict`() {
+            val booklet = Booklet(label = "acct-double-update", amount = Amount(1000L), owner = user)
+            bookletStateTestAdapter.init(listOf(booklet))
+
+            val uid = user!!.id
+            val persistedBooklet = transactionRepositoryJpaAdapter.findBookletByLabelWithTransactions(booklet.label, uid)
+            val bookletId = persistedBooklet!!.id!!
+
+            val original = Transaction(
+                id = null,
+                label = "v1",
+                date = LocalDate.of(2025, 6, 1),
+                amount = Amount(100L),
+                isIncome = false,
+                tag = null,
+            )
+            val saved = transactionRepositoryJpaAdapter.save(bookletId, original)
+            assertThat(saved).isNotNull
+
+            val firstUpdate = Transaction(
+                id = saved!!.id,
+                label = "v2",
+                date = saved.date,
+                amount = Amount(200L),
+                isIncome = false,
+                tag = null,
+            )
+            val afterFirstUpdate = transactionRepositoryJpaAdapter.save(bookletId, firstUpdate)
+            assertThat(afterFirstUpdate).isNotNull
+            assertThat(afterFirstUpdate!!.label).isEqualTo("v2")
+
+            val secondUpdate = Transaction(
+                id = saved.id,
+                label = "v3",
+                date = saved.date,
+                amount = Amount(300L),
+                isIncome = true,
+                tag = null,
+            )
+            val afterSecondUpdate = transactionRepositoryJpaAdapter.save(bookletId, secondUpdate)
+            assertThat(afterSecondUpdate).isNotNull
+            assertThat(afterSecondUpdate!!.label).isEqualTo("v3")
+            assertThat(afterSecondUpdate.amount.value.toLong()).isEqualTo(300L)
+            assertThat(afterSecondUpdate.isIncome).isTrue()
+        }
+    }
 }
