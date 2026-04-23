@@ -1,9 +1,9 @@
 # {{title}}
 
-**Contexte**
+**Context**
 {{context}}
 
-**Critères d'acceptation**
+**Acceptance Criteria**
 {{gherkin scenarios ; each scenario must get a header with a number}}
 
 **Notes**

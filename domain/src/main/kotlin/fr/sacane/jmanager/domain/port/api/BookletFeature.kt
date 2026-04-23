@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port.api
 
+import fr.sacane.jmanager.domain.Paginator
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
@@ -114,6 +115,8 @@ sealed interface BookletFeature {
         startingYear: Int? = null,
         startDate: LocalDate? = null,
         endDate: LocalDate? = null,
+        pageNumber: Int = 0,
+        pageSize: Int = 10,
     ): Result<BookletLoadingResult>
 
     /**
@@ -169,7 +172,8 @@ class BookletFeatureImpl(
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository,
     private val transactionQueryRepository: TransactionQueryRepository,
-    private val bookletBalanceQueryRepository: BookletBalanceQueryRepository
+    private val bookletBalanceQueryRepository: BookletBalanceQueryRepository,
+    private val paginator: Paginator,
 ): BookletFeature {
     companion object {
         private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
@@ -331,6 +335,8 @@ class BookletFeatureImpl(
         startingYear: Int?,
         startDate: LocalDate?,
         endDate: LocalDate?,
+        pageNumber: Int,
+        pageSize: Int,
     ): Result<BookletLoadingResult> = session.authenticate(token) { userId ->
         return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             val totalStartNs = System.nanoTime()
@@ -522,14 +528,23 @@ class BookletFeatureImpl(
                     tracker.excludedMonths.contains(targetYearMonth)
                 }
 
+            val allDisplayTransactions = transactions.second + combinedPrevisionalTransactions
+            val page = paginator.paginate(pageNumber, pageSize) { allDisplayTransactions }
+            val pagedCurrentTransactions = page.content.filter { !it.isPreview }
+            val pagedPrevisionalTransactions = page.content.filter { it.isPreview }
+
             val bookletLoadingResult = BookletLoadingResult(
                 label = booklet.label,
-                currentTransactions = transactions.second,
-                previsionalTransactions = combinedPrevisionalTransactions,
+                currentTransactions = pagedCurrentTransactions,
+                previsionalTransactions = pagedPrevisionalTransactions,
                 regularTransactions = filteredRegularTransactions,
                 realSold = booklet.amount,
                 previsionalSold = previsionalSold,
-                hasRegenerableTransactions = hasRegenerableTransactions
+                hasRegenerableTransactions = hasRegenerableTransactions,
+                pageNumber = page.pageNumber,
+                pageSize = page.pageSize,
+                totalElements = page.totalElements,
+                totalPages = page.totalPages,
             )
 
             val totalMs = Duration.ofNanos(System.nanoTime() - totalStartNs).toMillis()
@@ -734,5 +749,9 @@ data class BookletLoadingResult(
     val regularTransactions: List<RegularTransaction>,
     val realSold: Amount,
     val previsionalSold: Amount,
-    val hasRegenerableTransactions: Boolean = false
+    val hasRegenerableTransactions: Boolean = false,
+    val pageNumber: Int = 0,
+    val pageSize: Int = 10,
+    val totalElements: Long = 0L,
+    val totalPages: Int = 1,
 )

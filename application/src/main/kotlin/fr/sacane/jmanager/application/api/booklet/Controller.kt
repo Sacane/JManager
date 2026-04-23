@@ -41,6 +41,7 @@ class BookletController (
         @Valid @RequestBody bookletRequest: BookletBookingRequest
     ): ResponseEntity<BookletInfoDTO> {
         LOGGER.info("Booking a new Booklet ${bookletRequest.label} starting at ${bookletRequest.amount}${bookletRequest.currency} for user ${currentUser.id}")
+        currentUser
         return feature.save(
             SessionToken(currentUser.token),
             Booklet(amount = bookletRequest.amount.toAmount(bookletRequest.currency.asCurrency()), label = bookletRequest.label)
@@ -92,6 +93,7 @@ class BookletController (
             year = year,
             startDate = startDate,
             endDate = endDate,
+            pageSize = Int.MAX_VALUE,
         )
         val report = result.map { res ->
             BookletReport(
@@ -134,6 +136,8 @@ class BookletController (
         @RequestParam("year") year: Int,
         @RequestParam("startDate", required = false) startDate: LocalDate?,
         @RequestParam("endDate", required = false) endDate: LocalDate?,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "10") size: Int,
     ): ResponseEntity<BookletTransactionsResponse> {
         validateDateRange(startDate, endDate)
         LOGGER.info("Requesting transactions for booklet $bookletID")
@@ -145,11 +149,17 @@ class BookletController (
                 year = year,
                 startDate = startDate,
                 endDate = endDate,
+                pageNumber = page,
+                pageSize = size,
             )
             .map { res ->
                 BookletTransactionsResponse(
                     transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() },
-                    hasRegenerableTransactions = res.hasRegenerableTransactions
+                    hasRegenerableTransactions = res.hasRegenerableTransactions,
+                    pageNumber = res.pageNumber,
+                    pageSize = res.pageSize,
+                    totalElements = res.totalElements,
+                    totalPages = res.totalPages,
                 )
             }
             .toHttpResponse()
@@ -220,7 +230,11 @@ data class BookletBalancesResponse(
 @Serializable
 data class BookletTransactionsResponse(
     val transactions: List<TransactionResult>,
-    val hasRegenerableTransactions: Boolean
+    val hasRegenerableTransactions: Boolean,
+    val pageNumber: Int = 0,
+    val pageSize: Int = 10,
+    val totalElements: Long = 0L,
+    val totalPages: Int = 1,
 )
 
 @Serializable

@@ -232,6 +232,14 @@ declare global {
     dailyTrends: DailyTrendDTO[]
   }
 
+  interface PageDTO<T> {
+    content: T[]
+    pageNumber: number
+    pageSize: number
+    totalElements: number
+    totalPages: number
+  }
+
   interface DailyTrendDTO {
     date: string
     income: string

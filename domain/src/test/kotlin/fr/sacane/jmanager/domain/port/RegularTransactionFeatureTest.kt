@@ -56,10 +56,10 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 val result = regularTransactionFeature.getAllRegularTransactions(tokenValue)
 
                 result.assertSuccess()
-                result.onSuccess { transactions ->
-                    assertEquals(2, transactions.size)
-                    assertTrue(transactions.any { it.label == "monthly salary" })
-                    assertTrue(transactions.any { it.label == "Rent" })
+                result.onSuccess { page ->
+                    assertEquals(2, page.content.size)
+                    assertTrue(page.content.any { it.label == "monthly salary" })
+                    assertTrue(page.content.any { it.label == "Rent" })
                 }
             }
         }
@@ -70,8 +70,8 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 val result = regularTransactionFeature.getAllRegularTransactions(tokenValue)
 
                 result.assertSuccess()
-                result.onSuccess { transactions ->
-                    assertTrue(transactions.isEmpty())
+                result.onSuccess { page ->
+                    assertTrue(page.content.isEmpty())
                 }
             }
         }
@@ -80,6 +80,120 @@ class RegularTransactionFeatureTest : FeatureTest() {
         fun `should fail with unauthorized when token is invalid`() {
             val result = regularTransactionFeature.getAllRegularTransactions(SessionToken("invalid-token"))
             result.assertFailure(ResultState.UNAUTHORIZED)
+        }
+    }
+
+    @Nested
+    inner class GetAllRegularTransactionsPaginatedTest {
+
+        @Test
+        fun `should return first page of regular transactions with correct metadata`() {
+            launchWithConnectedUserInstance {
+                val transactions = (1..35).map { i ->
+                    RegularTransaction(
+                        label = "Transaction $i",
+                        amount = 100.toAmount(),
+                        isIncome = true,
+                        id = RegularTransactionId("${user.id}-rt-$i"),
+                        startDate = LocalDate.of(2024, 1, 1),
+                        frequencyProperty = FrequencyProperty.Forever(),
+                        recurrenceRule = RecurrenceRule.Monthly(1)
+                    )
+                }
+                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+
+                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue, pageNumber = 0, pageSize = 10)
+
+                result.assertSuccess()
+                result.onSuccess { page ->
+                    assertEquals(10, page.content.size)
+                    assertEquals(35L, page.totalElements)
+                    assertEquals(4, page.totalPages)
+                    assertEquals(0, page.pageNumber)
+                    assertEquals(10, page.pageSize)
+                }
+            }
+        }
+
+        @Test
+        fun `should return last page with remaining items when total is not divisible by pageSize`() {
+            launchWithConnectedUserInstance {
+                val transactions = (1..35).map { i ->
+                    RegularTransaction(
+                        label = "Transaction $i",
+                        amount = 100.toAmount(),
+                        isIncome = false,
+                        id = RegularTransactionId("${user.id}-rt-last-$i"),
+                        startDate = LocalDate.of(2024, 1, 1),
+                        frequencyProperty = FrequencyProperty.Forever(),
+                        recurrenceRule = RecurrenceRule.Monthly(1)
+                    )
+                }
+                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+
+                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue, pageNumber = 3, pageSize = 10)
+
+                result.assertSuccess()
+                result.onSuccess { page ->
+                    assertEquals(5, page.content.size)
+                    assertEquals(35L, page.totalElements)
+                    assertEquals(4, page.totalPages)
+                }
+            }
+        }
+
+        @Test
+        fun `should use default pagination when no page params are provided`() {
+            launchWithConnectedUserInstance {
+                val transactions = (1..5).map { i ->
+                    RegularTransaction(
+                        label = "RT $i",
+                        amount = 50.toAmount(),
+                        isIncome = true,
+                        id = RegularTransactionId("${user.id}-rt-default-$i"),
+                        startDate = LocalDate.of(2024, 1, 1),
+                        frequencyProperty = FrequencyProperty.Forever(),
+                        recurrenceRule = RecurrenceRule.Monthly(1)
+                    )
+                }
+                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+
+                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue)
+
+                result.assertSuccess()
+                result.onSuccess { page ->
+                    assertEquals(0, page.pageNumber)
+                    assertEquals(10, page.pageSize)
+                    assertEquals(5, page.content.size)
+                    assertEquals(5L, page.totalElements)
+                }
+            }
+        }
+
+        @Test
+        fun `should return empty content when page is out of range`() {
+            launchWithConnectedUserInstance {
+                val transactions = (1..5).map { i ->
+                    RegularTransaction(
+                        label = "RT $i",
+                        amount = 50.toAmount(),
+                        isIncome = true,
+                        id = RegularTransactionId("${user.id}-rt-oor-$i"),
+                        startDate = LocalDate.of(2024, 1, 1),
+                        frequencyProperty = FrequencyProperty.Forever(),
+                        recurrenceRule = RecurrenceRule.Monthly(1)
+                    )
+                }
+                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+
+                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue, pageNumber = 10, pageSize = 10)
+
+                result.assertSuccess()
+                result.onSuccess { page ->
+                    assertTrue(page.content.isEmpty())
+                    assertEquals(5L, page.totalElements)
+                }
+            }
         }
     }
 
@@ -408,8 +522,8 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 val remaining = regularTransactionFeature.getAllRegularTransactions(tokenValue)
                 remaining.assertSuccess()
                 remaining.onSuccess { all ->
-                    assertTrue(all.none { it.id == first.id })
-                    assertTrue(all.none { it.id == second.id })
+                    assertTrue(all.content.none { it.id == first.id })
+                    assertTrue(all.content.none { it.id == second.id })
                 }
             }
         }

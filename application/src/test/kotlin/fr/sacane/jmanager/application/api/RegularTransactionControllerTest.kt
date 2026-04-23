@@ -467,8 +467,8 @@ class RegularTransactionControllerTest(
             } Then {
                 statusCode(200)
                 body(
-                    "label", hasItems("Salaire", "Loyer"),
-                    "size()", equalTo(2)
+                    "content.label", hasItems("Salaire", "Loyer"),
+                    "content.size()", equalTo(2)
                 )
             }
 
@@ -486,7 +486,7 @@ class RegularTransactionControllerTest(
                 get("/api/transaction/regular")
             } Then {
                 statusCode(200)
-                body("size()", equalTo(0))
+                body("content.size()", equalTo(0))
             }
         }
 

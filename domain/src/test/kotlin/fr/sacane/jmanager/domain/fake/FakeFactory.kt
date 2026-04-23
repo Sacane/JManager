@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.BiState
 import fr.sacane.jmanager.domain.InMemoryDatabase
+import fr.sacane.jmanager.domain.PaginatorImpl
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
@@ -72,6 +73,8 @@ object FakeFactory {
         }
     }
 
+    private val paginator = PaginatorImpl()
+
     val bookletFeature = BookletFeatureImpl(
         userRepository,
         sessionManager,
@@ -81,7 +84,8 @@ object FakeFactory {
         manager,
         inMemoryTrackerRepository,
         transactionQueryRepository,
-        bookletBalanceQueryRepository
+        bookletBalanceQueryRepository,
+        paginator,
     )
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
     val sessionFeature = UserFeatureImpl(userRepository, bookletRepository, sessionManager, DefaultHasher, tokenGenerator)
@@ -91,7 +95,8 @@ object FakeFactory {
         inMemoryTagRepository,
         sessionManager,
         manager,
-        inMemoryTrackerRepository
+        inMemoryTrackerRepository,
+        paginator,
     )
     val fileImportExportFeature = FileImportExportFeatureImpl(
         csvFileReader,

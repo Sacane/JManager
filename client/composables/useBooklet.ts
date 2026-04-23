@@ -14,6 +14,10 @@ export interface BookletBalancesDTO {
 export interface BookletTransactionsDTO {
   transactions: TransactionResultDTO[]
   hasRegenerableTransactions: boolean
+  pageNumber: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
 }
 
 export type RegenerationType = 'PREVISIONAL' | 'VIRTUAL' | 'NONE'
@@ -84,11 +88,15 @@ export default function useBooklet() {
     month: number,
     year: number,
     dateRange: BookletDateRangeQuery = {},
+    page: number = 0,
+    size: number = 10,
   ): Promise<BookletTransactionsDTO> {
     return get(`booklet/${bookletId}/transactions`, {
       month,
       year,
       ...dateRange,
+      page,
+      size,
     })
   }
 

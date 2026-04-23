@@ -113,6 +113,10 @@ An evolution is considered complete when:
 
 ## 11. TDD Approach (Red, Green, Refactor)
 
+> The complete development workflow (TDD cycle, mandatory final analysis, SOLID, duplication, design patterns) is defined in  
+> [`development-workflow.md`](development-workflow.md) and applies to **all layers**.  
+> This section summarises the testing-specific aspects of TDD.
+
 TDD is the recommended method for implementing business rules and limiting regressions.
 
 ### 11.1 Red: Write a Failing Test

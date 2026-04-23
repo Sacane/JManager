@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-05-01
+- **Feature: Server-side pagination for transactions (domain + application)**
+  - Added `pageNumber: Int = 0` and `pageSize: Int = 10` parameters to `BookletFeature.loadTransactionsForBookletForAMonth` interface and implementation.
+  - Added `pageNumber`, `pageSize`, `totalElements`, `totalPages` fields to `BookletLoadingResult` data class.
+  - Added `Paginator` dependency to `BookletFeatureImpl` — uses `paginator.paginate()` to slice the combined `(currentTransactions + previsionalTransactions)` list before returning; balances (`realSold`, `previsionalSold`) are still computed over all transactions regardless of page.
+  - Changed `RegularTransactionFeature.getAllRegularTransactions` return type from `Result<List<RegularTransaction>>` to `Result<Page<RegularTransaction>>`; added `pageNumber: Int = 0` and `pageSize: Int = 10` parameters.
+  - Added `Paginator` dependency to `RegularTransactionFeatureImpl`.
+  - Updated `FakeFactory` to inject `PaginatorImpl` into both `BookletFeatureImpl` and `RegularTransactionFeatureImpl`.
+  - Updated `application` layer:
+    - `GET /api/transaction` — added optional `page` and `size` query params; `TransactionListResponse` DTO now includes `pageNumber`, `pageSize`, `totalElements`, `totalPages`.
+    - `GET /api/booklet/{id}/transactions` — added optional `page` and `size` query params; `BookletTransactionsResponse` DTO now includes pagination metadata.
+    - `GET /api/booklet/report/{id}` — passes `pageSize = Int.MAX_VALUE` to return all transactions (report use-case).
+    - `GET /api/transaction/regular` — added optional `page` and `size` query params; endpoint now returns `Page<RegularTransactionDTO>` instead of `List<RegularTransactionDTO>`.
+  - Added 5 new domain tests in `LoadTransactionsWithPaginationTest` (BookletFeature).
+  - Added 4 new domain tests in `GetAllRegularTransactionsPaginatedTest` (RegularTransactionFeature).
+  - Updated `RegularTransactionControllerTest` assertions to match paginated response shape (`content.label`, `content.size()`).
+
 ## 2026-04-22
 - **Feature: Reusable `AppTable` component (client)**
   - Created `client/components/AppTable.vue`: a generic, typed wrapper around PrimeVue `DataTable` that consolidates all shared DataTable configuration and CSS overrides.

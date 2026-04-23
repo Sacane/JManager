@@ -246,11 +246,13 @@ Then the transaction is persisted
 And the system returns a TransactionResumeResult with the updated booklet balance
 ```
 
-### Scenario: Retrieve transactions by month and year
+### Scenario: Retrieve transactions by month and year (paginated)
 ```gherkin
 Given an authenticated user with transactions in February 2025 on booklet "Current"
-When the user retrieves transactions for month February, year 2025, booklet "Current"
-Then the system returns the list of matching transactions
+When the user retrieves transactions for month February, year 2025, booklet "Current" with pageNumber 0 and pageSize 10
+Then the system returns a paginated list of matching transactions for the requested page
+And the response includes pagination metadata (pageNumber, pageSize, totalElements, totalPages)
+And the balances (realSold, previsionalSold) are computed on all transactions for the period
 ```
 
 ### Scenario: Edit an existing transaction
@@ -298,11 +300,12 @@ Then the regular transaction is persisted and associated with the specified book
 And the system returns the created RegularTransaction
 ```
 
-### Scenario: List all regular transactions
+### Scenario: List all regular transactions (paginated)
 ```gherkin
 Given an authenticated user with existing regular transactions
-When the user requests all regular transactions
-Then the system returns the complete list of the user's regular transactions
+When the user requests regular transactions with pageNumber 0 and pageSize 10
+Then the system returns a paginated list of the user's regular transactions
+And the response includes pagination metadata (pageNumber, pageSize, totalElements, totalPages)
 ```
 
 ### Scenario: Retrieve a regular transaction by ID

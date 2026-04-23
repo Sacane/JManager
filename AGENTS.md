@@ -176,6 +176,7 @@ Keep these scopes clearly separated — do not mix concerns across layers in a s
 You must follow the following guidelines in depends on the contexte you are working on : 
 
 - `./docs/agents/instructions/prompt.instruments.md` for **every** prompts.
+- `./docs/agents/instructions/development-workflow.md` for **every** development task across all layers (`domain/`, `infrastructure/`, `application/`, `client/`) — TDD, clean code, SOLID, duplication, design patterns.
 - `./docs/agents/instructions/kotlin-coding-guidelines.md` for all development tasks that implies Kotlin conventions.
 - `./docs/agents/instructions/testing-guidelines.md` whenever you are writing or reviewing tests.
 - `./docs/agents/instructions/agents-md-maintenance.md` whenever you have to maintain guidelines.
