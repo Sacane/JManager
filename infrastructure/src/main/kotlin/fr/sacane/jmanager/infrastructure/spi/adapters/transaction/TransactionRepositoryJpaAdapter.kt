@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
+import fr.sacane.jmanager.infrastructure.spi.entity.TagPersonalResource
 import fr.sacane.jmanager.infrastructure.spi.entity.TransactionResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
@@ -93,7 +94,34 @@ class TransactionRepositoryJpaAdapter(
         } else {
             tagPersonalPostgresRepository.findByIdNullable(transaction.tag?.id!!)
         }
-        val transactionResource = transaction.asResource(tag)
+
+        val existingResource = transaction.id?.let {
+            transactionJpaRepository.findTransactionResourceByIdTransaction(it)
+        }
+
+        val transactionResource = if (existingResource != null) {
+            existingResource.label = transaction.label
+            existingResource.date = transaction.date
+            existingResource.value = transaction.amount.value
+            existingResource.isIncome = transaction.isIncome
+            existingResource.lastModified = transaction.lastModified
+            existingResource.isPreview = transaction.isPreview
+            existingResource.regularTransactionId = transaction.regularTransactionId?.value?.let {
+                try { java.util.UUID.fromString(it) } catch (_: IllegalArgumentException) { null }
+            }
+            existingResource.tag = null
+            existingResource.personalTag = null
+            if (tag != null) {
+                when (tag) {
+                    is DefaultTagResource -> existingResource.tag = tag
+                    is TagPersonalResource -> existingResource.personalTag = tag
+                }
+            }
+            existingResource
+        } else {
+            transaction.asResource(tag)
+        }
+
         transactionResource.booklet = bookletJpaRepository.findByIdOrNull(bookletId)
         return transactionJpaRepository.save(transactionResource).toModel()
     }
