@@ -41,6 +41,7 @@ class BookletController (
         @Valid @RequestBody bookletRequest: BookletBookingRequest
     ): ResponseEntity<BookletInfoDTO> {
         LOGGER.info("Booking a new Booklet ${bookletRequest.label} starting at ${bookletRequest.amount}${bookletRequest.currency} for user ${currentUser.id}")
+        currentUser
         return feature.save(
             SessionToken(currentUser.token),
             Booklet(amount = bookletRequest.amount.toAmount(bookletRequest.currency.asCurrency()), label = bookletRequest.label)
