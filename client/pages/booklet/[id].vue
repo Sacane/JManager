@@ -50,7 +50,7 @@ const transactionToConfirm = ref<DisplayTransaction | null>(null)
 const hasRegenerableTransactions = ref(false)
 
 const PAGE_SIZE_KEY_BOOKLET = 'jmanager.pagination.bookletTransactions.pageSize'
-const pageSizeOptions = [10, 20, 30, 50]
+const pageSizeOptions = [5, 10, 20, 30, 50]
 const pageSize = useLocalStorage(PAGE_SIZE_KEY_BOOKLET, 10)
 const currentPage = ref(0)
 const totalElements = ref(0)
@@ -810,14 +810,10 @@ onUnmounted(() => {
         </Transition>
       </div>
 
-      <div v-if="isBookletLoading" class="mb-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-3 text-[var(--text-secondary)]">
-        <i class="pi pi-spin pi-spinner" />
-        <span>Chargement des transactions...</span>
-      </div>
-
-      <div v-if="!isMobile" class="sticky top-0 h-[100dvh] flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
+      <div v-if="!isMobile" class="sticky top-0 max-h-[calc(100dvh-1rem)] flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <AppTable
           v-model:selection="selectedTransactions"
+          class="flex-1 min-h-0"
           :columns="bookletTransactionColumns"
           :rows="filteredTransactions"
           data-key="selectionKey"
@@ -825,6 +821,7 @@ onUnmounted(() => {
           selectable
           scrollable
           scroll-height="flex"
+          :loading="isBookletLoading"
           @row-dblclick="onEditTransaction"
         >
           <template #empty>
@@ -837,6 +834,13 @@ onUnmounted(() => {
                 Commencez par créer votre première transaction
               </p>
               <Button class="btn-primary" icon="pi pi-plus" label="Créer une transaction" @click="openCreationDialog" />
+            </div>
+          </template>
+
+          <template #loading>
+            <div class="flex items-center justify-center gap-2 py-8 text-[var(--text-secondary)]">
+              <i class="pi pi-spin pi-spinner" />
+              <span>Chargement des transactions...</span>
             </div>
           </template>
 
