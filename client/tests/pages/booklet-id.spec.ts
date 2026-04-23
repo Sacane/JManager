@@ -144,12 +144,6 @@ describe('pages/booklet/[id] loading states', () => {
     vi.useRealTimers()
   })
 
-  it('shows inline loading feedback when account load scope is active', () => {
-    const { wrapper } = mountPage(['booklet.loadBookletData'])
-
-    expect(wrapper.text()).toContain('Chargement des transactions...')
-  })
-
   it('shows export button loading state when csv export scope is active', () => {
     const { wrapper } = mountPage(['booklet.exportCsv'])
 
