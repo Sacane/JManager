@@ -1,5 +1,18 @@
 # Refactor Feature Ports to One Use Case Interface per Method: Domain Module Impact
 
+> **⚠️ This issue has been decomposed into per-category issues.**
+> Refer to the following files for the detailed breakdown by domain category:
+> - `domain_usecase-interface-split-transaction.md`
+> - `domain_usecase-interface-split-booklet.md`
+> - `domain_usecase-interface-split-tag.md`
+> - `domain_usecase-interface-split-regular-transaction.md`
+> - `domain_usecase-interface-split-user.md`
+> - `domain_usecase-interface-split-stats.md`
+> - `domain_usecase-interface-split-admin.md`
+> - `domain_usecase-interface-split-file-import-export.md`
+>
+> The content below serves as the high-level overview and shared context.
+
 **Context**
 The current domain API contracts expose large feature interfaces with many methods (e.g., transaction, booklet, tag, user features). This makes boundaries less explicit and increases coupling between unrelated use cases. The target architecture is one input interface per use case, with a single method (`execute(...)` or `invoke(...)`), while preserving business behavior and existing method signatures.
 
