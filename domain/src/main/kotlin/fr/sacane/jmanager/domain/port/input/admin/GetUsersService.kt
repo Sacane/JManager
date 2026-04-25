@@ -3,7 +3,6 @@ package fr.sacane.jmanager.domain.port.input.admin
 import fr.sacane.jmanager.domain.Paginator
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.Page
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.roleAdmin
 import fr.sacane.jmanager.domain.port.spi.SessionManager
@@ -18,9 +17,9 @@ class GetUsersService(
     private val paginator: Paginator
 ) : GetUsersUseCase {
 
-    override fun getUsers(token: SessionToken, pageNumber: Int, pageSize: Int): Result<Page<User>> =
-        sessionManager.authenticate(token, requiredRoles = roleAdmin) { userId ->
-            val page = paginator.paginate(pageNumber, pageSize) {
+    override fun handle(query: GetUsersQuery): Result<Page<User>> =
+        sessionManager.authenticate(query.token, requiredRoles = roleAdmin) { userId ->
+            val page = paginator.paginate(query.pageNumber, query.pageSize) {
                 val allUsers = userRepository.findAll()
                 allUsers.filter { it.id != userId }.sortedByDescending { it.creationDate }
             }
