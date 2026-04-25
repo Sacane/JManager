@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.application.configuration
 
 import fr.sacane.jmanager.domain.port.input.tag.AddDefaultTagsUseCase
+import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsCommand
 import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsUseCase
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -22,7 +23,7 @@ class DataLoader (
             return
         }
         addDefaultTagsUseCase.addDefaultTags()
-        val adminCreationResult = createAdminIfNotExistsUseCase.createAdminIfNotExists(adminUsername, adminPassword)
+        val adminCreationResult = createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand(adminUsername, adminPassword))
         check(!adminCreationResult.isFailure()){
             "The admin user could not be created"
         }

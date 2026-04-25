@@ -11,13 +11,13 @@ class LogoutService(
     private val session: SessionManager
 ) : LogoutUseCase {
 
-    override fun logout(token: SessionToken): Result<Nothing> = session.authenticate(token) {
-        val activeSession = session.findSessionByToken(token)
+    override fun handle(command: LogoutCommand): Result<Nothing> = session.authenticate(command.token) {
+        val activeSession = session.findSessionByToken(command.token)
         val refreshToken = activeSession?.refreshToken
         if (refreshToken != null) {
             session.blacklistRefreshToken(refreshToken, activeSession.refreshTokenLifetime)
         }
-        session.removeSession(it, token)
+        session.removeSession(it, command.token)
         success()
     }
 }

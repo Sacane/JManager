@@ -7,5 +7,5 @@ import fr.sacane.jmanager.domain.utils.Result
 
 @Port(Side.APPLICATION)
 interface RegisterUserUseCase {
-    fun register(username: String, password: String, confirmPassword: String): Result<User>
+    fun handle(command: RegisterUserCommand): Result<User>
 }

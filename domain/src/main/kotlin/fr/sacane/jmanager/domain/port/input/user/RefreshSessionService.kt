@@ -10,7 +10,6 @@ import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
-import java.util.UUID
 
 @DomainService
 class RefreshSessionService(
@@ -19,9 +18,9 @@ class RefreshSessionService(
     private val tokenGenerator: TokenGenerator
 ) : RefreshSessionUseCase {
 
-    override fun refresh(refreshToken: UUID): Result<UserToken> =
-        session.authenticateRefreshToken(refreshToken) { userId ->
-            val refreshTokenExpiry = session.getRefreshTokenExpiry(refreshToken)
+    override fun handle(command: RefreshSessionCommand): Result<UserToken> =
+        session.authenticateRefreshToken(command.refreshToken) { userId ->
+            val refreshTokenExpiry = session.getRefreshTokenExpiry(command.refreshToken)
                 ?: return@authenticateRefreshToken failure(
                     ResultState.UNAUTHORIZED,
                     DomainError(ResultState.UNAUTHORIZED.code, "domain.user.refresh.missing_refresh_token", "Refresh token introuvable")
@@ -34,7 +33,7 @@ class RefreshSessionService(
                 )
 
             val accessToken = tokenGenerator.generateToken(user.id, user.username, user.roles)
-            session.blacklistRefreshToken(refreshToken, refreshTokenExpiry)
+            session.blacklistRefreshToken(command.refreshToken, refreshTokenExpiry)
             session.addSession(userId, accessToken)
             accessToken.refreshToken?.let {
                 session.saveRefreshToken(userId, it, accessToken.refreshTokenLifetime)

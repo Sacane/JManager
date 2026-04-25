@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 2 / 17
+**Overall status**: 🔄 In progress — Step 3 / 17
 
 ---
 
@@ -126,7 +126,7 @@ class GetCategoryDistributionService(
 
 ### Step 3 — User: Command/Query + rename `handle`
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 2  
 **Objective**: Introduce the 7 User Command/Query objects and rename methods to `handle`.
 

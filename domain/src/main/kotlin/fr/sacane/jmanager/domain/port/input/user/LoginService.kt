@@ -25,15 +25,15 @@ class LoginService(
         private val LOGGER = Logger.getLogger(LoginService::class.java.name)
     }
 
-    override fun login(pseudonym: String, userPassword: String): Result<UserToken> {
-        val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym)
+    override fun handle(command: LoginCommand): Result<UserToken> {
+        val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(command.pseudonym)
             ?: return failure(
                 ResultState.NOT_FOUND,
-                DomainError(ResultState.NOT_FOUND.code, "domain.user.login.user_not_found", "L'utilisateur $pseudonym n'existe pas")
+                DomainError(ResultState.NOT_FOUND.code, "domain.user.login.user_not_found", "L'utilisateur ${command.pseudonym} n'existe pas")
             )
         LOGGER.info("LOGIN request for user ${userWithPassword.user.id}")
         val user = userWithPassword.user
-        if (hasher.verify(userPassword, userWithPassword.password)) {
+        if (hasher.verify(command.userPassword, userWithPassword.password)) {
             LOGGER.info("User ${userWithPassword.user.username} logged")
             val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, userWithPassword.roles)
             session.addSession(user.id, accessToken)
@@ -42,7 +42,7 @@ class LoginService(
             }
             return success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
         }
-        LOGGER.warning("Failed to log user $pseudonym")
+        LOGGER.warning("Failed to log user ${command.pseudonym}")
         return failure(
             ResultState.USER_UNAUTHORIZED,
             DomainError(ResultState.USER_UNAUTHORIZED.code, "domain.user.login.invalid_credentials", "Le pseudonyme ou le mot de passe est incorrect")

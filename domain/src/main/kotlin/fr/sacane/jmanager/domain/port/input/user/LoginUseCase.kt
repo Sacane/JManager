@@ -7,5 +7,5 @@ import fr.sacane.jmanager.domain.utils.Result
 
 @Port(Side.APPLICATION)
 interface LoginUseCase {
-    fun login(pseudonym: String, userPassword: String): Result<UserToken>
+    fun handle(command: LoginCommand): Result<UserToken>
 }

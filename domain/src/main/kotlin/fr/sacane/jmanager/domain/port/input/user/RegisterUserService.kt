@@ -16,15 +16,15 @@ class RegisterUserService(
     private val hasher: Hasher
 ) : RegisterUserUseCase {
 
-    override fun register(username: String, password: String, confirmPassword: String): Result<User> {
-        if (password != confirmPassword) {
+    override fun handle(command: RegisterUserCommand): Result<User> {
+        if (command.password != command.confirmPassword) {
             return failure(
                 ResultState.PASSWORD_NOT_MATCH,
                 DomainError(ResultState.PASSWORD_NOT_MATCH.code, "domain.user.register.password_mismatch", "Les mots de passes ne correspondent pas")
             )
         }
-        val hashedPassword = hasher.hash(password)
-        val userResult = userRepository.register(username, hashedPassword)
+        val hashedPassword = hasher.hash(command.password)
+        val userResult = userRepository.register(command.username, hashedPassword)
             ?: return failure(
                 ResultState.INVALID,
                 DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")

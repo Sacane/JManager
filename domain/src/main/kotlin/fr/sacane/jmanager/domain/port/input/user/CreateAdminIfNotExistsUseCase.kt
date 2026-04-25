@@ -7,5 +7,5 @@ import fr.sacane.jmanager.domain.utils.Result
 
 @Port(Side.APPLICATION)
 interface CreateAdminIfNotExistsUseCase {
-    fun createAdminIfNotExists(username: String, password: String): Result<User>
+    fun handle(command: CreateAdminIfNotExistsCommand): Result<User>
 }

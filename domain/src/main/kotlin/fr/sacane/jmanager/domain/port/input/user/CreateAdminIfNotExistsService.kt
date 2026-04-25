@@ -22,24 +22,24 @@ class CreateAdminIfNotExistsService(
         private val LOGGER = Logger.getLogger(CreateAdminIfNotExistsService::class.java.name)
     }
 
-    override fun createAdminIfNotExists(username: String, password: String): Result<User> {
-        val existingAdmin = userRepository.findByPseudonymWithEncodedPassword(username)
-        val hashedPassword = hasher.hash(password)
+    override fun handle(command: CreateAdminIfNotExistsCommand): Result<User> {
+        val existingAdmin = userRepository.findByPseudonymWithEncodedPassword(command.username)
+        val hashedPassword = hasher.hash(command.password)
         if (existingAdmin != null) {
-            LOGGER.info("Admin user already exists with username $username")
-            return if (!hasher.verify(password, existingAdmin.password))
+            LOGGER.info("Admin user already exists with username ${command.username}")
+            return if (!hasher.verify(command.password, existingAdmin.password))
                 failure(
                     ResultState.PASSWORD_NOT_MATCH,
                     DomainError(ResultState.PASSWORD_NOT_MATCH.code, "domain.user.admin.password_mismatch", "admin password does not match the existing one")
                 )
             else success(existingAdmin.user)
         }
-        val adminUser = userRepository.register(username, hashedPassword, setOf(Role.USER, Role.ADMIN))
+        val adminUser = userRepository.register(command.username, hashedPassword, setOf(Role.USER, Role.ADMIN))
             ?: return failure(
                 ResultState.INVALID,
                 DomainError(ResultState.INVALID.code, "domain.user.admin.creation_failed", "Une erreur est survenue lors de la création de l'administrateur")
             )
-        LOGGER.info("Admin user created with username $username")
+        LOGGER.info("Admin user created with username ${command.username}")
         return success(adminUser)
     }
 }

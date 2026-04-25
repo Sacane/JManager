@@ -2,8 +2,6 @@ package fr.sacane.jmanager.domain.port.input.user
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.models.BookletMonthlyCycleSetting
-import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.port.spi.SessionManager
@@ -14,7 +12,6 @@ import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
-import java.util.UUID
 
 @DomainService
 class UpdateUserSettingsService(
@@ -23,19 +20,15 @@ class UpdateUserSettingsService(
     private val bookletRepository: BookletRepository
 ) : UpdateUserSettingsUseCase {
 
-    override fun updateSettings(
-        token: SessionToken,
-        projectionWindowDays: Int,
-        bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
-    ): Result<UserSettings> = session.authenticate(token) { userId ->
-        if (projectionWindowDays !in 7..60) {
+    override fun handle(command: UpdateUserSettingsCommand): Result<UserSettings> = session.authenticate(command.token) { userId ->
+        if (command.projectionWindowDays !in 7..60) {
             return@authenticate failure(
                 ResultState.INVALID,
                 DomainError(ResultState.INVALID.code, "domain.user.settings.invalid_projection_window", "La fenêtre de projection doit être comprise entre 7 et 60 jours")
             )
         }
 
-        val invalidBookletCycle = bookletCycles.entries.firstOrNull { (_, cycle) ->
+        val invalidBookletCycle = command.bookletCycles.entries.firstOrNull { (_, cycle) ->
             cycle.monthlyPeriodStartDay !in 1..31
         }
         if (invalidBookletCycle != null) {
@@ -45,7 +38,7 @@ class UpdateUserSettingsService(
             )
         }
 
-        val invalidBookletCycleEndDay = bookletCycles.entries.firstOrNull { (_, cycle) ->
+        val invalidBookletCycleEndDay = command.bookletCycles.entries.firstOrNull { (_, cycle) ->
             cycle.monthlyPeriodEndDay != null && cycle.monthlyPeriodEndDay !in 1..31
         }
         if (invalidBookletCycleEndDay != null) {
@@ -65,7 +58,7 @@ class UpdateUserSettingsService(
             booklet.id?.let { id -> id to booklet }
         }.toMap()
 
-        val missingBooklets = bookletsById.keys - bookletCycles.keys
+        val missingBooklets = bookletsById.keys - command.bookletCycles.keys
         if (missingBooklets.isNotEmpty()) {
             return@authenticate failure(
                 ResultState.INVALID,
@@ -73,7 +66,7 @@ class UpdateUserSettingsService(
             )
         }
 
-        for ((bookletId, bookletCycle) in bookletCycles) {
+        for ((bookletId, bookletCycle) in command.bookletCycles) {
             val booklet = bookletsById[bookletId]
                 ?: return@authenticate failure(
                     ResultState.FORBIDDEN,
@@ -97,7 +90,7 @@ class UpdateUserSettingsService(
             )
         }
 
-        val projectionUpdated = userRepository.updateProjectionWindowDays(userId, projectionWindowDays)
+        val projectionUpdated = userRepository.updateProjectionWindowDays(userId, command.projectionWindowDays)
         if (!projectionUpdated) {
             return@authenticate failure(
                 ResultState.INFRASTRUCTURE_ERROR,
@@ -105,7 +98,7 @@ class UpdateUserSettingsService(
             )
         }
 
-        user.updateProjectionWindowDays(projectionWindowDays)
+        user.updateProjectionWindowDays(command.projectionWindowDays)
         success(user.toSettings())
     }
 
