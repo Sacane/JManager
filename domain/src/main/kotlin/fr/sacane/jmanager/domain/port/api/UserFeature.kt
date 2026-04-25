@@ -3,6 +3,13 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsUseCase
+import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsUseCase
+import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
+import fr.sacane.jmanager.domain.port.input.user.LogoutUseCase
+import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
+import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
+import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
@@ -18,6 +25,7 @@ import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 import java.util.logging.Logger
 
+@Deprecated("Use individual use case interfaces from domain.port.input.user instead")
 @Port(Side.APPLICATION)
 /**
  * Application port: UserFeature
@@ -106,7 +114,8 @@ class UserFeatureImpl(
     private val session: SessionManager,
     private val hasher: Hasher,
     private val tokenGenerator: TokenGenerator
-): UserFeature{
+): UserFeature, LoginUseCase, LogoutUseCase, RefreshSessionUseCase, RegisterUserUseCase,
+   CreateAdminIfNotExistsUseCase, GetUserSettingsUseCase, UpdateUserSettingsUseCase {
 
     companion object{
         private val LOGGER = Logger.getLogger(UserFeatureImpl::class.java.name)

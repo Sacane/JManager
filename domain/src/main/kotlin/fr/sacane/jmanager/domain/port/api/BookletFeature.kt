@@ -11,6 +11,15 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.port.input.booklet.DeleteBookletByIdUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.EditBookletUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.FindAllRegisteredBookletsUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.FindBookletByIdUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.FindByLabelAndUserIdUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.LoadBalancesForBookletForAMonthUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.LoadTransactionsForBookletForAMonthUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.RegenerateDeletedPrevisionalTransactionsUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.SaveBookletUseCase
 import fr.sacane.jmanager.domain.port.spi.*
 import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
@@ -31,6 +40,7 @@ import java.time.YearMonth
 import java.util.UUID
 import java.util.logging.Logger
 
+@Deprecated("Use individual use case interfaces from domain.port.input.booklet instead")
 @Port(Side.APPLICATION)
 /**
  * Application port: BookletFeature
@@ -174,7 +184,10 @@ class BookletFeatureImpl(
     private val transactionQueryRepository: TransactionQueryRepository,
     private val bookletBalanceQueryRepository: BookletBalanceQueryRepository,
     private val paginator: Paginator,
-): BookletFeature {
+): BookletFeature, FindBookletByIdUseCase, EditBookletUseCase, DeleteBookletByIdUseCase,
+    FindByLabelAndUserIdUseCase, FindAllRegisteredBookletsUseCase, SaveBookletUseCase,
+    LoadTransactionsForBookletForAMonthUseCase, LoadBalancesForBookletForAMonthUseCase,
+    RegenerateDeletedPrevisionalTransactionsUseCase {
     companion object {
         private val LOGGER = Logger.getLogger(BookletFeatureImpl::class.java.name)
     }

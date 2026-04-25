@@ -2,7 +2,9 @@ package fr.sacane.jmanager.application.api.csv
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.api.FileImportExportFeature
+import fr.sacane.jmanager.domain.port.input.csv.ExportTransactionsToCsvUseCase
+import fr.sacane.jmanager.domain.port.input.csv.ImportTransactionsFromCsvUseCase
+import fr.sacane.jmanager.domain.port.input.csv.ValidateCsvFileUseCase
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
@@ -24,7 +26,9 @@ import java.util.logging.Logger
 @RequestMapping("api/csv")
 @Adapter(Side.APPLICATION)
 class CsvImportController(
-    private val fileImportExportFeature: FileImportExportFeature,
+    private val validateCsvFileUseCase: ValidateCsvFileUseCase,
+    private val importTransactionsFromCsvUseCase: ImportTransactionsFromCsvUseCase,
+    private val exportTransactionsToCsvUseCase: ExportTransactionsToCsvUseCase,
     private val transactionRepository: TransactionRepository
 ) {
     companion object {
@@ -63,7 +67,7 @@ class CsvImportController(
             )
         }
 
-        return fileImportExportFeature.validateCsvFile(
+        return validateCsvFileUseCase.validateCsvFile(
             token = SessionToken(currentUser.token),
             bookletId = bookletId.toUUID(),
             csvContent = csvContent,
@@ -96,7 +100,7 @@ class CsvImportController(
             )
         }
 
-        return fileImportExportFeature.importTransactionsFromCsv(
+        return importTransactionsFromCsvUseCase.importTransactionsFromCsv(
             token = SessionToken(currentUser.token),
             bookletId = bookletId.toUUID(),
             csvContent = csvContent,
@@ -175,7 +179,7 @@ class CsvImportController(
                     .body(mapOf("message" to "Aucune transaction trouvée"))
             }
 
-            val result = fileImportExportFeature.exportTransactionsToCsv(
+            val result = exportTransactionsToCsvUseCase.exportTransactionsToCsv(
                 token = SessionToken(currentUser.token),
                 transactions = transactions
             )

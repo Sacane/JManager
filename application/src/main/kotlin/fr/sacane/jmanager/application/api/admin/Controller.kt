@@ -3,7 +3,7 @@ package fr.sacane.jmanager.application.api.admin
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.models.Page
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.api.AdminFeature
+import fr.sacane.jmanager.domain.port.input.admin.GetUsersUseCase
 import fr.sacane.jmanager.application.api.currentUser
 import fr.sacane.jmanager.application.api.session.UserDTO
 import fr.sacane.jmanager.application.api.toDTO
@@ -23,7 +23,7 @@ import java.util.logging.Logger
 @Adapter
 @Validated
 class AdminController(
-    private val adminFeature: AdminFeature
+    private val adminFeature: GetUsersUseCase
 ) {
 
     companion object {

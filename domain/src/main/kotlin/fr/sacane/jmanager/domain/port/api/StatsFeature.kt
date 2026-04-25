@@ -11,6 +11,11 @@ import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.input.stats.GetCategoryDistributionUseCase
+import fr.sacane.jmanager.domain.port.input.stats.GetDailyTrendStatsUseCase
+import fr.sacane.jmanager.domain.port.input.stats.GetMonthlyBookletStatsUseCase
+import fr.sacane.jmanager.domain.port.input.stats.GetPrevisionalTransactionsUseCase
+import fr.sacane.jmanager.domain.port.input.stats.GetTrendStatsUseCase
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
@@ -28,6 +33,7 @@ import java.time.LocalDate
 import java.util.UUID
 import java.util.logging.Logger
 
+@Deprecated("Use individual use case interfaces from domain.port.input.stats instead")
 @Port(Side.APPLICATION)
 /**
  * Application port: StatsFeature
@@ -121,7 +127,7 @@ class StatsFeatureImpl(
     private val trendCalculator: TrendCalculator,
     private val dailyTrendCalculator: DailyTrendCalculator,
     private val previsionalTransactionFilter: PrevisionalTransactionFilter
-) : StatsFeature {
+) : StatsFeature, GetMonthlyBookletStatsUseCase, GetCategoryDistributionUseCase, GetTrendStatsUseCase, GetPrevisionalTransactionsUseCase, GetDailyTrendStatsUseCase {
     companion object {
         private val LOGGER = Logger.getLogger(StatsFeatureImpl::class.java.name)
     }

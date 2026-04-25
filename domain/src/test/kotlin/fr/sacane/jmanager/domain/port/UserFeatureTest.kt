@@ -9,7 +9,13 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
-import fr.sacane.jmanager.domain.port.api.UserFeature
+import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsUseCase
+import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsUseCase
+import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
+import fr.sacane.jmanager.domain.port.input.user.LogoutUseCase
+import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
+import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
+import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
 import fr.sacane.jmanager.domain.port.spi.DefaultHasher
 import fr.sacane.jmanager.domain.utils.success
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -23,7 +29,13 @@ import java.util.UUID
 class UserFeatureTest: FeatureTest() {
 
     companion object {
-        private val userFeature: UserFeature = FakeFactory.sessionFeature
+        private val loginUseCase: LoginUseCase = FakeFactory.sessionFeature
+        private val logoutUseCase: LogoutUseCase = FakeFactory.sessionFeature
+        private val refreshSessionUseCase: RefreshSessionUseCase = FakeFactory.sessionFeature
+        private val registerUserUseCase: RegisterUserUseCase = FakeFactory.sessionFeature
+        private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = FakeFactory.sessionFeature
+        private val getUserSettingsUseCase: GetUserSettingsUseCase = FakeFactory.sessionFeature
+        private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = FakeFactory.sessionFeature
         private val sessionFakeState = FakeFactory.sessionState()
         private val userState = FakeFactory.fakeUserRepository()
         private val tokenGenerator = FakeFactory.tokenGenerator
@@ -42,7 +54,7 @@ class UserFeatureTest: FeatureTest() {
             userState.init(listOf(
                 UserWithPassword(user, DefaultHasher.hash("test"))
             ))
-            userFeature.login("John", "test")
+            loginUseCase.login("John", "test")
                 .assertSuccess()
         }
         @Test
@@ -51,7 +63,7 @@ class UserFeatureTest: FeatureTest() {
             userState.init(listOf(
                 UserWithPassword(user, DefaultHasher.hash("test"))
             ))
-            val result = userFeature.login("John", "wrong")
+            val result = loginUseCase.login("John", "wrong")
 
             result.assertFailure(ResultState.USER_UNAUTHORIZED)
             assertEquals("domain.user.login.invalid_credentials", result.errorInfo?.key)
@@ -62,7 +74,7 @@ class UserFeatureTest: FeatureTest() {
             val user = User(UserId(UUID.randomUUID()), "John", "john.doe@gmail.com")
             userState.init(listOf(UserWithPassword(user, DefaultHasher.hash("test"))))
 
-            val loginResult = userFeature.login("John", "test")
+            val loginResult = loginUseCase.login("John", "test")
             loginResult.assertSuccess()
 
             val accessToken = loginResult.mapNotNullOrFailure()!!.token
@@ -87,7 +99,7 @@ class UserFeatureTest: FeatureTest() {
             )
             val token = tokenGenerator.generateToken(user.id, user.username)
             sessionFakeState.addSession(user.id, token)
-            userFeature.logout(SessionToken(token.tokenValue))
+            logoutUseCase.logout(SessionToken(token.tokenValue))
                 .assertSuccess()
         }
 
@@ -96,13 +108,13 @@ class UserFeatureTest: FeatureTest() {
             val user = User(UserId(UUID.randomUUID()), "John", "")
             userState.init(listOf(UserWithPassword(user, DefaultHasher.hash("test"))))
 
-            val loginResult = userFeature.login("John", "test")
+            val loginResult = loginUseCase.login("John", "test")
             val accessToken = loginResult.mapNotNullOrFailure()!!.token
             val activeSession = sessionFakeState.findSessionByToken(SessionToken(accessToken))
             val refreshToken = activeSession?.refreshToken
             assertNotNull(refreshToken)
 
-            userFeature.logout(SessionToken(accessToken)).assertSuccess()
+            logoutUseCase.logout(SessionToken(accessToken)).assertSuccess()
 
             sessionFakeState.authenticateRefreshToken(refreshToken!!) {
                 return@authenticateRefreshToken success("ok")
@@ -117,13 +129,13 @@ class UserFeatureTest: FeatureTest() {
             val user = User(UserId(UUID.randomUUID()), "John", "john.doe@gmail.com")
             userState.init(listOf(UserWithPassword(user, DefaultHasher.hash("test"))))
 
-            val loginResult = userFeature.login("John", "test")
+            val loginResult = loginUseCase.login("John", "test")
             val initialAccessToken = loginResult.mapNotNullOrFailure()!!.token
             val initialSession = sessionFakeState.findSessionByToken(SessionToken(initialAccessToken))
             val initialRefreshToken = initialSession?.refreshToken
             assertNotNull(initialRefreshToken)
 
-            val refreshResult = userFeature.refresh(initialRefreshToken!!)
+            val refreshResult = refreshSessionUseCase.refresh(initialRefreshToken!!)
             refreshResult.assertSuccess()
             val refreshedAccessToken = refreshResult.mapNotNullOrFailure()!!.token
 
@@ -145,12 +157,12 @@ class UserFeatureTest: FeatureTest() {
     inner class RegisterFeatureTest {
         @Test
         fun `Register a user must return success`() {
-            userFeature.register("John", "test", "test")
+            registerUserUseCase.register("John", "test", "test")
                 .assertSuccess()
         }
         @Test
         fun `Register a user with different password must return password not match`() {
-            val result = userFeature.register("John", "test", "wrong")
+            val result = registerUserUseCase.register("John", "test", "wrong")
 
             result.assertFailure(ResultState.PASSWORD_NOT_MATCH)
             assertEquals("domain.user.register.password_mismatch", result.errorInfo?.key)
@@ -161,20 +173,20 @@ class UserFeatureTest: FeatureTest() {
     inner class CreateAdminFeatureTest {
         @Test
         fun `Create admin that doesn't exists must return success`() {
-            userFeature.createAdminIfNotExists("admin", "test")
+            createAdminIfNotExistsUseCase.createAdminIfNotExists("admin", "test")
                 .assertSuccess()
         }
 
         @Test
         fun `Create admin that exists must return success`() {
-            userFeature.createAdminIfNotExists("admin", "test")
-            userFeature.createAdminIfNotExists("admin", "test")
+            createAdminIfNotExistsUseCase.createAdminIfNotExists("admin", "test")
+            createAdminIfNotExistsUseCase.createAdminIfNotExists("admin", "test")
                 .assertSuccess()
         }
         @Test
         fun `Create admin with different password must return password not match`() {
-            userFeature.createAdminIfNotExists("admin", "test")
-            val result = userFeature.createAdminIfNotExists("admin", "wrong")
+            createAdminIfNotExistsUseCase.createAdminIfNotExists("admin", "test")
+            val result = createAdminIfNotExistsUseCase.createAdminIfNotExists("admin", "wrong")
 
             result.assertFailure(ResultState.PASSWORD_NOT_MATCH)
             assertEquals("domain.user.admin.password_mismatch", result.errorInfo?.key)
@@ -185,10 +197,10 @@ class UserFeatureTest: FeatureTest() {
     inner class UserSettingsFeatureTest {
         @Test
         fun `Get settings for a connected user must return defaults`() {
-            userFeature.register("John", "test", "test")
-            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+            registerUserUseCase.register("John", "test", "test")
+            val token = loginUseCase.login("John", "test").mapNotNullOrFailure()!!.token
 
-            userFeature.getSettings(SessionToken(token))
+            getUserSettingsUseCase.getSettings(SessionToken(token))
                 .assertTrue {
                     projectionWindowDays == 15 && bookletCycles.isEmpty()
                 }
@@ -196,10 +208,10 @@ class UserFeatureTest: FeatureTest() {
 
         @Test
         fun `Update settings must persist projection window`() {
-            userFeature.register("John", "test", "test")
-            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+            registerUserUseCase.register("John", "test", "test")
+            val token = loginUseCase.login("John", "test").mapNotNullOrFailure()!!.token
 
-            userFeature.updateSettings(
+            updateUserSettingsUseCase.updateSettings(
                 token = SessionToken(token),
                 projectionWindowDays = 30,
                 bookletCycles = emptyMap(),
@@ -210,10 +222,10 @@ class UserFeatureTest: FeatureTest() {
 
         @Test
         fun `Update settings with projection outside range must fail`() {
-            userFeature.register("John", "test", "test")
-            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+            registerUserUseCase.register("John", "test", "test")
+            val token = loginUseCase.login("John", "test").mapNotNullOrFailure()!!.token
 
-            val result = userFeature.updateSettings(
+            val result = updateUserSettingsUseCase.updateSettings(
                 token = SessionToken(token),
                 projectionWindowDays = 6,
                 bookletCycles = emptyMap(),
@@ -225,10 +237,10 @@ class UserFeatureTest: FeatureTest() {
 
         @Test
         fun `Update settings with non owned booklet must fail`() {
-            userFeature.register("John", "test", "test")
-            val token = userFeature.login("John", "test").mapNotNullOrFailure()!!.token
+            registerUserUseCase.register("John", "test", "test")
+            val token = loginUseCase.login("John", "test").mapNotNullOrFailure()!!.token
 
-            val result = userFeature.updateSettings(
+            val result = updateUserSettingsUseCase.updateSettings(
                 token = SessionToken(token),
                 projectionWindowDays = 20,
                 bookletCycles = mapOf(UUID.randomUUID() to BookletMonthlyCycleUpdate(10, null)),
@@ -241,7 +253,7 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Update settings without cycle for each owned booklet must fail`() {
             launchWithConnectedUserInstance {
-                val result = userFeature.updateSettings(
+                val result = updateUserSettingsUseCase.updateSettings(
                     token = tokenValue,
                     projectionWindowDays = 20,
                     bookletCycles = emptyMap(),
@@ -255,7 +267,7 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Update settings with invalid monthly period end day must fail`() {
             launchWithConnectedUserInstance {
-                val result = userFeature.updateSettings(
+                val result = updateUserSettingsUseCase.updateSettings(
                     token = tokenValue,
                     projectionWindowDays = 20,
                     bookletCycles = mapOf(booklet.id!! to BookletMonthlyCycleUpdate(28, 40)),
@@ -269,7 +281,7 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Update settings with cycle for each owned booklet must succeed`() {
             launchWithConnectedUserInstance {
-                val result = userFeature.updateSettings(
+                val result = updateUserSettingsUseCase.updateSettings(
                     token = tokenValue,
                     projectionWindowDays = 20,
                     bookletCycles = mapOf(booklet.id!! to BookletMonthlyCycleUpdate(28, 27)),

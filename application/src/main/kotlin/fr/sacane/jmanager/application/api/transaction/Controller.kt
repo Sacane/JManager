@@ -8,11 +8,22 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.api.BookletFeature
-import fr.sacane.jmanager.domain.port.api.RegularTransactionFeature
+import fr.sacane.jmanager.domain.port.input.booklet.LoadTransactionsForBookletForAMonthUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.BookRegularTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.DeleteRegularTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.DeleteRegularTransactionsUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.GetAllRegularTransactionsUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.GetRegularTransactionByIdUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.LinkRegularTransactionToBookletUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.UnlinkRegularTransactionFromBookletUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.UpdateRegularTransactionUseCase
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.api.TransactionDeletionResult
-import fr.sacane.jmanager.domain.port.api.TransactionFeature
+import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.ConfirmPreviewTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.DeleteTransactionsByIdsUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.EditTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.FindTransactionByIdUseCase
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.toUUIDs
@@ -34,9 +45,20 @@ import java.util.logging.Logger
 @RequestMapping("api/transaction")
 @Adapter(Side.APPLICATION)
 class TransactionController(
-    private val transactionFeature: TransactionFeature,
-    private val regularTransactionFeature: RegularTransactionFeature,
-    private val bookletFeature: BookletFeature
+    private val bookTransactionUseCase: BookTransactionUseCase,
+    private val deleteTransactionsByIdsUseCase: DeleteTransactionsByIdsUseCase,
+    private val editTransactionUseCase: EditTransactionUseCase,
+    private val findTransactionByIdUseCase: FindTransactionByIdUseCase,
+    private val confirmPreviewTransactionUseCase: ConfirmPreviewTransactionUseCase,
+    private val getAllRegularTransactionsUseCase: GetAllRegularTransactionsUseCase,
+    private val bookRegularTransactionUseCase: BookRegularTransactionUseCase,
+    private val getRegularTransactionByIdUseCase: GetRegularTransactionByIdUseCase,
+    private val updateRegularTransactionUseCase: UpdateRegularTransactionUseCase,
+    private val deleteRegularTransactionUseCase: DeleteRegularTransactionUseCase,
+    private val deleteRegularTransactionsUseCase: DeleteRegularTransactionsUseCase,
+    private val linkRegularTransactionToBookletUseCase: LinkRegularTransactionToBookletUseCase,
+    private val unlinkRegularTransactionFromBookletUseCase: UnlinkRegularTransactionFromBookletUseCase,
+    private val loadTransactionsForBookletForAMonthUseCase: LoadTransactionsForBookletForAMonthUseCase
 ) {
 
     companion object {
@@ -48,7 +70,7 @@ class TransactionController(
     fun createTransaction(
         @Valid @RequestBody userBookletResponse: UserBookletResponse
     ): ResponseEntity<TransactionResponse> {
-        return transactionFeature.bookTransaction(
+        return bookTransactionUseCase.bookTransaction(
             SessionToken(currentUser.token),
             userBookletResponse.bookletLabel,
             userBookletResponse.transactionResult.toModel()
@@ -61,7 +83,7 @@ class TransactionController(
     fun deleteByIds(
         @Valid @RequestBody transactionIds: BookletTransactionsIdRequest
     ): ResponseEntity<TransactionDeletionResponse> =
-        transactionFeature
+        deleteTransactionsByIdsUseCase
             .deleteTransactionsByIds(transactionIds.bookletId.toUUID(), transactionIds.transactionIds.toUUIDs(), SessionToken(currentUser.token))
             .map { it.toDTO() }
             .toHttpResponse()
@@ -79,11 +101,13 @@ class TransactionController(
         ): ResponseEntity<TransactionListResponse> {
         validateDateRange(startDate, endDate)
         logger.info("Request transactions from booklet $bookletId for month $month and year $year")
-        val response = bookletFeature.loadTransactionsForBookletForAMonth(
+        val response = loadTransactionsForBookletForAMonthUseCase.loadTransactionsForBookletForAMonth(
             token = SessionToken(currentUser.token),
             bookletId = java.util.UUID.fromString(bookletId),
             month = month ?: Month.JANUARY,
             year = year,
+            startingMonth = null,
+            startingYear = null,
             startDate = startDate,
             endDate = endDate,
             pageNumber = page,
@@ -124,7 +148,7 @@ class TransactionController(
         @Valid @RequestBody dto: UserBookletIdsTransactionRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Start editing transaction => ${dto.transaction}")
-        return transactionFeature.editTransaction(java.util.UUID.fromString(dto.bookletId), dto.transaction.toModel(), SessionToken(currentUser.token))
+        return editTransactionUseCase.editTransaction(java.util.UUID.fromString(dto.bookletId), dto.transaction.toModel(), SessionToken(currentUser.token))
             .map {
                 it.toDTO()
             }.toHttpResponse()
@@ -136,7 +160,7 @@ class TransactionController(
     fun findById(
         @PathVariable("id") transactionID: String
     ): ResponseEntity<TransactionResult>
-        = transactionFeature.findById(java.util.UUID.fromString(transactionID), SessionToken(currentUser.token))
+        = findTransactionByIdUseCase.findById(java.util.UUID.fromString(transactionID), SessionToken(currentUser.token))
             .map {
                 it.toDTO()
             }.toHttpResponse()
@@ -146,7 +170,7 @@ class TransactionController(
         @Valid @RequestBody command: ConfirmPreviewRequest
     ): ResponseEntity<TransactionResponse> {
         logger.info("Confirming preview Transaction...")
-        return transactionFeature.confirmPreviewTransaction(
+        return confirmPreviewTransactionUseCase.confirmPreviewTransaction(
             transactionId = java.util.UUID.fromString(command.transactionID),
             bookletID = java.util.UUID.fromString(command.bookletID),
             newAmount = command.newAmount?.toAmount(),
@@ -165,7 +189,7 @@ class TransactionController(
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "10") size: Int,
     ): ResponseEntity<Page<RegularTransactionDTO>> {
-        return regularTransactionFeature.getAllRegularTransactions(SessionToken(currentUser.token), page, size)
+        return getAllRegularTransactionsUseCase.getAllRegularTransactions(SessionToken(currentUser.token), page, size)
             .map { p -> Page(p.content.map { it.toDTO() }, p.pageNumber, p.pageSize, p.totalElements, p.totalPages) }
             .toHttpResponse()
     }
@@ -179,7 +203,7 @@ class TransactionController(
             throw InvalidRequestException(ResultState.BAD_REQUEST.code, "At least one booklet must be selected")
         }
 
-        return regularTransactionFeature.bookRegularTransaction(
+        return bookRegularTransactionUseCase.bookRegularTransaction(
             SessionToken(currentUser.token),
             RegularTransaction(
                 id = RegularTransactionId(""),
@@ -202,7 +226,7 @@ class TransactionController(
     @GetMapping("/regular/{id}")
     fun getRegularTransactionById(@PathVariable id: String): ResponseEntity<RegularTransactionDTO> {
         logger.info("Fetching regular transaction with ID $id")
-        return regularTransactionFeature.getRegularTransactionById(SessionToken(currentUser.token), id).map {
+        return getRegularTransactionByIdUseCase.getRegularTransactionById(SessionToken(currentUser.token), id).map {
             it.toDTO()
         }.toHttpResponse().also {
             logger.info("Regular transaction fetched successfully")
@@ -214,7 +238,7 @@ class TransactionController(
         @Valid @RequestBody request: UpdateRegularTransactionRequest
     ): ResponseEntity<RegularTransactionDTO> {
         logger.info("Updating regular transaction ${request.id}")
-        return regularTransactionFeature.updateRegularTransaction(
+        return updateRegularTransactionUseCase.updateRegularTransaction(
             SessionToken(currentUser.token),
             RegularTransaction(
                 id = RegularTransactionId(request.id),
@@ -237,7 +261,7 @@ class TransactionController(
     @DeleteMapping("/regular/{id}")
     fun deleteRegularTransaction(@PathVariable id: String): ResponseEntity<Unit> {
         logger.info("Deleting regular transaction $id")
-        return regularTransactionFeature.deleteRegularTransaction(SessionToken(currentUser.token), id)
+        return deleteRegularTransactionUseCase.deleteRegularTransaction(SessionToken(currentUser.token), id)
             .map { }
             .toHttpResponse()
             .also {
@@ -248,7 +272,7 @@ class TransactionController(
     @DeleteMapping("/regular", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteRegularTransactions(@Valid @RequestBody request: RegularTransactionsDeletionRequest): ResponseEntity<RegularTransactionsDeletionResponse> {
         logger.info("Bulk deleting ${request.transactionIds.size} regular transaction(s)")
-        return regularTransactionFeature.deleteRegularTransactions(SessionToken(currentUser.token), request.transactionIds)
+        return deleteRegularTransactionsUseCase.deleteRegularTransactions(SessionToken(currentUser.token), request.transactionIds)
             .map { deletedIds ->
                 RegularTransactionsDeletionResponse(deletedIds)
             }
@@ -264,7 +288,7 @@ class TransactionController(
         @PathVariable bookletId: String
     ): ResponseEntity<RegularTransactionDTO> {
         logger.info("Linking booklet $bookletId to regular transaction $transactionId")
-        return regularTransactionFeature.linkRegularTransactionToBooklet(
+        return linkRegularTransactionToBookletUseCase.linkRegularTransactionToBooklet(
             SessionToken(currentUser.token),
             transactionId,
             java.util.UUID.fromString(bookletId)
@@ -279,7 +303,7 @@ class TransactionController(
         @PathVariable bookletId: String
     ): ResponseEntity<RegularTransactionDTO> {
         logger.info("Unlinking booklet $bookletId from regular transaction $transactionId")
-        return regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+        return unlinkRegularTransactionFromBookletUseCase.unlinkRegularTransactionFromBooklet(
             SessionToken(currentUser.token),
             transactionId,
             java.util.UUID.fromString(bookletId)

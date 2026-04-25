@@ -11,6 +11,9 @@ import fr.sacane.jmanager.domain.models.csv.CsvTransactionLine
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
 import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.port.input.csv.ExportTransactionsToCsvUseCase
+import fr.sacane.jmanager.domain.port.input.csv.ImportTransactionsFromCsvUseCase
+import fr.sacane.jmanager.domain.port.input.csv.ValidateCsvFileUseCase
 import fr.sacane.jmanager.domain.port.spi.CsvFileReader
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
@@ -25,6 +28,7 @@ import fr.sacane.jmanager.domain.utils.*
 import java.util.*
 import java.util.logging.Logger
 
+@Deprecated("Use individual use case interfaces from domain.port.input.csv instead")
 @Port(Side.APPLICATION)
 /**
  * Application port: FileImportExportFeature
@@ -97,7 +101,7 @@ class FileImportExportFeatureImpl(
     private val tagRepository: TagRepository,
     private val sessionManager: SessionManager,
     private val unitOfWorkProvider: UnitOfWorkTransactionProvider
-) : FileImportExportFeature {
+) : FileImportExportFeature, ValidateCsvFileUseCase, ImportTransactionsFromCsvUseCase, ExportTransactionsToCsvUseCase {
 
     companion object {
         private val logger = Logger.getLogger(FileImportExportFeatureImpl::class.java.name)

@@ -163,7 +163,7 @@ object FakeFactory {
         return inMemoryTagRepository
     }
 
-    fun tagFeature(): TagFeature {
+    fun tagFeature(): TagFeatureImpl {
         return tagFeature
     }
 }

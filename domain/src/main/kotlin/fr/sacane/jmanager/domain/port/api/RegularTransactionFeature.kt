@@ -4,6 +4,14 @@ import fr.sacane.jmanager.domain.Paginator
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.port.input.regularTransaction.BookRegularTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.DeleteRegularTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.DeleteRegularTransactionsUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.GetAllRegularTransactionsUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.GetRegularTransactionByIdUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.LinkRegularTransactionToBookletUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.UnlinkRegularTransactionFromBookletUseCase
+import fr.sacane.jmanager.domain.port.input.regularTransaction.UpdateRegularTransactionUseCase
 import fr.sacane.jmanager.domain.models.Page
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
@@ -20,6 +28,7 @@ import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.util.UUID
 
+@Deprecated("Use individual use case interfaces from domain.port.input.regularTransaction instead")
 @Port(Side.APPLICATION)
 /**
  * Application port: RegularTransactionFeature
@@ -122,7 +131,10 @@ class RegularTransactionFeatureImpl(
     private val unitOfWork: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository,
     private val paginator: Paginator,
-) : RegularTransactionFeature {
+) : RegularTransactionFeature, GetAllRegularTransactionsUseCase, BookRegularTransactionUseCase,
+    GetRegularTransactionByIdUseCase, UpdateRegularTransactionUseCase,
+    DeleteRegularTransactionUseCase, DeleteRegularTransactionsUseCase,
+    LinkRegularTransactionToBookletUseCase, UnlinkRegularTransactionFromBookletUseCase {
 
     private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
         return failure(state, DomainError(state.code, key, detail))

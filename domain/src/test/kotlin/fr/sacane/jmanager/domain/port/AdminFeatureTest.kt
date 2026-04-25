@@ -5,8 +5,8 @@ import fr.sacane.jmanager.domain.PaginatorImpl
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.api.AdminFeature
-import fr.sacane.jmanager.domain.port.api.AdminFeatureImpl
+import fr.sacane.jmanager.domain.port.input.admin.GetUsersService
+import fr.sacane.jmanager.domain.port.input.admin.GetUsersUseCase
 import fr.sacane.jmanager.domain.utils.Result
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
@@ -20,7 +20,7 @@ class AdminFeatureTest : FeatureTest() {
         private val userRepository = FakeFactory.fakeUserRepository()
         private val sessionManager = FakeFactory.sessionManager()
         private val paginator = PaginatorImpl()
-        private val adminFeature: AdminFeature = AdminFeatureImpl(sessionManager, userRepository, paginator)
+        private val adminFeature: GetUsersUseCase = GetUsersService(sessionManager, userRepository, paginator)
     }
 
     @AfterEach

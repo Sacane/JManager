@@ -3,6 +3,12 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.ConfirmPreviewTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.DeleteTransactionsByIdsUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.EditTransactionUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.FindTransactionByIdUseCase
+import fr.sacane.jmanager.domain.port.input.transaction.RetrieveTransactionsByMonthAndYearUseCase
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
@@ -22,6 +28,7 @@ import java.time.Month
 import java.util.UUID
 import java.util.logging.Logger
 
+@Deprecated("Use individual use case interfaces from domain.port.input.transaction instead")
 @Port(Side.APPLICATION)
 /**
  * Application port: TransactionFeature
@@ -106,7 +113,9 @@ class TransactionFeatureImpl(
     private val infraTransactionManager: UnitOfWorkTransactionProvider,
     private val tagRepository: TagRepository,
     private val trackerRepository: RegularTransactionTrackerRepository
-): TransactionFeature{
+): TransactionFeature, BookTransactionUseCase, RetrieveTransactionsByMonthAndYearUseCase,
+   EditTransactionUseCase, FindTransactionByIdUseCase, DeleteTransactionsByIdsUseCase,
+   ConfirmPreviewTransactionUseCase {
     companion object {
         private val logger = Logger.getLogger(TransactionFeatureImpl::class.java.name)
     }

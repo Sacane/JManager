@@ -3,6 +3,12 @@ package fr.sacane.jmanager.domain.port.api
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.port.input.tag.AddDefaultTagsUseCase
+import fr.sacane.jmanager.domain.port.input.tag.AddTagUseCase
+import fr.sacane.jmanager.domain.port.input.tag.DefaultTagUseCase
+import fr.sacane.jmanager.domain.port.input.tag.DeleteTagUseCase
+import fr.sacane.jmanager.domain.port.input.tag.EditTagUseCase
+import fr.sacane.jmanager.domain.port.input.tag.GetAllTagsUseCase
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.models.SessionToken
@@ -13,6 +19,7 @@ import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
+@Deprecated("Use individual use case interfaces from domain.port.input.tag instead")
 @Port(Side.APPLICATION)
 /**
  * Application port: TagFeature
@@ -98,7 +105,8 @@ class TagFeatureImpl(
     private val transactionRepository: TransactionRepository,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val session: SessionManager
-): TagFeature {
+): TagFeature, AddTagUseCase, GetAllTagsUseCase, AddDefaultTagsUseCase, DeleteTagUseCase,
+   DefaultTagUseCase, EditTagUseCase {
     private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
         return failure(state, DomainError(state.code, key, detail))
     }
