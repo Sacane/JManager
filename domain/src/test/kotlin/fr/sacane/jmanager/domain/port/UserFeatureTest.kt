@@ -29,13 +29,13 @@ import java.util.UUID
 class UserFeatureTest: FeatureTest() {
 
     companion object {
-        private val loginUseCase: LoginUseCase = FakeFactory.sessionFeature
-        private val logoutUseCase: LogoutUseCase = FakeFactory.sessionFeature
-        private val refreshSessionUseCase: RefreshSessionUseCase = FakeFactory.sessionFeature
-        private val registerUserUseCase: RegisterUserUseCase = FakeFactory.sessionFeature
-        private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = FakeFactory.sessionFeature
-        private val getUserSettingsUseCase: GetUserSettingsUseCase = FakeFactory.sessionFeature
-        private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = FakeFactory.sessionFeature
+        private val loginUseCase: LoginUseCase = FakeFactory.loginService
+        private val logoutUseCase: LogoutUseCase = FakeFactory.logoutService
+        private val refreshSessionUseCase: RefreshSessionUseCase = FakeFactory.refreshSessionService
+        private val registerUserUseCase: RegisterUserUseCase = FakeFactory.registerUserService
+        private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = FakeFactory.createAdminIfNotExistsService
+        private val getUserSettingsUseCase: GetUserSettingsUseCase = FakeFactory.getUserSettingsService
+        private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = FakeFactory.updateUserSettingsService
         private val sessionFakeState = FakeFactory.sessionState()
         private val userState = FakeFactory.fakeUserRepository()
         private val tokenGenerator = FakeFactory.tokenGenerator

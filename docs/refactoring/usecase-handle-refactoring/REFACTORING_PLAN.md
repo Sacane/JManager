@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 1 / 17
+**Overall status**: 🔄 In progress — Step 2 / 17
 
 ---
 
@@ -98,7 +98,7 @@ class GetCategoryDistributionService(
 
 ### Step 2 — User: split `UserFeatureImpl` into 7 services
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: None  
 **Objective**: Create 7 independent service classes in `domain/port/input/user/`.
 

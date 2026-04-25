@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
+import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.spi.*
 import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
@@ -88,7 +89,13 @@ object FakeFactory {
         paginator,
     )
     val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
-    val sessionFeature = UserFeatureImpl(userRepository, bookletRepository, sessionManager, DefaultHasher, tokenGenerator)
+    val loginService = LoginService(userRepository, sessionManager, DefaultHasher, tokenGenerator)
+    val logoutService = LogoutService(sessionManager)
+    val refreshSessionService = RefreshSessionService(sessionManager, userRepository, tokenGenerator)
+    val registerUserService = RegisterUserService(userRepository, DefaultHasher)
+    val createAdminIfNotExistsService = CreateAdminIfNotExistsService(userRepository, DefaultHasher)
+    val getUserSettingsService = GetUserSettingsService(sessionManager, userRepository)
+    val updateUserSettingsService = UpdateUserSettingsService(sessionManager, userRepository, bookletRepository)
     private val tagFeature = TagFeatureImpl(inMemoryTagRepository, transactionRepository, inMemoryRegularTransactionRepository, sessionManager)
     val regularTransactionFeature = RegularTransactionFeatureImpl(
         inMemoryRegularTransactionRepository,

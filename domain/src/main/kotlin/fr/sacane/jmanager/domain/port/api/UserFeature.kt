@@ -1,29 +1,14 @@
 package fr.sacane.jmanager.domain.port.api
 
-import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsUseCase
-import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsUseCase
-import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
-import fr.sacane.jmanager.domain.port.input.user.LogoutUseCase
-import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
-import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
-import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
-import fr.sacane.jmanager.domain.models.Role
-import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
-import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.UserToken
-import fr.sacane.jmanager.domain.port.spi.Hasher
-import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
-import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
-import java.util.logging.Logger
 
 @Deprecated("Use individual use case interfaces from domain.port.input.user instead")
 @Port(Side.APPLICATION)
@@ -54,12 +39,12 @@ sealed interface UserFeature {
     fun logout(token: SessionToken): Result<Nothing>
 
     /**
-        * Refresh a session using a refresh token and issue a new access token.
+     * Refresh a session using a refresh token and issue a new access token.
      *
-        * @param refreshToken Current valid refresh token.
+     * @param refreshToken Current valid refresh token.
      * @return Result containing a UserToken with a newly issued access token.
      */
-        fun refresh(refreshToken: UUID): Result<UserToken>
+    fun refresh(refreshToken: UUID): Result<UserToken>
 
     /**
      * Register a new user.
@@ -104,249 +89,4 @@ sealed interface UserFeature {
         projectionWindowDays: Int,
         bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
     ): Result<UserSettings>
-}
-
-
-@DomainService
-class UserFeatureImpl(
-    private val userRepository: UserRepository,
-    private val bookletRepository: BookletRepository,
-    private val session: SessionManager,
-    private val hasher: Hasher,
-    private val tokenGenerator: TokenGenerator
-): UserFeature, LoginUseCase, LogoutUseCase, RefreshSessionUseCase, RegisterUserUseCase,
-   CreateAdminIfNotExistsUseCase, GetUserSettingsUseCase, UpdateUserSettingsUseCase {
-
-    companion object{
-        private val LOGGER = Logger.getLogger(UserFeatureImpl::class.java.name)
-    }
-
-    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
-        return failure(state, DomainError(state.code, key, detail))
-    }
-
-    override fun login(pseudonym: String, userPassword: String): Result<UserToken> {
-        val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(pseudonym)
-            ?: return domainFailure(
-                ResultState.NOT_FOUND,
-                "L'utilisateur $pseudonym n'existe pas",
-                "domain.user.login.user_not_found"
-            )
-        LOGGER.info("LOGIN request for user ${userWithPassword.user.id}")
-        val user = userWithPassword.user
-        if(hasher.verify(userPassword, userWithPassword.password)) {
-            LOGGER.info("User ${userWithPassword.user.username} logged")
-            val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, userWithPassword.roles)
-            session.addSession(user.id, accessToken)
-            accessToken.refreshToken?.let {
-                session.saveRefreshToken(user.id, it, accessToken.refreshTokenLifetime)
-            }
-            return success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
-        }
-        LOGGER.warning("Failed to log user $pseudonym")
-        return domainFailure(
-            ResultState.USER_UNAUTHORIZED,
-            "Le pseudonyme ou le mot de passe est incorrect",
-            "domain.user.login.invalid_credentials"
-        )
-    }
-
-    override fun logout(token: SessionToken)
-    : Result<Nothing> = session.authenticate(token) {
-        val activeSession = session.findSessionByToken(token)
-        val refreshToken = activeSession?.refreshToken
-        if (refreshToken != null) {
-            session.blacklistRefreshToken(refreshToken, activeSession.refreshTokenLifetime)
-        }
-        session.removeSession(it, token)
-        success()
-    }
-
-    override fun refresh(refreshToken: UUID): Result<UserToken> =
-        session.authenticateRefreshToken(refreshToken) { userId ->
-            val refreshTokenExpiry = session.getRefreshTokenExpiry(refreshToken)
-                ?: return@authenticateRefreshToken domainFailure(
-                    ResultState.UNAUTHORIZED,
-                    "Refresh token introuvable",
-                    "domain.user.refresh.missing_refresh_token"
-                )
-
-            val user = userRepository.findUserById(userId)
-                ?: return@authenticateRefreshToken domainFailure(
-                    ResultState.USER_NOT_FOUND,
-                    "L'utilisateur n'existe pas",
-                    "domain.user.refresh.user_not_found"
-                )
-
-            val accessToken = tokenGenerator.generateToken(user.id, user.username, user.roles)
-            session.blacklistRefreshToken(refreshToken, refreshTokenExpiry)
-            session.addSession(userId, accessToken)
-            accessToken.refreshToken?.let {
-                session.saveRefreshToken(userId, it, accessToken.refreshTokenLifetime)
-            }
-            success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
-        }
-
-    override fun register(username: String, password: String, confirmPassword: String): Result<User> {
-        if (password != confirmPassword) {
-            return domainFailure(
-                ResultState.PASSWORD_NOT_MATCH,
-                "Les mots de passes ne correspondent pas",
-                "domain.user.register.password_mismatch"
-            )
-        }
-        val hashedPassword = hasher.hash(password)
-        val userResult = userRepository.register(username, hashedPassword)
-            ?: return domainFailure(
-                ResultState.INVALID,
-                "Une erreur est survenue",
-                "domain.user.register.invalid"
-            )
-        return success(userResult)
-    }
-
-    override fun createAdminIfNotExists(
-        username: String,
-        password: String
-    ): Result<User> {
-        val existingAdmin = userRepository.findByPseudonymWithEncodedPassword(username)
-        val hashedPassword = hasher.hash(password)
-        if(existingAdmin != null){
-            LOGGER.info("Admin user already exists with username $username")
-            return if (!hasher.verify(password, existingAdmin.password))
-                domainFailure(
-                    ResultState.PASSWORD_NOT_MATCH,
-                    "admin password does not match the existing one",
-                    "domain.user.admin.password_mismatch"
-                )
-            else success(existingAdmin.user)
-        }
-        val adminUser = userRepository.register(username, hashedPassword, setOf(Role.USER, Role.ADMIN))
-            ?: return domainFailure(
-                ResultState.INVALID,
-                "Une erreur est survenue lors de la création de l'administrateur",
-                "domain.user.admin.creation_failed"
-            )
-        LOGGER.info("Admin user created with username $username")
-        return success(adminUser)
-    }
-
-    override fun getSettings(token: SessionToken): Result<UserSettings> = session.authenticate(token) { userId ->
-        val user = userRepository.findUserByIdWithBooklets(userId)
-            ?: return@authenticate domainFailure(
-                ResultState.USER_NOT_FOUND,
-                "L'utilisateur n'existe pas",
-                "domain.user.settings.user_not_found"
-            )
-
-        success(user.toSettings())
-    }
-
-    override fun updateSettings(
-        token: SessionToken,
-        projectionWindowDays: Int,
-        bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
-    ): Result<UserSettings> = session.authenticate(token) { userId ->
-        if (projectionWindowDays !in 7..60) {
-            return@authenticate domainFailure(
-                ResultState.INVALID,
-                "La fenêtre de projection doit être comprise entre 7 et 60 jours",
-                "domain.user.settings.invalid_projection_window"
-            )
-        }
-
-        val invalidBookletCycle = bookletCycles.entries.firstOrNull { (_, cycle) ->
-            cycle.monthlyPeriodStartDay !in 1..31
-        }
-        if (invalidBookletCycle != null) {
-            return@authenticate domainFailure(
-                ResultState.INVALID,
-                "Le jour de début de période doit être compris entre 1 et 31",
-                "domain.user.settings.invalid_monthly_period_start_day"
-            )
-        }
-
-        val invalidBookletCycleEndDay = bookletCycles.entries.firstOrNull { (_, cycle) ->
-            cycle.monthlyPeriodEndDay != null && cycle.monthlyPeriodEndDay !in 1..31
-        }
-        if (invalidBookletCycleEndDay != null) {
-            return@authenticate domainFailure(
-                ResultState.INVALID,
-                "Le jour de fin de période doit être compris entre 1 et 31",
-                "domain.user.settings.invalid_monthly_period_end_day"
-            )
-        }
-
-        val user = userRepository.findUserByIdWithBooklets(userId)
-            ?: return@authenticate domainFailure(
-                ResultState.USER_NOT_FOUND,
-                "L'utilisateur n'existe pas",
-                "domain.user.settings.user_not_found"
-            )
-
-        val bookletsById = user.booklets.mapNotNull { booklet ->
-            booklet.id?.let { id -> id to booklet }
-        }.toMap()
-
-        val missingBooklets = bookletsById.keys - bookletCycles.keys
-        if (missingBooklets.isNotEmpty()) {
-            return@authenticate domainFailure(
-                ResultState.INVALID,
-                "Chaque livret doit avoir un cycle mensuel configuré",
-                "domain.user.settings.missing_booklet_cycles"
-            )
-        }
-
-        for ((bookletId, bookletCycle) in bookletCycles) {
-            val booklet = bookletsById[bookletId]
-                ?: return@authenticate domainFailure(
-                    ResultState.FORBIDDEN,
-                    "Vous n'avez pas accès au livret $bookletId",
-                    "domain.user.settings.booklet_forbidden"
-                )
-
-            val updated = bookletRepository.updateMonthlyPeriodStartDay(
-                bookletId,
-                bookletCycle.monthlyPeriodStartDay,
-                bookletCycle.monthlyPeriodEndDay,
-            )
-            if (!updated) {
-                return@authenticate domainFailure(
-                    ResultState.INFRASTRUCTURE_ERROR,
-                    "Impossible de mettre à jour le cycle du livret $bookletId",
-                    "domain.user.settings.booklet_update_failed"
-                )
-            }
-            booklet.updateMonthlyPeriodConfiguration(
-                bookletCycle.monthlyPeriodStartDay,
-                bookletCycle.monthlyPeriodEndDay,
-            )
-        }
-
-        val projectionUpdated = userRepository.updateProjectionWindowDays(userId, projectionWindowDays)
-        if (!projectionUpdated) {
-            return@authenticate domainFailure(
-                ResultState.INFRASTRUCTURE_ERROR,
-                "Impossible de mettre à jour la fenêtre de projection",
-                "domain.user.settings.projection_update_failed"
-            )
-        }
-
-        user.updateProjectionWindowDays(projectionWindowDays)
-        success(user.toSettings())
-    }
-
-    private fun User.toSettings(): UserSettings = UserSettings(
-        projectionWindowDays = projectionWindowDays,
-        bookletCycles = booklets.mapNotNull { booklet ->
-            val bookletId = booklet.id ?: return@mapNotNull null
-            fr.sacane.jmanager.domain.models.BookletMonthlyCycleSetting(
-                bookletId = bookletId,
-                bookletLabel = booklet.label,
-                monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
-                monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
-            )
-        }
-    )
-
 }
