@@ -27,7 +27,7 @@ import fr.sacane.jmanager.domain.port.input.regularTransaction.UnlinkRegularTran
 import fr.sacane.jmanager.domain.port.input.regularTransaction.UpdateRegularTransactionCommand
 import fr.sacane.jmanager.domain.port.input.regularTransaction.UpdateRegularTransactionUseCase
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.api.TransactionDeletionResult
+import fr.sacane.jmanager.domain.port.input.transaction.TransactionDeletionResult
 import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionUseCase
 import fr.sacane.jmanager.domain.port.input.transaction.ConfirmPreviewTransactionCommand

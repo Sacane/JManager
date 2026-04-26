@@ -9,7 +9,6 @@ import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.port.input.csv.*
 import fr.sacane.jmanager.domain.port.input.regularTransaction.*

@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 14 / 17
+**Overall status**: 🔄 In progress — Step 16 / 17
 
 ---
 
@@ -349,7 +349,7 @@ class GetCategoryDistributionService(
 
 ### Step 15 — CSV: Command/Query + rename `handle`
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 14
 
 **Actions:**
@@ -363,7 +363,7 @@ class GetCategoryDistributionService(
 
 ### Step 16 — Delete deprecated `*Feature` interfaces
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Steps 2, 4, 6, 8, 10, 12, 14 (all split implementations complete)  
 **Objective**: Permanently remove all deprecated `*Feature` interfaces and their files.
 

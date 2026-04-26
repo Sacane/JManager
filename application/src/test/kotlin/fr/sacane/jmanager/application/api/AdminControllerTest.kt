@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.application.api
 
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.port.api.UserFeature
+import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
@@ -21,15 +21,17 @@ import org.springframework.test.context.TestPropertySource
 class AdminControllerTest(
     @LocalServerPort private val port: Int,
     @Autowired val userRepository: UserPostgresRepository,
-    @Autowired private val userFeature: UserFeature
+    @Autowired private val registerUserUseCase: RegisterUserUseCase,
+    @Autowired private val loginUseCase: LoginUseCase,
+    @Autowired private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase
 ) : AuthenticatedUserTest() {
 
     private lateinit var adminToken: String
 
     @BeforeEach
     fun setupAdmin() {
-        userFeature.createAdminIfNotExists("admin2", "admin123").onSuccess {
-            userFeature.login("admin2", "admin123").onSuccess { loginResult ->
+        createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin2", "admin123")).onSuccess {
+            loginUseCase.handle(LoginCommand("admin2", "admin123")).onSuccess { loginResult ->
                 adminToken = loginResult.token
             }
         }
@@ -48,9 +50,9 @@ class AdminControllerTest(
 
         @Test
         fun `Get users as admin should return 200 with paginated users`() {
-            userFeature.register("user1", "test", "test")
-            userFeature.register("user2", "test", "test")
-            userFeature.register("user3", "test", "test")
+            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test"))
 
             Given {
                 port(port)
@@ -72,7 +74,7 @@ class AdminControllerTest(
 
         @Test
         fun `Get users as admin with bearer token should return 200 with paginated users`() {
-            userFeature.register("user4", "test", "test")
+            registerUserUseCase.handle(RegisterUserCommand("user4", "test", "test"))
 
             Given {
                 port(port)
@@ -93,7 +95,7 @@ class AdminControllerTest(
         @Test
         fun `Get users with pagination should return correct page size`() {
             repeat(5) { i ->
-                userFeature.register("user$i", "test", "test")
+                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test"))
             }
 
             Given {
@@ -115,7 +117,7 @@ class AdminControllerTest(
         @Test
         fun `Get users on second page should return correct content`() {
             repeat(5) { i ->
-                userFeature.register("user$i", "test", "test")
+                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test"))
             }
 
             Given {
@@ -180,9 +182,9 @@ class AdminControllerTest(
 
         @Test
         fun `Get users should return users sorted by creation date descending`() {
-            userFeature.register("user1", "test", "test")
-            userFeature.register("user2", "test", "test")
-            userFeature.register("user3", "test", "test")
+            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test"))
 
             Given {
                 port(port)

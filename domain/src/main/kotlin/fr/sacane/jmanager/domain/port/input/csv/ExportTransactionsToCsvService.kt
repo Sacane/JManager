@@ -1,8 +1,6 @@
 package fr.sacane.jmanager.domain.port.input.csv
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
-import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionExporter
 import fr.sacane.jmanager.domain.utils.Result
@@ -21,14 +19,11 @@ class ExportTransactionsToCsvService(
 
     private val csvExporter = CsvTransactionExporter()
 
-    override fun exportTransactionsToCsv(
-        token: SessionToken,
-        transactions: List<Transaction>
-    ): Result<String> {
-        return sessionManager.authenticate(token) { _ ->
+    override fun handle(command: ExportTransactionsToCsvCommand): Result<String> {
+        return sessionManager.authenticate(command.token) { _ ->
             try {
-                val csvContent = csvExporter.exportToCsv(transactions)
-                logger.info("CSV export completed: ${transactions.filter { !it.isPreview }.size} transactions exported")
+                val csvContent = csvExporter.exportToCsv(command.transactions)
+                logger.info("CSV export completed: ${command.transactions.filter { !it.isPreview }.size} transactions exported")
                 success(csvContent)
             } catch (e: Exception) {
                 logger.severe("Error during CSV export: ${e.message}")

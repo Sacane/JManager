@@ -7,14 +7,16 @@ import fr.sacane.jmanager.domain.models.csv.CsvImportResult
 import fr.sacane.jmanager.domain.utils.Result
 import java.util.UUID
 
+data class ImportTransactionsFromCsvCommand(
+    val token: SessionToken,
+    val bookletId: UUID,
+    val csvContent: String,
+    val skipValidation: Boolean = false,
+    val month: Int? = null,
+    val year: Int? = null
+)
+
 @Port(Side.APPLICATION)
 interface ImportTransactionsFromCsvUseCase {
-    fun importTransactionsFromCsv(
-        token: SessionToken,
-        bookletId: UUID,
-        csvContent: String,
-        skipValidation: Boolean = false,
-        month: Int? = null,
-        year: Int? = null
-    ): Result<CsvImportResult>
+    fun handle(command: ImportTransactionsFromCsvCommand): Result<CsvImportResult>
 }

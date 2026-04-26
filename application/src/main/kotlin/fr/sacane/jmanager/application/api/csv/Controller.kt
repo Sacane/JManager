@@ -2,9 +2,7 @@ package fr.sacane.jmanager.application.api.csv
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.input.csv.ExportTransactionsToCsvUseCase
-import fr.sacane.jmanager.domain.port.input.csv.ImportTransactionsFromCsvUseCase
-import fr.sacane.jmanager.domain.port.input.csv.ValidateCsvFileUseCase
+import fr.sacane.jmanager.domain.port.input.csv.*
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
@@ -67,12 +65,14 @@ class CsvImportController(
             )
         }
 
-        return validateCsvFileUseCase.validateCsvFile(
-            token = SessionToken(currentUser.token),
-            bookletId = bookletId.toUUID(),
-            csvContent = csvContent,
-            month = month,
-            year = year
+        return validateCsvFileUseCase.handle(
+            ValidateCsvFileQuery(
+                token = SessionToken(currentUser.token),
+                bookletId = bookletId.toUUID(),
+                csvContent = csvContent,
+                month = month,
+                year = year
+            )
         ).map { it.toDTO() }.toHttpResponse()
     }
 
@@ -100,13 +100,15 @@ class CsvImportController(
             )
         }
 
-        return importTransactionsFromCsvUseCase.importTransactionsFromCsv(
-            token = SessionToken(currentUser.token),
-            bookletId = bookletId.toUUID(),
-            csvContent = csvContent,
-            skipValidation = skipValidation,
-            month = month,
-            year = year
+        return importTransactionsFromCsvUseCase.handle(
+            ImportTransactionsFromCsvCommand(
+                token = SessionToken(currentUser.token),
+                bookletId = bookletId.toUUID(),
+                csvContent = csvContent,
+                skipValidation = skipValidation,
+                month = month,
+                year = year
+            )
         ).map { it.toDTO() }.toHttpResponse()
     }
 
@@ -179,9 +181,11 @@ class CsvImportController(
                     .body(mapOf("message" to "Aucune transaction trouvée"))
             }
 
-            val result = exportTransactionsToCsvUseCase.exportTransactionsToCsv(
-                token = SessionToken(currentUser.token),
-                transactions = transactions
+            val result = exportTransactionsToCsvUseCase.handle(
+                ExportTransactionsToCsvCommand(
+                    token = SessionToken(currentUser.token),
+                    transactions = transactions
+                )
             )
 
             return if (result.isSuccess()) {

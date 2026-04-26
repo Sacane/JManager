@@ -7,13 +7,15 @@ import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
 import fr.sacane.jmanager.domain.utils.Result
 import java.util.UUID
 
+data class ValidateCsvFileQuery(
+    val token: SessionToken,
+    val bookletId: UUID,
+    val csvContent: String,
+    val month: Int? = null,
+    val year: Int? = null
+)
+
 @Port(Side.APPLICATION)
 interface ValidateCsvFileUseCase {
-    fun validateCsvFile(
-        token: SessionToken,
-        bookletId: UUID,
-        csvContent: String,
-        month: Int? = null,
-        year: Int? = null
-    ): Result<CsvValidationReport>
+    fun handle(query: ValidateCsvFileQuery): Result<CsvValidationReport>
 }

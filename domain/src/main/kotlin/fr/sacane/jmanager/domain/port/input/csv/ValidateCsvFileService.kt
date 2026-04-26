@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain.port.input.csv
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
 import fr.sacane.jmanager.domain.port.spi.CsvFileReader
 import fr.sacane.jmanager.domain.port.spi.SessionManager
@@ -11,7 +10,6 @@ import fr.sacane.jmanager.domain.usecase.csv.CsvFileValidator
 import fr.sacane.jmanager.domain.usecase.csv.CsvValidationUtils
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
-import java.util.UUID
 import java.util.logging.Logger
 
 @DomainService
@@ -28,23 +26,17 @@ class ValidateCsvFileService(
 
     private val fileValidator = CsvFileValidator()
 
-    override fun validateCsvFile(
-        token: SessionToken,
-        bookletId: UUID,
-        csvContent: String,
-        month: Int?,
-        year: Int?
-    ): Result<CsvValidationReport> {
-        return sessionManager.authenticate(token) { userId ->
-            val bookletFindResult = findBookletAndCheckOwner(bookletRepository, userId, bookletId)
+    override fun handle(query: ValidateCsvFileQuery): Result<CsvValidationReport> {
+        return sessionManager.authenticate(query.token) { userId ->
+            val bookletFindResult = findBookletAndCheckOwner(bookletRepository, userId, query.bookletId)
 
             val userTags = tagRepository.getAllDefault(userId)
-            val csvSeparator = CsvValidationUtils.detectCsvSeparator(csvContent)
+            val csvSeparator = CsvValidationUtils.detectCsvSeparator(query.csvContent)
 
             try {
                 bookletFindResult.flatMap {
-                    val rows = csvFileReader.readCsvContent(csvContent)
-                    val validationResult = fileValidator.validate(rows, userTags, month, year, csvSeparator)
+                    val rows = csvFileReader.readCsvContent(query.csvContent)
+                    val validationResult = fileValidator.validate(rows, userTags, query.month, query.year, csvSeparator)
 
                     validationResult.mapNullable { report ->
                         if (report != null) {
