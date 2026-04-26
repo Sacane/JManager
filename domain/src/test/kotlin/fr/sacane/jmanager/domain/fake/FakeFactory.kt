@@ -11,6 +11,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.input.booklet.*
+import fr.sacane.jmanager.domain.port.input.csv.*
 import fr.sacane.jmanager.domain.port.input.regularTransaction.*
 import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.*
@@ -126,14 +127,9 @@ object FakeFactory {
     val deleteRegularTransactionsService = DeleteRegularTransactionsService(inMemoryRegularTransactionRepository, sessionManager, manager)
     val linkRegularTransactionToBookletService = LinkRegularTransactionToBookletService(inMemoryRegularTransactionRepository, sessionManager, manager)
     val unlinkRegularTransactionFromBookletService = UnlinkRegularTransactionFromBookletService(inMemoryRegularTransactionRepository, sessionManager, manager, inMemoryTrackerRepository)
-    val fileImportExportFeature = FileImportExportFeatureImpl(
-        csvFileReader,
-        transactionRepository,
-        bookletRepository,
-        inMemoryTagRepository,
-        sessionManager,
-        manager
-    )
+    val validateCsvFileService = ValidateCsvFileService(csvFileReader, bookletRepository, inMemoryTagRepository, sessionManager)
+    val importTransactionsFromCsvService = ImportTransactionsFromCsvService(csvFileReader, transactionRepository, bookletRepository, inMemoryTagRepository, sessionManager, manager)
+    val exportTransactionsToCsvService = ExportTransactionsToCsvService(sessionManager)
 
     val getMonthlyBookletStatsService = GetMonthlyBookletStatsService(sessionManager(), bookletRepository, MonthlyStatsCalculatorImpl())
     val getCategoryDistributionService = GetCategoryDistributionService(sessionManager(), bookletRepository, CategoryDistributionCalculatorImpl(inMemoryTagRepository))

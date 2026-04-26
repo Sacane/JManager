@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 13 / 17
+**Overall status**: 🔄 In progress — Step 14 / 17
 
 ---
 
@@ -333,7 +333,7 @@ class GetCategoryDistributionService(
 
 ### Step 14 — CSV: split `FileImportExportFeatureImpl` into 3 services
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: None
 
 **UseCases**: `ValidateCsvFile`, `ImportTransactionsFromCsv`, `ExportTransactionsToCsv`

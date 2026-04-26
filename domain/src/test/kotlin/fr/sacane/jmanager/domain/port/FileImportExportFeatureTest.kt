@@ -16,14 +16,16 @@ import java.util.UUID
 @DisplayName("FileImportExportFeature Tests")
 class FileImportExportFeatureTest : FeatureTest() {
 
-    private val fileImportExportFeature = FakeFactory.fileImportExportFeature
+    private val validateCsvFileService = FakeFactory.validateCsvFileService
+    private val importTransactionsFromCsvService = FakeFactory.importTransactionsFromCsvService
+    private val exportTransactionsToCsvService = FakeFactory.exportTransactionsToCsvService
 
     @Test
     @DisplayName("Should fail when user is not authenticated")
     fun `validateCsvFile should fail when user is not authenticated`() {
         val invalidToken = "invalid-token"
 
-        val result = fileImportExportFeature.validateCsvFile(
+        val result = validateCsvFileService.validateCsvFile(
             SessionToken(invalidToken),
             UUID.randomUUID(),
             "csv content"
@@ -39,7 +41,7 @@ class FileImportExportFeatureTest : FeatureTest() {
         launchWithConnectedUserInstance {
             val nonExistentBookletId = UUID.randomUUID()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 nonExistentBookletId,
                 "csv content"
@@ -65,7 +67,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 100.toAmount()
             )
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 otherUser.id!!,
                 "csv content"
@@ -83,7 +85,7 @@ class FileImportExportFeatureTest : FeatureTest() {
         launchWithConnectedUserInstance {
             val csvContent = ""
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -106,7 +108,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Test,10.00,,
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -129,7 +131,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 2025-01-15,Test,10.00,,
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -153,7 +155,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 16-01-2025,Salary,,2500.00,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -180,7 +182,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Groceries,45.50,,UnknownTag
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -207,7 +209,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Test,45.50,100.00,
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -230,7 +232,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Test,,,
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -253,7 +255,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Test,-45.50,,
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -273,7 +275,7 @@ class FileImportExportFeatureTest : FeatureTest() {
         launchWithConnectedUserInstance {
             val csvContent = "date;label;depense;recette;tag\n15-01-2025;Test;\"45,50\";;\n"
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -296,7 +298,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Test,45.50
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -314,7 +316,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     fun `importTransactionsFromCsv should fail when user is not authenticated`() {
         val invalidToken = "invalid-token"
 
-        val result = fileImportExportFeature.importTransactionsFromCsv(
+        val result = importTransactionsFromCsvService.importTransactionsFromCsv(
             SessionToken(invalidToken),
             UUID.randomUUID(),
             "csv content"
@@ -329,7 +331,7 @@ class FileImportExportFeatureTest : FeatureTest() {
         launchWithConnectedUserInstance {
             val nonExistentBookletId = UUID.randomUUID()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 nonExistentBookletId,
                 "csv content"
@@ -354,7 +356,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 100.toAmount()
             )
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 otherUser.id!!,
                 "csv content"
@@ -369,7 +371,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     fun `importTransactionsFromCsv should fail when CSV is empty`() {
         launchWithConnectedUserInstance {
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 ""
@@ -390,7 +392,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Test,10.00,,
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -413,7 +415,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 16-01-2025,Transport,30.00,,Transport
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -447,7 +449,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 16-01-2025,Bonus,,500.00,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -483,7 +485,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 18-01-2025,Freelance,,800.00,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -515,7 +517,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 invalid-date,Test,45.50,,
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -542,7 +544,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15-01-2025,Purchase,100.00,,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -576,7 +578,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15,Transport,30.00,,Transport
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 token = tokenValue,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
@@ -603,7 +605,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 1,Groceries,45.50,,Alimentation & Restaurant
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent
@@ -628,7 +630,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 15,Salary,,2500.00,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 token = tokenValue,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
@@ -672,7 +674,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 20,Day Only Transaction,50.00,,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 token = tokenValue,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
@@ -706,7 +708,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 32,Invalid Day,45.50,,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent,
@@ -733,7 +735,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 2,Another transaction,,50.00,Aucune
             """.trimIndent()
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent,
@@ -761,7 +763,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent!!,
@@ -810,7 +812,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
             // Tentative de validation avec month=2 (février) alors que le fichier est pour janvier
-            val result = fileImportExportFeature.validateCsvFile(
+            val result = validateCsvFileService.validateCsvFile(
                 tokenValue,
                 booklet.id!!,
                 csvContent!!,
@@ -851,7 +853,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
-            val result = fileImportExportFeature.importTransactionsFromCsv(
+            val result = importTransactionsFromCsvService.importTransactionsFromCsv(
                 tokenValue,
                 booklet.id!!,
                 csvContent!!,

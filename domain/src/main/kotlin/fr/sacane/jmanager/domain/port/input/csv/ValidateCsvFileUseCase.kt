@@ -13,7 +13,7 @@ interface ValidateCsvFileUseCase {
         token: SessionToken,
         bookletId: UUID,
         csvContent: String,
-        month: Int?,
-        year: Int?
+        month: Int? = null,
+        year: Int? = null
     ): Result<CsvValidationReport>
 }

@@ -13,8 +13,8 @@ interface ImportTransactionsFromCsvUseCase {
         token: SessionToken,
         bookletId: UUID,
         csvContent: String,
-        skipValidation: Boolean,
-        month: Int?,
-        year: Int?
+        skipValidation: Boolean = false,
+        month: Int? = null,
+        year: Int? = null
     ): Result<CsvImportResult>
 }
