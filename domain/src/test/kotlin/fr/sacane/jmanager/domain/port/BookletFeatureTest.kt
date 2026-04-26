@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.api.BookletFeature
+import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -34,7 +34,15 @@ class BookletFeatureTest: FeatureTest() {
 
     companion object{
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
-        private var bookletFeature: BookletFeature = FakeFactory.bookletFeature
+        private val findBookletByIdService = FakeFactory.findBookletByIdService
+        private val editBookletService = FakeFactory.editBookletService
+        private val deleteBookletByIdService = FakeFactory.deleteBookletByIdService
+        private val findByLabelAndUserIdService = FakeFactory.findByLabelAndUserIdService
+        private val findAllRegisteredBookletsService = FakeFactory.findAllRegisteredBookletsService
+        private val saveBookletService = FakeFactory.saveBookletService
+        private val loadTransactionsForBookletForAMonthService = FakeFactory.loadTransactionsForBookletForAMonthService
+        private val loadBalancesForBookletForAMonthService = FakeFactory.loadBalancesForBookletForAMonthService
+        private val regenerateDeletedPrevisionalTransactionsService = FakeFactory.regenerateDeletedPrevisionalTransactionsService
         private val user = userRepository.register("jojo", "test") as User
         private val tokenValueStr = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
         private val tokenValue = SessionToken(tokenValueStr)
@@ -55,8 +63,8 @@ class BookletFeatureTest: FeatureTest() {
         private val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
         override val action: List<Result<out Any>>
             get() = listOf(
-                bookletFeature.findBookletById(UUID.randomUUID(), SessionToken(UUID.randomUUID().toString())),
-                bookletFeature.save(SessionToken(UUID.randomUUID().toString()), element)
+                findBookletByIdService.handle(FindBookletByIdQuery(UUID.randomUUID(), SessionToken(UUID.randomUUID().toString()))),
+                saveBookletService.handle(SaveBookletCommand(SessionToken(UUID.randomUUID().toString()), element))
             )
     }
 
@@ -68,7 +76,7 @@ class BookletFeatureTest: FeatureTest() {
         bookletState.init(listOf(
             BookletsByOwner(listOf(element), user.id)
         ))
-        bookletFeature.findBookletById(id, tokenValue)
+        findBookletByIdService.handle(FindBookletByIdQuery(id, tokenValue))
             .assertTrue {
                 this.label == "test"
             }
@@ -88,7 +96,7 @@ class BookletFeatureTest: FeatureTest() {
             owner = user,
             id= element.id,
         )
-        val response = bookletFeature.editBooklet(booklet = booklet, tokenValue)
+        val response = editBookletService.handle(EditBookletCommand(booklet, tokenValue))
 
         val expectedAnswer = Amount(BigDecimal(102))
 
@@ -103,7 +111,7 @@ class BookletFeatureTest: FeatureTest() {
             BookletsByOwner(listOf(element), user.id)
         ))
 
-        bookletFeature.deleteBookletById(element.id!!, tokenValue).assertTrue {
+        deleteBookletByIdService.handle(DeleteBookletByIdCommand(element.id!!, tokenValue)).assertTrue {
             val bookletsList = bookletState.getStates()
 
             val expectedBookletSize = 0
@@ -124,7 +132,7 @@ class BookletFeatureTest: FeatureTest() {
             bookletState.init(listOf(
                 BookletsByOwner(listOf(element), this.user.id)
             ))
-            bookletFeature.findByLabelAndUserId(tokenValue, element.label)
+            findByLabelAndUserIdService.handle(FindByLabelAndUserIdQuery(tokenValue, element.label))
                 .assertTrue {
                     this.label == "test22" && this.amount == Amount(100)
                 }
@@ -149,7 +157,7 @@ class BookletFeatureTest: FeatureTest() {
                 BookletsByOwner(expectedBookletList, userId)
             ))
 
-            bookletFeature.findAllRegisteredBooklets(tokenValue)
+            findAllRegisteredBookletsService.handle(FindAllRegisteredBookletsQuery(tokenValue))
                 .assertContainsAtPosition(0, booklet)
                 .assertContainsAtPosition(1, booklet2)
                 .assertContainsAtPosition(2, booklet3)
@@ -163,7 +171,7 @@ class BookletFeatureTest: FeatureTest() {
         launchWithConnectedUserWithoutBooklet {
             val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
 
-            bookletFeature.save(tokenValue, bookletToSave)
+            saveBookletService.handle(SaveBookletCommand(tokenValue, bookletToSave))
                 .assertTrue {
                     val expectedAmount = Amount(100)
                     val expectedLabel = "test1"
@@ -184,10 +192,10 @@ class BookletFeatureTest: FeatureTest() {
                 BookletsByOwner(bookletLists, userId)
             ))
 
-            val result = bookletFeature.save(
+            val result = saveBookletService.handle(SaveBookletCommand(
                 tokenValue,
                 Booklet( Amount.fromString("100", "€".asCurrency()), "test7", owner = user, id = UUID.randomUUID())
-            )
+            ))
 
             result.assertFailure(ResultState.BOOKLET_MAXIMUM_SIZE_REACHED)
             assertEquals("domain.booklet.save.maximum_size_reached", result.errorInfo?.key)
@@ -204,7 +212,7 @@ class BookletFeatureTest: FeatureTest() {
         ))
 
         val bookletToSave = Booklet( Amount.fromString("150", "€".asCurrency()), "test1", owner = otherUser, id = UUID.randomUUID())
-        bookletFeature.save(tokenValue, bookletToSave)
+        saveBookletService.handle(SaveBookletCommand(tokenValue, bookletToSave))
             .assertFailure()
     }
 
@@ -217,7 +225,7 @@ class BookletFeatureTest: FeatureTest() {
             BookletsByOwner(listOf(victimBooklet), victimUser.id)
         ))
 
-        val result = bookletFeature.deleteBookletById(victimBooklet.id!!, tokenValue)
+        val result = deleteBookletByIdService.handle(DeleteBookletByIdCommand(victimBooklet.id!!, tokenValue))
         result.assertFailure(ResultState.FORBIDDEN)
     }
 
@@ -231,7 +239,7 @@ class BookletFeatureTest: FeatureTest() {
         ))
 
         val editedBooklet = Booklet(Amount.fromString("999", "€".asCurrency()), "hacked", owner = victimUser, id = victimBooklet.id)
-        val result = bookletFeature.editBooklet(editedBooklet, tokenValue)
+        val result = editBookletService.handle(EditBookletCommand(editedBooklet, tokenValue))
         result.assertFailure(ResultState.FORBIDDEN)
     }
 
@@ -275,14 +283,14 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
                     2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.realSold == 3500.toAmount() } // 1000 + 2000 + 500
                 result.assertTrue { this.currentTransactions.size == 2 }
@@ -331,14 +339,14 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
                     2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.realSold == 300.toAmount() } // 1000 - 500 - 200
                 result.assertTrue { this.currentTransactions.size == 2 }
@@ -405,14 +413,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.FEBRUARY,
                     2025,
                     startingMonth = java.time.Month.FEBRUARY,
                     startingYear = 2025
-                )
+                ))
                 result.assertTrue { this.realSold == 2500.toAmount() } // 1000 + 1500 - 300 + 800 - 500 = 2500
             }
         }
@@ -465,14 +473,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.NOVEMBER,
                     2025,
                     startingMonth = java.time.Month.NOVEMBER,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.realSold == 1500.toAmount() } // 1000 + 500 (only current)
                 result.assertTrue { this.previsionalSold.value > this.realSold.value } // Should be higher with preview
@@ -548,14 +556,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.APRIL,
                     2025,
                     startingMonth = java.time.Month.APRIL,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.currentTransactions.size == 3 }
                 result.assertTrue { this.previsionalTransactions.size == 2 }
@@ -604,14 +612,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
                     2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.regularTransactions.size == 2 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Monthly Salary" } }
@@ -634,14 +642,14 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.MAY,
                     2025,
                     startingMonth = java.time.Month.MAY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.currentTransactions.isEmpty() }
                 result.assertTrue { this.previsionalTransactions.isEmpty() }
@@ -653,14 +661,14 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should fail when booklet does not exist`() {
             launchWithConnectedUserInstance {
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     UUID.randomUUID(), // Non-existent booklet ID
                     java.time.Month.JUNE,
                     2025,
                     startingMonth = java.time.Month.JUNE,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertFailure()
             }
@@ -725,14 +733,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.FEBRUARY,
                     2025,
                     startingMonth = java.time.Month.FEBRUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.currentTransactions.size == 2 }
                 result.assertTrue { this.currentTransactions.all { it.date.month == java.time.Month.FEBRUARY } }
@@ -793,14 +801,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.JANUARY,
                     2026,
                     startingMonth = java.time.Month.NOVEMBER,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.realSold == 1500.toAmount() } // 1000 + 500
                 result.assertTrue { this.previsionalSold.value > this.realSold.value }
@@ -821,11 +829,11 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                var result = bookletFeature.loadTransactionsForBookletForAMonth(
+                var result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
                 result.assertTrue { this.regularTransactions.isEmpty() }
 
                 val regular = RegularTransaction(
@@ -843,20 +851,20 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                result = bookletFeature.loadTransactionsForBookletForAMonth(
+                result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Monthly Income RT" } }
 
                 FakeFactory.regularTransactionState.init(emptyList())
-                result = bookletFeature.loadTransactionsForBookletForAMonth(
+                result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
                 result.assertTrue { this.regularTransactions.isEmpty() }
             }
         }
@@ -901,11 +909,11 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletIdMine, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Mine RT" } }
@@ -939,11 +947,11 @@ class BookletFeatureTest: FeatureTest() {
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(bookletId)))
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.NOVEMBER, 2025,
                     startingMonth = java.time.Month.NOVEMBER,
                     startingYear = 2025
-                )
+                ))
                 println(result.mapNotNullOrFailure())
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.previsionalSold.value >= BigDecimal(3000) }
@@ -998,11 +1006,11 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.regularTransactions.size == 3 }
                 result.assertTrue { this.regularTransactions.any { it.label == "RT Start Day 1" } }
@@ -1063,11 +1071,11 @@ class BookletFeatureTest: FeatureTest() {
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.DECEMBER, 2025,
                     startingMonth = java.time.Month.DECEMBER,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Regular Income" } }
@@ -1104,9 +1112,9 @@ class BookletFeatureTest: FeatureTest() {
                     listOf(UserRegularTransaction(userId = user.id, transaction = futureRT, bookletIds = listOf(bookletId)))
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025
-                )
+                ))
 
                 result.assertTrue { this.regularTransactions.isEmpty() }
             }
@@ -1167,14 +1175,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.MARCH,
                     2026,
                     startingMonth = java.time.Month.FEBRUARY,
                     startingYear = 2026
-                )
+                ))
 
                 result.assertTrue { this.previsionalSold == this.realSold }
             }
@@ -1226,14 +1234,14 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                val result = bookletFeature.loadBalancesForBookletForAMonth(
+                val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.MARCH,
                     2026,
                     startingMonth = java.time.Month.MARCH,
                     startingYear = 2026
-                )
+                ))
 
                 result.assertTrue { this.previewSold == this.realSold }
             }
@@ -1271,14 +1279,14 @@ class BookletFeatureTest: FeatureTest() {
 
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadBalancesForBookletForAMonth(
+                val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.MARCH,
                     2026,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2026
-                )
+                ))
 
                 result.assertTrue { this.realSold == 1000.toAmount() }
                 result.assertTrue { this.previewSold == 1100.toAmount() }
@@ -1311,14 +1319,14 @@ class BookletFeatureTest: FeatureTest() {
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.MARCH,
                     2026,
                     startingMonth = java.time.Month.MARCH,
                     startingYear = 2026
-                )
+                ))
 
                 result.assertTrue { this.previsionalTransactions.all { tr -> tr.id != null } }
             }
@@ -1350,14 +1358,14 @@ class BookletFeatureTest: FeatureTest() {
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue,
                     bookletId,
                     java.time.Month.APRIL,
                     2026,
                     startingMonth = java.time.Month.MARCH,
                     startingYear = 2026
-                )
+                ))
 
                 result.assertTrue { this.previsionalTransactions.any { tr -> tr.id == null } }
             }
@@ -1410,14 +1418,14 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.APRIL,
                     year = 2026,
                     startDate = LocalDate.of(2026, 3, 28),
                     endDate = LocalDate.of(2026, 4, 27)
-                )
+                ))
 
                 result.assertTrue { this.currentTransactions.any { tr -> tr.label == "At start" } }
                 result.assertTrue { this.currentTransactions.any { tr -> tr.label == "At end" } }
@@ -1464,14 +1472,14 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadBalancesForBookletForAMonth(
+                val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.APRIL,
                     year = 2026,
                     startDate = LocalDate.of(2026, 3, 28),
                     endDate = LocalDate.of(2026, 4, 27)
-                )
+                ))
 
                 result.assertTrue { this.realSold == 1000.toAmount() }
                 result.assertTrue { this.previewSold == 1120.toAmount() }
@@ -1506,7 +1514,7 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository().init(emptyList())
 
                 // Simulate: current date is 1st April 2026, user views March 2026 with default settings (1→31)
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.MARCH,
@@ -1515,7 +1523,7 @@ class BookletFeatureTest: FeatureTest() {
                     startingYear = 2026,
                     startDate = LocalDate.of(2026, 3, 1),
                     endDate = LocalDate.of(2026, 3, 31)
-                )
+                ))
 
                 result.assertTrue { this.previsionalTransactions.isEmpty() }
             }
@@ -1549,7 +1557,7 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository().init(emptyList())
 
                 // Simulate: current date is 1st April 2026, user views March cycle (28 Feb → 27 Mar)
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.MARCH,
@@ -1558,7 +1566,7 @@ class BookletFeatureTest: FeatureTest() {
                     startingYear = 2026,
                     startDate = LocalDate.of(2026, 2, 28),
                     endDate = LocalDate.of(2026, 3, 27)
-                )
+                ))
 
                 result.assertTrue { this.previsionalTransactions.isEmpty() }
             }
@@ -1592,7 +1600,7 @@ class BookletFeatureTest: FeatureTest() {
                 FakeFactory.fakeTransactionRepository().init(emptyList())
 
                 // Simulate: current date is 1st April 2026, user views May cycle (28 Apr → 27 May)
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.MAY,
@@ -1601,7 +1609,7 @@ class BookletFeatureTest: FeatureTest() {
                     startingYear = 2026,
                     startDate = LocalDate.of(2026, 4, 28),
                     endDate = LocalDate.of(2026, 5, 27)
-                )
+                ))
 
                 result.assertTrue { this.previsionalTransactions.isNotEmpty() }
                 result.assertTrue {
@@ -1644,7 +1652,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 // Current cycle: March 28 → April 27. startingMonth = APRIL so today = April N.
                 // Works correctly for days 1-27 of April (today within cycle range).
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.APRIL,
@@ -1653,7 +1661,7 @@ class BookletFeatureTest: FeatureTest() {
                     startingYear = 2026,
                     startDate = LocalDate.of(2026, 3, 28),
                     endDate = LocalDate.of(2026, 4, 27)
-                )
+                ))
 
                 result.assertTrue { this.previsionalTransactions.none { tx -> tx.date == LocalDate.of(2026, 3, 5) } }
                 result.assertTrue { this.previsionalTransactions.any { tx -> tx.date == LocalDate.of(2026, 4, 5) } }
@@ -1692,7 +1700,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 // Current cycle: March 28 → April 27. startingMonth = APRIL so today = April N.
                 // Works correctly for days 1-27 of April (today within cycle range).
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.APRIL,
@@ -1701,7 +1709,7 @@ class BookletFeatureTest: FeatureTest() {
                     startingYear = 2026,
                     startDate = LocalDate.of(2026, 3, 28),
                     endDate = LocalDate.of(2026, 4, 27)
-                )
+                ))
 
                 result.assertTrue { this.previsionalTransactions.none { tx -> tx.date == LocalDate.of(2026, 4, 29) } }
                 result.assertTrue { this.previsionalTransactions.any { tx -> tx.date == LocalDate.of(2026, 3, 29) } }
@@ -1740,12 +1748,12 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.fakeTransactionRepository().init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = currentDate.month,
                     year = currentDate.year
-                )
+                ))
 
                 result.assertTrue { this.hasRegenerableTransactions }
             }
@@ -1783,14 +1791,14 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 // Load for that same past month
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.FEBRUARY,
                     year = 2024,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { !this.hasRegenerableTransactions }
             }
@@ -1822,14 +1830,14 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.fakeTransactionRepository().init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = java.time.Month.FEBRUARY,
                     year = 2024,
                     startingMonth = java.time.Month.JANUARY,
                     startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { !this.hasRegenerableTransactions }
             }
@@ -1857,11 +1865,11 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY, startingYear = 2025,
                     pageNumber = 0, pageSize = 10
-                )
+                ))
 
                 result.assertTrue { currentTransactions.size + previsionalTransactions.size == 10 }
                 result.assertTrue { totalElements == 25L }
@@ -1888,11 +1896,11 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY, startingYear = 2025,
                     pageNumber = 2, pageSize = 10
-                )
+                ))
 
                 result.assertTrue { currentTransactions.size + previsionalTransactions.size == 5 }
                 result.assertTrue { totalElements == 25L }
@@ -1917,10 +1925,10 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY, startingYear = 2025
-                )
+                ))
 
                 result.assertTrue { pageNumber == 0 }
                 result.assertTrue { pageSize == 10 }
@@ -1946,11 +1954,11 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY, startingYear = 2025,
                     pageNumber = 5, pageSize = 10
-                )
+                ))
 
                 result.assertTrue { currentTransactions.isEmpty() && previsionalTransactions.isEmpty() }
                 result.assertTrue { totalElements == 5L }
@@ -1974,16 +1982,16 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.regularTransactionState.init(emptyList())
 
-                val page0Result = bookletFeature.loadTransactionsForBookletForAMonth(
+                val page0Result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY, startingYear = 2025,
                     pageNumber = 0, pageSize = 10
-                )
-                val page1Result = bookletFeature.loadTransactionsForBookletForAMonth(
+                ))
+                val page1Result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     tokenValue, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY, startingYear = 2025,
                     pageNumber = 1, pageSize = 10
-                )
+                ))
 
                 // realSold = booklet.amount (stored balance) — unaffected by pagination
                 page0Result.assertTrue { realSold == page1Result.mapNotNullOrFailure()!!.realSold }
@@ -2035,12 +2043,12 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 FakeFactory.fakeTransactionRepository().init(emptyList())
 
-                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = futureDate.month,
                     year = futureDate.year
-                )
+                ))
 
                 result.assertTrue { this.isNotEmpty() }
                 result.assertTrue { this.any { it.label == "Loyer" } }
@@ -2070,12 +2078,12 @@ class BookletFeatureTest: FeatureTest() {
                     regularTx.id, bookletId, pastYearMonth.year, pastYearMonth.month
                 )
 
-                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = pastYearMonth.month,
                     year = pastYearMonth.year
-                )
+                ))
 
                 result.assertTrue { this.isEmpty() }
 
@@ -2089,12 +2097,12 @@ class BookletFeatureTest: FeatureTest() {
         fun `regenerate for a non-existing booklet should return BOOKLET_NOT_FOUND`() {
             launchWithConnectedUserInstance {
                 FakeFactory.regularTransactionState.init(emptyList())
-                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     token = tokenValue,
                     bookletId = UUID.randomUUID(),
                     month = java.time.Month.JANUARY,
                     year = 2024
-                )
+                ))
                 result.assertFailure(ResultState.BOOKLET_NOT_FOUND)
             }
         }
@@ -2119,12 +2127,12 @@ class BookletFeatureTest: FeatureTest() {
                     regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
 
-                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = currentDate.month,
                     year = currentDate.year
-                )
+                ))
 
                 result.assertTrue { this.isNotEmpty() }
                 result.assertTrue { this.any { it.label == "Loyer" && it.isPreview } }
@@ -2169,12 +2177,12 @@ class BookletFeatureTest: FeatureTest() {
                     regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
 
-                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = currentDate.month,
                     year = currentDate.year
-                )
+                ))
 
                 // No new transaction should be generated because a confirmed one already exists
                 result.assertTrue { this.isEmpty() }
@@ -2210,12 +2218,12 @@ class BookletFeatureTest: FeatureTest() {
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), mutableListOf(existingPreview)))
                 )
 
-                val result = bookletFeature.regenerateDeletedPrevisionalTransactions(
+                val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = currentDate.month,
                     year = currentDate.year
-                )
+                ))
 
                 result.assertTrue { this.isEmpty() }
             }
@@ -2247,12 +2255,12 @@ class BookletFeatureTest: FeatureTest() {
                 )
 
                 // Only regenerate current month
-                bookletFeature.regenerateDeletedPrevisionalTransactions(
+                regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     token = tokenValue,
                     bookletId = bookletId,
                     month = currentDate.month,
                     year = currentDate.year
-                ).assertSuccess()
+                )).assertSuccess()
 
                 val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
                 assertFalse(

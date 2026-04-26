@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 11 / 17
+**Overall status**: 🔄 In progress — Step 13 / 17
 
 ---
 
@@ -296,7 +296,7 @@ class GetCategoryDistributionService(
 
 ### Step 12 — Booklet: split `BookletFeatureImpl` into 9 services
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: None
 
 > ⚠️ `BookletFeatureImpl` is the largest impl (~600 lines). Contains `domainFailure()`, `userOwnsBooklet()` — extract if shared between services.
@@ -316,7 +316,7 @@ class GetCategoryDistributionService(
 
 ### Step 13 — Booklet: Command/Query + rename `handle`
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 12
 
 > ⚠️ `LoadTransactionsForBookletForAMonthCommand` will have ~10 fields — this is expected for a complex operation.

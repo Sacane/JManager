@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
+import fr.sacane.jmanager.domain.port.input.booklet.LoadTransactionsForBookletForAMonthQuery
 import fr.sacane.jmanager.domain.port.input.booklet.LoadTransactionsForBookletForAMonthUseCase
 import fr.sacane.jmanager.domain.port.input.regularTransaction.BookRegularTransactionCommand
 import fr.sacane.jmanager.domain.port.input.regularTransaction.BookRegularTransactionUseCase
@@ -116,17 +117,17 @@ class TransactionController(
         ): ResponseEntity<TransactionListResponse> {
         validateDateRange(startDate, endDate)
         logger.info("Request transactions from booklet $bookletId for month $month and year $year")
-        val response = loadTransactionsForBookletForAMonthUseCase.loadTransactionsForBookletForAMonth(
-            token = SessionToken(currentUser.token),
-            bookletId = java.util.UUID.fromString(bookletId),
-            month = month ?: Month.JANUARY,
-            year = year,
-            startingMonth = null,
-            startingYear = null,
-            startDate = startDate,
-            endDate = endDate,
-            pageNumber = page,
-            pageSize = size,
+        val response = loadTransactionsForBookletForAMonthUseCase.handle(
+            LoadTransactionsForBookletForAMonthQuery(
+                token = SessionToken(currentUser.token),
+                bookletId = java.util.UUID.fromString(bookletId),
+                month = month ?: Month.JANUARY,
+                year = year,
+                startDate = startDate,
+                endDate = endDate,
+                pageNumber = page,
+                pageSize = size,
+            )
         )
 
         return response.map {

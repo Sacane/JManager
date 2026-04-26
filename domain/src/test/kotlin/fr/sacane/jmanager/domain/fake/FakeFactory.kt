@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
+import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.port.input.regularTransaction.*
 import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.*
@@ -80,17 +81,23 @@ object FakeFactory {
 
     private val paginator = PaginatorImpl()
 
-    val bookletFeature = BookletFeatureImpl(
-        userRepository,
-        sessionManager,
-        bookletRepository,
-        inMemoryRegularTransactionRepository,
-        inMemoryRegularTransactionGenerator,
-        manager,
-        inMemoryTrackerRepository,
-        transactionQueryRepository,
-        bookletBalanceQueryRepository,
-        paginator,
+    val findBookletByIdService = FindBookletByIdService(sessionManager, bookletRepository)
+    val editBookletService = EditBookletService(sessionManager, bookletRepository)
+    val deleteBookletByIdService = DeleteBookletByIdService(sessionManager, bookletRepository, manager, inMemoryTrackerRepository)
+    val findByLabelAndUserIdService = FindByLabelAndUserIdService(sessionManager, userRepository)
+    val findAllRegisteredBookletsService = FindAllRegisteredBookletsService(sessionManager, userRepository)
+    val saveBookletService = SaveBookletService(sessionManager, userRepository, bookletRepository)
+    val loadTransactionsForBookletForAMonthService = LoadTransactionsForBookletForAMonthService(
+        sessionManager, bookletRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator,
+        manager, inMemoryTrackerRepository, transactionQueryRepository, paginator
+    )
+    val loadBalancesForBookletForAMonthService = LoadBalancesForBookletForAMonthService(
+        sessionManager, inMemoryRegularTransactionRepository, manager, transactionQueryRepository,
+        bookletBalanceQueryRepository, inMemoryRegularTransactionGenerator
+    )
+    val regenerateDeletedPrevisionalTransactionsService = RegenerateDeletedPrevisionalTransactionsService(
+        sessionManager, bookletRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator,
+        manager, inMemoryTrackerRepository, transactionQueryRepository
     )
     val bookTransactionService = BookTransactionService(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTagRepository)
     val retrieveTransactionsByMonthAndYearService = RetrieveTransactionsByMonthAndYearService(transactionRepository, sessionManager)

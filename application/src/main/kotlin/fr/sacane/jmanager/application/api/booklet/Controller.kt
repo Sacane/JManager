@@ -6,13 +6,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.BookletBalances
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
-import fr.sacane.jmanager.domain.port.input.booklet.DeleteBookletByIdUseCase
-import fr.sacane.jmanager.domain.port.input.booklet.FindAllRegisteredBookletsUseCase
-import fr.sacane.jmanager.domain.port.input.booklet.FindBookletByIdUseCase
-import fr.sacane.jmanager.domain.port.input.booklet.LoadBalancesForBookletForAMonthUseCase
-import fr.sacane.jmanager.domain.port.input.booklet.LoadTransactionsForBookletForAMonthUseCase
-import fr.sacane.jmanager.domain.port.input.booklet.RegenerateDeletedPrevisionalTransactionsUseCase
-import fr.sacane.jmanager.domain.port.input.booklet.SaveBookletUseCase
+import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -54,9 +48,11 @@ class BookletController (
     ): ResponseEntity<BookletInfoDTO> {
         LOGGER.info("Booking a new Booklet ${bookletRequest.label} starting at ${bookletRequest.amount}${bookletRequest.currency} for user ${currentUser.id}")
         currentUser
-        return saveBookletUseCase.save(
-            SessionToken(currentUser.token),
-            Booklet(amount = bookletRequest.amount.toAmount(bookletRequest.currency.asCurrency()), label = bookletRequest.label)
+        return saveBookletUseCase.handle(
+            SaveBookletCommand(
+                token = SessionToken(currentUser.token),
+                booklet = Booklet(amount = bookletRequest.amount.toAmount(bookletRequest.currency.asCurrency()), label = bookletRequest.label)
+            )
         ).map { BookletInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
     }
 
@@ -64,8 +60,8 @@ class BookletController (
     fun getAllBooklets(): ResponseEntity<List<BookletDTO>> {
         LOGGER.info("Requesting all booklets...")
 
-        val response = findAllRegisteredBookletsUseCase.findAllRegisteredBooklets(
-            SessionToken(currentUser.token)
+        val response = findAllRegisteredBookletsUseCase.handle(
+            FindAllRegisteredBookletsQuery(SessionToken(currentUser.token))
         )
         return response.map { booklets ->
             booklets.map {
@@ -77,14 +73,14 @@ class BookletController (
     @DeleteMapping(path = ["{bookletId}"])
     fun deleteBooklet(
         @PathVariable bookletId: String
-    ): ResponseEntity<Nothing> = deleteBookletByIdUseCase.deleteBookletById(bookletId.toUUID(), SessionToken(currentUser.token)).toHttpResponse()
+    ): ResponseEntity<Nothing> = deleteBookletByIdUseCase.handle(DeleteBookletByIdCommand(bookletId.toUUID(), SessionToken(currentUser.token))).toHttpResponse()
 
     @GetMapping("{bookletID}")
     fun findBookletById(
         @PathVariable("bookletID") bookletID: String
     ): ResponseEntity<BookletDTO> {
         LOGGER.info("Requesting booklet with ID $bookletID")
-        return findBookletByIdUseCase.findBookletById(bookletID.toUUID(), SessionToken(currentUser.token))
+        return findBookletByIdUseCase.handle(FindBookletByIdQuery(bookletID.toUUID(), SessionToken(currentUser.token)))
             .map { it.toDTO() }.toHttpResponse()
     }
 
@@ -98,17 +94,17 @@ class BookletController (
     ): ResponseEntity<BookletReport> {
         validateDateRange(startDate, endDate)
         LOGGER.info("Requesting report for booklet $bookletID")
-        val result = loadTransactionsForBookletForAMonthUseCase.loadTransactionsForBookletForAMonth(
-            token = SessionToken(currentUser.token),
-            bookletId = bookletID.toUUID(),
-            month = Month.of(month),
-            year = year,
-            startingMonth = null,
-            startingYear = null,
-            startDate = startDate,
-            endDate = endDate,
-            pageNumber = 0,
-            pageSize = Int.MAX_VALUE,
+        val result = loadTransactionsForBookletForAMonthUseCase.handle(
+            LoadTransactionsForBookletForAMonthQuery(
+                token = SessionToken(currentUser.token),
+                bookletId = bookletID.toUUID(),
+                month = Month.of(month),
+                year = year,
+                startDate = startDate,
+                endDate = endDate,
+                pageNumber = 0,
+                pageSize = Int.MAX_VALUE,
+            )
         )
         val report = result.map { res ->
             BookletReport(
@@ -132,15 +128,15 @@ class BookletController (
         validateDateRange(startDate, endDate)
         LOGGER.info("Requesting balances for booklet $bookletID")
         return loadBalancesForBookletForAMonthUseCase
-            .loadBalancesForBookletForAMonth(
-                token = SessionToken(currentUser.token),
-                bookletId = bookletID.toUUID(),
-                month = Month.of(month),
-                year = year,
-                startingMonth = null,
-                startingYear = null,
-                startDate = startDate,
-                endDate = endDate,
+            .handle(
+                LoadBalancesForBookletForAMonthQuery(
+                    token = SessionToken(currentUser.token),
+                    bookletId = bookletID.toUUID(),
+                    month = Month.of(month),
+                    year = year,
+                    startDate = startDate,
+                    endDate = endDate,
+                )
             )
             .map { it.toDTO() }
             .toHttpResponse()
@@ -159,17 +155,17 @@ class BookletController (
         validateDateRange(startDate, endDate)
         LOGGER.info("Requesting transactions for booklet $bookletID")
         return loadTransactionsForBookletForAMonthUseCase
-            .loadTransactionsForBookletForAMonth(
-                token = SessionToken(currentUser.token),
-                bookletId = bookletID.toUUID(),
-                month = Month.of(month),
-                year = year,
-                startingMonth = null,
-                startingYear = null,
-                startDate = startDate,
-                endDate = endDate,
-                pageNumber = page,
-                pageSize = size,
+            .handle(
+                LoadTransactionsForBookletForAMonthQuery(
+                    token = SessionToken(currentUser.token),
+                    bookletId = bookletID.toUUID(),
+                    month = Month.of(month),
+                    year = year,
+                    startDate = startDate,
+                    endDate = endDate,
+                    pageNumber = page,
+                    pageSize = size,
+                )
             )
             .map { res ->
                 BookletTransactionsResponse(
@@ -199,11 +195,13 @@ class BookletController (
             else -> RegenerationType.VIRTUAL
         }
         return regenerateDeletedPrevisionalTransactionsUseCase
-            .regenerateDeletedPrevisionalTransactions(
-                token = SessionToken(currentUser.token),
-                bookletId = bookletID.toUUID(),
-                month = Month.of(month),
-                year = year
+            .handle(
+                RegenerateDeletedPrevisionalTransactionsCommand(
+                    token = SessionToken(currentUser.token),
+                    bookletId = bookletID.toUUID(),
+                    month = Month.of(month),
+                    year = year
+                )
             )
             .map { transactions ->
                 RegenerateTransactionsResponse(
