@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure
 
-import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.domain.port.input.tag.AddDefaultTagsUseCase
 import fr.sacane.jmanager.domain.port.api.UserFeature
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class TestDataLoader(
-    private val tagFeature: TagFeature,
+    private val addDefaultTagsUseCase: AddDefaultTagsUseCase,
     private val userFeature: UserFeature,
     @param:Value("\${jmanager.admin.username}") private val adminUsername: String,
     @param:Value("\${jmanager.admin.password}") private val adminPassword: String,
@@ -20,7 +20,7 @@ class TestDataLoader(
 
     override fun onApplicationEvent(event: ContextRefreshedEvent) {
         if (isSetup) return
-        tagFeature.addDefaultTags()
+        addDefaultTagsUseCase.handle()
         val adminCreationResult = userFeature.createAdminIfNotExists(adminUsername, adminPassword)
         check(!adminCreationResult.isFailure()) { "The admin user could not be created" }
         isSetup = true

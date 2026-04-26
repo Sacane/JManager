@@ -5,5 +5,5 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 
 @Port(Side.APPLICATION)
 interface AddDefaultTagsUseCase {
-    fun addDefaultTags()
+    fun handle()
 }

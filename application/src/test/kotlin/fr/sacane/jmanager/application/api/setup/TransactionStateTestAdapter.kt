@@ -3,6 +3,7 @@ package fr.sacane.jmanager.application.api.setup
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionUseCase
 import fr.sacane.jmanager.application.State
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
@@ -35,7 +36,7 @@ class TransactionStateTestAdapter(
     override fun init(initialState: Collection<BookletTransaction>) {
         initialState.forEach {
             it.transactions.forEach { tr ->
-                bookTransactionUseCase.bookTransaction(SessionToken(it.token), it.bookletName, tr)
+                bookTransactionUseCase.handle(BookTransactionCommand(SessionToken(it.token), it.bookletName, tr))
             }
         }
     }

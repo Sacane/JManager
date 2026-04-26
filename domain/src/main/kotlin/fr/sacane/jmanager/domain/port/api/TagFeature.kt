@@ -1,21 +1,9 @@
 package fr.sacane.jmanager.domain.port.api
 
-import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.input.tag.AddDefaultTagsUseCase
-import fr.sacane.jmanager.domain.port.input.tag.AddTagUseCase
-import fr.sacane.jmanager.domain.port.input.tag.DefaultTagUseCase
-import fr.sacane.jmanager.domain.port.input.tag.DeleteTagUseCase
-import fr.sacane.jmanager.domain.port.input.tag.EditTagUseCase
-import fr.sacane.jmanager.domain.port.input.tag.GetAllTagsUseCase
 import fr.sacane.jmanager.domain.models.Tag
-import fr.sacane.jmanager.domain.models.defaultTags
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
@@ -97,108 +85,4 @@ sealed interface TagFeature {
      * @return Result containing the updated Tag on success, or appropriate failure states.
      */
     fun editTag(token: SessionToken, tag: Tag): Result<Tag>
-}
-
-@DomainService
-class TagFeatureImpl(
-    private val tagRepository: TagRepository,
-    private val transactionRepository: TransactionRepository,
-    private val regularTransactionRepository: RegularTransactionRepository,
-    private val session: SessionManager
-): TagFeature, AddTagUseCase, GetAllTagsUseCase, AddDefaultTagsUseCase, DeleteTagUseCase,
-   DefaultTagUseCase, EditTagUseCase {
-    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
-        return failure(state, DomainError(state.code, key, detail))
-    }
-
-    override fun addTag(token: SessionToken, tag: Tag): Result<Tag> = session.authenticate(token){
-        if(tag.isDefault || tagRepository.existsByLabelAndUserId(it, tag)) {
-            return@authenticate domainFailure(
-                ResultState.TAG_LABEL_ALREADY_TAKEN,
-                "Label '${tag.label}' is already taken by the user ${it.value}",
-                "domain.tag.add.label_already_taken"
-            )
-        }
-        val save = tagRepository.save(it, tag)
-            ?: return@authenticate domainFailure(
-                ResultState.NOT_FOUND,
-                "User has not been found",
-                "domain.tag.add.user_not_found"
-            )
-        success(save)
-    }
-
-    override fun getAllTags(token: SessionToken): Result<List<Tag>> = session.authenticate(token) {
-        success(tagRepository.getAllDefault(it))
-    }
-
-    override fun addDefaultTags() {
-        if(tagRepository.existsDefault()){
-            return
-        }
-        tagRepository.saveAll(defaultTags)
-    }
-
-    override fun deleteTag(token: SessionToken, tagId: UUID, force: Boolean): Result<Nothing> = session.authenticate(token){
-        val isUsedInTransactions = transactionRepository.isPersonalTagUsed(tagId)
-        val isUsedInRegular = regularTransactionRepository.isPersonalTagUsed(tagId)
-        if ((isUsedInTransactions || isUsedInRegular) && !force) {
-            return@authenticate domainFailure(
-                ResultState.TAG_IN_USE,
-                "Tag with id $tagId is used in existing transactions",
-                "domain.tag.delete.tag_in_use"
-            )
-        }
-        if (force && (isUsedInTransactions || isUsedInRegular)) {
-            val defaultTag = tagRepository.defaultTag()
-            if (isUsedInTransactions) transactionRepository.replacePersonalTagByDefault(tagId, defaultTag)
-            if (isUsedInRegular) regularTransactionRepository.replacePersonalTagByDefault(tagId, defaultTag)
-        }
-        if(!tagRepository.deleteById(tagId)) {
-            return@authenticate domainFailure(
-                ResultState.NOT_FOUND,
-                "Tag with id $tagId has not been found",
-                "domain.tag.delete.not_found"
-            )
-        }
-        success()
-    }
-
-    override fun defaultTag(token: SessionToken): Result<Tag> = session.authenticate(token) {
-        val tagResult = tagRepository.defaultTag()
-        return@authenticate success(tagResult)
-    }
-
-    override fun editTag(token: SessionToken, tag: Tag): Result<Tag> = session.authenticate(token) {
-        if(tag.id == null || !tagRepository.existsById(tag.id)) {
-            return@authenticate domainFailure(
-                ResultState.NOT_FOUND,
-                "Tag with id ${tag.id} has not been found",
-                "domain.tag.edit.not_found"
-            )
-        }
-        if(
-            tagRepository.existsAnotherTagByLabel(it, tag)
-        ) {
-            return@authenticate domainFailure(
-                ResultState.TAG_LABEL_ALREADY_TAKEN,
-                "Label '${tag.label}' is already taken",
-                "domain.tag.edit.label_already_taken"
-            )
-        }
-        if(tag.isDefault) {
-            return@authenticate domainFailure(
-                ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
-                "Tag should not be default",
-                "domain.tag.edit.default_forbidden"
-            )
-        }
-        val save = tagRepository.patch(tag)
-            ?: return@authenticate domainFailure(
-                ResultState.NOT_FOUND,
-                "User has not been found",
-                "domain.tag.edit.user_not_found"
-            )
-        success(save)
-    }
 }

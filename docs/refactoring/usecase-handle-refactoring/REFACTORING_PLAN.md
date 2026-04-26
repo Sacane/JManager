@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 3 / 17
+**Overall status**: 🔄 In progress — Step 9 / 17
 
 ---
 
@@ -144,7 +144,7 @@ class GetCategoryDistributionService(
 
 ### Step 4 — Tag: split `TagFeatureImpl` into 6 services
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: None (can be parallelised with Step 2)  
 **Objective**: Create 6 services in `domain/port/input/tag/`.
 
@@ -170,7 +170,7 @@ class GetCategoryDistributionService(
 
 ### Step 5 — Tag: Command/Query + rename `handle`
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 4
 
 **Actions:**
@@ -185,7 +185,7 @@ class GetCategoryDistributionService(
 
 ### Step 6 — Transaction: split `TransactionFeatureImpl` into 6 services
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: None
 
 **UseCases to split:**
@@ -209,8 +209,7 @@ class GetCategoryDistributionService(
 
 ### Step 7 — Transaction: Command/Query + rename `handle`
 
-**Status**: ⏳ To do  
-**Depends on**: Step 6
+**Status**: ✅ Done
 
 **Actions:**
 1. Create 6 Command/Query objects in `domain/port/input/transaction/`
@@ -223,7 +222,7 @@ class GetCategoryDistributionService(
 
 ### Step 8 — RegularTransaction: split into 8 services
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: None
 
 **UseCases**: `GetAllRegularTransactions`, `BookRegularTransaction`, `GetRegularTransactionById`, `UpdateRegularTransaction`, `DeleteRegularTransaction`, `DeleteRegularTransactions`, `LinkRegularTransactionToBooklet`, `UnlinkRegularTransactionFromBooklet`
@@ -241,7 +240,7 @@ class GetCategoryDistributionService(
 
 ### Step 9 — RegularTransaction: Command/Query + rename `handle`
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 8
 
 **Actions:**

@@ -178,6 +178,7 @@ class SessionController(
                 projectionWindowDays = settings.projectionWindowDays,
                 bookletCycles = bookletCycles,
             )
+        )
             .map { it.toDTO() }
             .toHttpResponse()
     }

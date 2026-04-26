@@ -22,7 +22,7 @@ class DataLoader (
         if(isSetup){
             return
         }
-        addDefaultTagsUseCase.addDefaultTags()
+        addDefaultTagsUseCase.handle()
         val adminCreationResult = createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand(adminUsername, adminPassword))
         check(!adminCreationResult.isFailure()){
             "The admin user could not be created"

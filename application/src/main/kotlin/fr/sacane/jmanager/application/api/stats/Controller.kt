@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.port.input.stats.GetDailyTrendStatsUseCase
 import fr.sacane.jmanager.domain.port.input.stats.GetMonthlyBookletStatsUseCase
 import fr.sacane.jmanager.domain.port.input.stats.GetPrevisionalTransactionsUseCase
 import fr.sacane.jmanager.domain.port.input.stats.GetTrendStatsUseCase
+import fr.sacane.jmanager.domain.port.input.tag.DefaultTagQuery
 import fr.sacane.jmanager.domain.port.input.tag.DefaultTagUseCase
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.toUUID
@@ -91,7 +92,7 @@ class StatsController(
         @RequestParam(required = false) bookletId: UUID?
     ): ResponseEntity<PrevisionalTransactionsDTO> {
         LOGGER.info("Requesting previsional transactions from $startDate to $endDate")
-        val defaultTag = defaultTagUseCase.defaultTag(SessionToken(currentUser.token)).mapNotNullOrFailure() ?: throw NotFoundException(
+        val defaultTag = defaultTagUseCase.handle(DefaultTagQuery(SessionToken(currentUser.token))).mapNotNullOrFailure() ?: throw NotFoundException(
             ResultState.TAG_NOT_FOUND.code, "Default tag not found")
         return getPrevisionalTransactionsUseCase.getPrevisionalTransactions(SessionToken(currentUser.token), startDate, endDate, bookletId)
             .map {

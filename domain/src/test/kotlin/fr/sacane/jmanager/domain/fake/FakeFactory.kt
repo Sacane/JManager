@@ -10,6 +10,9 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
+import fr.sacane.jmanager.domain.port.input.regularTransaction.*
+import fr.sacane.jmanager.domain.port.input.tag.*
+import fr.sacane.jmanager.domain.port.input.transaction.*
 import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.spi.*
 import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
@@ -88,7 +91,12 @@ object FakeFactory {
         bookletBalanceQueryRepository,
         paginator,
     )
-    val transactionFeature = TransactionFeatureImpl(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTagRepository, inMemoryTrackerRepository)
+    val bookTransactionService = BookTransactionService(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTagRepository)
+    val retrieveTransactionsByMonthAndYearService = RetrieveTransactionsByMonthAndYearService(transactionRepository, sessionManager)
+    val editTransactionService = EditTransactionService(transactionRepository, sessionManager, bookletRepository, manager)
+    val findTransactionByIdService = FindTransactionByIdService(transactionRepository, sessionManager)
+    val deleteTransactionsByIdsService = DeleteTransactionsByIdsService(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTrackerRepository)
+    val confirmPreviewTransactionService = ConfirmPreviewTransactionService(transactionRepository, sessionManager, bookletRepository, manager)
     val loginService = LoginService(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     val logoutService = LogoutService(sessionManager)
     val refreshSessionService = RefreshSessionService(sessionManager, userRepository, tokenGenerator)
@@ -96,15 +104,20 @@ object FakeFactory {
     val createAdminIfNotExistsService = CreateAdminIfNotExistsService(userRepository, DefaultHasher)
     val getUserSettingsService = GetUserSettingsService(sessionManager, userRepository)
     val updateUserSettingsService = UpdateUserSettingsService(sessionManager, userRepository, bookletRepository)
-    private val tagFeature = TagFeatureImpl(inMemoryTagRepository, transactionRepository, inMemoryRegularTransactionRepository, sessionManager)
-    val regularTransactionFeature = RegularTransactionFeatureImpl(
-        inMemoryRegularTransactionRepository,
-        inMemoryTagRepository,
-        sessionManager,
-        manager,
-        inMemoryTrackerRepository,
-        paginator,
-    )
+    private val addTagService = AddTagService(inMemoryTagRepository, sessionManager)
+    private val getAllTagsService = GetAllTagsService(inMemoryTagRepository, sessionManager)
+    private val addDefaultTagsService = AddDefaultTagsService(inMemoryTagRepository)
+    private val deleteTagService = DeleteTagService(inMemoryTagRepository, transactionRepository, inMemoryRegularTransactionRepository, sessionManager)
+    private val defaultTagService = DefaultTagService(inMemoryTagRepository, sessionManager)
+    private val editTagService = EditTagService(inMemoryTagRepository, sessionManager)
+    val getAllRegularTransactionsService = GetAllRegularTransactionsService(inMemoryRegularTransactionRepository, sessionManager, paginator)
+    val bookRegularTransactionService = BookRegularTransactionService(inMemoryRegularTransactionRepository, sessionManager, manager)
+    val getRegularTransactionByIdService = GetRegularTransactionByIdService(inMemoryRegularTransactionRepository, sessionManager)
+    val updateRegularTransactionService = UpdateRegularTransactionService(inMemoryRegularTransactionRepository, sessionManager, manager)
+    val deleteRegularTransactionService = DeleteRegularTransactionService(inMemoryRegularTransactionRepository, sessionManager, manager)
+    val deleteRegularTransactionsService = DeleteRegularTransactionsService(inMemoryRegularTransactionRepository, sessionManager, manager)
+    val linkRegularTransactionToBookletService = LinkRegularTransactionToBookletService(inMemoryRegularTransactionRepository, sessionManager, manager)
+    val unlinkRegularTransactionFromBookletService = UnlinkRegularTransactionFromBookletService(inMemoryRegularTransactionRepository, sessionManager, manager, inMemoryTrackerRepository)
     val fileImportExportFeature = FileImportExportFeatureImpl(
         csvFileReader,
         transactionRepository,
@@ -170,7 +183,10 @@ object FakeFactory {
         return inMemoryTagRepository
     }
 
-    fun tagFeature(): TagFeatureImpl {
-        return tagFeature
-    }
+    fun addTagUseCase(): AddTagUseCase = addTagService
+    fun getAllTagsUseCase(): GetAllTagsUseCase = getAllTagsService
+    fun addDefaultTagsUseCase(): AddDefaultTagsUseCase = addDefaultTagsService
+    fun deleteTagUseCase(): DeleteTagUseCase = deleteTagService
+    fun defaultTagUseCase(): DefaultTagUseCase = defaultTagService
+    fun editTagUseCase(): EditTagUseCase = editTagService
 }
