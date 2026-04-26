@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 16 / 17
+**Overall status**: ✅ Complete — 19 / 19
 
 ---
 
@@ -389,7 +389,7 @@ class GetCategoryDistributionService(
 
 ### Step 17 — Final validation: full test suite
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 16
 
 **Actions:**
@@ -399,6 +399,104 @@ class GetCategoryDistributionService(
 
 **Validation criterion:**
 > All tests pass. No regression.
+
+---
+
+### Step 18 — Consolidate Command/Query + Service into UseCase files
+
+**Status**: ✅ Done  
+**Depends on**: Step 17  
+**Objective**: Merge the Command/Query data classes and Service implementations into their corresponding UseCase interface files. Each use case becomes a single file containing: the input data class, the port interface, and the `@DomainService` implementation.
+
+**Rationale**: The current structure produces 3 files per use case (`XCommand.kt`, `XUseCase.kt`, `XService.kt`). Since all three are tightly coupled — the Command/Query is referenced only by its UseCase, and the Service implements only that UseCase — they belong together. Consolidating reduces ~135 files to ~48 across all categories, making navigation and maintenance significantly easier.
+
+**Target convention** (replaces the 3-file structure):
+
+```
+domain/port/input/{category}/
+├── GetCategoryDistributionUseCase.kt     // contains Query + interface + @DomainService
+└── StatsDomainHelper.kt                  // shared helpers stay in their own file
+```
+
+```kotlin
+// GetCategoryDistributionUseCase.kt
+
+data class GetCategoryDistributionQuery(
+    val token: SessionToken,
+    val bookletId: UUID? = null,
+    val startDate: LocalDate? = null,
+    val endDate: LocalDate? = null
+)
+
+@Port(Side.APPLICATION)
+interface GetCategoryDistributionUseCase {
+    fun handle(query: GetCategoryDistributionQuery): Result<CategoryDistributionOutput>
+}
+
+@DomainService
+class GetCategoryDistributionService(
+    private val session: SessionManager,
+    private val bookletRepository: BookletRepository,
+    private val calculator: CategoryDistributionCalculator
+) : GetCategoryDistributionUseCase {
+    override fun handle(query: GetCategoryDistributionQuery): Result<CategoryDistributionOutput> { ... }
+}
+```
+
+**Files kept separate** (NOT merged):
+- `StatsDomainHelper.kt`, `BookletDomainHelper.kt`, `CsvDomainHelper.kt` — shared helpers used by multiple services
+- `BookletLoadingResult.kt`, `TransactionDeletionResult.kt` — return types used across packages (controllers, tests)
+
+**Per-category actions:**
+
+| Category | UseCase files | Command/Query files to merge | Service files to merge | Files deleted |
+|---|---|---|---|---|
+| admin | 1 (`GetUsers`) | 1 (`GetUsersQuery`) | 1 | **2** |
+| user | 7 | 7 | 7 | **14** |
+| tag | 6 (incl. `AddDefaultTags` — no Command) | 5 | 6 | **11** |
+| transaction | 6 | 6 | 6 | **12** |
+| regularTransaction | 8 | 8 | 8 | **16** |
+| stats | 5 | 5 | 5 | **10** |
+| booklet | 9 | 9 | 9 | **18** |
+| csv | 3 (Commands already inlined) | 0 | 3 | **3** |
+| **Total** | **45** | **41** | **45** | **86** |
+
+**Procedure for each UseCase**:
+1. Open `XUseCase.kt`
+2. If a separate `XCommand.kt` / `XQuery.kt` exists, move its data class to the top of `XUseCase.kt` (before the interface)
+3. Move the entire content of `XService.kt` (class + imports) to the bottom of `XUseCase.kt` (after the interface)
+4. Consolidate imports (remove duplicates, remove same-package imports)
+5. Delete `XCommand.kt` / `XQuery.kt` and `XService.kt`
+
+**Import safety**: All external callers (controllers, tests) use wildcard imports (`import fr.sacane.jmanager.domain.port.input.user.*`), so class relocations within the same package require **no caller changes**.
+
+**Execution order**: Process categories one at a time. Compile after each category to catch issues early:
+1. admin → compile
+2. user → compile
+3. tag → compile
+4. transaction → compile
+5. regularTransaction → compile
+6. stats → compile
+7. booklet → compile
+8. csv → compile
+
+**Validation criterion:**
+> `.\gradlew :domain:compileKotlin :domain:compileTestKotlin :application:compileKotlin :application:compileTestKotlin :infrastructure:compileKotlin :infrastructure:compileTestKotlin` passes. Each category has exactly one file per use case (plus helpers). No orphan `*Command.kt`, `*Query.kt`, or `*Service.kt` files remain.
+
+---
+
+### Step 19 — Final validation: full test suite (post-consolidation)
+
+**Status**: ✅ Done  
+**Depends on**: Step 18
+
+**Actions:**
+1. `.\gradlew :domain:test`
+2. `.\gradlew :application:test`
+3. `.\gradlew :infrastructure:test`
+
+**Validation criterion:**
+> All tests pass. No regression. Each `domain/port/input/{category}/` package contains only UseCase files and optional shared helpers.
 
 ---
 
@@ -416,6 +514,10 @@ Step 3      Step 5      Step 7      Step 9      Step 11     Step 13     Step 15
                                                                               Step 16 (cleanup)
                                                                                     ↓
                                                                               Step 17 (tests)
+                                                                                    ↓
+                                                                              Step 18 (consolidate)
+                                                                                    ↓
+                                                                              Step 19 (tests)
 ```
 
 *Split steps (2, 4, 6, 8, 10, 12, 14) are independent from each other and can be done in any order. Command/Query steps (3, 5, 7, 9, 11, 13, 15) each depend on their respective split step.*

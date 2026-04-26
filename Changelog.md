@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-26
+- **Refactoring: Consolidate UseCase files (Step 18-19)**
+  - Merged Command/Query data classes and Service implementations into their corresponding `*UseCase.kt` files across all 8 categories (admin, user, tag, transaction, regularTransaction, stats, booklet, csv).
+  - Deleted 86 orphan `*Command.kt`, `*Query.kt`, and `*Service.kt` files — each UseCase is now a single file containing input data class + port interface + `@DomainService` implementation.
+  - Shared helpers (`StatsDomainHelper`, `BookletDomainHelper`, `CsvDomainHelper`) and cross-package types (`BookletLoadingResult`, `TransactionDeletionResult`) remain in separate files.
+  - Full test suite passes across domain, application, and infrastructure modules with no regression.
+
 ## 2026-05-01
 - **Feature: Server-side pagination for transactions (domain + application)**
   - Added `pageNumber: Int = 0` and `pageSize: Int = 10` parameters to `BookletFeature.loadTransactionsForBookletForAMonth` interface and implementation.
