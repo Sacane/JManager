@@ -3,7 +3,7 @@
 **Generated on**: 2026-04-25  
 **Applied pattern**: Use Case Split + Command/Query Object  
 **Stack**: Kotlin 21 + Spring Boot 3.4.0 (Hexagonal Architecture)  
-**Overall status**: 🔄 In progress — Step 9 / 17
+**Overall status**: 🔄 In progress — Step 11 / 17
 
 ---
 
@@ -254,7 +254,7 @@ class GetCategoryDistributionService(
 
 ### Step 10 — Stats: split `StatsFeatureImpl` into 5 services
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: None
 
 > ⚠️ `StatsFeatureImpl` contains `domainFailure()` and `validateDateRange()` — extract into a `StatsDomainHelper` or duplicate.
@@ -281,7 +281,7 @@ class GetCategoryDistributionService(
 
 ### Step 11 — Stats: Command/Query + rename `handle`
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 10
 
 **Actions:**

@@ -1,10 +1,6 @@
 package fr.sacane.jmanager.application.api.stats
 
-import fr.sacane.jmanager.domain.port.input.stats.GetCategoryDistributionUseCase
-import fr.sacane.jmanager.domain.port.input.stats.GetDailyTrendStatsUseCase
-import fr.sacane.jmanager.domain.port.input.stats.GetMonthlyBookletStatsUseCase
-import fr.sacane.jmanager.domain.port.input.stats.GetPrevisionalTransactionsUseCase
-import fr.sacane.jmanager.domain.port.input.stats.GetTrendStatsUseCase
+import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.DefaultTagQuery
 import fr.sacane.jmanager.domain.port.input.tag.DefaultTagUseCase
 import fr.sacane.jmanager.domain.models.SessionToken
@@ -44,7 +40,7 @@ class StatsController(
     ): ResponseEntity<MonthlyBookletStatsDTO> {
         LOGGER.info("Requesting monthly stats for booklet $bookletId and year $year")
 
-        return getMonthlyBookletStatsUseCase.getMonthlyBookletStats(bookletId.toUUID(), year, SessionToken(currentUser.token))
+        return getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(bookletId.toUUID(), year, SessionToken(currentUser.token)))
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -57,12 +53,12 @@ class StatsController(
     ): ResponseEntity<CategoryDistributionDTO> {
         LOGGER.info("Requesting category distribution")
 
-        return getCategoryDistributionUseCase.getCategoryDistribution(
+        return getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(
             token = SessionToken(currentUser.token),
             bookletId = bookletId,
             startDate = startDate,
             endDate = endDate
-        )
+        ))
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -75,12 +71,12 @@ class StatsController(
     ): ResponseEntity<TrendStatsDTO> {
         LOGGER.info("Requesting trend stats")
 
-        return getTrendStatsUseCase.getTrendStats(
+        return getTrendStatsUseCase.handle(GetTrendStatsQuery(
             token = SessionToken(currentUser.token),
             bookletId = bookletId,
             startDate = startDate,
             endDate = endDate
-        )
+        ))
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -94,7 +90,7 @@ class StatsController(
         LOGGER.info("Requesting previsional transactions from $startDate to $endDate")
         val defaultTag = defaultTagUseCase.handle(DefaultTagQuery(SessionToken(currentUser.token))).mapNotNullOrFailure() ?: throw NotFoundException(
             ResultState.TAG_NOT_FOUND.code, "Default tag not found")
-        return getPrevisionalTransactionsUseCase.getPrevisionalTransactions(SessionToken(currentUser.token), startDate, endDate, bookletId)
+        return getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(SessionToken(currentUser.token), startDate, endDate, bookletId))
             .map {
                 it.toDTO(defaultTag)
             }
@@ -109,12 +105,12 @@ class StatsController(
     ): ResponseEntity<DailyTrendStatsDTO> {
         LOGGER.info("Requesting daily trend stats from $startDate to $endDate")
 
-        return getDailyTrendStatsUseCase.getDailyTrendStats(
+        return getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
             token = SessionToken(currentUser.token),
             startDate = startDate,
             endDate = endDate,
             bookletId = bookletId
-        )
+        ))
             .map { it.toDTO() }
             .toHttpResponse()
     }

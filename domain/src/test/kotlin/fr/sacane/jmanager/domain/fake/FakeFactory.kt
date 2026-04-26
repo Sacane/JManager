@@ -11,6 +11,7 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.api.*
 import fr.sacane.jmanager.domain.port.input.regularTransaction.*
+import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.*
 import fr.sacane.jmanager.domain.port.input.transaction.*
 import fr.sacane.jmanager.domain.port.input.user.*
@@ -127,18 +128,11 @@ object FakeFactory {
         manager
     )
 
-    val statsFeature: StatsFeature by lazy {
-        StatsFeatureImpl(
-            session = sessionManager(),
-            userRepository = fakeUserRepository(),
-            bookletRepository = bookletRepository,
-            monthlyStatsCalculator = MonthlyStatsCalculatorImpl(),
-            categoryDistributionCalculator = CategoryDistributionCalculatorImpl(inMemoryTagRepository),
-            trendCalculator = TrendCalculatorImpl(),
-            dailyTrendCalculator = DailyTrendCalculatorImpl(),
-            previsionalTransactionFilter = PrevisionalTransactionFilterImpl()
-        )
-    }
+    val getMonthlyBookletStatsService = GetMonthlyBookletStatsService(sessionManager(), bookletRepository, MonthlyStatsCalculatorImpl())
+    val getCategoryDistributionService = GetCategoryDistributionService(sessionManager(), bookletRepository, CategoryDistributionCalculatorImpl(inMemoryTagRepository))
+    val getTrendStatsService = GetTrendStatsService(sessionManager(), bookletRepository, TrendCalculatorImpl())
+    val getPrevisionalTransactionsService = GetPrevisionalTransactionsService(sessionManager(), bookletRepository, PrevisionalTransactionFilterImpl())
+    val getDailyTrendStatsService = GetDailyTrendStatsService(sessionManager(), bookletRepository, DailyTrendCalculatorImpl())
 
     fun bookletState(): State<BookletsByOwner>{
         return bookletRepository
