@@ -8,7 +8,7 @@ import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
-import fr.sacane.jmanager.domain.port.api.TagFeature
+import fr.sacane.jmanager.domain.port.input.tag.*
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -20,7 +20,12 @@ import java.util.UUID
 class TagFeatureTest: FeatureTest() {
 
     private val tagState = FakeFactory.tagTestState()
-    private val tagFeature: TagFeature = FakeFactory.tagFeature()
+    private val addTagUseCase: AddTagUseCase = FakeFactory.addTagUseCase()
+    private val deleteTagUseCase: DeleteTagUseCase = FakeFactory.deleteTagUseCase()
+    private val getAllTagsUseCase: GetAllTagsUseCase = FakeFactory.getAllTagsUseCase()
+    private val addDefaultTagsUseCase: AddDefaultTagsUseCase = FakeFactory.addDefaultTagsUseCase()
+    private val editTagUseCase: EditTagUseCase = FakeFactory.editTagUseCase()
+    private val defaultTagUseCase: DefaultTagUseCase = FakeFactory.defaultTagUseCase()
 
     @AfterEach
     fun clearUp() {
@@ -33,7 +38,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Add a tag must return success`() {
             launchWithConnectedUserInstance {
-                tagFeature.addTag(this.tokenValue, Tag("test"))
+                addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag("test")))
                     .assertSuccess()
             }
         }
@@ -42,7 +47,7 @@ class TagFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 tagState.init(UserTag(this.user.id, mutableListOf(Tag("test"))))
 
-                tagFeature.addTag(this.tokenValue, Tag("test"))
+                addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag("test")))
                     .assertFailure()
             }
         }
@@ -50,7 +55,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Add a default tag must return failure`() {
             launchWithConnectedUserInstance {
-                val result = tagFeature.addTag(this.tokenValue, Tag("test", isDefault = true))
+                val result = addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag("test", isDefault = true)))
 
                 result.assertFailure(ResultState.TAG_LABEL_ALREADY_TAKEN)
                 assertEquals("domain.tag.add.label_already_taken", result.errorInfo?.key)
@@ -65,14 +70,14 @@ class TagFeatureTest: FeatureTest() {
                 val uuid = UUID.randomUUID()
                 tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
-                tagFeature.deleteTag(this.tokenValue, uuid)
+                deleteTagUseCase.handle(DeleteTagCommand(this.tokenValue, uuid, false))
                     .assertSuccess()
             }
         }
         @Test
         fun `Delete a tag that does not exist must return failure`() {
             launchWithConnectedUserInstance {
-                tagFeature.deleteTag(this.tokenValue, UUID.randomUUID())
+                deleteTagUseCase.handle(DeleteTagCommand(this.tokenValue, UUID.randomUUID(), false))
                     .assertFailure()
             }
         }
@@ -85,7 +90,7 @@ class TagFeatureTest: FeatureTest() {
                 tagState.init(UserTag(this.user.id, mutableListOf(tag)))
                 initTransactions(listOf(generateTransaction("tx1", Amount(50L), false, tag = tag)))
 
-                val result = tagFeature.deleteTag(this.tokenValue, tagId, force = false)
+                val result = deleteTagUseCase.handle(DeleteTagCommand(this.tokenValue, tagId, false))
 
                 result.assertFailure(ResultState.TAG_IN_USE)
                 assertEquals("domain.tag.delete.tag_in_use", result.errorInfo?.key)
@@ -101,7 +106,7 @@ class TagFeatureTest: FeatureTest() {
                 val transaction = generateTransaction("tx1", Amount(50L), false, tag = tag)
                 initTransactions(listOf(transaction))
 
-                tagFeature.deleteTag(this.tokenValue, tagId, force = true)
+                deleteTagUseCase.handle(DeleteTagCommand(this.tokenValue, tagId, true))
                     .assertSuccess()
 
                 val updated = FakeFactory.transactionRepository().findTransactionById(transaction.id!!)
@@ -117,7 +122,7 @@ class TagFeatureTest: FeatureTest() {
                 val uuid = UUID.randomUUID()
                 tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
-                tagFeature.getAllTags(this.tokenValue)
+                getAllTagsUseCase.handle(GetAllTagsQuery(this.tokenValue))
                     .assertSuccess()
             }
         }
@@ -126,15 +131,15 @@ class TagFeatureTest: FeatureTest() {
     inner class AddDefaultTagsFeatureTest {
         @Test
         fun `Add default tags must return success`() {
-            tagFeature.addDefaultTags()
+            addDefaultTagsUseCase.handle()
 
             assertEquals(defaultTags.size, tagState.getStates().size)
         }
 
         @Test
         fun `Add default tags must return success and should not add duplicated tags`() {
-            tagFeature.addDefaultTags()
-            tagFeature.addDefaultTags()
+            addDefaultTagsUseCase.handle()
+            addDefaultTagsUseCase.handle()
 
             assertEquals(defaultTags.size, tagState.getStates().size)
         }
@@ -147,14 +152,14 @@ class TagFeatureTest: FeatureTest() {
                 val uuid = UUID.randomUUID()
                 tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
-                tagFeature.editTag(this.tokenValue, Tag("test2", id = uuid))
+                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("test2", id = uuid)))
                     .assertSuccess()
             }
         }
         @Test
         fun `Patch a tag that does not exist must return failure`() {
             launchWithConnectedUserInstance {
-                tagFeature.editTag(this.tokenValue, Tag("test2", id = UUID.randomUUID()))
+                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("test2", id = UUID.randomUUID())))
                     .assertFailure()
             }
         }
@@ -162,7 +167,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Patch a tag without id must return failure`() {
             launchWithConnectedUserInstance {
-                val result = tagFeature.editTag(this.tokenValue, Tag("no-id"))
+                val result = editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("no-id")))
 
                 result.assertFailure(ResultState.NOT_FOUND)
                 assertEquals("domain.tag.edit.not_found", result.errorInfo?.key)
@@ -176,7 +181,7 @@ class TagFeatureTest: FeatureTest() {
                 val id2 = UUID.randomUUID()
                 tagState.init(UserTag(this.user.id, mutableListOf(Tag("one", id = id1), Tag("two", id = id2))))
 
-                tagFeature.editTag(this.tokenValue, Tag("two", id = id1))
+                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("two", id = id1)))
                     .assertFailure(ResultState.TAG_LABEL_ALREADY_TAKEN)
             }
         }
@@ -187,7 +192,7 @@ class TagFeatureTest: FeatureTest() {
                 val uuid = UUID.randomUUID()
                 tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
 
-                val result = tagFeature.editTag(this.tokenValue, Tag("test", id = uuid, isDefault = true))
+                val result = editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("test", id = uuid, isDefault = true)))
 
                 result.assertFailure(ResultState.TAG_SHOULD_NOT_BE_DEFAULT)
                 assertEquals("domain.tag.edit.default_forbidden", result.errorInfo?.key)
@@ -200,7 +205,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Default tag must return success`() {
             launchWithConnectedUserInstance {
-                tagFeature.defaultTag(this.tokenValue)
+                defaultTagUseCase.handle(DefaultTagQuery(this.tokenValue))
                     .assertTrue { label == "Aucune" }
             }
         }

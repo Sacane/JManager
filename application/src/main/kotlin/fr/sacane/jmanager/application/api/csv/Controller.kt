@@ -2,12 +2,14 @@ package fr.sacane.jmanager.application.api.csv
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.api.FileImportExportFeature
+import fr.sacane.jmanager.domain.port.input.csv.*
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.application.api.currentUser
 import fr.sacane.jmanager.application.api.toHttpResponse
+import fr.sacane.jmanager.application.bus.CommandBus
+import fr.sacane.jmanager.application.bus.QueryBus
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -24,7 +26,8 @@ import java.util.logging.Logger
 @RequestMapping("api/csv")
 @Adapter(Side.APPLICATION)
 class CsvImportController(
-    private val fileImportExportFeature: FileImportExportFeature,
+    private val queryBus: QueryBus,
+    private val commandBus: CommandBus,
     private val transactionRepository: TransactionRepository
 ) {
     companion object {
@@ -63,12 +66,14 @@ class CsvImportController(
             )
         }
 
-        return fileImportExportFeature.validateCsvFile(
-            token = SessionToken(currentUser.token),
-            bookletId = bookletId.toUUID(),
-            csvContent = csvContent,
-            month = month,
-            year = year
+        return queryBus.dispatch(
+            ValidateCsvFileQuery(
+                token = SessionToken(currentUser.token),
+                bookletId = bookletId.toUUID(),
+                csvContent = csvContent,
+                month = month,
+                year = year
+            )
         ).map { it.toDTO() }.toHttpResponse()
     }
 
@@ -96,13 +101,15 @@ class CsvImportController(
             )
         }
 
-        return fileImportExportFeature.importTransactionsFromCsv(
-            token = SessionToken(currentUser.token),
-            bookletId = bookletId.toUUID(),
-            csvContent = csvContent,
-            skipValidation = skipValidation,
-            month = month,
-            year = year
+        return commandBus.dispatch(
+            ImportTransactionsFromCsvCommand(
+                token = SessionToken(currentUser.token),
+                bookletId = bookletId.toUUID(),
+                csvContent = csvContent,
+                skipValidation = skipValidation,
+                month = month,
+                year = year
+            )
         ).map { it.toDTO() }.toHttpResponse()
     }
 
@@ -175,9 +182,11 @@ class CsvImportController(
                     .body(mapOf("message" to "Aucune transaction trouvée"))
             }
 
-            val result = fileImportExportFeature.exportTransactionsToCsv(
-                token = SessionToken(currentUser.token),
-                transactions = transactions
+            val result = commandBus.dispatch(
+                ExportTransactionsToCsvCommand(
+                    token = SessionToken(currentUser.token),
+                    transactions = transactions
+                )
             )
 
             return if (result.isSuccess()) {

@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.UserRegularTransaction
 import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.port.input.regularTransaction.*
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
@@ -21,7 +22,14 @@ import java.util.UUID
 class RegularTransactionFeatureTest : FeatureTest() {
 
     companion object {
-        private val regularTransactionFeature = FakeFactory.regularTransactionFeature
+        private val getAllRegularTransactionsUseCase = FakeFactory.getAllRegularTransactionsService
+        private val bookRegularTransactionUseCase = FakeFactory.bookRegularTransactionService
+        private val getRegularTransactionByIdUseCase = FakeFactory.getRegularTransactionByIdService
+        private val updateRegularTransactionUseCase = FakeFactory.updateRegularTransactionService
+        private val deleteRegularTransactionUseCase = FakeFactory.deleteRegularTransactionService
+        private val deleteRegularTransactionsUseCase = FakeFactory.deleteRegularTransactionsService
+        private val linkRegularTransactionToBookletUseCase = FakeFactory.linkRegularTransactionToBookletService
+        private val unlinkRegularTransactionFromBookletUseCase = FakeFactory.unlinkRegularTransactionFromBookletService
         private val regularTransactionState = FakeFactory.regularTransactionState
     }
 
@@ -53,7 +61,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction1), UserRegularTransaction(user.id, monthlyTransaction2)))
 
-                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue)
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -67,7 +75,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should return empty list when user has no regular transactions`() {
             launchWithConnectedUserInstance {
-                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue)
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -78,7 +86,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail with unauthorized when token is invalid`() {
-            val result = regularTransactionFeature.getAllRegularTransactions(SessionToken("invalid-token"))
+            val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(SessionToken("invalid-token"), 0, 10))
             result.assertFailure(ResultState.UNAUTHORIZED)
         }
     }
@@ -102,7 +110,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 }
                 regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
 
-                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue, pageNumber = 0, pageSize = 10)
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -131,7 +139,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 }
                 regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
 
-                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue, pageNumber = 3, pageSize = 10)
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 3, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -158,7 +166,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 }
                 regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
 
-                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue)
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -186,7 +194,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 }
                 regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
 
-                val result = regularTransactionFeature.getAllRegularTransactions(tokenValue, pageNumber = 10, pageSize = 10)
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 10, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -213,10 +221,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val result = regularTransactionFeature.bookRegularTransaction(
-                    tokenValue,
-                    monthlyTransaction,
-                    listOf(booklet.id!!)
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -243,10 +248,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(15)
                 )
 
-                val result = regularTransactionFeature.bookRegularTransaction(
-                    tokenValue,
-                    monthlyTransaction,
-                    listOf(booklet.id!!)
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -271,10 +273,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(10)
                 )
 
-                val result = regularTransactionFeature.bookRegularTransaction(
-                    tokenValue,
-                    monthlyTransaction,
-                    listOf(booklet.id!!)
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -301,10 +300,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val result = regularTransactionFeature.bookRegularTransaction(
-                    tokenValue,
-                    monthlyTransaction,
-                    listOf(booklet.id!!, secondBooklet.id!!)
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!, secondBooklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -326,10 +322,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 recurrenceRule = RecurrenceRule.Monthly(1)
             )
 
-            val result = regularTransactionFeature.bookRegularTransaction(
-                SessionToken("invalid-token"),
-                monthlyTransaction,
-                listOf(UUID.randomUUID())
+            val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(SessionToken("invalid-token"), monthlyTransaction, listOf(UUID.randomUUID()))
             )
 
             result.assertFailure(ResultState.UNAUTHORIZED)
@@ -354,10 +347,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction)))
 
-                val result = regularTransactionFeature.getRegularTransactionById(
-                    tokenValue,
-                    monthlyTransaction.id.value
-                )
+                val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, monthlyTransaction.id.value))
 
                 result.assertSuccess()
                 result.onSuccess { transaction ->
@@ -371,10 +361,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail when transaction id does not exist`() {
             launchWithConnectedUserInstance {
-                val result = regularTransactionFeature.getRegularTransactionById(
-                    tokenValue,
-                    "non-existing-id"
-                )
+                val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, "non-existing-id"))
 
                 result.assertFailure()
                 assertEquals("domain.regular_transaction.get_by_id.not_found", result.errorInfo?.key)
@@ -383,10 +370,10 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail with unauthorized when token is invalid`() {
-            val result = regularTransactionFeature.getRegularTransactionById(
+            val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(
                 SessionToken("invalid-token"),
                 "some-id"
-            )
+            ))
 
             result.assertFailure(ResultState.UNAUTHORIZED)
         }
@@ -411,20 +398,14 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction)))
 
-                val result = regularTransactionFeature.deleteRegularTransaction(
-                    tokenValue,
-                    monthlyTransaction.id.value
-                )
+                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(tokenValue, monthlyTransaction.id.value))
 
                 result.assertSuccess()
                 result.onSuccess { deleted ->
                     assertTrue(deleted)
                 }
 
-                val getResult = regularTransactionFeature.getRegularTransactionById(
-                    tokenValue,
-                    monthlyTransaction.id.value
-                )
+                val getResult = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, monthlyTransaction.id.value))
                 getResult.assertFailure()
             }
         }
@@ -432,10 +413,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail when deleting non-existing transaction`() {
             launchWithConnectedUserInstance {
-                val result = regularTransactionFeature.deleteRegularTransaction(
-                    tokenValue,
-                    "non-existing-id"
-                )
+                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(tokenValue, "non-existing-id"))
 
                 result.assertFailure()
                 assertEquals("domain.regular_transaction.delete.not_found", result.errorInfo?.key)
@@ -444,10 +422,10 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail with unauthorized when token is invalid`() {
-            val result = regularTransactionFeature.deleteRegularTransaction(
+            val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(
                 SessionToken("invalid-token"),
                 "some-id"
-            )
+            ))
 
             result.assertFailure(ResultState.UNAUTHORIZED)
         }
@@ -468,10 +446,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 regularTransactionState.init(listOf(UserRegularTransaction(otherUserId, monthlyTransaction)))
 
-                val result = regularTransactionFeature.deleteRegularTransaction(
-                    tokenValue,
-                    monthlyTransaction.id.value
-                )
+                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(tokenValue, monthlyTransaction.id.value))
 
                 result.assertFailure()
                 assertEquals("domain.regular_transaction.delete.not_found", result.errorInfo?.key)
@@ -507,10 +482,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     )
                 )
 
-                val result = regularTransactionFeature.deleteRegularTransactions(
-                    tokenValue,
-                    listOf(first.id.value, second.id.value)
-                )
+                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(tokenValue, listOf(first.id.value, second.id.value)))
 
                 result.assertSuccess()
                 result.onSuccess { deletedIds ->
@@ -519,7 +491,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     assertTrue(deletedIds.contains(second.id.value))
                 }
 
-                val remaining = regularTransactionFeature.getAllRegularTransactions(tokenValue)
+                val remaining = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
                 remaining.assertSuccess()
                 remaining.onSuccess { all ->
                     assertTrue(all.content.none { it.id == first.id })
@@ -531,7 +503,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail bulk deletion when selection is empty`() {
             launchWithConnectedUserInstance {
-                val result = regularTransactionFeature.deleteRegularTransactions(tokenValue, emptyList())
+                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(tokenValue, emptyList()))
 
                 result.assertFailure(ResultState.TRANSACTION_ENTRY_ERROR)
                 assertEquals("domain.regular_transaction.delete.bulk.empty_selection", result.errorInfo?.key)
@@ -553,15 +525,12 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, first)))
 
-                val result = regularTransactionFeature.deleteRegularTransactions(
-                    tokenValue,
-                    listOf(first.id.value, "missing-id")
-                )
+                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(tokenValue, listOf(first.id.value, "missing-id")))
 
                 result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
                 assertEquals("domain.regular_transaction.delete.bulk.not_found", result.errorInfo?.key)
 
-                val after = regularTransactionFeature.getRegularTransactionById(tokenValue, first.id.value)
+                val after = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, first.id.value))
                 after.assertSuccess()
             }
         }
@@ -589,11 +558,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     label = "Abonnement Gym Premium"
                 )
 
-                val result = regularTransactionFeature.updateRegularTransaction(
+                val result = updateRegularTransactionUseCase.handle(UpdateRegularTransactionCommand(
                     tokenValue,
                     updatedTransaction,
                     listOf(booklet.id!!)
-                )
+                ))
 
                 result.assertSuccess()
                 result.onSuccess { transaction ->
@@ -617,7 +586,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val result = regularTransactionFeature.updateRegularTransaction(tokenValue, unknownTransaction, listOf(booklet.id!!))
+                val result = updateRegularTransactionUseCase.handle(UpdateRegularTransactionCommand(tokenValue, unknownTransaction, listOf(booklet.id!!)))
                 result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
                 assertEquals("domain.regular_transaction.update.not_found", result.errorInfo?.key)
             }
@@ -642,11 +611,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction)))
 
-                val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+                val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
                     tokenValue,
                     transaction.id.value,
                     booklet.id!!
-                )
+                ))
 
                 result.assertSuccess()
                 result.onSuccess { updated ->
@@ -658,11 +627,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail when linking booklet to a non-existing transaction`() {
             launchWithConnectedUserInstance {
-                val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+                val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
                     tokenValue,
                     "non-existing-id",
                     booklet.id!!
-                )
+                ))
 
                 result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
                 assertEquals("domain.regular_transaction.link.not_found", result.errorInfo?.key)
@@ -684,11 +653,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction, listOf(booklet.id!!))))
 
-                val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+                val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
                     tokenValue,
                     transaction.id.value,
                     booklet.id!!
-                )
+                ))
 
                 result.assertFailure(ResultState.BAD_REQUEST)
                 assertEquals("domain.regular_transaction.link.already_linked", result.errorInfo?.key)
@@ -697,11 +666,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail with unauthorized when token is invalid`() {
-            val result = regularTransactionFeature.linkRegularTransactionToBooklet(
+            val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
                 SessionToken("invalid-token"),
                 "some-id",
                 UUID.randomUUID()
-            )
+            ))
             result.assertFailure(ResultState.UNAUTHORIZED)
         }
     }
@@ -724,11 +693,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction, listOf(booklet.id!!))))
 
-                val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+                val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
                     tokenValue,
                     transaction.id.value,
                     booklet.id!!
-                )
+                ))
 
                 result.assertSuccess()
                 result.onSuccess { updated ->
@@ -740,11 +709,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
         @Test
         fun `should fail when unlinking booklet from a non-existing transaction`() {
             launchWithConnectedUserInstance {
-                val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+                val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
                     tokenValue,
                     "non-existing-id",
                     booklet.id!!
-                )
+                ))
 
                 result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
                 assertEquals("domain.regular_transaction.unlink.not_found", result.errorInfo?.key)
@@ -765,11 +734,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
                 regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction)))
 
-                val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+                val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
                     tokenValue,
                     transaction.id.value,
                     booklet.id!!
-                )
+                ))
 
                 result.assertFailure(ResultState.BAD_REQUEST)
                 assertEquals("domain.regular_transaction.unlink.not_linked", result.errorInfo?.key)
@@ -778,11 +747,11 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail with unauthorized when token is invalid`() {
-            val result = regularTransactionFeature.unlinkRegularTransactionFromBooklet(
+            val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
                 SessionToken("invalid-token"),
                 "some-id",
                 UUID.randomUUID()
-            )
+            ))
             result.assertFailure(ResultState.UNAUTHORIZED)
         }
     }

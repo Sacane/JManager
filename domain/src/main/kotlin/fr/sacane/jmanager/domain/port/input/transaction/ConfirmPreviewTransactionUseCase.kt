@@ -1,0 +1,88 @@
+package fr.sacane.jmanager.domain.port.input.transaction
+
+import fr.sacane.jmanager.domain.hexadoc.DomainService
+import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.utils.*
+import java.time.LocalDate
+import java.util.UUID
+
+data class ConfirmPreviewTransactionCommand(
+    val token: SessionToken,
+    val bookletID: UUID,
+    val transactionId: UUID,
+    val newAmount: Amount? = null,
+    val newDate: LocalDate? = null
+) : Command<TransactionResumeResult>
+
+@Port(Side.APPLICATION)
+interface ConfirmPreviewTransactionUseCase : CommandHandler<ConfirmPreviewTransactionCommand, TransactionResumeResult> {
+    override val commandClass get() = ConfirmPreviewTransactionCommand::class
+}
+
+@DomainService
+class ConfirmPreviewTransactionService(
+    private val transactionRepository: TransactionRepository,
+    private val session: SessionManager,
+    private val bookletRepository: BookletRepository,
+    private val infraTransactionManager: UnitOfWorkTransactionProvider
+) : ConfirmPreviewTransactionUseCase {
+
+    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+        return failure(state, DomainError(state.code, key, detail))
+    }
+
+    override fun handle(command: ConfirmPreviewTransactionCommand): Result<TransactionResumeResult> = session.authenticate(command.token) {
+        return@authenticate infraTransactionManager.executeInTransaction(Any()) {
+            val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Booklet ${command.bookletID} not found",
+                    "domain.transaction.confirm.booklet_not_found"
+                )
+            val transaction = booklet.findTransactionById(command.transactionId)
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Transaction not found",
+                    "domain.transaction.confirm.transaction_not_found"
+                )
+
+            if (transaction.isNotPreview) {
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_ENTRY_ERROR,
+                    "Transaction ${command.transactionId} is not preview",
+                    "domain.transaction.confirm.not_preview"
+                )
+            }
+
+            booklet.removeTransactionById(command.transactionId)
+            if (command.newAmount != null) {
+                transaction.amount = command.newAmount
+            }
+            if (command.newDate != null) {
+                transaction.date = command.newDate
+            }
+            transaction.isPreview = false
+
+            transactionRepository.save(command.bookletID, transaction)
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.INFRASTRUCTURE_ERROR,
+                    "Could not confirm transaction ${command.transactionId}",
+                    "domain.transaction.confirm.save_failed"
+                )
+
+            booklet.addTransaction(transaction)
+            bookletRepository.update(booklet)
+            return@executeInTransaction success(TransactionResumeResult(transaction, booklet.amount))
+        }
+    }
+}

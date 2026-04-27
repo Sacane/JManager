@@ -5,8 +5,9 @@ import fr.sacane.jmanager.domain.PaginatorImpl
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
-import fr.sacane.jmanager.domain.port.api.AdminFeature
-import fr.sacane.jmanager.domain.port.api.AdminFeatureImpl
+import fr.sacane.jmanager.domain.port.input.admin.GetUsersQuery
+import fr.sacane.jmanager.domain.port.input.admin.GetUsersService
+import fr.sacane.jmanager.domain.port.input.admin.GetUsersUseCase
 import fr.sacane.jmanager.domain.utils.Result
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Nested
@@ -20,7 +21,7 @@ class AdminFeatureTest : FeatureTest() {
         private val userRepository = FakeFactory.fakeUserRepository()
         private val sessionManager = FakeFactory.sessionManager()
         private val paginator = PaginatorImpl()
-        private val adminFeature: AdminFeature = AdminFeatureImpl(sessionManager, userRepository, paginator)
+        private val adminFeature: GetUsersUseCase = GetUsersService(sessionManager, userRepository, paginator)
     }
 
     @AfterEach
@@ -70,10 +71,10 @@ class AdminFeatureTest : FeatureTest() {
                 )
 
                 return listOf(
-                    adminFeature.getUsers(SessionToken(invalidToken)),
-                    adminFeature.getUsers(SessionToken(normalToken)),
-                    adminFeature.getUsers(SessionToken(invalidToken), 0, 10),
-                    adminFeature.getUsers(SessionToken(normalToken), 0, 10)
+                    adminFeature.handle(GetUsersQuery(SessionToken(invalidToken))),
+                    adminFeature.handle(GetUsersQuery(SessionToken(normalToken))),
+                    adminFeature.handle(GetUsersQuery(SessionToken(invalidToken), 0, 10)),
+                    adminFeature.handle(GetUsersQuery(SessionToken(normalToken), 0, 10))
                 )
             }
     }
@@ -99,7 +100,7 @@ class AdminFeatureTest : FeatureTest() {
                 userRepository.init(listOf(UserWithPassword(user, "test")))
             }
 
-            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 0, 10))
                 .assertTrue {
                     this.content.size == 5 && this.totalElements == 5L
                 }
@@ -117,7 +118,7 @@ class AdminFeatureTest : FeatureTest() {
                 UserWithPassword(user2, "test")
             ))
 
-            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 0, 10))
                 .assertTrue {
                     this.content.size == 2 &&
                     this.content.none { it.username == "admin" }
@@ -141,7 +142,7 @@ class AdminFeatureTest : FeatureTest() {
                 userRepository.init(listOf(UserWithPassword(user, "test")))
             }
 
-            adminFeature.getUsers(SessionToken(admin.token), 0, 5)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 0, 5))
                 .assertTrue {
                     this.content.size == 5 &&
                     this.pageNumber == 0 &&
@@ -150,14 +151,14 @@ class AdminFeatureTest : FeatureTest() {
                     this.totalPages == 3
                 }
 
-            adminFeature.getUsers(SessionToken(admin.token), 1, 5)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 1, 5))
                 .assertTrue {
                     this.content.size == 5 &&
                     this.pageNumber == 1 &&
                     this.totalElements == 15L
                 }
 
-            adminFeature.getUsers(SessionToken(admin.token), 2, 5)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 2, 5))
                 .assertTrue {
                     this.content.size == 5 &&
                     this.pageNumber == 2 &&
@@ -194,7 +195,7 @@ class AdminFeatureTest : FeatureTest() {
                 UserWithPassword(user3, "test")
             ))
 
-            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 0, 10))
                 .assertTrue {
                     this.content.size == 3 &&
                     this.content[0].username == "user2" &&
@@ -207,7 +208,7 @@ class AdminFeatureTest : FeatureTest() {
         fun `Get users with empty database should return empty page`() {
             val admin = createAndConnectAdmin("admin")
 
-            adminFeature.getUsers(SessionToken(admin.token), 0, 10)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 0, 10))
                 .assertTrue {
                     this.content.isEmpty() &&
                     this.totalElements == 0L &&
@@ -227,7 +228,7 @@ class AdminFeatureTest : FeatureTest() {
                 userRepository.init(listOf(UserWithPassword(user, "test")))
             }
 
-            adminFeature.getUsers(SessionToken(admin.token))
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token)))
                 .assertTrue {
                     this.pageNumber == 0 &&
                     this.pageSize == 20 &&
@@ -244,7 +245,7 @@ class AdminFeatureTest : FeatureTest() {
             val user = User(UserId(UUID.randomUUID()), "user1", "user1@test.fr")
             userRepository.init(listOf(UserWithPassword(user, "test")))
 
-            adminFeature.getUsers(SessionToken(admin.token), 10, 10)
+            adminFeature.handle(GetUsersQuery(SessionToken(admin.token), 10, 10))
                 .assertTrue {
                     this.content.isEmpty() &&
                     this.pageNumber == 10 &&

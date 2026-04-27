@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.api.StatsFeature
+import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -28,7 +28,11 @@ class StatsFeatureTest : FeatureTest() {
 
     companion object {
         private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
-        private var statsFeature: StatsFeature = FakeFactory.statsFeature
+        private val getMonthlyBookletStatsUseCase: GetMonthlyBookletStatsUseCase = FakeFactory.getMonthlyBookletStatsService
+        private val getCategoryDistributionUseCase: GetCategoryDistributionUseCase = FakeFactory.getCategoryDistributionService
+        private val getTrendStatsUseCase: GetTrendStatsUseCase = FakeFactory.getTrendStatsService
+        private val getPrevisionalTransactionsUseCase: GetPrevisionalTransactionsUseCase = FakeFactory.getPrevisionalTransactionsService
+        private val getDailyTrendStatsUseCase: GetDailyTrendStatsUseCase = FakeFactory.getDailyTrendStatsService
         private val user = userRepository.register("jojo", "test") as User
         private val tokenValueStr = "${user.id.value}||${UUID.randomUUID()}||${Role.USER.name}||${user.username}"
         private val tokenValue = SessionToken(tokenValueStr)
@@ -47,11 +51,11 @@ class StatsFeatureTest : FeatureTest() {
     inner class StatsFeatureAuthTest : AuthenticationTest {
         override val action: List<Result<out Any>>
             get() = listOf(
-                statsFeature.getMonthlyBookletStats(UUID.randomUUID(), 2025, tokenValue),
-                statsFeature.getCategoryDistribution(tokenValue),
-                statsFeature.getTrendStats(tokenValue),
-                statsFeature.getPrevisionalTransactions(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3)),
-                statsFeature.getDailyTrendStats(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(1))
+                getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(UUID.randomUUID(), 2025, tokenValue)),
+                getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue)),
+                getTrendStatsUseCase.handle(GetTrendStatsQuery(tokenValue)),
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(3))),
+                getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(tokenValue, LocalDate.now(), LocalDate.now().plusMonths(1)))
             )
     }
 
@@ -68,7 +72,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
+                getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(booklet.id!!, 2025, tokenValue))
                     .assertTrue {
                         this.year == 2025 && this.monthlyData.size == 12
                     }
@@ -84,7 +88,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
+                getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(booklet.id!!, 2025, tokenValue))
                     .assertTrue {
                         val januaryData = this.monthlyData.find { it.month == 1 }
                         januaryData != null
@@ -97,7 +101,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return empty stats when no transactions exist for the year`() {
             launchWithConnectedUserInstance {
-                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
+                getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(booklet.id!!, 2025, tokenValue))
                     .assertTrue {
                         this.monthlyData.all {
                             it.income.value.compareTo(BigDecimal.ZERO) == 0 &&
@@ -110,7 +114,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should fail when booklet does not exist`() {
             launchWithConnectedUserInstance {
-                val result = statsFeature.getMonthlyBookletStats(UUID.randomUUID(), 2025, tokenValue)
+                val result = getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(UUID.randomUUID(), 2025, tokenValue))
 
                 result.assertFailure()
                 assertEquals("domain.stats.monthly.booklet_not_found", result.errorInfo?.key)
@@ -126,7 +130,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getMonthlyBookletStats(booklet.id!!, 2025, tokenValue)
+                getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(booklet.id!!, 2025, tokenValue))
                     .assertTrue {
                         val januaryData = this.monthlyData.find { it.month == 1 }
                         januaryData != null && januaryData.income.value.compareTo(BigDecimal.ZERO) == 0
@@ -149,7 +153,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getCategoryDistribution(tokenValue)
+                getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue))
                     .assertTrue {
                         this.categories.isNotEmpty()
                     }
@@ -168,7 +172,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getCategoryDistribution(tokenValue)
+                getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue))
                     .assertTrue {
                         val foodCategory = this.categories.find { it.tagLabel == "Food" }
                         foodCategory != null && foodCategory.totalAmount == Amount(BigDecimal("300"))
@@ -189,7 +193,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getCategoryDistribution(tokenValue)
+                getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue))
                     .assertTrue {
                         val totalPercentage = this.categories.sumOf { it.percentage.toDouble() }
                         totalPercentage in 99.9..100.1
@@ -203,7 +207,7 @@ class StatsFeatureTest : FeatureTest() {
                 val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = user, id = UUID.randomUUID())
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), userId)))
 
-                statsFeature.getCategoryDistribution(tokenValue)
+                getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue))
                     .assertTrue {
                         this.categories.isEmpty()
                     }
@@ -218,7 +222,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                val result = statsFeature.getCategoryDistribution(tokenValue)
+                val result = getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue))
 
                 result.assertTrue {
                     val uncategorized = this.categories.find { it.tagLabel == "Aucune" }
@@ -243,7 +247,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getCategoryDistribution(tokenValue)
+                getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue))
                     .assertTrue {
                         this.categories.all { it.totalAmount.value >= BigDecimal.ZERO }
                     }
@@ -287,7 +291,7 @@ class StatsFeatureTest : FeatureTest() {
                     )
                 )
 
-                statsFeature.getCategoryDistribution(tokenValue, bookletId = booklet.id)
+                getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(tokenValue, bookletId = booklet.id))
                     .assertTrue {
                         this.totalExpenses == Amount(BigDecimal("100"))
                     }
@@ -297,11 +301,11 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should fail category distribution when period is partially provided`() {
             launchWithConnectedUserInstance {
-                val result = statsFeature.getCategoryDistribution(
+                val result = getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = null
-                )
+                ))
 
                 result.assertFailure()
                 assertEquals("domain.stats.category_distribution.invalid_partial_date_range", result.errorInfo?.key)
@@ -322,7 +326,7 @@ class StatsFeatureTest : FeatureTest() {
                 }
                 initTransactions(transactions)
 
-                statsFeature.getTrendStats(tokenValue)
+                getTrendStatsUseCase.handle(GetTrendStatsQuery(tokenValue))
                     .assertTrue {
                         this.monthlyTrends.size == 12
                     }
@@ -339,7 +343,7 @@ class StatsFeatureTest : FeatureTest() {
                 }
                 initTransactions(transactions)
 
-                statsFeature.getTrendStats(tokenValue)
+                getTrendStatsUseCase.handle(GetTrendStatsQuery(tokenValue))
                     .assertTrue {
                         val firstMonth = this.monthlyTrends.first()
                         val lastMonth = this.monthlyTrends.last()
@@ -370,7 +374,7 @@ class StatsFeatureTest : FeatureTest() {
 
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet2), user.id)))
 
-                statsFeature.getTrendStats(tokenValue)
+                getTrendStatsUseCase.handle(GetTrendStatsQuery(tokenValue))
                     .assertTrue {
                         this.monthlyTrends.all { it.totalBooklets == 2 }
                     }
@@ -387,7 +391,7 @@ class StatsFeatureTest : FeatureTest() {
                 }
                 initTransactions(transactions)
 
-                statsFeature.getTrendStats(tokenValue)
+                getTrendStatsUseCase.handle(GetTrendStatsQuery(tokenValue))
                     .assertTrue {
                         val months = this.monthlyTrends.map { it.month to it.year }
                         months == months.sortedWith(compareBy({ it.second }, { it.first }))
@@ -405,7 +409,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getTrendStats(tokenValue)
+                getTrendStatsUseCase.handle(GetTrendStatsQuery(tokenValue))
                     .assertTrue {
                         this.monthlyTrends.any {
                             it.income.value.compareTo(BigDecimal.ZERO) == 0 && it.expenses.value.compareTo(BigDecimal.ZERO) == 0
@@ -426,12 +430,12 @@ class StatsFeatureTest : FeatureTest() {
                     )
                 )
 
-                statsFeature.getTrendStats(
+                getTrendStatsUseCase.handle(GetTrendStatsQuery(
                     token = tokenValue,
                     bookletId = booklet.id,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = LocalDate.of(2025, 2, 28)
-                ).assertTrue {
+                )).assertTrue {
                     this.monthlyTrends.size == 2 && this.monthlyTrends.all { it.totalBooklets == 1 }
                 }
             }
@@ -440,11 +444,11 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should fail trend stats when period is partially provided`() {
             launchWithConnectedUserInstance {
-                val result = statsFeature.getTrendStats(
+                val result = getTrendStatsUseCase.handle(GetTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = null
-                )
+                ))
 
                 result.assertFailure()
                 assertEquals("domain.stats.trend.invalid_partial_date_range", result.errorInfo?.key)
@@ -467,7 +471,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
                     .assertTrue {
                         this.transactions.all {
                             it.date >= startDate && it.date <= endDate
@@ -488,7 +492,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
                     .assertTrue {
                         this.transactions.all { it.isPreview }
                     }
@@ -511,7 +515,7 @@ class StatsFeatureTest : FeatureTest() {
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, booklet2.id!!), mutableListOf(generateTransaction("Future Bill", Amount(BigDecimal("100")), false, startDate.plusMonths(1), isPreview = true))))
                 )
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
                     .assertTrue {
                         this.groupedByBooklet.keys.size == 2
                     }
@@ -529,7 +533,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
                     .assertTrue {
                         this.totalAmount.value != BigDecimal.ZERO
                     }
@@ -542,7 +546,7 @@ class StatsFeatureTest : FeatureTest() {
                 val startDate = LocalDate.now().plusMonths(6)
                 val endDate = LocalDate.now()
 
-                val result = statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                val result = getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
 
                 result.assertFailure()
                 assertEquals("domain.stats.previsional.invalid_date_range", result.errorInfo?.key)
@@ -556,7 +560,7 @@ class StatsFeatureTest : FeatureTest() {
                 val endDate = startDate.plusMonths(3)
                 initTransactions(emptyList())
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
                     .assertTrue {
                         this.transactions.isEmpty()
                     }
@@ -575,7 +579,7 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
                     .assertTrue {
                         val dates = this.transactions.map { it.date }
                         dates == dates.sorted()
@@ -613,7 +617,7 @@ class StatsFeatureTest : FeatureTest() {
                     )
                 )
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate, booklet.id)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate, booklet.id))
                     .assertTrue {
                         this.groupedByBooklet.keys.size == 1
                     }
@@ -644,7 +648,7 @@ class StatsFeatureTest : FeatureTest() {
 
                 initTransactions(listOf(regularPreview, nonRegularPreview))
 
-                statsFeature.getPrevisionalTransactions(tokenValue, startDate, endDate)
+                getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(tokenValue, startDate, endDate))
                     .assertTrue {
                         this.regularTransactions.size == 1 &&
                             this.nonRegularTransactions.size == 1
@@ -682,12 +686,12 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getDailyTrendStats(
+                getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = LocalDate.of(2025, 1, 31),
                     bookletId = booklet.id
-                ).assertTrue {
+                )).assertTrue {
                     this.dailyTrends.size == 31
                 }
             }
@@ -702,12 +706,12 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getDailyTrendStats(
+                getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 5, 25),
                     endDate = LocalDate.of(2025, 6, 24),
                     bookletId = booklet.id
-                ).assertTrue {
+                )).assertTrue {
                     this.dailyTrends.size == 31 &&
                         this.dailyTrends.first().date == LocalDate.of(2025, 5, 25) &&
                         this.dailyTrends.last().date == LocalDate.of(2025, 6, 24)
@@ -724,12 +728,12 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getDailyTrendStats(
+                getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = LocalDate.of(2025, 1, 31),
                     bookletId = booklet.id
-                ).assertTrue {
+                )).assertTrue {
                     val day5 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 5) }
                     day5 != null && day5.income == Amount(BigDecimal("100"))
                 }
@@ -741,12 +745,12 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 initTransactions(emptyList())
 
-                statsFeature.getDailyTrendStats(
+                getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 3, 1),
                     endDate = LocalDate.of(2025, 3, 31),
                     bookletId = booklet.id
-                ).assertTrue {
+                )).assertTrue {
                     this.dailyTrends.size == 31 &&
                         this.dailyTrends.all { it.income.value.compareTo(BigDecimal.ZERO) == 0 }
                 }
@@ -756,12 +760,12 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should fail when start date is after end date`() {
             launchWithConnectedUserInstance {
-                val result = statsFeature.getDailyTrendStats(
+                val result = getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 6, 1),
                     endDate = LocalDate.of(2025, 5, 1),
                     bookletId = booklet.id
-                )
+                ))
 
                 result.assertFailure()
                 assertEquals("domain.stats.daily_trend.invalid_date_range", result.errorInfo?.key)
@@ -776,12 +780,12 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getDailyTrendStats(
+                getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = LocalDate.of(2025, 1, 31),
                     bookletId = booklet.id
-                ).assertTrue {
+                )).assertTrue {
                     this.dailyTrends.all { it.totalBooklets == 1 }
                 }
             }
@@ -796,12 +800,12 @@ class StatsFeatureTest : FeatureTest() {
                 )
                 initTransactions(transactions)
 
-                statsFeature.getDailyTrendStats(
+                getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                     token = tokenValue,
                     startDate = LocalDate.of(2025, 1, 1),
                     endDate = LocalDate.of(2025, 1, 31),
                     bookletId = booklet.id
-                ).assertTrue {
+                )).assertTrue {
                     val day1 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 1) }
                     val day10 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 10) }
                     val day31 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 31) }

@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.api
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.port.api.UserFeature
+import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.junit.jupiter.api.AfterEach
@@ -24,7 +24,13 @@ abstract class AuthenticatedUserTest {
     private lateinit var userPostgresRepository: UserPostgresRepository
 
     @Autowired
-    private lateinit var session: UserFeature
+    private lateinit var registerUserUseCase: RegisterUserUseCase
+
+    @Autowired
+    private lateinit var loginUseCase: LoginUseCase
+
+    @Autowired
+    private lateinit var logoutUseCase: LogoutUseCase
 
     @Autowired
     private lateinit var sessionManager: SessionManager
@@ -51,8 +57,8 @@ abstract class AuthenticatedUserTest {
 
     @BeforeEach
     fun beforeEach() {
-        session.register("test", "test", "test").onSuccess { user = it }
-        session.login("test", "test").onSuccess {
+        registerUserUseCase.handle(RegisterUserCommand("test", "test", "test")).onSuccess { user = it }
+        loginUseCase.handle(LoginCommand("test", "test")).onSuccess {
             token = it.token
             refreshToken = sessionManager.findSessionByToken(SessionToken(it.token))?.refreshToken?.toString()
                 ?: error("Refresh token should be initialized for authenticated test user")
@@ -61,7 +67,7 @@ abstract class AuthenticatedUserTest {
 
     @AfterEach
     fun tearDown() {
-        session.logout(SessionToken(token.asTokenUUID()))
+        logoutUseCase.handle(LogoutCommand(SessionToken(token.asTokenUUID())))
         userPostgresRepository.deleteAll()
     }
 }
