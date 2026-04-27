@@ -16,11 +16,11 @@ import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.*
 import fr.sacane.jmanager.domain.port.input.transaction.*
 import fr.sacane.jmanager.domain.port.input.user.*
-import fr.sacane.jmanager.domain.port.spi.*
-import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
-import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.output.*
+import fr.sacane.jmanager.domain.port.output.repository.BookletBalanceQueryRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionQueryRepository
+import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculatorImpl
 import fr.sacane.jmanager.domain.usecase.DailyTrendCalculatorImpl
 import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculatorImpl

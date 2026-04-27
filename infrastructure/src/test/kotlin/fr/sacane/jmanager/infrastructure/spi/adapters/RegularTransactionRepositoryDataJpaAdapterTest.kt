@@ -8,7 +8,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.output.repository.TagRepository
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.adapters.regular.RegularTransactionRepositoryDataJpaAdapter

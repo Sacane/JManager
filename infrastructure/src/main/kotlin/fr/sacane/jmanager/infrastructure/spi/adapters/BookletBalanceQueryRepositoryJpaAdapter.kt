@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
-import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
+import fr.sacane.jmanager.domain.port.output.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletBalanceJpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID

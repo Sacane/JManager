@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.input.user.*
-import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.RestAssured
 import org.junit.jupiter.api.AfterEach

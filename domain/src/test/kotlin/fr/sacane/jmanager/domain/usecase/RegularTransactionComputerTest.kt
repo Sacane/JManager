@@ -12,7 +12,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.FeatureTest
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach

@@ -8,9 +8,9 @@ import fr.sacane.jmanager.domain.models.BookletMonthlyCycleSetting
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserSettings
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.UserRepository
-import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result

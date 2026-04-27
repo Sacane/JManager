@@ -6,7 +6,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource

@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.input.csv.*
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.application.api.currentUser
 import fr.sacane.jmanager.application.api.toHttpResponse

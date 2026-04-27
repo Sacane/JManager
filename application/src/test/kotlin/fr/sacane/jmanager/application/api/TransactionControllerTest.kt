@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
+import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.application.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.application.api.setup.BookletTransaction
 import fr.sacane.jmanager.application.api.setup.TransactionStateTestAdapter

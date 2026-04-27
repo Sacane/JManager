@@ -3,7 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters.utils
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
+import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.domain.toUUID
 import io.jsonwebtoken.Jwts
 import org.springframework.beans.factory.annotation.Value

@@ -3,7 +3,7 @@ package fr.sacane.jmanager.domain.fake
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import java.time.Month
 import java.time.YearMonth
 import java.util.UUID

@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.BookletMapper
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository

@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionExporter
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler

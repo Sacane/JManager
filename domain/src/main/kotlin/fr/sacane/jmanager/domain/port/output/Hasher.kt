@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi
+package fr.sacane.jmanager.domain.port.output
 
 import at.favre.lib.crypto.bcrypt.BCrypt
 import at.favre.lib.crypto.bcrypt.LongPasswordStrategies
