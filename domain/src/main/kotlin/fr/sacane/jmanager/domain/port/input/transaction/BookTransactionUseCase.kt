@@ -45,6 +45,13 @@ class BookTransactionService(
     override fun handle(command: BookTransactionCommand): Result<TransactionResumeResult> = session.authenticate(command.token) { id ->
         return@authenticate infraTransactionManager.executeInTransaction(command.transaction) {
             logger.info("Request for a transaction with id $id")
+            if (command.transaction.amount.isNegative()) {
+                return@executeInTransaction domainFailure(
+                    ResultState.TRANSACTION_ENTRY_ERROR,
+                    "Le montant de la transaction ne peut pas être négatif",
+                    "domain.transaction.book.negative_amount"
+                )
+            }
             val booklet = bookletRepository.findBookletByLabelWithTransactions(id, command.bookletLabel)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,
@@ -57,20 +64,13 @@ class BookTransactionService(
                     "Erreur est survenu lors de la transaction",
                     "domain.transaction.book.infrastructure_error"
                 )
-            if (command.transaction.amount.isNegative()) {
-                return@executeInTransaction domainFailure(
-                    ResultState.TRANSACTION_ENTRY_ERROR,
-                    "Le montant de la transaction ne peut pas être négatif",
-                    "domain.transaction.book.negative_amount"
-                )
-            }
             val toSaveTransaction = if (newTr.tag == null) {
                 newTr.copy(tag = tagRepository.defaultTag())
             } else newTr
             booklet.addTransaction(toSaveTransaction)
             bookletRepository.update(booklet)
-            logger.info("Transaction $newTr has been created, the booklet sold has been updated : $booklet")
-            success(TransactionResumeResult(newTr, booklet.amount))
+            logger.info("Transaction $toSaveTransaction has been created, the booklet sold has been updated : $booklet")
+            success(TransactionResumeResult(toSaveTransaction, booklet.amount))
         }
     }
 }
