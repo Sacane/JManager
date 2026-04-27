@@ -38,6 +38,74 @@ Guidelines to follow whenever working on any of the three backend layers: `domai
 
 ---
 
+## 3. Use Case Architecture: Command/Query Bus
+
+### 3.1 Consolidated UseCase File Structure
+
+Every use case lives in `domain/port/input/{category}/` as a **single file** containing three elements in order:
+
+1. The **input data class** (Command or Query)
+2. The **port interface** extending `CommandHandler` or `QueryHandler`
+3. The **`@DomainService` implementation**
+
+```kotlin
+// LoginUseCase.kt
+
+data class LoginCommand(val pseudonym: String, val userPassword: String) : Command<UserToken>
+
+@Port(Side.APPLICATION)
+interface LoginUseCase : CommandHandler<LoginCommand, UserToken> {
+    override val commandClass get() = LoginCommand::class
+}
+
+@DomainService
+class LoginService(
+    private val session: SessionManager,
+    private val userRepository: UserRepository
+) : LoginUseCase {
+    override fun handle(command: LoginCommand): Result<UserToken> { ... }
+}
+```
+
+Shared helpers used by multiple services in the same category are extracted to a dedicated `*DomainHelper.kt` file (e.g. `BookletDomainHelper.kt`, `StatsDomainHelper.kt`).
+
+### 3.2 Command vs Query Classification
+
+- **Command** — any operation that **mutates state**: create, update, delete, link, import, book, confirm. Input type **ends with `Command`**, interface extends `CommandHandler<C, R>`.
+- **Query** — any operation that **only reads state** without side effects: find, get, list, calculate, validate. Input type **ends with `Query`**, interface extends `QueryHandler<Q, R>`.
+- When in doubt: if it writes to the database or triggers any external side effect → **Command**.
+
+### 3.3 Bus Dispatch in Controllers
+
+Controllers **never** inject individual use cases directly. They inject `CommandBus` and `QueryBus` from `application/bus/` and dispatch by input type:
+
+```kotlin
+class BookletController(
+    private val commandBus: CommandBus,
+    private val queryBus: QueryBus,
+) {
+    fun save(...) = commandBus.dispatch(SaveBookletCommand(...))
+    fun findById(...) = queryBus.dispatch(FindBookletByIdQuery(...))
+}
+```
+
+**Exception**: use cases with no input parameter (e.g. `AddDefaultTagsUseCase`) or called exclusively from non-controller components (e.g. `DataLoader`) keep their direct injection — they are not routed through the bus.
+
+### 3.4 Foundation Types
+
+The base interfaces live in `domain/port/input/`:
+
+- `Command<R>` — marker interface for command input objects
+- `Query<R>` — marker interface for query input objects
+- `CommandHandler<C : Command<R>, R>` — declares `val commandClass: KClass<C>` and `fun handle(command: C): Result<R>`
+- `QueryHandler<Q : Query<R>, R>` — declares `val queryClass: KClass<Q>` and `fun handle(query: Q): Result<R>`
+
+The `commandClass`/`queryClass` property (not `GenericTypeResolver`) is the registration key used by the bus — this is intentional: Kotlin erases generic type information for interfaces parameterised with `Nothing`, making reflection-based resolution unreliable.
+
+---
+
+---
+
 ## 2. Domain Modelling and Invariants
 
 ### 6.1 Explicit Business Model

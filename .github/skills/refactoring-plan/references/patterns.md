@@ -18,14 +18,15 @@ Apply these questions in order to the analysed code:
 3. **Do interfaces or classes group operations without strong cohesion?**
    - Yes → `Use Case Split`
 
-4. **Do read and write operations share complex models?**
-   - Yes, with complexity → `CQRS`
-   - Yes, but simple → `Use Case Split` is sufficient
+4. **Do read and write operations share complex models, or do controllers inject many use cases?**
+   - Many injected use cases per controller (3+) and Command/Query objects are in place → `Command/Query Bus`
+   - Truly independent read/write models with separate stores → full `CQRS`
+   - Simple or moderate complexity → `Use Case Split` is sufficient
 
 5. **Does a class do too many things without being an interface?**
    - Yes → `Extract Service`
 
-Multiple patterns can apply in sequence. In that case, order them in the plan: package restructuring → hexagonal → use case split → CQRS if needed.
+Multiple patterns can apply in sequence. In that case, order them in the plan: package restructuring → hexagonal → use case split → command/query bus if needed.
 
 ---
 
@@ -38,16 +39,33 @@ Multiple patterns can apply in sequence. In that case, order them in the plan: p
 - Each interface has a dedicated implementation (`*Service`)
 - Callers inject only the use case they need
 
-**Target structure (Kotlin + Spring Boot)**:
+**Target structure (Kotlin + Spring Boot) — consolidated 1-file per use case**:
 ```
 domain/port/input/{category}/
-├── CreateXUseCase.kt          // interface { fun handle(cmd: CreateXCommand): Result<X> }
-├── CreateXCommand.kt          // data class CreateXCommand(...)
-├── CreateXService.kt          // @DomainService : CreateXUseCase { override fun handle(...) }
-├── GetXByIdUseCase.kt
-├── GetXByIdQuery.kt
-├── GetXByIdService.kt
-└── ...
+├── CreateXUseCase.kt          // data class + interface + @DomainService — all in one file
+├── GetXByIdUseCase.kt         // data class + interface + @DomainService — all in one file
+└── XDomainHelper.kt           // shared helpers used by multiple services (kept separate)
+```
+
+Each `*UseCase.kt` file follows this layout:
+```kotlin
+// 1. Input data class (Command or Query)
+data class CreateXCommand(val field1: String, val field2: Int) : Command<X>
+
+// 2. Port interface
+@Port(Side.APPLICATION)
+interface CreateXUseCase : CommandHandler<CreateXCommand, X> {
+    override val commandClass get() = CreateXCommand::class
+}
+
+// 3. Domain service implementation
+@DomainService
+class CreateXService(
+    private val session: SessionManager,
+    private val repository: XRepository
+) : CreateXUseCase {
+    override fun handle(command: CreateXCommand): Result<X> { ... }
+}
 ```
 
 **Typical step order**:
@@ -56,6 +74,7 @@ domain/port/input/{category}/
 3. Create the service implementations with logic extracted from the old `*FeatureImpl`
 4. Update callers (controllers, other services)
 5. Remove the old interface and implementation
+6. Consolidate: merge Command/Query + interface + service into the single `*UseCase.kt` file
 
 **Risks**: Spring injection must be updated in all callers; shared private helpers in the old impl may need extraction.
 
@@ -99,34 +118,98 @@ infrastructure/
 
 ---
 
-## CQRS (Command Query Responsibility Segregation)
+## Command/Query Bus (Mediator)
 
-**Signal**: Read operations return complex or aggregated data that does not share the same shape as objects used for writes. Or read query performance requires independent optimisations.
+**Signal**: Controllers inject a large number of individual use cases (3+), leading to bloated constructors and tight coupling between the application layer and every domain operation. The use case split + Command/Query objects are already in place.
 
-**What we do**:
-- Commands (mutations) have their own handlers with their own model
-- Queries (reads) have their own handlers, potentially with optimised DTOs or projections
-- Both sides can evolve independently
+**This is NOT full CQRS** (no separate read/write stores, no projections). It is a **Mediator/Bus** pattern layered on top of Use Case Split: all dispatch goes through a single `CommandBus` or `QueryBus`, which resolves the correct handler by the runtime type of the input object.
 
-**Target structure**:
+**Classification rule — Command vs Query**:
+- **Command** = any operation that **mutates state** (create, update, delete, link, import…). Input type ends with `Command`. Handler extends `CommandHandler<C, R>`.
+- **Query** = any operation that **only reads state** without side effects (find, get, list, calculate, validate…). Input type ends with `Query`. Handler extends `QueryHandler<Q, R>`.
+- When in doubt: if it writes anything to the database or triggers any external side effect → Command.
+
+**Domain foundation types** (`domain/port/input/`):
+```kotlin
+// CommandHandling.kt
+interface Command<R>
+interface CommandHandler<C : Command<R>, R> {
+    val commandClass: KClass<C>
+    fun handle(command: C): Result<R>
+}
+
+// QueryHandling.kt
+interface Query<R>
+interface QueryHandler<Q : Query<R>, R> {
+    val queryClass: KClass<Q>
+    fun handle(query: Q): Result<R>
+}
 ```
-application/
-├── command/
-│   ├── CreateBudgetCommand.kt
-│   └── CreateBudgetCommandHandler.kt
-└── query/
-    ├── GetBudgetSummaryQuery.kt
-    └── GetBudgetSummaryQueryHandler.kt
+
+**UseCase interface** — extends the appropriate handler (one per use case file):
+```kotlin
+data class LoginCommand(val pseudonym: String, val userPassword: String) : Command<UserToken>
+
+@Port(Side.APPLICATION)
+interface LoginUseCase : CommandHandler<LoginCommand, UserToken> {
+    override val commandClass get() = LoginCommand::class
+    // handle() is inherited — no need to redeclare it
+}
 ```
 
-**When NOT to apply**: if reads and writes share the same simple models and there is no performance or complexity issue — `Use Case Split` is sufficient.
+**Bus implementations** (`application/bus/`):
+```kotlin
+interface CommandBus {
+    fun <R> dispatch(command: Command<R>): Result<R>
+}
+
+@Component
+class SpringCommandBus(handlers: List<CommandHandler<*, *>>) : CommandBus {
+    private val handlerMap: Map<Class<*>, CommandHandler<*, *>> =
+        handlers.associateBy { it.commandClass.java as Class<*> }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <R> dispatch(command: Command<R>): Result<R> {
+        val handler = handlerMap[command::class.java] as? CommandHandler<Command<R>, R>
+            ?: throw IllegalArgumentException("No handler registered for ${command::class.simpleName}")
+        return handler.handle(command)
+    }
+}
+// QueryBus is symmetric — same structure with queryClass.
+```
+
+**Controller convention** — inject only buses, never individual use cases:
+```kotlin
+// Before (N UseCase injections)
+class TransactionController(
+    private val bookTransactionUseCase: BookTransactionUseCase,
+    private val deleteTransactionsByIdsUseCase: DeleteTransactionsByIdsUseCase,
+    // ... 12 more ...
+)
+
+// After (2 bus injections)
+class TransactionController(
+    private val commandBus: CommandBus,
+    private val queryBus: QueryBus,
+) {
+    fun book(...) = commandBus.dispatch(BookTransactionCommand(...))
+    fun findById(...) = queryBus.dispatch(FindTransactionByIdQuery(...))
+}
+```
+
+**Exception**: use cases with no input parameter (e.g. `AddDefaultTagsUseCase`) or called exclusively outside controllers (e.g. `DataLoader`) keep their direct injection — they are not routed through the bus.
+
+**When NOT to apply**: if the number of injected use cases per controller is small (≤ 2–3) and direct injection is manageable — `Use Case Split` is sufficient.
 
 **Typical step order**:
-1. Identify which operations are commands vs queries
-2. Create Command and Query objects
-3. Create CommandHandlers (extract write logic)
-4. Create QueryHandlers (extract read logic, optimise if needed)
-5. Remove the old unified interface
+1. Create `Command<R>`, `Query<R>`, `CommandHandler`, `QueryHandler` base interfaces in domain
+2. Create `CommandBus` / `QueryBus` Spring implementations in application (`application/bus/`)
+3. For each use case: add `: Command<R>` / `: Query<R>` to the input data class; extend `CommandHandler` / `QueryHandler` in the interface; add `override val commandClass/queryClass` default getter
+4. Refactor controllers one by one: replace N use case injections with 2 bus injections; replace `useCase.handle(...)` with `bus.dispatch(...)`
+5. Update controller tests: mock `CommandBus`/`QueryBus` instead of individual use cases
+6. Full test suite validation
+
+**Design note — KClass property instead of GenericTypeResolver**: Kotlin omits the JVM Signature attribute for interfaces parameterised with `Nothing`, making `GenericTypeResolver` unreliable for handler registration. The chosen solution is an explicit `val commandClass: KClass<C>` / `val queryClass: KClass<Q>` overridden in each UseCase interface with a default getter. This is fully static, type-safe, and requires no changes on `@DomainService` implementations.
 
 ---
 
