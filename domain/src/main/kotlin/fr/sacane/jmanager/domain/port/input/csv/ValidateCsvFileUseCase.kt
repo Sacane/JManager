@@ -11,6 +11,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.usecase.csv.CsvFileValidator
 import fr.sacane.jmanager.domain.usecase.csv.CsvValidationUtils
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import java.util.UUID
@@ -22,11 +24,11 @@ data class ValidateCsvFileQuery(
     val csvContent: String,
     val month: Int? = null,
     val year: Int? = null
-)
+) : Query<CsvValidationReport>
 
 @Port(Side.APPLICATION)
-interface ValidateCsvFileUseCase {
-    fun handle(query: ValidateCsvFileQuery): Result<CsvValidationReport>
+interface ValidateCsvFileUseCase : QueryHandler<ValidateCsvFileQuery, CsvValidationReport> {
+    override val queryClass get() = ValidateCsvFileQuery::class
 }
 
 @DomainService

@@ -9,6 +9,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
@@ -16,11 +18,11 @@ data class LinkRegularTransactionToBookletCommand(
     val token: SessionToken,
     val transactionId: String,
     val bookletId: UUID
-)
+) : Command<RegularTransaction>
 
 @Port(Side.APPLICATION)
-interface LinkRegularTransactionToBookletUseCase {
-    fun handle(command: LinkRegularTransactionToBookletCommand): Result<RegularTransaction>
+interface LinkRegularTransactionToBookletUseCase : CommandHandler<LinkRegularTransactionToBookletCommand, RegularTransaction> {
+    override val commandClass get() = LinkRegularTransactionToBookletCommand::class
 }
 
 @DomainService

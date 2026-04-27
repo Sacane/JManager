@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
@@ -15,11 +17,11 @@ data class UpdateRegularTransactionCommand(
     val token: SessionToken,
     val regularTransaction: RegularTransaction,
     val bookletIds: List<UUID>
-)
+) : Command<RegularTransaction>
 
 @Port(Side.APPLICATION)
-interface UpdateRegularTransactionUseCase {
-    fun handle(command: UpdateRegularTransactionCommand): Result<RegularTransaction>
+interface UpdateRegularTransactionUseCase : CommandHandler<UpdateRegularTransactionCommand, RegularTransaction> {
+    override val commandClass get() = UpdateRegularTransactionCommand::class
 }
 
 @DomainService

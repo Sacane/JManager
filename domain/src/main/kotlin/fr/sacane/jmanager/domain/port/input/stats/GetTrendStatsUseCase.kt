@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.TrendStatsOutput
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.TrendCalculator
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -21,11 +23,11 @@ data class GetTrendStatsQuery(
     val bookletId: UUID? = null,
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null
-)
+) : Query<TrendStatsOutput>
 
 @Port(Side.APPLICATION)
-interface GetTrendStatsUseCase {
-    fun handle(query: GetTrendStatsQuery): Result<TrendStatsOutput>
+interface GetTrendStatsUseCase : QueryHandler<GetTrendStatsQuery, TrendStatsOutput> {
+    override val queryClass get() = GetTrendStatsQuery::class
 }
 
 @DomainService

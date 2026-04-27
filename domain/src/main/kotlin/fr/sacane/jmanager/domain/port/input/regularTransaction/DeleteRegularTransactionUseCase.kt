@@ -8,16 +8,18 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 
 data class DeleteRegularTransactionCommand(
     val token: SessionToken,
     val transactionId: String
-)
+) : Command<Boolean>
 
 @Port(Side.APPLICATION)
-interface DeleteRegularTransactionUseCase {
-    fun handle(command: DeleteRegularTransactionCommand): Result<Boolean>
+interface DeleteRegularTransactionUseCase : CommandHandler<DeleteRegularTransactionCommand, Boolean> {
+    override val commandClass get() = DeleteRegularTransactionCommand::class
 }
 
 @DomainService

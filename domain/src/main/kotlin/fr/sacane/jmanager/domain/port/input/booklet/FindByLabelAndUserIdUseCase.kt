@@ -7,6 +7,8 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -14,11 +16,11 @@ import fr.sacane.jmanager.domain.utils.success
 data class FindByLabelAndUserIdQuery(
     val token: SessionToken,
     val label: String
-)
+) : Query<Booklet>
 
 @Port(Side.APPLICATION)
-interface FindByLabelAndUserIdUseCase {
-    fun handle(query: FindByLabelAndUserIdQuery): Result<Booklet>
+interface FindByLabelAndUserIdUseCase : QueryHandler<FindByLabelAndUserIdQuery, Booklet> {
+    override val queryClass get() = FindByLabelAndUserIdQuery::class
 }
 
 @DomainService

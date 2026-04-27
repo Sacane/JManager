@@ -7,6 +7,8 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -14,11 +16,11 @@ import fr.sacane.jmanager.domain.utils.success
 data class EditBookletCommand(
     val booklet: Booklet,
     val token: SessionToken
-)
+) : Command<Booklet>
 
 @Port(Side.APPLICATION)
-interface EditBookletUseCase {
-    fun handle(command: EditBookletCommand): Result<Booklet>
+interface EditBookletUseCase : CommandHandler<EditBookletCommand, Booklet> {
+    override val commandClass get() = EditBookletCommand::class
 }
 
 @DomainService

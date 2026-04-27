@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 import java.util.logging.Logger
@@ -15,11 +17,11 @@ import java.util.logging.Logger
 data class FindTransactionByIdQuery(
     val token: SessionToken,
     val id: UUID
-)
+) : Query<Transaction>
 
 @Port(Side.APPLICATION)
-interface FindTransactionByIdUseCase {
-    fun handle(query: FindTransactionByIdQuery): Result<Transaction>
+interface FindTransactionByIdUseCase : QueryHandler<FindTransactionByIdQuery, Transaction> {
+    override val queryClass get() = FindTransactionByIdQuery::class
 }
 
 @DomainService

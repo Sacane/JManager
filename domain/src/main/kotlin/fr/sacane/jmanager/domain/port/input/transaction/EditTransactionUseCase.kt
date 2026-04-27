@@ -11,6 +11,8 @@ import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDateTime
 import java.util.UUID
@@ -19,11 +21,11 @@ data class EditTransactionCommand(
     val token: SessionToken,
     val bookletID: UUID,
     val transaction: Transaction
-)
+) : Command<TransactionResumeResult>
 
 @Port(Side.APPLICATION)
-interface EditTransactionUseCase {
-    fun handle(command: EditTransactionCommand): Result<TransactionResumeResult>
+interface EditTransactionUseCase : CommandHandler<EditTransactionCommand, TransactionResumeResult> {
+    override val commandClass get() = EditTransactionCommand::class
 }
 
 @DomainService

@@ -11,6 +11,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.logging.Logger
 
@@ -18,11 +20,11 @@ data class BookTransactionCommand(
     val token: SessionToken,
     val bookletLabel: String,
     val transaction: Transaction
-)
+) : Command<TransactionResumeResult>
 
 @Port(Side.APPLICATION)
-interface BookTransactionUseCase {
-    fun handle(command: BookTransactionCommand): Result<TransactionResumeResult>
+interface BookTransactionUseCase : CommandHandler<BookTransactionCommand, TransactionResumeResult> {
+    override val commandClass get() = BookTransactionCommand::class
 }
 
 @DomainService

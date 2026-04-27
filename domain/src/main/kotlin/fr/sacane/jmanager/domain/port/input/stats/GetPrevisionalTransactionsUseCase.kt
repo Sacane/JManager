@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.PrevisionalTransactionFilter
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -20,11 +22,11 @@ data class GetPrevisionalTransactionsQuery(
     val startDate: LocalDate,
     val endDate: LocalDate,
     val bookletId: UUID? = null
-)
+) : Query<PrevisionalTransactionsOutput>
 
 @Port(Side.APPLICATION)
-interface GetPrevisionalTransactionsUseCase {
-    fun handle(query: GetPrevisionalTransactionsQuery): Result<PrevisionalTransactionsOutput>
+interface GetPrevisionalTransactionsUseCase : QueryHandler<GetPrevisionalTransactionsQuery, PrevisionalTransactionsOutput> {
+    override val queryClass get() = GetPrevisionalTransactionsQuery::class
 }
 
 @DomainService

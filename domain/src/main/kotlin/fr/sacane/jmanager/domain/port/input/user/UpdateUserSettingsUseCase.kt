@@ -11,9 +11,11 @@ import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
-import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.util.UUID
@@ -22,11 +24,11 @@ data class UpdateUserSettingsCommand(
     val token: SessionToken,
     val projectionWindowDays: Int,
     val bookletCycles: Map<UUID, BookletMonthlyCycleUpdate>
-)
+) : Command<UserSettings>
 
 @Port(Side.APPLICATION)
-interface UpdateUserSettingsUseCase {
-    fun handle(command: UpdateUserSettingsCommand): Result<UserSettings>
+interface UpdateUserSettingsUseCase : CommandHandler<UpdateUserSettingsCommand, UserSettings> {
+    override val commandClass get() = UpdateUserSettingsCommand::class
 }
 
 @DomainService

@@ -7,6 +7,8 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionExporter
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -15,11 +17,11 @@ import java.util.logging.Logger
 data class ExportTransactionsToCsvCommand(
     val token: SessionToken,
     val transactions: List<Transaction>
-)
+) : Command<String>
 
 @Port(Side.APPLICATION)
-interface ExportTransactionsToCsvUseCase {
-    fun handle(command: ExportTransactionsToCsvCommand): Result<String>
+interface ExportTransactionsToCsvUseCase : CommandHandler<ExportTransactionsToCsvCommand, String> {
+    override val commandClass get() = ExportTransactionsToCsvCommand::class
 }
 
 @DomainService

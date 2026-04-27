@@ -13,6 +13,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepositor
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -30,11 +32,11 @@ data class LoadBalancesForBookletForAMonthQuery(
     val startingYear: Int? = null,
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null,
-)
+) : Query<BookletBalances>
 
 @Port(Side.APPLICATION)
-interface LoadBalancesForBookletForAMonthUseCase {
-    fun handle(query: LoadBalancesForBookletForAMonthQuery): Result<BookletBalances>
+interface LoadBalancesForBookletForAMonthUseCase : QueryHandler<LoadBalancesForBookletForAMonthQuery, BookletBalances> {
+    override val queryClass get() = LoadBalancesForBookletForAMonthQuery::class
 }
 
 @DomainService

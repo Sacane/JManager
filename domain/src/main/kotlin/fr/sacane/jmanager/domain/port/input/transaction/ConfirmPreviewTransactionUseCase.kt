@@ -10,6 +10,8 @@ import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDate
 import java.util.UUID
@@ -20,11 +22,11 @@ data class ConfirmPreviewTransactionCommand(
     val transactionId: UUID,
     val newAmount: Amount? = null,
     val newDate: LocalDate? = null
-)
+) : Command<TransactionResumeResult>
 
 @Port(Side.APPLICATION)
-interface ConfirmPreviewTransactionUseCase {
-    fun handle(command: ConfirmPreviewTransactionCommand): Result<TransactionResumeResult>
+interface ConfirmPreviewTransactionUseCase : CommandHandler<ConfirmPreviewTransactionCommand, TransactionResumeResult> {
+    override val commandClass get() = ConfirmPreviewTransactionCommand::class
 }
 
 @DomainService

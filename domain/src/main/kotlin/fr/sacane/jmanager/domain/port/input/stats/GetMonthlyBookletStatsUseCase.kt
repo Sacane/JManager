@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculator
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -18,11 +20,11 @@ data class GetMonthlyBookletStatsQuery(
     val bookletId: UUID,
     val year: Int,
     val token: SessionToken
-)
+) : Query<MonthlyBookletStatsOutput>
 
 @Port(Side.APPLICATION)
-interface GetMonthlyBookletStatsUseCase {
-    fun handle(query: GetMonthlyBookletStatsQuery): Result<MonthlyBookletStatsOutput>
+interface GetMonthlyBookletStatsUseCase : QueryHandler<GetMonthlyBookletStatsQuery, MonthlyBookletStatsOutput> {
+    override val queryClass get() = GetMonthlyBookletStatsQuery::class
 }
 
 @DomainService

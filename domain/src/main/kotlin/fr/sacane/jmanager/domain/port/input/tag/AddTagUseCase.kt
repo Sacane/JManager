@@ -7,16 +7,18 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 
 data class AddTagCommand(
     val token: SessionToken,
     val tag: Tag
-)
+) : Command<Tag>
 
 @Port(Side.APPLICATION)
-interface AddTagUseCase {
-    fun handle(command: AddTagCommand): Result<Tag>
+interface AddTagUseCase : CommandHandler<AddTagCommand, Tag> {
+    override val commandClass get() = AddTagCommand::class
 }
 
 @DomainService

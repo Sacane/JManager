@@ -14,6 +14,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvid
 import fr.sacane.jmanager.domain.usecase.csv.CsvFileValidator
 import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionValidator
 import fr.sacane.jmanager.domain.usecase.csv.CsvValidationUtils
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -27,11 +29,11 @@ data class ImportTransactionsFromCsvCommand(
     val skipValidation: Boolean = false,
     val month: Int? = null,
     val year: Int? = null
-)
+) : Command<CsvImportResult>
 
 @Port(Side.APPLICATION)
-interface ImportTransactionsFromCsvUseCase {
-    fun handle(command: ImportTransactionsFromCsvCommand): Result<CsvImportResult>
+interface ImportTransactionsFromCsvUseCase : CommandHandler<ImportTransactionsFromCsvCommand, CsvImportResult> {
+    override val commandClass get() = ImportTransactionsFromCsvCommand::class
 }
 
 @DomainService

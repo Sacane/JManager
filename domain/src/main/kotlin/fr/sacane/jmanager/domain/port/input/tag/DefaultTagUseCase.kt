@@ -7,16 +7,18 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.success
 
 data class DefaultTagQuery(
     val token: SessionToken
-)
+) : Query<Tag>
 
 @Port(Side.APPLICATION)
-interface DefaultTagUseCase {
-    fun handle(query: DefaultTagQuery): Result<Tag>
+interface DefaultTagUseCase : QueryHandler<DefaultTagQuery, Tag> {
+    override val queryClass get() = DefaultTagQuery::class
 }
 
 @DomainService

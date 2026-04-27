@@ -8,16 +8,18 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.*
 
 data class GetRegularTransactionByIdQuery(
     val token: SessionToken,
     val transactionId: String
-)
+) : Query<RegularTransaction>
 
 @Port(Side.APPLICATION)
-interface GetRegularTransactionByIdUseCase {
-    fun handle(query: GetRegularTransactionByIdQuery): Result<RegularTransaction>
+interface GetRegularTransactionByIdUseCase : QueryHandler<GetRegularTransactionByIdQuery, RegularTransaction> {
+    override val queryClass get() = GetRegularTransactionByIdQuery::class
 }
 
 @DomainService

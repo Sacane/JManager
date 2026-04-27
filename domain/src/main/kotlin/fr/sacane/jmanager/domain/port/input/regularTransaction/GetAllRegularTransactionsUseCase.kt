@@ -9,6 +9,8 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.success
 
@@ -16,11 +18,11 @@ data class GetAllRegularTransactionsQuery(
     val token: SessionToken,
     val pageNumber: Int = 0,
     val pageSize: Int = 10
-)
+) : Query<Page<RegularTransaction>>
 
 @Port(Side.APPLICATION)
-interface GetAllRegularTransactionsUseCase {
-    fun handle(query: GetAllRegularTransactionsQuery): Result<Page<RegularTransaction>>
+interface GetAllRegularTransactionsUseCase : QueryHandler<GetAllRegularTransactionsQuery, Page<RegularTransaction>> {
+    override val queryClass get() = GetAllRegularTransactionsQuery::class
 }
 
 @DomainService

@@ -7,18 +7,20 @@ import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.util.logging.Logger
 
-data class CreateAdminIfNotExistsCommand(val username: String, val password: String)
+data class CreateAdminIfNotExistsCommand(val username: String, val password: String) : Command<User>
 
 @Port(Side.APPLICATION)
-interface CreateAdminIfNotExistsUseCase {
-    fun handle(command: CreateAdminIfNotExistsCommand): Result<User>
+interface CreateAdminIfNotExistsUseCase : CommandHandler<CreateAdminIfNotExistsCommand, User> {
+    override val commandClass get() = CreateAdminIfNotExistsCommand::class
 }
 
 @DomainService

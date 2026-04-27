@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.CategoryDistributionCalculator
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -20,11 +22,11 @@ data class GetCategoryDistributionQuery(
     val bookletId: UUID? = null,
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null
-)
+) : Query<CategoryDistributionOutput>
 
 @Port(Side.APPLICATION)
-interface GetCategoryDistributionUseCase {
-    fun handle(query: GetCategoryDistributionQuery): Result<CategoryDistributionOutput>
+interface GetCategoryDistributionUseCase : QueryHandler<GetCategoryDistributionQuery, CategoryDistributionOutput> {
+    override val queryClass get() = GetCategoryDistributionQuery::class
 }
 
 @DomainService

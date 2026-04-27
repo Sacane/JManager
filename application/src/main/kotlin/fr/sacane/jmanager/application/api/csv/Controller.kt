@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.application.api.currentUser
 import fr.sacane.jmanager.application.api.toHttpResponse
+import fr.sacane.jmanager.application.bus.CommandBus
+import fr.sacane.jmanager.application.bus.QueryBus
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -24,9 +26,8 @@ import java.util.logging.Logger
 @RequestMapping("api/csv")
 @Adapter(Side.APPLICATION)
 class CsvImportController(
-    private val validateCsvFileUseCase: ValidateCsvFileUseCase,
-    private val importTransactionsFromCsvUseCase: ImportTransactionsFromCsvUseCase,
-    private val exportTransactionsToCsvUseCase: ExportTransactionsToCsvUseCase,
+    private val queryBus: QueryBus,
+    private val commandBus: CommandBus,
     private val transactionRepository: TransactionRepository
 ) {
     companion object {
@@ -65,7 +66,7 @@ class CsvImportController(
             )
         }
 
-        return validateCsvFileUseCase.handle(
+        return queryBus.dispatch(
             ValidateCsvFileQuery(
                 token = SessionToken(currentUser.token),
                 bookletId = bookletId.toUUID(),
@@ -100,7 +101,7 @@ class CsvImportController(
             )
         }
 
-        return importTransactionsFromCsvUseCase.handle(
+        return commandBus.dispatch(
             ImportTransactionsFromCsvCommand(
                 token = SessionToken(currentUser.token),
                 bookletId = bookletId.toUUID(),
@@ -181,7 +182,7 @@ class CsvImportController(
                     .body(mapOf("message" to "Aucune transaction trouvée"))
             }
 
-            val result = exportTransactionsToCsvUseCase.handle(
+            val result = commandBus.dispatch(
                 ExportTransactionsToCsvCommand(
                     token = SessionToken(currentUser.token),
                     transactions = transactions

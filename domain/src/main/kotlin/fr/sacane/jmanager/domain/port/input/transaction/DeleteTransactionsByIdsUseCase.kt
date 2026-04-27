@@ -11,6 +11,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 import java.util.logging.Logger
@@ -19,11 +21,11 @@ data class DeleteTransactionsByIdsCommand(
     val token: SessionToken,
     val bookletID: UUID,
     val transactionIds: List<UUID>
-)
+) : Command<TransactionDeletionResult>
 
 @Port(Side.APPLICATION)
-interface DeleteTransactionsByIdsUseCase {
-    fun handle(command: DeleteTransactionsByIdsCommand): Result<TransactionDeletionResult>
+interface DeleteTransactionsByIdsUseCase : CommandHandler<DeleteTransactionsByIdsCommand, TransactionDeletionResult> {
+    override val commandClass get() = DeleteTransactionsByIdsCommand::class
 }
 
 @DomainService

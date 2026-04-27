@@ -6,17 +6,19 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.spi.Hasher
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 
-data class RegisterUserCommand(val username: String, val password: String, val confirmPassword: String)
+data class RegisterUserCommand(val username: String, val password: String, val confirmPassword: String) : Command<User>
 
 @Port(Side.APPLICATION)
-interface RegisterUserUseCase {
-    fun handle(command: RegisterUserCommand): Result<User>
+interface RegisterUserUseCase : CommandHandler<RegisterUserCommand, User> {
+    override val commandClass get() = RegisterUserCommand::class
 }
 
 @DomainService

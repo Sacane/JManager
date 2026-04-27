@@ -7,6 +7,8 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.time.Month
 
@@ -15,11 +17,11 @@ data class RetrieveTransactionsByMonthAndYearQuery(
     val month: Month,
     val year: Int,
     val bookletLabel: String
-)
+) : Query<List<Transaction>>
 
 @Port(Side.APPLICATION)
-interface RetrieveTransactionsByMonthAndYearUseCase {
-    fun handle(query: RetrieveTransactionsByMonthAndYearQuery): Result<List<Transaction>>
+interface RetrieveTransactionsByMonthAndYearUseCase : QueryHandler<RetrieveTransactionsByMonthAndYearQuery, List<Transaction>> {
+    override val queryClass get() = RetrieveTransactionsByMonthAndYearQuery::class
 }
 
 @DomainService

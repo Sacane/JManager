@@ -9,17 +9,19 @@ import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.TokenGenerator
 import fr.sacane.jmanager.domain.port.spi.UserRepository
 import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import java.util.logging.Logger
 
-data class LoginCommand(val pseudonym: String, val userPassword: String)
+data class LoginCommand(val pseudonym: String, val userPassword: String) : Command<UserToken>
 
 @Port(Side.APPLICATION)
-interface LoginUseCase {
-    fun handle(command: LoginCommand): Result<UserToken>
+interface LoginUseCase : CommandHandler<LoginCommand, UserToken> {
+    override val commandClass get() = LoginCommand::class
 }
 
 @DomainService

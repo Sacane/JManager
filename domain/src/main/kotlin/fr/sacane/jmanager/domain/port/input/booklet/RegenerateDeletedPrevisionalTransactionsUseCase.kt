@@ -12,6 +12,8 @@ import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRe
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -25,11 +27,11 @@ data class RegenerateDeletedPrevisionalTransactionsCommand(
     val bookletId: UUID,
     val month: Month,
     val year: Int
-)
+) : Command<List<Transaction>>
 
 @Port(Side.APPLICATION)
-interface RegenerateDeletedPrevisionalTransactionsUseCase {
-    fun handle(command: RegenerateDeletedPrevisionalTransactionsCommand): Result<List<Transaction>>
+interface RegenerateDeletedPrevisionalTransactionsUseCase : CommandHandler<RegenerateDeletedPrevisionalTransactionsCommand, List<Transaction>> {
+    override val commandClass get() = RegenerateDeletedPrevisionalTransactionsCommand::class
 }
 
 @DomainService

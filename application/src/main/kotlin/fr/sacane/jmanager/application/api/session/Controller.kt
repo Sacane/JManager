@@ -7,23 +7,19 @@ import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsQuery
-import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsUseCase
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
-import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
 import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
-import fr.sacane.jmanager.domain.port.input.user.LogoutUseCase
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionCommand
-import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
-import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
-import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.application.api.InvalidRequestException
 import fr.sacane.jmanager.application.api.UnauthorizedRequestException
 import fr.sacane.jmanager.application.api.currentUser
 import fr.sacane.jmanager.application.api.toDTO
 import fr.sacane.jmanager.application.api.toHttpResponse
+import fr.sacane.jmanager.application.bus.CommandBus
+import fr.sacane.jmanager.application.bus.QueryBus
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
@@ -47,12 +43,8 @@ import java.util.logging.Logger
 @RequestMapping("api/user")
 @Adapter(Side.APPLICATION)
 class SessionController(
-    private val loginUseCase: LoginUseCase,
-    private val logoutUseCase: LogoutUseCase,
-    private val refreshSessionUseCase: RefreshSessionUseCase,
-    private val registerUserUseCase: RegisterUserUseCase,
-    private val getUserSettingsUseCase: GetUserSettingsUseCase,
-    private val updateUserSettingsUseCase: UpdateUserSettingsUseCase,
+    private val commandBus: CommandBus,
+    private val queryBus: QueryBus,
     private val loginRateLimiter: LoginRateLimiter,
     @Value("\${server.servlet.session.cookie.secure:true}")
     private val secureCookie: Boolean = true,
@@ -72,7 +64,7 @@ class SessionController(
             LOGGER.warning("Rate limit exceeded for IP $clientIp")
             return ResponseEntity.status(429).build()
         }
-        val domainResult = loginUseCase.handle(LoginCommand(userDTO.username, userDTO.password))
+        val domainResult = commandBus.dispatch(LoginCommand(userDTO.username, userDTO.password))
         LOGGER.info("Start authenticate user ${userDTO.username}...")
         if (domainResult.isFailure()) {
             loginRateLimiter.recordFailedAttempt(clientIp)
@@ -97,7 +89,7 @@ class SessionController(
         httpResponse: HttpServletResponse,
 
     ): ResponseEntity<Nothing> {
-        return logoutUseCase.handle(LogoutCommand(SessionToken(currentUser.token)))
+        return commandBus.dispatch(LogoutCommand(SessionToken(currentUser.token)))
             .also {
                 clearCookie(httpResponse, "token")
                 clearCookie(httpResponse, "refresh_token")
@@ -115,7 +107,7 @@ class SessionController(
         val requestedUserId = parseUserId(userId)
         val providedRefreshToken = parseRefreshToken(httpRequest)
 
-        return refreshSessionUseCase.handle(RefreshSessionCommand(providedRefreshToken))
+        return commandBus.dispatch(RefreshSessionCommand(providedRefreshToken))
             .map {
                 if (it.user.id.value != requestedUserId) {
                     throw UnauthorizedRequestException(
@@ -139,7 +131,7 @@ class SessionController(
     ): ResponseEntity<UserStorageDTO> {
         val providedRefreshToken = parseRefreshToken(httpRequest)
 
-        return refreshSessionUseCase.handle(RefreshSessionCommand(providedRefreshToken))
+        return commandBus.dispatch(RefreshSessionCommand(providedRefreshToken))
             .map {
                 addAccessCookie(httpResponse, it.token)
                 addRefreshCookie(httpResponse, it.refreshToken)
@@ -149,13 +141,13 @@ class SessionController(
 
     @PostMapping(path = ["/create"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun createUser(@Valid @RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-        val response = registerUserUseCase.handle(RegisterUserCommand(userDTO.username, userDTO.password, userDTO.confirmPassword))
+        val response = commandBus.dispatch(RegisterUserCommand(userDTO.username, userDTO.password, userDTO.confirmPassword))
         return response.map { u -> u.toDTO() }.toHttpResponse()
     }
 
     @GetMapping(path = ["/settings"])
     fun getUserSettings(): ResponseEntity<UserSettingsDTO> {
-        return getUserSettingsUseCase.handle(GetUserSettingsQuery(SessionToken(currentUser.token)))
+        return queryBus.dispatch(GetUserSettingsQuery(SessionToken(currentUser.token)))
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -172,7 +164,7 @@ class SessionController(
             )
         }
 
-        return updateUserSettingsUseCase.handle(
+        return commandBus.dispatch(
             UpdateUserSettingsCommand(
                 token = SessionToken(currentUser.token),
                 projectionWindowDays = settings.projectionWindowDays,

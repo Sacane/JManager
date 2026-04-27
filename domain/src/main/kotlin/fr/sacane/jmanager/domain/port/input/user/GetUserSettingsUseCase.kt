@@ -9,17 +9,19 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.UserRepository
-import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 
-data class GetUserSettingsQuery(val token: SessionToken)
+data class GetUserSettingsQuery(val token: SessionToken) : Query<UserSettings>
 
 @Port(Side.APPLICATION)
-interface GetUserSettingsUseCase {
-    fun handle(query: GetUserSettingsQuery): Result<UserSettings>
+interface GetUserSettingsUseCase : QueryHandler<GetUserSettingsQuery, UserSettings> {
+    override val queryClass get() = GetUserSettingsQuery::class
 }
 
 @DomainService

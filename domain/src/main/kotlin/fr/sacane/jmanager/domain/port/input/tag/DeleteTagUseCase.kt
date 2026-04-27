@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
 import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
@@ -15,11 +17,11 @@ data class DeleteTagCommand(
     val token: SessionToken,
     val tagId: UUID,
     val force: Boolean = false
-)
+) : Command<Nothing>
 
 @Port(Side.APPLICATION)
-interface DeleteTagUseCase {
-    fun handle(command: DeleteTagCommand): Result<Nothing>
+interface DeleteTagUseCase : CommandHandler<DeleteTagCommand, Nothing> {
+    override val commandClass get() = DeleteTagCommand::class
 }
 
 @DomainService

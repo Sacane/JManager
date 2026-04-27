@@ -10,6 +10,8 @@ import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
@@ -17,11 +19,11 @@ data class UnlinkRegularTransactionFromBookletCommand(
     val token: SessionToken,
     val transactionId: String,
     val bookletId: UUID
-)
+) : Command<RegularTransaction>
 
 @Port(Side.APPLICATION)
-interface UnlinkRegularTransactionFromBookletUseCase {
-    fun handle(command: UnlinkRegularTransactionFromBookletCommand): Result<RegularTransaction>
+interface UnlinkRegularTransactionFromBookletUseCase : CommandHandler<UnlinkRegularTransactionFromBookletCommand, RegularTransaction> {
+    override val commandClass get() = UnlinkRegularTransactionFromBookletCommand::class
 }
 
 @DomainService

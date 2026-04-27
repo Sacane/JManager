@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -16,11 +18,11 @@ import java.util.UUID
 data class DeleteBookletByIdCommand(
     val bookletId: UUID,
     val token: SessionToken
-)
+) : Command<Nothing>
 
 @Port(Side.APPLICATION)
-interface DeleteBookletByIdUseCase {
-    fun handle(command: DeleteBookletByIdCommand): Result<Nothing>
+interface DeleteBookletByIdUseCase : CommandHandler<DeleteBookletByIdCommand, Nothing> {
+    override val commandClass get() = DeleteBookletByIdCommand::class
 }
 
 @DomainService

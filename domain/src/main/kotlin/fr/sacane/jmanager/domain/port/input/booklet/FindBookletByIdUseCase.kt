@@ -7,6 +7,8 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
 import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.input.Query
+import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -15,11 +17,11 @@ import java.util.UUID
 data class FindBookletByIdQuery(
     val bookletId: UUID,
     val token: SessionToken
-)
+) : Query<Booklet>
 
 @Port(Side.APPLICATION)
-interface FindBookletByIdUseCase {
-    fun handle(query: FindBookletByIdQuery): Result<Booklet>
+interface FindBookletByIdUseCase : QueryHandler<FindBookletByIdQuery, Booklet> {
+    override val queryClass get() = FindBookletByIdQuery::class
 }
 
 @DomainService

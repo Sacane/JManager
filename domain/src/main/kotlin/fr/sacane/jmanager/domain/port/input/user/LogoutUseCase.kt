@@ -5,14 +5,16 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.success
 
-data class LogoutCommand(val token: SessionToken)
+data class LogoutCommand(val token: SessionToken) : Command<Nothing>
 
 @Port(Side.APPLICATION)
-interface LogoutUseCase {
-    fun handle(command: LogoutCommand): Result<Nothing>
+interface LogoutUseCase : CommandHandler<LogoutCommand, Nothing> {
+    override val commandClass get() = LogoutCommand::class
 }
 
 @DomainService
