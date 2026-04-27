@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi.repository
+package fr.sacane.jmanager.domain.port.output.repository
 
 /**
  * SPI contract that provides a unit-of-work / transaction boundary for coordinating multiple

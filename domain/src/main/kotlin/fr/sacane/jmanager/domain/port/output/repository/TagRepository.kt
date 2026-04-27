@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi.repository
+package fr.sacane.jmanager.domain.port.output.repository
 
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId

@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result

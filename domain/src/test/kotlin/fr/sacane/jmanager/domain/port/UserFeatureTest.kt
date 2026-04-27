@@ -23,7 +23,7 @@ import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
-import fr.sacane.jmanager.domain.port.spi.DefaultHasher
+import fr.sacane.jmanager.domain.port.output.DefaultHasher
 import fr.sacane.jmanager.domain.utils.success
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
@@ -150,7 +150,7 @@ class UserFeatureTest: FeatureTest() {
             val refreshedRefreshToken = refreshedSession?.refreshToken
             assertNotNull(refreshedRefreshToken)
 
-            sessionFakeState.authenticateRefreshToken(initialRefreshToken!!) {
+            sessionFakeState.authenticateRefreshToken(initialRefreshToken) {
                 return@authenticateRefreshToken success("ok")
             }.assertFailure(ResultState.UNAUTHORIZED)
 

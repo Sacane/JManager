@@ -10,8 +10,8 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
+import fr.sacane.jmanager.domain.port.output.repository.TagRepository
+import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.application.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.application.api.setup.BookletTransaction
 import fr.sacane.jmanager.application.api.setup.TagStateTestAdapter

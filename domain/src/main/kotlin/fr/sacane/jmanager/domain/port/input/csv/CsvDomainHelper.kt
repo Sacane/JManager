@@ -6,13 +6,10 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.csv.CsvImportResult
 import fr.sacane.jmanager.domain.models.csv.CsvLineResult
 import fr.sacane.jmanager.domain.models.csv.CsvTransactionLine
-import fr.sacane.jmanager.domain.models.csv.CsvValidationReport
-import fr.sacane.jmanager.domain.port.spi.CsvFileReader
-import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.usecase.csv.CsvFileValidator
 import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionValidator
-import fr.sacane.jmanager.domain.usecase.csv.CsvValidationUtils
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState

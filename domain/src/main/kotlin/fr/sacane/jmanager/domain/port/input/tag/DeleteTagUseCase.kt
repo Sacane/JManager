@@ -4,10 +4,10 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.TagRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*

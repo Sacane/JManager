@@ -6,10 +6,10 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
-import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
@@ -33,10 +33,6 @@ class UnlinkRegularTransactionFromBookletService(
     private val unitOfWork: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository
 ) : UnlinkRegularTransactionFromBookletUseCase {
-
-    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
-        return failure(state, DomainError(state.code, key, detail))
-    }
 
     override fun handle(
         command: UnlinkRegularTransactionFromBookletCommand

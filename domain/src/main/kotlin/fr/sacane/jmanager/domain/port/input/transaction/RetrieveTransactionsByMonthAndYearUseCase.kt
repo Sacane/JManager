@@ -5,8 +5,8 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.*
@@ -30,13 +30,10 @@ class RetrieveTransactionsByMonthAndYearService(
     private val session: SessionManager
 ) : RetrieveTransactionsByMonthAndYearUseCase {
 
-    private fun <S> domainNotFound(detail: String, key: String): Result<S> {
-        return failure(ResultState.NOT_FOUND, DomainError(ResultState.NOT_FOUND.code, key, detail))
-    }
-
     override fun handle(query: RetrieveTransactionsByMonthAndYearQuery): Result<List<Transaction>> = session.authenticate(query.token) {
         success(transactionRepository.findBookletByLabelWithTransactions(query.bookletLabel, it)?.retrieveTransactionsSortedByDate(query.month, query.year)
-            ?: return@authenticate domainNotFound(
+            ?: return@authenticate domainFailure(
+                state = ResultState.BOOKLET_NOT_FOUND,
                 "Aucun compte ne correspond au label indiqué",
                 "domain.transaction.retrieve.booklet_not_found"
             )

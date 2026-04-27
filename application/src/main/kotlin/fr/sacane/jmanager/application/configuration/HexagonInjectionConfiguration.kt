@@ -2,7 +2,7 @@ package fr.sacane.jmanager.application.configuration
 
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.UseCase
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
+import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.JwtTokenGenerator
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

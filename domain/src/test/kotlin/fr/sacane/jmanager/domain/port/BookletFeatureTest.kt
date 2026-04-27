@@ -14,7 +14,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.input.booklet.*
-import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach

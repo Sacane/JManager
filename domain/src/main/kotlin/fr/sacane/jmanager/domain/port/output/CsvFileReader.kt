@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi
+package fr.sacane.jmanager.domain.port.output
 
 /**
  * SPI Port: File reader for CSV import

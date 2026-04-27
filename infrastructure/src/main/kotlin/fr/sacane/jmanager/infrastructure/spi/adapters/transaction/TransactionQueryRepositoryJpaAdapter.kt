@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters.transaction
 
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionQueryRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.TransactionQueryJpaRepository
 import org.springframework.stereotype.Repository

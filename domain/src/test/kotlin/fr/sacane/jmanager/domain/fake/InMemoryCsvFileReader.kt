@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain.fake
 
-import fr.sacane.jmanager.domain.port.spi.CsvFileReader
+import fr.sacane.jmanager.domain.port.output.CsvFileReader
 
 class InMemoryCsvFileReader : CsvFileReader {
 

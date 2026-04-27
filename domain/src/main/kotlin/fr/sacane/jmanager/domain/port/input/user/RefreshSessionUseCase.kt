@@ -4,9 +4,9 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.UserToken
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
-import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.TokenGenerator
+import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result

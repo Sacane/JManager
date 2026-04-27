@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
-import fr.sacane.jmanager.domain.port.spi.CsvFileReader
+import fr.sacane.jmanager.domain.port.output.CsvFileReader
 import org.springframework.stereotype.Component
 
 @Component

@@ -5,8 +5,8 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.port.spi.Hasher
-import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.port.output.Hasher
+import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result

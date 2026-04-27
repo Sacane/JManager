@@ -4,8 +4,8 @@ import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository

@@ -1,6 +1,6 @@
 # SPI package — Domain outbound ports (infrastructure contracts)
 
-This README explains the responsibilities, conventions and architectural rationale for the `fr.sacane.jmanager.domain.port.spi` package. It is written for architects and engineers implementing adapters (infrastructure) or contributing to domain ports.
+This README explains the responsibilities, conventions and architectural rationale for the `fr.sacane.jmanager.domain.port.output` package. It is written for architects and engineers implementing adapters (infrastructure) or contributing to domain ports.
 
 ## Purpose
 

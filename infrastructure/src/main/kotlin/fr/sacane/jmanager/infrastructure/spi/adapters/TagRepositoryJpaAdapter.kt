@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.output.repository.TagRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toPersonalTag

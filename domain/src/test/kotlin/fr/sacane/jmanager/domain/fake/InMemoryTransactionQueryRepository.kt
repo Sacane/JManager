@@ -2,7 +2,7 @@ package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionQueryRepository
 import java.time.LocalDate
 import java.util.UUID
 

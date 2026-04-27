@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
 import org.junit.jupiter.api.AfterEach

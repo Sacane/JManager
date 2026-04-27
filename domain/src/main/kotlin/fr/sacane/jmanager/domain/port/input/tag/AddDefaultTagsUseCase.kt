@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.defaultTags
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.output.repository.TagRepository
 
 @Port(Side.APPLICATION)
 interface AddDefaultTagsUseCase {
