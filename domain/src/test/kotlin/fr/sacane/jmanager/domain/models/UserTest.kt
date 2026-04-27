@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
-import fr.sacane.jmanager.domain.port.spi.DefaultHasher
+import fr.sacane.jmanager.domain.port.output.DefaultHasher
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 

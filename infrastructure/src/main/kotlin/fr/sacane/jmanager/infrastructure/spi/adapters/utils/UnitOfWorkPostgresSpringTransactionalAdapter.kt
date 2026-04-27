@@ -2,7 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters.utils
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 

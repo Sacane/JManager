@@ -7,11 +7,11 @@ import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.BookletBalances
 import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.BookletBalanceQueryRepository
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionQueryRepository
-import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.repository.BookletBalanceQueryRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionQueryRepository
+import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler

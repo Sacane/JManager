@@ -131,3 +131,7 @@ fun <S> forbidden(message: String): Result<S> =
 
 fun <S> timeout(message: String): Result<S> =
     Result(ResultState.TIMEOUT, error=message)
+
+fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
+    return failure(state, DomainError(state.code, key, detail))
+}

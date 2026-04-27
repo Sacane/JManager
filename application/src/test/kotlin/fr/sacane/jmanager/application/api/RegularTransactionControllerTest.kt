@@ -11,8 +11,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
+import fr.sacane.jmanager.domain.port.output.repository.TagRepository
+import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.application.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.application.api.setup.BookletTransaction
 import fr.sacane.jmanager.application.api.setup.BookletRegularTransactionInput

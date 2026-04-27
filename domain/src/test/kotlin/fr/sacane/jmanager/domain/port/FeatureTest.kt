@@ -10,11 +10,10 @@ import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.SessionManager
+import fr.sacane.jmanager.domain.port.output.SessionManager
 import org.junit.jupiter.api.AfterEach
 import java.time.LocalDate
 import java.util.*
-import kotlin.random.Random
 
 open class FeatureTest {
 

@@ -1,6 +1,6 @@
 package fr.sacane.jmanager.application.domain_server
 
-import fr.sacane.jmanager.domain.port.spi.Hasher
+import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat

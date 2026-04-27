@@ -7,8 +7,8 @@ import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionTracker
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionTrackerRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth

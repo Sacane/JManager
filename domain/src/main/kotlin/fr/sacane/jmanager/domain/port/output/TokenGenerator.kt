@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi
+package fr.sacane.jmanager.domain.port.output
 
 import fr.sacane.jmanager.domain.models.AccessToken
 import fr.sacane.jmanager.domain.models.Role

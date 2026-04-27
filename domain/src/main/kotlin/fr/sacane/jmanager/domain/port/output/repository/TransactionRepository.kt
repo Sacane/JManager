@@ -1,4 +1,4 @@
-package fr.sacane.jmanager.domain.port.spi.repository
+package fr.sacane.jmanager.domain.port.output.repository
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet

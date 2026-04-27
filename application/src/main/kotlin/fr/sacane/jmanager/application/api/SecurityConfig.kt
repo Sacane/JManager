@@ -1,7 +1,7 @@
 package fr.sacane.jmanager.application.api
 
-import fr.sacane.jmanager.domain.port.spi.TokenGenerator
-import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.port.output.TokenGenerator
+import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.application.api.session.JwtCookieAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

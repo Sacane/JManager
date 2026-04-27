@@ -6,8 +6,8 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.*
@@ -32,10 +32,6 @@ class FindTransactionByIdService(
 
     companion object {
         private val logger = Logger.getLogger(FindTransactionByIdService::class.java.name)
-    }
-
-    private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
-        return failure(state, DomainError(state.code, key, detail))
     }
 
     override fun handle(query: FindTransactionByIdQuery): Result<Transaction> = session.authenticate(query.token, roleUser) {

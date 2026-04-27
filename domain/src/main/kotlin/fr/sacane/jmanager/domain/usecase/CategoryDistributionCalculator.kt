@@ -5,7 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.CategoryData
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.repository.TagRepository
+import fr.sacane.jmanager.domain.port.output.repository.TagRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate

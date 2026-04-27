@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-12
+- **Refactoring: Command/Query Bus — explicit KClass type resolution**
+  - Replaced reflection-based `commandType()`/`queryType()` default methods on `CommandHandler`/`QueryHandler` with explicit abstract `val commandClass: KClass<C>` / `val queryClass: KClass<Q>` properties.
+  - Each of the 44 UseCase interfaces now provides a default getter (`override val commandClass get() = XxxCommand::class`). Service implementations require no changes — the property is inherited from the interface.
+  - `SpringCommandBus` and `SpringQueryBus` now build their handler maps using `it.commandClass.java as Class<*>` / `it.queryClass.java as Class<*>` — zero reflection, fully static and type-safe.
+  - This resolves the `Command<Nothing>` JVM Signature issue: Kotlin omits the JVM Signature attribute for `Nothing`-parameterised interfaces, causing `GenericTypeResolver` and `getGenericInterfaces()` to return raw types at runtime. The KClass property bypasses this entirely.
+  - `REFACTORING_PLAN.md` updated to reflect actual implementation (all 10 steps ✅ Complete).
+  - 833 tests pass across domain, application, and infrastructure modules with no regression.
+
 ## 2026-04-26
 - **Refactoring: Consolidate UseCase files (Step 18-19)**
   - Merged Command/Query data classes and Service implementations into their corresponding `*UseCase.kt` files across all 8 categories (admin, user, tag, transaction, regularTransaction, stats, booklet, csv).

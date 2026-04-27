@@ -5,9 +5,8 @@ import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
-import fr.sacane.jmanager.domain.port.spi.UserRepository
+import fr.sacane.jmanager.domain.port.output.UserRepository
 import java.util.UUID
-import kotlin.random.Random
 
 class FakeUserRepository: UserRepository, State<User> {
 

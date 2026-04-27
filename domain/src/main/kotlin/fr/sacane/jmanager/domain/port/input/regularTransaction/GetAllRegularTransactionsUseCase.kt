@@ -7,8 +7,8 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Page
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.RegularTransactionRepository
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result

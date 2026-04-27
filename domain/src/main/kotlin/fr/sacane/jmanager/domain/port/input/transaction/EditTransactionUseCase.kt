@@ -7,10 +7,10 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.roleUser
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.spi.SessionManager
-import fr.sacane.jmanager.domain.port.spi.repository.BookletRepository
-import fr.sacane.jmanager.domain.port.spi.repository.TransactionRepository
-import fr.sacane.jmanager.domain.port.spi.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
@@ -44,10 +44,6 @@ class EditTransactionService(
         return domainFailure(ResultState.NOT_FOUND, detail, key)
     }
 
-    private fun <S> domainInvalid(detail: String, key: String): Result<S> {
-        return domainFailure(ResultState.INVALID, detail, key)
-    }
-
     override fun handle(command: EditTransactionCommand): Result<TransactionResumeResult> = session.authenticate(command.token, roleUser) {
         return@authenticate infraTransactionManager.executeInTransaction(command.transaction) {
             if (command.transaction.id == null) {
@@ -70,7 +66,8 @@ class EditTransactionService(
             transactionFromDatabase.updateFromOther(command.transaction)
             transactionFromDatabase.lastModified = LocalDateTime.now()
             transactionRepository.save(registeredBooklet.id!!, transactionFromDatabase)
-                ?: return@executeInTransaction domainInvalid(
+                ?: return@executeInTransaction domainFailure(
+                    state = ResultState.INVALID,
                     "Une erreur est survenue lors de la mise à jour de la transaction ${transactionFromDatabase.id}",
                     "domain.transaction.edit.save_failed"
                 )
