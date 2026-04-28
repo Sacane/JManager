@@ -267,8 +267,8 @@ describe('pages/dashboard/index tags insights', () => {
 
     expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
       bookletId: '11111111-1111-4111-8111-111111111111',
-      startDate: '2026-03-28',
-      endDate: '2026-04-27',
+      startDate: '2026-02-28',
+      endDate: '2026-03-27',
     }))
   })
 
@@ -294,8 +294,8 @@ describe('pages/dashboard/index tags insights', () => {
 
     expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
       bookletId: '11111111-1111-4111-8111-111111111111',
-      startDate: '2026-03-28',
-      endDate: '2026-04-30',
+      startDate: '2026-02-28',
+      endDate: '2026-03-30',
     }))
   })
 })

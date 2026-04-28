@@ -23,7 +23,7 @@ import useStats from '~/composables/useStats'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
-import { resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
+import { resolveMonthlyCycleRangeForTargetMonth, resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, rgbToHex, toReadableTagTextColor } from '~/utils/util'
 
 ChartJS.register(
@@ -200,8 +200,9 @@ const periodMetricLabel = computed(() =>
 
 const currentDateRange = computed(() => {
   if (selectedPeriod.value === 'month') {
-    return resolveCustomMonthlyRange(
-      periodAnchorDate.value,
+    return resolveMonthlyCycleRangeForTargetMonth(
+      periodAnchorDate.value.getFullYear(),
+      periodAnchorDate.value.getMonth() + 1,
       selectedMonthlyPeriodStartDay.value,
       selectedMonthlyPeriodEndDay.value,
     )
