@@ -557,15 +557,16 @@ describe('pages/dashboard/index doughnut slice click toggle', () => {
     expect(wrapper.find('[data-test="doughnut-center-label"]').exists()).toBe(false)
   })
 
-  // Scenario 9 — Chart container uses aspect-ratio on desktop
-  it('uses aspect ratio class on desktop for doughnut container', async () => {
+  // Scenario 9 — Chart and tags side by side on desktop
+  it('renders chart and tags in a horizontal layout on desktop', async () => {
     const wrapper = mountDashboardPage()
     await settleDashboard()
 
     const container = wrapper.find('[data-test="doughnut-container"]')
     expect(container.exists()).toBe(true)
-    // On desktop (isSmallScreen = false), the container should have aspect-[16/7]
-    expect(container.classes()).toContain('aspect-[16/7]')
+    // On desktop (isSmallScreen = false), the container should have min-h-70 and flex-1
+    expect(container.classes()).toContain('min-h-70')
+    expect(container.classes()).toContain('flex-1')
     expect(container.classes()).not.toContain('h-72')
   })
 

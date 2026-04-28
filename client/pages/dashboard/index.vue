@@ -752,7 +752,7 @@ const doughnutOptionsComputed = computed(() => {
       ...doughnutOptions.plugins,
       legend: {
         ...doughnutOptions.plugins.legend,
-        position: isSmallScreen.value ? 'bottom' as const : 'right' as const,
+        position: 'bottom' as const,
         labels: {
           ...doughnutOptions.plugins.legend.labels,
           font: {
@@ -1184,58 +1184,61 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
-          <div class="mb-5">
-            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
-              <i class="pi pi-chart-pie text-purple-600" />
-              Dépenses par catégorie
-            </h2>
-            <p class="text-sm" style="color: var(--text-secondary);">
-              {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
-            </p>
-          </div>
-          <div class="doughnut-chart-container relative" :class="isSmallScreen ? 'h-72' : 'aspect-[16/7]'" data-test="doughnut-container">
-            <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
-            <div
-              v-if="doughnutCenterLabel"
-              class="absolute inset-0 flex items-center pointer-events-none"
-              :class="isSmallScreen ? 'justify-center' : 'doughnut-center-desktop'"
-              data-test="doughnut-center-label"
-            >
-              <span
-                class="font-bold"
-                :class="isSmallScreen ? 'text-sm' : 'text-base'"
-                style="color: var(--text-primary);"
-              >
-                {{ doughnutCenterLabel }}
-              </span>
-            </div>
-          </div>
-          <div class="mt-5">
-            <div class="flex justify-between items-center mb-3">
-              <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                Top tags de la période
-              </h3>
-              <span class="text-xs" style="color: var(--text-secondary);">
-                Variation vs période précédente
-              </span>
-            </div>
-            <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
-              Aucun tag de dépense sur cette période
-            </div>
-            <div v-else class="flex flex-col gap-2">
-              <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
-                <div>
-                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                    {{ tag.tagLabel }}
-                  </p>
-                  <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
-                    {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
-                  </p>
+        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
+          <div class="flex flex-col sm:flex-row gap-6">
+            <div class="sm:w-1/2 flex flex-col">
+              <div class="mb-5">
+                <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+                  <i class="pi pi-chart-pie text-purple-600" />
+                  Dépenses par catégorie
+                </h2>
+                <p class="text-sm" style="color: var(--text-secondary);">
+                  {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
+                </p>
+              </div>
+              <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-72' : 'min-h-70'" data-test="doughnut-container">
+                <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
+                <div
+                  v-if="doughnutCenterLabel"
+                  class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  data-test="doughnut-center-label"
+                >
+                  <span
+                    class="font-bold"
+                    :class="isSmallScreen ? 'text-sm' : 'text-base'"
+                    style="color: var(--text-primary);"
+                  >
+                    {{ doughnutCenterLabel }}
+                  </span>
                 </div>
-                <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
-                  {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+              </div>
+            </div>
+            <div class="sm:w-1/2 flex flex-col" :class="isSmallScreen ? 'mt-2' : ''">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                  Top tags de la période
+                </h3>
+                <span class="text-xs" style="color: var(--text-secondary);">
+                  Variation vs période précédente
                 </span>
+              </div>
+              <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
+                Aucun tag de dépense sur cette période
+              </div>
+              <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
+                <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
+                  <div>
+                    <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                      {{ tag.tagLabel }}
+                    </p>
+                    <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                      {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
+                    </p>
+                  </div>
+                  <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
+                    {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -1734,19 +1737,6 @@ watch(selectedBookletId, () => {
 .doughnut-chart-container {
   position: relative;
   width: 100%;
-}
-
-.doughnut-center-desktop {
-  /* Position the label inside the donut hole on the left half where the chart sits */
-  justify-content: flex-start;
-  padding-left: calc(50% - 35%);
-}
-
-@media (max-width: 639px) {
-  .doughnut-center-desktop {
-    justify-content: center;
-    padding-left: 0;
-  }
 }
 
 @media (min-width: 640px) {
