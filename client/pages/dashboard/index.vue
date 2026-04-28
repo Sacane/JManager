@@ -86,6 +86,10 @@ const chartsRef = ref(null)
 const isOverviewVisible = ref(false)
 const isChartsVisible = ref(false)
 
+// Doughnut slice toggle state
+const selectedSliceIndex = ref<number | null>(null)
+const sliceDisplayMode = ref<'amount' | 'percentage'>('amount')
+
 // Setup intersection observers
 useIntersectionObserver(overviewRef, ([entry]) => {
   if (entry?.isIntersecting) {
@@ -556,6 +560,42 @@ const categoryExpensesData = computed(() => {
   }
 })
 
+const doughnutCenterLabel = computed(() => {
+  if (selectedSliceIndex.value === null) {
+    return null
+  }
+
+  const data = categoryExpensesData.value.datasets[0]?.data ?? []
+  const value = data[selectedSliceIndex.value]
+  if (value === undefined) {
+    return null
+  }
+
+  if (sliceDisplayMode.value === 'percentage') {
+    const total = data.reduce((a: number, b: number) => a + b, 0)
+    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
+    return `${percentage}%`
+  }
+
+  return `${value.toFixed(2)} €`
+})
+
+function onDoughnutClick(_event: any, elements: any[]) {
+  if (!elements.length) {
+    return
+  }
+
+  const clickedIndex = elements[0].index
+
+  if (selectedSliceIndex.value === clickedIndex) {
+    sliceDisplayMode.value = sliceDisplayMode.value === 'amount' ? 'percentage' : 'amount'
+  }
+  else {
+    selectedSliceIndex.value = clickedIndex
+    sliceDisplayMode.value = 'amount'
+  }
+}
+
 const topTagsInsights = computed(() => {
   const currentCategories = categoryDistribution.value?.categories ?? []
   if (currentCategories.length === 0) {
@@ -677,7 +717,7 @@ const doughnutOptions = {
           const value = context.parsed || 0
           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
           const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
-          return `${label}: ${value.toFixed(2)}€ (${percentage}%)`
+          return `${label}: ${value.toFixed(2)} € (${percentage}%)`
         },
       },
     },
@@ -706,16 +746,24 @@ const chartOptionsComputed = computed(() => {
 })
 
 const doughnutOptionsComputed = computed(() => {
-  const opts = JSON.parse(JSON.stringify(doughnutOptions))
-  opts.plugins = opts.plugins || {}
-  opts.plugins.legend = opts.plugins.legend || {}
-  // put legend under chart on small screens to avoid horizontal overflow
-  opts.plugins.legend.position = isSmallScreen.value ? 'bottom' : 'right'
-  // reduce label size on small screens
-  opts.plugins.legend.labels = opts.plugins.legend.labels || {}
-  opts.plugins.legend.labels.font = opts.plugins.legend.labels.font || {}
-  opts.plugins.legend.labels.font.size = isSmallScreen.value ? 11 : 12
-  return opts
+  return {
+    ...doughnutOptions,
+    plugins: {
+      ...doughnutOptions.plugins,
+      legend: {
+        ...doughnutOptions.plugins.legend,
+        position: isSmallScreen.value ? 'bottom' as const : 'right' as const,
+        labels: {
+          ...doughnutOptions.plugins.legend.labels,
+          font: {
+            ...doughnutOptions.plugins.legend.labels.font,
+            size: isSmallScreen.value ? 11 : 12,
+          },
+        },
+      },
+    },
+    onClick: onDoughnutClick,
+  }
 })
 
 if (typeof window !== 'undefined') {
@@ -947,6 +995,8 @@ watch([selectedBookletId, selectedPeriod, periodAnchorDate], () => {
   if (!hasInitializedDashboard.value || booklets.value.length === 0) {
     return
   }
+  selectedSliceIndex.value = null
+  sliceDisplayMode.value = 'amount'
   loadStatsData()
 })
 
@@ -1144,8 +1194,22 @@ watch(selectedBookletId, () => {
               {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
             </p>
           </div>
-          <div class="chart-container h-70 relative">
+          <div class="doughnut-chart-container relative" :class="isSmallScreen ? 'h-72' : 'aspect-[16/7]'" data-test="doughnut-container">
             <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
+            <div
+              v-if="doughnutCenterLabel"
+              class="absolute inset-0 flex items-center pointer-events-none"
+              :class="isSmallScreen ? 'justify-center' : 'doughnut-center-desktop'"
+              data-test="doughnut-center-label"
+            >
+              <span
+                class="font-bold"
+                :class="isSmallScreen ? 'text-sm' : 'text-base'"
+                style="color: var(--text-primary);"
+              >
+                {{ doughnutCenterLabel }}
+              </span>
+            </div>
           </div>
           <div class="mt-5">
             <div class="flex justify-between items-center mb-3">
@@ -1667,21 +1731,31 @@ watch(selectedBookletId, () => {
   background-color: var(--card-bg);
 }
 
-@media (min-width: 640px) {
-  .chart-container.h-70 {
-    height: 18rem;
-  }
+.doughnut-chart-container {
+  position: relative;
+  width: 100%;
+}
 
+.doughnut-center-desktop {
+  /* Position the label inside the donut hole on the left half where the chart sits */
+  justify-content: flex-start;
+  padding-left: calc(50% - 35%);
+}
+
+@media (max-width: 639px) {
+  .doughnut-center-desktop {
+    justify-content: center;
+    padding-left: 0;
+  }
+}
+
+@media (min-width: 640px) {
   .chart-container.h-75 {
     height: 20rem;
   }
 }
 
 @media (max-width: 639px) {
-  .chart-container.h-70 {
-    height: 15rem;
-  }
-
   .chart-container.h-75 {
     height: 18rem;
   }
