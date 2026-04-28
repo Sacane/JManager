@@ -186,3 +186,4 @@ You must follow the following guidelines in depends on the contexte you are work
 ## Skills Guidelines
 
 - Whenever you are writing Issues for the project, you must follow the guidelines described in `.github/skills/create-issue/SKILL.md`
+- Whenever you are working on any frontend task under `client/`, you must load and follow `.github/skills/dev-frontend/SKILL.md`
