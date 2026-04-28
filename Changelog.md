@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-04-29
+- **Fix: Dashboard — monthly cycle range off by one month when anchor date falls after cycle start day**
+  - `currentDateRange` in `pages/dashboard/index.vue` was passing `periodAnchorDate` directly to `resolveMonthlyCycleRangeFromAnchor`. When the anchor day (e.g. 29) was ≥ the configured cycle start day (e.g. 27), the function resolved the *next* cycle (Mar 27 – Apr 26) instead of the expected one for the displayed calendar month (Feb 27 – Mar 26).
+  - Fixed by replacing the call with `resolveMonthlyCycleRangeForTargetMonth(year, month, startDay, endDay)`, which uses day 15 as a safe cycle-neutral anchor.
+  - Updated two pre-existing dashboard integration tests whose expected dates reflected the old incorrect behavior.
+  - Added 4 new unit tests in `monthlyCycleRange.spec.ts` covering the bug scenario and adjacent months (start=27/end=26 and start=5/end=4 cycles).
+
+## 2026-04-28
+- **Feature: Dashboard doughnut chart — slice click toggles amount/percentage center label**
+  - Clicking a slice shows its amount (`X.XX €`) in a center overlay label; clicking again toggles to percentage (`XX.X%`); clicking a different slice resets to amount for the new slice.
+  - Chart container changed from fixed height to horizontal rectangle layout (`aspect-[16/7]` on desktop, `h-72` on mobile) with legend on the right (desktop) or bottom (mobile).
+  - Fixed tooltip callback being lost during `JSON.parse(JSON.stringify(...))` — replaced with object spread to preserve functions.
+  - Added space before `€` in tooltip (`X.XX €` instead of `X.XX€`).
+  - Center label resets when booklet, period, or anchor date changes.
+  - 9 new tests covering all acceptance scenarios (toggle cycle, reset on different slice, initial state, empty data, tooltip format, layout classes).
+
 ## 2026-05-12
 - **Refactoring: Command/Query Bus — explicit KClass type resolution**
   - Replaced reflection-based `commandType()`/`queryType()` default methods on `CommandHandler`/`QueryHandler` with explicit abstract `val commandClass: KClass<C>` / `val queryClass: KClass<Q>` properties.

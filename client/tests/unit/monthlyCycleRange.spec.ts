@@ -25,4 +25,35 @@ describe('utils/monthlyCycleRange', () => {
     expect(toIsoLocalDate(range.start)).toBe('2026-02-28')
     expect(toIsoLocalDate(range.end)).toBe('2026-03-27')
   })
+
+  describe('non-regression — cycle start=27 end=26', () => {
+    it('returns Feb 27 – Mar 26 for target month March 2026 regardless of a late anchor day', () => {
+      // Bug: using resolveMonthlyCycleRangeFromAnchor with anchor=March 29 incorrectly returned Mar 27 – Apr 26
+      const range = resolveMonthlyCycleRangeForTargetMonth(2026, 3, 27, 26)
+
+      expect(toIsoLocalDate(range.start)).toBe('2026-02-27')
+      expect(toIsoLocalDate(range.end)).toBe('2026-03-26')
+    })
+
+    it('returns Mar 27 – Apr 26 for target month April 2026', () => {
+      const range = resolveMonthlyCycleRangeForTargetMonth(2026, 4, 27, 26)
+
+      expect(toIsoLocalDate(range.start)).toBe('2026-03-27')
+      expect(toIsoLocalDate(range.end)).toBe('2026-04-26')
+    })
+
+    it('returns Jan 27 – Feb 26 for target month February 2026', () => {
+      const range = resolveMonthlyCycleRangeForTargetMonth(2026, 2, 27, 26)
+
+      expect(toIsoLocalDate(range.start)).toBe('2026-01-27')
+      expect(toIsoLocalDate(range.end)).toBe('2026-02-26')
+    })
+  })
+
+  it('returns Mar 5 – Apr 4 for cycle start=5 end=4 on target month March 2026', () => {
+    const range = resolveMonthlyCycleRangeForTargetMonth(2026, 3, 5, 4)
+
+    expect(toIsoLocalDate(range.start)).toBe('2026-03-05')
+    expect(toIsoLocalDate(range.end)).toBe('2026-04-04')
+  })
 })

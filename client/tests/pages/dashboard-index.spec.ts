@@ -7,9 +7,9 @@ vi.mock('@vueuse/core', () => ({
 }))
 
 vi.mock('vue-chartjs', () => ({
-  Bar: { template: '<div class="bar-chart" />' },
-  Doughnut: { template: '<div class="doughnut-chart" />' },
-  Line: { template: '<div class="line-chart" />' },
+  Bar: { name: 'Bar', props: ['data', 'options'], template: '<div class="bar-chart" />' },
+  Doughnut: { name: 'Doughnut', props: ['data', 'options'], template: '<div class="doughnut-chart" />' },
+  Line: { name: 'Line', props: ['data', 'options'], template: '<div class="line-chart" />' },
 }))
 
 vi.mock('@/composables/useAuth', () => ({
@@ -267,8 +267,8 @@ describe('pages/dashboard/index tags insights', () => {
 
     expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
       bookletId: '11111111-1111-4111-8111-111111111111',
-      startDate: '2026-03-28',
-      endDate: '2026-04-27',
+      startDate: '2026-02-28',
+      endDate: '2026-03-27',
     }))
   })
 
@@ -294,8 +294,8 @@ describe('pages/dashboard/index tags insights', () => {
 
     expect(getCategoryDistributionMock).toHaveBeenCalledWith(expect.objectContaining({
       bookletId: '11111111-1111-4111-8111-111111111111',
-      startDate: '2026-03-28',
-      endDate: '2026-04-30',
+      startDate: '2026-02-28',
+      endDate: '2026-03-30',
     }))
   })
 })
@@ -391,5 +391,197 @@ describe('pages/dashboard/index category distribution chart completeness', () =>
     await settleDashboard()
 
     expect(wrapper.text()).toContain('Aucun tag de dépense sur cette période')
+  })
+})
+
+describe('pages/dashboard/index doughnut slice click toggle', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+
+    fetchBookletsMock.mockResolvedValue([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        amount: 1200,
+        label: 'Compte principal',
+        transactions: [],
+      },
+    ])
+
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 15,
+      bookletCycles: [
+        {
+          bookletId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
+        },
+      ],
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // Scenario 5 — No center label when no slice has been clicked
+  it('does not show center label initially', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="doughnut-center-label"]').exists()).toBe(false)
+  })
+
+  // Scenario 1 — Clicking a slice for the first time shows its amount
+  it('shows amount in center label when a slice is clicked', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    // Simulate Chart.js onClick: call the handler directly via the Doughnut options
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+
+    const centerLabel = wrapper.find('[data-test="doughnut-center-label"]')
+    expect(centerLabel.exists()).toBe(true)
+    // Courses: 200.00 €
+    expect(centerLabel.text()).toBe('200.00 €')
+  })
+
+  // Scenario 2 — Clicking the same slice a second time toggles to percentage
+  it('toggles to percentage when same slice is clicked again', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+
+    // First click: amount
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+
+    // Second click: percentage
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+
+    const centerLabel = wrapper.find('[data-test="doughnut-center-label"]')
+    expect(centerLabel.exists()).toBe(true)
+    // Courses: 200 / 300 total = 66.7%
+    expect(centerLabel.text()).toBe('66.7%')
+  })
+
+  // Scenario 3 — Clicking the same slice a third time toggles back to amount
+  it('toggles back to amount on third click of same slice', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+
+    const centerLabel = wrapper.find('[data-test="doughnut-center-label"]')
+    expect(centerLabel.exists()).toBe(true)
+    expect(centerLabel.text()).toBe('200.00 €')
+  })
+
+  // Scenario 4 — Clicking a different slice resets to amount view
+  it('resets to amount when a different slice is clicked', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+
+    // Click slice A, toggle to percentage
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="doughnut-center-label"]').text()).toBe('66.7%')
+
+    // Click slice B → resets to amount for Transport
+    options.onClick(null, [{ index: 1 }])
+    await wrapper.vm.$nextTick()
+
+    const centerLabel = wrapper.find('[data-test="doughnut-center-label"]')
+    expect(centerLabel.text()).toBe('100.00 €')
+  })
+
+  // Scenario 6 — Tooltip continues to show amount with € and percentage
+  it('provides tooltip callback with amount € and percentage', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+    const tooltipCallback = options.plugins.tooltip.callbacks.label
+
+    const result = tooltipCallback({
+      label: 'Courses',
+      parsed: 200,
+      dataset: { data: [200, 100] },
+    })
+
+    expect(result).toBe('Courses: 200.00 € (66.7%)')
+  })
+
+  // Scenario 7 — No regression when there are no category data
+  it('does not show center label when no categories exist', async () => {
+    getCategoryDistributionMock.mockResolvedValue({ categories: [], totalExpenses: '0.00' })
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="doughnut-center-label"]').exists()).toBe(false)
+  })
+
+  // Scenario 9 — Chart and tags side by side on desktop
+  it('renders chart and tags in a horizontal layout on desktop', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const container = wrapper.find('[data-test="doughnut-container"]')
+    expect(container.exists()).toBe(true)
+    // On desktop (isSmallScreen = false), the container should have min-h-70 and flex-1
+    expect(container.classes()).toContain('min-h-70')
+    expect(container.classes()).toContain('flex-1')
+    expect(container.classes()).not.toContain('h-72')
+  })
+
+  // Scenario — onClick with empty elements array does nothing
+  it('does nothing when clicking outside slices', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+
+    // Click with no elements (miss)
+    options.onClick(null, [])
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="doughnut-center-label"]').exists()).toBe(false)
   })
 })
