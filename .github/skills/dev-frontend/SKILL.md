@@ -167,6 +167,53 @@ Before starting any task, **always read** the following files to understand the 
 
 ---
 
+## Mobile & Responsive Design
+
+### Proactive Mobile Awareness
+
+Whenever a task involves a **new page, layout, or significant UI component**, the agent must evaluate whether mobile support is relevant.
+
+**If the user's request does not explicitly address mobile:**
+1. Assess whether the feature is likely to be used on mobile (e.g. data-entry forms, dashboards, navigation, dialogs).
+2. If yes, **ask the user before implementing** using the `vscode_askQuestions` tool with concrete options:
+   - *Responsive only* — single layout that adapts via breakpoints (`sm:`, `md:`, `lg:`).
+   - *Mobile-first* — design starting at the smallest viewport, progressively enhance for larger screens.
+   - *Adaptive layout* — distinct markup/components per breakpoint (e.g. a `BottomNav` on mobile vs. the `app-sidebar` on desktop).
+   - *Desktop only for now* — explicitly out of scope; flag it with a `TODO(mobile)` comment.
+3. Only skip the question if the feature is clearly desktop-only in context (e.g. admin tables with dozens of columns).
+
+> Ask the question early — a missed mobile requirement is much more expensive to fix after implementation.
+
+### UnoCSS Responsive Breakpoints
+- Use **mobile-first** breakpoint prefixes: `sm:` (≥640 px), `md:` (≥768 px), `lg:` (≥1024 px), `xl:` (≥1280 px).
+- Default (unprefixed) styles apply to all screens; add prefixed overrides to scale up.
+- Never use `max-w-` or `max-h-` breakpoints to target *only* mobile — prefer the mobile-first direction.
+
+### Touch & Interaction
+- Touch targets must be **at least 44×44 px** (WCAG 2.5.5). Apply `min-h-11 min-w-11` (44 px) to all interactive elements on mobile.
+- Avoid hover-only interactions — every hover state must have an equivalent focus or active state for touch devices.
+- Prefer `@click` over `@mouseenter`/`@mouseleave` for primary actions.
+- For swipe gestures or drag-and-drop, use a library (`@vueuse/gesture` or similar) rather than raw pointer events.
+
+### Navigation on Mobile
+| Pattern | When to use |
+|---|---|
+| Keep `app-sidebar` hidden, add hamburger menu | Simple nav with < 6 items |
+| Bottom navigation bar (`components/BottomNav.vue`) | Feature-level navigation used frequently on mobile |
+| Drawer / slide-over (`PrimeVue Drawer`) | Secondary nav, filters, contextual panels |
+
+### Form & Data Display
+- On mobile, prefer **stacked form fields** (`flex-col`) over horizontal layouts.
+- Tables must degrade gracefully: hide secondary columns on small viewports (`hidden sm:table-cell`) or replace with a card-list view.
+- Use `overflow-x-auto` on table wrappers — never let a table break the page layout.
+- Dialogs must be **full-screen on mobile**: apply `w-full max-w-full rounded-none` below `sm:` breakpoint or use a PrimeVue `Dialog` with `:style="{ width: isMobile ? '100vw' : '40rem' }"`.
+
+### Viewport & Safe Areas
+- Add `safe-area` insets for devices with notches: `pb-safe` / `pt-safe` (define UnoCSS shortcuts using `env(safe-area-inset-*)` if not already present).
+- Use `100dvh` (dynamic viewport height) instead of `100vh` to avoid the iOS address-bar resize bug.
+
+---
+
 ## UX/UI Design Principles
 
 ### Spacing and rhythm
@@ -222,13 +269,14 @@ Before starting any task, **always read** the following files to understand the 
 When working on a frontend task, follow this sequence:
 
 1. **Read** the files listed in Phase 0 to ground yourself in the current state.
-2. **Design first** — sketch the target layout and interaction model mentally before writing code.
-3. **Search** `components/`, `composables/`, `utils/` for reusable building blocks.
-4. **Identify design gaps** — are any new UnoCSS shortcuts or type definitions needed?
-5. **Implement** bottom-up: types → utils → composable → component → page.
-6. **Write tests** alongside each unit as you go.
-7. **Run `pnpm test`** and keep the suite green.
-8. **Review** the result against the design system rules above before considering done.
+2. **Mobile checkpoint** — before designing, evaluate mobile relevance (see *Mobile & Responsive Design → Proactive Mobile Awareness* above). If unclear and relevant, ask the user now using `vscode_askQuestions` with the four implementation options. Do not proceed past this step without a clear answer.
+3. **Design first** — sketch the target layout and interaction model mentally before writing code. Include mobile viewport if in scope.
+4. **Search** `components/`, `composables/`, `utils/` for reusable building blocks.
+5. **Identify design gaps** — are any new UnoCSS shortcuts, breakpoint utilities, or type definitions needed?
+6. **Implement** bottom-up: types → utils → composable → component → page.
+7. **Write tests** alongside each unit as you go.
+8. **Run `pnpm test`** and keep the suite green.
+9. **Review** the result against the design system rules above before considering done.
 
 ---
 
