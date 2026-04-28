@@ -24,7 +24,7 @@ import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
 import { resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
-import { capitalizeFirst, rgbToHex } from '~/utils/util'
+import { capitalizeFirst, rgbToHex, toReadableTagTextColor } from '~/utils/util'
 
 ChartJS.register(
   CategoryScale,
@@ -623,6 +623,7 @@ const topTagsInsights = computed(() => {
         currentAmount,
         percentage: category.percentage,
         variation,
+        colorDTO: category.colorDTO,
       }
     })
 })
@@ -1227,13 +1228,22 @@ watch(selectedBookletId, () => {
               </div>
               <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
                 <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
-                  <div>
-                    <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                      {{ tag.tagLabel }}
-                    </p>
-                    <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
-                      {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
-                    </p>
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span
+                      class="w-3 h-3 rounded-full flex-shrink-0"
+                      :style="{ backgroundColor: `rgb(${tag.colorDTO.red}, ${tag.colorDTO.green}, ${tag.colorDTO.blue})` }"
+                    />
+                    <div class="min-w-0">
+                      <p
+                        class="text-sm font-semibold m-0 truncate"
+                        :style="{ color: toReadableTagTextColor(tag.colorDTO) }"
+                      >
+                        {{ tag.tagLabel }}
+                      </p>
+                      <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                        {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
+                      </p>
+                    </div>
                   </div>
                   <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
                     {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
