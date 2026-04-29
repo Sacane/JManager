@@ -74,8 +74,16 @@ data class UserBookletResponse(
 data class BookletTransactionsIdRequest(
     @field:NotBlank
     val bookletId: String,
-    @field:NotEmpty
-    val transactionIds: List<String>
+    val transactionIds: List<String> = emptyList(),
+    val virtualTransactions: List<VirtualTransactionDescriptorDTO> = emptyList()
+)
+
+@Serializable
+data class VirtualTransactionDescriptorDTO(
+    @field:NotBlank
+    val regularTransactionId: String,
+    val month: Int,
+    val year: Int
 )
 
 @Serializable

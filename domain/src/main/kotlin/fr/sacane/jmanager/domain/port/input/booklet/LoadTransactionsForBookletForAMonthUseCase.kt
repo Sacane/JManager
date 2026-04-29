@@ -108,7 +108,8 @@ class LoadTransactionsForBookletForAMonthService(
 
             val targetYearMonth = YearMonth.of(year, month)
             val currentYearMonth = YearMonth.of(currentYear, currentMonth)
-            val today = LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)
+            val currentYM = YearMonth.of(currentYear, currentMonth)
+            val today = currentYM.atDay(minOf(currentDate.dayOfMonth, currentYM.lengthOfMonth()))
 
             val generationStartNs = System.nanoTime()
             val generatedCount: Int = if (!hasExplicitDateRange && targetYearMonth.equals(currentYearMonth)) {
@@ -121,7 +122,7 @@ class LoadTransactionsForBookletForAMonthService(
                 LOGGER.info("Generated ${transactions.size} physical transactions for current month $month/$year")
                 transactions.size
             } else if (hasExplicitDateRange) {
-                if (!today.isBefore(resolvedRangeStart) && !today.isAfter(resolvedRangeEnd)) {
+                if (!today.isBefore(resolvedRangeStart) && !YearMonth.from(today).isAfter(YearMonth.from(resolvedRangeEnd))) {
                     val startYM = YearMonth.from(resolvedRangeStart)
                     val endYM = YearMonth.from(resolvedRangeEnd)
                     var generated = 0

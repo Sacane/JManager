@@ -1,6 +1,31 @@
 # Changelog
 
+## 2026-04-30
+- **Fix: Domain tests — `LoadTransactionsForBookletForAMonthService` day-of-month sensitivity**
+  - Running on day 30 (or any day ≥ 29) could crash with `DateTimeException: Invalid date 'FEBRUARY 30'` because `today` was built as `LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)` where `currentMonth` came from `startingMonth` (e.g. February) but the actual day was the real calendar day.
+  - Fixed by clamping the day to the length of the target month: `currentYM.atDay(minOf(currentDate.dayOfMonth, currentYM.lengthOfMonth()))`.
+  - A second flakiness issue caused generation to be skipped when the actual calendar day (e.g. April 30) exceeded the cycle end day (e.g. April 27) because the end-range check used exact-date comparison. Fixed by comparing at `YearMonth` level instead: `!YearMonth.from(today).isAfter(YearMonth.from(resolvedRangeEnd))`.
+  - All 534 domain tests now pass regardless of which day the suite is run.
+
+- **Feature: Delete virtual transaction — client-side support**
+  - Added `VirtualTransactionDescriptor` type in `client/types/index.d.ts`.
+  - Updated `deleteTransaction` in `useTransaction.ts` to accept an optional `virtualTransactions` parameter alongside physical `ids`, sending both in a single `DELETE /transaction` call.
+  - Updated `TransactionDeletionDTO` with `excludedVirtualTransactions` field.
+  - Rewrote `confirmDelete()` in `pages/booklet/[id].vue` to split selection into physical (id non-null) and virtual (id null, regularTransactionId set) transactions, build descriptors with `{ regularTransactionId, month, year }`, and send a unified payload.
+  - Virtual transactions without `regularTransactionId` are skipped with a warning toast.
+  - Locally removes deleted physical and excluded virtual transactions from the displayed list.
+  - 4 new tests covering: virtual-only deletion, mixed selection, skipped orphan virtuals with warning, and selection of only unsuppressible virtuals.
+
 ## 2026-04-29
+- **Feature: Delete virtual transaction — exclude virtual transaction occurrences**
+  - Added `ExcludeVirtualTransactionUseCase` in the domain layer: marks a month as excluded in the `RegularTransactionTracker` so that virtual transactions are no longer generated for that month.
+  - Extended `DELETE /api/transaction` endpoint to accept an optional `virtualTransactions` list alongside physical `transactionIds`. Both can be sent in a single HTTP call.
+  - `BookletTransactionsIdRequest` now has optional `transactionIds` (defaults to empty) and `virtualTransactions: List<VirtualTransactionDescriptorDTO>`.
+  - `TransactionDeletionResponse` includes a new `excludedVirtualTransactions` field listing the excluded YearMonth strings.
+  - Backward compatible: existing clients sending only `transactionIds` continue to work unchanged.
+  - Validation: returns 400 if both lists are empty.
+  - 4 domain tests covering success, idempotency, and booklet-not-found scenarios.
+
 - **Fix: Dashboard — monthly cycle range off by one month when anchor date falls after cycle start day**
   - `currentDateRange` in `pages/dashboard/index.vue` was passing `periodAnchorDate` directly to `resolveMonthlyCycleRangeFromAnchor`. When the anchor day (e.g. 29) was ≥ the configured cycle start day (e.g. 27), the function resolved the *next* cycle (Mar 27 – Apr 26) instead of the expected one for the displayed calendar month (Feb 27 – Mar 26).
   - Fixed by replacing the call with `resolveMonthlyCycleRangeForTargetMonth(year, month, startDay, endDay)`, which uses day 15 as a safe cycle-neutral anchor.

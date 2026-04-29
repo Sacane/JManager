@@ -340,24 +340,55 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
 async function confirmDelete() {
   await withLoading(async () => {
     try {
-      const idsToDelete = selectedTransactions.value
-        .map(transaction => transaction.id)
-        .filter((id): id is string => id != null)
+      const physicalIds = selectedTransactions.value
+        .filter(t => t.id != null)
+        .map(t => t.id as string)
 
-      if (idsToDelete.length === 0) {
+      const virtualDescriptors: VirtualTransactionDescriptor[] = []
+      const skippedVirtuals: DisplayTransaction[] = []
+
+      for (const t of selectedTransactions.value) {
+        if (t.id != null) continue
+        if (t.regularTransactionId) {
+          const txDate = new Date(t.date)
+          virtualDescriptors.push({
+            regularTransactionId: t.regularTransactionId,
+            month: txDate.getMonth() + 1,
+            year: txDate.getFullYear(),
+          })
+        } else {
+          skippedVirtuals.push(t)
+        }
+      }
+
+      if (physicalIds.length === 0 && virtualDescriptors.length === 0) {
         toast.warn('La sélection contient uniquement des transactions virtuelles non supprimables.')
         selectedTransactions.value = []
         return
       }
 
+      if (skippedVirtuals.length > 0) {
+        toast.warn('Certaines transactions virtuelles n\'ont pas pu être supprimées (identifiant récurrent manquant).')
+      }
+
       const res = await deleteTransaction(
         bookletData.id,
-        idsToDelete,
+        physicalIds,
+        virtualDescriptors,
       )
 
-      // Update list locally (no reload)
-      const deleted = new Set(res.deletedIds)
-      actualTransactions.value = actualTransactions.value.filter(t => !deleted.has(t.id as string))
+      const deletedPhysical = new Set(res.deletedIds)
+      const excludedMonths = new Set(res.excludedVirtualTransactions ?? [])
+
+      actualTransactions.value = actualTransactions.value.filter((t) => {
+        if (t.id != null) return !deletedPhysical.has(t.id)
+        if (t.regularTransactionId && excludedMonths.size > 0) {
+          const txDate = new Date(t.date)
+          const yearMonth = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`
+          return !excludedMonths.has(yearMonth)
+        }
+        return true
+      })
       selectedTransactions.value = []
 
       await loadBookletData()

@@ -23,6 +23,7 @@ import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.ConfirmPreviewTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.DeleteTransactionsByIdsCommand
 import fr.sacane.jmanager.domain.port.input.transaction.EditTransactionCommand
+import fr.sacane.jmanager.domain.port.input.transaction.ExcludeVirtualTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.FindTransactionByIdQuery
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.toUUID
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.Month
+import java.util.UUID
 import java.util.logging.Logger
 
 @RestController
@@ -73,12 +75,49 @@ class TransactionController(
 
     @DeleteMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteByIds(
-        @Valid @RequestBody transactionIds: BookletTransactionsIdRequest
-    ): ResponseEntity<TransactionDeletionResponse> =
-        commandBus
-            .dispatch(DeleteTransactionsByIdsCommand(SessionToken(currentUser.token), transactionIds.bookletId.toUUID(), transactionIds.transactionIds.toUUIDs()))
-            .map { it.toDTO() }
-            .toHttpResponse()
+        @Valid @RequestBody request: BookletTransactionsIdRequest
+    ): ResponseEntity<TransactionDeletionResponse> {
+        if (request.transactionIds.isEmpty() && request.virtualTransactions.isEmpty()) {
+            throw InvalidRequestException(
+                ResultState.BAD_REQUEST.code,
+                "Both transactionIds and virtualTransactions are empty"
+            )
+        }
+
+        val bookletId = request.bookletId.toUUID()
+        val token = SessionToken(currentUser.token)
+
+        var physicalDeletion: TransactionDeletionResult? = null
+
+        if (request.transactionIds.isNotEmpty()) {
+            physicalDeletion = commandBus
+                .dispatch(DeleteTransactionsByIdsCommand(token, bookletId, request.transactionIds.toUUIDs()))
+                .toHttpResponse()
+                .body
+        }
+
+        val excludedMonths = mutableListOf<String>()
+        request.virtualTransactions.forEach { descriptor ->
+            commandBus.dispatch(
+                ExcludeVirtualTransactionCommand(
+                    token = token,
+                    bookletId = bookletId,
+                    regularTransactionId = RegularTransactionId(descriptor.regularTransactionId),
+                    month = java.time.Month.of(descriptor.month),
+                    year = descriptor.year
+                )
+            ).toHttpResponse()
+            excludedMonths.add("${descriptor.year}-${descriptor.month.toString().padStart(2, '0')}")
+        }
+
+        return ResponseEntity.ok(
+            TransactionDeletionResponse(
+                deletedIds = physicalDeletion?.deletedIds?.map { it.toString() } ?: emptyList(),
+                amount = physicalDeletion?.bookletAmount?.value?.toString() ?: "0",
+                excludedVirtualTransactions = excludedMonths
+            )
+        )
+    }
 
 
     @GetMapping
@@ -344,6 +383,7 @@ data class ConfirmPreviewRequest(
 data class TransactionDeletionResponse(
     val deletedIds: List<String>,
     val amount: String,
+    val excludedVirtualTransactions: List<String> = emptyList()
 )
 
 private fun TransactionDeletionResult.toDTO(): TransactionDeletionResponse = TransactionDeletionResponse(

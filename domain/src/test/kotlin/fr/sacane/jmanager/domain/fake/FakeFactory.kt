@@ -104,6 +104,7 @@ object FakeFactory {
     val editTransactionService = EditTransactionService(transactionRepository, sessionManager, bookletRepository, manager)
     val findTransactionByIdService = FindTransactionByIdService(transactionRepository, sessionManager)
     val deleteTransactionsByIdsService = DeleteTransactionsByIdsService(transactionRepository, sessionManager, bookletRepository, manager, inMemoryTrackerRepository)
+    val excludeVirtualTransactionService = ExcludeVirtualTransactionService(sessionManager, bookletRepository, inMemoryTrackerRepository)
     val confirmPreviewTransactionService = ConfirmPreviewTransactionService(transactionRepository, sessionManager, bookletRepository, manager)
     val loginService = LoginService(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     val logoutService = LogoutService(sessionManager)
