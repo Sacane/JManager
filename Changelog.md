@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-04-30
+- **Feature: Delete virtual transaction — client-side support**
+  - Added `VirtualTransactionDescriptor` type in `client/types/index.d.ts`.
+  - Updated `deleteTransaction` in `useTransaction.ts` to accept an optional `virtualTransactions` parameter alongside physical `ids`, sending both in a single `DELETE /transaction` call.
+  - Updated `TransactionDeletionDTO` with `excludedVirtualTransactions` field.
+  - Rewrote `confirmDelete()` in `pages/booklet/[id].vue` to split selection into physical (id non-null) and virtual (id null, regularTransactionId set) transactions, build descriptors with `{ regularTransactionId, month, year }`, and send a unified payload.
+  - Virtual transactions without `regularTransactionId` are skipped with a warning toast.
+  - Locally removes deleted physical and excluded virtual transactions from the displayed list.
+  - 4 new tests covering: virtual-only deletion, mixed selection, skipped orphan virtuals with warning, and selection of only unsuppressible virtuals.
+
 ## 2026-04-29
 - **Feature: Delete virtual transaction — exclude virtual transaction occurrences**
   - Added `ExcludeVirtualTransactionUseCase` in the domain layer: marks a month as excluded in the `RegularTransactionTracker` so that virtual transactions are no longer generated for that month.

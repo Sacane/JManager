@@ -271,6 +271,12 @@ declare global {
     isIncome: boolean
     tag: string | null
   }
+
+  interface VirtualTransactionDescriptor {
+    regularTransactionId: string
+    month: number
+    year: number
+  }
 }
 
 export {}

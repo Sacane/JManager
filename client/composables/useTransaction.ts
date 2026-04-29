@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 export interface TransactionDeletionDTO {
   deletedIds: string[]
   amount: string
+  excludedVirtualTransactions: string[]
 }
 
 export default function useTransaction() {
@@ -30,10 +31,15 @@ export default function useTransaction() {
     })
   }
 
-  function deleteTransaction(bookletId: string, ids: Array<string>): Promise<TransactionDeletionDTO> {
+  function deleteTransaction(
+    bookletId: string,
+    ids: Array<string>,
+    virtualTransactions?: VirtualTransactionDescriptor[],
+  ): Promise<TransactionDeletionDTO> {
     return deleteQuery(`transaction`, {
       bookletId,
       transactionIds: ids,
+      virtualTransactions: virtualTransactions ?? [],
     })
   }
 
