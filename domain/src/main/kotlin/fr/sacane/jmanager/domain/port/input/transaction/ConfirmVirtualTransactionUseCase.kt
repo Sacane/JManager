@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
@@ -13,7 +14,6 @@ import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
-import fr.sacane.jmanager.domain.port.output.repository.TagRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.utils.*
@@ -30,7 +30,7 @@ data class ConfirmVirtualTransactionCommand(
     val amount: Amount,
     val date: LocalDate,
     val isIncome: Boolean,
-    val tagId: UUID? = null
+    val tagLabel: String? = null
 ) : Command<TransactionResumeResult>
 
 @Port(Side.APPLICATION)
@@ -44,7 +44,6 @@ class ConfirmVirtualTransactionService(
     private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val trackerRepository: RegularTransactionTrackerRepository,
-    private val tagRepository: TagRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider
 ) : ConfirmVirtualTransactionUseCase {
 
@@ -57,7 +56,7 @@ class ConfirmVirtualTransactionService(
                     "domain.virtual_transaction.confirm.booklet_not_found"
                 )
 
-            val tag = tagRepository.defaultTag()
+            val tag = command.tagLabel?.let { Tag(label = it) }
 
             val transaction = Transaction(
                 id = null,

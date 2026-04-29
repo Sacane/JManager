@@ -598,6 +598,34 @@ class TransactionFeatureTest: FeatureTest() {
                 assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2026, Month.MAY)))
             }
         }
+
+        @Test
+        fun `shouldPersistTransactionWithTagLabel_whenTagLabelIsProvided`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-5")
+
+                val result = confirmVirtualTransactionUseCase.handle(
+                    ConfirmVirtualTransactionCommand(
+                        token = tokenValue,
+                        bookletId = booklet.id!!,
+                        regularTransactionId = regularTransactionId,
+                        sourceMonth = 5,
+                        sourceYear = 2026,
+                        label = "Salaire",
+                        amount = 3000.toAmount(),
+                        date = LocalDate.of(2026, 5, 15),
+                        isIncome = true,
+                        tagLabel = "Alimentation & Restaurant"
+                    )
+                )
+
+                result.assertSuccess()
+                result.onSuccess { transactionResult ->
+                    assertNotNull(transactionResult.transaction.tag)
+                    assertEquals("Alimentation & Restaurant", transactionResult.transaction.tag!!.label)
+                }
+            }
+        }
     }
 }
 

@@ -4,7 +4,8 @@
 
 - Added `ConfirmVirtualTransactionUseCase` domain use case to atomically persist a virtual transaction as a real (non-preview) transaction and mark the source month as excluded in the `RegularTransactionTracker`.
 - Added `POST /api/transaction/virtual/confirm` endpoint in the application layer with `ConfirmVirtualTransactionRequest` DTO.
-- Added domain tests covering: happy path (unchanged date), date changed to different month, booklet not found, and tracker auto-creation when missing.
+- Command uses `tagLabel` (optional) to create a domain `Tag` from the provided label instead of looking up by ID.
+- Added domain tests covering: happy path (unchanged date), date changed to different month, booklet not found, tracker auto-creation when missing, and tag label propagation.
 - Added application tests covering: HTTP 200 on success and HTTP 404 on unknown booklet.
 
 - **Fix: Domain tests — `LoadTransactionsForBookletForAMonthService` day-of-month sensitivity**

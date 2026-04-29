@@ -233,7 +233,7 @@ class TransactionController(
                 amount = request.amount.toAmount(),
                 date = request.date,
                 isIncome = request.isIncome,
-                tagId = request.tagId?.let { java.util.UUID.fromString(it) }
+                tagLabel = request.tagLabel
             )
         ).map {
             it.toDTO()
@@ -420,7 +420,7 @@ data class ConfirmVirtualTransactionRequest(
     @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
     val isIncome: Boolean,
-    val tagId: String? = null
+    val tagLabel: String? = null
 )
 
 @Serializable
