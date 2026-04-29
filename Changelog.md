@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-04-30
+- **Fix: Domain tests — `LoadTransactionsForBookletForAMonthService` day-of-month sensitivity**
+  - Running on day 30 (or any day ≥ 29) could crash with `DateTimeException: Invalid date 'FEBRUARY 30'` because `today` was built as `LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)` where `currentMonth` came from `startingMonth` (e.g. February) but the actual day was the real calendar day.
+  - Fixed by clamping the day to the length of the target month: `currentYM.atDay(minOf(currentDate.dayOfMonth, currentYM.lengthOfMonth()))`.
+  - A second flakiness issue caused generation to be skipped when the actual calendar day (e.g. April 30) exceeded the cycle end day (e.g. April 27) because the end-range check used exact-date comparison. Fixed by comparing at `YearMonth` level instead: `!YearMonth.from(today).isAfter(YearMonth.from(resolvedRangeEnd))`.
+  - All 534 domain tests now pass regardless of which day the suite is run.
+
 - **Feature: Delete virtual transaction — client-side support**
   - Added `VirtualTransactionDescriptor` type in `client/types/index.d.ts`.
   - Updated `deleteTransaction` in `useTransaction.ts` to accept an optional `virtualTransactions` parameter alongside physical `ids`, sending both in a single `DELETE /transaction` call.
