@@ -1,6 +1,15 @@
 # Changelog
 
 ## 2026-04-29
+- **Feature: Delete virtual transaction — exclude virtual transaction occurrences**
+  - Added `ExcludeVirtualTransactionUseCase` in the domain layer: marks a month as excluded in the `RegularTransactionTracker` so that virtual transactions are no longer generated for that month.
+  - Extended `DELETE /api/transaction` endpoint to accept an optional `virtualTransactions` list alongside physical `transactionIds`. Both can be sent in a single HTTP call.
+  - `BookletTransactionsIdRequest` now has optional `transactionIds` (defaults to empty) and `virtualTransactions: List<VirtualTransactionDescriptorDTO>`.
+  - `TransactionDeletionResponse` includes a new `excludedVirtualTransactions` field listing the excluded YearMonth strings.
+  - Backward compatible: existing clients sending only `transactionIds` continue to work unchanged.
+  - Validation: returns 400 if both lists are empty.
+  - 4 domain tests covering success, idempotency, and booklet-not-found scenarios.
+
 - **Fix: Dashboard — monthly cycle range off by one month when anchor date falls after cycle start day**
   - `currentDateRange` in `pages/dashboard/index.vue` was passing `periodAnchorDate` directly to `resolveMonthlyCycleRangeFromAnchor`. When the anchor day (e.g. 29) was ≥ the configured cycle start day (e.g. 27), the function resolved the *next* cycle (Mar 27 – Apr 26) instead of the expected one for the displayed calendar month (Feb 27 – Mar 26).
   - Fixed by replacing the call with `resolveMonthlyCycleRangeForTargetMonth(year, month, startDay, endDay)`, which uses day 15 as a safe cycle-neutral anchor.
