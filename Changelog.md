@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-04-30
+
+- Added `ConfirmVirtualTransactionUseCase` domain use case to atomically persist a virtual transaction as a real (non-preview) transaction and mark the source month as excluded in the `RegularTransactionTracker`.
+- Added `POST /api/transaction/virtual/confirm` endpoint in the application layer with `ConfirmVirtualTransactionRequest` DTO.
+- Added domain tests covering: happy path (unchanged date), date changed to different month, booklet not found, and tracker auto-creation when missing.
+- Added application tests covering: HTTP 200 on success and HTTP 404 on unknown booklet.
+
 - **Fix: Domain tests — `LoadTransactionsForBookletForAMonthService` day-of-month sensitivity**
   - Running on day 30 (or any day ≥ 29) could crash with `DateTimeException: Invalid date 'FEBRUARY 30'` because `today` was built as `LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)` where `currentMonth` came from `startingMonth` (e.g. February) but the actual day was the real calendar day.
   - Fixed by clamping the day to the length of the target month: `currentYM.atDay(minOf(currentDate.dayOfMonth, currentYM.lengthOfMonth()))`.

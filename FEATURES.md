@@ -286,6 +286,18 @@ Then the transaction is converted from preview to a real confirmed transaction
 And the system returns a TransactionResumeResult with the updated balance
 ```
 
+### Scenario: Confirm a virtual transaction and exclude its source month
+```gherkin
+Given an authenticated user viewing month M (e.g. May) on a booklet
+And a virtual transaction exists for a regular transaction A in month M
+When the user confirms the virtual transaction, optionally providing a new amount or date (possibly in a different month N)
+Then a new real (isPreview = false) transaction is persisted with the provided date
+And month M is marked as excluded in the tracker for regular transaction A
+And the virtual transaction no longer appears for month M on subsequent loads
+```
+
+> **Rule**: when confirming a virtual transaction, the source month (the month from which the confirmation is triggered) must always be marked as excluded in the tracker — regardless of the final date chosen by the user. This prevents the virtual transaction from reappearing for the source month.
+
 ---
 
 ## Feature: Regular (Recurring) Transaction Management

@@ -21,6 +21,7 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.input.transaction.TransactionDeletionResult
 import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.ConfirmPreviewTransactionCommand
+import fr.sacane.jmanager.domain.port.input.transaction.ConfirmVirtualTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.DeleteTransactionsByIdsCommand
 import fr.sacane.jmanager.domain.port.input.transaction.EditTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.ExcludeVirtualTransactionCommand
@@ -216,6 +217,31 @@ class TransactionController(
         }
     }
 
+    @PostMapping("/virtual/confirm", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun confirmVirtualTransaction(
+        @Valid @RequestBody request: ConfirmVirtualTransactionRequest
+    ): ResponseEntity<TransactionResponse> {
+        logger.info("Confirming virtual Transaction...")
+        return commandBus.dispatch(
+            ConfirmVirtualTransactionCommand(
+                token = SessionToken(currentUser.token),
+                bookletId = java.util.UUID.fromString(request.bookletId),
+                regularTransactionId = RegularTransactionId(request.regularTransactionId),
+                sourceMonth = request.sourceMonth,
+                sourceYear = request.sourceYear,
+                label = request.label,
+                amount = request.amount.toAmount(),
+                date = request.date,
+                isIncome = request.isIncome,
+                tagId = request.tagId?.let { java.util.UUID.fromString(it) }
+            )
+        ).map {
+            it.toDTO()
+        }.toHttpResponse().also {
+            logger.info("Virtual Transaction confirmed successfully")
+        }
+    }
+
 
     @GetMapping("/regular")
     fun getAllRegularTransactions(
@@ -377,6 +403,24 @@ data class ConfirmPreviewRequest(
     val newAmount: BigDecimal?,
     @Serializable(with = LocalDateSerializer::class)
     val newDate: LocalDate?
+)
+
+@Serializable
+data class ConfirmVirtualTransactionRequest(
+    @field:NotBlank
+    val bookletId: String,
+    @field:NotBlank
+    val regularTransactionId: String,
+    val sourceMonth: Int,
+    val sourceYear: Int,
+    @field:NotBlank
+    val label: String,
+    @Serializable(with = BigDecimalSerializer::class)
+    val amount: BigDecimal,
+    @Serializable(with = LocalDateSerializer::class)
+    val date: LocalDate,
+    val isIncome: Boolean,
+    val tagId: String? = null
 )
 
 @Serializable
