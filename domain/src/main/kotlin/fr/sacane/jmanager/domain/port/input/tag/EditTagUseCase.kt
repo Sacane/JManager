@@ -32,7 +32,8 @@ class EditTagService(
     }
 
     override fun handle(command: EditTagCommand): Result<Tag> = session.authenticate(command.token) {
-        if (command.tag.id == null || !tagRepository.existsById(command.tag.id)) {
+        val tagId = command.tag.id
+        if (tagId == null || !tagRepository.existsById(tagId)) {
             return@authenticate domainFailure(
                 ResultState.NOT_FOUND,
                 "Tag with id ${command.tag.id} has not been found",

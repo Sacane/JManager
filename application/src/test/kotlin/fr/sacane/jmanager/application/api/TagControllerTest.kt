@@ -85,7 +85,7 @@ class TagControllerTest (
             tagStateTestAdapter.init(
                 listOf(
                     UserTagsRequest(
-                        user!!.id, listOf(Tag("test", color = Color(10, 10, 10)))
+                        user!!.id, listOf(Tag.Personal("test", color = Color(10, 10, 10)))
                     )
                 )
             )
@@ -128,10 +128,10 @@ class TagControllerTest (
         fun `Get all registered tags should return 200 and body should contain default and personal tags`() {
             val initialState = listOf(
                 UserTagsRequest(
-                    user!!.id, listOf(Tag("test", color = Color(10, 10, 10)))
+                    user!!.id, listOf(Tag.Personal("test", color = Color(10, 10, 10)))
                 ),
                 UserTagsRequest(
-                    user!!.id, listOf(Tag("test2", color = Color(20, 20, 20)))
+                    user!!.id, listOf(Tag.Personal("test2", color = Color(20, 20, 20)))
                 )
             )
             tagStateTestAdapter.init(
@@ -172,7 +172,7 @@ class TagControllerTest (
         fun `Delete tag endpoint successfully must return 200`() {
             val initialState = listOf(
                 UserTagsRequest(
-                    user!!.id, listOf(Tag("test", color = Color(10, 10, 10)))
+                    user!!.id, listOf(Tag.Personal("test", color = Color(10, 10, 10)))
                 )
             )
             tagStateTestAdapter.init(
@@ -205,7 +205,7 @@ class TagControllerTest (
         @Test
         fun `Delete tag used in a transaction without force must return 409`() {
             tagStateTestAdapter.init(listOf(
-                UserTagsRequest(user!!.id, listOf(Tag("reserved", color = Color(10, 10, 10))))
+                UserTagsRequest(user!!.id, listOf(Tag.Personal("reserved", color = Color(10, 10, 10))))
             ))
             val targetTag = state.get().find { it.label == "reserved" } ?: fail("Tag not found")
             bookletStateTestAdapter.init(listOf(Booklet(Amount(0L), "test-booklet", owner = user)))
@@ -228,7 +228,7 @@ class TagControllerTest (
         @Test
         fun `Delete tag used in a transaction with force must return 200 and reassign to default tag`() {
             tagStateTestAdapter.init(listOf(
-                UserTagsRequest(user!!.id, listOf(Tag("reserved", color = Color(10, 10, 10))))
+                UserTagsRequest(user!!.id, listOf(Tag.Personal("reserved", color = Color(10, 10, 10))))
             ))
             val targetTag = state.get().find { it.label == "reserved" } ?: fail("Tag not found")
             bookletStateTestAdapter.init(listOf(Booklet(Amount(0L), "test-booklet", owner = user)))
@@ -257,7 +257,7 @@ class TagControllerTest (
     inner class PatchTagEndpointTest {
         @Test
         fun `Patch tag endpoint successfully must return 200`() {
-            val element = Tag(label = "test", color = Color(10, 10, 10))
+            val element = Tag.Personal(label = "test", color = Color(10, 10, 10))
             val initialState = listOf(
                 UserTagsRequest(
                     user!!.id, listOf(element)

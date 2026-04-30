@@ -546,4 +546,66 @@ class TransactionControllerTest(
             }
         }
     }
+
+    @Nested
+    inner class ConfirmVirtualTransactionEndpointTest {
+
+        @Test
+        fun `Confirm virtual transaction should return 200`() {
+            bookletStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
+
+            val body = ConfirmVirtualTransactionRequest(
+                bookletId = booklet.id!!.toString(),
+                regularTransactionId = "regular-tx-1",
+                sourceMonth = 5,
+                sourceYear = 2026,
+                label = "Salaire",
+                amount = BigDecimal("3000.00"),
+                date = LocalDate.of(2026, 5, 15),
+                isIncome = true
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/transaction/virtual/confirm")
+            } Then {
+                statusCode(200)
+                body("label", equalTo("Salaire"))
+                body("value", equalTo("3000.00"))
+                body("isPreview", equalTo(false))
+            }
+        }
+
+        @Test
+        fun `Confirm virtual transaction with unknown booklet should return 404`() {
+            val body = ConfirmVirtualTransactionRequest(
+                bookletId = UUID.randomUUID().toString(),
+                regularTransactionId = "regular-tx-2",
+                sourceMonth = 5,
+                sourceYear = 2026,
+                label = "Salaire",
+                amount = BigDecimal("3000.00"),
+                date = LocalDate.of(2026, 5, 15),
+                isIncome = true
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/transaction/virtual/confirm")
+            } Then {
+                statusCode(404)
+            }
+        }
+    }
 }

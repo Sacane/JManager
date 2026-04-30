@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserBooklet
 import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.input.transaction.*
@@ -475,6 +476,155 @@ class TransactionFeatureTest: FeatureTest() {
                 assertNotNull(updated)
                 assertFalse(updated!!.isPreview)
                 assertEquals(newDate, updated.date)
+            }
+        }
+    }
+
+    @Nested
+    inner class ConfirmVirtualTransactionTest {
+
+        private val confirmVirtualTransactionUseCase: ConfirmVirtualTransactionUseCase = FakeFactory.confirmVirtualTransactionService
+
+        @Test
+        fun `shouldPersistRealTransactionAndExcludeSourceMonth_whenConfirmingVirtualTransactionWithUnchangedDate`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-1")
+
+                val result = confirmVirtualTransactionUseCase.handle(
+                    ConfirmVirtualTransactionCommand(
+                        token = tokenValue,
+                        bookletId = booklet.id!!,
+                        regularTransactionId = regularTransactionId,
+                        sourceMonth = 5,
+                        sourceYear = 2026,
+                        label = "Salaire",
+                        amount = 3000.toAmount(),
+                        date = LocalDate.of(2026, 5, 15),
+                        isIncome = true
+                    )
+                )
+
+                result.assertSuccess()
+                result.onSuccess { transactionResult ->
+                    assertFalse(transactionResult.transaction.isPreview)
+                    assertEquals("Salaire", transactionResult.transaction.label)
+                    assertEquals(3000.toAmount(), transactionResult.transaction.amount)
+                    assertEquals(LocalDate.of(2026, 5, 15), transactionResult.transaction.date)
+                }
+
+                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                assertNotNull(tracker)
+                assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2026, Month.MAY)))
+            }
+        }
+
+        @Test
+        fun `shouldPersistTransactionWithNewDateAndExcludeOnlySourceMonth_whenDateChangedToDifferentMonth`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-2")
+
+                val result = confirmVirtualTransactionUseCase.handle(
+                    ConfirmVirtualTransactionCommand(
+                        token = tokenValue,
+                        bookletId = booklet.id!!,
+                        regularTransactionId = regularTransactionId,
+                        sourceMonth = 5,
+                        sourceYear = 2026,
+                        label = "Salaire",
+                        amount = 3000.toAmount(),
+                        date = LocalDate.of(2026, 4, 20),
+                        isIncome = true
+                    )
+                )
+
+                result.assertSuccess()
+                result.onSuccess { transactionResult ->
+                    assertEquals(LocalDate.of(2026, 4, 20), transactionResult.transaction.date)
+                }
+
+                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                assertNotNull(tracker)
+                assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2026, Month.MAY)))
+                assertFalse(tracker.excludedMonths.contains(YearMonth.of(2026, Month.APRIL)))
+            }
+        }
+
+        @Test
+        fun `shouldReturnBookletNotFound_whenBookletDoesNotExist`() {
+            launchWithConnectedUserInstance {
+                val result = confirmVirtualTransactionUseCase.handle(
+                    ConfirmVirtualTransactionCommand(
+                        token = tokenValue,
+                        bookletId = UUID.randomUUID(),
+                        regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-3"),
+                        sourceMonth = 5,
+                        sourceYear = 2026,
+                        label = "Salaire",
+                        amount = 3000.toAmount(),
+                        date = LocalDate.of(2026, 5, 15),
+                        isIncome = true
+                    )
+                )
+
+                result.assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            }
+        }
+
+        @Test
+        fun `shouldCreateTrackerAndExcludeMonth_whenNoTrackerExistsForBooklet`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-4")
+
+                val trackerBefore = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                assertNull(trackerBefore)
+
+                val result = confirmVirtualTransactionUseCase.handle(
+                    ConfirmVirtualTransactionCommand(
+                        token = tokenValue,
+                        bookletId = booklet.id!!,
+                        regularTransactionId = regularTransactionId,
+                        sourceMonth = 5,
+                        sourceYear = 2026,
+                        label = "Salaire",
+                        amount = 3000.toAmount(),
+                        date = LocalDate.of(2026, 5, 15),
+                        isIncome = true
+                    )
+                )
+
+                result.assertSuccess()
+
+                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                assertNotNull(tracker)
+                assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2026, Month.MAY)))
+            }
+        }
+
+        @Test
+        fun `shouldPersistTransactionWithTagLabel_whenTagLabelIsProvided`() {
+            launchWithConnectedUserInstance {
+                val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-5")
+
+                val result = confirmVirtualTransactionUseCase.handle(
+                    ConfirmVirtualTransactionCommand(
+                        token = tokenValue,
+                        bookletId = booklet.id!!,
+                        regularTransactionId = regularTransactionId,
+                        sourceMonth = 5,
+                        sourceYear = 2026,
+                        label = "Salaire",
+                        amount = 3000.toAmount(),
+                        date = LocalDate.of(2026, 5, 15),
+                        isIncome = true,
+                        tag = Tag.Default("Alimentation & Restaurant")
+                    )
+                )
+
+                result.assertSuccess()
+                result.onSuccess { transactionResult ->
+                    assertNotNull(transactionResult.transaction.tag)
+                    assertEquals("Alimentation & Restaurant", transactionResult.transaction.tag!!.label)
+                }
             }
         }
     }

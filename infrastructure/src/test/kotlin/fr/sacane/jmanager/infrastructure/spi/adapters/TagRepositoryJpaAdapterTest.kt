@@ -32,7 +32,7 @@ class TagRepositoryJpaAdapterTest(
 
     @Test
     fun `save should persist personal tag and attach to user`(){
-        val t = Tag("mytag")
+        val t = Tag.Personal("mytag")
         val saved = tagRepositoryJpaAdapter.save(user!!.id, t)
         assertThat(saved).isNotNull
         val uid = user!!.id.value ?: throw AssertionError("user id is null")
@@ -42,8 +42,8 @@ class TagRepositoryJpaAdapterTest(
 
     @Test
     fun `getAll should return defaults plus personal`(){
-        defaultTagPostgresRepository.saveAll(listOf(Tag("d1", isDefault = true).asResource() as fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource))
-        val personal = Tag("p1")
+        defaultTagPostgresRepository.saveAll(listOf(Tag.Default("d1").asResource() as fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource))
+        val personal = Tag.Personal("p1")
         tagRepositoryJpaAdapter.save(user!!.id, personal)
 
         val all = tagRepositoryJpaAdapter.getAll(user!!.id)

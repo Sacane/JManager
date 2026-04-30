@@ -23,10 +23,9 @@ class InMemoryDatabase {
     private val tags = mutableMapOf<UserId, MutableList<Tag>>()
     val userByTag = mutableMapOf<UserId, MutableList<Tag>>()
     val defaultTags = fr.sacane.jmanager.domain.models.defaultTags.map { tag ->
-        Tag(
+        Tag.Default(
             id = UUID.randomUUID(),
             label = tag.label,
-            isDefault = tag.isDefault,
             color = tag.color
         )
     }

@@ -1,6 +1,31 @@
 # Changelog
 
+## 2026-05-01
+
+- **Refactoring: `Tag` → `sealed class` (Tag.Default / Tag.Personal)**
+  - Converted `Tag` from a plain data class with an `isDefault: Boolean` flag to a sealed class with two subtypes: `Tag.Default` and `Tag.Personal`. `isDefault` is preserved as a computed property (`this is Default`).
+  - The wrong-construction bug (virtual transactions always saved with the default tag) is now impossible at compile time: there is no `Tag(label, isDefault = false)` constructor to misuse.
+  - **Domain**: `Tag.kt` rewritten as sealed class. `noneTag()` returns `Tag.Default("Aucune")`. `defaultTags` uses `Tag.Default(...)`. `asPersonalTag()` returns `Tag.Personal`. `ConfirmVirtualTransactionCommand.tagLabel: String?` replaced by `tag: Tag?` — the application layer is now responsible for constructing the correct subtype before dispatching the command. `EditTagUseCase` smart-cast fixed with a local `val tagId`.
+  - **Infrastructure**: `DatasourceMapper` updated to dispatch on `Tag.Default`/`Tag.Personal` in both `asResource()` and `AbstractTagResource.toDomain()`. `TransactionRepositoryJpaAdapter.save()` and `persist()` rewritten with sealed `when` dispatch so the correct FK column (`tag` vs `personalTag`) is always set.
+  - **Application**: `ConfirmVirtualTransactionRequest` changed from `tagLabel: String?` to `tagId: String? + tagIsDefault: Boolean`. Controller builds a typed `Tag.Default` or `Tag.Personal` from the payload before dispatching. `ApiMappingExtensions.TagDTO.toDomain()` and `TransactionResult.toModel()` updated to branch on `isDefault`.
+  - **Frontend**: `confirmVirtualTransaction` in `useTransaction.ts` now sends `tagId` + `tagIsDefault` instead of `tagLabel`. Call site in `booklet/[id].vue` passes `tagDTO?.tagId` and `tagDTO?.isDefault`. Tests updated accordingly.
+  - All 534 domain tests, all infrastructure tests, all application tests, and all 125 frontend tests remain green.
+
 ## 2026-04-30
+
+- Added `confirmVirtualTransaction` function to `useTransaction` composable, calling `POST /transaction/virtual/confirm` with source month/year derived from the current booklet view.
+- Updated `confirmPreview()` in `booklet/[id].vue` to use `confirmVirtualTransaction` for virtual transactions (no `id`) instead of `saveTransaction`, ensuring source-month exclusion is handled atomically by the backend.
+- Persisted preview transactions (with `id`) continue to use the existing `confirmPreviewTransaction` flow unchanged.
+- Added tests covering: virtual confirm calls the new endpoint, persisted preview uses the old flow, sourceMonth/sourceYear are correctly derived from the booklet view.
+- **Fix: NPE in `TransactionResumeResult.toDTO()`** — `this.transaction.tag!!.toDTO()` was crashing with `NullPointerException: null` in Spring logs when confirming a virtual transaction without a specific tag (tag = null). Fixed by replacing `!!` with a null-safe call and a default `TagDTO("Aucune")` fallback. Added `TagDTO`/`ColorDTO` imports to `Controller.kt`.
+- **Fix: `tagLabel` for default tags** — frontend was sending `tagLabel: 'Aucune'` (the fallback label) for transactions with no specific tag. Now sends `undefined` (omitted from JSON → `null` on backend) when `tagDTO.isDefault` is true, ensuring default-tag transactions are saved with no tag association.
+
+- Added `ConfirmVirtualTransactionUseCase` domain use case to atomically persist a virtual transaction as a real (non-preview) transaction and mark the source month as excluded in the `RegularTransactionTracker`.
+- Added `POST /api/transaction/virtual/confirm` endpoint in the application layer with `ConfirmVirtualTransactionRequest` DTO.
+- Command uses `tagLabel` (optional) to create a domain `Tag` from the provided label instead of looking up by ID.
+- Added domain tests covering: happy path (unchanged date), date changed to different month, booklet not found, tracker auto-creation when missing, and tag label propagation.
+- Added application tests covering: HTTP 200 on success and HTTP 404 on unknown booklet.
+
 - **Fix: Domain tests — `LoadTransactionsForBookletForAMonthService` day-of-month sensitivity**
   - Running on day 30 (or any day ≥ 29) could crash with `DateTimeException: Invalid date 'FEBRUARY 30'` because `today` was built as `LocalDate.of(currentYear, currentMonth, currentDate.dayOfMonth)` where `currentMonth` came from `startingMonth` (e.g. February) but the actual day was the real calendar day.
   - Fixed by clamping the day to the length of the target month: `currentYM.atDay(minOf(currentDate.dayOfMonth, currentYM.lengthOfMonth()))`.

@@ -3,12 +3,36 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import BookletDetailsPage from '../../pages/booklet/[id].vue'
 
 const deleteTransactionMock = vi.fn().mockResolvedValue({ deletedIds: [], excludedVirtualTransactions: [] })
+const confirmVirtualTransactionMock = vi.fn().mockResolvedValue({
+  id: 'new-tx-1',
+  label: 'Confirmed',
+  value: 100,
+  isIncome: false,
+  date: '2026-03-15',
+  color: { red: 255, green: 255, blue: 255 },
+  tagDTO: { tagId: 'default-tag', label: 'Aucune', colorDTO: { red: 255, green: 255, blue: 255 }, isDefault: true },
+  isPreview: false,
+  bookletAmount: '1400.00',
+})
+const confirmPreviewTransactionMock = vi.fn().mockResolvedValue({
+  id: 'tx-1',
+  label: 'Confirmed',
+  value: 100,
+  isIncome: false,
+  date: '2026-03-15',
+  color: { red: 255, green: 255, blue: 255 },
+  tagDTO: { tagId: 'default-tag', label: 'Aucune', colorDTO: { red: 255, green: 255, blue: 255 }, isDefault: true },
+  isPreview: false,
+  bookletAmount: '1400.00',
+})
+const saveTransactionMock = vi.fn()
 
 vi.mock('~/composables/useTransaction', () => ({
   default: () => ({
     deleteTransaction: deleteTransactionMock,
-    confirmPreviewTransaction: vi.fn(),
-    saveTransaction: vi.fn(),
+    confirmPreviewTransaction: confirmPreviewTransactionMock,
+    confirmVirtualTransaction: confirmVirtualTransactionMock,
+    saveTransaction: saveTransactionMock,
     editTransaction: vi.fn(),
     findTransactionById: vi.fn(),
   }),
@@ -445,5 +469,195 @@ describe('pages/booklet/[id] confirmDelete with virtual transactions', () => {
       'La sélection contient uniquement des transactions virtuelles non supprimables.',
     )
     expect(deleteTransactionMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('pages/booklet/[id] confirmPreview with virtual transactions', () => {
+  let successMock: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function mountWithConfirmMock(transactions: TransactionResultDTO[]) {
+    successMock = vi.fn()
+
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useRoute', () => ({ params: { id: 'booklet-1' } }))
+    vi.stubGlobal('useJToast', () => ({
+      success: successMock,
+      errorAxios: vi.fn(),
+      warn: vi.fn(),
+    }))
+    vi.stubGlobal('useLoading', () => ({
+      isScopeLoading: () => false,
+      withLoading: async <T>(action: () => Promise<T>) => action(),
+    }))
+    vi.stubGlobal('useBooklet', () => ({
+      findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
+      findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+    }))
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([defaultTag]),
+      getDefaultTag: vi.fn().mockResolvedValue(defaultTag),
+    }))
+    vi.stubGlobal('useDate', () => ({
+      months: ['JANUARY', 'FEBRUARY', 'MARCH'],
+      englishMonth: (v: string) => v,
+      translate: (v: string) => v,
+      monthFromNumber: (n: number) => ['JANUARY', 'FEBRUARY', 'MARCH'][n - 1] || 'JANUARY',
+      numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
+    }))
+    vi.stubGlobal('navigateTo', vi.fn())
+
+    findTransactionsByIdMonthAndYearMock.mockResolvedValue({
+      transactions,
+      hasRegenerableTransactions: false,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: transactions.length,
+      totalPages: 1,
+    })
+
+    const wrapper = shallowMount(BookletDetailsPage, {
+      global: {
+        mocks: {
+          useDate: () => ({
+            months: ['JANUARY', 'FEBRUARY', 'MARCH'],
+          }),
+        },
+        stubs: {
+          ConfirmDialog: true,
+          ProgressSpinner: { template: '<div class="spinner" />' },
+          DataTable: { template: '<div><slot /><slot name="empty" /></div>' },
+          Column: { template: '<div><slot :data="{}" /></div>' },
+          TransactionCreationDialog: true,
+          Dialog: { template: '<div><slot /></div>' },
+          CsvImportDialog: true,
+          Select: true,
+          DatePicker: true,
+          Tag: true,
+          Checkbox: true,
+          Paginator: true,
+          Button: {
+            props: ['label', 'disabled', 'loading'],
+            template: '<button :data-label="label" :data-loading="String(loading)" :disabled="disabled"><slot /></button>',
+          },
+        },
+      },
+    })
+
+    return wrapper
+  }
+
+  it('calls confirmVirtualTransaction for virtual transaction without id', async () => {
+    const virtualTx = createTransaction({
+      id: null as unknown as string,
+      label: 'Loyer virtuel',
+      value: 800.00,
+      isPreview: true,
+      date: '2026-03-15',
+      regularTransactionId: 'reg-1',
+      tagDTO: { tagId: 'tag-1', label: 'Logement', colorDTO: { red: 100, green: 200, blue: 50 }, isDefault: false },
+    })
+
+    const wrapper = mountWithConfirmMock([virtualTx])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const displayed = vm.filteredTransactions[0]
+    vm.onConfirmPreview(displayed)
+
+    await vm.confirmPreview()
+    await flushPromises()
+
+    expect(confirmVirtualTransactionMock).toHaveBeenCalledWith(
+      'booklet-1',
+      'reg-1',
+      3,
+      2026,
+      'Loyer virtuel',
+      800.00,
+      expect.any(Date),
+      false,
+      'tag-1',
+      false,
+    )
+    expect(saveTransactionMock).not.toHaveBeenCalled()
+    expect(confirmPreviewTransactionMock).not.toHaveBeenCalled()
+    expect(successMock).toHaveBeenCalled()
+  })
+
+  it('calls confirmPreviewTransaction for persisted preview with id', async () => {
+    const persistedPreview = createTransaction({
+      id: 'tx-preview-1',
+      label: 'Abonnement',
+      value: 15.99,
+      isPreview: true,
+      date: '2026-03-10',
+    })
+
+    const wrapper = mountWithConfirmMock([persistedPreview])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const displayed = vm.filteredTransactions[0]
+    vm.onConfirmPreview(displayed)
+
+    await vm.confirmPreview()
+    await flushPromises()
+
+    expect(confirmPreviewTransactionMock).toHaveBeenCalledWith(
+      'booklet-1',
+      'tx-preview-1',
+      null,
+      expect.any(Date),
+    )
+    expect(confirmVirtualTransactionMock).not.toHaveBeenCalled()
+    expect(saveTransactionMock).not.toHaveBeenCalled()
+    expect(successMock).toHaveBeenCalled()
+  })
+
+  it('passes sourceMonth and sourceYear from the current booklet view', async () => {
+    const virtualTx = createTransaction({
+      id: null as unknown as string,
+      label: 'Loyer virtuel',
+      value: 500.00,
+      isPreview: true,
+      date: '2026-03-20',
+      regularTransactionId: 'reg-2',
+    })
+
+    const wrapper = mountWithConfirmMock([virtualTx])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const displayed = vm.filteredTransactions[0]
+    vm.onConfirmPreview(displayed)
+
+    await vm.confirmPreview()
+    await flushPromises()
+
+    expect(confirmVirtualTransactionMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'reg-2',
+      3,
+      2026,
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      'default-tag',
+      true,
+    )
   })
 })

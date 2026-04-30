@@ -145,7 +145,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should return category distribution for all user transactions`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag(id = UUID.randomUUID(), label = "Food", isDefault = false)
+                val foodTag = Tag.Personal(id = UUID.randomUUID(), label = "Food")
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
                 val transactions = listOf(
                     generateTransactionWithTag("Groceries", Amount(BigDecimal("-100")), LocalDate.of(2025, 1, 10), foodTag),
@@ -163,7 +163,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate correct amounts per category`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag(id = UUID.randomUUID(), label = "Food", isDefault = false)
+                val foodTag = Tag.Personal(id = UUID.randomUUID(), label = "Food")
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
 
                 val transactions = listOf(
@@ -183,8 +183,8 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should calculate correct percentages for each category`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag("Food", UUID.randomUUID(),  isDefault = false)
-                val transportTag = Tag("Transport",UUID.randomUUID(), isDefault =  false)
+                val foodTag = Tag.Personal("Food", UUID.randomUUID())
+                val transportTag = Tag.Personal("Transport",UUID.randomUUID())
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag, transportTag))))
 
                 val transactions = listOf(
@@ -236,8 +236,8 @@ class StatsFeatureTest : FeatureTest() {
             launchWithConnectedUserInstance {
                 val foodTagId = UUID.randomUUID()
                 val salaryTagId = UUID.randomUUID()
-                val foodTag = Tag(id = foodTagId, label = "Food", isDefault = false)
-                val salaryTag = Tag(id = salaryTagId, label = "Salary",  isDefault = false)
+                val foodTag = Tag.Personal(id = foodTagId, label = "Food")
+                val salaryTag = Tag.Personal(id = salaryTagId, label = "Salary")
 
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag, salaryTag))))
 
@@ -257,7 +257,7 @@ class StatsFeatureTest : FeatureTest() {
         @Test
         fun `Should scope category distribution to selected booklet`() {
             launchWithConnectedUserInstance {
-                val foodTag = Tag(id = UUID.randomUUID(), label = "Food", isDefault = false)
+                val foodTag = Tag.Personal(id = UUID.randomUUID(), label = "Food")
                 initTags(listOf(UserTag(user.id, mutableListOf(foodTag))))
 
                 val secondBooklet = Booklet(
