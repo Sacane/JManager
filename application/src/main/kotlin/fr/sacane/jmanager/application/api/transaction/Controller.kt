@@ -3,6 +3,7 @@ package fr.sacane.jmanager.application.api.transaction
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Page
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
@@ -30,6 +31,8 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.toUUIDs
 import fr.sacane.jmanager.application.api.*
+import fr.sacane.jmanager.application.api.tag.ColorDTO
+import fr.sacane.jmanager.application.api.tag.TagDTO
 import fr.sacane.jmanager.application.bus.CommandBus
 import fr.sacane.jmanager.application.bus.QueryBus
 import fr.sacane.jmanager.application.configuration.BigDecimalSerializer
@@ -233,7 +236,11 @@ class TransactionController(
                 amount = request.amount.toAmount(),
                 date = request.date,
                 isIncome = request.isIncome,
-                tagLabel = request.tagLabel
+                tag = request.tagId?.let { rawId ->
+                    val id = java.util.UUID.fromString(rawId)
+                    if (request.tagIsDefault) Tag.Default(id = id, label = "")
+                    else Tag.Personal(id = id, label = "")
+                }
             )
         ).map {
             it.toDTO()
@@ -381,13 +388,15 @@ class TransactionController(
 }
 
 fun TransactionResumeResult.toDTO(): TransactionResponse {
+    val tagDTO = this.transaction.tag?.toDTO()
+        ?: TagDTO(tagId = null, label = "Aucune", colorDTO = ColorDTO(255, 255, 255), isDefault = true)
     return TransactionResponse(
         this.transaction.id.toString(),
         this.transaction.label,
         this.transaction.date,
         this.transaction.amount.value.toString(),
         this.transaction.isIncome,
-        this.transaction.tag!!.toDTO(),
+        tagDTO,
         this.bookletAmount.value.toString(),
         this.transaction.isPreview
     )
@@ -420,7 +429,8 @@ data class ConfirmVirtualTransactionRequest(
     @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
     val isIncome: Boolean,
-    val tagLabel: String? = null
+    val tagId: String? = null,
+    val tagIsDefault: Boolean = false
 )
 
 @Serializable

@@ -53,11 +53,10 @@ class DatasourceMapperTest {
     @Test
     fun `Transaction should convert to TransactionResource with default tag`() {
         val idTag = UUID.randomUUID()
-        val tag = Tag(
+        val tag = Tag.Default(
             label = "Shopping",
             id = idTag,
             color = Color.RED,
-            isDefault = true
         )
         val txId = UUID.randomUUID()
         val transaction = Transaction(
@@ -91,11 +90,10 @@ class DatasourceMapperTest {
     @Test
     fun `Transaction should convert to TransactionResource with personal tag`() {
         val idTag = UUID.randomUUID()
-        val tag = Tag(
+        val tag = Tag.Personal(
             label = "My Category",
             id = idTag,
             color = Color.BLUE,
-            isDefault = false
         )
         val transaction = Transaction(
             id = UUID.randomUUID(),

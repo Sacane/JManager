@@ -51,8 +51,8 @@ class CsvExportControllerTest(
         )
         bookletId = bookletStateAdapter.get().first().id!!.toString()
 
-        val alimentationTag = Tag("Alimentation & Restaurant", isDefault = true)
-        val transportTag = Tag("Transport", isDefault = true)
+        val alimentationTag = Tag.Default("Alimentation & Restaurant")
+        val transportTag = Tag.Default("Transport")
 
         testTransactions.clear()
         testTransactions.addAll(listOf(

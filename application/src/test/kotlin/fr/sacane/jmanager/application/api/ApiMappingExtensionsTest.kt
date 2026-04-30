@@ -64,11 +64,10 @@ class ApiMappingExtensionsTest {
 
     @Test
     fun `Transaction toDTO should convert transaction correctly`() {
-        val tag = Tag(
+        val tag = Tag.Personal(
             label = "Shopping",
             id = UUID.randomUUID(),
             color = Color.RED,
-            isDefault = false
         )
         val trId = UUID.randomUUID()
         val transaction = Transaction(
@@ -285,11 +284,10 @@ class ApiMappingExtensionsTest {
     @Test
     fun `Tag toDTO should convert tag correctly`() {
         val tagId = UUID.randomUUID()
-        val tag = Tag(
+        val tag = Tag.Default(
             label = "Transport",
             id = tagId,
             color = Color.BLUE,
-            isDefault = true
         )
 
         val dto = tag.toDTO()

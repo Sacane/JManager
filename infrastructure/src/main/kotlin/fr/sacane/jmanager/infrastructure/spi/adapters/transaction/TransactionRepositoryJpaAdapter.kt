@@ -36,19 +36,16 @@ class TransactionRepositoryJpaAdapter(
     override fun persist(userId: UserId, bookletLabel: String, transaction: Transaction): Transaction? {
         val id = userId.value ?: return null
         val booklet = bookletJpaRepository.findByOwnerAndLabelWithTransactions(id, bookletLabel) ?: return null
-        val transactionResource: TransactionResource
-        if (transaction.tag?.label == Tag.noneTag().label) {
-            val noneTag = tagRepository.findUnknownTag()
-            transactionResource = transaction.asResource(noneTag)
-        } else if (transaction.tag?.isDefault == true) {
-            val byName = tagRepository.findAll().firstOrNull { it.name == transaction.tag!!.label }
-            transactionResource = if (byName != null) {
-                transaction.asResource(byName)
-            } else {
-                transaction.mapToRightTag()
+        val transactionResource: TransactionResource = when (val t = transaction.tag) {
+            null, is Tag.Default -> {
+                if (t?.label == Tag.noneTag().label || t == null) {
+                    transaction.asResource(tagRepository.findUnknownTag())
+                } else {
+                    val byName = tagRepository.findAll().firstOrNull { it.name == t.label }
+                    if (byName != null) transaction.asResource(byName) else transaction.mapToRightTag()
+                }
             }
-        } else {
-            transactionResource = transaction.mapToRightTag()
+            is Tag.Personal -> transaction.mapToRightTag()
         }
         return try {
             transactionResource.booklet = booklet
@@ -62,15 +59,13 @@ class TransactionRepositoryJpaAdapter(
     }
 
     fun Transaction.mapToRightTag(): TransactionResource {
-        val tag = when {
-            this.tag == null -> null
-            this.tag!!.id != null -> {
-                if (this.tag!!.isDefault) tagRepository.findByIdNullable(this.tag!!.id!!) else tagPersonalPostgresRepository.findByIdNullable(this.tag!!.id!!)
+        val tag = when (val t = this.tag) {
+            null -> null
+            is Tag.Default -> when {
+                t.id != null -> tagRepository.findByIdNullable(t.id!!)
+                else -> tagRepository.findAll().firstOrNull { it.name == t.label } ?: (t.asResource() as DefaultTagResource)
             }
-            this.tag!!.isDefault -> {
-                tagRepository.findAll().firstOrNull { it.name == this.tag!!.label } ?: (this.tag!!.asResource() as DefaultTagResource)
-            }
-            else -> null
+            is Tag.Personal -> if (t.id != null) tagPersonalPostgresRepository.findByIdNullable(t.id!!) else null
         }
         return this.asResource(tag)
     }
@@ -87,12 +82,12 @@ class TransactionRepositoryJpaAdapter(
 
     @Transactional
     override fun save(bookletId: java.util.UUID, transaction: Transaction): Transaction? {
-        val tag = if (transaction.tag == null) {
-            tagRepository.findUnknownTag()
-        } else if (transaction.tag!!.isDefault) {
-            tagRepository.findAll().firstOrNull { it.name == transaction.tag!!.label }
-        } else {
-            tagPersonalPostgresRepository.findByIdNullable(transaction.tag?.id!!)
+        val tag = when (val t = transaction.tag) {
+            null -> tagRepository.findUnknownTag()
+            is Tag.Default -> if (t.id != null) tagRepository.findByIdNullable(t.id!!)
+                              else tagRepository.findByName(t.label)
+            is Tag.Personal -> if (t.id != null) tagPersonalPostgresRepository.findByIdNullable(t.id!!)
+                               else null
         }
 
         val existingResource = transaction.id?.let {

@@ -21,7 +21,7 @@ class CsvFileValidatorTest {
     fun setup() {
         validator = CsvFileValidator()
         availableTags = defaultTags + listOf(
-            Tag(label = "CustomTag", id = null, isDefault = false, color = Color.BLUE)
+            Tag.Personal(label = "CustomTag", id = null, color = Color.BLUE)
         )
     }
 

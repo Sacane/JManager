@@ -9,7 +9,7 @@ class TagTest {
 
     @Test
     fun `Tag should be created with label and default values`() {
-        val tag = Tag("Shopping")
+        val tag = Tag.Personal("Shopping")
 
         assertEquals("Shopping", tag.label)
         assertNull(tag.id)
@@ -21,7 +21,7 @@ class TagTest {
     fun `Tag should be created with all parameters`() {
         val tagId = UUID.randomUUID()
         val color = Color(255, 0, 0)
-        val tag = Tag("Alimentation", id = tagId, color = color, isDefault = true)
+        val tag = Tag.Default("Alimentation", id = tagId, color = color)
 
         assertEquals(tagId, tag.id)
         assertEquals(color, tag.color)
@@ -31,7 +31,7 @@ class TagTest {
     @Test
     fun `Tag toString should display label and color components`() {
         val color = Color(255, 128, 64, 255)
-        val tag = Tag("Transport", color = color)
+        val tag = Tag.Personal("Transport", color = color)
         val stringRepresentation = tag.toString()
 
         assertTrue(stringRepresentation.contains("Transport"))

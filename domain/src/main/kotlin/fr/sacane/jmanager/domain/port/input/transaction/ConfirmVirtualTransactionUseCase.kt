@@ -30,7 +30,7 @@ data class ConfirmVirtualTransactionCommand(
     val amount: Amount,
     val date: LocalDate,
     val isIncome: Boolean,
-    val tagLabel: String? = null
+    val tag: Tag? = null
 ) : Command<TransactionResumeResult>
 
 @Port(Side.APPLICATION)
@@ -56,7 +56,7 @@ class ConfirmVirtualTransactionService(
                     "domain.virtual_transaction.confirm.booklet_not_found"
                 )
 
-            val tag = command.tagLabel?.let { Tag(label = it) }
+            val tag = command.tag
 
             val transaction = Transaction(
                 id = null,

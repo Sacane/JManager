@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.IdUserBooklet
 import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.input.transaction.*
@@ -615,7 +616,7 @@ class TransactionFeatureTest: FeatureTest() {
                         amount = 3000.toAmount(),
                         date = LocalDate.of(2026, 5, 15),
                         isIncome = true,
-                        tagLabel = "Alimentation & Restaurant"
+                        tag = Tag.Default("Alimentation & Restaurant")
                     )
                 )
 
