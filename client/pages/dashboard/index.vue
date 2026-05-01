@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
   ArcElement,
@@ -89,6 +90,12 @@ const isChartsVisible = ref(false)
 // Doughnut slice toggle state
 const selectedSliceIndex = ref<number | null>(null)
 const sliceDisplayMode = ref<'amount' | 'percentage'>('amount')
+
+// Y-axis scale overrides (null = auto-scale, non-null = custom bounds)
+const lineChartYMin = ref<number | null>(null)
+const lineChartYMax = ref<number | null>(null)
+const barChartYMin = ref<number | null>(null)
+const barChartYMax = ref<number | null>(null)
 
 // Setup intersection observers
 useIntersectionObserver(overviewRef, ([entry]) => {
@@ -590,8 +597,7 @@ function onDoughnutClick(_event: any, elements: any[]) {
 
   if (selectedSliceIndex.value === clickedIndex) {
     sliceDisplayMode.value = sliceDisplayMode.value === 'amount' ? 'percentage' : 'amount'
-  }
-  else {
+  } else {
     selectedSliceIndex.value = clickedIndex
     sliceDisplayMode.value = 'amount'
   }
@@ -736,16 +742,24 @@ function updateIsSmallScreen() {
   }
 }
 
-// computed options so we can change legend position for doughnut on small screens
-const chartOptionsComputed = computed(() => {
-  // shallow clone
-  const opts = JSON.parse(JSON.stringify(chartOptions))
-  // keep legend at bottom for small screens (line/bar already bottom)
-  opts.plugins = opts.plugins || {}
-  opts.plugins.legend = opts.plugins.legend || {}
-  opts.plugins.legend.position = 'bottom'
-  return opts
-})
+// computed options factory — injects custom Y-axis bounds when set
+function makeChartOptions(yMin: Ref<number | null>, yMax: Ref<number | null>) {
+  return computed(() => {
+    const opts = JSON.parse(JSON.stringify(chartOptions))
+    opts.plugins = opts.plugins || {}
+    opts.plugins.legend = opts.plugins.legend || {}
+    opts.plugins.legend.position = 'bottom'
+    if (yMin.value !== null && yMax.value !== null) {
+      opts.scales.y.min = yMin.value
+      opts.scales.y.max = yMax.value
+      opts.scales.y.beginAtZero = false
+    }
+    return opts
+  })
+}
+
+const lineChartOptionsComputed = makeChartOptions(lineChartYMin, lineChartYMax)
+const barChartOptionsComputed = makeChartOptions(barChartYMin, barChartYMax)
 
 const doughnutOptionsComputed = computed(() => {
   return {
@@ -767,6 +781,56 @@ const doughnutOptionsComputed = computed(() => {
     onClick: onDoughnutClick,
   }
 })
+
+// --- Y-axis wheel zoom ---
+const CHART_ZOOM_STEP_RATIO = 0.15
+
+function computeDataRange(chartData: { datasets: { data: number[] }[] }): { min: number, max: number } | null {
+  const allValues = chartData.datasets.flatMap(ds => ds.data).filter(v => Number.isFinite(v))
+  if (allValues.length === 0) return null
+  const dataMin = Math.min(...allValues)
+  const dataMax = Math.max(...allValues)
+  if (dataMax <= dataMin) return null
+  const padding = (dataMax - dataMin) * 0.1
+  return { min: dataMin - padding, max: dataMax + padding }
+}
+
+function applyWheelToScale(
+  yMin: Ref<number | null>,
+  yMax: Ref<number | null>,
+  chartData: { datasets: { data: number[] }[] },
+  deltaY: number,
+): void {
+  if (yMin.value === null || yMax.value === null) {
+    const range = computeDataRange(chartData)
+    if (!range) return
+    yMin.value = range.min
+    yMax.value = range.max
+  }
+  const currentMin = yMin.value
+  const currentMax = yMax.value
+  const range = currentMax - currentMin
+  if (range <= 0) return
+  const step = range * CHART_ZOOM_STEP_RATIO
+  const zoomIn = deltaY < 0
+  if (zoomIn) {
+    const newMax = currentMax - step
+    if (newMax <= currentMin + step * 0.1) return
+    yMin.value = currentMin - step * 0.25
+    yMax.value = newMax
+  } else {
+    yMin.value = currentMin - step * 0.25
+    yMax.value = currentMax + step
+  }
+}
+
+function onLineChartWheel(event: WheelEvent): void {
+  applyWheelToScale(lineChartYMin, lineChartYMax, expensesTrendData.value, event.deltaY)
+}
+
+function onBarChartWheel(event: WheelEvent): void {
+  applyWheelToScale(barChartYMin, barChartYMax, monthlyComparisonData.value, event.deltaY)
+}
 
 if (typeof window !== 'undefined') {
   updateIsSmallScreen()
@@ -994,6 +1058,10 @@ onMounted(() => {
 })
 
 watch([selectedBookletId, selectedPeriod, periodAnchorDate], () => {
+  lineChartYMin.value = null
+  lineChartYMax.value = null
+  barChartYMin.value = null
+  barChartYMax.value = null
   if (!hasInitializedDashboard.value || booklets.value.length === 0) {
     return
   }
@@ -1181,8 +1249,8 @@ watch(selectedBookletId, () => {
               Comparaison revenus vs dépenses sur la période sélectionnée
             </p>
           </div>
-          <div class="chart-container h-75 relative">
-            <Line :data="expensesTrendData" :options="chartOptionsComputed" />
+          <div class="chart-container h-75 relative" data-test="line-chart-container" @wheel.prevent="onLineChartWheel">
+            <Line :data="expensesTrendData" :options="lineChartOptionsComputed" />
           </div>
         </div>
 
@@ -1265,8 +1333,8 @@ watch(selectedBookletId, () => {
               Période active vs période précédente
             </p>
           </div>
-          <div class="chart-container h-75 relative">
-            <Bar :data="monthlyComparisonData" :options="chartOptionsComputed" />
+          <div class="chart-container h-75 relative" data-test="bar-chart-container" @wheel.prevent="onBarChartWheel">
+            <Bar :data="monthlyComparisonData" :options="barChartOptionsComputed" />
           </div>
         </div>
       </section>

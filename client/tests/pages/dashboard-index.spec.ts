@@ -585,3 +585,180 @@ describe('pages/dashboard/index doughnut slice click toggle', () => {
     expect(wrapper.find('[data-test="doughnut-center-label"]').exists()).toBe(false)
   })
 })
+
+describe('pages/dashboard/index chart wheel Y-axis zoom', () => {
+  const trendData = {
+    dailyTrends: [
+      { date: '2026-05-01', expenses: '1000', income: '2000', cumulativeBalance: '1000' },
+      { date: '2026-05-15', expenses: '500', income: '3000', cumulativeBalance: '2500' },
+    ],
+  }
+
+  const trendStatsData = {
+    monthlyTrends: [
+      { month: 5, year: 2026, expenses: '1500', income: '2500' },
+    ],
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+
+    fetchBookletsMock.mockResolvedValue([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        amount: 1200,
+        label: 'Compte principal',
+        transactions: [],
+      },
+    ])
+
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getTrendStatsMock.mockResolvedValue(trendStatsData)
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getDailyTrendStatsMock.mockResolvedValue(trendData)
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 15,
+      bookletCycles: [
+        {
+          bookletId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
+        },
+      ],
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // Scenario 1 — forward scroll (deltaY < 0) zooms in: max decreases
+  it('decreases Y-axis max on Line chart when scrolling forward', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineContainer = wrapper.find('[data-test="line-chart-container"]')
+    expect(lineContainer.exists()).toBe(true)
+
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    const optsBefore = lineStub.props('options') as any
+    expect(optsBefore.scales.y.max).toBeUndefined()
+
+    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await wrapper.vm.$nextTick()
+
+    const optsAfter = lineStub.props('options') as any
+    expect(optsAfter.scales.y.max).toBeDefined()
+    // Initial max is derived from data: max(1000,500,2000,3000,1000,2500) = 3000 + padding
+    // After forward zoom the max should be less than the initial auto-computed max
+    expect(optsAfter.scales.y.max).toBeLessThan(3000 + (3000 - 500) * 0.1)
+  })
+
+  // Scenario 2 — backward scroll (deltaY > 0) zooms out: max increases
+  it('increases Y-axis max on Line chart when scrolling backward after a forward scroll', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineContainer = wrapper.find('[data-test="line-chart-container"]')
+
+    // First, initialise scale with a forward scroll
+    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await wrapper.vm.$nextTick()
+
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    const maxAfterZoomIn = (lineStub.props('options') as any).scales.y.max as number
+
+    // Now scroll backward
+    await lineContainer.trigger('wheel', { deltaY: 100 })
+    await wrapper.vm.$nextTick()
+
+    const maxAfterZoomOut = (lineStub.props('options') as any).scales.y.max as number
+    expect(maxAfterZoomOut).toBeGreaterThan(maxAfterZoomIn)
+  })
+
+  // Scenario 6 — Line and Bar charts are independent
+  it('does not affect Bar chart when scrolling over the Line chart', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineContainer = wrapper.find('[data-test="line-chart-container"]')
+    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await wrapper.vm.$nextTick()
+
+    const barStub = wrapper.findComponent({ name: 'Bar' })
+    const barOpts = barStub.props('options') as any
+    // Bar chart scales should remain auto (no custom min/max injected)
+    expect(barOpts.scales.y.min).toBeUndefined()
+    expect(barOpts.scales.y.max).toBeUndefined()
+  })
+
+  it('does not affect Line chart when scrolling over the Bar chart', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const barContainer = wrapper.find('[data-test="bar-chart-container"]')
+    await barContainer.trigger('wheel', { deltaY: -100 })
+    await wrapper.vm.$nextTick()
+
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    const lineOpts = lineStub.props('options') as any
+    expect(lineOpts.scales.y.min).toBeUndefined()
+    expect(lineOpts.scales.y.max).toBeUndefined()
+  })
+
+  // Scenario 4 — Scale resets when selected period changes
+  it('resets Line chart Y-axis scale when the period changes', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineContainer = wrapper.find('[data-test="line-chart-container"]')
+    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await wrapper.vm.$nextTick()
+
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    expect((lineStub.props('options') as any).scales.y.max).toBeDefined()
+
+    // Change the period
+    const periodButtons = wrapper.findAll('button')
+    const quarterBtn = periodButtons.find(b => b.text() === 'Trimestre')
+    if (quarterBtn) await quarterBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const optsAfterReset = lineStub.props('options') as any
+    expect(optsAfterReset.scales.y.min).toBeUndefined()
+    expect(optsAfterReset.scales.y.max).toBeUndefined()
+  })
+
+  // Scenario 7 — No crash when there is no chart data
+  it('does not throw when scrolling over Line chart with no data', async () => {
+    getDailyTrendStatsMock.mockResolvedValue({ dailyTrends: [] })
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineContainer = wrapper.find('[data-test="line-chart-container"]')
+    expect(async () => {
+      await lineContainer.trigger('wheel', { deltaY: -100 })
+      await wrapper.vm.$nextTick()
+    }).not.toThrow()
+
+    // Options should remain with no custom scale (auto)
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    const opts = lineStub.props('options') as any
+    expect(opts.scales.y.min).toBeUndefined()
+    expect(opts.scales.y.max).toBeUndefined()
+  })
+})
