@@ -3,7 +3,7 @@
 **Generated on**: 2026-05-01  
 **Applied pattern**: Hexagonal Architecture (removal of cross-cutting concern from domain)  
 **Stack**: Kotlin + Spring Boot 3  
-**Overall status**: ⏳ To do — Step 0 / 11
+**Overall status**: ✅ Step 2 / 11 complete
 
 ---
 
@@ -41,7 +41,7 @@ The authentication concern has leaked into the domain layer, violating the Hexag
 
 ### Step 1 — Pilot: Migrate EditBookletUseCase end-to-end
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Objective**: Validate the migration pattern on a single use case across all layers (domain → controller → tests) before scaling to the rest.  
 **Blocking for**: Steps 2–8
 
@@ -64,7 +64,7 @@ The authentication concern has leaked into the domain layer, violating the Hexag
 
 ### Step 2 — Migrate remaining booklet use cases (8 use cases)
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 1  
 **Objective**: Apply the validated pattern to all booklet use cases.
 

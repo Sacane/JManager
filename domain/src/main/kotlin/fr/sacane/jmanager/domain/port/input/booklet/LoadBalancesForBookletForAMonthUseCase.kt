@@ -6,8 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.BookletBalances
-import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionQueryRepository
@@ -24,7 +23,7 @@ import java.time.YearMonth
 import java.util.UUID
 
 data class LoadBalancesForBookletForAMonthQuery(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletId: UUID,
     val month: Month,
     val year: Int,
@@ -41,7 +40,6 @@ interface LoadBalancesForBookletForAMonthUseCase : QueryHandler<LoadBalancesForB
 
 @DomainService
 class LoadBalancesForBookletForAMonthService(
-    private val session: SessionManager,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
     private val transactionQueryRepository: TransactionQueryRepository,
@@ -50,9 +48,8 @@ class LoadBalancesForBookletForAMonthService(
 ) : LoadBalancesForBookletForAMonthUseCase {
 
     override fun handle(query: LoadBalancesForBookletForAMonthQuery): Result<BookletBalances> {
-        val (token, bookletId, month, year, startingMonth, startingYear, startDate, endDate) = query
-        return session.authenticate(token) { userId ->
-        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+        val (userId, bookletId, month, year, startingMonth, startingYear, startDate, endDate) = query
+        return unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
                 val persisted = bookletBalanceQueryRepository.findPersistedBalances(bookletId)
                     ?: return@executeInTransaction bookletDomainFailure(
                         ResultState.BOOKLET_NOT_FOUND,
@@ -119,6 +116,5 @@ class LoadBalancesForBookletForAMonthService(
                     )
                 )
             }
-        }
     }
 }

@@ -3,9 +3,8 @@ package fr.sacane.jmanager.domain.port.input.booklet
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
@@ -23,7 +22,7 @@ import java.time.YearMonth
 import java.util.UUID
 
 data class RegenerateDeletedPrevisionalTransactionsCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletId: UUID,
     val month: Month,
     val year: Int
@@ -36,7 +35,6 @@ interface RegenerateDeletedPrevisionalTransactionsUseCase : CommandHandler<Regen
 
 @DomainService
 class RegenerateDeletedPrevisionalTransactionsService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
@@ -46,9 +44,8 @@ class RegenerateDeletedPrevisionalTransactionsService(
 ) : RegenerateDeletedPrevisionalTransactionsUseCase {
 
     override fun handle(command: RegenerateDeletedPrevisionalTransactionsCommand): Result<List<Transaction>> {
-        val (token, bookletId, month, year) = command
-        return session.authenticate(token) { userId ->
-        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+        val (userId, bookletId, month, year) = command
+        return unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             bookletRepository.findBookletByIdWithTransactions(bookletId)
                 ?: return@executeInTransaction bookletDomainFailure(
                     ResultState.BOOKLET_NOT_FOUND,
@@ -95,6 +92,5 @@ class RegenerateDeletedPrevisionalTransactionsService(
                 return@executeInTransaction success(virtual)
             }
         }
-    }
     }
 }

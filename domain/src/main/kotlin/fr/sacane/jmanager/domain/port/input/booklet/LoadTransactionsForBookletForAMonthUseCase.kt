@@ -5,9 +5,8 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
@@ -27,7 +26,7 @@ import java.util.UUID
 import java.util.logging.Logger
 
 data class LoadTransactionsForBookletForAMonthQuery(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletId: UUID,
     val month: Month,
     val year: Int,
@@ -46,7 +45,6 @@ interface LoadTransactionsForBookletForAMonthUseCase : QueryHandler<LoadTransact
 
 @DomainService
 class LoadTransactionsForBookletForAMonthService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val regularTransactionRepository: RegularTransactionRepository,
     private val regularTransactionGeneratorService: RegularTransactionGenerator,
@@ -61,9 +59,8 @@ class LoadTransactionsForBookletForAMonthService(
     }
 
     override fun handle(query: LoadTransactionsForBookletForAMonthQuery): Result<BookletLoadingResult> {
-        val (token, bookletId, month, year, startingMonth, startingYear, startDate, endDate, pageNumber, pageSize) = query
-        return session.authenticate(token) { userId ->
-        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+        val (userId, bookletId, month, year, startingMonth, startingYear, startDate, endDate, pageNumber, pageSize) = query
+        return unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             val totalStartNs = System.nanoTime()
             LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
 
@@ -284,6 +281,5 @@ class LoadTransactionsForBookletForAMonthService(
 
             return@executeInTransaction success(bookletLoadingResult)
         }
-    }
     }
 }

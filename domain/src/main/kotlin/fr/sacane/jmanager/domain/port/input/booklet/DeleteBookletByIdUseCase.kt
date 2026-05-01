@@ -3,8 +3,7 @@ package fr.sacane.jmanager.domain.port.input.booklet
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
@@ -17,7 +16,7 @@ import java.util.UUID
 
 data class DeleteBookletByIdCommand(
     val bookletId: UUID,
-    val token: SessionToken
+    val userId: UserId
 ) : Command<Nothing>
 
 @Port(Side.APPLICATION)
@@ -27,14 +26,14 @@ interface DeleteBookletByIdUseCase : CommandHandler<DeleteBookletByIdCommand, No
 
 @DomainService
 class DeleteBookletByIdService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository
 ) : DeleteBookletByIdUseCase {
-    override fun handle(command: DeleteBookletByIdCommand): Result<Nothing> = session.authenticate(command.token) { userId ->
+    override fun handle(command: DeleteBookletByIdCommand): Result<Nothing> {
+        val userId = command.userId
         val bookletId = command.bookletId
-        return@authenticate unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
+        return unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             if(bookletRepository.findBookletByIdWithTransactions(bookletId) == null){
                 return@executeInTransaction bookletDomainFailure(
                     ResultState.NOT_FOUND,
