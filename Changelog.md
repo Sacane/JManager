@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-02
+
+- **Refactoring Step 2: Extract authentication from all 8 remaining booklet use cases**
+  - Migrated `DeleteBookletByIdUseCase`, `FindBookletByIdUseCase`, `FindAllRegisteredBookletsUseCase`, `FindByLabelAndUserIdUseCase`, `SaveBookletUseCase`, `RegenerateDeletedPrevisionalTransactionsUseCase`, `LoadTransactionsForBookletForAMonthUseCase`, `LoadBalancesForBookletForAMonthUseCase`.
+  - All Commands/Queries now use `val userId: UserId` instead of `val token: SessionToken`.
+  - All corresponding services no longer inject `SessionManager` and no longer call `session.authenticate(...)`.
+  - `BookletController` and `TransactionController` updated to pass `UserId(currentUser.id)` instead of `SessionToken(currentUser.token)`.
+  - `FakeFactory` updated: removed `sessionManager` as first constructor argument for all 8 migrated service instances.
+  - `BookletFeatureTest` updated: removed `BookletFeatureAuthTest` inner class (auth no longer validated in domain), removed companion `tokenValue`/`session`/`connectUser` members, all test calls now use `user.id` / `userId` directly. Rewritten the duplicate-label test to validate business rule `BOOKLET_LABEL_EXIST`.
+  - All domain tests pass (53/53 for `BookletFeatureTest`, full domain suite green). Application compile clean.
+
 ## 2026-05-01
 
 - **Refactoring: `Tag` → `sealed class` (Tag.Default / Tag.Personal)**

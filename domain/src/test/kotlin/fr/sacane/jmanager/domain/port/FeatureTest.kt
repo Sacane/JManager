@@ -69,6 +69,17 @@ open class FeatureTest {
         sessionManager.removeSession(john.user.id, SessionToken(token))
     }
 
+    fun launchWithUserId(action: UserIdBooklet.() -> Unit) {
+        val userId = UserId(UUID.randomUUID())
+        val booklet = createBooklet(User(userId, "John", null), "test", Amount(0))
+        action(UserIdBooklet(userId, booklet))
+    }
+
+    inner class UserIdBooklet(
+        val userId: UserId,
+        val booklet: Booklet
+    )
+
     inner class BookletTokenUserId(
         val user: MinimalUserRepresentation,
         val tokenValue: SessionToken,

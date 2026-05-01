@@ -7,7 +7,7 @@ import fr.sacane.jmanager.domain.models.BookletBalances
 import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.input.booklet.*
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.application.api.InvalidRequestException
@@ -47,7 +47,7 @@ class BookletController (
         currentUser
         return commandBus.dispatch(
             SaveBookletCommand(
-                token = SessionToken(currentUser.token),
+                userId = UserId(currentUser.id),
                 booklet = Booklet(amount = bookletRequest.amount.toAmount(bookletRequest.currency.asCurrency()), label = bookletRequest.label)
             )
         ).map { BookletInfoDTO(it.amount.toStringValue(), it.label, it.id.toString(), it.amount.currency.symbol) }.toHttpResponse()
@@ -58,7 +58,7 @@ class BookletController (
         LOGGER.info("Requesting all booklets...")
 
         val response = queryBus.dispatch(
-            FindAllRegisteredBookletsQuery(SessionToken(currentUser.token))
+            FindAllRegisteredBookletsQuery(UserId(currentUser.id))
         )
         return response.map { booklets ->
             booklets.map {
@@ -70,14 +70,14 @@ class BookletController (
     @DeleteMapping(path = ["{bookletId}"])
     fun deleteBooklet(
         @PathVariable bookletId: String
-    ): ResponseEntity<Nothing> = commandBus.dispatch(DeleteBookletByIdCommand(bookletId.toUUID(), SessionToken(currentUser.token))).toHttpResponse()
+    ): ResponseEntity<Nothing> = commandBus.dispatch(DeleteBookletByIdCommand(bookletId.toUUID(), UserId(currentUser.id))).toHttpResponse()
 
     @GetMapping("{bookletID}")
     fun findBookletById(
         @PathVariable("bookletID") bookletID: String
     ): ResponseEntity<BookletDTO> {
         LOGGER.info("Requesting booklet with ID $bookletID")
-        return queryBus.dispatch(FindBookletByIdQuery(bookletID.toUUID(), SessionToken(currentUser.token)))
+        return queryBus.dispatch(FindBookletByIdQuery(bookletID.toUUID(), UserId(currentUser.id)))
             .map { it.toDTO() }.toHttpResponse()
     }
 
@@ -93,7 +93,7 @@ class BookletController (
         LOGGER.info("Requesting report for booklet $bookletID")
         val result = queryBus.dispatch(
             LoadTransactionsForBookletForAMonthQuery(
-                token = SessionToken(currentUser.token),
+                userId = UserId(currentUser.id),
                 bookletId = bookletID.toUUID(),
                 month = Month.of(month),
                 year = year,
@@ -127,7 +127,7 @@ class BookletController (
         return queryBus
             .dispatch(
                 LoadBalancesForBookletForAMonthQuery(
-                    token = SessionToken(currentUser.token),
+                    userId = UserId(currentUser.id),
                     bookletId = bookletID.toUUID(),
                     month = Month.of(month),
                     year = year,
@@ -154,7 +154,7 @@ class BookletController (
         return queryBus
             .dispatch(
                 LoadTransactionsForBookletForAMonthQuery(
-                    token = SessionToken(currentUser.token),
+                    userId = UserId(currentUser.id),
                     bookletId = bookletID.toUUID(),
                     month = Month.of(month),
                     year = year,
@@ -194,7 +194,7 @@ class BookletController (
         return commandBus
             .dispatch(
                 RegenerateDeletedPrevisionalTransactionsCommand(
-                    token = SessionToken(currentUser.token),
+                    userId = UserId(currentUser.id),
                     bookletId = bookletID.toUUID(),
                     month = Month.of(month),
                     year = year

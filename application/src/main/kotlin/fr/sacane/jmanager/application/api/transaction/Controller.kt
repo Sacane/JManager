@@ -19,6 +19,7 @@ import fr.sacane.jmanager.domain.port.input.regularTransaction.LinkRegularTransa
 import fr.sacane.jmanager.domain.port.input.regularTransaction.UnlinkRegularTransactionFromBookletCommand
 import fr.sacane.jmanager.domain.port.input.regularTransaction.UpdateRegularTransactionCommand
 import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.transaction.TransactionDeletionResult
 import fr.sacane.jmanager.domain.port.input.transaction.BookTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.ConfirmPreviewTransactionCommand
@@ -138,7 +139,7 @@ class TransactionController(
         logger.info("Request transactions from booklet $bookletId for month $month and year $year")
         val response = queryBus.dispatch(
             LoadTransactionsForBookletForAMonthQuery(
-                token = SessionToken(currentUser.token),
+                userId = UserId(currentUser.id),
                 bookletId = java.util.UUID.fromString(bookletId),
                 month = month ?: Month.JANUARY,
                 year = year,
