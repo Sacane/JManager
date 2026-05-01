@@ -38,16 +38,16 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Add a tag must return success`() {
             launchWithConnectedUserInstance {
-                addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag("test")))
+                addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag.Personal("test")))
                     .assertSuccess()
             }
         }
         @Test
         fun `Add a tag with the same label must return failure`() {
             launchWithConnectedUserInstance {
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test"))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag.Personal("test"))))
 
-                addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag("test")))
+                addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag.Personal("test")))
                     .assertFailure()
             }
         }
@@ -55,7 +55,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Add a default tag must return failure`() {
             launchWithConnectedUserInstance {
-                val result = addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag("test", isDefault = true)))
+                val result = addTagUseCase.handle(AddTagCommand(this.tokenValue, Tag.Default("test")))
 
                 result.assertFailure(ResultState.TAG_LABEL_ALREADY_TAKEN)
                 assertEquals("domain.tag.add.label_already_taken", result.errorInfo?.key)
@@ -68,7 +68,7 @@ class TagFeatureTest: FeatureTest() {
         fun `Delete a tag must return success`() {
             launchWithConnectedUserInstance {
                 val uuid = UUID.randomUUID()
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag.Personal("test", id = uuid))))
 
                 deleteTagUseCase.handle(DeleteTagCommand(this.tokenValue, uuid, false))
                     .assertSuccess()
@@ -86,7 +86,7 @@ class TagFeatureTest: FeatureTest() {
         fun `Delete a personal tag used in a transaction without force must return TAG_IN_USE`() {
             launchWithConnectedUserInstance {
                 val tagId = UUID.randomUUID()
-                val tag = Tag("usedTag", id = tagId)
+                val tag = Tag.Personal("usedTag", id = tagId)
                 tagState.init(UserTag(this.user.id, mutableListOf(tag)))
                 initTransactions(listOf(generateTransaction("tx1", Amount(50L), false, tag = tag)))
 
@@ -101,7 +101,7 @@ class TagFeatureTest: FeatureTest() {
         fun `Delete a personal tag used in a transaction with force must succeed and reassign to default tag`() {
             launchWithConnectedUserInstance {
                 val tagId = UUID.randomUUID()
-                val tag = Tag("usedTag", id = tagId)
+                val tag = Tag.Personal("usedTag", id = tagId)
                 tagState.init(UserTag(this.user.id, mutableListOf(tag)))
                 val transaction = generateTransaction("tx1", Amount(50L), false, tag = tag)
                 initTransactions(listOf(transaction))
@@ -120,7 +120,7 @@ class TagFeatureTest: FeatureTest() {
         fun `Get all tags must return success`() {
             launchWithConnectedUserInstance {
                 val uuid = UUID.randomUUID()
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag.Personal("test", id = uuid))))
 
                 getAllTagsUseCase.handle(GetAllTagsQuery(this.tokenValue))
                     .assertSuccess()
@@ -150,16 +150,16 @@ class TagFeatureTest: FeatureTest() {
         fun `Patch a tag must return success`() {
             launchWithConnectedUserInstance {
                 val uuid = UUID.randomUUID()
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag.Personal("test", id = uuid))))
 
-                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("test2", id = uuid)))
+                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag.Personal("test2", id = uuid)))
                     .assertSuccess()
             }
         }
         @Test
         fun `Patch a tag that does not exist must return failure`() {
             launchWithConnectedUserInstance {
-                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("test2", id = UUID.randomUUID())))
+                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag.Personal("test2", id = UUID.randomUUID())))
                     .assertFailure()
             }
         }
@@ -167,7 +167,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Patch a tag without id must return failure`() {
             launchWithConnectedUserInstance {
-                val result = editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("no-id")))
+                val result = editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag.Personal("no-id")))
 
                 result.assertFailure(ResultState.NOT_FOUND)
                 assertEquals("domain.tag.edit.not_found", result.errorInfo?.key)
@@ -179,9 +179,9 @@ class TagFeatureTest: FeatureTest() {
             launchWithConnectedUserInstance {
                 val id1 = UUID.randomUUID()
                 val id2 = UUID.randomUUID()
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("one", id = id1), Tag("two", id = id2))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag.Personal("one", id = id1), Tag.Personal("two", id = id2))))
 
-                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("two", id = id1)))
+                editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag.Personal("two", id = id1)))
                     .assertFailure(ResultState.TAG_LABEL_ALREADY_TAKEN)
             }
         }
@@ -190,9 +190,9 @@ class TagFeatureTest: FeatureTest() {
         fun `Patch a tag that is default must return failure`() {
             launchWithConnectedUserInstance {
                 val uuid = UUID.randomUUID()
-                tagState.init(UserTag(this.user.id, mutableListOf(Tag("test", id = uuid))))
+                tagState.init(UserTag(this.user.id, mutableListOf(Tag.Personal("test", id = uuid))))
 
-                val result = editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag("test", id = uuid, isDefault = true)))
+                val result = editTagUseCase.handle(EditTagCommand(this.tokenValue, Tag.Default("test", id = uuid)))
 
                 result.assertFailure(ResultState.TAG_SHOULD_NOT_BE_DEFAULT)
                 assertEquals("domain.tag.edit.default_forbidden", result.errorInfo?.key)

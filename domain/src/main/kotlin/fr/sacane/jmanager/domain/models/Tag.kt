@@ -3,25 +3,42 @@ package fr.sacane.jmanager.domain.models
 import java.awt.Color
 import java.util.UUID
 
-class Tag(val label: String, val id: UUID? = null, val color: Color = Color(0f, 0f, 0f, 0f), val isDefault: Boolean = false){
-    override fun toString(): String {
-        return """
-            name: $label
-            color: (${color.red}, ${color.green}, ${color.blue}, ${color.alpha})
-        """.trimIndent()
-    }
+sealed class Tag(
+    open val label: String,
+    open val id: UUID? = null,
+    open val color: Color = Color(0f, 0f, 0f, 0f)
+) {
+    val isDefault: Boolean get() = this is Default
+
+    data class Default(
+        override val label: String,
+        override val id: UUID? = null,
+        override val color: Color = Color(0f, 0f, 0f, 0f)
+    ) : Tag(label, id, color)
+
+    data class Personal(
+        override val label: String,
+        override val id: UUID? = null,
+        override val color: Color = Color(0f, 0f, 0f, 0f)
+    ) : Tag(label, id, color)
+
     companion object {
-        fun noneTag(): Tag = Tag("Aucune", color = Color.WHITE, isDefault = true)
+        fun noneTag(): Default = Default("Aucune", color = Color.WHITE)
     }
+
+    override fun toString(): String =
+        "name: $label\ncolor: (${color.red}, ${color.green}, ${color.blue}, ${color.alpha})"
 }
 
-val defaultTags: List<Tag> = listOf(
-    Tag("Achat & Shopping", color = Color(1f, 0f, 0f, 1f), isDefault = true),
-    Tag("Alimentation & Restaurant", color = Color(1f, 0.5f, 0f, 1f), isDefault = true),
-    Tag("Logement & Charges", color = Color(0f, 1f, 0f, 1f), isDefault = true),
-    Tag("Santé", color = Color(0.4f, 0.2f, 0.8f, 1f), isDefault = true),
-    Tag("Transport", color = Color(1f, 0f, 1f, 1f), isDefault = true),
-    Tag("Epargne & Placement", color = Color(1f, 1f, 0f, 1f), isDefault = true),
-    Tag("Aucune", color = Color.WHITE, isDefault = true) // Blanc
+val defaultTags: List<Tag.Default> = listOf(
+    Tag.Default("Achat & Shopping", color = Color(1f, 0f, 0f, 1f)),
+    Tag.Default("Alimentation & Restaurant", color = Color(1f, 0.5f, 0f, 1f)),
+    Tag.Default("Logement & Charges", color = Color(0f, 1f, 0f, 1f)),
+    Tag.Default("Santé", color = Color(0.4f, 0.2f, 0.8f, 1f)),
+    Tag.Default("Transport", color = Color(1f, 0f, 1f, 1f)),
+    Tag.Default("Epargne & Placement", color = Color(1f, 1f, 0f, 1f)),
+    Tag.Default("Aucune", color = Color.WHITE),
 )
-fun String.asPersonalTag(color: Color = Color(0f, 0f, 0f, 0f)): Tag = Tag(this, color = color, isDefault = false)
+
+fun String.asPersonalTag(color: Color = Color(0f, 0f, 0f, 0f)): Tag.Personal =
+    Tag.Personal(this, color = color)

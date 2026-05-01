@@ -62,5 +62,31 @@ export default function useTransaction() {
     })
   }
 
-  return { findByDate, saveTransaction, deleteTransaction, editTransaction, findTransactionById, confirmPreviewTransaction }
+  function confirmVirtualTransaction(
+    bookletId: string,
+    regularTransactionId: string,
+    sourceMonth: number,
+    sourceYear: number,
+    label: string,
+    amount: number,
+    date: Date,
+    isIncome: boolean,
+    tagId?: string,
+    tagIsDefault?: boolean,
+  ): Promise<TransactionResultDTO> {
+    return post('transaction/virtual/confirm', {
+      bookletId,
+      regularTransactionId,
+      sourceMonth,
+      sourceYear,
+      label,
+      amount,
+      date: format(date, 'yyyy-MM-dd'),
+      isIncome,
+      tagId: tagId ?? null,
+      tagIsDefault: tagIsDefault ?? false,
+    })
+  }
+
+  return { findByDate, saveTransaction, deleteTransaction, editTransaction, findTransactionById, confirmPreviewTransaction, confirmVirtualTransaction }
 }

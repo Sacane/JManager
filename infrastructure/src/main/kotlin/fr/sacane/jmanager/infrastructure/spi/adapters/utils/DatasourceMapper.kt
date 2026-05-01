@@ -111,7 +111,7 @@ fun TransactionResource.toModel(): Transaction
     this.date,
     this.value.toAmount(),
     this.isIncome!!,
-    tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag("Aucune", null, Color(0, 0, 0)),
+    tag = this.tag?.toDomain() ?: this.personalTag?.toDomain() ?: Tag.Default("Aucune", null, Color(0, 0, 0)),
     lastModified = this.lastModified ?: LocalDateTime.now(),
     isPreview = isPreview,
     regularTransactionId = this.regularTransactionId?.let { RegularTransactionId(it.toString()) }
@@ -170,15 +170,15 @@ fun UserResource.toModelWithPasswords() : UserWithPassword =
     )
 
 fun Tag.asResource(): AbstractTagResource {
-    return when(this.isDefault) {
-        true -> DefaultTagResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue))
-        false -> TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue))
+    return when(this) {
+        is Tag.Default -> DefaultTagResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue))
+        is Tag.Personal -> TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(this.color.red, this.color.green, this.color.blue))
     }
 }
 fun AbstractTagResource.toDomain(): Tag {
     return when(this) {
-        is DefaultTagResource -> Tag(this.name, this.idTag, this.color.asAwtColor(), true)
-        is TagPersonalResource -> Tag(this.name, this.idTag, this.color.asAwtColor(), false)
+        is DefaultTagResource -> Tag.Default(this.name, this.idTag, this.color.asAwtColor())
+        is TagPersonalResource -> Tag.Personal(this.name, this.idTag, this.color.asAwtColor())
     }
 }
 
@@ -204,10 +204,9 @@ class JpaTagMapperAdapter(
 ) {
     fun mapToResource(tag: Tag?): AbstractTagResource? {
         return tag?.id?.let {
-            if(tag.isDefault) {
-                defaultTagPostgresRepository.findByIdNullable(it)
-            } else {
-                tagPersonalPostgresRepository.findByIdNullable(it)
+            when(tag) {
+                is Tag.Default -> defaultTagPostgresRepository.findByIdNullable(it)
+                is Tag.Personal -> tagPersonalPostgresRepository.findByIdNullable(it)
             }
         }
     }

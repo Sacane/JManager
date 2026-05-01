@@ -20,7 +20,7 @@ const confirm = useConfirm()
 
 const { englishMonth, translate, monthFromNumber, numberFromMonth } = useDate()
 const tag = useTag()
-const { deleteTransaction, confirmPreviewTransaction, saveTransaction, editTransaction, findTransactionById } = useTransaction()
+const { deleteTransaction, confirmPreviewTransaction, confirmVirtualTransaction, saveTransaction, editTransaction, findTransactionById } = useTransaction()
 const { downloadCsvExport } = useCsvImport()
 const { isScopeLoading, withLoading } = useLoading()
 
@@ -441,16 +441,20 @@ async function confirmPreview() {
           actualTransactions.value[index] = asDisplayableTransaction(result)
         }
       } else {
-        await saveTransaction(bookletData.label, {
-          id: null,
-          label: transaction.label,
-          tagDTO: transaction.tagDTO,
-          regularTransactionId: transaction.regularTransactionId,
-          isIncome: transaction.isIncome,
-          isPreview: false,
-          value: finalAmount,
-          date: finalDate,
-        })
+        const sourceMonth = numberFromMonth(bookletData.month) as number
+        const sourceYear = bookletData.year
+        await confirmVirtualTransaction(
+          bookletData.id,
+          transaction.regularTransactionId!,
+          sourceMonth,
+          sourceYear,
+          transaction.label,
+          finalAmount,
+          finalDate,
+          transaction.isIncome,
+          transaction.tagDTO?.tagId ?? undefined,
+          transaction.tagDTO?.isDefault ?? false,
+        )
       }
 
       await loadBookletData()

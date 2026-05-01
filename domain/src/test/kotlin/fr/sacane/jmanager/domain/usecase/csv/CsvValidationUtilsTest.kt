@@ -231,8 +231,8 @@ class CsvValidationUtilsTest {
     @DisplayName("validateTag")
     inner class ValidateTagTests {
 
-        private val customTag1 = Tag("CustomTag1", UUID.randomUUID())
-        private val customTag2 = Tag("CustomTag2", UUID.randomUUID())
+        private val customTag1 = Tag.Personal("CustomTag1", UUID.randomUUID())
+        private val customTag2 = Tag.Personal("CustomTag2", UUID.randomUUID())
         private val availableTags = listOf(customTag1, customTag2)
 
         @Test
@@ -294,7 +294,7 @@ class CsvValidationUtilsTest {
         @Test
         fun `should prioritize available tags over default tags`() {
             val defaultTagLabel = if (defaultTags.isNotEmpty()) defaultTags.first().label else "Transport"
-            val customTagWithDefaultLabel = Tag(defaultTagLabel, UUID.randomUUID())
+            val customTagWithDefaultLabel = Tag.Personal(defaultTagLabel, UUID.randomUUID())
             val tagsWithOverride = listOf(customTagWithDefaultLabel)
 
             val tag = CsvValidationUtils.validateTag(defaultTagLabel, tagsWithOverride)

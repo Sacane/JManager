@@ -24,8 +24,23 @@ internal fun Booklet.toDTO(): BookletDTO = BookletDTO(
     this.amount.currency.symbol
 )
 
-internal fun TransactionResult.toModel(): Transaction
-= Transaction(this.id?.let { java.util.UUID.fromString(it) }, this.label, this.date, Amount(this.value), this.isIncome, tag = if(tagDTO == null) Tag("Aucune", isDefault = true) else Tag(label = tagDTO.label, id = tagDTO.tagId?.let { java.util.UUID.fromString(it) }, isDefault = tagDTO.isDefault, color = Color(tagDTO.colorDTO.red,tagDTO.colorDTO.green,tagDTO.colorDTO.blue)), isPreview = isPreview, regularTransactionId = this.regularTransactionId?.let { fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId(it) })
+internal fun TransactionResult.toModel(): Transaction {
+    val tag: Tag? = if (tagDTO == null) {
+        Tag.Default("Aucune")
+    } else {
+        tagDTO.toDomain()
+    }
+    return Transaction(
+        this.id?.let { java.util.UUID.fromString(it) },
+        this.label,
+        this.date,
+        Amount(this.value),
+        this.isIncome,
+        tag = tag,
+        isPreview = isPreview,
+        regularTransactionId = this.regularTransactionId?.let { fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId(it) }
+    )
+}
 
 internal fun Transaction.toDTO(): TransactionResult {
     return TransactionResult(id?.toString(), label, amount.value, amount.currency.symbol, isIncome, date, tagDTO = tag?.toDTO(), isPreview, regularTransactionId = regularTransactionId?.value)
@@ -103,7 +118,12 @@ internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 
 internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id?.toString(), label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
 
-internal fun TagDTO.toDomain(): Tag = Tag(label = this.label, id = this.tagId?.let { java.util.UUID.fromString(it) }, isDefault = this.isDefault, color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue))
+internal fun TagDTO.toDomain(): Tag {
+    val id = this.tagId?.let { java.util.UUID.fromString(it) }
+    val color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue)
+    return if (this.isDefault) Tag.Default(label = this.label, id = id, color = color)
+    else Tag.Personal(label = this.label, id = id, color = color)
+}
 
 internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
     val regularityType = when (this.recurrenceRule) {

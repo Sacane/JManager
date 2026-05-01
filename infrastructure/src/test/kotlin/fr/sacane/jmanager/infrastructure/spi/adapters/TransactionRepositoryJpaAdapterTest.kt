@@ -129,7 +129,7 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             val booklet = Booklet(label = "acct-list", amount = Amount(300L), owner = user)
             bookletStateTestAdapter.init(listOf(booklet))
 
-            val tx = Transaction(id = null, label = "list-tx", date = LocalDate.now(), amount = Amount(30L), isIncome = false, tag = Tag("t"))
+            val tx = Transaction(id = null, label = "list-tx", date = LocalDate.now(), amount = Amount(30L), isIncome = false, tag = Tag.Personal("t"))
             val persisted = transactionRepositoryJpaAdapter.persist(userId = user!!.id, bookletLabel = booklet.label, transaction = tx)
 
             assertThat(persisted).isNotNull
@@ -198,8 +198,8 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             assertThat(tagInDb).isNotNull
 
              // build transaction tag with the id from DB to force resolution by id
-            val txDefault = Transaction(id = null, label = "tx-default", date = LocalDate.now(), amount = Amount(10L), isIncome = false, tag = Tag("Achat & Shopping",
-                tagInDb?.idTag, isDefault = true))
+            val txDefault = Transaction(id = null, label = "tx-default", date = LocalDate.now(), amount = Amount(10L), isIncome = false, tag = Tag.Default("Achat & Shopping",
+                tagInDb?.idTag))
             val bookletRef = transactionRepositoryJpaAdapter.findBookletByLabelWithTransactions(booklet.label, uid)
             val bookletId = bookletRef!!.id!!
             val persistedDefault = transactionRepositoryJpaAdapter.save(bookletId, txDefault)
@@ -207,7 +207,7 @@ class TransactionRepositoryJpaAdapterTest : AuthenticatedUserTest() {
             assertThat(persistedDefault!!.tag).isNotNull
             assertThat(persistedDefault.tag!!.label).isEqualTo("Achat & Shopping")
 
-            val personalTag = Tag("my-personal", null, isDefault = false)
+            val personalTag = Tag.Personal("my-personal")
             val txPersonal = Transaction(id = null, label = "tx-personal", date = LocalDate.now(), amount = Amount(15L), isIncome = false, tag = personalTag)
             val persistedPersonal = transactionRepositoryJpaAdapter.persist(userId = uid, bookletLabel = booklet.label, transaction = txPersonal)
             assertThat(persistedPersonal).isNotNull

@@ -62,7 +62,7 @@ class CategoryDistributionCalculatorTest {
     @Test
     fun `calculateDistribution should calculate correct distribution for single category`() {
         val tagId = UUID.randomUUID()
-        val shoppingTag = Tag("Shopping", id = tagId, color = Color.RED)
+        val shoppingTag = Tag.Personal("Shopping", id = tagId, color = Color.RED)
         val transactions = listOf(
             Transaction(UUID.randomUUID(), "Buy shoes", LocalDate.now(), 50.toAmount(), isIncome = false, tag = shoppingTag),
             Transaction(UUID.randomUUID(), "Buy clothes", LocalDate.now(), 30.toAmount(), isIncome = false, tag = shoppingTag)
@@ -82,8 +82,8 @@ class CategoryDistributionCalculatorTest {
 
     @Test
     fun `calculateDistribution should calculate correct distribution for multiple categories`() {
-        val shoppingTag = Tag("Shopping", id = UUID.randomUUID(), color = Color.RED)
-        val foodTag = Tag("Food", id = UUID.randomUUID(), color = Color.GREEN)
+        val shoppingTag = Tag.Personal("Shopping", id = UUID.randomUUID(), color = Color.RED)
+        val foodTag = Tag.Personal("Food", id = UUID.randomUUID(), color = Color.GREEN)
 
         val transactions = listOf(
             Transaction(UUID.randomUUID(), "Shopping", LocalDate.now(), 100.toAmount(), isIncome = false, tag = shoppingTag),
@@ -127,7 +127,7 @@ class CategoryDistributionCalculatorTest {
 
     @Test
     fun `calculateDistribution should handle mixed income and expense transactions`() {
-        val tag = Tag("Mixed", id = UUID.randomUUID())
+        val tag = Tag.Personal("Mixed", id = UUID.randomUUID())
         val transactions = listOf(
             Transaction(UUID.randomUUID(), "Income", LocalDate.now(), 500.toAmount(), isIncome = true, tag = tag),
             Transaction(UUID.randomUUID(), "Expense", LocalDate.now(), 100.toAmount(), isIncome = false, tag = tag)
@@ -142,9 +142,9 @@ class CategoryDistributionCalculatorTest {
 
     @Test
     fun `calculateDistribution should sort categories by amount descending`() {
-        val tag1 = Tag("Small", id = UUID.randomUUID())
-        val tag2 = Tag("Large", id = UUID.randomUUID())
-        val tag3 = Tag("Medium", id = UUID.randomUUID())
+        val tag1 = Tag.Personal("Small", id = UUID.randomUUID())
+        val tag2 = Tag.Personal("Large", id = UUID.randomUUID())
+        val tag3 = Tag.Personal("Medium", id = UUID.randomUUID())
 
         val transactions = listOf(
             Transaction(UUID.randomUUID(), "Small", LocalDate.now(), 10.toAmount(), isIncome = false, tag = tag1),
@@ -161,7 +161,7 @@ class CategoryDistributionCalculatorTest {
 
     @Test
     fun `calculateDistribution should handle absolute values correctly`() {
-        val tag = Tag("Test", id = UUID.randomUUID())
+        val tag = Tag.Personal("Test", id = UUID.randomUUID())
         val transactions = listOf(
             Transaction(UUID.randomUUID(), "Negative amount", LocalDate.now(), 100.toAmount(), isIncome = false, tag = tag)
         )
@@ -181,7 +181,7 @@ class CategoryDistributionCalculatorTest {
         override fun saveAll(defaultTags: List<Tag>) {}
         override fun existsDefault(): Boolean = true
         override fun deleteById(tagId: UUID): Boolean = false
-        override fun defaultTag(): Tag = Tag("Default", id = generatedTagId)
+        override fun defaultTag(): Tag = Tag.Default("Default", id = generatedTagId)
         override fun patch(tag: Tag): Tag = tag
         override fun existsAnotherTagByLabel(userId: UserId, tag: Tag): Boolean = false
         override fun existsById(tagId: UUID): Boolean = false

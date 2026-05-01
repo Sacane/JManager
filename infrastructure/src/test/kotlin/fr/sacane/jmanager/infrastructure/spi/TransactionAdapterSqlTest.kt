@@ -35,7 +35,7 @@ class TransactionAdapterSqlTest(
                 label = "test",
                 date = LocalDate.now(),
                 isIncome = false,
-                tag = Tag("test"),
+                tag = Tag.Personal("test"),
                 id = null
             )
             val booklet = Booklet(
@@ -55,7 +55,7 @@ class TransactionAdapterSqlTest(
                 label = "test",
                 date = LocalDate.now(),
                 isIncome = false,
-                tag = Tag("test"),
+                tag = Tag.Personal("test"),
                 id = null
             )
             val booklet = Booklet(
@@ -75,7 +75,7 @@ class TransactionAdapterSqlTest(
                 label = "test",
                 date = LocalDate.now(),
                 isIncome = false,
-                tag = Tag("test"),
+                tag = Tag.Personal("test"),
                 id = null
             )
             val booklet = Booklet(
