@@ -597,8 +597,8 @@ onUnmounted(() => {
 <template>
   <ConfirmDialog />
 
-  <div class="flex flex-col bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-5 md:(py-3 pb-8)">
-    <div class="flex flex-col w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8">
+  <div class="flex flex-col bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] md:(h-full overflow-hidden)">
+    <div class="flex flex-col w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-5 md:(py-4 flex-1 min-h-0)">
       <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-4">
           <div class="flex items-center gap-4 min-w-0 md:gap-3">
@@ -845,7 +845,7 @@ onUnmounted(() => {
         </Transition>
       </div>
 
-      <div v-if="!isMobile" class="sticky top-0 max-h-[calc(100dvh-1rem)] flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
+      <div v-if="!isMobile" class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <AppTable
           v-model:selection="selectedTransactions"
           class="flex-1 min-h-0"

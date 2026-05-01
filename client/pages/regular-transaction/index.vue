@@ -382,16 +382,16 @@ async function handleUnlink() {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen gap-5 bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] py-6 md:(py-4 pb-8) px-5 md:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="rounded-5 p-6 shadow-lg border md:p-4 md:rounded-4" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
-      <div class="flex items-center gap-4">
-        <div class="flex-1">
-          <h1 class="text-5 font-extrabold bg-gradient-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent m-0 mb-1.5 md:text-9 md:mb-2" style="background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-            💰 Mes transactions régulières
+  <div class="flex flex-col gap-4 bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] px-5 md:px-6 lg:px-8 py-5 md:(py-4 h-full overflow-hidden) max-w-7xl mx-auto">
+    <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden">
+      <div class="flex items-center gap-4 min-w-0">
+        <div class="flex-1 min-w-0">
+          <h1 class="text-2xl font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0">
+            Mes transactions régulières
           </h1>
-          <div class="flex gap-2 flex-wrap md:gap-3">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-br from-purple-600/6 to-purple-800/6 border border-purple-500/20 rounded-full text-3 font-semibold text-purple-600 md:px-3 md:py-1.5 md:text-4">
-              <i class="pi pi-sync text-2.8 md:text-3.5" />
+          <div class="flex gap-4 flex-wrap mt-1">
+            <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-secondary)]">
+              <i class="pi pi-sync text-[var(--primary)] text-sm" />
               {{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}
             </span>
           </div>
@@ -417,7 +417,7 @@ async function handleUnlink() {
       />
     </div>
 
-    <div v-if="!isMobile" class="flex-1 flex flex-col rounded-5 overflow-hidden shadow-lg border" style="background-color: var(--card-bg); box-shadow: 0 10px 30px var(--shadow-purple); border-color: var(--card-border);">
+    <div v-if="!isMobile" class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden shadow-lg border border-[var(--card-border)]">
       <AppTable
         v-model:selection="selectedTransactions"
         :columns="regularTransactionColumns"
