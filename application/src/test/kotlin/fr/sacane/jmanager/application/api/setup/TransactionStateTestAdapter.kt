@@ -36,7 +36,7 @@ class TransactionStateTestAdapter(
     override fun init(initialState: Collection<BookletTransaction>) {
         initialState.forEach {
             it.transactions.forEach { tr ->
-                bookTransactionUseCase.handle(BookTransactionCommand(SessionToken(it.token), it.bookletName, tr))
+                bookTransactionUseCase.handle(BookTransactionCommand(it.bookletOwnerId, it.bookletName, tr))
             }
         }
     }

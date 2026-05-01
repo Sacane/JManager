@@ -3,11 +3,10 @@ package fr.sacane.jmanager.domain.port.input.transaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.utils.*
@@ -15,7 +14,7 @@ import java.time.Month
 import java.util.UUID
 
 data class ExcludeVirtualTransactionCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletId: UUID,
     val regularTransactionId: RegularTransactionId,
     val month: Month,
@@ -29,28 +28,25 @@ interface ExcludeVirtualTransactionUseCase : CommandHandler<ExcludeVirtualTransa
 
 @DomainService
 class ExcludeVirtualTransactionService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val trackerRepository: RegularTransactionTrackerRepository
 ) : ExcludeVirtualTransactionUseCase {
 
     override fun handle(command: ExcludeVirtualTransactionCommand): Result<Unit> {
-        return session.authenticate(command.token) {
-            val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletId)
-                ?: return@authenticate domainFailure(
-                    ResultState.BOOKLET_NOT_FOUND,
-                    "Booklet ${command.bookletId} n'existe pas",
-                    "domain.virtual_transaction.exclude.booklet_not_found"
-                )
-
-            trackerRepository.markMonthAsExcluded(
-                regularTransactionId = command.regularTransactionId,
-                bookletId = command.bookletId,
-                year = command.year,
-                month = command.month
+        val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletId)
+            ?: return domainFailure(
+                ResultState.BOOKLET_NOT_FOUND,
+                "Booklet ${command.bookletId} n'existe pas",
+                "domain.virtual_transaction.exclude.booklet_not_found"
             )
 
-            success(Unit)
-        }
+        trackerRepository.markMonthAsExcluded(
+            regularTransactionId = command.regularTransactionId,
+            bookletId = command.bookletId,
+            year = command.year,
+            month = command.month
+        )
+
+        return success(Unit)
     }
 }

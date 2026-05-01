@@ -4,7 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.input.tag.*
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.application.api.*
 import fr.sacane.jmanager.application.bus.CommandBus
@@ -26,14 +26,14 @@ class TagController(
     fun addPersonalTag(
         @Valid @RequestBody userTagRequest: UserTagRequest
     ): ResponseEntity<TagDTO>
-    = commandBus.dispatch(AddTagCommand(token = SessionToken(currentUser.token), tag = userTagRequest.tagLabel.asPersonalTag(userTagRequest.colorDTO.asAwtColor())))
+    = commandBus.dispatch(AddTagCommand(userId = UserId(currentUser.id), tag = userTagRequest.tagLabel.asPersonalTag(userTagRequest.colorDTO.asAwtColor())))
             .map { it.toDTO() }.toHttpResponse()
 
 
     @GetMapping
     fun getAllTags(
     ): ResponseEntity<List<TagDTO>>
-    = queryBus.dispatch(GetAllTagsQuery(SessionToken(currentUser.token))).map { it.map { tag -> tag.toDTO() } }.toHttpResponse()
+    = queryBus.dispatch(GetAllTagsQuery(UserId(currentUser.id))).map { it.map { tag -> tag.toDTO() } }.toHttpResponse()
 
 
     @DeleteMapping("{tagId}")
@@ -41,18 +41,18 @@ class TagController(
         @PathVariable("tagId") tagId: String,
         @RequestParam(required = false, defaultValue = "false") force: Boolean
     ): ResponseEntity<Nothing>
-       = commandBus.dispatch(DeleteTagCommand(SessionToken(currentUser.token), tagId.toUUID(), force))
+       = commandBus.dispatch(DeleteTagCommand(UserId(currentUser.id), tagId.toUUID(), force))
            .toHttpResponse()
 
     @GetMapping("/default")
-    fun defaultTag(): ResponseEntity<TagDTO> = queryBus.dispatch(DefaultTagQuery(SessionToken(currentUser.token)))
+    fun defaultTag(): ResponseEntity<TagDTO> = queryBus.dispatch(DefaultTagQuery(UserId(currentUser.id)))
         .map { it.toDTO() }.toHttpResponse()
 
     @PatchMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun editTag(
         @Valid @RequestBody tagDTO: TagDTO
     ): ResponseEntity<TagDTO> {
-        return commandBus.dispatch(EditTagCommand(SessionToken(currentUser.token), tagDTO.toDomain()))
+        return commandBus.dispatch(EditTagCommand(UserId(currentUser.id), tagDTO.toDomain()))
             .map { it.toDTO() }.toHttpResponse()
     }
 }

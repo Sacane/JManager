@@ -71,14 +71,25 @@ open class FeatureTest {
 
     fun launchWithUserId(action: UserIdBooklet.() -> Unit) {
         val userId = UserId(UUID.randomUUID())
-        val booklet = createBooklet(User(userId, "John", null), "test", Amount(0))
+        val user = User(userId, "John", null)
+        userState.init(listOf(UserWithPassword(user, "test")))
+        val booklet = createBooklet(user, "test", Amount(0))
         action(UserIdBooklet(userId, booklet))
     }
 
     inner class UserIdBooklet(
         val userId: UserId,
         val booklet: Booklet
-    )
+    ) {
+        fun initTransactions(transactions: List<Transaction>) {
+            transactionState.init(listOf(IdBookletByTransaction(IdUserBooklet(userId, booklet.id!!), transactions.toMutableList())))
+        }
+        fun initTags(tags: List<UserTag>) {
+            tags.forEach {
+                tagState.init(it)
+            }
+        }
+    }
 
     inner class BookletTokenUserId(
         val user: MinimalUserRepresentation,

@@ -3,9 +3,8 @@ package fr.sacane.jmanager.domain.port.input.regularTransaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
@@ -13,7 +12,7 @@ import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 
 data class DeleteRegularTransactionsCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val transactionIds: List<String>
 ) : Command<List<String>>
 
@@ -25,15 +24,15 @@ interface DeleteRegularTransactionsUseCase : CommandHandler<DeleteRegularTransac
 @DomainService
 class DeleteRegularTransactionsService(
     private val regularTransactionRepository: RegularTransactionRepository,
-    private val session: SessionManager,
     private val unitOfWork: UnitOfWorkTransactionProvider
 ) : DeleteRegularTransactionsUseCase {
 
     override fun handle(
         command: DeleteRegularTransactionsCommand
-    ): Result<List<String>> = session.authenticate(command.token) { userId ->
+    ): Result<List<String>> {
+        val userId = command.userId
         if (command.transactionIds.isEmpty()) {
-            return@authenticate domainFailure(
+            return domainFailure(
                 ResultState.TRANSACTION_ENTRY_ERROR,
                 "Aucune transaction régulière à supprimer",
                 "domain.regular_transaction.delete.bulk.empty_selection"
@@ -41,7 +40,7 @@ class DeleteRegularTransactionsService(
         }
 
         val distinctIds = command.transactionIds.distinct()
-        return@authenticate unitOfWork.executeInTransaction(distinctIds) { ids ->
+        return unitOfWork.executeInTransaction(distinctIds) { ids ->
             val missingId = ids.firstOrNull {
                 regularTransactionRepository.getRegularTransactionById(userId, RegularTransactionId(it)) == null
             }

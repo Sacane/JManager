@@ -3,7 +3,7 @@
 **Generated on**: 2026-05-01  
 **Applied pattern**: Hexagonal Architecture (removal of cross-cutting concern from domain)  
 **Stack**: Kotlin + Spring Boot 3  
-**Overall status**: ✅ Step 2 / 11 complete
+**Overall status**: ✅ Step 5 / 11 complete
 
 ---
 
@@ -92,7 +92,7 @@ The authentication concern has leaked into the domain layer, violating the Hexag
 
 ### Step 3 — Migrate tag use cases (5 use cases)
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 1  
 **Non-blocking**: Can run in parallel with Steps 2, 4–8
 
@@ -117,7 +117,7 @@ The authentication concern has leaked into the domain layer, violating the Hexag
 
 ### Step 4 — Migrate transaction use cases (8 use cases)
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 1  
 **Non-blocking**: Can run in parallel with Steps 2, 3, 5–8
 
@@ -146,9 +146,7 @@ The authentication concern has leaked into the domain layer, violating the Hexag
 
 ### Step 5 — Migrate regular transaction use cases (8 use cases)
 
-**Status**: ⏳ To do  
-**Depends on**: Step 1  
-**Non-blocking**: Can run in parallel with Steps 2–4, 6–8
+**Status**: ✅ Done
 
 **Use cases:**
 - `BookRegularTransactionUseCase`

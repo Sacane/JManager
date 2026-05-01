@@ -4,9 +4,8 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
@@ -18,7 +17,7 @@ import java.util.UUID
 import java.util.logging.Logger
 
 data class DeleteTransactionsByIdsCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletID: UUID,
     val transactionIds: List<UUID>
 ) : Command<TransactionDeletionResult>
@@ -31,7 +30,6 @@ interface DeleteTransactionsByIdsUseCase : CommandHandler<DeleteTransactionsById
 @DomainService
 class DeleteTransactionsByIdsService(
     private val transactionRepository: TransactionRepository,
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository
@@ -42,14 +40,13 @@ class DeleteTransactionsByIdsService(
     }
 
     override fun handle(command: DeleteTransactionsByIdsCommand): Result<TransactionDeletionResult> {
-        return session.authenticate(command.token) {
-            infraTransactionManager.executeInTransaction(transactionRepository) {
-                val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)
-                    ?: return@executeInTransaction domainFailure(
-                        ResultState.BOOKLET_NOT_FOUND,
-                        "Booklet ${command.bookletID} n'existe pas",
-                        "domain.transaction.delete.booklet_not_found"
-                    )
+        return infraTransactionManager.executeInTransaction(transactionRepository) {
+            val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)
+                ?: return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Booklet ${command.bookletID} n'existe pas",
+                    "domain.transaction.delete.booklet_not_found"
+                )
 
                 if (command.transactionIds.isEmpty()) {
                     return@executeInTransaction domainFailure(
@@ -93,6 +90,5 @@ class DeleteTransactionsByIdsService(
                     )
                 )
             }
-        }
     }
 }

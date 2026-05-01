@@ -4,8 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.MonthlyBookletStatsOutput
-import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.MonthlyStatsCalculator
 import fr.sacane.jmanager.domain.port.input.Query
@@ -19,7 +18,7 @@ import java.util.logging.Logger
 data class GetMonthlyBookletStatsQuery(
     val bookletId: UUID,
     val year: Int,
-    val token: SessionToken
+    val userId: UserId
 ) : Query<MonthlyBookletStatsOutput>
 
 @Port(Side.APPLICATION)
@@ -29,7 +28,6 @@ interface GetMonthlyBookletStatsUseCase : QueryHandler<GetMonthlyBookletStatsQue
 
 @DomainService
 class GetMonthlyBookletStatsService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val monthlyStatsCalculator: MonthlyStatsCalculator
 ) : GetMonthlyBookletStatsUseCase {
@@ -38,18 +36,19 @@ class GetMonthlyBookletStatsService(
         private val LOGGER = Logger.getLogger(GetMonthlyBookletStatsService::class.java.name)
     }
 
-    override fun handle(query: GetMonthlyBookletStatsQuery): Result<MonthlyBookletStatsOutput> = session.authenticate(query.token) { userId ->
+    override fun handle(query: GetMonthlyBookletStatsQuery): Result<MonthlyBookletStatsOutput> {
+        val userId = query.userId
         LOGGER.info("Fetching monthly stats for booklet ${query.bookletId} and year ${query.year}")
 
         val booklet = bookletRepository.findBookletByIdWithTransactions(query.bookletId)
-            ?: return@authenticate statsDomainFailure(
+            ?: return statsDomainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
                 "Le livret ${query.bookletId} est introuvable",
                 "domain.stats.monthly.booklet_not_found"
             )
 
         if (booklet.owner?.id != userId) {
-            return@authenticate statsDomainFailure(
+            return statsDomainFailure(
                 ResultState.FORBIDDEN,
                 "Vous n'avez pas accès à ce livret",
                 "domain.stats.monthly.forbidden"
@@ -63,7 +62,7 @@ class GetMonthlyBookletStatsService(
 
         LOGGER.info("Monthly stats calculated: ${monthlyData.size} months processed")
 
-        success(
+        return success(
             MonthlyBookletStatsOutput(
                 bookletId = query.bookletId,
                 bookletLabel = booklet.label,

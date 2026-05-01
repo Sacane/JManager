@@ -3,9 +3,8 @@ package fr.sacane.jmanager.domain.port.input.regularTransaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
@@ -14,7 +13,7 @@ import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
 data class UpdateRegularTransactionCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val regularTransaction: RegularTransaction,
     val bookletIds: List<UUID>
 ) : Command<RegularTransaction>
@@ -27,14 +26,14 @@ interface UpdateRegularTransactionUseCase : CommandHandler<UpdateRegularTransact
 @DomainService
 class UpdateRegularTransactionService(
     private val regularTransactionRepository: RegularTransactionRepository,
-    private val session: SessionManager,
     private val unitOfWork: UnitOfWorkTransactionProvider
 ) : UpdateRegularTransactionUseCase {
 
     override fun handle(
         command: UpdateRegularTransactionCommand
-    ): Result<RegularTransaction> = session.authenticate(command.token) { userId ->
-        return@authenticate unitOfWork.executeInTransaction(command.regularTransaction) {
+    ): Result<RegularTransaction> {
+        val userId = command.userId
+        return unitOfWork.executeInTransaction(command.regularTransaction) {
             val updated = regularTransactionRepository.updateRegularTransaction(userId, it, command.bookletIds)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,

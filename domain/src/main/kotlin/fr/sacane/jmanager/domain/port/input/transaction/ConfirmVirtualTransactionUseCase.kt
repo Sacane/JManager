@@ -4,14 +4,13 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
@@ -21,7 +20,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class ConfirmVirtualTransactionCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletId: UUID,
     val regularTransactionId: RegularTransactionId,
     val sourceMonth: Int,
@@ -41,14 +40,13 @@ interface ConfirmVirtualTransactionUseCase : CommandHandler<ConfirmVirtualTransa
 @DomainService
 class ConfirmVirtualTransactionService(
     private val transactionRepository: TransactionRepository,
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val trackerRepository: RegularTransactionTrackerRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider
 ) : ConfirmVirtualTransactionUseCase {
 
-    override fun handle(command: ConfirmVirtualTransactionCommand): Result<TransactionResumeResult> = session.authenticate(command.token) {
-        return@authenticate infraTransactionManager.executeInTransaction(Any()) {
+    override fun handle(command: ConfirmVirtualTransactionCommand): Result<TransactionResumeResult> {
+        return infraTransactionManager.executeInTransaction(Any()) {
             val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletId)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,

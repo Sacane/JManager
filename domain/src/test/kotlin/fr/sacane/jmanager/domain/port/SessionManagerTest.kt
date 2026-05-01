@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -29,48 +30,30 @@ class SessionManagerTest {
     inner class AddSessionTest {
 
         @Test
-        fun `Add a session must return success`() {
+        fun `Add a session must be findable by token`() {
             val id = UserId(UUID.randomUUID())
             userState.init(listOf(
                 UserWithPassword(User(id, "test", email = "test"), "test")
             ))
             val accessToken = AccessToken(id, "test","${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
-            sessionState.authenticate(SessionToken(accessToken.tokenValue)) {
-                return@authenticate success("success")
-            }.assertSuccess()
+            val found = sessionManager.findSessionByToken(SessionToken(accessToken.tokenValue))
+            assertNotNull(found)
+            assertEquals(accessToken.tokenValue, found!!.tokenValue)
         }
     }
 
     @Test
-    fun `Remove a session must return success`() {
+    fun `Remove a session must make it unfindable`() {
         val id = UserId(UUID.randomUUID())
         userState.init(listOf(
             UserWithPassword(User(id, "test", email = "test"), "test")
         ))
-        val accessToken = AccessToken(id, "test","${UUID.randomUUID()}||${UUID.randomUUID()}||${Role.USER.name}||test")
+        val accessToken = AccessToken(id, "test","${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
         sessionManager.addSession(id, accessToken)
         sessionManager.removeSession(id, SessionToken(accessToken.tokenValue))
-        sessionManager.authenticate(SessionToken(accessToken.tokenValue)) {
-            return@authenticate success("success")
-        }.assertFailure()
-    }
-
-    @Nested
-    inner class AuthenticateTest {
-
-        @Test
-        fun `Authenticate a session must return success`() {
-            val id = UserId(UUID.randomUUID())
-            userState.init(listOf(
-                UserWithPassword(User(id, "test", email = "test"), "test")
-            ))
-            val accessToken = AccessToken(id, "test","${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
-            sessionManager.addSession(id, accessToken)
-            sessionManager.authenticate(SessionToken(accessToken.tokenValue)) {
-                return@authenticate success("success")
-            }.assertSuccess()
-        }
+        val found = sessionManager.findSessionByToken(SessionToken(accessToken.tokenValue))
+        assertNull(found)
     }
 
     @Nested

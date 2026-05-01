@@ -3,11 +3,9 @@ package fr.sacane.jmanager.domain.port.input.transaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
-import fr.sacane.jmanager.domain.models.roleUser
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
@@ -18,7 +16,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class EditTransactionCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletID: UUID,
     val transaction: Transaction
 ) : Command<TransactionResumeResult>
@@ -31,7 +29,6 @@ interface EditTransactionUseCase : CommandHandler<EditTransactionCommand, Transa
 @DomainService
 class EditTransactionService(
     private val transactionRepository: TransactionRepository,
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider
 ) : EditTransactionUseCase {
@@ -44,8 +41,8 @@ class EditTransactionService(
         return domainFailure(ResultState.NOT_FOUND, detail, key)
     }
 
-    override fun handle(command: EditTransactionCommand): Result<TransactionResumeResult> = session.authenticate(command.token, roleUser) {
-        return@authenticate infraTransactionManager.executeInTransaction(command.transaction) {
+    override fun handle(command: EditTransactionCommand): Result<TransactionResumeResult> {
+        return infraTransactionManager.executeInTransaction(command.transaction) {
             if (command.transaction.id == null) {
                 return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_ENTRY_ERROR,

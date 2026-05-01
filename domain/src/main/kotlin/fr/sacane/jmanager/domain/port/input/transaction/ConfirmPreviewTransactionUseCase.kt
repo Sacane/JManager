@@ -4,9 +4,8 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Amount
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
-import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
@@ -17,7 +16,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 data class ConfirmPreviewTransactionCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletID: UUID,
     val transactionId: UUID,
     val newAmount: Amount? = null,
@@ -32,7 +31,6 @@ interface ConfirmPreviewTransactionUseCase : CommandHandler<ConfirmPreviewTransa
 @DomainService
 class ConfirmPreviewTransactionService(
     private val transactionRepository: TransactionRepository,
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider
 ) : ConfirmPreviewTransactionUseCase {
@@ -41,8 +39,8 @@ class ConfirmPreviewTransactionService(
         return failure(state, DomainError(state.code, key, detail))
     }
 
-    override fun handle(command: ConfirmPreviewTransactionCommand): Result<TransactionResumeResult> = session.authenticate(command.token) {
-        return@authenticate infraTransactionManager.executeInTransaction(Any()) {
+    override fun handle(command: ConfirmPreviewTransactionCommand): Result<TransactionResumeResult> {
+        return infraTransactionManager.executeInTransaction(Any()) {
             val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,

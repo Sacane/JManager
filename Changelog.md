@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-03
+
+- **Refactoring Steps 5-10: Extract authentication from all remaining domain use cases**
+  - **Step 5 (Regular Transactions)**: Migrated 8 use cases (`GetAllRegularTransactions`, `BookRegularTransaction`, `GetRegularTransactionById`, `CreateRegularTransaction`, `UpdateRegularTransaction`, `DeleteRegularTransaction`, `PauseRegularTransaction`, `ResumeRegularTransaction`).
+  - **Step 6 (Stats)**: Migrated 5 use cases (`GetCategoryDistribution`, `GetGlobalCategoryDistribution`, `GetGlobalFinancialOverview`, `GetDailyEvolution`, `GetMonthlyOverview`).
+  - **Step 7 (CSV)**: Migrated 3 use cases (`ValidateCsvFile`, `ImportTransactionsFromCsv`, `ExportTransactionsToCsv`).
+  - **Step 8 (User/Admin)**: Migrated 3 use cases (`GetUserSettings`, `UpdateUserSettings`, `GetUsers`). Removed `requiredRoles` role check from `GetUsersService` (Spring Security handles admin authorization).
+  - **Step 9 (Logout)**: `LogoutService` no longer wraps body in `session.authenticate()`. Keeps `SessionManager` for `removeSession`/`blacklistRefreshToken`. `LogoutCommand` now carries both `userId: UserId` and `token: SessionToken`.
+  - **Step 10 (Cleanup SessionManager)**: Removed `authenticate()` method from `SessionManager` interface and `InMemorySessionManager` implementation. Removed `AuthenticationTest` interface (no longer needed). Updated `SessionManagerTest` to use `findSessionByToken` instead of `authenticate`.
+  - All domain services (except Login, Register, RefreshSession, Logout) no longer inject `SessionManager`.
+  - All Commands/Queries use `val userId: UserId` (except `LogoutCommand` which retains `token` for session identification).
+  - `FeatureTest.launchWithUserId` now registers user in `userState` for settings tests.
+  - Full domain test suite green (529 tests). Application compiles clean.
+
 ## 2026-05-02
 
 - **Refactoring Step 2: Extract authentication from all 8 remaining booklet use cases**
