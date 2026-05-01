@@ -2,6 +2,23 @@
 
 ## 2026-05-01
 
+- **UX: Responsive layout — transaction table pages (booklet/[id] & regular-transaction)**
+  - Both pages now use a proper flex height chain (`h-full overflow-hidden` → `flex-1 min-h-0` → `flex-1 min-h-0` on the table container) so the table always fills the viewport to the bottom without scrolling the page. Internal table overflow is handled by PrimeVue `scroll-height="flex"`, allowing the user to scroll within the table when rows exceed the visible area.
+  - Removed the fragile `sticky top-0 max-h-[calc(100dvh-1rem)]` hack from `booklet/[id].vue`.
+  - Applies to all non-mobile screen sizes; mobile layout is unaffected.
+
+- **UX: Header coherence on regular-transaction page**
+  - Replaced inline styles and hardcoded `purple-600/800` gradient with design-token classes (`var(--primary)`, `var(--primary-2)`, `var(--card-bg)`, `var(--card-border)`) to match the `booklet/[id]` header exactly.
+  - Removed the 💰 emoji and normalised font size / spacing to align with the rest of the app.
+
+- **UX: Regular transaction table — column improvements**
+  - Added `sortable: true` to the **Type** (`isIncome`) and **Fréquence** (`regularity`) columns.
+  - Removed the **Date de début** column from the table (was cluttering the view; detail is still available via the edit dialog).
+  - Actions column is now always frozen to the right (was conditional on screen width).
+  - Removed the unused `isSmallScreen` ref and its resize logic.
+
+
+
 - **Refactoring: `Tag` → `sealed class` (Tag.Default / Tag.Personal)**
   - Converted `Tag` from a plain data class with an `isDefault: Boolean` flag to a sealed class with two subtypes: `Tag.Default` and `Tag.Personal`. `isDefault` is preserved as a computed property (`this is Default`).
   - The wrong-construction bug (virtual transactions always saved with the default tag) is now impossible at compile time: there is no `Tag(label, isDefault = false)` constructor to misuse.
