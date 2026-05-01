@@ -2,6 +2,15 @@
 
 ## 2026-05-01
 
+- **Feature: Dashboard charts — mouse wheel Y-axis scale adjustment**
+  - Scrolling the mouse wheel over the "Évolution des finances" (Line) or "Comparaison de période" (Bar) chart now adjusts the Y-axis visible range interactively.
+  - Scrolling forward (toward the screen) zooms in: the range narrows and shifts down, making detail more visible.
+  - Scrolling backward zooms out: the range expands, revealing a wider span of values.
+  - Each chart maintains its own independent scale state (`lineChartYMin/Max`, `barChartYMin/Max`).
+  - The scale resets to Chart.js auto-scaling whenever the selected period or booklet changes.
+  - Page scroll is suppressed while the pointer is inside a chart container (`@wheel.prevent`).
+  - No external library added — implemented natively with a proportional step ratio (`CHART_ZOOM_STEP_RATIO = 0.15`).
+
 - **UX: Responsive layout — transaction table pages (booklet/[id] & regular-transaction)**
   - Both pages now use a proper flex height chain (`h-full overflow-hidden` → `flex-1 min-h-0` → `flex-1 min-h-0` on the table container) so the table always fills the viewport to the bottom without scrolling the page. Internal table overflow is handled by PrimeVue `scroll-height="flex"`, allowing the user to scroll within the table when rows exceed the visible area.
   - Removed the fragile `sticky top-0 max-h-[calc(100dvh-1rem)]` hack from `booklet/[id].vue`.
