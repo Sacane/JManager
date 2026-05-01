@@ -24,7 +24,6 @@ const jToast = useJToast()
 const booklets = ref<OnlyBookletInfo[]>([])
 const selectedTransactions = ref<RegularTransactionDTO[]>([])
 const isMobile = ref(false)
-const isSmallScreen = ref(false)
 const confirm = useConfirm()
 
 function loadRegularTransactions(page: number = currentPage.value, size: number = pageSize.value) {
@@ -263,39 +262,27 @@ function onRtPageSizeChange() {
 
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768
-  isSmallScreen.value = window.innerWidth > 768 && window.innerWidth <= 1200
 }
 
 const transactionsCount = computed(() => transactions.value.length)
 const selectedTransactionsCount = computed(() => selectedTransactions.value.length)
 
 const regularTransactionColumns = computed<AppTableColumn[]>(() => {
-  const cols: AppTableColumn[] = [
+  return [
     { selectionMode: 'multiple', headerStyle: 'width: 3rem' },
     { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '200px' }, slotName: 'label' },
-    { field: 'isIncome', header: 'Type', style: { minWidth: '130px' }, slotName: 'type' },
+    { field: 'isIncome', header: 'Type', sortable: true, style: { minWidth: '130px' }, slotName: 'type' },
     { field: 'value', header: 'Montant', sortable: true, style: { minWidth: '150px' }, slotName: 'montant' },
     { style: { width: '180px', minWidth: '180px', maxWidth: '180px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
-    { field: 'regularity', header: 'Fréquence', style: { minWidth: '130px' }, slotName: 'regularity' },
+    { field: 'regularity', header: 'Fréquence', sortable: true, style: { minWidth: '130px' }, slotName: 'regularity' },
+    {
+      header: 'Actions',
+      style: { minWidth: '160px' },
+      frozen: true,
+      alignFrozen: 'right',
+      slotName: 'actions',
+    },
   ]
-
-  if (!isSmallScreen.value) {
-    cols.push({ field: 'startDate', header: 'Date de début', sortable: true, style: { minWidth: '140px' }, slotName: 'startDate' })
-  }
-
-  cols.push({
-    header: 'Actions',
-    style: { minWidth: '160px' },
-    frozen: !isSmallScreen.value,
-    alignFrozen: !isSmallScreen.value ? 'right' : undefined,
-    slotName: 'actions',
-  })
-
-  if (isSmallScreen.value) {
-    cols.push({ field: 'startDate', header: 'Date de début', sortable: true, style: { minWidth: '140px' }, slotName: 'startDate' })
-  }
-
-  return cols
 })
 
 // ── Link dialog ──────────────────────────────────────────────────────────────
