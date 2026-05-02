@@ -107,7 +107,7 @@ class BookletFeatureTest: FeatureTest() {
 
     @Test
     fun `As an booklet's owner, I can retrieve it by its label`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = Companion.user, id = UUID.randomUUID())
             bookletState.init(listOf(
                 BookletsByOwner(listOf(element), this.user.id)
@@ -121,7 +121,7 @@ class BookletFeatureTest: FeatureTest() {
 
     @Test
     fun `As a booklet's owner,  I can retrieve All of my Registered Booklets`() {
-        launchWithConnectedUserWithoutBooklet {
+        launchWithNewUserId {
 
             val booklet = Booklet(Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
             val booklet2 = Booklet(Amount.fromString("100", "€".asCurrency()), "test2", owner = user, id = UUID.randomUUID())
@@ -148,7 +148,7 @@ class BookletFeatureTest: FeatureTest() {
 
     @Test
     fun `As a Jmanager user, I can create new booklet`() {
-        launchWithConnectedUserWithoutBooklet {
+        launchWithNewUserId {
             val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test1", owner = user, id = UUID.randomUUID())
 
             saveBookletService.handle(SaveBookletCommand(userId, bookletToSave))
@@ -162,7 +162,7 @@ class BookletFeatureTest: FeatureTest() {
 
     @Test
     fun `As a simple user, I cannot create more than six booklets`() {
-        launchWithConnectedUserWithoutBooklet {
+        launchWithNewUserId {
             val bookletLists = mutableListOf<Booklet>()
             repeat(6) {
                 val bookletToSave = Booklet( Amount.fromString("100", "€".asCurrency()), "test$it", owner = user, id = UUID.randomUUID())
@@ -224,7 +224,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should calculate real sold correctly with income transactions only`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -276,7 +276,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should calculate real sold correctly with expense transactions only`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -332,7 +332,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should calculate real sold correctly with mixed income and expense transactions`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -404,7 +404,7 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `Should calculate previsional sold correctly with preview transactions`() {
             val bookletId = UUID.randomUUID()
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
                     label = "Preview Booklet",
@@ -467,7 +467,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should separate current and previsional transactions correctly`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 2000.toAmount(),
@@ -550,7 +550,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should retrieve regular transactions for the booklet`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -605,7 +605,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should return empty lists when booklet has no transactions`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 500.toAmount(),
@@ -636,7 +636,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should fail when booklet does not exist`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
                     UUID.randomUUID(), // Non-existent booklet ID
@@ -652,7 +652,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should only load transactions for the requested month and year`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -728,7 +728,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should calculate previsional sold including future months transactions`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -793,7 +793,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should reflect add and remove of regular transaction via regularTransactionState`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -847,7 +847,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not expose regular transactions of other user (multi-tenant isolation)`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletIdMine = UUID.randomUUID()
                 val bookletMine = Booklet(1000.toAmount(), "My Booklet", owner = user.toUser(), id = bookletIdMine)
                 val otherUser = userRepository.register("other${UUID.randomUUID()}", "pw") as User
@@ -899,7 +899,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should include regular transactions in previsional sold calculation`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -936,7 +936,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should handle multiple regular transactions with different frequencies`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -997,7 +997,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should combine regular transactions with current and preview transactions correctly`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1064,7 +1064,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not include regular transactions that started after the requested month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1098,7 +1098,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not double count virtual regular transactions when months already have confirmed physical transactions`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 2000.toAmount(),
@@ -1166,7 +1166,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Balances endpoint should not double count virtual regular transactions when confirmed physical already exists`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 2000.toAmount(),
@@ -1225,7 +1225,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Balances endpoint should include preview transactions in current-to-target month range`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1271,7 +1271,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not expose null id previsional transactions for current month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1310,7 +1310,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should expose virtual previsional transactions with null id for non current month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1349,7 +1349,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Explicit date range should include start and exclude end plus one day for transactions`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1411,7 +1411,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Explicit date range should bound previsional sold to provided end date`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1464,7 +1464,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not generate virtual transactions for a past explicit range with default settings`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1507,7 +1507,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not generate virtual transactions for a past custom cycle range`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1550,7 +1550,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should generate virtual transaction for a future custom cycle range`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1598,7 +1598,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not generate previsional for day outside cycle start boundary with custom date range`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1646,7 +1646,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `Should not generate previsional for day outside cycle end boundary with custom date range`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(
                     amount = 1000.toAmount(),
@@ -1694,7 +1694,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `loadTransactions should signal hasRegenerableTransactions when a month is excluded for a regular transaction`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -1737,7 +1737,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `loadTransactions should not signal hasRegenerableTransactions when the excluded month is a past month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -1782,7 +1782,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `loadTransactions should not signal hasRegenerableTransactions when no month is excluded`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -1826,7 +1826,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `should return first page of transactions when 25 transactions exist`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(amount = 1000.toAmount(), label = "Paginated Booklet", owner = user.toUser(), id = bookletId)
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
@@ -1857,7 +1857,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `should return last page with fewer items when total is not divisible by pageSize`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(amount = 1000.toAmount(), label = "Last Page Booklet", owner = user.toUser(), id = bookletId)
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
@@ -1886,7 +1886,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `should use default page=0 and size=10 when no pagination params are given`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(amount = 1000.toAmount(), label = "Default Pagination Booklet", owner = user.toUser(), id = bookletId)
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
@@ -1915,7 +1915,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `should return empty transaction list when requested page is out of range`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(amount = 1000.toAmount(), label = "Out of Range Booklet", owner = user.toUser(), id = bookletId)
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
@@ -1943,7 +1943,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `should compute realSold on ALL transactions regardless of requested page`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = UUID.randomUUID()
                 val booklet = Booklet(amount = 1000.toAmount(), label = "Balance Invariance Booklet", owner = user.toUser(), id = bookletId)
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
@@ -2001,7 +2001,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `regenerate for a future month should return virtual transactions and unmark the tracker`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val futureDate = LocalDate.now().plusMonths(2)
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
@@ -2037,7 +2037,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `regenerate for a past month should return empty list without modifying the tracker`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
                     amount = 1000.toAmount(),
@@ -2071,7 +2071,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `regenerate for a non-existing booklet should return BOOKLET_NOT_FOUND`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 FakeFactory.regularTransactionState.init(emptyList())
                 val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     userId = user.id,
@@ -2085,7 +2085,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `regenerate for the current month should recreate previsional transactions`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val currentDate = LocalDate.now()
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
@@ -2121,7 +2121,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `regenerate should not create duplicate if confirmed transaction already exists for that month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val currentDate = LocalDate.now()
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
@@ -2167,7 +2167,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `regenerate should not create duplicate if preview transaction already exists for that month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val currentDate = LocalDate.now()
                 val bookletId = booklet.id!!
                 val bookletInstance = Booklet(
@@ -2207,7 +2207,7 @@ class BookletFeatureTest: FeatureTest() {
 
         @Test
         fun `regenerate should only unmark the requested month — other excluded months remain excluded`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val currentDate = LocalDate.now()
                 val nextMonthDate = currentDate.plusMonths(1)
                 val bookletId = booklet.id!!

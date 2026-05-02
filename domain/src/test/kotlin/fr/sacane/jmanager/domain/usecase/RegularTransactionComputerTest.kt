@@ -45,7 +45,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should generate monthly transactions for a full year with Forever frequency`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Salaire",
                     amount = 3000.toAmount(),
@@ -84,7 +84,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should generate multiple monthly transactions for the same month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transaction1 = RegularTransaction(
                     label = "Loyer",
                     amount = 800.toAmount(),
@@ -136,7 +136,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should not generate duplicate transactions for already generated months`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Abonnement",
                     amount = 20.toAmount(),
@@ -187,7 +187,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should generate transactions only until the specified end date`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val endDate = LocalDate.of(2024, 6, 30)
                 val monthlyTransaction = RegularTransaction(
                     label = "Prêt temporaire",
@@ -226,7 +226,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should not generate any transaction when start date is after end date`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val endDate = LocalDate.of(2024, 3, 31)
                 val monthlyTransaction = RegularTransaction(
                     label = "Prêt expiré",
@@ -255,7 +255,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should generate only the specified number of transactions`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Formation - 5 mois",
                     amount = 100.toAmount(),
@@ -288,7 +288,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should respect max repetition count across multiple generations`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Cours - 3 séances",
                     amount = 50.toAmount(),
@@ -347,7 +347,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should create tracker after first generation`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Test tracker",
                     amount = 100.toAmount(),
@@ -379,7 +379,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should update tracker on subsequent generations`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Test update tracker",
                     amount = 100.toAmount(),
@@ -422,7 +422,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should handle leap year correctly for February`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Test leap year",
                     amount = 100.toAmount(),
@@ -448,7 +448,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should handle day 31 for months with only 30 days`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Test day 31",
                     amount = 100.toAmount(),
@@ -474,7 +474,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should return empty list when no regular transactions provided`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val generatedTransactions = regularTransactionGenerator.generateMissingPrevisionalTransactions(
                     bookletId = booklet.id!!,
                     regularTransactions = emptyList(),
@@ -488,7 +488,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should not generate transactions before start date`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Future transaction",
                     amount = 100.toAmount(),
@@ -512,7 +512,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should not generate previsional transaction when a real transaction already exists with same regularTransactionId`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
 
                 val monthlyTransaction = RegularTransaction(
@@ -561,7 +561,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should generate previsional transaction when no real transaction exists for this regularTransactionId`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
 
                 val monthlyTransaction = RegularTransaction(
@@ -594,7 +594,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should not regenerate transaction for a month where it was deleted after confirmation`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("${user.id.value}-salary")
 
                 val monthlyTransaction = RegularTransaction(
@@ -657,7 +657,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `virtual transactions should also respect excluded months`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("${user.id.value}-rent")
 
                 val monthlyTransaction = RegularTransaction(
@@ -701,7 +701,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `virtual transactions should exclude already materialized physical occurrences`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("${user.id.value}-gym")
 
                 val monthlyTransaction = RegularTransaction(
@@ -745,7 +745,7 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `day anchor must be preserved after a short month in non-leap year`() {
             // Monthly(29) starting Jan 29 2025: Feb clamps to 28, but Mar must be Mar 29 (not 28)
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Ancrage jour",
                     amount = 100.toAmount(),
@@ -771,7 +771,7 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `day anchor must be preserved after a short month for day 31`() {
             // Monthly(31) starting Jan 31: Feb clamps to 28, Mar must be Mar 31 (not 28)
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Ancrage jour 31",
                     amount = 50.toAmount(),
@@ -797,7 +797,7 @@ class RegularTransactionComputerTest : FeatureTest() {
         @Test
         fun `virtual transactions use correct anchor date after crossing a short month`() {
             // Monthly(28) starting Feb 28 2026: virtual for custom range Mar (28/02->27/03) = 28/02, Apr (28/03->27/04) = 28/03
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Aqua",
                     amount = 30.toAmount(),
@@ -840,7 +840,7 @@ class RegularTransactionComputerTest : FeatureTest() {
         fun `confirmed preview with changed date must not produce a virtual on the original natural date`() {
             // Regression: when a preview transaction is confirmed with a different date,
             // calculateVirtualTransactions must not re-create a virtual for that month.
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("${user.id.value}-confirmed-date-change")
 
                 val monthlyTransaction = RegularTransaction(
@@ -890,7 +890,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should not generate transaction when target date falls before startDateBound`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 // Monthly-on-5, cycle starts March 28 → March 5 is before the bound → no transaction
                 val monthlyTransaction = RegularTransaction(
                     label = "Rent",
@@ -916,7 +916,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should generate transaction when target date falls within startDateBound`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 // Monthly-on-29, cycle starts March 28 → March 29 ≥ March 28 → 1 transaction
                 val monthlyTransaction = RegularTransaction(
                     label = "Salary",
@@ -943,7 +943,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should not generate transaction when target date falls after endDateBound`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 // Monthly-on-29, cycle ends April 27 → April 29 > April 27 → no transaction
                 val monthlyTransaction = RegularTransaction(
                     label = "Salary",
@@ -969,7 +969,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should generate transaction when target date is exactly on endDateBound`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 // Monthly-on-27, cycle ends April 27 → April 27 ≤ April 27 → 1 transaction
                 val monthlyTransaction = RegularTransaction(
                     label = "Insurance",
@@ -996,7 +996,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
         @Test
         fun `should behave identically to no-bounds when bounds match full calendar month`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 // Explicitly passing full-month bounds should produce same result as no bounds
                 val monthlyTransaction = RegularTransaction(
                     label = "Subscription",
