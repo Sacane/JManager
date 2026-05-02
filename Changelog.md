@@ -2,6 +2,14 @@
 
 ## 2026-05-03
 
+- **Cache: Phase 1 implementation (Caffeine local cache)**
+  - Added `spring-boot-starter-cache` and `caffeine:3.2.0` dependencies to `application` and `infrastructure` modules.
+  - Created `CacheConfig.kt` with 4 named caches: `defaultTag`, `allTags`, `allBooklets`, `userSettings`.
+  - `TagRepositoryJpaAdapter`: `@Cacheable` on `defaultTag()` and `getAllDefault()`; `@CacheEvict` on `save()`, `deleteById()`, `patch()`.
+  - `BookletJpaRepositoryAdapter`: `@CacheEvict("allBooklets")` on `save()` and `deleteBookletById()`.
+  - `UserRepositoryJpaAdapter`: `@Cacheable("allBooklets")` on `findUserByIdWithBooklets()`; `@CacheEvict` on `updateProjectionWindowDays()`.
+  - Fixed SpEL key expressions for Kotlin `value class UserId` (inlined at runtime as `UUID`).
+
 - **Refactoring Steps 5-10: Extract authentication from all remaining domain use cases**
   - **Step 5 (Regular Transactions)**: Migrated 8 use cases (`GetAllRegularTransactions`, `BookRegularTransaction`, `GetRegularTransactionById`, `CreateRegularTransaction`, `UpdateRegularTransaction`, `DeleteRegularTransaction`, `PauseRegularTransaction`, `ResumeRegularTransaction`).
   - **Step 6 (Stats)**: Migrated 5 use cases (`GetCategoryDistribution`, `GetGlobalCategoryDistribution`, `GetGlobalFinancialOverview`, `GetDailyEvolution`, `GetMonthlyOverview`).
