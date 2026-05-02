@@ -8,6 +8,7 @@ import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -25,6 +26,7 @@ class BookletJpaRepositoryAdapter(
         return bookletFromDatabase.toModel()
     }
 
+    @CacheEvict(cacheNames = ["allBooklets"], key = "#ownerId")
     @Transactional
     override fun save(ownerId: UserId, booklet: Booklet): Booklet? {
         val id = ownerId.value ?: return null
@@ -47,6 +49,7 @@ class BookletJpaRepositoryAdapter(
         return bookletRepository.findByOwnerAndLabelWithTransactions(id, bookletLabel)?.toModel()
     }
 
+    @CacheEvict(cacheNames = ["allBooklets"], allEntries = true)
     @Transactional
     override fun deleteBookletById(bookletId: UUID) {
         val booklet = bookletRepository.findByIdWithRegularTransactions(bookletId) ?: return

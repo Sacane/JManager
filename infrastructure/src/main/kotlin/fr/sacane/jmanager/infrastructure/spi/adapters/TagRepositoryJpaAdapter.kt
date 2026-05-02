@@ -11,6 +11,8 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepo
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -20,6 +22,7 @@ class TagRepositoryJpaAdapter(
     private val tagPersonalPostgresRepository: TagPersonalPostgresRepository,
     private val userPostgresRepository: UserPostgresRepository
 ): TagRepository {
+    @CacheEvict(cacheNames = ["allTags"], allEntries = true)
     @Transactional
     override fun save(userId: UserId, tag: Tag): Tag? {
         val id = userId.value ?: return null
@@ -40,6 +43,7 @@ class TagRepositoryJpaAdapter(
     override fun deleteByLabel(label: String) {
         defaultTagPostgresRepository.deleteByName(label)
     }
+    @Cacheable(cacheNames = ["allTags"], key = "#userId")
     @Transactional
     override fun getAllDefault(userId: UserId): List<Tag> {
         val defaults = defaultTagPostgresRepository.findAll()
@@ -58,6 +62,7 @@ class TagRepositoryJpaAdapter(
     override fun existsDefault(): Boolean {
         return defaultTagPostgresRepository.findAll().count() > 2
     }
+    @CacheEvict(cacheNames = ["allTags"], allEntries = true)
     @Transactional
     override fun deleteById(tagId: UUID): Boolean {
         return tagPersonalPostgresRepository.existsById(tagId).also {
@@ -65,11 +70,13 @@ class TagRepositoryJpaAdapter(
         }
     }
 
+    @Cacheable(cacheNames = ["defaultTag"])
     override fun defaultTag(): Tag {
         val found = defaultTagPostgresRepository.findAll().firstOrNull { it.name == Tag.noneTag().label }
         return found?.toDomain() ?: error("No default tag found")
     }
 
+    @CacheEvict(cacheNames = ["allTags"], allEntries = true)
     @Transactional
     override fun patch(tag: Tag): Tag? {
         try {

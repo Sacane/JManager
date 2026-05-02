@@ -15,6 +15,8 @@ import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithSimpleBoo
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import java.util.logging.Logger
 
@@ -33,6 +35,7 @@ class UserRepositoryJpaAdapter (
         val user = userPostgresRepository.findById(id).orElse(null) ?: return null
         return user.toModel()
     }
+    @Cacheable(cacheNames = ["allBooklets"], key = "#userId")
     @Transactional
     override fun findUserByIdWithBooklets(userId: UserId): User? {
         val id = userId.value ?: return null
@@ -84,6 +87,7 @@ class UserRepositoryJpaAdapter (
         }
     }
 
+    @CacheEvict(cacheNames = ["userSettings", "allBooklets"], allEntries = true)
     @Transactional
     override fun updateProjectionWindowDays(userId: UserId, projectionWindowDays: Int): Boolean {
         val id = userId.value ?: return false
