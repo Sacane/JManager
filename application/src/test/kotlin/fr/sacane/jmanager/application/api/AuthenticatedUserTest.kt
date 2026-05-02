@@ -75,7 +75,7 @@ abstract class AuthenticatedUserTest {
 
     @AfterEach
     fun tearDown() {
-        logoutUseCase.handle(LogoutCommand(SessionToken(token.asTokenUUID())))
+        logoutUseCase.handle(LogoutCommand(user!!.id, SessionToken(token.asTokenUUID())))
         userPostgresRepository.deleteAll()
     }
 }

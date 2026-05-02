@@ -3,10 +3,9 @@ package fr.sacane.jmanager.domain.port.input.regularTransaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
@@ -16,7 +15,7 @@ import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
 data class UnlinkRegularTransactionFromBookletCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val transactionId: String,
     val bookletId: UUID
 ) : Command<RegularTransaction>
@@ -29,15 +28,15 @@ interface UnlinkRegularTransactionFromBookletUseCase : CommandHandler<UnlinkRegu
 @DomainService
 class UnlinkRegularTransactionFromBookletService(
     private val regularTransactionRepository: RegularTransactionRepository,
-    private val session: SessionManager,
     private val unitOfWork: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository
 ) : UnlinkRegularTransactionFromBookletUseCase {
 
     override fun handle(
         command: UnlinkRegularTransactionFromBookletCommand
-    ): Result<RegularTransaction> = session.authenticate(command.token) { userId ->
-        return@authenticate unitOfWork.executeInTransaction(command.transactionId) {
+    ): Result<RegularTransaction> {
+        val userId = command.userId
+        return unitOfWork.executeInTransaction(command.transactionId) {
             val existing = regularTransactionRepository.getRegularTransactionById(userId, RegularTransactionId(it))
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,

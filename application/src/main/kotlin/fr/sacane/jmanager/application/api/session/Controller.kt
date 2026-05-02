@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.models.BookletMonthlyCycleUpdate
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsQuery
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
@@ -89,7 +90,7 @@ class SessionController(
         httpResponse: HttpServletResponse,
 
     ): ResponseEntity<Nothing> {
-        return commandBus.dispatch(LogoutCommand(SessionToken(currentUser.token)))
+        return commandBus.dispatch(LogoutCommand(UserId(currentUser.id), SessionToken(currentUser.token)))
             .also {
                 clearCookie(httpResponse, "token")
                 clearCookie(httpResponse, "refresh_token")
@@ -147,7 +148,7 @@ class SessionController(
 
     @GetMapping(path = ["/settings"])
     fun getUserSettings(): ResponseEntity<UserSettingsDTO> {
-        return queryBus.dispatch(GetUserSettingsQuery(SessionToken(currentUser.token)))
+        return queryBus.dispatch(GetUserSettingsQuery(UserId(currentUser.id)))
             .map { it.toDTO() }
             .toHttpResponse()
     }
@@ -166,7 +167,7 @@ class SessionController(
 
         return commandBus.dispatch(
             UpdateUserSettingsCommand(
-                token = SessionToken(currentUser.token),
+                userId = UserId(currentUser.id),
                 projectionWindowDays = settings.projectionWindowDays,
                 bookletCycles = bookletCycles,
             )

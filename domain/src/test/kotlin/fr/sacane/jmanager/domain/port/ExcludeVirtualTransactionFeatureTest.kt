@@ -30,12 +30,12 @@ class ExcludeVirtualTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `shouldExcludeVirtualTransaction_whenValidBookletAndRegularTransaction`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("regular-exclude-1")
 
                 val result = excludeVirtualTransactionUseCase.handle(
                     ExcludeVirtualTransactionCommand(
-                        token = tokenValue,
+                        userId = userId,
                         bookletId = booklet.id!!,
                         regularTransactionId = regularTransactionId,
                         month = Month.JUNE,
@@ -52,12 +52,12 @@ class ExcludeVirtualTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `shouldExcludeVirtualTransaction_whenCurrentMonth`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("regular-exclude-2")
 
                 val result = excludeVirtualTransactionUseCase.handle(
                     ExcludeVirtualTransactionCommand(
-                        token = tokenValue,
+                        userId = userId,
                         bookletId = booklet.id!!,
                         regularTransactionId = regularTransactionId,
                         month = Month.APRIL,
@@ -74,12 +74,12 @@ class ExcludeVirtualTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `shouldBeIdempotent_whenMonthAlreadyExcluded`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val regularTransactionId = RegularTransactionId("regular-exclude-3")
 
                 excludeVirtualTransactionUseCase.handle(
                     ExcludeVirtualTransactionCommand(
-                        token = tokenValue,
+                        userId = userId,
                         bookletId = booklet.id!!,
                         regularTransactionId = regularTransactionId,
                         month = Month.MARCH,
@@ -89,7 +89,7 @@ class ExcludeVirtualTransactionFeatureTest : FeatureTest() {
 
                 val secondResult = excludeVirtualTransactionUseCase.handle(
                     ExcludeVirtualTransactionCommand(
-                        token = tokenValue,
+                        userId = userId,
                         bookletId = booklet.id!!,
                         regularTransactionId = regularTransactionId,
                         month = Month.MARCH,
@@ -110,10 +110,10 @@ class ExcludeVirtualTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `shouldReturnBookletNotFound_whenBookletDoesNotExist`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val result = excludeVirtualTransactionUseCase.handle(
                     ExcludeVirtualTransactionCommand(
-                        token = tokenValue,
+                        userId = userId,
                         bookletId = UUID.randomUUID(),
                         regularTransactionId = RegularTransactionId("regular-exclude-4"),
                         month = Month.JUNE,

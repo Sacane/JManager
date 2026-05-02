@@ -106,7 +106,7 @@ class UserFeatureTest: FeatureTest() {
             )
             val token = tokenGenerator.generateToken(user.id, user.username)
             sessionFakeState.addSession(user.id, token)
-            logoutUseCase.handle(LogoutCommand(SessionToken(token.tokenValue)))
+            logoutUseCase.handle(LogoutCommand(user.id, SessionToken(token.tokenValue)))
                 .assertSuccess()
         }
 
@@ -121,7 +121,7 @@ class UserFeatureTest: FeatureTest() {
             val refreshToken = activeSession?.refreshToken
             assertNotNull(refreshToken)
 
-            logoutUseCase.handle(LogoutCommand(SessionToken(accessToken))).assertSuccess()
+            logoutUseCase.handle(LogoutCommand(user.id, SessionToken(accessToken))).assertSuccess()
 
             sessionFakeState.authenticateRefreshToken(refreshToken!!) {
                 return@authenticateRefreshToken success("ok")
@@ -205,9 +205,9 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Get settings for a connected user must return defaults`() {
             registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
-            val token = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!.token
+            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
-            getUserSettingsUseCase.handle(GetUserSettingsQuery(SessionToken(token)))
+            getUserSettingsUseCase.handle(GetUserSettingsQuery(userToken.user.id))
                 .assertTrue {
                     projectionWindowDays == 15 && bookletCycles.isEmpty()
                 }
@@ -216,11 +216,11 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Update settings must persist projection window`() {
             registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
-            val token = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!.token
+            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             updateUserSettingsUseCase.handle(
                 UpdateUserSettingsCommand(
-                    token = SessionToken(token),
+                    userId = userToken.user.id,
                     projectionWindowDays = 30,
                     bookletCycles = emptyMap(),
                 )
@@ -232,11 +232,11 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Update settings with projection outside range must fail`() {
             registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
-            val token = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!.token
+            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = updateUserSettingsUseCase.handle(
                 UpdateUserSettingsCommand(
-                    token = SessionToken(token),
+                    userId = userToken.user.id,
                     projectionWindowDays = 6,
                     bookletCycles = emptyMap(),
                 )
@@ -249,11 +249,11 @@ class UserFeatureTest: FeatureTest() {
         @Test
         fun `Update settings with non owned booklet must fail`() {
             registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
-            val token = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!.token
+            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = updateUserSettingsUseCase.handle(
                 UpdateUserSettingsCommand(
-                    token = SessionToken(token),
+                    userId = userToken.user.id,
                     projectionWindowDays = 20,
                     bookletCycles = mapOf(UUID.randomUUID() to BookletMonthlyCycleUpdate(10, null)),
                 )
@@ -265,10 +265,10 @@ class UserFeatureTest: FeatureTest() {
 
         @Test
         fun `Update settings without cycle for each owned booklet must fail`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val result = updateUserSettingsUseCase.handle(
                     UpdateUserSettingsCommand(
-                        token = tokenValue,
+                        userId = userId,
                         projectionWindowDays = 20,
                         bookletCycles = emptyMap(),
                     )
@@ -281,10 +281,10 @@ class UserFeatureTest: FeatureTest() {
 
         @Test
         fun `Update settings with invalid monthly period end day must fail`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val result = updateUserSettingsUseCase.handle(
                     UpdateUserSettingsCommand(
-                        token = tokenValue,
+                        userId = userId,
                         projectionWindowDays = 20,
                         bookletCycles = mapOf(booklet.id!! to BookletMonthlyCycleUpdate(28, 40)),
                     )
@@ -297,10 +297,10 @@ class UserFeatureTest: FeatureTest() {
 
         @Test
         fun `Update settings with cycle for each owned booklet must succeed`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val result = updateUserSettingsUseCase.handle(
                     UpdateUserSettingsCommand(
-                        token = tokenValue,
+                        userId = userId,
                         projectionWindowDays = 20,
                         bookletCycles = mapOf(booklet.id!! to BookletMonthlyCycleUpdate(28, 27)),
                     )

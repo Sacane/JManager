@@ -3,9 +3,8 @@ package fr.sacane.jmanager.domain.port.input.transaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
@@ -13,7 +12,7 @@ import fr.sacane.jmanager.domain.utils.*
 import java.time.Month
 
 data class RetrieveTransactionsByMonthAndYearQuery(
-    val token: SessionToken,
+    val userId: UserId,
     val month: Month,
     val year: Int,
     val bookletLabel: String
@@ -26,13 +25,12 @@ interface RetrieveTransactionsByMonthAndYearUseCase : QueryHandler<RetrieveTrans
 
 @DomainService
 class RetrieveTransactionsByMonthAndYearService(
-    private val transactionRepository: TransactionRepository,
-    private val session: SessionManager
+    private val transactionRepository: TransactionRepository
 ) : RetrieveTransactionsByMonthAndYearUseCase {
 
-    override fun handle(query: RetrieveTransactionsByMonthAndYearQuery): Result<List<Transaction>> = session.authenticate(query.token) {
-        success(transactionRepository.findBookletByLabelWithTransactions(query.bookletLabel, it)?.retrieveTransactionsSortedByDate(query.month, query.year)
-            ?: return@authenticate domainFailure(
+    override fun handle(query: RetrieveTransactionsByMonthAndYearQuery): Result<List<Transaction>> {
+        return success(transactionRepository.findBookletByLabelWithTransactions(query.bookletLabel, query.userId)?.retrieveTransactionsSortedByDate(query.month, query.year)
+            ?: return domainFailure(
                 state = ResultState.BOOKLET_NOT_FOUND,
                 "Aucun compte ne correspond au label indiqué",
                 "domain.transaction.retrieve.booklet_not_found"

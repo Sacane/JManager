@@ -4,8 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.DailyTrendStatsOutput
-import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.DailyTrendCalculator
 import fr.sacane.jmanager.domain.port.input.Query
@@ -18,7 +17,7 @@ import java.util.UUID
 import java.util.logging.Logger
 
 data class GetDailyTrendStatsQuery(
-    val token: SessionToken,
+    val userId: UserId,
     val startDate: LocalDate,
     val endDate: LocalDate,
     val bookletId: UUID? = null
@@ -31,7 +30,6 @@ interface GetDailyTrendStatsUseCase : QueryHandler<GetDailyTrendStatsQuery, Dail
 
 @DomainService
 class GetDailyTrendStatsService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val dailyTrendCalculator: DailyTrendCalculator
 ) : GetDailyTrendStatsUseCase {
@@ -40,18 +38,19 @@ class GetDailyTrendStatsService(
         private val LOGGER = Logger.getLogger(GetDailyTrendStatsService::class.java.name)
     }
 
-    override fun handle(query: GetDailyTrendStatsQuery): Result<DailyTrendStatsOutput> = session.authenticate(query.token) { userId ->
+    override fun handle(query: GetDailyTrendStatsQuery): Result<DailyTrendStatsOutput> {
+        val userId = query.userId
         LOGGER.info("Fetching daily trend stats from ${query.startDate} to ${query.endDate} for user $userId")
 
         if (query.startDate.isAfter(query.endDate)) {
-            return@authenticate statsDomainFailure(
+            return statsDomainFailure(
                 ResultState.INVALID,
                 "La date de début doit être antérieure à la date de fin",
                 "domain.stats.daily_trend.invalid_date_range"
             )
         }
 
-        withScopedBooklets(bookletRepository, userId, query.bookletId) { scopedBooklets ->
+        return withScopedBooklets(bookletRepository, userId, query.bookletId) { scopedBooklets ->
             val dailyTrends = dailyTrendCalculator.calculateDailyTrend(
                 booklets = scopedBooklets,
                 startDate = query.startDate,

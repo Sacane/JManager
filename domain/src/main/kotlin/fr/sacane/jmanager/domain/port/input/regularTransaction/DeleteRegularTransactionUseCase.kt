@@ -3,9 +3,8 @@ package fr.sacane.jmanager.domain.port.input.regularTransaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
@@ -13,7 +12,7 @@ import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 
 data class DeleteRegularTransactionCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val transactionId: String
 ) : Command<Boolean>
 
@@ -25,7 +24,6 @@ interface DeleteRegularTransactionUseCase : CommandHandler<DeleteRegularTransact
 @DomainService
 class DeleteRegularTransactionService(
     private val regularTransactionRepository: RegularTransactionRepository,
-    private val session: SessionManager,
     private val unitOfWork: UnitOfWorkTransactionProvider
 ) : DeleteRegularTransactionUseCase {
 
@@ -35,8 +33,9 @@ class DeleteRegularTransactionService(
 
     override fun handle(
         command: DeleteRegularTransactionCommand
-    ): Result<Boolean> = session.authenticate(command.token) { userId ->
-        return@authenticate unitOfWork.executeInTransaction(command.transactionId) {
+    ): Result<Boolean> {
+        val userId = command.userId
+        return unitOfWork.executeInTransaction(command.transactionId) {
             val deleted = regularTransactionRepository.deleteRegularTransaction(userId, RegularTransactionId(it))
             if (!deleted) {
                 return@executeInTransaction domainFailure(

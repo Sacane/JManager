@@ -4,8 +4,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.PrevisionalTransactionsOutput
-import fr.sacane.jmanager.domain.models.SessionToken
-import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.PrevisionalTransactionFilter
 import fr.sacane.jmanager.domain.port.input.Query
@@ -18,7 +17,7 @@ import java.util.UUID
 import java.util.logging.Logger
 
 data class GetPrevisionalTransactionsQuery(
-    val token: SessionToken,
+    val userId: UserId,
     val startDate: LocalDate,
     val endDate: LocalDate,
     val bookletId: UUID? = null
@@ -31,7 +30,6 @@ interface GetPrevisionalTransactionsUseCase : QueryHandler<GetPrevisionalTransac
 
 @DomainService
 class GetPrevisionalTransactionsService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val previsionalTransactionFilter: PrevisionalTransactionFilter
 ) : GetPrevisionalTransactionsUseCase {
@@ -40,18 +38,19 @@ class GetPrevisionalTransactionsService(
         private val LOGGER = Logger.getLogger(GetPrevisionalTransactionsService::class.java.name)
     }
 
-    override fun handle(query: GetPrevisionalTransactionsQuery): Result<PrevisionalTransactionsOutput> = session.authenticate(query.token) { userId ->
+    override fun handle(query: GetPrevisionalTransactionsQuery): Result<PrevisionalTransactionsOutput> {
+        val userId = query.userId
         LOGGER.info("Fetching previsional transactions from ${query.startDate} to ${query.endDate} for user $userId")
 
         if (query.startDate.isAfter(query.endDate)) {
-            return@authenticate statsDomainFailure(
+            return statsDomainFailure(
                 ResultState.INVALID,
                 "La date de début doit être antérieure à la date de fin",
                 "domain.stats.previsional.invalid_date_range"
             )
         }
 
-        withScopedBooklets(bookletRepository, userId, query.bookletId) { scopedBooklets ->
+        return withScopedBooklets(bookletRepository, userId, query.bookletId) { scopedBooklets ->
             val result = previsionalTransactionFilter.filterPrevisionalTransactions(
                 booklets = scopedBooklets,
                 startDate = query.startDate,

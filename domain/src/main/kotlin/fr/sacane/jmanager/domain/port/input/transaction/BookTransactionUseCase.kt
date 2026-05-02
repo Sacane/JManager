@@ -3,10 +3,9 @@ package fr.sacane.jmanager.domain.port.input.transaction
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.TransactionResumeResult
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.TagRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
@@ -17,7 +16,7 @@ import fr.sacane.jmanager.domain.utils.*
 import java.util.logging.Logger
 
 data class BookTransactionCommand(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletLabel: String,
     val transaction: Transaction
 ) : Command<TransactionResumeResult>
@@ -30,7 +29,6 @@ interface BookTransactionUseCase : CommandHandler<BookTransactionCommand, Transa
 @DomainService
 class BookTransactionService(
     private val transactionRepository: TransactionRepository,
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val infraTransactionManager: UnitOfWorkTransactionProvider,
     private val tagRepository: TagRepository
@@ -40,9 +38,10 @@ class BookTransactionService(
         private val logger = Logger.getLogger(BookTransactionService::class.java.name)
     }
 
-    override fun handle(command: BookTransactionCommand): Result<TransactionResumeResult> = session.authenticate(command.token) { id ->
-        return@authenticate infraTransactionManager.executeInTransaction(command.transaction) {
-            logger.info("Request for a transaction with id $id")
+    override fun handle(command: BookTransactionCommand): Result<TransactionResumeResult> {
+        val userId = command.userId
+        return infraTransactionManager.executeInTransaction(command.transaction) {
+            logger.info("Request for a transaction with id $userId")
             if (command.transaction.amount.isNegative()) {
                 return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_ENTRY_ERROR,
@@ -50,7 +49,7 @@ class BookTransactionService(
                     "domain.transaction.book.negative_amount"
                 )
             }
-            val booklet = bookletRepository.findBookletByLabelWithTransactions(id, command.bookletLabel)
+            val booklet = bookletRepository.findBookletByLabelWithTransactions(userId, command.bookletLabel)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_NOT_FOUND,
                     "Le livret ${command.bookletLabel} n'existe pas",

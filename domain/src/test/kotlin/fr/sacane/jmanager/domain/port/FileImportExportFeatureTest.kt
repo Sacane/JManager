@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
@@ -22,28 +21,13 @@ class FileImportExportFeatureTest : FeatureTest() {
     private val exportTransactionsToCsvService = FakeFactory.exportTransactionsToCsvService
 
     @Test
-    @DisplayName("Should fail when user is not authenticated")
-    fun `validateCsvFile should fail when user is not authenticated`() {
-        val invalidToken = "invalid-token"
-
-        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-            token = SessionToken(invalidToken),
-            bookletId = UUID.randomUUID(),
-            csvContent = "csv content"
-        ))
-
-        Assertions.assertTrue(result.isFailure())
-        Assertions.assertEquals(ResultState.UNAUTHORIZED, result.status)
-    }
-
-    @Test
     @DisplayName("Should fail when booklet does not exist")
     fun `validateCsvFile should fail when booklet does not exist`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val nonExistentBookletId = UUID.randomUUID()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = nonExistentBookletId,
                 csvContent = "csv content"
                 ))
@@ -57,7 +41,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should fail when user does not own the booklet")
     fun `validateCsvFile should fail when user does not own the booklet`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val otherUser = createBooklet(
                 User(
                     UserId(UUID.randomUUID()),
@@ -69,7 +53,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             )
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = otherUser.id!!,
                 csvContent = "csv content"
                 ))
@@ -83,11 +67,11 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should return report with error when CSV is empty")
     fun `validateCsvFile should return report with error when CSV is empty`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = ""
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -103,14 +87,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should return report with error when CSV header is invalid")
     fun `validateCsvFile should return report with error when CSV header is invalid`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,wrong_column,recette,tag
                 15-01-2025,Test,10.00,,
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -126,14 +110,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should return report with error when line has invalid date format")
     fun `validateCsvFile should return report with error when line has invalid date format`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 2025-01-15,Test,10.00,,
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -149,7 +133,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should succeed validation with valid CSV and no warnings")
     fun `validateCsvFile should succeed with valid CSV`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 15-01-2025,Groceries,45.50,,Alimentation & Restaurant
@@ -157,7 +141,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -177,14 +161,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should succeed validation with warnings for unknown tags")
     fun `validateCsvFile should succeed with warnings when tag is unknown`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 15-01-2025,Groceries,45.50,,UnknownTag
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -204,14 +188,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should return report with error when both amounts are filled")
     fun `validateCsvFile should return report with error when both depense and recette are filled`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 15-01-2025,Test,45.50,100.00,
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -227,14 +211,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should return report with error when no amount is filled")
     fun `validateCsvFile should return report with error when neither amount is filled`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 15-01-2025,Test,,,
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -250,14 +234,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should return report with error when amount is negative")
     fun `validateCsvFile should return report with error when amount is negative`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 15-01-2025,Test,-45.50,,
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -273,11 +257,11 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should accept comma as decimal separator")
     fun `validateCsvFile should accept comma as decimal separator`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = "date;label;depense;recette;tag\n15-01-2025;Test;\"45,50\";;\n"
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -293,14 +277,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should return report with error when columns have wrong count")
     fun `validateCsvFile should return report with error when line has wrong column count`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 15-01-2025,Test,45.50
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -314,26 +298,12 @@ class FileImportExportFeatureTest : FeatureTest() {
     }
 
     @Test
-    fun `importTransactionsFromCsv should fail when user is not authenticated`() {
-        val invalidToken = "invalid-token"
-
-        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-            token = SessionToken(invalidToken),
-            bookletId = UUID.randomUUID(),
-            csvContent = "csv content"
-            ))
-
-        Assertions.assertTrue(result.isFailure())
-        Assertions.assertEquals(ResultState.UNAUTHORIZED, result.status)
-    }
-
-    @Test
     fun `importTransactionsFromCsv should fail when booklet does not exist`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val nonExistentBookletId = UUID.randomUUID()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = nonExistentBookletId,
                 csvContent = "csv content"
                 ))
@@ -346,7 +316,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
     @Test
     fun `importTransactionsFromCsv should fail when user does not own the booklet`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val otherUser = createBooklet(
                 User(
                     UserId(UUID.randomUUID()),
@@ -358,7 +328,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             )
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = otherUser.id!!,
                 csvContent = "csv content"
                 ))
@@ -371,9 +341,9 @@ class FileImportExportFeatureTest : FeatureTest() {
 
     @Test
     fun `importTransactionsFromCsv should fail when CSV is empty`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = ""
                 ))
@@ -387,14 +357,14 @@ class FileImportExportFeatureTest : FeatureTest() {
 
     @Test
     fun `importTransactionsFromCsv should fail when CSV header is invalid`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,wrong_column,recette,tag
                 15-01-2025,Test,10.00,,
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -408,7 +378,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should update booklet amount after importing expense transactions")
     fun `importTransactionsFromCsv should update booklet amount after importing expense transactions`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val initialAmount = booklet.amount
             val csvContent = """
                 date,label,depense,recette,tag
@@ -417,7 +387,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -428,7 +398,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
+                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
@@ -442,7 +412,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should update booklet amount after importing income transactions")
     fun `importTransactionsFromCsv should update booklet amount after importing income transactions`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val initialAmount = booklet.amount
             val csvContent = """
                 date,label,depense,recette,tag
@@ -451,7 +421,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -462,7 +432,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
+                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
@@ -476,7 +446,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should update booklet amount correctly with mixed transactions")
     fun `importTransactionsFromCsv should update booklet amount with mixed income and expense transactions`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val initialAmount = booklet.amount
             val csvContent = """
                 date,label,depense,recette,tag
@@ -487,7 +457,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -498,7 +468,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
                 val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
+                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
@@ -512,14 +482,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should not change booklet amount when import fails")
     fun `importTransactionsFromCsv should not change booklet amount when import fails`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val initialAmount = booklet.amount
             val csvContent = """
                 invalid-date,Test,45.50,,
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -527,7 +497,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             Assertions.assertTrue(result.isFailure())
 
             val bookletState = FakeFactory.bookletState()
-            val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
+            val updatedBooklets = bookletState.getStates().find { it.userId == userId }
             Assertions.assertNotNull(updatedBooklets)
             val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
             Assertions.assertNotNull(updatedBooklet)
@@ -538,7 +508,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should persist booklet with updated amount after successful import")
     fun `importTransactionsFromCsv should persist booklet with updated amount in repository`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val initialAmount = booklet.amount
             val csvContent = """
                 date,label,depense,recette,tag
@@ -546,7 +516,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -554,7 +524,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             Assertions.assertTrue(result.isSuccess())
 
             val bookletState = FakeFactory.bookletState()
-            val persistedBooklets = bookletState.getStates().find { it.userId == user.id }
+            val persistedBooklets = bookletState.getStates().find { it.userId == userId }
             Assertions.assertNotNull(persistedBooklets)
             val persistedBooklet = persistedBooklets!!.booklets.find { it.id == booklet.id }
             Assertions.assertNotNull(persistedBooklet)
@@ -572,7 +542,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should validate CSV with day-only dates when month and year are provided")
     fun `validateCsvFile should accept day-only dates when month and year are provided`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 1,Groceries,45.50,,Alimentation & Restaurant
@@ -580,7 +550,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
                 month = 1,
@@ -600,14 +570,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should fail validation when day-only date is provided without month and year")
     fun `validateCsvFile should fail when day-only date without month and year`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 1,Groceries,45.50,,Alimentation & Restaurant
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent
                 ))
@@ -623,7 +593,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should import transactions with day-only dates when month and year are provided")
     fun `importTransactionsFromCsv should import with day-only dates and month year`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val initialAmount = booklet.amount
             val csvContent = """
                 date,label,depense,recette,tag
@@ -632,7 +602,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
                 skipValidation = false,
@@ -654,7 +624,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(LocalDate.of(2026, 1, 15), transaction2!!.date)
 
                 val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == user.id }
+                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
                 Assertions.assertNotNull(updatedBooklet)
@@ -668,7 +638,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should accept mixed full dates and day-only dates")
     fun `importTransactionsFromCsv should accept mixed date formats`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 15-02-2026,Full Date Transaction,100.00,,Aucune
@@ -676,7 +646,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
                 skipValidation = false,
@@ -703,14 +673,14 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should fail when day-only date is invalid (e.g., 32)")
     fun `validateCsvFile should fail when day-only date is out of range`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = """
                 date,label,depense,recette,tag
                 32,Invalid Day,45.50,,Aucune
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
                 month = 1,
@@ -728,7 +698,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should successfully validate CSV file with UTF-8 BOM")
     fun `validateCsvFile should successfully validate CSV file with UTF-8 BOM`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             // Simuler un fichier CSV avec BOM UTF-8 (comme celui exporté depuis Excel)
             val bomChar = '\uFEFF'
             val csvContent = """${bomChar}date,label,depense,recette,tag
@@ -737,7 +707,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             """.trimIndent()
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent,
                 month = 1,
@@ -757,7 +727,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should successfully validate real CSV file with UTF-8 BOM and 100+ transactions")
     fun `validateCsvFile should successfully validate real CSV file with BOM`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = this::class.java.classLoader
                 .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
                 ?.readText(Charsets.UTF_8)
@@ -765,7 +735,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent!!,
                 month = 1,
@@ -805,7 +775,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should fail with clear error when validating January file with February month")
     fun `validateCsvFile should show clear error when using wrong month for January file`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = this::class.java.classLoader
                 .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
                 ?.readText(Charsets.UTF_8)
@@ -814,7 +784,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             // Tentative de validation avec month=2 (février) alors que le fichier est pour janvier
             val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent!!,
                 month = 2,  // ERREUR: février au lieu de janvier
@@ -847,7 +817,7 @@ class FileImportExportFeatureTest : FeatureTest() {
     @Test
     @DisplayName("Should successfully import real CSV file with UTF-8 BOM and 100+ transactions")
     fun `importTransactionsFromCsv should successfully import real CSV file with BOM`() {
-        launchWithConnectedUserInstance {
+        launchWithUserId {
             val csvContent = this::class.java.classLoader
                 .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
                 ?.readText(Charsets.UTF_8)
@@ -855,7 +825,7 @@ class FileImportExportFeatureTest : FeatureTest() {
             Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
             val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                token = tokenValue,
+                userId = userId,
                 bookletId = booklet.id!!,
                 csvContent = csvContent!!,
                 skipValidation = false,

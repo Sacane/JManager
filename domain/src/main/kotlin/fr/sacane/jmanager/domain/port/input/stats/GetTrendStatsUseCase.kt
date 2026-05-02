@@ -3,9 +3,8 @@ package fr.sacane.jmanager.domain.port.input.stats
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.TrendStatsOutput
-import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.usecase.TrendCalculator
 import fr.sacane.jmanager.domain.port.input.Query
@@ -19,7 +18,7 @@ import java.util.UUID
 import java.util.logging.Logger
 
 data class GetTrendStatsQuery(
-    val token: SessionToken,
+    val userId: UserId,
     val bookletId: UUID? = null,
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null
@@ -32,7 +31,6 @@ interface GetTrendStatsUseCase : QueryHandler<GetTrendStatsQuery, TrendStatsOutp
 
 @DomainService
 class GetTrendStatsService(
-    private val session: SessionManager,
     private val bookletRepository: BookletRepository,
     private val trendCalculator: TrendCalculator
 ) : GetTrendStatsUseCase {
@@ -41,14 +39,15 @@ class GetTrendStatsService(
         private val LOGGER = Logger.getLogger(GetTrendStatsService::class.java.name)
     }
 
-    override fun handle(query: GetTrendStatsQuery): Result<TrendStatsOutput> = session.authenticate(query.token) { userId ->
+    override fun handle(query: GetTrendStatsQuery): Result<TrendStatsOutput> {
+        val userId = query.userId
         LOGGER.info("Fetching trend stats for user $userId")
 
         validateDateRange(query.startDate, query.endDate, "domain.stats.trend")?.let { (detail, key) ->
-            return@authenticate statsDomainFailure(ResultState.INVALID, detail, key)
+            return statsDomainFailure(ResultState.INVALID, detail, key)
         }
 
-        withScopedBooklets(bookletRepository, userId, query.bookletId) { scopedBooklets ->
+        return withScopedBooklets(bookletRepository, userId, query.bookletId) { scopedBooklets ->
             val monthlyTrends = trendCalculator.calculateTrend(
                 booklets = scopedBooklets,
                 startDate = query.startDate,

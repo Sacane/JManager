@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
@@ -30,17 +31,39 @@ class SecurityConfig(
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
             }
             authorizeHttpRequests {
+                // Public SPA routes
+                authorize("/", permitAll)
+                authorize("/index.html", permitAll)
+                authorize("/_nuxt/**", permitAll)
+                authorize("/assets/**", permitAll)
+                authorize("/favicon.ico", permitAll)
+                authorize("/login", permitAll)
+                authorize("/dashboard", permitAll)
+                authorize("/dashboard/**", permitAll)
+                authorize("/booklet", permitAll)
+                authorize("/booklet/**", permitAll)
+                authorize("/admin", permitAll)
+                authorize("/admin/**", permitAll)
+                authorize("/tag", permitAll)
+                authorize("/tag/**", permitAll)
+                authorize("/user", permitAll)
+                authorize("/user/**", permitAll)
+                authorize("/regular-transaction", permitAll)
+                authorize("/regular-transaction/**", permitAll)
+                // Public API
                 authorize("/api/user/create", permitAll)
                 authorize("/api/user/auth", permitAll)
-                authorize("/api/user/auth/refresh", permitAll)
                 authorize("/api/user/auth/refresh/**", permitAll)
+                // Protected API
                 authorize("/api/admin/**", hasRole("ADMIN"))
                 authorize("/api/**", authenticated)
-                authorize(anyRequest, permitAll)
+                // Deny everything else
+                authorize(anyRequest, denyAll)
             }
             httpBasic { disable() }
             exceptionHandling {
                 authenticationEntryPoint = HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+                accessDeniedHandler = AccessDeniedHandler { _, response, _ -> response.status = HttpStatus.FORBIDDEN.value() }
             }
             addFilterBefore<UsernamePasswordAuthenticationFilter>(JwtCookieAuthenticationFilter(tokenGenerator, userDetailsService))
         }

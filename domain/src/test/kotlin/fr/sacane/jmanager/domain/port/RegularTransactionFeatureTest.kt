@@ -4,8 +4,8 @@ import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.UserRegularTransaction
-import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.port.input.regularTransaction.*
+import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
@@ -38,12 +38,12 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should retrieve all regular transactions for authenticated user`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction1 = RegularTransaction(
                     label = "monthly salary",
                     amount = 2500.toAmount(),
                     isIncome = true,
-                    id = RegularTransactionId("${user.id}-monthly-1"),
+                    id = RegularTransactionId("${userId}-monthly-1"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
@@ -53,15 +53,15 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     label = "Rent",
                     amount = 800.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-monthly-2"),
+                    id = RegularTransactionId("${userId}-monthly-2"),
                     startDate = LocalDate.of(2024, 1, 5),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction1), UserRegularTransaction(user.id, monthlyTransaction2)))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, monthlyTransaction1), UserRegularTransaction(userId, monthlyTransaction2)))
 
-                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(userId, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -74,8 +74,8 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should return empty list when user has no regular transactions`() {
-            launchWithConnectedUserInstance {
-                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
+            launchWithUserId {
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(userId, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -85,9 +85,12 @@ class RegularTransactionFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `should fail with unauthorized when token is invalid`() {
-            val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(SessionToken("invalid-token"), 0, 10))
-            result.assertFailure(ResultState.UNAUTHORIZED)
+        fun `should return empty page when user has no regular transactions`() {
+            val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(UserId(java.util.UUID.randomUUID()), 0, 10))
+            result.assertSuccess()
+            result.onSuccess { page ->
+                assertTrue(page.content.isEmpty())
+            }
         }
     }
 
@@ -96,21 +99,21 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should return first page of regular transactions with correct metadata`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transactions = (1..35).map { i ->
                     RegularTransaction(
                         label = "Transaction $i",
                         amount = 100.toAmount(),
                         isIncome = true,
-                        id = RegularTransactionId("${user.id}-rt-$i"),
+                        id = RegularTransactionId("${userId}-rt-$i"),
                         startDate = LocalDate.of(2024, 1, 1),
                         frequencyProperty = FrequencyProperty.Forever(),
                         recurrenceRule = RecurrenceRule.Monthly(1)
                     )
                 }
-                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+                regularTransactionState.init(transactions.map { UserRegularTransaction(userId, it) })
 
-                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(userId, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -125,21 +128,21 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should return last page with remaining items when total is not divisible by pageSize`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transactions = (1..35).map { i ->
                     RegularTransaction(
                         label = "Transaction $i",
                         amount = 100.toAmount(),
                         isIncome = false,
-                        id = RegularTransactionId("${user.id}-rt-last-$i"),
+                        id = RegularTransactionId("${userId}-rt-last-$i"),
                         startDate = LocalDate.of(2024, 1, 1),
                         frequencyProperty = FrequencyProperty.Forever(),
                         recurrenceRule = RecurrenceRule.Monthly(1)
                     )
                 }
-                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+                regularTransactionState.init(transactions.map { UserRegularTransaction(userId, it) })
 
-                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 3, 10))
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(userId, 3, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -152,21 +155,21 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should use default pagination when no page params are provided`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transactions = (1..5).map { i ->
                     RegularTransaction(
                         label = "RT $i",
                         amount = 50.toAmount(),
                         isIncome = true,
-                        id = RegularTransactionId("${user.id}-rt-default-$i"),
+                        id = RegularTransactionId("${userId}-rt-default-$i"),
                         startDate = LocalDate.of(2024, 1, 1),
                         frequencyProperty = FrequencyProperty.Forever(),
                         recurrenceRule = RecurrenceRule.Monthly(1)
                     )
                 }
-                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+                regularTransactionState.init(transactions.map { UserRegularTransaction(userId, it) })
 
-                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(userId, 0, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -180,21 +183,21 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should return empty content when page is out of range`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transactions = (1..5).map { i ->
                     RegularTransaction(
                         label = "RT $i",
                         amount = 50.toAmount(),
                         isIncome = true,
-                        id = RegularTransactionId("${user.id}-rt-oor-$i"),
+                        id = RegularTransactionId("${userId}-rt-oor-$i"),
                         startDate = LocalDate.of(2024, 1, 1),
                         frequencyProperty = FrequencyProperty.Forever(),
                         recurrenceRule = RecurrenceRule.Monthly(1)
                     )
                 }
-                regularTransactionState.init(transactions.map { UserRegularTransaction(user.id, it) })
+                regularTransactionState.init(transactions.map { UserRegularTransaction(userId, it) })
 
-                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 10, 10))
+                val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(userId, 10, 10))
 
                 result.assertSuccess()
                 result.onSuccess { page ->
@@ -210,18 +213,18 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should book a monthly transaction with Forever frequency`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Abonnement Netflix",
                     amount = 15.99.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-monthly-netflix"),
+                    id = RegularTransactionId("${userId}-monthly-netflix"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!))
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(userId, monthlyTransaction, listOf(booklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -236,19 +239,19 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should book a monthly transaction with UntilDate frequency`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val endDate = LocalDate.of(2024, 12, 31)
                 val monthlyTransaction = RegularTransaction(
                     label = "Prêt temporaire",
                     amount = 200.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-monthly-loan"),
+                    id = RegularTransactionId("${userId}-monthly-loan"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.UntilDate(endDate),
                     recurrenceRule = RecurrenceRule.Monthly(15)
                 )
 
-                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!))
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(userId, monthlyTransaction, listOf(booklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -262,18 +265,18 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should book a monthly transaction with SpecificRepetitionTimes frequency`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Cours de yoga - 10 séances",
                     amount = 50.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user}-monthly-yoga"),
+                    id = RegularTransactionId("${userId}-monthly-yoga"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.SpecificRepetitionTimes(10),
                     recurrenceRule = RecurrenceRule.Monthly(10)
                 )
 
-                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!))
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(userId, monthlyTransaction, listOf(booklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -287,20 +290,20 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should book a monthly transaction linked to multiple booklets`() {
-            launchWithConnectedUserInstance {
-                val secondBooklet = createBooklet(user.toUser(), "Compte épargne", 1000.toAmount())
+            launchWithUserId {
+                val secondBooklet = createBooklet(User(userId, "John", null), "Compte épargne", 1000.toAmount())
 
                 val monthlyTransaction = RegularTransaction(
                     label = "Épargne automatique",
                     amount = 300.toAmount(),
                     isIncome = true,
-                    id = RegularTransactionId("${user}-monthly-savings"),
+                    id = RegularTransactionId("${userId}-monthly-savings"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(tokenValue, monthlyTransaction, listOf(booklet.id!!, secondBooklet.id!!))
+                val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(userId, monthlyTransaction, listOf(booklet.id!!, secondBooklet.id!!))
                 )
 
                 result.assertSuccess()
@@ -309,24 +312,6 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 }
             }
         }
-
-        @Test
-        fun `should fail with unauthorized when token is invalid`() {
-            val monthlyTransaction = RegularTransaction(
-                label = "Test",
-                amount = 100.toAmount(),
-                isIncome = true,
-                id = RegularTransactionId("test-id"),
-                startDate = LocalDate.now(),
-                frequencyProperty = FrequencyProperty.Forever(),
-                recurrenceRule = RecurrenceRule.Monthly(1)
-            )
-
-            val result = bookRegularTransactionUseCase.handle(BookRegularTransactionCommand(SessionToken("invalid-token"), monthlyTransaction, listOf(UUID.randomUUID()))
-            )
-
-            result.assertFailure(ResultState.UNAUTHORIZED)
-        }
     }
 
     @Nested
@@ -334,20 +319,20 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should retrieve regular transaction by id`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Abonnement Spotify",
                     amount = 9.99.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user}-monthly-spotify"),
+                    id = RegularTransactionId("${userId}-monthly-spotify"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction)))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, monthlyTransaction)))
 
-                val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, monthlyTransaction.id.value))
+                val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(userId, monthlyTransaction.id.value))
 
                 result.assertSuccess()
                 result.onSuccess { transaction ->
@@ -360,22 +345,12 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail when transaction id does not exist`() {
-            launchWithConnectedUserInstance {
-                val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, "non-existing-id"))
+            launchWithUserId {
+                val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(userId, "non-existing-id"))
 
                 result.assertFailure()
                 assertEquals("domain.regular_transaction.get_by_id.not_found", result.errorInfo?.key)
             }
-        }
-
-        @Test
-        fun `should fail with unauthorized when token is invalid`() {
-            val result = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(
-                SessionToken("invalid-token"),
-                "some-id"
-            ))
-
-            result.assertFailure(ResultState.UNAUTHORIZED)
         }
 
     }
@@ -385,35 +360,35 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should delete a regular transaction successfully`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val monthlyTransaction = RegularTransaction(
                     label = "Abonnement à supprimer",
                     amount = 19.99.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-monthly-delete"),
+                    id = RegularTransactionId("${userId}-monthly-delete"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, monthlyTransaction)))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, monthlyTransaction)))
 
-                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(tokenValue, monthlyTransaction.id.value))
+                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(userId, monthlyTransaction.id.value))
 
                 result.assertSuccess()
                 result.onSuccess { deleted ->
                     assertTrue(deleted)
                 }
 
-                val getResult = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, monthlyTransaction.id.value))
+                val getResult = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(userId, monthlyTransaction.id.value))
                 getResult.assertFailure()
             }
         }
 
         @Test
         fun `should fail when deleting non-existing transaction`() {
-            launchWithConnectedUserInstance {
-                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(tokenValue, "non-existing-id"))
+            launchWithUserId {
+                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(userId, "non-existing-id"))
 
                 result.assertFailure()
                 assertEquals("domain.regular_transaction.delete.not_found", result.errorInfo?.key)
@@ -421,18 +396,8 @@ class RegularTransactionFeatureTest : FeatureTest() {
         }
 
         @Test
-        fun `should fail with unauthorized when token is invalid`() {
-            val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(
-                SessionToken("invalid-token"),
-                "some-id"
-            ))
-
-            result.assertFailure(ResultState.UNAUTHORIZED)
-        }
-
-        @Test
         fun `should not delete transaction belonging to another user`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val otherUserId = UserId(UUID.randomUUID())
                 val monthlyTransaction = RegularTransaction(
                     label = "Transaction d'un autre utilisateur",
@@ -446,7 +411,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 regularTransactionState.init(listOf(UserRegularTransaction(otherUserId, monthlyTransaction)))
 
-                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(tokenValue, monthlyTransaction.id.value))
+                val result = deleteRegularTransactionUseCase.handle(DeleteRegularTransactionCommand(userId, monthlyTransaction.id.value))
 
                 result.assertFailure()
                 assertEquals("domain.regular_transaction.delete.not_found", result.errorInfo?.key)
@@ -455,12 +420,12 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should delete multiple regular transactions successfully`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val first = RegularTransaction(
                     label = "Transaction 1",
                     amount = 10.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-bulk-1"),
+                    id = RegularTransactionId("${userId}-bulk-1"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
@@ -469,7 +434,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     label = "Transaction 2",
                     amount = 20.toAmount(),
                     isIncome = true,
-                    id = RegularTransactionId("${user.id}-bulk-2"),
+                    id = RegularTransactionId("${userId}-bulk-2"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(2)
@@ -477,12 +442,12 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
                 regularTransactionState.init(
                     listOf(
-                        UserRegularTransaction(user.id, first),
-                        UserRegularTransaction(user.id, second)
+                        UserRegularTransaction(userId, first),
+                        UserRegularTransaction(userId, second)
                     )
                 )
 
-                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(tokenValue, listOf(first.id.value, second.id.value)))
+                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(userId, listOf(first.id.value, second.id.value)))
 
                 result.assertSuccess()
                 result.onSuccess { deletedIds ->
@@ -491,7 +456,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     assertTrue(deletedIds.contains(second.id.value))
                 }
 
-                val remaining = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(tokenValue, 0, 10))
+                val remaining = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(userId, 0, 10))
                 remaining.assertSuccess()
                 remaining.onSuccess { all ->
                     assertTrue(all.content.none { it.id == first.id })
@@ -502,8 +467,8 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail bulk deletion when selection is empty`() {
-            launchWithConnectedUserInstance {
-                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(tokenValue, emptyList()))
+            launchWithUserId {
+                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(userId, emptyList()))
 
                 result.assertFailure(ResultState.TRANSACTION_ENTRY_ERROR)
                 assertEquals("domain.regular_transaction.delete.bulk.empty_selection", result.errorInfo?.key)
@@ -512,25 +477,25 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail bulk deletion when one transaction is missing`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val first = RegularTransaction(
                     label = "Transaction 1",
                     amount = 10.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-bulk-missing-1"),
+                    id = RegularTransactionId("${userId}-bulk-missing-1"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, first)))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, first)))
 
-                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(tokenValue, listOf(first.id.value, "missing-id")))
+                val result = deleteRegularTransactionsUseCase.handle(DeleteRegularTransactionsCommand(userId, listOf(first.id.value, "missing-id")))
 
                 result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
                 assertEquals("domain.regular_transaction.delete.bulk.not_found", result.errorInfo?.key)
 
-                val after = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(tokenValue, first.id.value))
+                val after = getRegularTransactionByIdUseCase.handle(GetRegularTransactionByIdQuery(userId, first.id.value))
                 after.assertSuccess()
             }
         }
@@ -540,18 +505,18 @@ class RegularTransactionFeatureTest : FeatureTest() {
     inner class UpdateRegularTransactionTest {
         @Test
         fun `should patch a regular transaction correctly`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val originalTransaction = RegularTransaction(
                     label = "Abonnement Gym",
                     amount = 40.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user}-monthly-gym"),
+                    id = RegularTransactionId("${userId}-monthly-gym"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, originalTransaction)))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, originalTransaction)))
 
                 val updatedTransaction = originalTransaction.copy(
                     amount = 45.toAmount(),
@@ -559,7 +524,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 )
 
                 val result = updateRegularTransactionUseCase.handle(UpdateRegularTransactionCommand(
-                    tokenValue,
+                    userId,
                     updatedTransaction,
                     listOf(booklet.id!!)
                 ))
@@ -575,7 +540,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail when updating unknown regular transaction`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val unknownTransaction = RegularTransaction(
                     label = "Unknown",
                     amount = 45.toAmount(),
@@ -586,7 +551,7 @@ class RegularTransactionFeatureTest : FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                val result = updateRegularTransactionUseCase.handle(UpdateRegularTransactionCommand(tokenValue, unknownTransaction, listOf(booklet.id!!)))
+                val result = updateRegularTransactionUseCase.handle(UpdateRegularTransactionCommand(userId, unknownTransaction, listOf(booklet.id!!)))
                 result.assertFailure(ResultState.TRANSACTION_NOT_FOUND)
                 assertEquals("domain.regular_transaction.update.not_found", result.errorInfo?.key)
             }
@@ -599,20 +564,20 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should link a booklet to a regular transaction successfully`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transaction = RegularTransaction(
                     label = "Salaire",
                     amount = 2500.toAmount(),
                     isIncome = true,
-                    id = RegularTransactionId("${user.id}-link-1"),
+                    id = RegularTransactionId("${userId}-link-1"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction)))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, transaction)))
 
                 val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
-                    tokenValue,
+                    userId,
                     transaction.id.value,
                     booklet.id!!
                 ))
@@ -626,9 +591,9 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail when linking booklet to a non-existing transaction`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
-                    tokenValue,
+                    userId,
                     "non-existing-id",
                     booklet.id!!
                 ))
@@ -640,21 +605,21 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail when linking an already linked booklet`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transaction = RegularTransaction(
                     label = "Loyer",
                     amount = 700.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-link-already"),
+                    id = RegularTransactionId("${userId}-link-already"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(5),
                     associatedBooklets = listOf(booklet)
                 )
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction, listOf(booklet.id!!))))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, transaction, listOf(booklet.id!!))))
 
                 val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
-                    tokenValue,
+                    userId,
                     transaction.id.value,
                     booklet.id!!
                 ))
@@ -663,16 +628,6 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 assertEquals("domain.regular_transaction.link.already_linked", result.errorInfo?.key)
             }
         }
-
-        @Test
-        fun `should fail with unauthorized when token is invalid`() {
-            val result = linkRegularTransactionToBookletUseCase.handle(LinkRegularTransactionToBookletCommand(
-                SessionToken("invalid-token"),
-                "some-id",
-                UUID.randomUUID()
-            ))
-            result.assertFailure(ResultState.UNAUTHORIZED)
-        }
     }
 
     @Nested
@@ -680,21 +635,21 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should unlink a booklet from a regular transaction successfully`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transaction = RegularTransaction(
                     label = "Abonnement streaming",
                     amount = 12.99.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-unlink-1"),
+                    id = RegularTransactionId("${userId}-unlink-1"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1),
                     associatedBooklets = listOf(booklet)
                 )
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction, listOf(booklet.id!!))))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, transaction, listOf(booklet.id!!))))
 
                 val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
-                    tokenValue,
+                    userId,
                     transaction.id.value,
                     booklet.id!!
                 ))
@@ -708,9 +663,9 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail when unlinking booklet from a non-existing transaction`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
-                    tokenValue,
+                    userId,
                     "non-existing-id",
                     booklet.id!!
                 ))
@@ -722,20 +677,20 @@ class RegularTransactionFeatureTest : FeatureTest() {
 
         @Test
         fun `should fail when unlinking a booklet that is not linked`() {
-            launchWithConnectedUserInstance {
+            launchWithUserId {
                 val transaction = RegularTransaction(
                     label = "Dépense non liée",
                     amount = 50.toAmount(),
                     isIncome = false,
-                    id = RegularTransactionId("${user.id}-unlink-notlinked"),
+                    id = RegularTransactionId("${userId}-unlink-notlinked"),
                     startDate = LocalDate.of(2024, 1, 1),
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
-                regularTransactionState.init(listOf(UserRegularTransaction(user.id, transaction)))
+                regularTransactionState.init(listOf(UserRegularTransaction(userId, transaction)))
 
                 val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
-                    tokenValue,
+                    userId,
                     transaction.id.value,
                     booklet.id!!
                 ))
@@ -743,16 +698,6 @@ class RegularTransactionFeatureTest : FeatureTest() {
                 result.assertFailure(ResultState.BAD_REQUEST)
                 assertEquals("domain.regular_transaction.unlink.not_linked", result.errorInfo?.key)
             }
-        }
-
-        @Test
-        fun `should fail with unauthorized when token is invalid`() {
-            val result = unlinkRegularTransactionFromBookletUseCase.handle(UnlinkRegularTransactionFromBookletCommand(
-                SessionToken("invalid-token"),
-                "some-id",
-                UUID.randomUUID()
-            ))
-            result.assertFailure(ResultState.UNAUTHORIZED)
         }
     }
 }
