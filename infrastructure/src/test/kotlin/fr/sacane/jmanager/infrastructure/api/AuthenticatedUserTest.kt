@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.api
 import fr.sacane.jmanager.domain.asTokenUUID
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
@@ -67,7 +68,7 @@ abstract class AuthenticatedUserTest {
 
     @AfterEach
     fun tearDown() {
-        logoutUseCase.handle(LogoutCommand(SessionToken(token.asTokenUUID())))
+        logoutUseCase.handle(LogoutCommand(UserId(user!!.id.value), SessionToken(token.asTokenUUID())))
         userPostgresRepository.deleteAll()
     }
 }
