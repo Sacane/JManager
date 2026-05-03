@@ -561,9 +561,18 @@ const bookletTransactionColumns: AppTableColumn[] = [
   { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '200px' }, slotName: 'label' },
   { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px' }, slotName: 'expenses' },
   { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px' }, slotName: 'income' },
-  { style: { width: '180px', minWidth: '180px', maxWidth: '180px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
+  { header: 'Tag', style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
+  { header: 'Sous tag', style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag' },
   { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions' },
 ]
+
+function resolveDisplayTag(tagDTO: TagDTO | null | undefined): TagDTO | null {
+  if (!tagDTO) return null
+  if (tagDTO.parentId) {
+    return tags.value.find(t => t.tagId === tagDTO.parentId) ?? tagDTO
+  }
+  return tagDTO
+}
 
 function openCsvImportFromMenu() {
   isMobileMenuOpen.value = false
@@ -919,150 +928,161 @@ onUnmounted(() => {
         </div>
 
         <div class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
-        <AppTable
-          v-model:selection="selectedTransactions"
-          class="flex-1 min-h-0"
-          :columns="bookletTransactionColumns"
-          :rows="filteredTransactions"
-          data-key="selectionKey"
-          :row-class="rowClass"
-          selectable
-          scrollable
-          scroll-height="flex"
-          :loading="isBookletLoading"
-          @row-dblclick="onEditTransaction"
-        >
-          <template #empty>
-            <div class="text-center py-12">
-              <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
-              <h3 class="text-xl font-bold text-[var(--text-primary)] mt-4 mb-2">
-                Aucune transaction
-              </h3>
-              <p class="text-[var(--text-secondary)] mb-4">
-                Commencez par créer votre première transaction
-              </p>
-              <Button class="btn-primary" icon="pi pi-plus" label="Créer une transaction" @click="openCreationDialog" />
-            </div>
-          </template>
+          <AppTable
+            v-model:selection="selectedTransactions"
+            class="flex-1 min-h-0"
+            :columns="bookletTransactionColumns"
+            :rows="filteredTransactions"
+            data-key="selectionKey"
+            :row-class="rowClass"
+            selectable
+            scrollable
+            scroll-height="flex"
+            :loading="isBookletLoading"
+            @row-dblclick="onEditTransaction"
+          >
+            <template #empty>
+              <div class="text-center py-12">
+                <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
+                <h3 class="text-xl font-bold text-[var(--text-primary)] mt-4 mb-2">
+                  Aucune transaction
+                </h3>
+                <p class="text-[var(--text-secondary)] mb-4">
+                  Commencez par créer votre première transaction
+                </p>
+                <Button class="btn-primary" icon="pi pi-plus" label="Créer une transaction" @click="openCreationDialog" />
+              </div>
+            </template>
 
-          <template #loading>
-            <div class="flex items-center justify-center gap-2 py-8 text-[var(--text-secondary)]">
-              <i class="pi pi-spin pi-spinner" />
-              <span>Chargement des transactions...</span>
-            </div>
-          </template>
+            <template #loading>
+              <div class="flex items-center justify-center gap-2 py-8 text-[var(--text-secondary)]">
+                <i class="pi pi-spin pi-spinner" />
+                <span>Chargement des transactions...</span>
+              </div>
+            </template>
 
-          <template #body-date="{ data }">
-            <div class="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
-              <i class="pi pi-calendar text-[var(--primary)] text-sm" />
-              <span>{{ data.date }}</span>
-            </div>
-          </template>
+            <template #body-date="{ data }">
+              <div class="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
+                <i class="pi pi-calendar text-[var(--primary)] text-sm" />
+                <span>{{ data.date }}</span>
+              </div>
+            </template>
 
-          <template #body-label="{ data }">
+            <template #body-label="{ data }">
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
+                <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm" title="Transaction prévisionnelle" />
+              </div>
+            </template>
+
+            <template #body-expenses="{ data }">
+              <span v-if="!data.isIncome" class="font-extrabold text-red-500">{{ data.expensesRepresentation }}</span>
+              <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
+            </template>
+
+            <template #body-income="{ data }">
+              <span v-if="data.isIncome" class="font-extrabold text-emerald-500">{{ data.incomeRepresentation }}</span>
+              <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
+            </template>
+
+            <template #header-tagFilter>
+              <div class="w-full" @click.stop>
+                <Select
+                  v-model="selectedTagFilter"
+                  :options="tagFilterOptions"
+                  option-label="label"
+                  option-value="value"
+                  class="w-full text-xs"
+                  size="small"
+                >
+                  <template #value="{ value: val }">
+                    <span class="text-xs font-semibold" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+                      {{ val ? (tagFilterOptions.find(o => o.value === val)?.label ?? val) : 'Tag' }}
+                    </span>
+                  </template>
+                  <template #option="{ option }">
+                    <span v-if="!option.value" class="text-sm text-[var(--text-secondary)]">Tous les tags</span>
+                    <Tag
+                      v-else
+                      :value="option.label"
+                      :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
+                      class="text-xs"
+                    />
+                  </template>
+                </Select>
+              </div>
+            </template>
+
+            <template #body-tag="{ data }">
+              <div class="max-w-[130px] overflow-hidden">
+                <Tag
+                  :value="resolveDisplayTag(data.tagDTO)?.label ?? data.tagDTO.label"
+                  :style="getTagStyle(resolveDisplayTag(data.tagDTO)?.colorDTO ?? data.tagDTO.colorDTO)"
+                  class="block max-w-full truncate"
+                  :title="resolveDisplayTag(data.tagDTO)?.label ?? data.tagDTO.label"
+                />
+              </div>
+            </template>
+
+            <template #body-subTag="{ data }">
+              <div v-if="data.tagDTO?.parentId" class="max-w-[130px] overflow-hidden">
+                <Tag
+                  :value="data.tagDTO.label"
+                  :style="getTagStyle(data.tagDTO.colorDTO)"
+                  class="block max-w-full truncate"
+                  :title="data.tagDTO.label"
+                />
+              </div>
+            </template>
+
+            <template #body-actions="{ data }">
+              <div class="flex items-center justify-center gap-1">
+                <Button
+                  v-if="data.id"
+                  class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  size="small"
+                  :disabled="isAnyActionLoading"
+                  title="Modifier la transaction"
+                  @click="onEditTransaction({ data })"
+                />
+                <Button
+                  v-if="data.isPreview"
+                  class="text-emerald-500 hover:bg-emerald-500/15"
+                  icon="pi pi-check"
+                  text
+                  rounded
+                  size="small"
+                  severity="success"
+                  :loading="isConfirmPreviewLoading"
+                  :disabled="isAnyActionLoading"
+                  title="Valider la transaction prévisionnel"
+                  @click="onConfirmPreview(data)"
+                />
+              </div>
+            </template>
+          </AppTable>
+          <div class="shrink-0 flex items-center justify-between flex-wrap gap-2 px-3 py-2 border-t border-[var(--card-border)]">
             <div class="flex items-center gap-2">
-              <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
-              <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm" title="Transaction prévisionnelle" />
-            </div>
-          </template>
-
-          <template #body-expenses="{ data }">
-            <span v-if="!data.isIncome" class="font-extrabold text-red-500">{{ data.expensesRepresentation }}</span>
-            <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
-          </template>
-
-          <template #body-income="{ data }">
-            <span v-if="data.isIncome" class="font-extrabold text-emerald-500">{{ data.incomeRepresentation }}</span>
-            <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
-          </template>
-
-          <template #header-tagFilter>
-            <div class="w-full" @click.stop>
+              <span class="text-xs text-[var(--text-secondary)]">Lignes par page&nbsp;:</span>
               <Select
-                v-model="selectedTagFilter"
-                :options="tagFilterOptions"
-                option-label="label"
-                option-value="value"
-                class="w-full text-xs"
+                v-model="pageSize"
+                :options="pageSizeOptions"
+                class="w-20"
                 size="small"
-              >
-                <template #value="{ value: val }">
-                  <span class="text-xs font-semibold" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
-                    {{ val ? (tagFilterOptions.find(o => o.value === val)?.label ?? val) : 'Tag' }}
-                  </span>
-                </template>
-                <template #option="{ option }">
-                  <span v-if="!option.value" class="text-sm text-[var(--text-secondary)]">Tous les tags</span>
-                  <Tag
-                    v-else
-                    :value="option.label"
-                    :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
-                    class="text-xs"
-                  />
-                </template>
-              </Select>
-            </div>
-          </template>
-
-          <template #body-tag="{ data }">
-            <div class="max-w-[148px] overflow-hidden">
-              <Tag
-                :value="data.tagDTO.label"
-                :style="getTagStyle(data.tagDTO.colorDTO)"
-                class="block max-w-full truncate"
-                :title="data.tagDTO.label"
+                @change="onBookletPageSizeChange"
               />
             </div>
-          </template>
-
-          <template #body-actions="{ data }">
-            <div class="flex items-center justify-center gap-1">
-              <Button
-                v-if="data.id"
-                class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
-                icon="pi pi-pencil"
-                text
-                rounded
-                size="small"
-                :disabled="isAnyActionLoading"
-                title="Modifier la transaction"
-                @click="onEditTransaction({ data })"
-              />
-              <Button
-                v-if="data.isPreview"
-                class="text-emerald-500 hover:bg-emerald-500/15"
-                icon="pi pi-check"
-                text
-                rounded
-                size="small"
-                severity="success"
-                :loading="isConfirmPreviewLoading"
-                :disabled="isAnyActionLoading"
-                title="Valider la transaction prévisionnel"
-                @click="onConfirmPreview(data)"
-              />
-            </div>
-          </template>
-        </AppTable>
-        <div class="shrink-0 flex items-center justify-between flex-wrap gap-2 px-3 py-2 border-t border-[var(--card-border)]">
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-[var(--text-secondary)]">Lignes par page&nbsp;:</span>
-            <Select
-              v-model="pageSize"
-              :options="pageSizeOptions"
-              class="w-20"
-              size="small"
-              @change="onBookletPageSizeChange"
+            <Paginator
+              v-if="totalPages > 1"
+              :first="currentPage * pageSize"
+              :rows="pageSize"
+              :total-records="totalElements"
+              @page="onPageChange"
             />
           </div>
-          <Paginator
-            v-if="totalPages > 1"
-            :first="currentPage * pageSize"
-            :rows="pageSize"
-            :total-records="totalElements"
-            @page="onPageChange"
-          />
-        </div>
         </div>
       </div>
 

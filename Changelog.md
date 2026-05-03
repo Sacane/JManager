@@ -2,6 +2,12 @@
 
 ## 2026-05-03
 
+- **Bug fix: Sub-tag visibility in booklet table and category distribution**
+  - **Domain — `CategoryDistributionCalculatorImpl`**: Fixed sub-tag promotion logic. When a parent tag has no transactions tagged directly (all transactions belong to its sub-tags), each sub-tag now appears as its own top-level entry in the distribution instead of being grouped under an invisible parent. Percentages are computed against the global total. When a parent has at least one direct transaction, the previous grouping behaviour (sub-tags in `subCategories`) is preserved.
+  - Added 3 new domain tests in `CategoryDistributionCalculatorTest` covering the promotion scenarios and percentage correctness.
+  - **Client — `booklet/[id].vue`**: Added a dedicated "Sous tag" column to the transactions table. The "Tag" column now displays the parent tag (resolved from `tagDTO.parentId`) when the transaction uses a sub-tag; the "Sous tag" column shows the sub-tag label. A `resolveDisplayTag` helper function resolves the effective display tag from the loaded `tags` ref.
+  - Added 6 new frontend tests in `booklet-id.spec.ts` covering `resolveDisplayTag` (parent resolution, fallback, null handling) and the two-column tag filter behaviour (parent filter includes sub-tags; sub-tag filter is exact match).
+
 - **Documentation Cleanup — Post-Implementation**
   - Established cleanup workflow for `docs/refactoring/` and `docs/technical/` folders after feature completion.
   - Removed completed refactoring plans: `command-query-bus/`, `extract-auth-from-domain/`, `tag-sealed-class/`, `usecase-handle-refactoring/`.
