@@ -2,6 +2,7 @@ package fr.sacane.jmanager.application.api.tag
 
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.asPersonalTag
 import fr.sacane.jmanager.domain.port.input.tag.*
 import fr.sacane.jmanager.domain.models.UserId
@@ -54,5 +55,19 @@ class TagController(
     ): ResponseEntity<TagDTO> {
         return commandBus.dispatch(EditTagCommand(UserId(currentUser.id), tagDTO.toDomain()))
             .map { it.toDTO() }.toHttpResponse()
+    }
+
+    @PostMapping("/sub-tag", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun createSubTag(
+        @Valid @RequestBody request: CreateSubTagRequest
+    ): ResponseEntity<TagDTO> {
+        val tag = Tag.Personal(label = request.tagLabel, color = request.colorDTO.asAwtColor())
+        return commandBus.dispatch(
+            CreateSubTagCommand(
+                userId = UserId(currentUser.id),
+                tag = tag,
+                parentId = request.parentId.toUUID()
+            )
+        ).map { it.toDTO() }.toHttpResponse()
     }
 }

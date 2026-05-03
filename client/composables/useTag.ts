@@ -7,6 +7,14 @@ export default function useTag() {
     })
   }
 
+  async function addSubTag(label: string, colorDTO: ColorDTO, parentId: string): Promise<TagDTO> {
+    return post('tag/sub-tag', {
+      tagLabel: label,
+      colorDTO,
+      parentId,
+    })
+  }
+
   async function getAllTags(): Promise<TagDTO[]> {
     return get(`tag`)
   }
@@ -19,5 +27,5 @@ export default function useTag() {
   async function editTag(tag: TagDTO): Promise<TagDTO> {
     return patch('tag', tag)
   }
-  return { addPersonalTag, getAllTags, deleteTag, getDefaultTag, editTag }
+  return { addPersonalTag, addSubTag, getAllTags, deleteTag, getDefaultTag, editTag }
 }

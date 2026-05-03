@@ -29,5 +29,8 @@ class TagPersonalResource(
     name: String = "",
     color: Color = Color(0, 0, 0),
     @ManyToOne
-    var owner: UserResource? = null
+    var owner: UserResource? = null,
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    var parent: TagPersonalResource? = null
 ): AbstractTagResource(idTag, name, color)

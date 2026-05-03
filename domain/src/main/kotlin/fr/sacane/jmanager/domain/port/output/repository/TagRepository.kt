@@ -106,4 +106,28 @@ interface TagRepository {
      * @return true if the tag exists
      */
     fun existsById(tagId: UUID): Boolean
+
+    /**
+     * Retrieve all sub-tags that have the given tag as their parent.
+     *
+     * @param parentId UUID of the parent tag
+     * @return List of personal sub-tags (may be empty)
+     */
+    fun findSubTagsByParentId(parentId: UUID): List<Tag.Personal>
+
+    /**
+     * Check whether a tag has at least one sub-tag.
+     *
+     * @param tagId UUID of the tag to check
+     * @return true if at least one sub-tag references this tag as parent
+     */
+    fun hasSubTags(tagId: UUID): Boolean
+
+    /**
+     * Find a tag by its identifier.
+     *
+     * @param tagId UUID of the tag
+     * @return the Tag if found, null otherwise
+     */
+    fun findById(tagId: UUID): Tag?
 }

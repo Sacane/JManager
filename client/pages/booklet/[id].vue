@@ -86,6 +86,23 @@ const displayMonth = computed({
   },
 })
 const transactionsCount = computed(() => actualTransactions.value.length)
+const parentTags = computed(() => tags.value.filter(t => !t.parentId))
+const subTagsByParent = computed(() => {
+  const map: Record<string, TagDTO[]> = {}
+  for (const t of tags.value) {
+    if (t.parentId) {
+      if (!map[t.parentId]) map[t.parentId] = []
+      map[t.parentId].push(t)
+    }
+  }
+  return map
+})
+const selectedParentTagFilter = ref<string>('')
+const selectedSubTagFilter = ref<string>('')
+const activeSubTags = computed(() => {
+  if (!selectedParentTagFilter.value) return []
+  return subTagsByParent.value[selectedParentTagFilter.value] ?? []
+})
 const tagFilterOptions = computed(() => [
   { label: 'Tous les tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
   ...tags.value.map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
@@ -143,7 +160,13 @@ const filteredTransactions = computed(() => {
   } else if (transactionFilter.value === 'confirmed') {
     result = result.filter(t => !t.isPreview)
   }
-  if (selectedTagFilter.value !== '') {
+  if (selectedSubTagFilter.value !== '') {
+    result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedSubTagFilter.value)
+  } else if (selectedParentTagFilter.value !== '') {
+    const childIds = (subTagsByParent.value[selectedParentTagFilter.value] ?? []).map(c => c.tagId)
+    const allowedIds = new Set([selectedParentTagFilter.value, ...childIds])
+    result = result.filter(t => allowedIds.has(t.tagDTO?.tagId ?? ''))
+  } else if (selectedTagFilter.value !== '') {
     result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedTagFilter.value)
   }
   return result
@@ -235,6 +258,17 @@ async function retrieveTags() {
     tags.value = await tag.getAllTags()
   } catch (err) {
     toast.errorAxios(err as AxiosError)
+  }
+}
+
+function onParentTagClick(tagId: string) {
+  if (selectedParentTagFilter.value === tagId) {
+    selectedParentTagFilter.value = ''
+    selectedSubTagFilter.value = ''
+  } else {
+    selectedParentTagFilter.value = tagId
+    selectedSubTagFilter.value = ''
+    selectedTagFilter.value = ''
   }
 }
 
@@ -845,7 +879,46 @@ onUnmounted(() => {
         </Transition>
       </div>
 
-      <div v-if="!isMobile" class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
+      <div v-if="!isMobile" class="flex-1 min-h-0 flex flex-col gap-3">
+        <!-- Two-column tag filter -->
+        <div v-if="parentTags.length > 0" class="flex gap-2 items-start p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm" data-test="tag-filter-panel">
+          <div class="flex flex-wrap gap-1.5 flex-1" data-test="tag-filter-col-a">
+            <button
+              class="tag-filter-btn"
+              :class="{ active: selectedParentTagFilter === '' && selectedTagFilter === '' }"
+              @click="selectedParentTagFilter = ''; selectedSubTagFilter = ''; selectedTagFilter = ''"
+            >
+              Tous
+            </button>
+            <button
+              v-for="pt in parentTags"
+              :key="pt.tagId"
+              class="tag-filter-btn"
+              :class="{ active: selectedParentTagFilter === pt.tagId }"
+              :style="selectedParentTagFilter === pt.tagId ? { backgroundColor: `rgb(${pt.colorDTO.red}, ${pt.colorDTO.green}, ${pt.colorDTO.blue})`, color: 'white' } : {}"
+              @click="onParentTagClick(pt.tagId ?? '')"
+            >
+              <span class="w-2.5 h-2.5 rounded-full inline-block mr-1" :style="{ backgroundColor: `rgb(${pt.colorDTO.red}, ${pt.colorDTO.green}, ${pt.colorDTO.blue})` }" />
+              {{ pt.label }}
+            </button>
+          </div>
+          <Transition name="fade">
+            <div v-if="activeSubTags.length > 0" class="flex flex-wrap gap-1.5 pl-3 border-l border-[var(--border-color)]" data-test="tag-filter-col-b">
+              <button
+                v-for="st in activeSubTags"
+                :key="st.tagId"
+                class="tag-filter-btn sub"
+                :class="{ active: selectedSubTagFilter === st.tagId }"
+                :style="selectedSubTagFilter === st.tagId ? { backgroundColor: `rgb(${st.colorDTO.red}, ${st.colorDTO.green}, ${st.colorDTO.blue})`, color: 'white' } : {}"
+                @click="selectedSubTagFilter = selectedSubTagFilter === (st.tagId ?? '') ? '' : (st.tagId ?? '')"
+              >
+                {{ st.label }}
+              </button>
+            </div>
+          </Transition>
+        </div>
+
+        <div class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
         <AppTable
           v-model:selection="selectedTransactions"
           class="flex-1 min-h-0"
@@ -989,6 +1062,7 @@ onUnmounted(() => {
             :total-records="totalElements"
             @page="onPageChange"
           />
+        </div>
         </div>
       </div>
 
@@ -1422,6 +1496,38 @@ onUnmounted(() => {
 
 .preview-confirm-help-text {
   color: var(--text-secondary);
+}
+
+/* Tag filter buttons */
+.tag-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--primary);
+    color: var(--text-primary);
+  }
+
+  &.active {
+    border-color: transparent;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  &.sub {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
 }
 
 .dark .preview-confirm-summary {

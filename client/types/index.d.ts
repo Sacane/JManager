@@ -48,6 +48,19 @@ declare global {
     label: string | undefined
     colorDTO: ColorDTO
     isDefault: boolean
+    parentId?: string | null
+  }
+
+  interface TagDisplayItem {
+    id: string
+    label: string
+    isDefault: boolean
+    color: string
+    parentId?: string | null
+  }
+
+  interface TagGroupItem extends TagDisplayItem {
+    children: TagDisplayItem[]
   }
 
   interface TransactionCreationDTO {
@@ -148,6 +161,7 @@ declare global {
     totalAmount: string
     percentage: number
     transactionCount: number
+    subCategories?: CategoryDataDTO[]
   }
 
   interface TrendStatsDTO {

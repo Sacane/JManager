@@ -35,8 +35,12 @@ class DeleteTagService(
     }
 
     override fun handle(command: DeleteTagCommand): Result<Nothing> {
-        val isUsedInTransactions = transactionRepository.isPersonalTagUsed(command.tagId)
-        val isUsedInRegular = regularTransactionRepository.isPersonalTagUsed(command.tagId)
+        val subTags = tagRepository.findSubTagsByParentId(command.tagId)
+        val allTagIds = listOf(command.tagId) + subTags.mapNotNull { it.id }
+
+        val isUsedInTransactions = allTagIds.any { transactionRepository.isPersonalTagUsed(it) }
+        val isUsedInRegular = allTagIds.any { regularTransactionRepository.isPersonalTagUsed(it) }
+
         if ((isUsedInTransactions || isUsedInRegular) && !command.force) {
             return domainFailure(
                 ResultState.TAG_IN_USE,
@@ -46,9 +50,20 @@ class DeleteTagService(
         }
         if (command.force && (isUsedInTransactions || isUsedInRegular)) {
             val defaultTag = tagRepository.defaultTag()
-            if (isUsedInTransactions) transactionRepository.replacePersonalTagByDefault(command.tagId, defaultTag)
-            if (isUsedInRegular) regularTransactionRepository.replacePersonalTagByDefault(command.tagId, defaultTag)
+            for (tagId in allTagIds) {
+                if (transactionRepository.isPersonalTagUsed(tagId)) {
+                    transactionRepository.replacePersonalTagByDefault(tagId, defaultTag)
+                }
+                if (regularTransactionRepository.isPersonalTagUsed(tagId)) {
+                    regularTransactionRepository.replacePersonalTagByDefault(tagId, defaultTag)
+                }
+            }
         }
+
+        for (subTag in subTags) {
+            subTag.id?.let { tagRepository.deleteById(it) }
+        }
+
         if (!tagRepository.deleteById(command.tagId)) {
             return domainFailure(
                 ResultState.NOT_FOUND,

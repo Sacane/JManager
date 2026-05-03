@@ -15,7 +15,8 @@ data class TagDTO(
     val label: String,
     @field:Valid
     val colorDTO: ColorDTO,
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    val parentId: String? = null
 )
 @Serializable
 data class ColorDTO(
@@ -37,4 +38,15 @@ data class UserTagRequest(
     val tagLabel: String,
     @field:Valid
     val colorDTO: ColorDTO
+)
+
+@Serializable
+data class CreateSubTagRequest(
+    @field:NotBlank
+    @field:Size(max = 50)
+    val tagLabel: String,
+    @field:Valid
+    val colorDTO: ColorDTO,
+    @field:NotBlank
+    val parentId: String
 )

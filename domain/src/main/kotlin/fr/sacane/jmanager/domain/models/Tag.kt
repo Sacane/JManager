@@ -19,7 +19,8 @@ sealed class Tag(
     data class Personal(
         override val label: String,
         override val id: UUID? = null,
-        override val color: Color = Color(0f, 0f, 0f, 0f)
+        override val color: Color = Color(0f, 0f, 0f, 0f),
+        val parentId: UUID? = null
     ) : Tag(label, id, color)
 
     companion object {

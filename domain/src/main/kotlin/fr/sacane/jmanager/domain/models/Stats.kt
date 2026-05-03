@@ -32,7 +32,8 @@ data class CategoryData(
     val tagColor: Color,
     val totalAmount: Amount,
     val percentage: BigDecimal,
-    val transactionCount: Int
+    val transactionCount: Int,
+    val subCategories: List<CategoryData> = emptyList()
 )
 
 

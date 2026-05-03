@@ -172,7 +172,64 @@ class CategoryDistributionCalculatorTest {
         assertEquals(100.toAmount(), totalExpenses)
     }
 
+    @Test
+    fun `calculateDistribution should aggregate sub-tag amounts under parent tag`() {
+        val parentId = UUID.randomUUID()
+        val subTag1Id = UUID.randomUUID()
+        val subTag2Id = UUID.randomUUID()
+        val parentTag = Tag.Personal("Food", id = parentId, color = Color.GREEN)
+        val subTag1 = Tag.Personal("Restaurants", id = subTag1Id, color = Color.RED, parentId = parentId)
+        val subTag2 = Tag.Personal("Groceries", id = subTag2Id, color = Color.BLUE, parentId = parentId)
+
+        tagRepository.addTag(parentTag)
+        tagRepository.addTag(subTag1)
+        tagRepository.addTag(subTag2)
+
+        val transactions = listOf(
+            Transaction(UUID.randomUUID(), "Direct food", LocalDate.now(), 10.toAmount(), isIncome = false, tag = parentTag),
+            Transaction(UUID.randomUUID(), "Restaurant meal", LocalDate.now(), 20.toAmount(), isIncome = false, tag = subTag1),
+            Transaction(UUID.randomUUID(), "Grocery run", LocalDate.now(), 30.toAmount(), isIncome = false, tag = subTag2)
+        )
+
+        val (categories, totalExpenses) = calculator.calculateDistribution(transactions)
+
+        assertEquals(1, categories.size)
+        assertEquals("Food", categories[0].tagLabel)
+        assertEquals(60.toAmount(), categories[0].totalAmount)
+        assertEquals(60.toAmount(), totalExpenses)
+
+        val subCategories = categories[0].subCategories
+        assertEquals(2, subCategories.size)
+        assertEquals("Groceries", subCategories[0].tagLabel)
+        assertEquals(30.toAmount(), subCategories[0].totalAmount)
+        assertEquals("Restaurants", subCategories[1].tagLabel)
+        assertEquals(20.toAmount(), subCategories[1].totalAmount)
+    }
+
+    @Test
+    fun `calculateDistribution should return empty subCategories for tags without sub-tags`() {
+        val tagId = UUID.randomUUID()
+        val tag = Tag.Personal("Transport", id = tagId, color = Color.YELLOW)
+
+        val transactions = listOf(
+            Transaction(UUID.randomUUID(), "Bus", LocalDate.now(), 15.toAmount(), isIncome = false, tag = tag)
+        )
+
+        val (categories, _) = calculator.calculateDistribution(transactions)
+
+        assertEquals(1, categories.size)
+        assertEquals("Transport", categories[0].tagLabel)
+        assertEquals(15.toAmount(), categories[0].totalAmount)
+        assertTrue(categories[0].subCategories.isEmpty())
+    }
+
     private class FakeTagRepository : TagRepository {
+        private val tags = mutableListOf<Tag>()
+
+        fun addTag(tag: Tag) {
+            tags.add(tag)
+        }
+
         override fun save(userId: UserId, tag: Tag): Tag = tag
         override fun getAll(userId: UserId): List<Tag> = emptyList()
         override fun deleteByLabel(label: String) {}
@@ -185,6 +242,11 @@ class CategoryDistributionCalculatorTest {
         override fun patch(tag: Tag): Tag = tag
         override fun existsAnotherTagByLabel(userId: UserId, tag: Tag): Boolean = false
         override fun existsById(tagId: UUID): Boolean = false
+        override fun findSubTagsByParentId(parentId: UUID): List<Tag.Personal> =
+            tags.filterIsInstance<Tag.Personal>().filter { it.parentId == parentId }
+        override fun hasSubTags(tagId: UUID): Boolean =
+            tags.filterIsInstance<Tag.Personal>().any { it.parentId == tagId }
+        override fun findById(tagId: UUID): Tag? = tags.find { it.id == tagId }
     }
 }
 

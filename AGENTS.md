@@ -171,6 +171,25 @@ Keep these scopes clearly separated — do not mix concerns across layers in a s
 - Entries must clearly describe what changed and why.
 - During a plan or agent mode, you must update changelog only when I the task is fully complete, if I undo your changes that means something need to be rework and you must iterate as in.
 
+## Documentation Cleanup (Post-Completion)
+
+After a feature, refactoring, or technical analysis is **fully complete and merged**:
+
+1. **Working Documents Cleanup**:
+   - Remove completed **refactoring plans** from `docs/refactoring/{refactoring-name}/` (keep `.gitkeep`)
+   - Remove completed **technical analysis reports** from `docs/technical/{topic}/` (keep `.gitkeep`)
+   - Remove completed **feature plans** from `docs/features/{feature-name}/` (keep `.gitkeep`)
+   - Preserve directory structure with `.gitkeep` files for future work
+
+2. **Content Preservation**:
+   - **Key decisions** and **implementation details** from plans/reports must be captured in `Changelog.md`
+   - Do **not** delete technical reports if they represent decisions NOT YET IMPLEMENTED — archive or flag for future phase
+   - Example: If a cache strategy is implemented → remove report, update Changelog; if a report is rejected → preserve reference in a decisions file
+
+3. **Workflow Integration**:
+   - Cleanup runs **after** feature completion and **before** final Changelog entry update
+   - This keeps `docs/` clean and ensures all decisions are documented in Changelog or code
+
 ## Instructions Guidelines
 
 You must follow the following guidelines in depends on the contexte you are working on : 

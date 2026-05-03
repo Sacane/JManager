@@ -33,7 +33,8 @@ data class CategoryDataDTO(
     val colorDTO: ColorDTO,
     val totalAmount: String,
     val percentage: BigDecimal,
-    val transactionCount: Int
+    val transactionCount: Int,
+    val subCategories: List<CategoryDataDTO> = emptyList()
 )
 
 data class TrendStatsDTO(
@@ -93,13 +94,14 @@ fun CategoryDistributionOutput.toDTO() = CategoryDistributionDTO(
     totalExpenses = totalExpenses.toStringValue()
 )
 
-fun CategoryData.toDTO() = CategoryDataDTO(
+fun CategoryData.toDTO(): CategoryDataDTO = CategoryDataDTO(
     tagLabel = tagLabel,
     tagId = tagId,
     colorDTO = tagColor.toDTO(),
     totalAmount = totalAmount.toStringValue(),
     percentage = percentage,
-    transactionCount = transactionCount
+    transactionCount = transactionCount,
+    subCategories = subCategories.map { it.toDTO() }
 )
 
 fun TrendStatsOutput.toDTO() = TrendStatsDTO(

@@ -78,7 +78,8 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.TRANSACTION_ENTRY_ERROR,
     ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
     ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR,
-    ResultState.BOOKLET_MAXIMUM_SIZE_REACHED -> throw InvalidRequestException(
+    ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
+    ResultState.TAG_PARENT_IS_SUBTAG -> throw InvalidRequestException(
         this.errorInfo?.code ?: this.status.code,
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,
@@ -116,13 +117,19 @@ internal fun ColorDTO.asAwtColor(): Color = Color(this.red, this.green, this.blu
 
 internal fun Color.toDTO(): ColorDTO = ColorDTO(this.red, this.green, this.blue)
 
-internal fun Tag.toDTO(): TagDTO = TagDTO(tagId = this.id?.toString(), label = this.label, isDefault = this.isDefault, colorDTO = this.color.toDTO())
+internal fun Tag.toDTO(): TagDTO = TagDTO(
+    tagId = this.id?.toString(),
+    label = this.label,
+    isDefault = this.isDefault,
+    colorDTO = this.color.toDTO(),
+    parentId = (this as? Tag.Personal)?.parentId?.toString()
+)
 
 internal fun TagDTO.toDomain(): Tag {
     val id = this.tagId?.let { java.util.UUID.fromString(it) }
     val color = Color(this.colorDTO.red, this.colorDTO.green, this.colorDTO.blue)
     return if (this.isDefault) Tag.Default(label = this.label, id = id, color = color)
-    else Tag.Personal(label = this.label, id = id, color = color)
+    else Tag.Personal(label = this.label, id = id, color = color, parentId = this.parentId?.let { java.util.UUID.fromString(it) })
 }
 
 internal fun RegularTransaction.toDTO(): RegularTransactionDTO {
