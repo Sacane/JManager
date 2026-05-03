@@ -99,13 +99,23 @@ const subTagsByParent = computed(() => {
 })
 const selectedParentTagFilter = ref<string>('')
 const selectedSubTagFilter = ref<string>('')
+watch(selectedTagFilter, (val) => {
+  if (val) selectedSubTagFilter.value = ''
+})
+watch(selectedSubTagFilter, (val) => {
+  if (val) selectedTagFilter.value = ''
+})
 const activeSubTags = computed(() => {
   if (!selectedParentTagFilter.value) return []
   return subTagsByParent.value[selectedParentTagFilter.value] ?? []
 })
 const tagFilterOptions = computed(() => [
   { label: 'Tous les tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
-  ...tags.value.map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
+  ...tags.value.filter(t => !t.parentId).map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
+])
+const subTagFilterOptions = computed(() => [
+  { label: 'Tous les sous-tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
+  ...tags.value.filter(t => !!t.parentId).map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
 ])
 const previewTransactionsCount = computed(() => actualTransactions.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedTransactions.value.length > 0)
@@ -160,14 +170,18 @@ const filteredTransactions = computed(() => {
   } else if (transactionFilter.value === 'confirmed') {
     result = result.filter(t => !t.isPreview)
   }
-  if (selectedSubTagFilter.value !== '') {
-    result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedSubTagFilter.value)
-  } else if (selectedParentTagFilter.value !== '') {
+  if (selectedParentTagFilter.value !== '') {
     const childIds = (subTagsByParent.value[selectedParentTagFilter.value] ?? []).map(c => c.tagId)
     const allowedIds = new Set([selectedParentTagFilter.value, ...childIds])
     result = result.filter(t => allowedIds.has(t.tagDTO?.tagId ?? ''))
-  } else if (selectedTagFilter.value !== '') {
-    result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedTagFilter.value)
+  }
+  if (selectedTagFilter.value !== '') {
+    const childIds = (subTagsByParent.value[selectedTagFilter.value] ?? []).map(c => c.tagId)
+    const allowedIds = new Set([selectedTagFilter.value, ...childIds])
+    result = result.filter(t => allowedIds.has(t.tagDTO?.tagId ?? ''))
+  }
+  if (selectedSubTagFilter.value !== '') {
+    result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedSubTagFilter.value)
   }
   return result
 })
@@ -561,8 +575,8 @@ const bookletTransactionColumns: AppTableColumn[] = [
   { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '200px' }, slotName: 'label' },
   { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px' }, slotName: 'expenses' },
   { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px' }, slotName: 'income' },
-  { header: 'Tag', style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
-  { header: 'Sous tag', style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag' },
+  { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
+  { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag', headerSlotName: 'subTagFilter' },
   { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions' },
 ]
 
@@ -1013,13 +1027,41 @@ onUnmounted(() => {
               </div>
             </template>
 
+            <template #header-subTagFilter>
+              <div class="w-full" @click.stop>
+                <Select
+                  v-model="selectedSubTagFilter"
+                  :options="subTagFilterOptions"
+                  option-label="label"
+                  option-value="value"
+                  class="w-full text-xs"
+                  size="small"
+                >
+                  <template #value="{ value: val }">
+                    <span class="text-xs font-semibold" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+                      {{ val ? (subTagFilterOptions.find(o => o.value === val)?.label ?? val) : 'Sous-tag' }}
+                    </span>
+                  </template>
+                  <template #option="{ option }">
+                    <span v-if="!option.value" class="text-sm text-[var(--text-secondary)]">Tous les sous-tags</span>
+                    <Tag
+                      v-else
+                      :value="option.label"
+                      :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
+                      class="text-xs"
+                    />
+                  </template>
+                </Select>
+              </div>
+            </template>
+
             <template #body-tag="{ data }">
               <div class="max-w-[130px] overflow-hidden">
                 <Tag
-                  :value="resolveDisplayTag(data.tagDTO)?.label ?? data.tagDTO.label"
-                  :style="getTagStyle(resolveDisplayTag(data.tagDTO)?.colorDTO ?? data.tagDTO.colorDTO)"
+                  :value="data.tagDTO.label"
+                  :style="getTagStyle(data.tagDTO.colorDTO)"
                   class="block max-w-full truncate"
-                  :title="resolveDisplayTag(data.tagDTO)?.label ?? data.tagDTO.label"
+                  :title="data.tagDTO.label"
                 />
               </div>
             </template>

@@ -1,5 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import BookletDetailsPage from '../../pages/booklet/[id].vue'
 
 const deleteTransactionMock = vi.fn().mockResolvedValue({ deletedIds: [], excludedVirtualTransactions: [] })
@@ -862,6 +863,25 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
     expect(result.map((t: any) => t.id)).toContain('tx-2')
   })
 
+  it('tag column filter includes transactions of the tag and its sub-tags', async () => {
+    const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTag })
+    const txSub = createTransaction({ id: 'tx-2', tagDTO: subTag })
+    const txOther = createTransaction({ id: 'tx-3', tagDTO: defaultTag })
+
+    const wrapper = mountWithTagsAndTransactions([txParent, txSub, txOther])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedTagFilter = 'parent-1'
+
+    const result = vm.filteredTransactions
+    expect(result).toHaveLength(2)
+    expect(result.map((t: any) => t.id)).toContain('tx-1')
+    expect(result.map((t: any) => t.id)).toContain('tx-2')
+  })
+
   it('filtering by sub-tag includes only transactions of that specific sub-tag', async () => {
     const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTag })
     const txSub = createTransaction({ id: 'tx-2', tagDTO: subTag })
@@ -872,11 +892,40 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
     await flushPromises()
 
     const vm = wrapper.vm as any
-    vm.selectedParentTagFilter = 'parent-1'
     vm.selectedSubTagFilter = 'sub-1'
 
     const result = vm.filteredTransactions
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('tx-2')
+  })
+
+  it('setting tag filter clears the sub-tag filter', async () => {
+    const wrapper = mountWithTagsAndTransactions([])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedSubTagFilter = 'sub-1'
+    await nextTick()
+    vm.selectedTagFilter = 'parent-1'
+    await nextTick()
+    await nextTick()
+
+    expect(vm.selectedSubTagFilter).toBe('')
+  })
+
+  it('setting sub-tag filter clears the tag filter', async () => {
+    const wrapper = mountWithTagsAndTransactions([])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedTagFilter = 'parent-1'
+    await nextTick()
+    vm.selectedSubTagFilter = 'sub-1'
+    await nextTick()
+    await nextTick()
+
+    expect(vm.selectedTagFilter).toBe('')
   })
 })
