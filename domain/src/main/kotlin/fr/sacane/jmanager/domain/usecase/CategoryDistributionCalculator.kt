@@ -68,29 +68,78 @@ class CategoryDistributionCalculatorImpl(
             }
         }
 
-        val categoryData = groupedByEffectiveParent.map { (parentKey, txs) ->
-            val parentTotal = txs
-                .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
+        val categoryData = groupedByEffectiveParent.flatMap { (parentKey, txs) ->
+            val hasDirectTransactions = txs.any { tx ->
+                val tag = tx.tag
+                !(tag is Tag.Personal && tag.parentId != null)
+            }
 
-            val percentage = parentTotal
-                .divide(totalExpenses, 4, RoundingMode.HALF_UP)
+            if (hasDirectTransactions) {
+                listOf(buildParentEntry(parentKey, txs, totalExpenses))
+            } else {
+                buildPromotedSubTagEntries(txs, totalExpenses)
+            }
+        }.sortedByDescending { it.totalAmount.value }
+
+        return Pair(categoryData, Amount(totalExpenses))
+    }
+
+    private fun buildParentEntry(
+        parentKey: TagKey,
+        txs: List<Transaction>,
+        totalExpenses: BigDecimal
+    ): CategoryData {
+        val parentTotal = txs.fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
+        val percentage = parentTotal
+            .divide(totalExpenses, 4, RoundingMode.HALF_UP)
+            .multiply(BigDecimal("100"))
+
+        val subGrouped = txs
+            .filter { tx -> tx.tag is Tag.Personal && (tx.tag as Tag.Personal).parentId != null }
+            .groupBy { tx ->
+                val tag = tx.tag as Tag.Personal
+                TagKey(tag.label, tag.id!!, tag.color)
+            }
+
+        val subCategories = subGrouped.map { (subKey, subTxs) ->
+            val subTotal = subTxs.fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
+            val subPercentage = subTotal
+                .divide(parentTotal, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal("100"))
+            CategoryData(
+                tagLabel = subKey.label,
+                tagId = subKey.id,
+                tagColor = subKey.color,
+                totalAmount = Amount(subTotal),
+                percentage = subPercentage,
+                transactionCount = subTxs.size
+            )
+        }.sortedByDescending { it.totalAmount.value }
 
-            val subGrouped = txs
-                .filter { tx ->
-                    val tag = tx.tag
-                    tag is Tag.Personal && tag.parentId != null
-                }
-                .groupBy { tx ->
-                    val tag = tx.tag as Tag.Personal
-                    TagKey(tag.label, tag.id!!, tag.color)
-                }
+        return CategoryData(
+            tagLabel = parentKey.label,
+            tagId = parentKey.id,
+            tagColor = parentKey.color,
+            totalAmount = Amount(parentTotal),
+            percentage = percentage,
+            transactionCount = txs.size,
+            subCategories = subCategories
+        )
+    }
 
-            val subCategories = subGrouped.map { (subKey, subTxs) ->
-                val subTotal = subTxs
-                    .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
+    private fun buildPromotedSubTagEntries(
+        txs: List<Transaction>,
+        totalExpenses: BigDecimal
+    ): List<CategoryData> {
+        return txs
+            .groupBy { tx ->
+                val tag = tx.tag as Tag.Personal
+                TagKey(tag.label, tag.id!!, tag.color)
+            }
+            .map { (subKey, subTxs) ->
+                val subTotal = subTxs.fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
                 val subPercentage = subTotal
-                    .divide(parentTotal, 4, RoundingMode.HALF_UP)
+                    .divide(totalExpenses, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal("100"))
                 CategoryData(
                     tagLabel = subKey.label,
@@ -100,19 +149,6 @@ class CategoryDistributionCalculatorImpl(
                     percentage = subPercentage,
                     transactionCount = subTxs.size
                 )
-            }.sortedByDescending { it.totalAmount.value }
-
-            CategoryData(
-                tagLabel = parentKey.label,
-                tagId = parentKey.id,
-                tagColor = parentKey.color,
-                totalAmount = Amount(parentTotal),
-                percentage = percentage,
-                transactionCount = txs.size,
-                subCategories = subCategories
-            )
-        }.sortedByDescending { it.totalAmount.value }
-
-        return Pair(categoryData, Amount(totalExpenses))
+            }
     }
 }

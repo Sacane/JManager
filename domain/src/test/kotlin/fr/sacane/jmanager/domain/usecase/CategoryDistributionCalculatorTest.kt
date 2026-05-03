@@ -223,6 +223,97 @@ class CategoryDistributionCalculatorTest {
         assertTrue(categories[0].subCategories.isEmpty())
     }
 
+    @Test
+    fun `calculateDistribution should promote sub-tag to top-level when parent tag has no direct transactions`() {
+        val parentId = UUID.randomUUID()
+        val subTagId = UUID.randomUUID()
+        val parentTag = Tag.Personal("Food", id = parentId, color = Color.GREEN)
+        val subTag = Tag.Personal("Restaurants", id = subTagId, color = Color.RED, parentId = parentId)
+
+        tagRepository.addTag(parentTag)
+        tagRepository.addTag(subTag)
+
+        val transactions = listOf(
+            Transaction(UUID.randomUUID(), "Restaurant meal", LocalDate.now(), 50.toAmount(), isIncome = false, tag = subTag),
+        )
+
+        val (categories, totalExpenses) = calculator.calculateDistribution(transactions)
+
+        assertEquals(1, categories.size)
+        assertEquals("Restaurants", categories[0].tagLabel)
+        assertEquals(subTagId, categories[0].tagId)
+        assertEquals(50.toAmount(), categories[0].totalAmount)
+        assertTrue(categories[0].subCategories.isEmpty())
+        assertEquals(50.toAmount(), totalExpenses)
+        assertFalse(categories.any { it.tagLabel == "Food" })
+    }
+
+    @Test
+    fun `calculateDistribution should promote multiple sub-tags to top-level when parent tag has no direct transactions`() {
+        val parentId = UUID.randomUUID()
+        val subTag1Id = UUID.randomUUID()
+        val subTag2Id = UUID.randomUUID()
+        val parentTag = Tag.Personal("Food", id = parentId, color = Color.GREEN)
+        val subTag1 = Tag.Personal("Restaurants", id = subTag1Id, color = Color.RED, parentId = parentId)
+        val subTag2 = Tag.Personal("Groceries", id = subTag2Id, color = Color.BLUE, parentId = parentId)
+
+        tagRepository.addTag(parentTag)
+        tagRepository.addTag(subTag1)
+        tagRepository.addTag(subTag2)
+
+        val transactions = listOf(
+            Transaction(UUID.randomUUID(), "Restaurant meal", LocalDate.now(), 30.toAmount(), isIncome = false, tag = subTag1),
+            Transaction(UUID.randomUUID(), "Grocery run", LocalDate.now(), 20.toAmount(), isIncome = false, tag = subTag2),
+        )
+
+        val (categories, totalExpenses) = calculator.calculateDistribution(transactions)
+
+        assertEquals(2, categories.size)
+        assertEquals(50.toAmount(), totalExpenses)
+        assertFalse(categories.any { it.tagLabel == "Food" })
+
+        val restaurantsEntry = categories.find { it.tagLabel == "Restaurants" }
+        assertNotNull(restaurantsEntry)
+        assertEquals(30.toAmount(), restaurantsEntry!!.totalAmount)
+        assertTrue(restaurantsEntry.subCategories.isEmpty())
+
+        val groceriesEntry = categories.find { it.tagLabel == "Groceries" }
+        assertNotNull(groceriesEntry)
+        assertEquals(20.toAmount(), groceriesEntry!!.totalAmount)
+        assertTrue(groceriesEntry.subCategories.isEmpty())
+    }
+
+    @Test
+    fun `calculateDistribution should compute correct percentages when sub-tags are promoted to top-level`() {
+        val parentId = UUID.randomUUID()
+        val subTagId = UUID.randomUUID()
+        val transportTagId = UUID.randomUUID()
+        val parentTag = Tag.Personal("Food", id = parentId, color = Color.GREEN)
+        val subTag = Tag.Personal("Restaurants", id = subTagId, color = Color.RED, parentId = parentId)
+        val transportTag = Tag.Personal("Transport", id = transportTagId, color = Color.YELLOW)
+
+        tagRepository.addTag(parentTag)
+        tagRepository.addTag(subTag)
+        tagRepository.addTag(transportTag)
+
+        val transactions = listOf(
+            Transaction(UUID.randomUUID(), "Restaurant meal", LocalDate.now(), 40.toAmount(), isIncome = false, tag = subTag),
+            Transaction(UUID.randomUUID(), "Bus ticket", LocalDate.now(), 60.toAmount(), isIncome = false, tag = transportTag),
+        )
+
+        val (categories, totalExpenses) = calculator.calculateDistribution(transactions)
+
+        assertEquals(2, categories.size)
+        assertEquals(100.toAmount(), totalExpenses)
+        assertFalse(categories.any { it.tagLabel == "Food" })
+
+        val transportEntry = categories.find { it.tagLabel == "Transport" }!!
+        val restaurantsEntry = categories.find { it.tagLabel == "Restaurants" }!!
+
+        assertEquals(BigDecimal("60.0000"), transportEntry.percentage)
+        assertEquals(BigDecimal("40.0000"), restaurantsEntry.percentage)
+    }
+
     private class FakeTagRepository : TagRepository {
         private val tags = mutableListOf<Tag>()
 

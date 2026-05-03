@@ -1,5 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import BookletDetailsPage from '../../pages/booklet/[id].vue'
 
 const deleteTransactionMock = vi.fn().mockResolvedValue({ deletedIds: [], excludedVirtualTransactions: [] })
@@ -659,5 +660,272 @@ describe('pages/booklet/[id] confirmPreview with virtual transactions', () => {
       'default-tag',
       true,
     )
+  })
+})
+
+describe('pages/booklet/[id] resolveDisplayTag', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const parentTag = { tagId: 'parent-1', label: 'Food', colorDTO: { red: 0, green: 200, blue: 0 }, isDefault: false }
+  const subTag = { tagId: 'sub-1', label: 'Restaurants', colorDTO: { red: 200, green: 0, blue: 0 }, isDefault: false, parentId: 'parent-1' }
+
+  function mountWithTags(tagsToLoad: any[]) {
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useRoute', () => ({ params: { id: 'booklet-1' } }))
+    vi.stubGlobal('useJToast', () => ({ success: vi.fn(), errorAxios: vi.fn(), warn: vi.fn() }))
+    vi.stubGlobal('useLoading', () => ({
+      isScopeLoading: () => false,
+      withLoading: async <T>(action: () => Promise<T>) => action(),
+    }))
+    vi.stubGlobal('useBooklet', () => ({
+      findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
+      findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+    }))
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue(tagsToLoad),
+      getDefaultTag: vi.fn().mockResolvedValue(defaultTag),
+    }))
+    vi.stubGlobal('useDate', () => ({
+      months: ['JANUARY', 'FEBRUARY', 'MARCH'],
+      englishMonth: (v: string) => v,
+      translate: (v: string) => v,
+      monthFromNumber: (n: number) => ['JANUARY', 'FEBRUARY', 'MARCH'][n - 1] || 'JANUARY',
+      numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
+    }))
+    vi.stubGlobal('navigateTo', vi.fn())
+
+    return shallowMount(BookletDetailsPage, {
+      global: {
+        mocks: {
+          useDate: () => ({ months: ['JANUARY', 'FEBRUARY', 'MARCH'] }),
+        },
+        stubs: {
+          ConfirmDialog: true,
+          ProgressSpinner: true,
+          AppTable: true,
+          TransactionCreationDialog: true,
+          Dialog: true,
+          CsvImportDialog: true,
+          Select: true,
+          DatePicker: true,
+          Tag: true,
+          Checkbox: true,
+          Paginator: true,
+          Button: true,
+        },
+      },
+    })
+  }
+
+  it('resolveDisplayTag returns the tag itself when it has no parentId', async () => {
+    const wrapper = mountWithTags([parentTag, subTag])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const result = vm.resolveDisplayTag(parentTag)
+
+    expect(result?.label).toBe('Food')
+    expect(result?.tagId).toBe('parent-1')
+  })
+
+  it('resolveDisplayTag returns the parent tag when the tag has a parentId', async () => {
+    const wrapper = mountWithTags([parentTag, subTag])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const result = vm.resolveDisplayTag(subTag)
+
+    expect(result?.label).toBe('Food')
+    expect(result?.tagId).toBe('parent-1')
+  })
+
+  it('resolveDisplayTag falls back to the tag itself when parent is not found in loaded tags', async () => {
+    const orphanSubTag = { tagId: 'orphan-sub', label: 'Orphan', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false, parentId: 'missing-parent' }
+    const wrapper = mountWithTags([orphanSubTag])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const result = vm.resolveDisplayTag(orphanSubTag)
+
+    expect(result?.label).toBe('Orphan')
+    expect(result?.tagId).toBe('orphan-sub')
+  })
+
+  it('resolveDisplayTag returns null when tagDTO is null', async () => {
+    const wrapper = mountWithTags([parentTag])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const result = vm.resolveDisplayTag(null)
+
+    expect(result).toBeNull()
+  })
+})
+
+describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const parentTag = { tagId: 'parent-1', label: 'Food', colorDTO: { red: 0, green: 200, blue: 0 }, isDefault: false }
+  const subTag = { tagId: 'sub-1', label: 'Restaurants', colorDTO: { red: 200, green: 0, blue: 0 }, isDefault: false, parentId: 'parent-1' }
+
+  function mountWithTagsAndTransactions(transactions: TransactionResultDTO[]) {
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useRoute', () => ({ params: { id: 'booklet-1' } }))
+    vi.stubGlobal('useJToast', () => ({ success: vi.fn(), errorAxios: vi.fn(), warn: vi.fn() }))
+    vi.stubGlobal('useLoading', () => ({
+      isScopeLoading: () => false,
+      withLoading: async <T>(action: () => Promise<T>) => action(),
+    }))
+    vi.stubGlobal('useBooklet', () => ({
+      findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
+      findTransactionsByIdMonthAndYear: vi.fn().mockResolvedValue({
+        transactions,
+        hasRegenerableTransactions: false,
+        pageNumber: 0,
+        pageSize: 10,
+        totalElements: transactions.length,
+        totalPages: 1,
+      }),
+    }))
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([parentTag, subTag]),
+      getDefaultTag: vi.fn().mockResolvedValue(defaultTag),
+    }))
+    vi.stubGlobal('useDate', () => ({
+      months: ['JANUARY', 'FEBRUARY', 'MARCH'],
+      englishMonth: (v: string) => v,
+      translate: (v: string) => v,
+      monthFromNumber: (n: number) => ['JANUARY', 'FEBRUARY', 'MARCH'][n - 1] || 'JANUARY',
+      numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
+    }))
+    vi.stubGlobal('navigateTo', vi.fn())
+
+    return shallowMount(BookletDetailsPage, {
+      global: {
+        mocks: {
+          useDate: () => ({ months: ['JANUARY', 'FEBRUARY', 'MARCH'] }),
+        },
+        stubs: {
+          ConfirmDialog: true,
+          ProgressSpinner: true,
+          AppTable: true,
+          TransactionCreationDialog: true,
+          Dialog: true,
+          CsvImportDialog: true,
+          Select: true,
+          DatePicker: true,
+          Tag: true,
+          Checkbox: true,
+          Paginator: true,
+          Button: true,
+        },
+      },
+    })
+  }
+
+  it('filtering by parent tag includes transactions of parent tag and its sub-tags', async () => {
+    const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTag })
+    const txSub = createTransaction({ id: 'tx-2', tagDTO: subTag })
+    const txOther = createTransaction({ id: 'tx-3', tagDTO: defaultTag })
+
+    const wrapper = mountWithTagsAndTransactions([txParent, txSub, txOther])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedParentTagFilter = 'parent-1'
+
+    const result = vm.filteredTransactions
+    expect(result).toHaveLength(2)
+    expect(result.map((t: any) => t.id)).toContain('tx-1')
+    expect(result.map((t: any) => t.id)).toContain('tx-2')
+  })
+
+  it('tag column filter includes transactions of the tag and its sub-tags', async () => {
+    const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTag })
+    const txSub = createTransaction({ id: 'tx-2', tagDTO: subTag })
+    const txOther = createTransaction({ id: 'tx-3', tagDTO: defaultTag })
+
+    const wrapper = mountWithTagsAndTransactions([txParent, txSub, txOther])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedTagFilter = 'parent-1'
+
+    const result = vm.filteredTransactions
+    expect(result).toHaveLength(2)
+    expect(result.map((t: any) => t.id)).toContain('tx-1')
+    expect(result.map((t: any) => t.id)).toContain('tx-2')
+  })
+
+  it('filtering by sub-tag includes only transactions of that specific sub-tag', async () => {
+    const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTag })
+    const txSub = createTransaction({ id: 'tx-2', tagDTO: subTag })
+
+    const wrapper = mountWithTagsAndTransactions([txParent, txSub])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedSubTagFilter = 'sub-1'
+
+    const result = vm.filteredTransactions
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('tx-2')
+  })
+
+  it('setting tag filter clears the sub-tag filter', async () => {
+    const wrapper = mountWithTagsAndTransactions([])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedSubTagFilter = 'sub-1'
+    await nextTick()
+    vm.selectedTagFilter = 'parent-1'
+    await nextTick()
+    await nextTick()
+
+    expect(vm.selectedSubTagFilter).toBe('')
+  })
+
+  it('setting sub-tag filter clears the tag filter', async () => {
+    const wrapper = mountWithTagsAndTransactions([])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.selectedTagFilter = 'parent-1'
+    await nextTick()
+    vm.selectedSubTagFilter = 'sub-1'
+    await nextTick()
+    await nextTick()
+
+    expect(vm.selectedTagFilter).toBe('')
   })
 })
