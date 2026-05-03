@@ -39,6 +39,7 @@ const tags = ref<TagDTO[]>([])
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
 const isMobile = ref(false)
+const isSidebarMode = ref(false)
 const csvImportDialogRef = ref<any>(null)
 const isMobileMenuOpen = ref(false)
 const transactionFilter = ref<'all' | 'preview' | 'confirmed'>('all')
@@ -117,6 +118,7 @@ const subTagFilterOptions = computed(() => [
   { label: 'Tous les sous-tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
   ...tags.value.filter(t => !!t.parentId).map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
 ])
+const monthOptions = computed(() => useDate().months.map((m: string) => translate(m)))
 const previewTransactionsCount = computed(() => actualTransactions.value.filter(t => t.isPreview).length)
 const hasSelection = computed(() => selectedTransactions.value.length > 0)
 const selectedTransactionsAmount = computed(() => selectedTransactions.value.reduce((total, transaction) => {
@@ -562,11 +564,9 @@ function isSelected(transaction: DisplayTransaction): boolean {
 }
 
 function checkMobile() {
-  isMobile.value = window.innerWidth <= 768
-}
-
-function toggleMobileMenu() {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value
+  const width = window.innerWidth
+  isMobile.value = width <= 768
+  isSidebarMode.value = !isMobile.value && window.innerHeight < 768
 }
 
 const bookletTransactionColumns: AppTableColumn[] = [
@@ -586,16 +586,6 @@ function resolveDisplayTag(tagDTO: TagDTO | null | undefined): TagDTO | null {
     return tags.value.find(t => t.tagId === tagDTO.parentId) ?? tagDTO
   }
   return tagDTO
-}
-
-function openCsvImportFromMenu() {
-  isMobileMenuOpen.value = false
-  openCsvImportDialog()
-}
-
-function openCsvExportFromMenu() {
-  isMobileMenuOpen.value = false
-  openCsvExportDialog()
 }
 
 function openCsvImportDialog() {
@@ -647,8 +637,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
-},
-)
+})
 </script>
 
 <template>
@@ -656,289 +645,73 @@ onUnmounted(() => {
 
   <div class="flex flex-col bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] md:(h-full overflow-hidden)">
     <div class="flex flex-col w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-5 md:(py-4 flex-1 min-h-0)">
-      <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-4">
-          <div class="flex items-center gap-4 min-w-0 md:gap-3">
-            <Button class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]" icon="pi pi-arrow-left" text rounded @click="navigateTo('/booklet')" />
-            <div class="flex-1 min-w-0">
-              <h1 class="text-2xl font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 md:(text-xl mb-1)">
-                {{ displayLabel }}
-              </h1>
-              <div class="flex gap-4 flex-wrap md:gap-2.5">
-                <span class="inline-flex items-center text-sm font-semibold text-[var(--text-secondary)]">{{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}</span>
-                <span v-if="previewTransactionsCount > 0" class="text-amber-600 inline-flex items-center text-sm font-semibold">{{ previewTransactionsCount }} en attente</span>
-              </div>
-            </div>
-          </div>
-          <!-- Right: balances + filters -->
-          <div class="flex flex-col items-stretch gap-3 shrink-0 w-full md:(w-auto flex-row items-center gap-6)">
-            <div class="flex items-center justify-between w-full md:w-auto gap-4 p-3 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--card-border)] md:(p-2.5 gap-4)">
-              <div class="flex flex-col gap-1">
-                <span class="text-[0.69rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] md:text-2xs">Réel</span><span class="text-xl font-extrabold text-[var(--primary)] md:text-lg">{{ bookletData.realSold.toFixed(2) }} €</span>
-              </div>
-              <div class="w-px h-10 md:h-9 bg-gradient-to-b from-transparent via-[var(--border-color)] to-transparent" />
-              <div class="flex flex-col gap-1">
-                <span class="text-[0.69rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] md:text-2xs">Prévisionnel</span><span class="text-xl font-extrabold text-amber-600 md:text-lg">{{ bookletData.previewSold.toFixed(2) }} €</span>
-              </div>
-            </div>
+      <BookletPageHeader
+        :display-label="displayLabel"
+        :transactions-count="transactionsCount"
+        :preview-transactions-count="previewTransactionsCount"
+        :real-sold="bookletData.realSold"
+        :preview-sold="bookletData.previewSold"
+        :is-mobile="isMobile"
+        :transaction-filter="transactionFilter"
+        :selected-month="displayMonth"
+        :month-options="monthOptions"
+        :date-year="bookletData.dateYear"
+        @update:transaction-filter="transactionFilter = $event"
+        @update:selected-month="displayMonth = $event"
+        @month-change="onMonthChange"
+        @update:date-year="bookletData.dateYear = $event"
+        @year-change="onYearChange"
+        @back="navigateTo('/booklet')"
+      />
 
-            <div class="flex w-full md:w-auto gap-2 items-center">
-              <Select
-                v-model="displayMonth"
-                :options="useDate().months.map(u => translate(u))"
-                placeholder="Mois"
-                class="flex-1 min-w-0 w-full md:(flex-none min-w-[120px] w-auto) border-1 rounded-lg bg-transparent"
-                @change="onMonthChange"
-              />
-              <DatePicker
-                v-model="bookletData.dateYear"
-                view="year"
-                date-format="yy"
-                class="flex-1 min-w-0 w-full md:(flex-none min-w-[220px] w-[220px]) rounded-[14px] min-h-[46px] cursor-pointer bg-transparent"
-                placeholder="Année"
-                :show-icon="true"
-                icon-display="input"
-                @date-select="onYearChange"
-              />
-              <template v-if="!isMobile">
-                <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
-                <div class="flex items-center gap-1 shrink-0">
-                  <button
-                    v-tooltip.bottom="`Tout (${transactionsCount})`"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
-                    :class="transactionFilter === 'all'
-                      ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-transparent shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
-                      : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-[var(--primary)] hover:border-[var(--primary)]'"
-                    @click="transactionFilter = 'all'"
-                  >
-                    <i class="pi pi-list" />
-                  </button>
-                  <button
-                    v-tooltip.bottom="`Confirmées (${transactionsCount - previewTransactionsCount})`"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
-                    :class="transactionFilter === 'confirmed'
-                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
-                      : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-emerald-600 hover:border-emerald-500'"
-                    @click="transactionFilter = 'confirmed'"
-                  >
-                    <i class="pi pi-check-circle" />
-                  </button>
-                  <button
-                    v-tooltip.bottom="`Prévisionnelles (${previewTransactionsCount})`"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
-                    :class="transactionFilter === 'preview'
-                      ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white border-transparent shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
-                      : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-amber-600 hover:border-amber-500'"
-                    @click="transactionFilter = 'preview'"
-                  >
-                    <i class="pi pi-clock" />
-                  </button>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-      </div>
+      <BookletFilterActionBar
+        :is-mobile="isMobile"
+        :hide-action-buttons="isSidebarMode"
+        :transaction-filter="transactionFilter"
+        :transactions-count="transactionsCount"
+        :preview-transactions-count="previewTransactionsCount"
+        :has-selection="hasSelection"
+        :selected-count="selectedTransactions.length"
+        :selected-amount="selectedTransactionsAmount"
+        :selected-amount-label="selectedTransactionsAmountLabel"
+        :has-regenerable-transactions="hasRegenerableTransactions"
+        :is-any-action-loading="isAnyActionLoading"
+        :is-delete-loading="isDeleteTransactionLoading"
+        :is-export-csv-loading="isExportCsvLoading"
+        :is-regenerate-loading="isRegenerateLoading"
+        @update:transaction-filter="transactionFilter = $event"
+        @new-transaction="openCreationDialog"
+        @new-preview="openPreviewCreationDialog"
+        @import-csv="openCsvImportDialog"
+        @export-csv="openCsvExportDialog"
+        @regenerate="regenerate"
+        @delete="confirmDeleteButton"
+      />
 
-      <!-- Filtres + Actions desktop -->
-      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
-        <template v-if="isMobile">
-          <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1 shrink-0">Afficher :</span>
-          <button
-            class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
-            :class="transactionFilter === 'all'
-              ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
-              : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--primary)]'"
-            @click="transactionFilter = 'all'"
-          >
-            <i class="pi pi-list mr-2" />
-            Tout ({{ transactionsCount }})
-          </button>
-          <button
-            class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
-            :class="transactionFilter === 'confirmed'
-              ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
-              : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-emerald-600'"
-            @click="transactionFilter = 'confirmed'"
-          >
-            <i class="pi pi-check-circle mr-2" />
-            Confirmées ({{ transactionsCount - previewTransactionsCount }})
-          </button>
-          <button
-            class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
-            :class="transactionFilter === 'preview'
-              ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
-              : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-amber-600'"
-            @click="transactionFilter = 'preview'"
-          >
-            <i class="pi pi-clock mr-2" />
-            Prévisionnelles ({{ previewTransactionsCount }})
-          </button>
-        </template>
-
-        <!-- Actions icon-only : desktop uniquement -->
-        <template v-if="!isMobile">
-          <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
-          <div class="flex items-center gap-1.5 shrink-0 ml-auto">
-            <template v-if="hasSelection">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] text-sm font-semibold whitespace-nowrap shrink-0">
-                <i class="pi pi-check-square text-[var(--primary)] text-xs" />
-                <span class="text-[var(--text-secondary)]">{{ selectedTransactions.length }}</span>
-                <span class="w-px h-4 bg-[var(--border-color)] inline-block" />
-                <span :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">{{ selectedTransactionsAmountLabel }}</span>
-              </span>
-              <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
-            </template>
-            <Button
-              v-tooltip.bottom="'Nouvelle transaction'"
-              class="btn-primary !w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0"
-              icon="pi pi-plus"
-              :disabled="isAnyActionLoading"
-              @click="openCreationDialog"
-            />
-            <Button
-              v-tooltip.bottom="'Transaction prévisionnelle'"
-              outlined
-              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-amber-500 text-amber-600 hover:bg-amber-500/10 transition-all"
-              icon="pi pi-clock"
-              :disabled="isAnyActionLoading"
-              @click="openPreviewCreationDialog"
-            />
-            <Button
-              v-tooltip.bottom="'Importer CSV'"
-              outlined
-              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-cyan-500 text-cyan-600 hover:bg-cyan-500/10 transition-all"
-              icon="pi pi-file-import"
-              :disabled="isAnyActionLoading"
-              @click="openCsvImportDialog"
-            />
-            <Button
-              v-tooltip.bottom="'Exporter CSV'"
-              aria-label="Exporter CSV"
-              outlined
-              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-emerald-500 text-emerald-600 hover:bg-emerald-500/10 transition-all"
-              icon="pi pi-file-export"
-              :loading="isExportCsvLoading"
-              :disabled="isAnyActionLoading"
-              @click="openCsvExportDialog"
-            />
-            <Button
-              v-if="hasRegenerableTransactions"
-              v-tooltip.bottom="'Régénérer les transactions supprimées'"
-              outlined
-              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-violet-500 text-violet-600 hover:bg-violet-500/10 transition-all"
-              icon="pi pi-refresh"
-              :loading="isRegenerateLoading"
-              :disabled="isAnyActionLoading"
-              @click="regenerate"
-            />
-            <template v-if="hasSelection">
-              <Button
-                v-tooltip.bottom="`Supprimer (${selectedTransactions.length})`"
-                outlined
-                class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
-                icon="pi pi-trash"
-                :loading="isDeleteTransactionLoading"
-                :disabled="isAnyActionLoading"
-                @click="confirmDeleteButton"
-              />
-            </template>
-          </div>
-        </template>
-      </div>
-
-      <!-- Boutons d'action mobile -->
-      <div v-if="isMobile" class="flex gap-2 mb-4">
-        <Button
-          class="btn-primary flex-1"
-          icon="pi pi-plus"
-          label="Transaction"
-          :disabled="isAnyActionLoading"
-          @click="openCreationDialog"
-        />
-        <Button
-          outlined
-          class="flex-1 border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all"
-          icon="pi pi-clock"
-          label="Prévisionnelle"
-          :disabled="isAnyActionLoading"
-          @click="openPreviewCreationDialog"
-        />
-        <Button
-          v-if="hasRegenerableTransactions"
-          outlined
-          class="flex-1 border-violet-500 text-violet-600 hover:bg-violet-500/10 font-semibold transition-all"
-          icon="pi pi-refresh"
-          label="Régénérer"
-          :loading="isRegenerateLoading"
-          :disabled="isAnyActionLoading"
-          @click="regenerate"
-        />
-      </div>
-
-      <div v-if="isMobile" class="flex flex-col gap-3 mb-5 md:mb-4">
-        <Transition name="fade">
-          <div v-if="hasSelection" class="flex items-center gap-3">
-            <div class="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm flex-1">
-              <div class="flex items-center gap-2">
-                <i class="pi pi-check-square text-[var(--primary)] text-sm" />
-                <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedTransactions.length }} sélectionnée{{ selectedTransactions.length > 1 ? 's' : '' }}</span>
-              </div>
-              <div class="w-px h-6 bg-[var(--border-color)]" />
-              <span class="text-base font-extrabold" :class="selectedTransactionsAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">
-                {{ selectedTransactionsAmountLabel }}
-              </span>
-            </div>
-            <Button
-              v-tooltip.bottom="`Supprimer (${selectedTransactions.length})`"
-              outlined
-              class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
-              icon="pi pi-trash"
-              :loading="isDeleteTransactionLoading"
-              :disabled="isAnyActionLoading"
-              @click="confirmDeleteButton"
-            />
-          </div>
-        </Transition>
-      </div>
-
-      <div v-if="!isMobile" class="flex-1 min-h-0 flex flex-col gap-3">
-        <!-- Two-column tag filter -->
-        <div v-if="parentTags.length > 0" class="flex gap-2 items-start p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm" data-test="tag-filter-panel">
-          <div class="flex flex-wrap gap-1.5 flex-1" data-test="tag-filter-col-a">
-            <button
-              class="tag-filter-btn"
-              :class="{ active: selectedParentTagFilter === '' && selectedTagFilter === '' }"
-              @click="selectedParentTagFilter = ''; selectedSubTagFilter = ''; selectedTagFilter = ''"
-            >
-              Tous
-            </button>
-            <button
-              v-for="pt in parentTags"
-              :key="pt.tagId"
-              class="tag-filter-btn"
-              :class="{ active: selectedParentTagFilter === pt.tagId }"
-              :style="selectedParentTagFilter === pt.tagId ? { backgroundColor: `rgb(${pt.colorDTO.red}, ${pt.colorDTO.green}, ${pt.colorDTO.blue})`, color: 'white' } : {}"
-              @click="onParentTagClick(pt.tagId ?? '')"
-            >
-              <span class="w-2.5 h-2.5 rounded-full inline-block mr-1" :style="{ backgroundColor: `rgb(${pt.colorDTO.red}, ${pt.colorDTO.green}, ${pt.colorDTO.blue})` }" />
-              {{ pt.label }}
-            </button>
-          </div>
-          <Transition name="fade">
-            <div v-if="activeSubTags.length > 0" class="flex flex-wrap gap-1.5 pl-3 border-l border-[var(--border-color)]" data-test="tag-filter-col-b">
-              <button
-                v-for="st in activeSubTags"
-                :key="st.tagId"
-                class="tag-filter-btn sub"
-                :class="{ active: selectedSubTagFilter === st.tagId }"
-                :style="selectedSubTagFilter === st.tagId ? { backgroundColor: `rgb(${st.colorDTO.red}, ${st.colorDTO.green}, ${st.colorDTO.blue})`, color: 'white' } : {}"
-                @click="selectedSubTagFilter = selectedSubTagFilter === (st.tagId ?? '') ? '' : (st.tagId ?? '')"
-              >
-                {{ st.label }}
-              </button>
-            </div>
-          </Transition>
+      <div v-if="!isMobile" class="flex-1 min-h-0 flex gap-3" :class="isSidebarMode ? 'flex-row' : 'flex-col'">
+        <!-- Sidebar action buttons (small desktop only, < 1024px) -->
+        <div
+          v-if="isSidebarMode"
+          class="flex flex-col gap-1.5 py-3 px-2 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm items-center self-start shrink-0"
+        >
+          <BookletActionButtons
+            orientation="vertical"
+            :has-selection="hasSelection"
+            :selected-count="selectedTransactions.length"
+            :selected-amount="selectedTransactionsAmount"
+            :selected-amount-label="selectedTransactionsAmountLabel"
+            :has-regenerable-transactions="hasRegenerableTransactions"
+            :is-any-action-loading="isAnyActionLoading"
+            :is-delete-loading="isDeleteTransactionLoading"
+            :is-export-csv-loading="isExportCsvLoading"
+            :is-regenerate-loading="isRegenerateLoading"
+            @new-transaction="openCreationDialog"
+            @new-preview="openPreviewCreationDialog"
+            @import-csv="openCsvImportDialog"
+            @export-csv="openCsvExportDialog"
+            @regenerate="regenerate"
+            @delete="confirmDeleteButton"
+          />
         </div>
 
         <div class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
@@ -1218,60 +991,17 @@ onUnmounted(() => {
         @create-transaction="applyEditTransaction"
       />
 
-      <Dialog
-        v-model:visible="isConfirmPreviewDialogVisible"
-        modal
-        header="Valider la transaction prévisionnelle"
-        :style="{ width: '25rem' }"
-        :pt="{
-          root: { class: 'preview-confirm-root' },
-          mask: { class: 'preview-confirm-mask' },
-          header: { class: 'preview-confirm-header' },
-          title: { class: 'preview-confirm-title' },
-          closeButton: { class: 'preview-confirm-close-btn' },
-          content: { class: 'preview-confirm-content' },
-          footer: { class: 'preview-confirm-footer' },
-        }"
-      >
-        <div v-if="transactionToConfirm" class="flex flex-col gap-4">
-          <p>Voulez-vous valider cette transaction prévisionnelle ?</p>
-
-          <div class="preview-confirm-summary p-3 rounded-lg border">
-            <div class="flex justify-between items-center text-sm">
-              <span class="font-semibold">Transaction</span>
-              <span class="font-medium">{{ transactionToConfirm.label }}</span>
-            </div>
-            <div class="preview-confirm-summary-row flex justify-between items-center mt-2 pt-2 border-t">
-              <span class="font-semibold">Montant de base</span>
-              <span class="font-bold text-lg" :class="transactionToConfirm.isIncome ? 'text-emerald-500' : 'text-red-500'">
-                {{ transactionToConfirm.isIncome ? '+' : '-' }} {{ transactionToConfirm.value }} €
-              </span>
-            </div>
-            <div class="preview-confirm-summary-row flex justify-between items-center mt-2 pt-2 border-t">
-              <span class="font-semibold">Date de base</span>
-              <span class="font-medium">{{ transactionToConfirm.date }}</span>
-            </div>
-          </div>
-
-          <p class="text-sm preview-confirm-help-text">
-            Vous pouvez optionnellement spécifier un nouveau montant et une nouvelle date ci-dessous.
-          </p>
-          <div class="flex flex-col gap-3">
-            <div class="flex flex-col gap-2">
-              <label for="newAmount" class="font-semibold">Nouveau montant</label>
-              <InputNumber id="newAmount" v-model="newAmountForPreview" mode="currency" currency="EUR" locale="fr-FR" placeholder="0.00" class="preview-confirm-field" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label for="newDate" class="font-semibold">Nouvelle date</label>
-              <DatePicker id="newDate" v-model="newDateForPreview" date-format="dd/mm/yy" show-icon icon-display="input" class="preview-confirm-field" />
-            </div>
-          </div>
-        </div>
-        <div class="flex justify-end gap-2 mt-6">
-          <Button type="button" label="Annuler" severity="secondary" :disabled="isConfirmPreviewLoading" @click="isConfirmPreviewDialogVisible = false" />
-          <Button type="button" label="Valider" :loading="isConfirmPreviewLoading" :disabled="isConfirmPreviewLoading" @click="confirmPreview" />
-        </div>
-      </Dialog>
+      <BookletConfirmPreviewDialog
+        :visible="isConfirmPreviewDialogVisible"
+        :transaction="transactionToConfirm"
+        :loading="isConfirmPreviewLoading"
+        :new-amount="newAmountForPreview"
+        :new-date="newDateForPreview"
+        @update:visible="isConfirmPreviewDialogVisible = $event"
+        @update:new-amount="newAmountForPreview = $event"
+        @update:new-date="newDateForPreview = $event"
+        @confirm="confirmPreview"
+      />
 
       <CsvImportDialog
         ref="csvImportDialogRef"
@@ -1281,81 +1011,13 @@ onUnmounted(() => {
         @import-success="onCsvImportSuccess"
       />
 
-      <Transition name="fab">
-        <button
-          v-if="isMobile"
-          class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-lg flex items-center justify-center z-40 transition-all duration-300 hover:shadow-xl hover:scale-110 active:scale-95"
-          @click="toggleMobileMenu"
-        >
-          <i :class="isMobileMenuOpen ? 'pi pi-times text-xl' : 'pi pi-ellipsis-h text-xl'" />
-        </button>
-      </Transition>
-
-      <Transition name="overlay">
-        <div
-          v-if="isMobile && isMobileMenuOpen"
-          class="fixed inset-0 z-50 flex items-end justify-center backdrop-blur-md bg-black/30"
-          @click="toggleMobileMenu"
-        >
-          <Transition name="menu-slide">
-            <div
-              v-if="isMobileMenuOpen"
-              class="w-full max-w-md bg-[var(--card-bg)] rounded-t-3xl shadow-2xl p-6 mb-0"
-              @click.stop
-            >
-              <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-[var(--text-primary)] m-0">
-                  Actions CSV
-                </h3>
-                <button
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] transition-colors"
-                  @click="toggleMobileMenu"
-                >
-                  <i class="pi pi-times" />
-                </button>
-              </div>
-
-              <div class="flex flex-col gap-3">
-                <button
-                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-2 border-cyan-500/20 text-left transition-all hover:border-cyan-500/40 hover:shadow-lg active:scale-[0.98]"
-                  @click="openCsvImportFromMenu"
-                >
-                  <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0">
-                    <i class="pi pi-file-import text-xl text-cyan-600" />
-                  </div>
-                  <div class="flex-1">
-                    <div class="font-semibold text-[var(--text-primary)] mb-1">
-                      Importer CSV
-                    </div>
-                    <div class="text-sm text-[var(--text-secondary)]">
-                      Importer des transactions depuis un fichier
-                    </div>
-                  </div>
-                  <i class="pi pi-chevron-right text-[var(--text-secondary)]" />
-                </button>
-
-                <button
-                  class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-2 border-emerald-500/20 text-left transition-all hover:border-emerald-500/40 hover:shadow-lg active:scale-[0.98]"
-                  @click="openCsvExportFromMenu"
-                >
-                  <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                    <i class="pi pi-file-export text-xl text-emerald-600" />
-                  </div>
-                  <div class="flex-1">
-                    <div class="font-semibold text-[var(--text-primary)] mb-1">
-                      Exporter CSV
-                    </div>
-                    <div class="text-sm text-[var(--text-secondary)]">
-                      Télécharger vos transactions en CSV
-                    </div>
-                  </div>
-                  <i class="pi pi-chevron-right text-[var(--text-secondary)]" />
-                </button>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
+      <BookletCsvMobileMenu
+        :is-mobile="isMobile"
+        :model-value="isMobileMenuOpen"
+        @update:model-value="isMobileMenuOpen = $event"
+        @import-csv="openCsvImportDialog"
+        @export-csv="openCsvExportDialog"
+      />
     </div>
   </div>
 </template>
@@ -1420,47 +1082,6 @@ onUnmounted(() => {
   font-weight: 600;
   transition: all 0.2s ease;
 }
-:deep(.p-button.p-button-outlined.border-amber-500) {
-  border-color: rgb(245 158 11) !important;
-  color: rgb(217 119 6) !important;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
-}
-:deep(.p-button.p-button-outlined.border-amber-500:hover) {
-  background: rgba(245, 158, 11, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
-  transform: translateY(-1px);
-}
-:deep(.p-button.p-button-outlined.border-cyan-500) {
-  border-color: rgb(6 182 212) !important;
-  color: rgb(8 145 178) !important;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
-}
-:deep(.p-button.p-button-outlined.border-cyan-500:hover) {
-  background: rgba(6, 182, 212, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
-  transform: translateY(-1px);
-}
-:deep(.p-button.p-button-outlined.border-emerald-500) {
-  border-color: rgb(16 185 129) !important;
-  color: rgb(5 150 105) !important;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
-}
-:deep(.p-button.p-button-outlined.border-emerald-500:hover) {
-  background: rgba(16, 185, 129, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
-  transform: translateY(-1px);
-}
-
-.csv-action-btn {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .csv-action-btn {
-    display: inline-flex;
-  }
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -1469,36 +1090,6 @@ onUnmounted(() => {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-4px);
-}
-
-.fab-enter-active,
-.fab-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.fab-enter-from,
-.fab-leave-to {
-  opacity: 0;
-  transform: scale(0.5) rotate(180deg);
-}
-
-.overlay-enter-active,
-.overlay-leave-active {
-  transition: all 0.3s ease;
-}
-.overlay-enter-from,
-.overlay-leave-to {
-  opacity: 0;
-  backdrop-filter: blur(0);
-}
-
-.menu-slide-enter-active,
-.menu-slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.menu-slide-enter-from,
-.menu-slide-leave-to {
-  opacity: 0;
-  transform: translateY(100%);
 }
 
 .p-dropdown-panel, .p-select-panel, .p-datepicker {
@@ -1534,32 +1125,6 @@ onUnmounted(() => {
   background: var(--card-hover-bg) !important;
 }
 
-.preview-confirm-summary {
-  background: var(--bg-tertiary);
-  border-color: var(--card-border);
-  color: var(--text-primary);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
-@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
-  .preview-confirm-summary {
-    background: linear-gradient(
-      145deg,
-      color-mix(in oklab, var(--bg-tertiary) 92%, #ffffff 8%),
-      color-mix(in oklab, var(--bg-tertiary) 84%, var(--primary) 16%)
-    );
-    border-color: color-mix(in oklab, var(--card-border) 65%, var(--primary) 35%);
-  }
-}
-
-.preview-confirm-summary-row {
-  border-color: var(--border-color);
-}
-
-.preview-confirm-help-text {
-  color: var(--text-secondary);
-}
-
 /* Tag filter buttons */
 .tag-filter-btn {
   display: inline-flex;
@@ -1590,157 +1155,5 @@ onUnmounted(() => {
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
   }
-}
-
-.dark .preview-confirm-summary {
-  background: #1f2937;
-  border-color: #374151;
-  color: #e5e7eb;
-}
-
-.dark .preview-confirm-summary-row {
-  border-color: #374151;
-}
-
-.dark .preview-confirm-help-text {
-  color: #9ca3af;
-}
-
-:global(.preview-confirm-root) {
-  background: var(--card-bg) !important;
-  border: 1px solid var(--card-border) !important;
-  color: var(--text-primary) !important;
-  overflow: hidden;
-  box-shadow: 0 18px 42px var(--shadow-lg), 0 8px 22px var(--shadow-purple) !important;
-}
-
-@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
-  :global(.preview-confirm-root) {
-    background: linear-gradient(
-      165deg,
-      color-mix(in oklab, var(--card-bg) 93%, #ffffff 7%),
-      color-mix(in oklab, var(--card-bg) 86%, var(--primary) 14%)
-    ) !important;
-    border-color: color-mix(in oklab, var(--card-border) 55%, var(--primary) 45%) !important;
-  }
-}
-
-:global(.preview-confirm-mask) {
-  backdrop-filter: blur(2px);
-  background: rgba(15, 23, 42, 0.32) !important;
-}
-
-:global(.preview-confirm-header),
-:global(.preview-confirm-content),
-:global(.preview-confirm-footer) {
-  color: var(--text-primary) !important;
-}
-
-:global(.preview-confirm-header) {
-  background: var(--bg-tertiary) !important;
-  border-bottom: 1px solid var(--card-border) !important;
-}
-
-@supports (background: color-mix(in oklab, #000 0%, #fff 0%)) {
-  :global(.preview-confirm-header) {
-    background: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--bg-tertiary) 90%, #ffffff 10%),
-      color-mix(in oklab, var(--bg-tertiary) 84%, var(--primary) 16%)
-    ) !important;
-  }
-}
-
-:global(.preview-confirm-content),
-:global(.preview-confirm-footer) {
-  background: transparent !important;
-}
-
-:global(.preview-confirm-title),
-:global(.preview-confirm-content p),
-:global(.preview-confirm-content label) {
-  color: var(--text-primary) !important;
-}
-
-:global(.preview-confirm-close-btn) {
-  color: var(--text-secondary) !important;
-  border: 1px solid var(--card-border) !important;
-  background: var(--bg-secondary) !important;
-  transition: all 0.2s ease;
-}
-
-:global(.preview-confirm-close-btn:hover) {
-  color: var(--primary) !important;
-  border-color: var(--primary) !important;
-  background: var(--card-hover-bg) !important;
-}
-
-:deep(.preview-confirm-field .p-inputtext),
-:deep(.preview-confirm-field .p-inputnumber-input),
-:deep(.preview-confirm-field .p-datepicker-input) {
-  background: var(--bg-secondary) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-color) !important;
-}
-
-:deep(.preview-confirm-field .p-inputtext::placeholder),
-:deep(.preview-confirm-field .p-inputnumber-input::placeholder) {
-  color: var(--text-tertiary) !important;
-}
-
-:deep(.preview-confirm-field.p-inputwrapper-focus .p-inputtext),
-:deep(.preview-confirm-field .p-inputtext:focus),
-:deep(.preview-confirm-field .p-inputnumber-input:focus) {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 0.16rem color-mix(in oklab, var(--primary) 24%, transparent) !important;
-}
-
-.dark :deep(.preview-confirm-field .p-inputtext),
-.dark :deep(.preview-confirm-field .p-inputnumber-input),
-.dark :deep(.preview-confirm-field .p-datepicker-input) {
-  background: #111827 !important;
-  color: #f3f4f6 !important;
-  border-color: #4b5563 !important;
-}
-
-.dark :deep(.preview-confirm-field .p-inputtext::placeholder),
-.dark :deep(.preview-confirm-field .p-inputnumber-input::placeholder) {
-  color: #9ca3af !important;
-}
-
-:global(.dark .preview-confirm-root) {
-  background: #111827 !important;
-  border-color: #374151 !important;
-  color: #f3f4f6 !important;
-}
-
-:global(.dark .preview-confirm-header),
-:global(.dark .preview-confirm-content),
-:global(.dark .preview-confirm-footer) {
-  background: #111827 !important;
-  color: #f3f4f6 !important;
-}
-
-:global(.dark .preview-confirm-header) {
-  border-bottom-color: #374151 !important;
-}
-
-:global(.dark .preview-confirm-title),
-:global(.dark .preview-confirm-content p),
-:global(.dark .preview-confirm-content label) {
-  color: #f3f4f6 !important;
-}
-
-:global(.dark .preview-confirm-close-btn) {
-  color: #9ca3af !important;
-}
-
-:global(.dark .preview-confirm-close-btn:hover) {
-  background: #1f2937 !important;
-  color: #f3f4f6 !important;
-}
-
-:global(.dark .preview-confirm-mask) {
-  background: rgba(2, 6, 23, 0.58) !important;
 }
 </style>

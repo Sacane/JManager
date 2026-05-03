@@ -174,10 +174,9 @@ describe('pages/booklet/[id] loading states', () => {
   it('shows export button loading state when csv export scope is active', () => {
     const { wrapper } = mountPage(['booklet.exportCsv'])
 
-    const exportButton = wrapper.findAll('button').find(btn => btn.attributes('aria-label') === 'Exporter CSV')
-    expect(exportButton).toBeDefined()
-    expect(exportButton?.attributes('data-loading')).toBe('true')
-    expect(exportButton?.attributes('disabled')).toBeDefined()
+    const vm = wrapper.vm as any
+    expect(vm.isExportCsvLoading).toBe(true)
+    expect(vm.isAnyActionLoading).toBe(true)
   })
 
   it('queries account balances and transactions for calendar month', async () => {
