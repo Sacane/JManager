@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import TagEditDialog from '~/components/dialog/TagEditDialog.vue'
+import TagFormDialog from '~/components/dialog/TagFormDialog.vue'
+import TagCard from '~/components/tag/TagCard.vue'
 import useTag from '~/composables/useTag'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
@@ -10,14 +13,6 @@ definePageMeta({
   layout: 'sidebar-layout',
   middleware: [authMiddleware],
 })
-
-interface DataDisplay {
-  id: string
-  label: string
-  isDefault: boolean
-  color: string
-  parentId?: string | null
-}
 
 const { addPersonalTag, addSubTag, getAllTags, deleteTag, editTag } = useTag()
 const { isScopeLoading, withLoading } = useLoading()
@@ -38,25 +33,12 @@ const isAnyTagActionLoading = computed(() =>
   || isDeletingTag.value,
 )
 
-const tags = ref<DataDisplay[]>([])
-const addTagDialog = ref<boolean>(false)
-const editTagDialog = ref<boolean>(false)
+const tags = ref<TagDisplayItem[]>([])
+const addTagDialog = ref(false)
+const editTagDialog = ref(false)
+const tagToEdit = ref<{ id: string, label: string, colorHex: string } | null>(null)
 const searchQuery = ref<string>('')
-const filterType = ref<string>('all') // 'all', 'default', 'personal'
-
-const tagToEdit = reactive({
-  id: '',
-  label: '',
-  color: '',
-  isDefault: false,
-})
-
-const personalTagForm = reactive({
-  tagLabel: '',
-  hex: '#6366f1',
-  isSubTag: false,
-  parentId: '' as string,
-})
+const filterType = ref<string>('all')
 
 const confirm = useConfirm()
 
@@ -75,7 +57,7 @@ onMounted(() => {
   loadTags()
 })
 
-function formattedData(tagDTO: TagDTO): DataDisplay {
+function formattedData(tagDTO: TagDTO): TagDisplayItem {
   const color = `rgb(${tagDTO.colorDTO.red}, ${tagDTO.colorDTO.green}, ${tagDTO.colorDTO.blue})`
   return {
     id: tagDTO.tagId as string,
@@ -110,7 +92,7 @@ const parentTagOptions = computed(() =>
   tags.value.filter(t => !t.isDefault && !t.parentId),
 )
 
-const groupedTags = computed(() => {
+const groupedTags = computed<TagGroupItem[]>(() => {
   const topLevel = filteredTags.value.filter(t => !t.parentId)
   return topLevel.map(parent => ({
     ...parent,
@@ -118,28 +100,24 @@ const groupedTags = computed(() => {
   }))
 })
 
-async function add() {
+async function onCreateSubmit(payload: { tagLabel: string, hex: string, isSubTag: boolean, parentId: string }) {
   await withLoading(async () => {
     try {
-      const rgb = hexToRgb(personalTagForm.hex)
+      const rgb = hexToRgb(payload.hex)
       const colorDTO = { red: rgb.r, green: rgb.g, blue: rgb.b }
-      const tag = personalTagForm.isSubTag
-        ? await addSubTag(personalTagForm.tagLabel, colorDTO, personalTagForm.parentId)
-        : await addPersonalTag(personalTagForm.tagLabel, colorDTO)
+      const tag = payload.isSubTag
+        ? await addSubTag(payload.tagLabel, colorDTO, payload.parentId)
+        : await addPersonalTag(payload.tagLabel, colorDTO)
       tags.value.push(formattedData(tag))
       addTagDialog.value = false
-      personalTagForm.tagLabel = ''
-      personalTagForm.hex = '#6366f1'
-      personalTagForm.isSubTag = false
-      personalTagForm.parentId = ''
-      toast.success(personalTagForm.isSubTag ? 'Sous-tag créé avec succès' : 'Tag créé avec succès')
+      toast.success(payload.isSubTag ? 'Sous-tag créé avec succès' : 'Tag créé avec succès')
     } catch (error) {
       toast.errorAxios(error as any)
     }
   }, addTagScope)
 }
 
-async function performDeleteTag(row: DataDisplay, force: boolean = false): Promise<void> {
+async function performDeleteTag(row: TagDisplayItem, force: boolean = false): Promise<void> {
   await withLoading(async () => {
     try {
       await deleteTag(row.id, force)
@@ -172,7 +150,7 @@ async function performDeleteTag(row: DataDisplay, force: boolean = false): Promi
   }, deleteTagScope)
 }
 
-function onDeleteClick(row: DataDisplay): void {
+function onDeleteClick(row: TagDisplayItem): void {
   confirm.require({
     message: 'Êtes-vous sûr de vouloir supprimer ce tag ?',
     header: 'Confirmer la suppression du tag',
@@ -190,26 +168,26 @@ function onDeleteClick(row: DataDisplay): void {
   })
 }
 
-function onEditClick(row: DataDisplay): void {
-  editTagDialog.value = true
-  tagToEdit.label = row.label
-  tagToEdit.id = row.id
+function onEditClick(row: TagDisplayItem): void {
   const rgb = row.color.match(/\d+/g)
+  let colorHex = '#000000'
   if (rgb) {
-    const red = Number.parseInt(rgb[0])
-    const green = Number.parseInt(rgb[1] as string)
-    const blue = Number.parseInt(rgb[2] as string)
-    tagToEdit.color = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`
+    const r = Number.parseInt(rgb[0])
+    const g = Number.parseInt(rgb[1] as string)
+    const b = Number.parseInt(rgb[2] as string)
+    colorHex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
   }
+  tagToEdit.value = { id: row.id, label: row.label, colorHex }
+  editTagDialog.value = true
 }
 
-async function applyEdit() {
+async function applyEdit(payload: { id: string, label: string, colorHex: string }) {
   await withLoading(async () => {
     try {
-      const rgb = hexToRgb(tagToEdit.color)
+      const rgb = hexToRgb(payload.colorHex)
       const tag = await editTag({
-        tagId: tagToEdit.id,
-        label: tagToEdit.label,
+        tagId: payload.id,
+        label: payload.label,
         colorDTO: {
           red: rgb.r,
           green: rgb.g,
@@ -217,7 +195,7 @@ async function applyEdit() {
         },
         isDefault: false,
       })
-      const indexTag = tags.value.findIndex(e => e.id === tagToEdit.id)
+      const indexTag = tags.value.findIndex(e => e.id === payload.id)
       if (indexTag !== -1) {
         tags.value[indexTag] = formattedData(tag)
       }
@@ -229,7 +207,7 @@ async function applyEdit() {
   }, editTagScope)
 }
 
-function edit() {
+function onEditSubmit(payload: { id: string, label: string, colorHex: string }) {
   confirm.require({
     message: 'Si vous modifiez ce tag, toutes vos transactions rattachées à ce tag seront modifiées. Voulez-vous continuer ?',
     header: 'Confirmation de modification',
@@ -242,7 +220,7 @@ function edit() {
     acceptProps: {
       label: 'Continuer',
     },
-    accept: () => applyEdit(),
+    accept: () => applyEdit(payload),
   })
 }
 </script>
@@ -250,7 +228,6 @@ function edit() {
 <template>
   <ConfirmDialog />
   <div class="tag-page">
-    <!-- Header Section -->
     <div class="page-header">
       <div class="header-content">
         <h1 class="page-title">
@@ -261,7 +238,6 @@ function edit() {
         </p>
       </div>
 
-      <!-- Search and Filter Bar -->
       <div class="toolbar">
         <div class="search-box">
           <i class="pi pi-search search-icon" />
@@ -284,7 +260,6 @@ function edit() {
           class="filter-buttons"
         />
 
-        <!-- Modern action button moved into toolbar and aligned right -->
         <Button
           v-tooltip.left="'Créer un nouveau tag'"
           icon="pi pi-plus"
@@ -297,7 +272,6 @@ function edit() {
       </div>
     </div>
 
-    <!-- Tags Grid -->
     <div class="tags-container">
       <div v-if="isLoadingTags" class="loading-container">
         <ProgressSpinner
@@ -308,110 +282,19 @@ function edit() {
           Chargement des tags...
         </p>
       </div>
+
       <TransitionGroup name="tag-list" tag="div" class="tags-grid">
-        <template v-for="group in groupedTags" :key="group.id">
-          <div
-            class="tag-card"
-            :class="{ 'tag-card-personal': !group.isDefault }"
-            :style="{ '--tag-color': group.color }"
-          >
-            <!-- Color Band -->
-            <div class="tag-color-band" :style="{ backgroundColor: group.color }" />
-
-            <!-- Card Content -->
-            <div class="tag-content">
-              <div class="tag-info">
-                <div class="tag-label-wrapper">
-                  <h3 class="tag-label">
-                    {{ group.label }}
-                  </h3>
-                  <Tag
-                    :value="group.isDefault ? 'Par défaut' : 'Personnel'"
-                    :severity="group.isDefault ? 'info' : 'success'"
-                    class="tag-badge"
-                  />
-                </div>
-
-                <!-- Color Preview -->
-                <div class="color-preview">
-                  <div class="color-circle" :style="{ backgroundColor: group.color }" />
-                  <span class="color-label">{{ group.color }}</span>
-                </div>
-              </div>
-
-              <!-- Sub-tags -->
-              <div v-if="group.children.length > 0" class="sub-tags-section">
-                <p class="sub-tags-header">
-                  <i class="pi pi-sitemap" />
-                  Sous-tags ({{ group.children.length }})
-                </p>
-                <div class="sub-tags-list">
-                  <div
-                    v-for="child in group.children"
-                    :key="child.id"
-                    class="sub-tag-chip"
-                    :style="{ borderLeftColor: child.color }"
-                  >
-                    <div class="color-circle-sm" :style="{ backgroundColor: child.color }" />
-                    <span class="sub-tag-label">{{ child.label }}</span>
-                    <div v-if="!child.isDefault" class="sub-tag-actions">
-                      <Button
-                        v-tooltip.top="'Modifier'"
-                        icon="pi pi-pencil"
-                        rounded
-                        text
-                        severity="secondary"
-                        size="small"
-                        :disabled="isAnyTagActionLoading"
-                        aria-label="Modifier"
-                        @click="onEditClick(child)"
-                      />
-                      <Button
-                        v-tooltip.top="'Supprimer'"
-                        icon="pi pi-trash"
-                        rounded
-                        text
-                        severity="danger"
-                        size="small"
-                        :disabled="isAnyTagActionLoading"
-                        aria-label="Supprimer"
-                        @click="onDeleteClick(child)"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Actions (only for personal tags) -->
-              <div v-if="!group.isDefault" class="tag-actions">
-                <Button
-                  v-tooltip.top="'Modifier'"
-                  icon="pi pi-pencil"
-                  rounded
-                  text
-                  severity="secondary"
-                  :disabled="isAnyTagActionLoading"
-                  aria-label="Modifier"
-                  @click="onEditClick(group)"
-                />
-                <Button
-                  v-tooltip.top="'Supprimer'"
-                  icon="pi pi-trash"
-                  rounded
-                  text
-                  severity="danger"
-                  :loading="isDeletingTag"
-                  :disabled="isAnyTagActionLoading"
-                  aria-label="Supprimer"
-                  @click="onDeleteClick(group)"
-                />
-              </div>
-            </div>
-          </div>
-        </template>
+        <TagCard
+          v-for="group in groupedTags"
+          :key="group.id"
+          :group="group"
+          :disabled="isAnyTagActionLoading"
+          :deleting="isDeletingTag"
+          @edit="onEditClick"
+          @delete="onDeleteClick"
+        />
       </TransitionGroup>
 
-      <!-- Empty State -->
       <div v-if="groupedTags.length === 0" class="empty-state">
         <i class="pi pi-tag empty-icon" />
         <h3>Aucun tag trouvé</h3>
@@ -424,161 +307,21 @@ function edit() {
       </div>
     </div>
 
-    <Dialog
+    <TagFormDialog
       v-model:visible="addTagDialog"
-      modal
-      header="Créer un nouveau tag"
-      class="tag-dialog"
-      :breakpoints="{ '960px': '90vw', '640px': '95vw' }"
-      style="width:450px"
-    >
-      <div class="dialog-content">
-        <div class="form-field">
-          <label class="form-label">Type</label>
-          <SelectButton
-            v-model="personalTagForm.isSubTag"
-            :options="[
-              { label: 'Tag', value: false },
-              { label: 'Sous-tag', value: true },
-            ]"
-            option-label="label"
-            option-value="value"
-            class="w-full"
-            data-test="subtag-toggle"
-          />
-        </div>
+      :parent-tag-options="parentTagOptions"
+      :loading="isAddingTag"
+      :disabled="isAnyTagActionLoading"
+      @submit="onCreateSubmit"
+    />
 
-        <div v-if="personalTagForm.isSubTag" class="form-field">
-          <label for="parent-tag" class="form-label">
-            Tag parent
-            <span class="required">*</span>
-          </label>
-          <Select
-            id="parent-tag"
-            v-model="personalTagForm.parentId"
-            :options="parentTagOptions"
-            option-label="label"
-            option-value="id"
-            placeholder="Sélectionner un tag parent"
-            class="w-full"
-            data-test="parent-tag-select"
-          >
-            <template #option="{ option }">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: option.color }" />
-                <span>{{ option.label }}</span>
-              </div>
-            </template>
-          </Select>
-        </div>
-
-        <div class="form-field">
-          <label for="tag-label" class="form-label">
-            Libellé du tag
-            <span class="required">*</span>
-          </label>
-          <InputText
-            id="tag-label"
-            v-model="personalTagForm.tagLabel"
-            placeholder="Ex: Courses, Essence, Loisirs..."
-            class="w-full"
-            autocomplete="off"
-            maxlength="50"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="tag-color" class="form-label">
-            Couleur
-            <span class="required">*</span>
-          </label>
-          <div class="color-picker-wrapper">
-            <input
-              id="tag-color"
-              v-model="personalTagForm.hex"
-              type="color"
-              class="color-picker"
-            >
-            <InputText
-              v-model="personalTagForm.hex"
-              class="color-hex-input"
-              placeholder="#000000"
-            />
-            <div class="color-preview-large" :style="{ backgroundColor: personalTagForm.hex }" />
-          </div>
-        </div>
-
-        <Button
-          label="Créer le tag"
-          icon="pi pi-check"
-          class="w-full mt-4"
-          :loading="isAddingTag"
-          :disabled="!personalTagForm.tagLabel || (personalTagForm.isSubTag && !personalTagForm.parentId) || isAnyTagActionLoading"
-          @click="add()"
-        />
-      </div>
-    </Dialog>
-
-    <!-- Edit Tag Dialog -->
-    <Dialog
+    <TagEditDialog
       v-model:visible="editTagDialog"
-      modal
-      header="Modifier le tag"
-      class="tag-dialog"
-      :breakpoints="{ '960px': '90vw', '640px': '95vw' }"
-      style="width:450px"
-    >
-      <div class="dialog-content">
-        <div class="form-field">
-          <label for="edit-tag-label" class="form-label">
-            Libellé du tag
-            <span class="required">*</span>
-          </label>
-          <InputText
-            id="edit-tag-label"
-            v-model="tagToEdit.label"
-            class="w-full"
-            autocomplete="off"
-            maxlength="50"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="edit-tag-color" class="form-label">
-            Couleur
-            <span class="required">*</span>
-          </label>
-          <div class="color-picker-wrapper">
-            <input
-              id="edit-tag-color"
-              v-model="tagToEdit.color"
-              type="color"
-              class="color-picker"
-            >
-            <InputText
-              v-model="tagToEdit.color"
-              class="color-hex-input"
-              placeholder="#000000"
-            />
-            <div class="color-preview-large" :style="{ backgroundColor: tagToEdit.color }" />
-          </div>
-        </div>
-
-        <div class="alert-box">
-          <i class="pi pi-info-circle" />
-          <span>La modification s'appliquera à toutes les transactions liées</span>
-        </div>
-
-        <Button
-          label="Enregistrer les modifications"
-          icon="pi pi-save"
-          class="w-full mt-4"
-          :loading="isEditingTag"
-          :disabled="!tagToEdit.label || isAnyTagActionLoading"
-          @click="edit()"
-        />
-      </div>
-    </Dialog>
+      :tag="tagToEdit"
+      :loading="isEditingTag"
+      :disabled="isAnyTagActionLoading"
+      @submit="onEditSubmit"
+    />
   </div>
 </template>
 
@@ -596,7 +339,6 @@ function edit() {
   }
 }
 
-/* Header */
 .page-header {
   margin-bottom: 2rem;
 }
@@ -639,7 +381,6 @@ function edit() {
   font-weight: 400;
 }
 
-/* Toolbar */
 .toolbar {
   display: flex;
   gap: 1rem;
@@ -687,7 +428,6 @@ function edit() {
   }
 }
 
-/* Tags Grid */
 .tags-container {
   position: relative;
   min-height: 400px;
@@ -703,191 +443,6 @@ function edit() {
   }
 }
 
-/* Tag Card */
-.tag-card {
-  position: relative;
-  background: var(--card-bg);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px var(--shadow-sm), 0 1px 2px var(--shadow-sm);
-  transition: all 0.3s ease;
-  border: 1px solid var(--card-border);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px var(--shadow-md), 0 4px 8px var(--shadow-sm);
-    border-color: var(--border-light);
-  }
-
-  &.tag-card-personal:hover {
-    .tag-actions {
-      opacity: 1;
-      pointer-events: all;
-    }
-  }
-}
-
-.tag-color-band {
-  height: 6px;
-  width: 100%;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 100%);
-  }
-}
-
-.tag-content {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.tag-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.tag-label-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.tag-label {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.tag-badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-}
-
-/* Color Preview */
-.color-preview {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--bg-tertiary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.color-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid var(--border-color);
-  box-shadow: 0 2px 8px var(--shadow-sm);
-  flex-shrink: 0;
-}
-
-.color-label {
-  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  font-weight: 500;
-}
-
-/* Tag Actions */
-.tag-actions {
-  display: flex;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-color);
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-
-  @media (max-width: 768px) {
-    opacity: 1;
-  }
-}
-
-/* Sub-tags section */
-.sub-tags-section {
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.sub-tags-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.5rem 0;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.sub-tags-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.sub-tag-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
-  border-left: 3px solid;
-  background: var(--bg-tertiary);
-  transition: background 0.2s ease;
-
-  &:hover {
-    background: var(--bg-hover, var(--bg-tertiary));
-
-    .sub-tag-actions {
-      opacity: 1;
-    }
-  }
-}
-
-.color-circle-sm {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border-color);
-  flex-shrink: 0;
-}
-
-.sub-tag-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  flex: 1;
-}
-
-.sub-tag-actions {
-  display: flex;
-  gap: 0.25rem;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-
-  @media (max-width: 768px) {
-    opacity: 1;
-  }
-}
-
-/* FAB Button */
 .modern-fab {
   border-radius: 999px;
   padding: 0.5rem 1rem;
@@ -914,7 +469,6 @@ function edit() {
     transform: translateY(0);
   }
 
-  /* Header variant: align to right inside toolbar */
   &.header {
     margin-left: auto;
     align-self: center;
@@ -924,14 +478,12 @@ function edit() {
     padding: 0.45rem;
     min-width: 44px;
 
-    /* Hide the label on small screens to remain compact */
     .p-button-label {
       display: none;
     }
   }
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -958,84 +510,6 @@ function edit() {
   color: var(--text-secondary);
 }
 
-/* Dialog Styles */
-.dialog-content {
-  padding: 1rem 0;
-}
-
-.form-field {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  letter-spacing: 0.01em;
-}
-
-.required {
-  color: #ef4444;
-  margin-left: 0.25rem;
-}
-
-.color-picker-wrapper {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.color-picker {
-  width: 60px;
-  height: 42px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  cursor: pointer;
-  background: none;
-
-  &::-webkit-color-swatch-wrapper {
-    padding: 2px;
-  }
-
-  &::-webkit-color-swatch {
-    border: none;
-    border-radius: 4px;
-  }
-}
-
-.color-hex-input {
-  flex: 1;
-}
-
-.color-preview-large {
-  width: 42px;
-  height: 42px;
-  border-radius: 6px;
-  border: 2px solid var(--border-color);
-  box-shadow: 0 2px 8px var(--shadow-sm);
-  flex-shrink: 0;
-}
-
-.alert-box {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: #eff6ff;
-  border-left: 4px solid #3b82f6;
-  border-radius: 6px;
-  color: #1e40af;
-  font-size: 0.875rem
-}
-
-.dark .alert-box {
-  background: rgba(59, 130, 246, 0.1);
-  color: #93c5fd;
-}
-
-/* Animations */
 .tag-list-move,
 .tag-list-enter-active,
 .tag-list-leave-active {
@@ -1054,61 +528,5 @@ function edit() {
 
 .tag-list-leave-active {
   position: absolute;
-}
-
-/* Dialog sizing and responsive adjustments for PrimeVue Dialog */
-:deep(.tag-dialog) {
-  /* PrimeVue may apply inline styles; ensure our size rules are prioritized */
-  width: 450px !important;
-  max-width: 95vw !important;
-  box-sizing: border-box !important;
-}
-
-/* Content inside the dialog */
-:deep(.tag-dialog .p-dialog-content) {
-  padding: 1rem !important;
-}
-
-/* Titlebar tweaks */
-:deep(.tag-dialog .p-dialog-header) {
-  padding: 0.75rem 1rem !important;
-}
-
-/* Make form elements more compact on small screens */
-@media (max-width: 640px) {
-  :deep(.tag-dialog) {
-    width: 95vw !important;
-    margin: 1.2rem !important;
-  }
-
-  :deep(.tag-dialog .p-dialog-content) {
-    padding: 0.75rem !important;
-  }
-
-  .dialog-content {
-    padding: 0.25rem 0 !important;
-  }
-
-  .form-field {
-    margin-bottom: 1rem;
-  }
-
-  .color-picker {
-    width: 48px !important;
-    height: 36px !important;
-  }
-
-  .color-preview-large {
-    width: 36px !important;
-    height: 36px !important;
-  }
-
-  .form-label {
-    font-size: 0.85rem !important;
-  }
-
-  .p-button {
-    font-size: 0.95rem !important;
-  }
 }
 </style>

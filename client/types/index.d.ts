@@ -51,6 +51,18 @@ declare global {
     parentId?: string | null
   }
 
+  interface TagDisplayItem {
+    id: string
+    label: string
+    isDefault: boolean
+    color: string
+    parentId?: string | null
+  }
+
+  interface TagGroupItem extends TagDisplayItem {
+    children: TagDisplayItem[]
+  }
+
   interface TransactionCreationDTO {
     id: string | null
     label: string
