@@ -178,6 +178,7 @@ After a feature, refactoring, or technical analysis is **fully complete and merg
 1. **Working Documents Cleanup**:
    - Remove completed **refactoring plans** from `docs/refactoring/{refactoring-name}/` (keep `.gitkeep`)
    - Remove completed **technical analysis reports** from `docs/technical/{topic}/` (keep `.gitkeep`)
+   - Remove completed **feature plans** from `docs/features/{feature-name}/` (keep `.gitkeep`)
    - Preserve directory structure with `.gitkeep` files for future work
 
 2. **Content Preservation**:
