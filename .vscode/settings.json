@@ -9,5 +9,6 @@
         "pwsh": true,
         "powershell": true,
         "pnpm": true,
+        "Add-Type": true
     }
 }

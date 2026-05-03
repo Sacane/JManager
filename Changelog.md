@@ -1,6 +1,16 @@
 # Changelog
 
-## 2026-05-03
+## 2026-05-04
+
+- **Bug fix: Regular transaction income displayed as expense after page reload**
+  - **Root cause**: `JacksonConfig.jacksonCustomizer()` called `builder.modules(module, JavaTimeModule())` which internally **replaces** the entire module list and disables well-known module auto-detection (`findWellKnownModules = false`). This evicted the `KotlinModule` auto-configured by Spring Boot. Without `KotlinModule`, Jackson uses Java bean introspection on `val isIncome: Boolean` — the generated getter `isIncome()` follows the Java boolean convention and strips the `is` prefix, serialising the field as `"income"` instead of `"isIncome"`. The frontend `data.isIncome` evaluated to `undefined` → `false` → "Dépense" on every GET reload.
+  - **Why creation appeared correct**: the transaction was pushed from the POST response which, due to a different execution context (Kotlin object still in memory), may have preserved the correct value before the serialised round-trip on the subsequent GET.
+  - **Fix (`JacksonConfig.kt`)**: replaced `builder.modules(module, JavaTimeModule())` with `builder.modulesToInstall(module)`. `modulesToInstall` appends to the existing module list without replacing it, preserving the auto-configured `KotlinModule` and `JavaTimeModule`. The explicit `JavaTimeModule()` registration is removed as Spring Boot auto-configures it via `jackson-datatype-jsr310`.
+  - **Tests added**:
+    - Backend: `Get all regular transactions must return correct isIncome for each transaction` in `RegularTransactionControllerTest.GetAllRegularTransactionsEndpointTest` — verifies `content[0].isIncome == true` on the GET all endpoint.
+    - Frontend: `passes isIncome: true to AppTable rows after loading an income transaction from API` in `regular-transaction-index.spec.ts` — verifies that `filteredTransactions` correctly propagates `isIncome: true` to the `AppTable` rows prop after an API load.
+  - All 141 frontend tests and all backend tests pass.
+
 
 - **Bug fix: Sub-tag visibility in booklet table and category distribution**
   - **Domain — `CategoryDistributionCalculatorImpl`**: Fixed sub-tag promotion logic. When a parent tag has no transactions tagged directly (all transactions belong to its sub-tags), each sub-tag now appears as its own top-level entry in the distribution instead of being grouped under an invisible parent. Percentages are computed against the global total. When a parent has at least one direct transaction, the previous grouping behaviour (sub-tags in `subCategories`) is preserved.

@@ -477,6 +477,48 @@ class RegularTransactionControllerTest(
         }
 
         @Test
+        fun `Get all regular transactions must return correct isIncome for each transaction`() {
+            bookletStateTestAdapter.init(
+                listOf(Booklet(200.toAmount(), "test", owner = user))
+            )
+            val booklet = bookletStateTestAdapter.get().find { it.label == "test" }!!
+
+            regularTransactionStateForTestAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = booklet.id!!.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = RegularTransactionId(""),
+                            label = "Salaire",
+                            amount = 2000.00.toAmount(),
+                            isIncome = true,
+                            tag = tagDTO.toDomain(),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            startDate = LocalDate.now(),
+                            recurrenceRule = RecurrenceRule.Monthly(15)
+                        )
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+            } When {
+                get("/api/transaction/regular")
+            } Then {
+                statusCode(200)
+                body(
+                    "content.size()", equalTo(1),
+                    "content[0].label", equalTo("Salaire"),
+                    "content[0].isIncome", equalTo(true)
+                )
+            }
+        }
+
+        @Test
         fun `Get all regular transactions with no transactions must send 200 with empty list`() {
             Given {
                 port(port)
