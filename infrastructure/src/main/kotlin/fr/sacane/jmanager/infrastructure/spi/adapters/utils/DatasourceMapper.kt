@@ -178,14 +178,14 @@ fun Tag.asResource(): AbstractTagResource {
 fun AbstractTagResource.toDomain(): Tag {
     return when(this) {
         is DefaultTagResource -> Tag.Default(this.name, this.idTag, this.color.asAwtColor())
-        is TagPersonalResource -> Tag.Personal(this.name, this.idTag, this.color.asAwtColor())
+        is TagPersonalResource -> Tag.Personal(this.name, this.idTag, this.color.asAwtColor(), parentId = this.parent?.idTag)
     }
 }
 
 fun fr.sacane.jmanager.infrastructure.spi.entity.Color.asAwtColor(): Color = Color(this.red, this.green, this.blue)
 
-fun Tag.toPersonalTag(userResource: UserResource? = null): TagPersonalResource{
-    return TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(color.red, color.green, color.blue), userResource)
+fun Tag.toPersonalTag(userResource: UserResource? = null, parentResource: TagPersonalResource? = null): TagPersonalResource{
+    return TagPersonalResource(this.id, this.label, fr.sacane.jmanager.infrastructure.spi.entity.Color(color.red, color.green, color.blue), userResource, parentResource)
 }
 
 fun User.asExistingResource(): UserResource

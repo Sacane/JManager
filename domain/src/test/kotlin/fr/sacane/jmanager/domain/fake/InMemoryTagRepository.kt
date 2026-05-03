@@ -68,6 +68,23 @@ class InMemoryTagRepository(
         return inMemoryDatabase.userByTag.values.flatten().any { it.id == tagId }
     }
 
+    override fun findSubTagsByParentId(parentId: UUID): List<Tag.Personal> {
+        return inMemoryDatabase.userByTag.values.flatten()
+            .filterIsInstance<Tag.Personal>()
+            .filter { it.parentId == parentId }
+    }
+
+    override fun hasSubTags(tagId: UUID): Boolean {
+        return inMemoryDatabase.userByTag.values.flatten()
+            .filterIsInstance<Tag.Personal>()
+            .any { it.parentId == tagId }
+    }
+
+    override fun findById(tagId: UUID): Tag? {
+        return inMemoryDatabase.userByTag.values.flatten().find { it.id == tagId }
+            ?: inMemoryDatabase.defaultTags.find { it.id == tagId }
+    }
+
     override fun getStates(): List<Tag> {
         return inMemoryDatabase.defaultTags + inMemoryDatabase.userByTag.values.flatten()
     }

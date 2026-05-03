@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import TagPage from '../../pages/tag/index.vue'
 
 const addPersonalTagMock = vi.fn()
+const addSubTagMock = vi.fn()
 const getAllTagsMock = vi.fn().mockResolvedValue([])
 const deleteTagMock = vi.fn()
 const editTagMock = vi.fn()
@@ -10,6 +11,7 @@ const editTagMock = vi.fn()
 vi.mock('~/composables/useTag', () => ({
   default: () => ({
     addPersonalTag: addPersonalTagMock,
+    addSubTag: addSubTagMock,
     getAllTags: getAllTagsMock,
     deleteTag: deleteTagMock,
     editTag: editTagMock,
@@ -35,6 +37,7 @@ function mountTagPage(activeScopes: string[] = []) {
         ProgressSpinner: { template: '<div class="spinner" />' },
         InputText: { template: '<input />' },
         SelectButton: { template: '<div />' },
+        Select: { template: '<div />' },
         Dialog: { template: '<div><slot /></div>' },
         Tag: { template: '<span><slot /></span>' },
         Button: {

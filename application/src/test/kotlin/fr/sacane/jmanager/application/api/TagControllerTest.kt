@@ -13,6 +13,7 @@ import fr.sacane.jmanager.application.api.setup.TransactionStateTestAdapter
 import fr.sacane.jmanager.application.api.setup.UserTagsRequest
 
 import fr.sacane.jmanager.application.api.tag.ColorDTO
+import fr.sacane.jmanager.application.api.tag.CreateSubTagRequest
 import fr.sacane.jmanager.application.api.tag.TagDTO
 import fr.sacane.jmanager.application.api.tag.UserTagRequest
 import io.restassured.module.kotlin.extensions.Given
@@ -323,6 +324,107 @@ class TagControllerTest (
                 patch("/api/tag")
             } Then {
                 statusCode(404)
+            }
+        }
+    }
+
+    @Nested
+    inner class CreateSubTagEndpointTest {
+        @Test
+        fun `Create sub-tag under an existing personal tag must return 200`() {
+            tagStateTestAdapter.init(listOf(
+                UserTagsRequest(user!!.id, listOf(Tag.Personal("parent", color = Color(10, 10, 10))))
+            ))
+            val parentTag = state.get().find { it.label == "parent" } ?: fail("Parent tag not found")
+
+            val body = CreateSubTagRequest(
+                tagLabel = "child",
+                colorDTO = ColorDTO(20, 20, 20),
+                parentId = parentTag.id.toString()
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/tag/sub-tag")
+            } Then {
+                statusCode(200)
+                body(
+                    "label", equalTo("child"),
+                    "colorDTO.red", equalTo(20),
+                    "colorDTO.green", equalTo(20),
+                    "colorDTO.blue", equalTo(20),
+                    "parentId", equalTo(parentTag.id.toString()),
+                )
+            }
+        }
+
+        @Test
+        fun `Create sub-tag with non-existing parent must return 404`() {
+            val body = CreateSubTagRequest(
+                tagLabel = "orphan",
+                colorDTO = ColorDTO(10, 10, 10),
+                parentId = UUID.randomUUID().toString()
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/tag/sub-tag")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Create sub-tag under a default tag must return 400`() {
+            val defaultTag = state.get().find { it.isDefault } ?: fail("Default tag not found")
+
+            val body = CreateSubTagRequest(
+                tagLabel = "child",
+                colorDTO = ColorDTO(10, 10, 10),
+                parentId = defaultTag.id.toString()
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/tag/sub-tag")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `Create sub-tag with duplicate label must return 403`() {
+            tagStateTestAdapter.init(listOf(
+                UserTagsRequest(user!!.id, listOf(
+                    Tag.Personal("parent", color = Color(10, 10, 10)),
+                    Tag.Personal("duplicate", color = Color(20, 20, 20))
+                ))
+            ))
+            val parentTag = state.get().find { it.label == "parent" } ?: fail("Parent tag not found")
+
+            val body = CreateSubTagRequest(
+                tagLabel = "duplicate",
+                colorDTO = ColorDTO(30, 30, 30),
+                parentId = parentTag.id.toString()
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/tag/sub-tag")
+            } Then {
+                statusCode(403)
             }
         }
     }

@@ -452,6 +452,51 @@ When the user attempts to edit it
 Then the system returns a failure
 ```
 
+### Scenario: Create a sub-tag under a personal parent tag
+```gherkin
+Given an authenticated user who owns a personal tag "Food"
+When the user creates a sub-tag "Restaurants" with parentId set to "Food"
+Then the sub-tag is persisted with parentId pointing to "Food"
+And the sub-tag is returned in the result
+```
+
+### Scenario: Sub-tag creation is rejected when parent does not exist
+```gherkin
+Given an authenticated user
+When the user attempts to create a sub-tag with a non-existent parentId
+Then the system returns a NOT_FOUND failure
+```
+
+### Scenario: Sub-tag creation is rejected under a default tag
+```gherkin
+Given a default tag "Alimentation & Restaurant"
+When the user attempts to create a sub-tag with that tag as parent
+Then the system returns an INVALID failure
+```
+
+### Scenario: Sub-tag creation is rejected when nesting depth exceeds 2
+```gherkin
+Given a sub-tag "Restaurants" that already has a parent tag
+When the user attempts to create a sub-tag under "Restaurants"
+Then the system returns an INVALID failure
+```
+
+### Scenario: Category distribution aggregates sub-tag amounts under parent
+```gherkin
+Given parent tag "Food" with sub-tags "Restaurants" (20 €) and "Groceries" (30 €) and a direct "Food" expense (10 €)
+When the category distribution is computed
+Then the "Food" entry has totalAmount 60 €
+And its subCategories list contains entries for "Restaurants" and "Groceries"
+```
+
+### Scenario: Tags without sub-tags appear normally in distribution
+```gherkin
+Given a tag "Transport" with no sub-tags and a 15 € expense
+When the category distribution is computed
+Then "Transport" appears with totalAmount 15 €
+And its subCategories list is empty
+```
+
 ---
 
 ## Feature: Statistics & Reporting

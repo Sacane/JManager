@@ -16,9 +16,10 @@ interface DataDisplay {
   label: string
   isDefault: boolean
   color: string
+  parentId?: string | null
 }
 
-const { addPersonalTag, getAllTags, deleteTag, editTag } = useTag()
+const { addPersonalTag, addSubTag, getAllTags, deleteTag, editTag } = useTag()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
 
@@ -53,6 +54,8 @@ const tagToEdit = reactive({
 const personalTagForm = reactive({
   tagLabel: '',
   hex: '#6366f1',
+  isSubTag: false,
+  parentId: '' as string,
 })
 
 const confirm = useConfirm()
@@ -79,6 +82,7 @@ function formattedData(tagDTO: TagDTO): DataDisplay {
     label: tagDTO.label as string,
     isDefault: tagDTO.isDefault as boolean,
     color,
+    parentId: tagDTO.parentId ?? null,
   }
 }
 
@@ -102,23 +106,33 @@ const filteredTags = computed(() => {
   return filtered
 })
 
+const parentTagOptions = computed(() =>
+  tags.value.filter(t => !t.isDefault && !t.parentId),
+)
+
+const groupedTags = computed(() => {
+  const topLevel = filteredTags.value.filter(t => !t.parentId)
+  return topLevel.map(parent => ({
+    ...parent,
+    children: filteredTags.value.filter(t => t.parentId === parent.id),
+  }))
+})
+
 async function add() {
   await withLoading(async () => {
     try {
       const rgb = hexToRgb(personalTagForm.hex)
-      const tag = await addPersonalTag(
-        personalTagForm.tagLabel,
-        {
-          red: rgb.r,
-          green: rgb.g,
-          blue: rgb.b,
-        },
-      )
+      const colorDTO = { red: rgb.r, green: rgb.g, blue: rgb.b }
+      const tag = personalTagForm.isSubTag
+        ? await addSubTag(personalTagForm.tagLabel, colorDTO, personalTagForm.parentId)
+        : await addPersonalTag(personalTagForm.tagLabel, colorDTO)
       tags.value.push(formattedData(tag))
       addTagDialog.value = false
       personalTagForm.tagLabel = ''
       personalTagForm.hex = '#6366f1'
-      toast.success('Tag créé avec succès')
+      personalTagForm.isSubTag = false
+      personalTagForm.parentId = ''
+      toast.success(personalTagForm.isSubTag ? 'Sous-tag créé avec succès' : 'Tag créé avec succès')
     } catch (error) {
       toast.errorAxios(error as any)
     }
@@ -296,67 +310,110 @@ function edit() {
         </p>
       </div>
       <TransitionGroup name="tag-list" tag="div" class="tags-grid">
-        <div
-          v-for="tag in filteredTags"
-          :key="tag.id"
-          class="tag-card"
-          :class="{ 'tag-card-personal': !tag.isDefault }"
-          :style="{ '--tag-color': tag.color }"
-        >
-          <!-- Color Band -->
-          <div class="tag-color-band" :style="{ backgroundColor: tag.color }" />
+        <template v-for="group in groupedTags" :key="group.id">
+          <div
+            class="tag-card"
+            :class="{ 'tag-card-personal': !group.isDefault }"
+            :style="{ '--tag-color': group.color }"
+          >
+            <!-- Color Band -->
+            <div class="tag-color-band" :style="{ backgroundColor: group.color }" />
 
-          <!-- Card Content -->
-          <div class="tag-content">
-            <div class="tag-info">
-              <div class="tag-label-wrapper">
-                <h3 class="tag-label">
-                  {{ tag.label }}
-                </h3>
-                <Tag
-                  :value="tag.isDefault ? 'Par défaut' : 'Personnel'"
-                  :severity="tag.isDefault ? 'info' : 'success'"
-                  class="tag-badge"
+            <!-- Card Content -->
+            <div class="tag-content">
+              <div class="tag-info">
+                <div class="tag-label-wrapper">
+                  <h3 class="tag-label">
+                    {{ group.label }}
+                  </h3>
+                  <Tag
+                    :value="group.isDefault ? 'Par défaut' : 'Personnel'"
+                    :severity="group.isDefault ? 'info' : 'success'"
+                    class="tag-badge"
+                  />
+                </div>
+
+                <!-- Color Preview -->
+                <div class="color-preview">
+                  <div class="color-circle" :style="{ backgroundColor: group.color }" />
+                  <span class="color-label">{{ group.color }}</span>
+                </div>
+              </div>
+
+              <!-- Sub-tags -->
+              <div v-if="group.children.length > 0" class="sub-tags-section">
+                <p class="sub-tags-header">
+                  <i class="pi pi-sitemap" />
+                  Sous-tags ({{ group.children.length }})
+                </p>
+                <div class="sub-tags-list">
+                  <div
+                    v-for="child in group.children"
+                    :key="child.id"
+                    class="sub-tag-chip"
+                    :style="{ borderLeftColor: child.color }"
+                  >
+                    <div class="color-circle-sm" :style="{ backgroundColor: child.color }" />
+                    <span class="sub-tag-label">{{ child.label }}</span>
+                    <div v-if="!child.isDefault" class="sub-tag-actions">
+                      <Button
+                        v-tooltip.top="'Modifier'"
+                        icon="pi pi-pencil"
+                        rounded
+                        text
+                        severity="secondary"
+                        size="small"
+                        :disabled="isAnyTagActionLoading"
+                        aria-label="Modifier"
+                        @click="onEditClick(child)"
+                      />
+                      <Button
+                        v-tooltip.top="'Supprimer'"
+                        icon="pi pi-trash"
+                        rounded
+                        text
+                        severity="danger"
+                        size="small"
+                        :disabled="isAnyTagActionLoading"
+                        aria-label="Supprimer"
+                        @click="onDeleteClick(child)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actions (only for personal tags) -->
+              <div v-if="!group.isDefault" class="tag-actions">
+                <Button
+                  v-tooltip.top="'Modifier'"
+                  icon="pi pi-pencil"
+                  rounded
+                  text
+                  severity="secondary"
+                  :disabled="isAnyTagActionLoading"
+                  aria-label="Modifier"
+                  @click="onEditClick(group)"
+                />
+                <Button
+                  v-tooltip.top="'Supprimer'"
+                  icon="pi pi-trash"
+                  rounded
+                  text
+                  severity="danger"
+                  :loading="isDeletingTag"
+                  :disabled="isAnyTagActionLoading"
+                  aria-label="Supprimer"
+                  @click="onDeleteClick(group)"
                 />
               </div>
-
-              <!-- Color Preview -->
-              <div class="color-preview">
-                <div class="color-circle" :style="{ backgroundColor: tag.color }" />
-                <span class="color-label">{{ tag.color }}</span>
-              </div>
-            </div>
-
-            <!-- Actions (only for personal tags) -->
-            <div v-if="!tag.isDefault" class="tag-actions">
-              <Button
-                v-tooltip.top="'Modifier'"
-                icon="pi pi-pencil"
-                rounded
-                text
-                severity="secondary"
-                :disabled="isAnyTagActionLoading"
-                aria-label="Modifier"
-                @click="onEditClick(tag)"
-              />
-              <Button
-                v-tooltip.top="'Supprimer'"
-                icon="pi pi-trash"
-                rounded
-                text
-                severity="danger"
-                :loading="isDeletingTag"
-                :disabled="isAnyTagActionLoading"
-                aria-label="Supprimer"
-                @click="onDeleteClick(tag)"
-              />
             </div>
           </div>
-        </div>
+        </template>
       </TransitionGroup>
 
       <!-- Empty State -->
-      <div v-if="filteredTags.length === 0" class="empty-state">
+      <div v-if="groupedTags.length === 0" class="empty-state">
         <i class="pi pi-tag empty-icon" />
         <h3>Aucun tag trouvé</h3>
         <p v-if="searchQuery">
@@ -377,6 +434,45 @@ function edit() {
       style="width:450px"
     >
       <div class="dialog-content">
+        <div class="form-field">
+          <label class="form-label">Type</label>
+          <SelectButton
+            v-model="personalTagForm.isSubTag"
+            :options="[
+              { label: 'Tag', value: false },
+              { label: 'Sous-tag', value: true },
+            ]"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+            data-test="subtag-toggle"
+          />
+        </div>
+
+        <div v-if="personalTagForm.isSubTag" class="form-field">
+          <label for="parent-tag" class="form-label">
+            Tag parent
+            <span class="required">*</span>
+          </label>
+          <Select
+            id="parent-tag"
+            v-model="personalTagForm.parentId"
+            :options="parentTagOptions"
+            option-label="label"
+            option-value="id"
+            placeholder="Sélectionner un tag parent"
+            class="w-full"
+            data-test="parent-tag-select"
+          >
+            <template #option="{ option }">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: option.color }" />
+                <span>{{ option.label }}</span>
+              </div>
+            </template>
+          </Select>
+        </div>
+
         <div class="form-field">
           <label for="tag-label" class="form-label">
             Libellé du tag
@@ -418,7 +514,7 @@ function edit() {
           icon="pi pi-check"
           class="w-full mt-4"
           :loading="isAddingTag"
-          :disabled="!personalTagForm.tagLabel || isAnyTagActionLoading"
+          :disabled="!personalTagForm.tagLabel || (personalTagForm.isSubTag && !personalTagForm.parentId) || isAnyTagActionLoading"
           @click="add()"
         />
       </div>
@@ -717,6 +813,75 @@ function edit() {
   border-top: 1px solid var(--border-color);
   opacity: 0.7;
   transition: opacity 0.3s ease;
+
+  @media (max-width: 768px) {
+    opacity: 1;
+  }
+}
+
+/* Sub-tags section */
+.sub-tags-section {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.sub-tags-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sub-tags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sub-tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border-left: 3px solid;
+  background: var(--bg-tertiary);
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--bg-hover, var(--bg-tertiary));
+
+    .sub-tag-actions {
+      opacity: 1;
+    }
+  }
+}
+
+.color-circle-sm {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.sub-tag-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.sub-tag-actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 
   @media (max-width: 768px) {
     opacity: 1;

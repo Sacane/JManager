@@ -120,6 +120,7 @@ object FakeFactory {
     private val deleteTagService = DeleteTagService(inMemoryTagRepository, transactionRepository, inMemoryRegularTransactionRepository)
     private val defaultTagService = DefaultTagService(inMemoryTagRepository)
     private val editTagService = EditTagService(inMemoryTagRepository)
+    private val createSubTagService = CreateSubTagService(inMemoryTagRepository)
     val getAllRegularTransactionsService = GetAllRegularTransactionsService(inMemoryRegularTransactionRepository, paginator)
     val bookRegularTransactionService = BookRegularTransactionService(inMemoryRegularTransactionRepository, manager)
     val getRegularTransactionByIdService = GetRegularTransactionByIdService(inMemoryRegularTransactionRepository)
@@ -187,4 +188,5 @@ object FakeFactory {
     fun deleteTagUseCase(): DeleteTagUseCase = deleteTagService
     fun defaultTagUseCase(): DefaultTagUseCase = defaultTagService
     fun editTagUseCase(): EditTagUseCase = editTagService
+    fun createSubTagUseCase(): CreateSubTagUseCase = createSubTagService
 }

@@ -90,6 +90,7 @@ const isChartsVisible = ref(false)
 // Doughnut slice toggle state
 const selectedSliceIndex = ref<number | null>(null)
 const sliceDisplayMode = ref<'amount' | 'percentage'>('amount')
+const selectedParentCategoryIndex = ref<number | null>(null)
 
 // Y-axis scale overrides (null = auto-scale, non-null = custom bounds)
 const lineChartYMin = ref<number | null>(null)
@@ -594,7 +595,23 @@ function onDoughnutClick(_event: any, elements: any[]) {
   }
 
   const clickedIndex = elements[0].index
+  const sortedCategories = categoryDistribution.value?.categories?.toSorted(
+    (a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount),
+  ) ?? []
+  const clickedCategory = sortedCategories[clickedIndex]
 
+  // Handle secondary chart toggle for parent categories with sub-tags
+  if (clickedCategory?.subCategories?.length) {
+    if (selectedParentCategoryIndex.value === clickedIndex) {
+      selectedParentCategoryIndex.value = null
+    } else {
+      selectedParentCategoryIndex.value = clickedIndex
+    }
+  } else {
+    selectedParentCategoryIndex.value = null
+  }
+
+  // Handle center label toggle (existing behavior)
   if (selectedSliceIndex.value === clickedIndex) {
     sliceDisplayMode.value = sliceDisplayMode.value === 'amount' ? 'percentage' : 'amount'
   } else {
@@ -602,6 +619,68 @@ function onDoughnutClick(_event: any, elements: any[]) {
     sliceDisplayMode.value = 'amount'
   }
 }
+
+const selectedParentCategory = computed(() => {
+  if (selectedParentCategoryIndex.value === null) return null
+  const sorted = categoryDistribution.value?.categories?.toSorted(
+    (a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount),
+  ) ?? []
+  return sorted[selectedParentCategoryIndex.value] ?? null
+})
+
+const secondaryChartData = computed(() => {
+  const parent = selectedParentCategory.value
+  if (!parent?.subCategories?.length) {
+    return null
+  }
+
+  const subs = parent.subCategories
+  return {
+    labels: subs.map(s => s.tagLabel),
+    datasets: [
+      {
+        data: subs.map(s => Number.parseFloat(s.totalAmount)),
+        backgroundColor: subs.map(s =>
+          `rgb(${s.colorDTO.red}, ${s.colorDTO.green}, ${s.colorDTO.blue})`,
+        ),
+        borderWidth: 0,
+      },
+    ],
+  }
+})
+
+const secondaryDoughnutOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+      labels: {
+        padding: 10,
+        usePointStyle: true,
+        font: {
+          size: isSmallScreen.value ? 10 : 11,
+        },
+      },
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      padding: 10,
+      borderRadius: 8,
+      callbacks: {
+        label: (context: any) => {
+          const label = context.label || ''
+          const value = context.parsed || 0
+          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
+          return `${label}: ${value.toFixed(2)} € (${percentage}%)`
+        },
+      },
+    },
+  },
+  cutout: '60%',
+}))
 
 const topTagsInsights = computed(() => {
   const currentCategories = categoryDistribution.value?.categories ?? []
@@ -1066,6 +1145,7 @@ watch([selectedBookletId, selectedPeriod, periodAnchorDate], () => {
     return
   }
   selectedSliceIndex.value = null
+  selectedParentCategoryIndex.value = null
   sliceDisplayMode.value = 'amount'
   loadStatsData()
 })
@@ -1255,68 +1335,89 @@ watch(selectedBookletId, () => {
         </div>
 
         <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
-          <div class="flex flex-col sm:flex-row gap-6">
-            <div class="sm:w-1/2 flex flex-col">
-              <div class="mb-5">
-                <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
-                  <i class="pi pi-chart-pie text-purple-600" />
-                  Dépenses par catégorie
-                </h2>
-                <p class="text-sm" style="color: var(--text-secondary);">
-                  {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
-                </p>
-              </div>
-              <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-72' : 'min-h-70'" data-test="doughnut-container">
-                <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
-                <div
-                  v-if="doughnutCenterLabel"
-                  class="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  data-test="doughnut-center-label"
-                >
-                  <span
-                    class="font-bold"
-                    :class="isSmallScreen ? 'text-sm' : 'text-base'"
-                    style="color: var(--text-primary);"
+          <div class="flex flex-col gap-6">
+            <div class="flex flex-col sm:flex-row gap-6">
+              <div class="flex-1 flex flex-col" :class="secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2'">
+                <div class="mb-5">
+                  <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+                    <i class="pi pi-chart-pie text-purple-600" />
+                    Dépenses par catégorie
+                  </h2>
+                  <p class="text-sm" style="color: var(--text-secondary);">
+                    {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
+                  </p>
+                </div>
+                <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-72' : 'min-h-70'" data-test="doughnut-container">
+                  <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
+                  <div
+                    v-if="doughnutCenterLabel"
+                    class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    data-test="doughnut-center-label"
                   >
-                    {{ doughnutCenterLabel }}
-                  </span>
+                    <span
+                      class="font-bold"
+                      :class="isSmallScreen ? 'text-sm' : 'text-base'"
+                      style="color: var(--text-primary);"
+                    >
+                      {{ doughnutCenterLabel }}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="sm:w-1/2 flex flex-col" :class="isSmallScreen ? 'mt-2' : ''">
-              <div class="flex justify-between items-center mb-3">
-                <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                  Top tags de la période
-                </h3>
-                <span class="text-xs" style="color: var(--text-secondary);">
-                  Variation vs période précédente
-                </span>
-              </div>
-              <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
-                Aucun tag de dépense sur cette période
-              </div>
-              <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
-                <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
-                  <div class="flex items-center gap-2.5 min-w-0">
-                    <span
-                      class="w-3 h-3 rounded-full flex-shrink-0"
-                      :style="{ backgroundColor: `rgb(${tag.colorDTO.red}, ${tag.colorDTO.green}, ${tag.colorDTO.blue})` }"
-                    />
-                    <div class="min-w-0">
-                      <p
-                        class="text-sm font-semibold m-0 truncate"
-                        :style="{ color: toReadableTagTextColor(tag.colorDTO) }"
-                      >
-                        {{ tag.tagLabel }}
-                      </p>
-                      <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
-                        {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
-                      </p>
-                    </div>
+
+              <!-- Secondary doughnut chart for sub-tags breakdown -->
+              <Transition name="fade">
+                <div v-if="secondaryChartData" class="flex-1 flex flex-col sm:w-1/3" data-test="secondary-doughnut">
+                  <div class="mb-5">
+                    <h3 class="text-lg font-semibold mb-1 flex items-center gap-2" style="color: var(--text-primary);">
+                      <i class="pi pi-sitemap text-purple-500" />
+                      {{ selectedParentCategory?.tagLabel }}
+                    </h3>
+                    <p class="text-xs" style="color: var(--text-secondary);">
+                      Détail des sous-tags • {{ Number.parseFloat(selectedParentCategory?.totalAmount ?? '0').toFixed(2) }} €
+                    </p>
                   </div>
-                  <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
-                    {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+                  <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-60' : 'min-h-55'">
+                    <Doughnut :data="secondaryChartData" :options="secondaryDoughnutOptions" />
+                  </div>
+                </div>
+              </Transition>
+
+              <div class="flex-1 flex flex-col" :class="[secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2', isSmallScreen ? 'mt-2' : '']">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    Top tags de la période
+                  </h3>
+                  <span class="text-xs" style="color: var(--text-secondary);">
+                    Variation vs période précédente
                   </span>
+                </div>
+                <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
+                  Aucun tag de dépense sur cette période
+                </div>
+                <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
+                  <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <span
+                        class="w-3 h-3 rounded-full flex-shrink-0"
+                        :style="{ backgroundColor: `rgb(${tag.colorDTO.red}, ${tag.colorDTO.green}, ${tag.colorDTO.blue})` }"
+                      />
+                      <div class="min-w-0">
+                        <p
+                          class="text-sm font-semibold m-0 truncate"
+                          :style="{ color: toReadableTagTextColor(tag.colorDTO) }"
+                        >
+                          {{ tag.tagLabel }}
+                        </p>
+                        <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                          {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
+                        </p>
+                      </div>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
+                      {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

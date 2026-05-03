@@ -113,6 +113,48 @@ class TagFeatureTest: FeatureTest() {
                 assertTrue(updated?.tag?.isDefault == true, "Transaction tag should be replaced with the default tag")
             }
         }
+
+        @Test
+        fun `Delete a parent tag with force must also delete its sub-tags`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                val subTagId1 = UUID.randomUUID()
+                val subTagId2 = UUID.randomUUID()
+                val parentTag = Tag.Personal("Food", id = parentId)
+                val subTag1 = Tag.Personal("Restaurants", id = subTagId1, parentId = parentId)
+                val subTag2 = Tag.Personal("Groceries", id = subTagId2, parentId = parentId)
+                tagState.init(UserTag(this.userId, mutableListOf(parentTag, subTag1, subTag2)))
+                val tx = generateTransaction("tx1", Amount(50L), false, tag = subTag1)
+                initTransactions(listOf(tx))
+
+                deleteTagUseCase.handle(DeleteTagCommand(this.userId, parentId, true))
+                    .assertSuccess()
+
+                val remainingTags = tagState.getStates().filter { it is Tag.Personal }
+                assertTrue(remainingTags.none { it.id == parentId }, "Parent tag should be deleted")
+                assertTrue(remainingTags.none { it.id == subTagId1 }, "Sub-tag 1 should be deleted")
+                assertTrue(remainingTags.none { it.id == subTagId2 }, "Sub-tag 2 should be deleted")
+
+                val updatedTx = FakeFactory.transactionRepository().findTransactionById(tx.id!!)
+                assertTrue(updatedTx?.tag?.isDefault == true, "Sub-tag transaction should be reassigned to default")
+            }
+        }
+
+        @Test
+        fun `Delete a parent tag without force when sub-tag is used must return TAG_IN_USE`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                val subTagId = UUID.randomUUID()
+                val parentTag = Tag.Personal("Food", id = parentId)
+                val subTag = Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
+                tagState.init(UserTag(this.userId, mutableListOf(parentTag, subTag)))
+                initTransactions(listOf(generateTransaction("tx1", Amount(20L), false, tag = subTag)))
+
+                val result = deleteTagUseCase.handle(DeleteTagCommand(this.userId, parentId, false))
+
+                result.assertFailure(ResultState.TAG_IN_USE)
+            }
+        }
     }
     @Nested
     inner class GetTagsFeatureTest {
@@ -207,6 +249,115 @@ class TagFeatureTest: FeatureTest() {
             launchWithUserId {
                 defaultTagUseCase.handle(DefaultTagQuery(this.userId))
                     .assertTrue { label == "Aucune" }
+            }
+        }
+    }
+
+    @Nested
+    inner class CreateSubTagFeatureTest {
+
+        private val createSubTagUseCase: CreateSubTagUseCase = FakeFactory.createSubTagUseCase()
+
+        @Test
+        fun `Create a sub-tag under an existing personal parent tag must return success`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                tagState.init(UserTag(this.userId, mutableListOf(Tag.Personal("Food", id = parentId))))
+
+                val result = createSubTagUseCase.handle(
+                    CreateSubTagCommand(this.userId, Tag.Personal("Restaurants"), parentId)
+                )
+
+                result.assertSuccess()
+                result.onSuccess { tag ->
+                    assertTrue(tag is Tag.Personal)
+                    assertEquals(parentId, (tag as Tag.Personal).parentId)
+                    assertEquals("Restaurants", tag.label)
+                }
+            }
+        }
+
+        @Test
+        fun `Create a sub-tag under a non-existent parent must return NOT_FOUND`() {
+            launchWithUserId {
+                val result = createSubTagUseCase.handle(
+                    CreateSubTagCommand(this.userId, Tag.Personal("Restaurants"), UUID.randomUUID())
+                )
+
+                result.assertFailure(ResultState.NOT_FOUND)
+                assertEquals("domain.tag.create_sub_tag.parent_not_found", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Create a sub-tag under a default tag must return INVALID`() {
+            launchWithUserId {
+                val defaultTag = FakeFactory.fakeTagRepository().defaultTag()
+
+                val result = createSubTagUseCase.handle(
+                    CreateSubTagCommand(this.userId, Tag.Personal("SubDefault"), defaultTag.id!!)
+                )
+
+                result.assertFailure(ResultState.INVALID)
+                assertEquals("domain.tag.create_sub_tag.parent_is_default", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Create a sub-tag under another sub-tag must return TAG_PARENT_IS_SUBTAG`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                val subTagId = UUID.randomUUID()
+                tagState.init(UserTag(this.userId, mutableListOf(
+                    Tag.Personal("Food", id = parentId),
+                    Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
+                )))
+
+                val result = createSubTagUseCase.handle(
+                    CreateSubTagCommand(this.userId, Tag.Personal("FastFood"), subTagId)
+                )
+
+                result.assertFailure(ResultState.TAG_PARENT_IS_SUBTAG)
+                assertEquals("domain.tag.create_sub_tag.parent_is_subtag", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Create a sub-tag with duplicate label must return TAG_LABEL_ALREADY_TAKEN`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                tagState.init(UserTag(this.userId, mutableListOf(
+                    Tag.Personal("Food", id = parentId),
+                    Tag.Personal("Restaurants", id = UUID.randomUUID())
+                )))
+
+                val result = createSubTagUseCase.handle(
+                    CreateSubTagCommand(this.userId, Tag.Personal("Restaurants"), parentId)
+                )
+
+                result.assertFailure(ResultState.TAG_LABEL_ALREADY_TAKEN)
+                assertEquals("domain.tag.create_sub_tag.label_already_taken", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `GetAllTags returns sub-tags with parentId set`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                tagState.init(UserTag(this.userId, mutableListOf(
+                    Tag.Personal("Food", id = parentId),
+                    Tag.Personal("Restaurants", id = UUID.randomUUID(), parentId = parentId)
+                )))
+
+                val result = getAllTagsUseCase.handle(GetAllTagsQuery(this.userId))
+
+                result.assertSuccess()
+                result.onSuccess { tags ->
+                    val restaurants = tags.filterIsInstance<Tag.Personal>().find { it.label == "Restaurants" }
+                    assertEquals(parentId, restaurants?.parentId)
+                    val food = tags.filterIsInstance<Tag.Personal>().find { it.label == "Food" }
+                    assertEquals(null, food?.parentId)
+                }
             }
         }
     }

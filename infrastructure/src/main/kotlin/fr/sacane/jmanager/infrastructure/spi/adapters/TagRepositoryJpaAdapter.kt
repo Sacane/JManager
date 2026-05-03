@@ -27,7 +27,10 @@ class TagRepositoryJpaAdapter(
     override fun save(userId: UserId, tag: Tag): Tag? {
         val id = userId.value ?: return null
         val user = userPostgresRepository.findByIdWithTags(id) ?: return null
-        val tag1 = tag.toPersonalTag()
+        val parentResource = (tag as? Tag.Personal)?.parentId?.let {
+            tagPersonalPostgresRepository.findByIdNullable(it)
+        }
+        val tag1 = tag.toPersonalTag(parentResource = parentResource)
         val saved = tagPersonalPostgresRepository.save(tag1)
         user.addTag(saved)
         return saved.toDomain()
@@ -95,5 +98,21 @@ class TagRepositoryJpaAdapter(
         val id = userId.value ?: return false
         val tagInBase = tagPersonalPostgresRepository.findByNameAndOwnerId(tag.label, id)
         return tagInBase != null && tagInBase.idTag != tag.id
+    }
+
+    @Transactional
+    override fun findSubTagsByParentId(parentId: UUID): List<Tag.Personal> {
+        return tagPersonalPostgresRepository.findAllByParentId(parentId)
+            .map { it.toDomain() as Tag.Personal }
+    }
+
+    override fun hasSubTags(tagId: UUID): Boolean {
+        return tagPersonalPostgresRepository.existsByParentId(tagId)
+    }
+
+    @Transactional
+    override fun findById(tagId: UUID): Tag? {
+        return tagPersonalPostgresRepository.findByIdNullable(tagId)?.toDomain()
+            ?: defaultTagPostgresRepository.findByIdNullable(tagId)?.toDomain()
     }
 }

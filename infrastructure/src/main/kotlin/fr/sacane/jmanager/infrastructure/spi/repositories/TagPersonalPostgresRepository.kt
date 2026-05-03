@@ -22,4 +22,10 @@ interface TagPersonalPostgresRepository: CrudRepository<TagPersonalResource, UUI
 
     @Query("SELECT tag FROM TagPersonalResource tag WHERE tag.name = :name AND tag.owner.idUser = :ownerId")
     fun findByNameAndOwnerId(name: String, ownerId: UUID): TagPersonalResource?
+
+    @Query("SELECT tag FROM TagPersonalResource tag WHERE tag.parent.idTag = :parentId")
+    fun findAllByParentId(parentId: UUID): List<TagPersonalResource>
+
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN TRUE ELSE FALSE END FROM TagPersonalResource t WHERE t.parent.idTag = :parentId")
+    fun existsByParentId(parentId: UUID): Boolean
 }

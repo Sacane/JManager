@@ -48,6 +48,7 @@ declare global {
     label: string | undefined
     colorDTO: ColorDTO
     isDefault: boolean
+    parentId?: string | null
   }
 
   interface TransactionCreationDTO {
@@ -148,6 +149,7 @@ declare global {
     totalAmount: string
     percentage: number
     transactionCount: number
+    subCategories?: CategoryDataDTO[]
   }
 
   interface TrendStatsDTO {

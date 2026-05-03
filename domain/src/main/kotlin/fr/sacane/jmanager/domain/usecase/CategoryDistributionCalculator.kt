@@ -4,11 +4,14 @@ package fr.sacane.jmanager.domain.usecase
 import fr.sacane.jmanager.domain.hexadoc.UseCase
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.CategoryData
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.output.repository.TagRepository
+import java.awt.Color
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.util.UUID
 
 
 
@@ -32,6 +35,8 @@ class CategoryDistributionCalculatorImpl(
     private val tagRepository: TagRepository
 ) : CategoryDistributionCalculator {
 
+    private data class TagKey(val label: String, val id: UUID, val color: Color)
+
     override fun calculateDistribution(
         transactions: List<Transaction>,
         startDate: LocalDate?,
@@ -51,27 +56,60 @@ class CategoryDistributionCalculatorImpl(
             return Pair(emptyList(), Amount(BigDecimal.ZERO))
         }
 
-
-        val groupedByTag = expenseTransactions.groupBy { transaction ->
+        val groupedByEffectiveParent = expenseTransactions.groupBy { transaction ->
             val tag = transaction.tag ?: tagRepository.defaultTag()
-            Triple(tag.label, tag.id!!, tag.color)
+            val parentId = (tag as? Tag.Personal)?.parentId
+            if (parentId != null) {
+                val parent = tagRepository.findById(parentId)
+                if (parent != null) TagKey(parent.label, parent.id!!, parent.color)
+                else TagKey(tag.label, tag.id!!, tag.color)
+            } else {
+                TagKey(tag.label, tag.id!!, tag.color)
+            }
         }
 
-        val categoryData = groupedByTag.map { (tagInfo, transactions) ->
-            val tagTotal = transactions
+        val categoryData = groupedByEffectiveParent.map { (parentKey, txs) ->
+            val parentTotal = txs
                 .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
 
-            val percentage = tagTotal
+            val percentage = parentTotal
                 .divide(totalExpenses, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal("100"))
 
+            val subGrouped = txs
+                .filter { tx ->
+                    val tag = tx.tag
+                    tag is Tag.Personal && tag.parentId != null
+                }
+                .groupBy { tx ->
+                    val tag = tx.tag as Tag.Personal
+                    TagKey(tag.label, tag.id!!, tag.color)
+                }
+
+            val subCategories = subGrouped.map { (subKey, subTxs) ->
+                val subTotal = subTxs
+                    .fold(BigDecimal.ZERO) { acc, t -> acc.add(t.amount.value.abs()) }
+                val subPercentage = subTotal
+                    .divide(parentTotal, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal("100"))
+                CategoryData(
+                    tagLabel = subKey.label,
+                    tagId = subKey.id,
+                    tagColor = subKey.color,
+                    totalAmount = Amount(subTotal),
+                    percentage = subPercentage,
+                    transactionCount = subTxs.size
+                )
+            }.sortedByDescending { it.totalAmount.value }
+
             CategoryData(
-                tagLabel = tagInfo.first,
-                tagId = tagInfo.second,
-                tagColor = tagInfo.third,
-                totalAmount = Amount(tagTotal),
+                tagLabel = parentKey.label,
+                tagId = parentKey.id,
+                tagColor = parentKey.color,
+                totalAmount = Amount(parentTotal),
                 percentage = percentage,
-                transactionCount = transactions.size
+                transactionCount = txs.size,
+                subCategories = subCategories
             )
         }.sortedByDescending { it.totalAmount.value }
 
