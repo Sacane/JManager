@@ -649,6 +649,9 @@ const secondaryChartData = computed(() => {
   }
 })
 
+// Responsive behavior for legends and chart sizing
+const isSmallScreen = ref(false)
+
 const secondaryDoughnutOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
@@ -811,9 +814,6 @@ const doughnutOptions = {
   },
   cutout: '65%',
 }
-
-// Responsive behavior for legends and chart sizing
-const isSmallScreen = ref(false)
 
 function updateIsSmallScreen() {
   if (typeof window !== 'undefined') {

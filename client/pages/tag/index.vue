@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
 import { onMounted, reactive, ref } from 'vue'
-import authMiddleware from '~/middleware/auth'
 import useTag from '~/composables/useTag'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import authMiddleware from '~/middleware/auth'
 import { hexToRgb } from '~/utils/util'
 
 definePageMeta({
@@ -165,8 +165,7 @@ async function performDeleteTag(row: DataDisplay, force: boolean = false): Promi
           },
           accept: () => performDeleteTag(row, true),
         })
-      }
-      else {
+      } else {
         toast.errorAxios(error)
       }
     }
