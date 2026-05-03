@@ -2,6 +2,13 @@
 
 ## 2026-05-03
 
+- **Documentation Cleanup — Post-Implementation**
+  - Established cleanup workflow for `docs/refactoring/` and `docs/technical/` folders after feature completion.
+  - Removed completed refactoring plans: `command-query-bus/`, `extract-auth-from-domain/`, `tag-sealed-class/`, `usecase-handle-refactoring/`.
+  - Removed completed technical analysis reports: `caching/2026-05-02-cache-strategy.md` (implementation details captured in Changelog and code).
+  - Preserved `.gitkeep` files to maintain folder structure for future work.
+  - Updated `AGENTS.md` with "Documentation Cleanup" section describing workflow, preservation strategy, and timing.
+
 - **Cache: Phase 1 implementation (Caffeine local cache)**
   - Added `spring-boot-starter-cache` and `caffeine:3.2.0` dependencies to `application` and `infrastructure` modules.
   - Created `CacheConfig.kt` with 4 named caches: `defaultTag`, `allTags`, `allBooklets`, `userSettings`.
