@@ -1,5 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
+import { defineComponent } from 'vue'
 import RegularTransactionPage from '../../pages/regular-transaction/index.vue'
 
 vi.mock('~/composables/useDate', () => ({
@@ -379,6 +380,63 @@ function mountPageForDialogTests(options?: { linkReject?: any, unlinkReject?: an
 
   return { wrapper, mocks: { linkRegularTransactionToBooklet, unlinkRegularTransactionFromBooklet, success, errorAxios } }
 }
+
+describe('pages/regular-transaction/index – isIncome display', () => {
+  it('passes isIncome: true to AppTable rows after loading an income transaction from API', async () => {
+    const incomeTransaction = { ...createRegularTransaction('rt-income'), isIncome: true, label: 'Salaire' }
+
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useBooklet', () => ({ fetch: vi.fn().mockResolvedValue([]) }))
+    vi.stubGlobal('useRegularTransaction', () => ({
+      getRegularTransaction: vi.fn().mockResolvedValue({
+        content: [incomeTransaction],
+        pageNumber: 0,
+        pageSize: 10,
+        totalElements: 1,
+        totalPages: 1,
+      }),
+      saveMonthlyTransaction: vi.fn(),
+      getRegularTransactionById: vi.fn(),
+      updateRegularTransaction: vi.fn(),
+      deleteRegularTransaction: vi.fn(),
+      deleteRegularTransactions: vi.fn(),
+      linkRegularTransactionToBooklet: vi.fn(),
+      unlinkRegularTransactionFromBooklet: vi.fn(),
+    }))
+    vi.stubGlobal('useJToast', () => ({ success: vi.fn(), errorAxios: vi.fn(), warn: vi.fn() }))
+    vi.stubGlobal('useConfirm', () => ({ require: vi.fn() }))
+
+    const AppTableSpy = defineComponent({
+      name: 'AppTable',
+      props: ['rows', 'columns', 'dataKey', 'selectable', 'scrollable', 'scrollHeight'],
+      template: '<div class="spy-table"><slot name="empty" /></div>',
+    })
+
+    const wrapper = shallowMount(RegularTransactionPage, {
+      global: {
+        stubs: {
+          AppTable: AppTableSpy,
+          Button: { props: ['label'], template: '<button>{{ label }}</button>' },
+          Tag: true,
+          Select: true,
+          ConfirmDialog: true,
+          Paginator: true,
+          RegularTransactionCreationDialog: { name: 'RegularTransactionCreationDialog', props: ['loading'], template: '<div />' },
+          RegularTransactionDialogCard: { name: 'RegularTransactionDialogCard', template: '<div />' },
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const appTable = wrapper.findComponent(AppTableSpy)
+    const rows = appTable.props('rows') as Array<{ isIncome: boolean, label: string }>
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0].label).toBe('Salaire')
+    expect(rows[0].isIncome).toBe(true)
+  })
+})
 
 describe('pages/regular-transaction/index – link/unlink button conditions', () => {
   it('link button is disabled when all active booklets are already linked', async () => {
