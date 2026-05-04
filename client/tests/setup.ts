@@ -14,6 +14,20 @@ vi.stubGlobal('defineNuxtRouteMiddleware', (guard: any) => guard)
 
 // Stub auto-imported composables that require Nuxt runtime context.
 vi.stubGlobal('useLocalStorage', (key: string, defaultValue: any) => ref(defaultValue))
+vi.stubGlobal('useTransaction', () => ({
+  findByDate: vi.fn(),
+  saveTransaction: vi.fn(),
+  deleteTransaction: vi.fn(),
+  editTransaction: vi.fn(),
+  findTransactionById: vi.fn(),
+  confirmPreviewTransaction: vi.fn(),
+  confirmVirtualTransaction: vi.fn(),
+}))
+vi.stubGlobal('useCsvImport', () => ({
+  validateCsvFile: vi.fn(),
+  importTransactionsFromCsv: vi.fn(),
+  downloadCsvExport: vi.fn(),
+}))
 vi.stubGlobal('useBookletOrder', (items: any) => ({
   orderedItems: computed(() => items.value),
   draggedIndex: ref(null),

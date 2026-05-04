@@ -2,15 +2,12 @@
 import type { AxiosError } from 'axios'
 import type { AppTableColumn } from '~/components/AppTable.vue'
 import { useConfirm } from 'primevue/useconfirm'
-import useCsvImport from '~/composables/useCsvImport'
-import useTransaction from '~/composables/useTransaction'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
-import authMiddleware from '~/middleware/auth'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({
   layout: 'sidebar-layout',
-  middleware: [authMiddleware],
+  middleware: ['auth'],
 })
 
 const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear, regenerateDeletedPrevisionalTransactions } = useBooklet()
@@ -87,13 +84,12 @@ const displayMonth = computed({
   },
 })
 const transactionsCount = computed(() => actualTransactions.value.length)
-const parentTags = computed(() => tags.value.filter(t => !t.parentId))
 const subTagsByParent = computed(() => {
   const map: Record<string, TagDTO[]> = {}
   for (const t of tags.value) {
     if (t.parentId) {
       if (!map[t.parentId]) map[t.parentId] = []
-      map[t.parentId].push(t)
+      map[t.parentId]!.push(t)
     }
   }
   return map
@@ -105,10 +101,6 @@ watch(selectedTagFilter, (val) => {
 })
 watch(selectedSubTagFilter, (val) => {
   if (val) selectedTagFilter.value = ''
-})
-const activeSubTags = computed(() => {
-  if (!selectedParentTagFilter.value) return []
-  return subTagsByParent.value[selectedParentTagFilter.value] ?? []
 })
 const tagFilterOptions = computed(() => [
   { label: 'Tous les tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
@@ -274,17 +266,6 @@ async function retrieveTags() {
     tags.value = await tag.getAllTags()
   } catch (err) {
     toast.errorAxios(err as AxiosError)
-  }
-}
-
-function onParentTagClick(tagId: string) {
-  if (selectedParentTagFilter.value === tagId) {
-    selectedParentTagFilter.value = ''
-    selectedSubTagFilter.value = ''
-  } else {
-    selectedParentTagFilter.value = tagId
-    selectedSubTagFilter.value = ''
-    selectedTagFilter.value = ''
   }
 }
 
@@ -571,13 +552,13 @@ function checkMobile() {
 
 const bookletTransactionColumns: AppTableColumn[] = [
   { selectionMode: 'multiple', style: { width: '3rem' } },
-  { field: 'date', header: 'Date', sortable: true, style: { minWidth: '120px' }, slotName: 'date' },
-  { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '200px' }, slotName: 'label' },
-  { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px' }, slotName: 'expenses' },
-  { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px' }, slotName: 'income' },
-  { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
+  { field: 'date', header: 'Date', sortable: true, style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date' },
+  { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '300px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'label' },
+  { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'expenses', headerClass: 'col-header-center' },
+  { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'income', headerClass: 'col-header-center' },
+  { style: { width: '150px', minWidth: '150px', maxWidth: '150px', textAlign: 'center' }, slotName: 'tag', headerSlotName: 'tagFilter' },
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag', headerSlotName: 'subTagFilter' },
-  { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions' },
+  { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions', headerClass: 'col-header-center' },
 ]
 
 function resolveDisplayTag(tagDTO: TagDTO | null | undefined): TagDTO | null {
@@ -749,14 +730,13 @@ onUnmounted(() => {
             </template>
 
             <template #body-date="{ data }">
-              <div class="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
-                <i class="pi pi-calendar text-[var(--primary)] text-sm" />
-                <span>{{ data.date }}</span>
-              </div>
+              <span class="block text-center font-semibold text-[var(--text-secondary)]">
+                {{ new Date(data.date).getDate() }}
+              </span>
             </template>
 
             <template #body-label="{ data }">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center justify-center gap-2">
                 <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
                 <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm" title="Transaction prévisionnelle" />
               </div>
