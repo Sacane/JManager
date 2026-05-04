@@ -862,7 +862,9 @@ const doughnutOptionsComputed = computed(() => {
 })
 
 // --- Y-axis wheel zoom ---
-const CHART_ZOOM_STEP_RATIO = 0.15
+// Multiplicative factor per wheel step: zoom-in shrinks range, zoom-out expands it.
+// Using a factor means one zoom-in followed by one zoom-out returns to the exact same range.
+const CHART_ZOOM_FACTOR = 0.8
 
 function computeDataRange(chartData: { datasets: { data: number[] }[] }): { min: number, max: number } | null {
   const allValues = chartData.datasets.flatMap(ds => ds.data).filter(v => Number.isFinite(v))
@@ -880,27 +882,31 @@ function applyWheelToScale(
   chartData: { datasets: { data: number[] }[] },
   deltaY: number,
 ): void {
+  const dataRange = computeDataRange(chartData)
+  if (!dataRange) return
+
   if (yMin.value === null || yMax.value === null) {
-    const range = computeDataRange(chartData)
-    if (!range) return
-    yMin.value = range.min
-    yMax.value = range.max
+    yMin.value = dataRange.min
+    yMax.value = dataRange.max
   }
-  const currentMin = yMin.value
-  const currentMax = yMax.value
-  const range = currentMax - currentMin
-  if (range <= 0) return
-  const step = range * CHART_ZOOM_STEP_RATIO
+
+  const center = (yMin.value + yMax.value) / 2
+  const halfRange = (yMax.value - yMin.value) / 2
+  if (halfRange <= 0) return
+
   const zoomIn = deltaY < 0
-  if (zoomIn) {
-    const newMax = currentMax - step
-    if (newMax <= currentMin + step * 0.1) return
-    yMin.value = currentMin - step * 0.25
-    yMax.value = newMax
-  } else {
-    yMin.value = currentMin - step * 0.25
-    yMax.value = currentMax + step
-  }
+  const factor = zoomIn ? CHART_ZOOM_FACTOR : (1 / CHART_ZOOM_FACTOR)
+  const newHalfRange = halfRange * factor
+
+  // Bounds: do not zoom in beyond 5% of the data span, nor zoom out beyond 4× the data span
+  const dataSpan = dataRange.max - dataRange.min
+  const minHalfRange = dataSpan * 0.025
+  const maxHalfRange = dataSpan * 2
+
+  const clampedHalfRange = Math.min(maxHalfRange, Math.max(minHalfRange, newHalfRange))
+
+  yMin.value = center - clampedHalfRange
+  yMax.value = center + clampedHalfRange
 }
 
 function onLineChartWheel(event: WheelEvent): void {
