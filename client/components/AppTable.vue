@@ -7,6 +7,7 @@ export interface AppTableColumn {
   sortable?: boolean
   style?: string | Record<string, string>
   headerStyle?: string | Record<string, string>
+  headerClass?: string
   slotName?: string
   headerSlotName?: string
   selectionMode?: 'multiple'
@@ -76,6 +77,7 @@ const visibleColumns = computed(() =>
       :sortable="col.sortable"
       :style="col.style"
       :header-style="col.headerStyle"
+      :header-class="col.headerClass"
       :selection-mode="col.selectionMode"
       :frozen="col.frozen"
       :align-frozen="col.alignFrozen"
@@ -101,6 +103,11 @@ const visibleColumns = computed(() =>
   text-transform: uppercase;
   font-size: 0.875rem;
   letter-spacing: 0.05em;
+}
+
+.app-table :deep(.col-header-center .p-datatable-column-header-content),
+.app-table :deep(.col-header-center .p-column-header-content) {
+  justify-content: center !important;
 }
 
 .app-table :deep(.p-datatable-tbody > tr) {

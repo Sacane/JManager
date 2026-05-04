@@ -571,11 +571,11 @@ function checkMobile() {
 
 const bookletTransactionColumns: AppTableColumn[] = [
   { selectionMode: 'multiple', style: { width: '3rem' } },
-  { field: 'date', header: 'Date', sortable: true, style: { minWidth: '120px' }, slotName: 'date' },
-  { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '200px' }, slotName: 'label' },
-  { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px' }, slotName: 'expenses' },
-  { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px' }, slotName: 'income' },
-  { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
+  { field: 'date', header: 'Date', sortable: true, style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date' },
+  { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '300px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'label' },
+  { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'expenses' },
+  { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'income' },
+  { style: { width: '150px', minWidth: '150px', maxWidth: '150px', textAlign: 'center' }, slotName: 'tag', headerSlotName: 'tagFilter' },
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag', headerSlotName: 'subTagFilter' },
   { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions' },
 ]
@@ -749,14 +749,13 @@ onUnmounted(() => {
             </template>
 
             <template #body-date="{ data }">
-              <div class="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
-                <i class="pi pi-calendar text-[var(--primary)] text-sm" />
-                <span>{{ data.date }}</span>
-              </div>
+              <span class="block text-center font-semibold text-[var(--text-secondary)]">
+                {{ new Date(data.date).getDate() }}
+              </span>
             </template>
 
             <template #body-label="{ data }">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center justify-center gap-2">
                 <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
                 <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm" title="Transaction prévisionnelle" />
               </div>
