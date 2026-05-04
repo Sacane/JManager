@@ -294,6 +294,14 @@ describe('pages/booklet/[id] confirmDelete with virtual transactions', () => {
       numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
     }))
     vi.stubGlobal('navigateTo', vi.fn())
+    vi.stubGlobal('useTransaction', () => ({
+      deleteTransaction: deleteTransactionMock,
+      confirmPreviewTransaction: confirmPreviewTransactionMock,
+      confirmVirtualTransaction: confirmVirtualTransactionMock,
+      saveTransaction: saveTransactionMock,
+      editTransaction: vi.fn(),
+      findTransactionById: vi.fn(),
+    }))
 
     findTransactionsByIdMonthAndYearMock.mockResolvedValue({
       transactions,
@@ -515,6 +523,14 @@ describe('pages/booklet/[id] confirmPreview with virtual transactions', () => {
       numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
     }))
     vi.stubGlobal('navigateTo', vi.fn())
+    vi.stubGlobal('useTransaction', () => ({
+      deleteTransaction: deleteTransactionMock,
+      confirmPreviewTransaction: confirmPreviewTransactionMock,
+      confirmVirtualTransaction: confirmVirtualTransactionMock,
+      saveTransaction: saveTransactionMock,
+      editTransaction: vi.fn(),
+      findTransactionById: vi.fn(),
+    }))
 
     findTransactionsByIdMonthAndYearMock.mockResolvedValue({
       transactions,
