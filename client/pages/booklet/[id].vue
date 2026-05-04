@@ -527,6 +527,16 @@ async function regenerate() {
   }, regenerateScope)
 }
 
+function resolveDisplayTag(tagDTO: TagDTO | null): TagDTO | null {
+  if (!tagDTO) return null
+  if (!tagDTO.parentId) return tagDTO
+  return tags.value.find(t => t.tagId === tagDTO.parentId) ?? tagDTO
+}
+
+function getParentTag(tagDTO: TagDTO): TagDTO {
+  return resolveDisplayTag(tagDTO) ?? tagDTO
+}
+
 function rowClass(row: DisplayTransaction): string {
   if (row.isPreview) return 'preview-row'
   return ''
@@ -560,14 +570,6 @@ const bookletTransactionColumns: AppTableColumn[] = [
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag', headerSlotName: 'subTagFilter' },
   { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions', headerClass: 'col-header-center' },
 ]
-
-function resolveDisplayTag(tagDTO: TagDTO | null | undefined): TagDTO | null {
-  if (!tagDTO) return null
-  if (tagDTO.parentId) {
-    return tags.value.find(t => t.tagId === tagDTO.parentId) ?? tagDTO
-  }
-  return tagDTO
-}
 
 function openCsvImportDialog() {
   csvImportDialogRef.value?.openDialog()
@@ -811,10 +813,10 @@ onUnmounted(() => {
             <template #body-tag="{ data }">
               <div class="max-w-[130px] overflow-hidden">
                 <Tag
-                  :value="data.tagDTO.label"
-                  :style="getTagStyle(data.tagDTO.colorDTO)"
+                  :value="getParentTag(data.tagDTO).label"
+                  :style="getTagStyle(getParentTag(data.tagDTO).colorDTO)"
                   class="block max-w-full truncate"
-                  :title="data.tagDTO.label"
+                  :title="getParentTag(data.tagDTO).label"
                 />
               </div>
             </template>
