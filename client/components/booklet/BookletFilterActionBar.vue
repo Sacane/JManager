@@ -68,8 +68,38 @@ const emit = defineEmits<{
       </button>
     </template>
 
-    <!-- Actions icon-only : desktop uniquement -->
+    <!-- Filtres + Actions : desktop uniquement -->
     <template v-if="!isMobile">
+      <button
+        class="px-3 py-1.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        :class="transactionFilter === 'all'
+          ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(130,42,204,0.07)]'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
+        @click="emit('update:transactionFilter', 'all')"
+      >
+        <i class="pi pi-list mr-1.5" />
+        Tout ({{ transactionsCount }})
+      </button>
+      <button
+        class="px-3 py-1.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        :class="transactionFilter === 'confirmed'
+          ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-emerald-500 hover:text-emerald-600'"
+        @click="emit('update:transactionFilter', 'confirmed')"
+      >
+        <i class="pi pi-check-circle mr-1.5" />
+        Confirmées ({{ transactionsCount - previewTransactionsCount }})
+      </button>
+      <button
+        class="px-3 py-1.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        :class="transactionFilter === 'preview'
+          ? 'border-amber-500 text-amber-600 bg-amber-500/8'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"
+        @click="emit('update:transactionFilter', 'preview')"
+      >
+        <i class="pi pi-clock mr-1.5" />
+        Prévisionnelles ({{ previewTransactionsCount }})
+      </button>
       <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
       <BookletActionButtons
         class="ml-auto"
@@ -96,15 +126,14 @@ const emit = defineEmits<{
   <!-- Boutons d'action mobile -->
   <div v-if="isMobile" class="flex gap-2 mb-4">
     <Button
-      class="btn-primary flex-1"
+      class="flex-1 !bg-gradient-to-br !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(130,42,204,0.3)] hover:!brightness-110 transition-all"
       icon="pi pi-plus"
       label="Transaction"
       :disabled="isAnyActionLoading"
       @click="emit('new-transaction')"
     />
     <Button
-      outlined
-      class="flex-1 border-amber-500 text-amber-600 hover:bg-amber-500/10 font-semibold transition-all"
+      class="flex-1 !bg-amber-500 !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(245,158,11,0.3)] hover:!bg-amber-600 transition-all"
       icon="pi pi-clock"
       label="Prévisionnelle"
       :disabled="isAnyActionLoading"
@@ -112,8 +141,7 @@ const emit = defineEmits<{
     />
     <Button
       v-if="hasRegenerableTransactions"
-      outlined
-      class="flex-1 border-violet-500 text-violet-600 hover:bg-violet-500/10 font-semibold transition-all"
+      class="flex-1 !bg-violet-500 !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all"
       icon="pi pi-refresh"
       label="Régénérer"
       :loading="isRegenerateLoading"
@@ -138,8 +166,7 @@ const emit = defineEmits<{
         </div>
         <Button
           v-tooltip.bottom="`Supprimer (${selectedCount})`"
-          outlined
-          class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 border-red-500 text-red-500 hover:bg-red-500/10 transition-all"
+          class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-red-500 !text-white !border-0 shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:!bg-red-600 transition-all"
           icon="pi pi-trash"
           :loading="isDeleteLoading"
           :disabled="isAnyActionLoading"
