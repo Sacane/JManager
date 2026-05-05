@@ -530,7 +530,7 @@ describe('pages/dashboard/index doughnut slice click toggle', () => {
     expect(centerLabel.text()).toBe('100.00 €')
   })
 
-  // Scenario 6 — Tooltip continues to show amount with € and percentage
+  // Scenario 6 — Tooltip continues to show amount with € and percentage (all slices visible)
   it('provides tooltip callback with amount € and percentage', async () => {
     const wrapper = mountDashboardPage()
     await settleDashboard()
@@ -543,9 +543,103 @@ describe('pages/dashboard/index doughnut slice click toggle', () => {
       label: 'Courses',
       parsed: 200,
       dataset: { data: [200, 100] },
+      chart: { getDataVisibility: () => true },
     })
 
-    expect(result).toBe('Courses: 200.00 € (66.7%)')
+    expect(result).toBe('Courses: 200.00 \u20AC (66.7%)')
+  })
+
+  // Scenario: Tooltip percentage excludes hidden slices from total
+  it('tooltip percentage uses visible-only total when a slice is hidden', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+
+    // Hide slice 1 (Transport 100) via legend → hiddenDoughnutIndices is populated
+    const hiddenState = new Set<number>()
+    const mockChart = {
+      toggleDataVisibility: vi.fn().mockImplementation((i: number) => {
+        if (hiddenState.has(i)) hiddenState.delete(i)
+        else hiddenState.add(i)
+      }),
+      update: vi.fn(),
+      getDataVisibility: vi.fn().mockImplementation((i: number) => !hiddenState.has(i)),
+    }
+    options.plugins.legend.onClick(null, { index: 1 }, { chart: mockChart })
+    await wrapper.vm.$nextTick()
+
+    // Now call the tooltip: hiddenDoughnutIndices has {1}, so total = 200 → 100%
+    const tooltipCallback = options.plugins.tooltip.callbacks.label
+    const result = tooltipCallback({
+      label: 'Courses',
+      parsed: 200,
+      dataset: { data: [200, 100] },
+    })
+
+    expect(result).toBe('Courses: 200.00 € (100.0%)')
+  })
+
+  // Scenario: Center label percentage updates when a slice is hidden via legend
+  it('center label percentage uses visible-only total after legend hide', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+
+    // Select slice 0 (Courses 200) → toggle to percentage (200/300 = 66.7%)
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="doughnut-center-label"]').text()).toBe('66.7%')
+
+    // Hide slice 1 (Transport 100) via legend → visible total becomes 200
+    const hiddenState = new Set<number>()
+    const mockChart = {
+      toggleDataVisibility: vi.fn().mockImplementation((i: number) => {
+        if (hiddenState.has(i)) hiddenState.delete(i)
+        else hiddenState.add(i)
+      }),
+      update: vi.fn(),
+      getDataVisibility: vi.fn().mockImplementation((i: number) => !hiddenState.has(i)),
+    }
+    options.plugins.legend.onClick(null, { index: 1 }, { chart: mockChart })
+    await wrapper.vm.$nextTick()
+
+    // Courses: 200 / 200 visible = 100.0%
+    expect(wrapper.find('[data-test="doughnut-center-label"]').text()).toBe('100.0%')
+  })
+
+  // Scenario: Center label clears when its own selected slice is hidden via legend
+  it('clears center label when the selected slice is hidden via legend', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const doughnutStub = wrapper.findComponent({ name: 'Doughnut' })
+    const options = doughnutStub.props('options') as any
+
+    // Select slice 0 (Courses)
+    options.onClick(null, [{ index: 0 }])
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-test="doughnut-center-label"]').exists()).toBe(true)
+
+    // Hide slice 0 via legend → center label must disappear
+    const hiddenState = new Set<number>()
+    const mockChart = {
+      toggleDataVisibility: vi.fn().mockImplementation((i: number) => {
+        if (hiddenState.has(i)) hiddenState.delete(i)
+        else hiddenState.add(i)
+      }),
+      update: vi.fn(),
+      getDataVisibility: vi.fn().mockImplementation((i: number) => !hiddenState.has(i)),
+    }
+    options.plugins.legend.onClick(null, { index: 0 }, { chart: mockChart })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-test="doughnut-center-label"]').exists()).toBe(false)
   })
 
   // Scenario 7 — No regression when there are no category data

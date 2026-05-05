@@ -91,6 +91,7 @@ const isChartsVisible = ref(false)
 const selectedSliceIndex = ref<number | null>(null)
 const sliceDisplayMode = ref<'amount' | 'percentage'>('amount')
 const selectedParentCategoryIndex = ref<number | null>(null)
+const hiddenDoughnutIndices = ref(new Set<number>())
 
 // Y-axis scale overrides (null = auto-scale, non-null = custom bounds)
 const lineChartYMin = ref<number | null>(null)
@@ -581,7 +582,8 @@ const doughnutCenterLabel = computed(() => {
   }
 
   if (sliceDisplayMode.value === 'percentage') {
-    const total = data.reduce((a: number, b: number) => a + b, 0)
+    const total = data.reduce((a: number, b: number, i: number) =>
+      hiddenDoughnutIndices.value.has(i) ? a : a + b, 0)
     const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
     return `${percentage}%`
   }
@@ -675,7 +677,8 @@ const secondaryDoughnutOptions = computed(() => ({
         label: (context: any) => {
           const label = context.label || ''
           const value = context.parsed || 0
-          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+          const total = context.dataset.data.reduce((a: number, b: number, i: number) =>
+            context.chart?.getDataVisibility(i) === false ? a : a + b, 0)
           const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
           return `${label}: ${value.toFixed(2)} € (${percentage}%)`
         },
@@ -805,7 +808,8 @@ const doughnutOptions = {
         label: (context: any) => {
           const label = context.label || ''
           const value = context.parsed || 0
-          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0)
+          const total = context.dataset.data.reduce((a: number, b: number, i: number) =>
+            hiddenDoughnutIndices.value.has(i) ? a : a + b, 0)
           const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
           return `${label}: ${value.toFixed(2)} € (${percentage}%)`
         },
@@ -854,6 +858,22 @@ const doughnutOptionsComputed = computed(() => {
             ...doughnutOptions.plugins.legend.labels.font,
             size: isSmallScreen.value ? 11 : 12,
           },
+        },
+        onClick: (e: any, legendItem: any, legend: any) => {
+          const index = legendItem.index as number
+          const chart = legend.chart
+          chart.toggleDataVisibility(index)
+          chart.update()
+          const newSet = new Set(hiddenDoughnutIndices.value)
+          if (!chart.getDataVisibility(index)) {
+            newSet.add(index)
+          } else {
+            newSet.delete(index)
+          }
+          hiddenDoughnutIndices.value = newSet
+          if (selectedSliceIndex.value !== null && newSet.has(selectedSliceIndex.value)) {
+            selectedSliceIndex.value = null
+          }
         },
       },
     },
