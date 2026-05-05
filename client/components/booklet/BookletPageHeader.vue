@@ -6,7 +6,6 @@ interface Props {
   realSold: number
   previewSold: number
   isMobile: boolean
-  transactionFilter: 'all' | 'preview' | 'confirmed'
   selectedMonth: string
   monthOptions: string[]
   dateYear: Date
@@ -15,7 +14,6 @@ interface Props {
 defineProps<Props>()
 
 const emit = defineEmits<{
-  'update:transactionFilter': [val: 'all' | 'preview' | 'confirmed']
   'update:selectedMonth': [val: string]
   'month-change': []
   'update:dateYear': [val: Date]
@@ -79,41 +77,7 @@ const emit = defineEmits<{
             @update:model-value="(val: Date) => emit('update:dateYear', val)"
             @date-select="emit('year-change')"
           />
-          <template v-if="!isMobile">
-            <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
-            <div class="flex items-center gap-1 shrink-0">
-              <button
-                v-tooltip.bottom="`Tout (${transactionsCount})`"
-                class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
-                :class="transactionFilter === 'all'
-                  ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-transparent shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
-                  : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-[var(--primary)] hover:border-[var(--primary)]'"
-                @click="emit('update:transactionFilter', 'all')"
-              >
-                <i class="pi pi-list" />
-              </button>
-              <button
-                v-tooltip.bottom="`Confirmées (${transactionsCount - previewTransactionsCount})`"
-                class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
-                :class="transactionFilter === 'confirmed'
-                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
-                  : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-emerald-600 hover:border-emerald-500'"
-                @click="emit('update:transactionFilter', 'confirmed')"
-              >
-                <i class="pi pi-check-circle" />
-              </button>
-              <button
-                v-tooltip.bottom="`Prévisionnelles (${previewTransactionsCount})`"
-                class="w-8 h-8 flex items-center justify-center rounded-lg text-sm transition-all border"
-                :class="transactionFilter === 'preview'
-                  ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white border-transparent shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
-                  : 'bg-transparent text-[var(--text-secondary)] border-[var(--card-border)] hover:text-amber-600 hover:border-amber-500'"
-                @click="emit('update:transactionFilter', 'preview')"
-              >
-                <i class="pi pi-clock" />
-              </button>
-            </div>
-          </template>
+
         </div>
       </div>
     </div>

@@ -635,11 +635,9 @@ onUnmounted(() => {
         :real-sold="bookletData.realSold"
         :preview-sold="bookletData.previewSold"
         :is-mobile="isMobile"
-        :transaction-filter="transactionFilter"
         :selected-month="displayMonth"
         :month-options="monthOptions"
         :date-year="bookletData.dateYear"
-        @update:transaction-filter="transactionFilter = $event"
         @update:selected-month="displayMonth = $event"
         @month-change="onMonthChange"
         @update:date-year="bookletData.dateYear = $event"
@@ -672,31 +670,6 @@ onUnmounted(() => {
       />
 
       <div v-if="!isMobile" class="flex-1 min-h-0 flex gap-3" :class="isSidebarMode ? 'flex-row' : 'flex-col'">
-        <!-- Sidebar action buttons (small desktop only, < 1024px) -->
-        <div
-          v-if="isSidebarMode"
-          class="flex flex-col gap-1.5 py-3 px-2 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm items-center self-start shrink-0"
-        >
-          <BookletActionButtons
-            orientation="vertical"
-            :has-selection="hasSelection"
-            :selected-count="selectedTransactions.length"
-            :selected-amount="selectedTransactionsAmount"
-            :selected-amount-label="selectedTransactionsAmountLabel"
-            :has-regenerable-transactions="hasRegenerableTransactions"
-            :is-any-action-loading="isAnyActionLoading"
-            :is-delete-loading="isDeleteTransactionLoading"
-            :is-export-csv-loading="isExportCsvLoading"
-            :is-regenerate-loading="isRegenerateLoading"
-            @new-transaction="openCreationDialog"
-            @new-preview="openPreviewCreationDialog"
-            @import-csv="openCsvImportDialog"
-            @export-csv="openCsvExportDialog"
-            @regenerate="regenerate"
-            @delete="confirmDeleteButton"
-          />
-        </div>
-
         <div class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
           <AppTable
             v-model:selection="selectedTransactions"
@@ -880,6 +853,62 @@ onUnmounted(() => {
               @page="onPageChange"
             />
           </div>
+        </div>
+
+        <!-- Sidebar action buttons (right side, small desktop only, height < 768px) -->
+        <div
+          v-if="isSidebarMode"
+          class="flex flex-col gap-1.5 py-3 px-2 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-md items-center self-start shrink-0"
+        >
+          <BookletActionButtons
+            orientation="vertical"
+            :has-selection="hasSelection"
+            :selected-count="selectedTransactions.length"
+            :selected-amount="selectedTransactionsAmount"
+            :selected-amount-label="selectedTransactionsAmountLabel"
+            :has-regenerable-transactions="hasRegenerableTransactions"
+            :is-any-action-loading="isAnyActionLoading"
+            :is-delete-loading="isDeleteTransactionLoading"
+            :is-export-csv-loading="isExportCsvLoading"
+            :is-regenerate-loading="isRegenerateLoading"
+            @new-transaction="openCreationDialog"
+            @new-preview="openPreviewCreationDialog"
+            @import-csv="openCsvImportDialog"
+            @export-csv="openCsvExportDialog"
+            @regenerate="regenerate"
+            @delete="confirmDeleteButton"
+          />
+          <div class="w-full h-px bg-[var(--card-border)] my-1" />
+          <button
+            v-tooltip.right="`Tout (${transactionsCount})`"
+            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
+            :class="transactionFilter === 'all'
+              ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(130,42,204,0.07)]'
+              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
+            @click="transactionFilter = 'all'"
+          >
+            <i class="pi pi-list" />
+          </button>
+          <button
+            v-tooltip.right="`Confirmées (${transactionsCount - previewTransactionsCount})`"
+            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
+            :class="transactionFilter === 'confirmed'
+              ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
+              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-emerald-500 hover:text-emerald-600'"
+            @click="transactionFilter = 'confirmed'"
+          >
+            <i class="pi pi-check-circle" />
+          </button>
+          <button
+            v-tooltip.right="`Prévisionnelles (${previewTransactionsCount})`"
+            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
+            :class="transactionFilter === 'preview'
+              ? 'border-amber-500 text-amber-600 bg-amber-500/8'
+              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"
+            @click="transactionFilter = 'preview'"
+          >
+            <i class="pi pi-clock" />
+          </button>
         </div>
       </div>
 

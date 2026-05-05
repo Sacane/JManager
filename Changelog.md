@@ -1,6 +1,13 @@
 # Changelog
 
-## 2026-05-04
+## 2026-05-06
+
+- **Feature: Booklet transaction page — action buttons layout and visual differentiation**
+  - `client/pages/booklet/[id].vue`: In sidebar mode (`isSidebarMode`), moved the `BookletActionButtons` sidebar panel from the **left** to the **right** side of the table by reordering the flex children (table div first, sidebar div second). The `isSidebarMode` condition itself (`window.innerHeight < 768`) is unchanged.
+  - `client/pages/booklet/[id].vue`: Changed the sidebar container background from the neutral card background (`bg-[var(--card-bg)]`) to the primary gradient (`bg-gradient-to-b from-[var(--primary)] to-[var(--primary-2)]`), visually differentiating functional action buttons from the filter buttons in `BookletPageHeader`.
+  - `client/components/booklet/BookletActionButtons.vue`: In `orientation === 'vertical'` mode, all button classes are switched to white variants (`!border-white/60 !text-white hover:!bg-white/15`) for readability against the colored background. The "add transaction" button uses a semi-transparent white fill (`!bg-white/20 !border-white/50 !text-white`). In `orientation === 'horizontal'` mode, all original colored styles are preserved unchanged. The selection count chip in vertical mode is also adapted (`bg-white/20 border-white/30` with white text/icon).
+
+
 
 - **Bug fix: Regular transaction income displayed as expense after page reload**
   - **Root cause**: `JacksonConfig.jacksonCustomizer()` called `builder.modules(module, JavaTimeModule())` which internally **replaces** the entire module list and disables well-known module auto-detection (`findWellKnownModules = false`). This evicted the `KotlinModule` auto-configured by Spring Boot. Without `KotlinModule`, Jackson uses Java bean introspection on `val isIncome: Boolean` — the generated getter `isIncome()` follows the Java boolean convention and strips the `is` prefix, serialising the field as `"income"` instead of `"isIncome"`. The frontend `data.isIncome` evaluated to `undefined` → `false` → "Dépense" on every GET reload.
