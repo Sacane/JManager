@@ -36,7 +36,7 @@ const isAnyTagActionLoading = computed(() =>
 const tags = ref<TagDisplayItem[]>([])
 const addTagDialog = ref(false)
 const editTagDialog = ref(false)
-const tagToEdit = ref<{ id: string, label: string, colorHex: string } | null>(null)
+const tagToEdit = ref<{ id: string, label: string, colorHex: string, parentId: string | null } | null>(null)
 const searchQuery = ref<string>('')
 const filterType = ref<string>('all')
 const selectedIds = ref<string[]>([])
@@ -146,7 +146,7 @@ function toggleSelectAll(): void {
 }
 
 function onBulkDeleteClick(): void {
-  const toDelete = visibleSelectableItems.value.filter(t => selectedIds.value.has(t.id))
+  const toDelete = visibleSelectableItems.value.filter(t => selectedIds.value.includes(t.id))
   const count = toDelete.length
   confirm.require({
     message: `Êtes-vous sûr de vouloir supprimer ${count} tag(s) sélectionné(s) ?`,
@@ -247,11 +247,11 @@ function onEditClick(row: TagDisplayItem): void {
     const b = Number.parseInt(rgb[2] as string)
     colorHex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
   }
-  tagToEdit.value = { id: row.id, label: row.label, colorHex }
+  tagToEdit.value = { id: row.id, label: row.label, colorHex, parentId: row.parentId ?? null }
   editTagDialog.value = true
 }
 
-async function applyEdit(payload: { id: string, label: string, colorHex: string }) {
+async function applyEdit(payload: { id: string, label: string, colorHex: string, parentId: string | null }) {
   await withLoading(async () => {
     try {
       const rgb = hexToRgb(payload.colorHex)
@@ -264,6 +264,7 @@ async function applyEdit(payload: { id: string, label: string, colorHex: string 
           blue: rgb.b,
         },
         isDefault: false,
+        parentId: payload.parentId ?? undefined,
       })
       const indexTag = tags.value.findIndex(e => e.id === payload.id)
       if (indexTag !== -1) {
@@ -277,7 +278,7 @@ async function applyEdit(payload: { id: string, label: string, colorHex: string 
   }, editTagScope)
 }
 
-function onEditSubmit(payload: { id: string, label: string, colorHex: string }) {
+function onEditSubmit(payload: { id: string, label: string, colorHex: string, parentId: string | null }) {
   confirm.require({
     message: 'Si vous modifiez ce tag, toutes vos transactions rattachées à ce tag seront modifiées. Voulez-vous continuer ?',
     header: 'Confirmation de modification',
@@ -418,6 +419,7 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string }) 
     <TagEditDialog
       v-model:visible="editTagDialog"
       :tag="tagToEdit"
+      :parent-tag="tagToEdit?.parentId ? (tags.find(t => t.id === tagToEdit?.parentId) ?? null) : null"
       :loading="isEditingTag"
       :disabled="isAnyTagActionLoading"
       @submit="onEditSubmit"

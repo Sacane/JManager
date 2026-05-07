@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.port.output.repository.TagRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toDomain
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toPersonalTag
+import fr.sacane.jmanager.infrastructure.spi.entity.Color
 import fr.sacane.jmanager.infrastructure.spi.entity.DefaultTagResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.DefaultTagPostgresRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.TagPersonalPostgresRepository
@@ -82,12 +83,15 @@ class TagRepositoryJpaAdapter(
     @CacheEvict(cacheNames = ["allTags"], allEntries = true)
     @Transactional
     override fun patch(tag: Tag): Tag? {
-        try {
-            tag.id?.let { tagPersonalPostgresRepository.patchTag(it, tag.label, tag.color.red, tag.color.green, tag.color.blue) } ?: return null
-            return tag
-        } catch (_: Exception) {
-            return null
+        val tagId = tag.id ?: return null
+        val existing = tagPersonalPostgresRepository.findByIdNullable(tagId) ?: return null
+        existing.name = tag.label
+        existing.color = Color(tag.color.red, tag.color.green, tag.color.blue)
+        existing.parent = (tag as? Tag.Personal)?.parentId?.let {
+            tagPersonalPostgresRepository.findByIdNullable(it)
         }
+        tagPersonalPostgresRepository.save(existing)
+        return tag
     }
 
     override fun existsById(tagId: UUID): Boolean {

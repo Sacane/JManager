@@ -16,6 +16,7 @@ import fr.sacane.jmanager.application.api.tag.ColorDTO
 import fr.sacane.jmanager.application.api.tag.CreateSubTagRequest
 import fr.sacane.jmanager.application.api.tag.TagDTO
 import fr.sacane.jmanager.application.api.tag.UserTagRequest
+import io.restassured.module.kotlin.extensions.Extract
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -314,6 +315,116 @@ class TagControllerTest (
                 tagId = UUID.randomUUID().toString(),
                 label = "test",
                 colorDTO = ColorDTO(10, 10, 10)
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/tag")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Patch sub-tag with null parentId must promote it to top-level tag`() {
+            tagStateTestAdapter.init(listOf(
+                UserTagsRequest(user!!.id, listOf(Tag.Personal("Food", color = Color(10, 10, 10))))
+            ))
+            val parentTag = state.get().find { it.label == "Food" } ?: fail("Parent tag not found")
+
+            val subTagId = Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(
+                    CreateSubTagRequest("Restaurants", ColorDTO(20, 20, 20), parentTag.id.toString())
+                ))
+            } When {
+                post("/api/tag/sub-tag")
+            } Then {
+                statusCode(200)
+            } Extract {
+                jsonPath().getString("tagId")
+            }
+
+            val patchBody = TagDTO(
+                tagId = subTagId,
+                label = "Restaurants",
+                colorDTO = ColorDTO(20, 20, 20),
+                isDefault = false,
+                parentId = null
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(patchBody))
+            } When {
+                patch("/api/tag")
+            } Then {
+                statusCode(200)
+                body("label", equalTo("Restaurants"))
+            }
+
+            val promoted = state.get().find { it.label == "Restaurants" } ?: fail("Promoted tag not found")
+            assertNull((promoted as? Tag.Personal)?.parentId)
+        }
+
+        @Test
+        fun `Patch sub-tag with null parentId and new label must promote it with updated label`() {
+            tagStateTestAdapter.init(listOf(
+                UserTagsRequest(user!!.id, listOf(Tag.Personal("Food", color = Color(10, 10, 10))))
+            ))
+            val parentTag = state.get().find { it.label == "Food" } ?: fail("Parent tag not found")
+
+            val subTagId = Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(
+                    CreateSubTagRequest("Fast Food", ColorDTO(20, 20, 20), parentTag.id.toString())
+                ))
+            } When {
+                post("/api/tag/sub-tag")
+            } Then {
+                statusCode(200)
+            } Extract {
+                jsonPath().getString("tagId")
+            }
+
+            val patchBody = TagDTO(
+                tagId = subTagId,
+                label = "Dining",
+                colorDTO = ColorDTO(20, 20, 20),
+                isDefault = false,
+                parentId = null
+            )
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(patchBody))
+            } When {
+                patch("/api/tag")
+            } Then {
+                statusCode(200)
+                body("label", equalTo("Dining"))
+            }
+
+            val promoted = state.get().find { it.label == "Dining" } ?: fail("Promoted tag not found")
+            assertNull((promoted as? Tag.Personal)?.parentId)
+        }
+
+        @Test
+        fun `Patch tag with unknown tagId and null parentId must return 404`() {
+            val body = TagDTO(
+                tagId = UUID.randomUUID().toString(),
+                label = "ghost",
+                colorDTO = ColorDTO(10, 10, 10),
+                parentId = null
             )
             Given {
                 port(port)
