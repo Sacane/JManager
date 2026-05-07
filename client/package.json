@@ -50,5 +50,11 @@
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",
     "vue-chartjs": "^5.3.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ]
   }
 }
