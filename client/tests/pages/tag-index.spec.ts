@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import TagPage from '../../pages/tag/index.vue'
 
@@ -64,5 +64,119 @@ describe('pages/tag/index loading states', () => {
     const createButton = wrapper.findAll('button').find(btn => btn.attributes('data-label') === 'Nouveau tag')
     expect(createButton).toBeDefined()
     expect(createButton?.attributes('disabled')).toBeDefined()
+  })
+})
+
+const personalTagDTO = {
+  tagId: '1',
+  label: 'Food',
+  colorDTO: { red: 255, green: 100, blue: 50 },
+  isDefault: false,
+  parentId: null,
+}
+
+const defaultTagDTO = {
+  tagId: '2',
+  label: 'None',
+  colorDTO: { red: 100, green: 100, blue: 100 },
+  isDefault: true,
+  parentId: null,
+}
+
+const subTagDTO = {
+  tagId: '3',
+  label: 'FastFood',
+  colorDTO: { red: 200, green: 50, blue: 50 },
+  isDefault: false,
+  parentId: '1',
+}
+
+describe('pages/tag/index multi-selection', () => {
+  it('shows select-all checkbox when non-default tags are loaded', async () => {
+    getAllTagsMock.mockResolvedValue([personalTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    expect(wrapper.html()).toContain('Tout sélectionner')
+  })
+
+  it('does not show selection controls when only default tags exist', async () => {
+    getAllTagsMock.mockResolvedValue([defaultTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    expect(wrapper.html()).not.toContain('Tout sélectionner')
+  })
+
+  it('hides selection count when nothing is selected', async () => {
+    getAllTagsMock.mockResolvedValue([personalTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('sélectionné')
+  })
+
+  it('shows selection count after toggling select-all', async () => {
+    getAllTagsMock.mockResolvedValue([personalTagDTO, { ...personalTagDTO, tagId: '4', label: 'Travel' }])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    await (wrapper.vm as any).toggleSelectAll()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('2 sélectionné(s)')
+  })
+
+  it('shows bulk delete button when at least one item is selected', async () => {
+    getAllTagsMock.mockResolvedValue([personalTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    const tag: TagDisplayItem = { id: '1', label: 'Food', isDefault: false, color: 'rgb(255,100,50)', parentId: null }
+    await (wrapper.vm as any).toggleSelectTag(tag)
+    await wrapper.vm.$nextTick()
+
+    const bulkDeleteBtn = wrapper.findAll('button').find(btn =>
+      btn.attributes('aria-label')?.includes('Supprimer') && btn.attributes('aria-label')?.includes('tag'),
+    )
+    expect(bulkDeleteBtn).toBeDefined()
+  })
+
+  it('deselects all items when toggling select-all while all are selected', async () => {
+    getAllTagsMock.mockResolvedValue([personalTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    await (wrapper.vm as any).toggleSelectAll()
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('1 sélectionné(s)')
+
+    await (wrapper.vm as any).toggleSelectAll()
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).not.toContain('sélectionné')
+  })
+
+  it('removes tag from selection when deleted', async () => {
+    deleteTagMock.mockResolvedValue(undefined)
+    getAllTagsMock.mockResolvedValue([personalTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    const tag: TagDisplayItem = { id: '1', label: 'Food', isDefault: false, color: 'rgb(255,100,50)', parentId: null }
+    await (wrapper.vm as any).toggleSelectTag(tag)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('1 sélectionné(s)')
+
+    await (wrapper.vm as any).performDeleteTag(tag)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).not.toContain('sélectionné')
+  })
+
+  it('does not show selection controls when no tags are loaded', async () => {
+    getAllTagsMock.mockResolvedValue([])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    expect(wrapper.html()).not.toContain('Tout sélectionner')
   })
 })

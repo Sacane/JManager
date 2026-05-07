@@ -3,33 +3,47 @@ defineProps<{
   group: TagGroupItem
   disabled: boolean
   deleting: boolean
+  selected: boolean
+  selectedChildIds: string[]
 }>()
 
 const emit = defineEmits<{
   (e: 'edit', tag: TagDisplayItem): void
   (e: 'delete', tag: TagDisplayItem): void
+  (e: 'toggle-select', tag: TagDisplayItem): void
+  (e: 'toggle-select-child', tag: TagDisplayItem): void
 }>()
 </script>
 
 <template>
   <div
     class="tag-card"
-    :class="{ 'tag-card-personal': !group.isDefault }"
+    :class="{ 'tag-card-personal': !group.isDefault, 'tag-card-selected': selected }"
     :style="{ '--tag-color': group.color }"
   >
     <div class="tag-color-band" :style="{ backgroundColor: group.color }" />
 
     <div class="tag-content">
       <div class="tag-info">
-        <div class="tag-label-wrapper">
-          <h3 class="tag-label">
-            {{ group.label }}
-          </h3>
-          <Tag
-            :value="group.isDefault ? 'Par défaut' : 'Personnel'"
-            :severity="group.isDefault ? 'info' : 'success'"
-            class="tag-badge"
+        <div class="tag-header">
+          <Checkbox
+            v-if="!group.isDefault"
+            :binary="true"
+            :model-value="selected"
+            class="tag-select-checkbox"
+            aria-label="Sélectionner ce tag"
+            @update:model-value="() => emit('toggle-select', group)"
           />
+          <div class="tag-label-wrapper">
+            <h3 class="tag-label">
+              {{ group.label }}
+            </h3>
+            <Tag
+              :value="group.isDefault ? 'Par défaut' : 'Personnel'"
+              :severity="group.isDefault ? 'info' : 'success'"
+              class="tag-badge"
+            />
+          </div>
         </div>
 
         <div class="color-preview">
@@ -48,8 +62,17 @@ const emit = defineEmits<{
             v-for="child in group.children"
             :key="child.id"
             class="sub-tag-chip"
+            :class="{ 'sub-tag-chip-selected': selectedChildIds.includes(child.id) }"
             :style="{ borderLeftColor: child.color }"
           >
+            <Checkbox
+              v-if="!child.isDefault"
+              :binary="true"
+              :model-value="selectedChildIds.includes(child.id)"
+              class="sub-tag-checkbox"
+              aria-label="Sélectionner ce sous-tag"
+              @update:model-value="() => emit('toggle-select-child', child)"
+            />
             <div class="color-circle-sm" :style="{ backgroundColor: child.color }" />
             <span class="sub-tag-label">{{ child.label }}</span>
             <div v-if="!child.isDefault" class="sub-tag-actions">
@@ -117,6 +140,11 @@ const emit = defineEmits<{
   transition: all 0.3s ease;
   border: 1px solid var(--card-border);
 
+  &.tag-card-selected {
+    border-color: var(--p-primary-color, #6366f1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), 0 1px 3px var(--shadow-sm);
+  }
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px var(--shadow-md), 0 4px 8px var(--shadow-sm);
@@ -160,12 +188,20 @@ const emit = defineEmits<{
   gap: 0.75rem;
 }
 
+.tag-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .tag-label-wrapper {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .tag-label {
@@ -286,5 +322,16 @@ const emit = defineEmits<{
   @media (max-width: 768px) {
     opacity: 1;
   }
+}
+
+.sub-tag-chip-selected {
+  background: color-mix(in srgb, var(--p-primary-color, #6366f1) 8%, var(--bg-tertiary));
+  outline: 1px solid rgba(99, 102, 241, 0.3);
+  outline-offset: -1px;
+}
+
+.tag-select-checkbox,
+.sub-tag-checkbox {
+  flex-shrink: 0;
 }
 </style>

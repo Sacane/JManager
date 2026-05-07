@@ -1,6 +1,12 @@
 # Changelog
 
-## 2026-05-06
+## 2026-05-07
+
+- **Feature: Tag multi-selection on the tags page**
+  - `client/components/tag/TagCard.vue`: Added `selected: boolean` and `selectedChildIds: string[]` props; added `toggle-select` and `toggle-select-child` emits. Non-default parent tags and sub-tags each show a PrimeVue `Checkbox` using `@update:model-value` (not `@click`) to stay in sync with PrimeVue's internal state. A `.tag-header` wrapper was introduced to correctly align `[checkbox | label — badge]` without breaking the existing `tag-label-wrapper` flex layout. Selected cards receive a primary-colored border ring (`.tag-card-selected`) and selected sub-tag chips a tinted background (`.sub-tag-chip-selected`).
+  - `client/pages/tag/index.vue`: Added `selectedIds: ref<string[]>` (plain array for reliable Vue 3 reactivity — `Set` mutations are not tracked). Introduced `visibleSelectableItems` (flat list of non-default items matching the current search/filter), `selectedVisibleCount`, `isAllSelected`, `isIndeterminate`, `toggleSelectTag`, `toggleSelectAll`, and `onBulkDeleteClick`. The toolbar gained a **select-all checkbox**, a **counter badge** (`N sélectionné(s)`), and a **bulk-delete danger button**, all conditionally rendered. `performDeleteTag` filters the deleted id out of `selectedIds` after removal.
+  - `client/tests/pages/tag-index.spec.ts`: 7 new scenarios covering select-all appearance, counter visibility, deselect-all toggle, bulk delete button, selection cleared on delete, and absence of controls when no selectable tags exist.
+
 
 - **Feature: Booklet transaction page — action buttons layout and visual differentiation**
   - `client/pages/booklet/[id].vue`: In sidebar mode (`isSidebarMode`), moved the `BookletActionButtons` sidebar panel from the **left** to the **right** side of the table by reordering the flex children (table div first, sidebar div second). The `isSidebarMode` condition itself (`window.innerHeight < 768`) is unchanged.
