@@ -39,6 +39,7 @@ const editTagDialog = ref(false)
 const tagToEdit = ref<{ id: string, label: string, colorHex: string } | null>(null)
 const searchQuery = ref<string>('')
 const filterType = ref<string>('all')
+const selectedIds = ref<string[]>([])
 
 const confirm = useConfirm()
 
@@ -100,6 +101,74 @@ const groupedTags = computed<TagGroupItem[]>(() => {
   }))
 })
 
+const visibleSelectableItems = computed<TagDisplayItem[]>(() => {
+  const items: TagDisplayItem[] = []
+  for (const group of groupedTags.value) {
+    if (!group.isDefault) items.push(group)
+    for (const child of group.children) {
+      if (!child.isDefault) items.push(child)
+    }
+  }
+  return items
+})
+
+const selectedVisibleCount = computed(() =>
+  visibleSelectableItems.value.filter(t => selectedIds.value.includes(t.id)).length,
+)
+
+const isAllSelected = computed(
+  () =>
+    visibleSelectableItems.value.length > 0
+    && visibleSelectableItems.value.every(t => selectedIds.value.includes(t.id)),
+)
+
+const isIndeterminate = computed(
+  () => selectedVisibleCount.value > 0 && !isAllSelected.value,
+)
+
+function toggleSelectTag(tag: TagDisplayItem): void {
+  const idx = selectedIds.value.indexOf(tag.id)
+  if (idx !== -1) {
+    selectedIds.value.splice(idx, 1)
+  }
+  else {
+    selectedIds.value.push(tag.id)
+  }
+}
+
+function toggleSelectAll(): void {
+  if (isAllSelected.value) {
+    selectedIds.value = []
+  }
+  else {
+    selectedIds.value = visibleSelectableItems.value.map(t => t.id)
+  }
+}
+
+function onBulkDeleteClick(): void {
+  const toDelete = visibleSelectableItems.value.filter(t => selectedIds.value.has(t.id))
+  const count = toDelete.length
+  confirm.require({
+    message: `Êtes-vous sûr de vouloir supprimer ${count} tag(s) sélectionné(s) ?`,
+    header: 'Confirmer la suppression multiple',
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: {
+      label: 'Annuler',
+      severity: 'secondary',
+      outlined: true,
+    },
+    acceptProps: {
+      label: `Supprimer (${count})`,
+      severity: 'danger',
+    },
+    accept: async () => {
+      for (const tag of toDelete) {
+        await performDeleteTag(tag)
+      }
+    },
+  })
+}
+
 async function onCreateSubmit(payload: { tagLabel: string, hex: string, isSubTag: boolean, parentId: string }) {
   await withLoading(async () => {
     try {
@@ -125,6 +194,7 @@ async function performDeleteTag(row: TagDisplayItem, force: boolean = false): Pr
       if (indexDelTag !== -1) {
         tags.value.splice(indexDelTag, 1)
       }
+      selectedIds.value = selectedIds.value.filter(id => id !== row.id)
       toast.success('Tag supprimé avec succès')
     } catch (error: any) {
       if (error?.response?.status === 409) {
@@ -260,6 +330,32 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string }) 
           class="filter-buttons"
         />
 
+        <div v-if="visibleSelectableItems.length > 0" class="selection-controls">
+          <Checkbox
+            :binary="true"
+            :model-value="isAllSelected"
+            :indeterminate="isIndeterminate"
+            v-tooltip.top="isAllSelected ? 'Désélectionner tout' : 'Tout sélectionner'"
+            aria-label="Tout sélectionner"
+            @update:model-value="() => toggleSelectAll()"
+          />
+          <span v-if="selectedVisibleCount > 0" class="selection-badge">
+            {{ selectedVisibleCount }} sélectionné(s)
+          </span>
+          <Button
+            v-if="selectedVisibleCount > 0"
+            v-tooltip.top="'Supprimer la sélection'"
+            icon="pi pi-trash"
+            severity="danger"
+            outlined
+            rounded
+            size="small"
+            :disabled="isAnyTagActionLoading"
+            :aria-label="`Supprimer ${selectedVisibleCount} tag(s) sélectionné(s)`"
+            @click="onBulkDeleteClick"
+          />
+        </div>
+
         <Button
           v-tooltip.left="'Créer un nouveau tag'"
           icon="pi pi-plus"
@@ -290,8 +386,12 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string }) 
           :group="group"
           :disabled="isAnyTagActionLoading"
           :deleting="isDeletingTag"
+          :selected="selectedIds.includes(group.id)"
+          :selected-child-ids="group.children.map(c => c.id).filter(id => selectedIds.includes(id))"
           @edit="onEditClick"
           @delete="onDeleteClick"
+          @toggle-select="toggleSelectTag"
+          @toggle-select-child="toggleSelectTag"
         />
       </TransitionGroup>
 
@@ -426,6 +526,28 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string }) 
       flex: 1;
     }
   }
+}
+
+.selection-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+.selection-badge {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .tags-container {
