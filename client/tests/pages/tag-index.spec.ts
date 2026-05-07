@@ -180,3 +180,75 @@ describe('pages/tag/index multi-selection', () => {
     expect(wrapper.html()).not.toContain('Tout sélectionner')
   })
 })
+
+describe('pages/tag/index sub-tag promotion', () => {
+  it('onEditClick sets parentId on tagToEdit for a sub-tag', async () => {
+    getAllTagsMock.mockResolvedValue([personalTagDTO, subTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    const subTag: TagDisplayItem = {
+      id: '3',
+      label: 'FastFood',
+      isDefault: false,
+      color: 'rgb(200,50,50)',
+      parentId: '1',
+    }
+    await (wrapper.vm as any).onEditClick(subTag)
+    await wrapper.vm.$nextTick()
+
+    const tagToEdit = (wrapper.vm as any).tagToEdit
+    expect(tagToEdit).not.toBeNull()
+    expect(tagToEdit.parentId).toBe('1')
+  })
+
+  it('onEditClick sets parentId to null for a top-level tag', async () => {
+    getAllTagsMock.mockResolvedValue([personalTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    const topTag: TagDisplayItem = {
+      id: '1',
+      label: 'Food',
+      isDefault: false,
+      color: 'rgb(255,100,50)',
+      parentId: null,
+    }
+    await (wrapper.vm as any).onEditClick(topTag)
+    await wrapper.vm.$nextTick()
+
+    const tagToEdit = (wrapper.vm as any).tagToEdit
+    expect(tagToEdit).not.toBeNull()
+    expect(tagToEdit.parentId).toBeNull()
+  })
+
+  it('applyEdit calls editTag with parentId null when detaching', async () => {
+    const updatedTag = { tagId: '3', label: 'FastFood', colorDTO: { red: 200, green: 50, blue: 50 }, isDefault: false, parentId: null }
+    editTagMock.mockResolvedValue(updatedTag)
+    getAllTagsMock.mockResolvedValue([personalTagDTO, subTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    await (wrapper.vm as any).applyEdit({ id: '3', label: 'FastFood', colorHex: '#c83232', parentId: null })
+    await flushPromises()
+
+    expect(editTagMock).toHaveBeenCalledWith(
+      expect.objectContaining({ tagId: '3', parentId: undefined }),
+    )
+  })
+
+  it('applyEdit updates tags list in-memory after successful promotion', async () => {
+    const updatedTag = { tagId: '3', label: 'FastFood', colorDTO: { red: 200, green: 50, blue: 50 }, isDefault: false, parentId: null }
+    editTagMock.mockResolvedValue(updatedTag)
+    getAllTagsMock.mockResolvedValue([personalTagDTO, subTagDTO])
+    const { wrapper } = mountTagPage()
+    await flushPromises()
+
+    await (wrapper.vm as any).applyEdit({ id: '3', label: 'FastFood', colorHex: '#c83232', parentId: null })
+    await flushPromises()
+
+    const tags = (wrapper.vm as any).tags as TagDisplayItem[]
+    const promoted = tags.find(t => t.id === '3')
+    expect(promoted?.parentId).toBeNull()
+  })
+})

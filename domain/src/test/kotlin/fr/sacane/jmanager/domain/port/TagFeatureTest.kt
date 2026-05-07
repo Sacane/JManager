@@ -12,6 +12,8 @@ import fr.sacane.jmanager.domain.port.input.tag.*
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -238,6 +240,74 @@ class TagFeatureTest: FeatureTest() {
 
                 result.assertFailure(ResultState.TAG_SHOULD_NOT_BE_DEFAULT)
                 assertEquals("domain.tag.edit.default_forbidden", result.errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Patch a sub-tag with null parentId must promote it to top-level tag`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                val subTagId = UUID.randomUUID()
+                tagState.init(UserTag(this.userId, mutableListOf(
+                    Tag.Personal("Food", id = parentId),
+                    Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
+                )))
+
+                val result = editTagUseCase.handle(
+                    EditTagCommand(this.userId, Tag.Personal("Restaurants", id = subTagId, parentId = null))
+                )
+
+                result.assertSuccess()
+                result.onSuccess { tag ->
+                    assertTrue(tag is Tag.Personal)
+                    assertNull((tag as Tag.Personal).parentId)
+                }
+                val persisted = tagState.getStates().find { it.id == subTagId } as? Tag.Personal
+                assertNotNull(persisted)
+                assertNull(persisted!!.parentId)
+            }
+        }
+
+        @Test
+        fun `Patch a sub-tag with null parentId and new label must promote it with updated label`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                val subTagId = UUID.randomUUID()
+                tagState.init(UserTag(this.userId, mutableListOf(
+                    Tag.Personal("Food", id = parentId),
+                    Tag.Personal("Fast Food", id = subTagId, parentId = parentId)
+                )))
+
+                val result = editTagUseCase.handle(
+                    EditTagCommand(this.userId, Tag.Personal("Dining", id = subTagId, parentId = null))
+                )
+
+                result.assertSuccess()
+                val persisted = tagState.getStates().find { it.id == subTagId } as? Tag.Personal
+                assertNotNull(persisted)
+                assertEquals("Dining", persisted!!.label)
+                assertNull(persisted.parentId)
+            }
+        }
+
+        @Test
+        fun `Patch a sub-tag keeping its parentId must remain a sub-tag`() {
+            launchWithUserId {
+                val parentId = UUID.randomUUID()
+                val subTagId = UUID.randomUUID()
+                tagState.init(UserTag(this.userId, mutableListOf(
+                    Tag.Personal("Food", id = parentId),
+                    Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
+                )))
+
+                val result = editTagUseCase.handle(
+                    EditTagCommand(this.userId, Tag.Personal("Restaurants Updated", id = subTagId, parentId = parentId))
+                )
+
+                result.assertSuccess()
+                val persisted = tagState.getStates().find { it.id == subTagId } as? Tag.Personal
+                assertNotNull(persisted)
+                assertEquals(parentId, persisted!!.parentId)
             }
         }
     }
