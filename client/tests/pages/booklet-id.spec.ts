@@ -241,6 +241,75 @@ describe('pages/booklet/[id] selection behavior', () => {
     expect(vm.isSelected(first)).toBe(true)
     expect(vm.isSelected(second)).toBe(true)
   })
+
+  it('selectedTransactionsAmountLabel shows negative total for expense transactions', async () => {
+    findTransactionsByIdMonthAndYearMock.mockResolvedValueOnce({
+      transactions: [
+        createTransaction({ id: 'tx-1', label: 'Loyer', value: 800.00, isIncome: false }),
+        createTransaction({ id: 'tx-2', label: 'Courses', value: 50.50, isIncome: false }),
+      ],
+      hasRegenerableTransactions: false,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 2,
+      totalPages: 1,
+    })
+
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.toggleSelection(vm.filteredTransactions[0])
+    vm.toggleSelection(vm.filteredTransactions[1])
+
+    expect(vm.selectedTransactionsAmountLabel).toBe('-850,50 €')
+  })
+
+  it('selectedTransactionsAmountLabel shows positive total for income transactions', async () => {
+    findTransactionsByIdMonthAndYearMock.mockResolvedValueOnce({
+      transactions: [
+        createTransaction({ id: 'tx-1', label: 'Salaire', value: 2000.00, isIncome: true }),
+        createTransaction({ id: 'tx-2', label: 'Prime', value: 500.00, isIncome: true }),
+      ],
+      hasRegenerableTransactions: false,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 2,
+      totalPages: 1,
+    })
+
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.toggleSelection(vm.filteredTransactions[0])
+    vm.toggleSelection(vm.filteredTransactions[1])
+
+    expect(vm.selectedTransactionsAmountLabel).toBe('+2\u202f500,00 €')
+  })
+
+  it('selectedTransactionsAmountLabel shows zero when no transactions are selected', async () => {
+    findTransactionsByIdMonthAndYearMock.mockResolvedValueOnce({
+      transactions: [
+        createTransaction({ id: 'tx-1', label: 'Loyer', value: 800.00, isIncome: false }),
+      ],
+      hasRegenerableTransactions: false,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 1,
+      totalPages: 1,
+    })
+
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+
+    expect(vm.selectedTransactionsAmountLabel).toBe('0,00 €')
+  })
 })
 
 describe('pages/booklet/[id] confirmDelete with virtual transactions', () => {

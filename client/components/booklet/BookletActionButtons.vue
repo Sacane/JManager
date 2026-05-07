@@ -94,13 +94,16 @@ const emit = defineEmits<{
     />
 
     <template v-if="hasSelection">
-      <!-- Selection count chip (vertical mode) -->
+      <!-- Selection chip (vertical mode) — count + amount -->
       <div
         v-if="orientation === 'vertical'"
-        class="flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-[var(--card-hover-bg)] border border-[var(--card-border)] w-full mt-1"
+        class="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg bg-[var(--card-hover-bg)] border border-[var(--card-border)] w-full mt-1"
       >
-        <i class="pi pi-check-square text-[var(--primary)] text-xs" />
-        <span class="text-xs font-semibold text-[var(--text-secondary)]">{{ selectedCount }}</span>
+        <div class="flex items-center gap-1">
+          <i class="pi pi-check-square text-[var(--primary)] text-xs" />
+          <span class="text-xs font-semibold text-[var(--text-secondary)]">{{ selectedCount }}</span>
+        </div>
+        <span class="text-xs font-extrabold" :class="selectedAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">{{ selectedAmountLabel }}</span>
       </div>
       <Button
         v-tooltip.bottom="`Supprimer (${selectedCount})`"

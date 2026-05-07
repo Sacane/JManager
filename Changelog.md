@@ -2,6 +2,14 @@
 
 ## 2026-05-07
 
+- **Bug fix: Selection amount ("calculator") not visible in sidebar/vertical mode**
+  - **Root cause**: In `BookletActionButtons.vue`, the `selectedAmountLabel` (total of selected transaction amounts) was only rendered inside the horizontal-mode badge (`v-if="hasSelection && orientation === 'horizontal'"`). In sidebar mode (`window.innerHeight < 768`), the component renders with `orientation="vertical"` and the `BookletFilterActionBar` is fully hidden (`hideActionButtons=true`), so the amount was never displayed — only the selection count appeared in the vertical chip.
+  - **Fix (`BookletActionButtons.vue`)**: Expanded the vertical selection chip to a two-row layout: the top row keeps the check-square icon + count, and a new bottom row displays `selectedAmountLabel` with the same colour logic as horizontal mode (emerald-600 for positive, red-500 for negative).
+  - **Tests added**:
+    - `tests/components/BookletActionButtons.spec.ts` (new file): 5 component tests — vertical chip shows amount label, positive/negative colour classes applied correctly, chip hidden when no selection, horizontal badge shows amount.
+    - `tests/pages/booklet-id.spec.ts`: 3 new unit tests for `selectedTransactionsAmountLabel` computed: negative sum for expenses, positive sum for income, zero when nothing selected.
+  - All 173 frontend tests pass.
+
 - **Feature: Tag multi-selection on the tags page**
   - `client/components/tag/TagCard.vue`: Added `selected: boolean` and `selectedChildIds: string[]` props; added `toggle-select` and `toggle-select-child` emits. Non-default parent tags and sub-tags each show a PrimeVue `Checkbox` using `@update:model-value` (not `@click`) to stay in sync with PrimeVue's internal state. A `.tag-header` wrapper was introduced to correctly align `[checkbox | label — badge]` without breaking the existing `tag-label-wrapper` flex layout. Selected cards receive a primary-colored border ring (`.tag-card-selected`) and selected sub-tag chips a tinted background (`.sub-tag-chip-selected`).
   - `client/pages/tag/index.vue`: Added `selectedIds: ref<string[]>` (plain array for reliable Vue 3 reactivity — `Set` mutations are not tracked). Introduced `visibleSelectableItems` (flat list of non-default items matching the current search/filter), `selectedVisibleCount`, `isAllSelected`, `isIndeterminate`, `toggleSelectTag`, `toggleSelectAll`, and `onBulkDeleteClick`. The toolbar gained a **select-all checkbox**, a **counter badge** (`N sélectionné(s)`), and a **bulk-delete danger button**, all conditionally rendered. `performDeleteTag` filters the deleted id out of `selectedIds` after removal.
