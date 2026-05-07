@@ -185,7 +185,7 @@ function handleTabKey(event: KeyboardEvent) {
         </div>
         <div class="flex flex-col">
           <p>Fréquence</p>
-          <Select v-model="regularTrForm.frequency" :options="[frequencyToString('DAILY'), frequencyToString('WEEKLY'), frequencyToString('MONTHLY'), frequencyToString('YEARLY')]" placeholder="Répéter" class="w-full md:w-14rem" />
+          <Select v-model="regularTrForm.frequency" :options="[frequencyToString('WEEKLY'), frequencyToString('MONTHLY'), frequencyToString('YEARLY')]" placeholder="Répéter" class="w-full md:w-14rem" />
         </div>
       </div>
       <div class="flex flex-col gap-3 mt-4">
