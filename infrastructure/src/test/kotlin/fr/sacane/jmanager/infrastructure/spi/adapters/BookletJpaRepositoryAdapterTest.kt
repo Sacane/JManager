@@ -2,6 +2,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import fr.sacane.jmanager.infrastructure.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.infrastructure.spi.repositories.BookletJpaRepository
@@ -17,7 +18,8 @@ import org.springframework.test.context.TestPropertySource
 class BookletJpaRepositoryAdapterTest(
     @Autowired private val bookletJpaRepositoryAdapter: BookletJpaRepositoryAdapter,
     @Autowired private val bookletStateTestAdapter: BookletStateTestAdapter,
-    @Autowired private val bookletJpaRepository: BookletJpaRepository
+    @Autowired private val bookletJpaRepository: BookletJpaRepository,
+    @Autowired private val userRepositoryJpaAdapter: UserRepositoryJpaAdapter,
 ) : AuthenticatedUserTest() {
 
     @AfterEach
@@ -77,5 +79,27 @@ class BookletJpaRepositoryAdapterTest(
         assertThat(refreshed).isNotNull
         assertThat(refreshed!!.monthlyPeriodStartDay).isEqualTo(28)
         assertThat(refreshed.monthlyPeriodEndDay).isEqualTo(27)
+    }
+
+    @Test
+    fun `update should evict allBooklets cache so that findUserByIdWithBooklets returns fresh amount`() {
+        // Arrange: save a booklet and warm up the allBooklets cache
+        val booklet = Booklet(label = "acct-cache-evict", amount = Amount(100L), owner = user)
+        val saved = bookletJpaRepositoryAdapter.save(user!!.id, booklet)
+        assertThat(saved).isNotNull
+
+        // Warm up the cache — this populates the "allBooklets" entry for this user
+        val cachedUser = userRepositoryJpaAdapter.findUserByIdWithBooklets(user!!.id)
+        val cachedAmount = cachedUser!!.booklets.first { it.label == "acct-cache-evict" }.amount
+        assertThat(cachedAmount).isEqualTo(Amount(100L))
+
+        // Act: update the booklet amount (simulates what happens after a transaction)
+        val updated = Booklet(label = saved!!.label, amount = Amount(250L), owner = user, id = saved.id)
+        bookletJpaRepositoryAdapter.update(updated)
+
+        // Assert: the cache must be evicted — fresh amount should be returned
+        val freshUser = userRepositoryJpaAdapter.findUserByIdWithBooklets(user!!.id)
+        val freshAmount = freshUser!!.booklets.first { it.label == "acct-cache-evict" }.amount
+        assertThat(freshAmount).isEqualTo(Amount(250L))
     }
 }

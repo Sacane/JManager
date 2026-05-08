@@ -98,11 +98,31 @@ Before writing any fix, state the root cause in plain language:
 
 > "The bug is caused by [X] in [file/class/function], which produces [incorrect behaviour] because [reason]."
 
-Do not proceed to Phase 4 without this statement validated with the user if there is any doubt.
+---
+
+### 3.4 — Fix Strategy Decision (MANDATORY — do not skip)
+
+After the root cause is identified, **always** stop and assess the complexity of the fix:
+
+**If the fix is trivial** (single-file change, obvious one-liner, no architectural impact):
+- Describe the fix to the user in plain language.
+- **Ask explicitly**: *"The fix is straightforward — [description of the change]. Do you want me to apply it directly, or would you prefer a full investigation report first?"*
+- Do **not** apply the fix until the user explicitly says yes.
+
+**If the fix is non-trivial** (multiple files, domain rule change, architecture impact, uncertain scope):
+- Do **not** ask to fix yet.
+- Proceed directly to Phase 6 (Report) to document the full analysis.
+- Present the report to the user.
+- **Only after the user explicitly asks** for the fix to be applied, proceed to Phase 4.
+
+> **CRITICAL**: Never apply a fix without explicit user authorization, regardless of how obvious the fix seems.
 
 ---
 
-## Phase 4 — Fix
+## Phase 4 — Fix (requires explicit user authorization)
+
+> **This phase must only be entered after the user has explicitly authorized the fix.**  
+> If authorization was not given, go to Phase 6 (Report) first.
 
 Apply the fix following the mandatory TDD cycle defined in `docs/agents/instructions/development-workflow.md`:
 
@@ -136,7 +156,9 @@ Once the fix is applied:
 
 ## Phase 6 — Investigation Report
 
-Once the fix is verified, always generate a report file at:
+Generate the report **before Phase 4** for non-trivial fixes, or **after Phase 4** when the user authorized a direct trivial fix.
+
+Always generate a report file at:
 
 ```
 docs/bugs/{bug-slug}/REPORT.md
