@@ -1013,3 +1013,154 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
     expect(vm.selectedTagFilter).toBe('')
   })
 })
+
+describe('pages/booklet/[id] tagFilterOptions and subTagFilterOptions scoped to transactions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const parentTagA = { tagId: 'parent-A', label: 'Alimentation', colorDTO: { red: 0, green: 200, blue: 0 }, isDefault: false }
+  const subTagA = { tagId: 'sub-A', label: 'Courses', colorDTO: { red: 200, green: 100, blue: 0 }, isDefault: false, parentId: 'parent-A' }
+  const parentTagB = { tagId: 'parent-B', label: 'Loisirs', colorDTO: { red: 0, green: 0, blue: 200 }, isDefault: false }
+  const subTagB = { tagId: 'sub-B', label: 'Sport', colorDTO: { red: 100, green: 0, blue: 200 }, isDefault: false, parentId: 'parent-B' }
+
+  function mountWithTagsAndTx(allTags: any[], transactions: TransactionResultDTO[]) {
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useRoute', () => ({ params: { id: 'booklet-1' } }))
+    vi.stubGlobal('useJToast', () => ({ success: vi.fn(), errorAxios: vi.fn(), warn: vi.fn() }))
+    vi.stubGlobal('useLoading', () => ({
+      isScopeLoading: () => false,
+      withLoading: async <T>(action: () => Promise<T>) => action(),
+    }))
+    vi.stubGlobal('useBooklet', () => ({
+      findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
+      findTransactionsByIdMonthAndYear: vi.fn().mockResolvedValue({
+        transactions,
+        hasRegenerableTransactions: false,
+        pageNumber: 0,
+        pageSize: 10,
+        totalElements: transactions.length,
+        totalPages: 1,
+      }),
+    }))
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue(allTags),
+      getDefaultTag: vi.fn().mockResolvedValue(defaultTag),
+    }))
+    vi.stubGlobal('useDate', () => ({
+      months: ['JANUARY', 'FEBRUARY', 'MARCH'],
+      englishMonth: (v: string) => v,
+      translate: (v: string) => v,
+      monthFromNumber: (n: number) => ['JANUARY', 'FEBRUARY', 'MARCH'][n - 1] || 'JANUARY',
+      numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
+    }))
+    vi.stubGlobal('navigateTo', vi.fn())
+
+    return shallowMount(BookletDetailsPage, {
+      global: {
+        mocks: { useDate: () => ({ months: ['JANUARY', 'FEBRUARY', 'MARCH'] }) },
+        stubs: {
+          ConfirmDialog: true, ProgressSpinner: true, AppTable: true,
+          TransactionCreationDialog: true, Dialog: true, CsvImportDialog: true,
+          Select: true, DatePicker: true, Tag: true, Checkbox: true, Paginator: true, Button: true,
+        },
+      },
+    })
+  }
+
+  it('tagFilterOptions only shows parent tags used directly in transactions', async () => {
+    const txA = createTransaction({ id: 'tx-1', tagDTO: parentTagA })
+
+    const wrapper = mountWithTagsAndTx([parentTagA, parentTagB], [txA])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const options = vm.tagFilterOptions as { value: string }[]
+
+    expect(options.some(o => o.value === 'parent-A')).toBe(true)
+    expect(options.some(o => o.value === 'parent-B')).toBe(false)
+  })
+
+  it('tagFilterOptions shows parent tag when only a sub-tag of it is used in transactions', async () => {
+    const txSub = createTransaction({ id: 'tx-1', tagDTO: subTagA })
+
+    const wrapper = mountWithTagsAndTx([parentTagA, subTagA], [txSub])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const options = vm.tagFilterOptions as { value: string }[]
+
+    expect(options.some(o => o.value === 'parent-A')).toBe(true)
+  })
+
+  it('tagFilterOptions always includes the default "Tous les tags" option', async () => {
+    const wrapper = mountWithTagsAndTx([parentTagA, parentTagB], [])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const options = vm.tagFilterOptions as { value: string, label: string }[]
+
+    expect(options[0]?.label).toBe('Tous les tags')
+    expect(options[0]?.value).toBe('')
+  })
+
+  it('subTagFilterOptions only shows sub-tags directly used in transactions', async () => {
+    const txSub = createTransaction({ id: 'tx-1', tagDTO: subTagA })
+
+    const wrapper = mountWithTagsAndTx([parentTagA, subTagA, parentTagB, subTagB], [txSub])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const options = vm.subTagFilterOptions as { value: string }[]
+
+    expect(options.some(o => o.value === 'sub-A')).toBe(true)
+    expect(options.some(o => o.value === 'sub-B')).toBe(false)
+  })
+
+  it('subTagFilterOptions always includes the default "Tous les sous-tags" option', async () => {
+    const wrapper = mountWithTagsAndTx([subTagA, subTagB], [])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const options = vm.subTagFilterOptions as { value: string, label: string }[]
+
+    expect(options[0]?.label).toBe('Tous les sous-tags')
+    expect(options[0]?.value).toBe('')
+  })
+
+  it('tagFilterOptions and subTagFilterOptions both update when transactions change', async () => {
+    const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTagA })
+    const txSub = createTransaction({ id: 'tx-2', tagDTO: subTagB })
+
+    const wrapper = mountWithTagsAndTx([parentTagA, subTagA, parentTagB, subTagB], [txParent, txSub])
+    await flushPromises()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+
+    const parentOpts = vm.tagFilterOptions as { value: string }[]
+    expect(parentOpts.some(o => o.value === 'parent-A')).toBe(true)
+    // parentTagB appears because subTagB (child of parent-B) is used
+    expect(parentOpts.some(o => o.value === 'parent-B')).toBe(true)
+
+    const subOpts = vm.subTagFilterOptions as { value: string }[]
+    expect(subOpts.some(o => o.value === 'sub-B')).toBe(true)
+    // subTagA is not used in any transaction
+    expect(subOpts.some(o => o.value === 'sub-A')).toBe(false)
+  })
+})
