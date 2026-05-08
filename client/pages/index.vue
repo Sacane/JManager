@@ -546,22 +546,87 @@ const expensesTrendData = computed(() => {
   }
 })
 
+// Normalise raw categories from the API so that promoted sub-tags (i.e. sub-tags whose
+// parent has no direct transactions, which the backend returns as top-level entries) are
+// rolled back up under their parent tag. The result always contains only root-level tags,
+// each one carrying its sub-tags in `subCategories`.
+function normalizeCategories(raw: CategoryDataDTO[]): CategoryDataDTO[] {
+  if (!raw.length) return []
+
+  const tagById = new Map(tags.value.map(t => [t.tagId, t]))
+
+  const rootMap = new Map<string, CategoryDataDTO>()
+  const promotedSubs: CategoryDataDTO[] = []
+
+  for (const cat of raw) {
+    const tagInfo = cat.tagId ? tagById.get(cat.tagId) : undefined
+    if (tagInfo?.parentId) {
+      // The backend promoted this sub-tag to the top level — defer it for roll-up
+      promotedSubs.push(cat)
+    } else {
+      rootMap.set(cat.tagId ?? cat.tagLabel, cat)
+    }
+  }
+
+  for (const sub of promotedSubs) {
+    const tagInfo = tagById.get(sub.tagId!)
+    if (!tagInfo?.parentId) continue
+    const parentTag = tagById.get(tagInfo.parentId)
+    if (!parentTag) continue
+
+    const parentKey = tagInfo.parentId
+    const existing = rootMap.get(parentKey)
+    if (existing) {
+      // Parent already in root map (shouldn't happen since backend groups by parent, but handle gracefully)
+      const newTotal = (Number.parseFloat(existing.totalAmount) + Number.parseFloat(sub.totalAmount)).toFixed(2)
+      rootMap.set(parentKey, {
+        ...existing,
+        totalAmount: newTotal,
+        percentage: existing.percentage + sub.percentage,
+        transactionCount: existing.transactionCount + sub.transactionCount,
+        subCategories: [...(existing.subCategories ?? []), sub],
+      })
+    } else {
+      rootMap.set(parentKey, {
+        tagLabel: parentTag.label ?? '',
+        tagId: tagInfo.parentId,
+        colorDTO: parentTag.colorDTO,
+        totalAmount: sub.totalAmount,
+        percentage: sub.percentage,
+        transactionCount: sub.transactionCount,
+        subCategories: [sub],
+      })
+    }
+  }
+
+  return [...rootMap.values()].toSorted(
+    (a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount),
+  )
+}
+
+const normalizedCategories = computed(() =>
+  normalizeCategories(categoryDistribution.value?.categories ?? []),
+)
+
+const normalizedPreviousCategories = computed(() =>
+  normalizeCategories(previousCategoryDistribution.value?.categories ?? []),
+)
+
 const categoryExpensesData = computed(() => {
-  if (!categoryDistribution.value?.categories.length) {
+  const categories = normalizedCategories.value
+  if (!categories.length) {
     return {
       labels: [],
       datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }],
     }
   }
 
-  const sortedCategories = categoryDistribution.value.categories.toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
-
   return {
-    labels: sortedCategories.map(cat => cat.tagLabel),
+    labels: categories.map(cat => cat.tagLabel),
     datasets: [
       {
-        data: sortedCategories.map(cat => Number.parseFloat(cat.totalAmount)),
-        backgroundColor: sortedCategories.map(cat =>
+        data: categories.map(cat => Number.parseFloat(cat.totalAmount)),
+        backgroundColor: categories.map(cat =>
           `rgb(${cat.colorDTO.red}, ${cat.colorDTO.green}, ${cat.colorDTO.blue})`,
         ),
         borderWidth: 0,
@@ -597,10 +662,7 @@ function onDoughnutClick(_event: any, elements: any[]) {
   }
 
   const clickedIndex = elements[0].index
-  const sortedCategories = categoryDistribution.value?.categories?.toSorted(
-    (a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount),
-  ) ?? []
-  const clickedCategory = sortedCategories[clickedIndex]
+  const clickedCategory = normalizedCategories.value[clickedIndex]
 
   // Handle secondary chart toggle for parent categories with sub-tags
   if (clickedCategory?.subCategories?.length) {
@@ -624,10 +686,7 @@ function onDoughnutClick(_event: any, elements: any[]) {
 
 const selectedParentCategory = computed(() => {
   if (selectedParentCategoryIndex.value === null) return null
-  const sorted = categoryDistribution.value?.categories?.toSorted(
-    (a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount),
-  ) ?? []
-  return sorted[selectedParentCategoryIndex.value] ?? null
+  return normalizedCategories.value[selectedParentCategoryIndex.value] ?? null
 })
 
 const secondaryChartData = computed(() => {
@@ -689,20 +748,19 @@ const secondaryDoughnutOptions = computed(() => ({
 }))
 
 const topTagsInsights = computed(() => {
-  const currentCategories = categoryDistribution.value?.categories ?? []
+  const currentCategories = normalizedCategories.value
   if (currentCategories.length === 0) {
     return []
   }
 
   const previousMap = new Map(
-    (previousCategoryDistribution.value?.categories ?? []).map(category => [
+    normalizedPreviousCategories.value.map(category => [
       category.tagId ?? category.tagLabel,
       Number.parseFloat(category.totalAmount),
     ]),
   )
 
   return currentCategories
-    .toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
     .map((category) => {
       const currentAmount = Number.parseFloat(category.totalAmount)
       const previousAmount = previousMap.get(category.tagId ?? category.tagLabel) ?? 0
