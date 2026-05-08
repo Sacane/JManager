@@ -1,0 +1,150 @@
+name: PR Auto Description
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  generate-description:
+    name: Generate PR description
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate and update PR description
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            const branchName = context.payload.pull_request.head.ref;
+            const baseBranch = context.payload.pull_request.base.ref;
+            const prTitle = context.payload.pull_request.title;
+
+            // --- Fetch commits and files ---
+            const [commitsRes, filesRes] = await Promise.all([
+              github.rest.pulls.listCommits({ owner, repo, pull_number: prNumber, per_page: 50 }),
+              github.rest.pulls.listFiles({ owner, repo, pull_number: prNumber, per_page: 100 }),
+            ]);
+
+            const commits = commitsRes.data;
+            const files = filesRes.data;
+
+            // --- Detect PR type from branch name ---
+            const typeMap = {
+              'feat': '✨ Feature',
+              'feature': '✨ Feature',
+              'fix': '🐛 Bug Fix',
+              'bugfix': '🐛 Bug Fix',
+              'hotfix': '🐛 Hotfix',
+              'refactor': '♻️ Refactoring',
+              'chore': '🔧 Chore',
+              'docs': '📚 Documentation',
+              'test': '🧪 Tests',
+              'perf': '⚡ Performance',
+              'ci': '🤖 CI / Infra',
+            };
+
+            const branchPrefix = branchName.split('/')[0].toLowerCase();
+            const prType = typeMap[branchPrefix] ?? '🔀 Change';
+
+            // --- Detect affected modules ---
+            const moduleMap = {
+              'domain/': '`domain`',
+              'infrastructure/': '`infrastructure`',
+              'application/': '`application`',
+              'client/': '`client`',
+              '.github/': '`ci`',
+              'build-logic/': '`build-logic`',
+              'docs/': '`docs`',
+            };
+
+            const affectedModules = new Set();
+            for (const file of files) {
+              for (const [prefix, label] of Object.entries(moduleMap)) {
+                if (file.filename.startsWith(prefix)) {
+                  affectedModules.add(label);
+                }
+              }
+            }
+
+            // --- Build commit list (deduplicated, skip merge commits) ---
+            const commitLines = commits
+              .filter(c => !c.commit.message.startsWith('Merge'))
+              .map(c => {
+                const msg = c.commit.message.split('\n')[0].trim();
+                return `- ${msg}`;
+              });
+
+            // --- Build changed files summary by module ---
+            const fileSummary = {};
+            for (const file of files) {
+              const mod = Object.keys(moduleMap).find(k => file.filename.startsWith(k)) ?? 'root';
+              if (!fileSummary[mod]) fileSummary[mod] = [];
+              fileSummary[mod].push(file.filename);
+            }
+
+            const fileSections = Object.entries(fileSummary)
+              .map(([mod, fileList]) => {
+                const label = moduleMap[mod] ?? `\`${mod}\``;
+                return `**${label}** — ${fileList.length} file(s)\n` +
+                  fileList.map(f => `  - \`${f}\``).join('\n');
+              })
+              .join('\n\n');
+
+            // --- Assemble description ---
+            const modulesLine = affectedModules.size > 0
+              ? [...affectedModules].join(', ')
+              : '_none detected_';
+
+            const body = [
+              `## ${prType}`,
+              '',
+              `> **Branch:** \`${branchName}\` → \`${baseBranch}\``,
+              `> **Modules:** ${modulesLine}`,
+              '',
+              '---',
+              '',
+              '## 📝 Description',
+              '',
+              '_Auto-generated — please complete this section._',
+              '',
+              '## ✅ Changes',
+              '',
+              commitLines.length > 0
+                ? commitLines.join('\n')
+                : '_No commits found._',
+              '',
+              '## 📁 Modified Files',
+              '',
+              fileSections || '_No files detected._',
+              '',
+              '## 🧪 Testing',
+              '',
+              '- [ ] Unit / domain tests pass',
+              '- [ ] Integration tests pass',
+              '- [ ] Frontend tests pass',
+              '',
+              '## 📋 Checklist',
+              '',
+              '- [ ] Code follows project conventions',
+              '- [ ] Changelog updated',
+              '- [ ] No debug code left',
+            ].join('\n');
+
+            await github.rest.pulls.update({
+              owner,
+              repo,
+              pull_number: prNumber,
+              body,
+            });
+
+            console.log(`PR #${prNumber} description generated successfully.`);
