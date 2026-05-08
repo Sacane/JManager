@@ -1,0 +1,76 @@
+/* ================================================================
+   Design Tokens — CSS Custom Properties
+   Single source of truth for colors, shadows, and surfaces.
+   ================================================================ */
+
+:root {
+  /* Brand palette */
+  --primary:          #822acc;
+  --primary-2:        #722aaa;
+  --primary-3:        #511e78;
+  --primary-4:        #391555;
+  --primary-light:    #9d5dd9;
+  --primary-lighter:  #b88ee0;
+
+  /* Accent */
+  --yellow: #e0d824;
+  --pink:   #f13c69;
+
+  /* Backgrounds */
+  --bg-primary:        #f5f7fa;
+  --bg-secondary:      #ffffff;
+  --bg-tertiary:       #f8fafc;
+  --bg-gradient-from:  #f5f7fa;
+  --bg-gradient-to:    #e8ecf1;
+
+  /* Cards */
+  --card-bg:        #ffffff;
+  --card-hover-bg:  #faf5ff;
+  --card-border:    rgba(130, 42, 204, 0.1);
+
+  /* Text */
+  --text-primary:    #1e293b;
+  --text-secondary:  #64748b;
+  --text-tertiary:   #94a3b8;
+  --text-muted:      #cbd5e1;
+
+  /* Borders */
+  --border-color:  #e2e8f0;
+  --border-light:  #f1f5f9;
+
+  /* Shadows */
+  --shadow-sm:      rgba(0, 0, 0, 0.05);
+  --shadow-md:      rgba(0, 0, 0, 0.08);
+  --shadow-lg:      rgba(0, 0, 0, 0.12);
+  --shadow-purple:  rgba(130, 42, 204, 0.08);
+}
+
+.dark {
+  /* Backgrounds */
+  --bg-primary:        #0f172a;
+  --bg-secondary:      #1e293b;
+  --bg-tertiary:       #334155;
+  --bg-gradient-from:  #0f172a;
+  --bg-gradient-to:    #1e293b;
+
+  /* Cards */
+  --card-bg:        #1e293b;
+  --card-hover-bg:  #2d3b52;
+  --card-border:    rgba(130, 42, 204, 0.2);
+
+  /* Text */
+  --text-primary:    #f1f5f9;
+  --text-secondary:  #cbd5e1;
+  --text-tertiary:   #94a3b8;
+  --text-muted:      #64748b;
+
+  /* Borders */
+  --border-color:  #334155;
+  --border-light:  #475569;
+
+  /* Shadows */
+  --shadow-sm:      rgba(0, 0, 0, 0.3);
+  --shadow-md:      rgba(0, 0, 0, 0.4);
+  --shadow-lg:      rgba(0, 0, 0, 0.5);
+  --shadow-purple:  rgba(130, 42, 204, 0.3);
+}

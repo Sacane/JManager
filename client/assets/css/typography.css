@@ -1,0 +1,118 @@
+/* ================================================================
+   Typography — Base Styles
+   Font: Poppins (loaded via UnoCSS presetWebFonts)
+   Weights: 300 light · 400 regular · 500 medium ·
+            600 semibold · 700 bold · 800 extrabold
+   ================================================================ */
+
+/* --- Base -------------------------------------------------------- */
+
+body,
+html {
+  font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 1rem;         /* 16px base */
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- Headings ---------------------------------------------------- */
+
+h1 {
+  font-size: 1.875rem;  /* 30px */
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  margin: 0 0 0.5em;
+}
+
+h2 {
+  font-size: 1.5rem;    /* 24px */
+  font-weight: 600;
+  line-height: 1.375;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0 0 0.5em;
+}
+
+h3 {
+  font-size: 1.25rem;   /* 20px */
+  font-weight: 600;
+  line-height: 1.375;
+  color: var(--text-primary);
+  margin: 0 0 0.375em;
+}
+
+h4 {
+  font-size: 1.125rem;  /* 18px */
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 0.25em;
+}
+
+h5 {
+  font-size: 1rem;      /* 16px */
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 0.25em;
+}
+
+h6 {
+  font-size: 0.75rem;   /* 12px */
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0 0 0.25em;
+}
+
+/* --- Body text --------------------------------------------------- */
+
+p {
+  font-size: 0.875rem;  /* 14px */
+  font-weight: 400;
+  line-height: 1.625;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* --- Inline elements --------------------------------------------- */
+
+label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+strong,
+b {
+  font-weight: 600;
+}
+
+/* --- Links ------------------------------------------------------- */
+
+a {
+  color: var(--primary-light);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary);
+}
