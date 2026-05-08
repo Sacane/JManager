@@ -3,6 +3,8 @@ name: create-issue
 description: Create an issue in the form of a markdown file with title, description, implementation plan, and Gherkin test scenarios from a functional request. Use when needing structured, testable issues.
 ---
 
+# Create Issue Skill
+
 # Instructions
 1. Extract context and success criteria from the request, then complete the context with the existing feature description in `FEATURES.md` if relevant.
 2. Ask 2-3 questions to clarify the request if necessary

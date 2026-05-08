@@ -1,6 +1,18 @@
 # Changelog
 
-## 2026-05-07
+## 2026-05-08
+
+- **Fix: Daily balance curve now starts from the booklet's actual balance, not from zero**
+  - **Root cause**: `DailyTrendCalculatorImpl` seeded `cumulativeBalance` at `BigDecimal.ZERO`, so the "Solde cumulé" curve on the dashboard represented the net delta over the period rather than the true running account balance.
+  - **Fix — domain layer only** (Approach A from `docs/investigations/daily-balance-curve/REPORT.md`):
+    - `DailyTrendCalculator` interface: added `startingBalance: Amount` parameter to `calculateDailyTrend`.
+    - `DailyTrendCalculatorImpl`: seeds `cumulativeBalance` from `startingBalance.value` instead of `BigDecimal.ZERO`.
+    - `GetDailyTrendStatsService`: computes the starting balance in a new private `computeStartingBalance` function before delegating to the calculator. The formula is `booklet.initialSold + sum of confirmed (non-preview) transactions with date < startDate`, applied per booklet and aggregated across all scoped booklets.
+  - No infrastructure, application, or client changes required — the endpoint contract and response shape are unchanged; only the values of `cumulativeBalance` entries are corrected.
+  - **Tests added/updated** (domain layer, 548 total — 0 failures):
+    - `DailyTrendCalculatorTest`: all existing call sites updated to pass `startingBalance = 0.toAmount()`; 2 new unit tests — *seeds cumulative balance from non-zero starting balance* and *accumulates in-period transactions on top of starting balance*.
+    - `StatsFeatureTest.DailyTrendStatsTest`: 2 new service-level tests — *seeds cumulative balance from pre-period confirmed transactions* and *excludes preview transactions when computing starting balance*.
+
 
 - **Bug fix: Selection amount ("calculator") not visible in sidebar/vertical mode**
   - **Root cause**: In `BookletActionButtons.vue`, the `selectedAmountLabel` (total of selected transaction amounts) was only rendered inside the horizontal-mode badge (`v-if="hasSelection && orientation === 'horizontal'"`). In sidebar mode (`window.innerHeight < 768`), the component renders with `orientation="vertical"` and the `BookletFilterActionBar` is fully hidden (`hideActionButtons=true`), so the amount was never displayed — only the selection count appeared in the vertical chip.

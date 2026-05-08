@@ -118,26 +118,38 @@ application  ──►  domain  ◄──  infrastructure
 
 Whenever implementing a new feature or a fix in backend side, the following order is mandatory:
 
-1. **TDD first, always**:
-   - Start with a failing test (**red**).
-   - Implement the minimum code required to pass (**green**).
-   - Refactor safely without changing behavior (**refactor**).
+1. **TDD first, always — per layer**:
+   - Start with a failing test (**red**). Use the 🔴 context marker.
+   - Implement the minimum code required to pass (**green**). Use the 🟢 context marker.
+   - **Refactor and analyse** once the layer is green (**refactor**). Use the ⚪ context marker.
    - Keep implementation incremental and test-driven at every step.
 
-2. **Start from the domain layer**:
+2. **The refactor phase is NEVER optional** — skipping it after green is a defect in the process.
+   After every green phase, **before moving to the next layer**, you MUST:
+   - Enter the ⚪ phase explicitly (new message with ⚪ as STARTER_CHARACTER).
+   - Run the mandatory quality analysis from `docs/agents/instructions/development-workflow.md` Section 2:
+     - SOLID principles (SRP, OCP, LSP, ISP, DIP)
+     - Design pattern opportunities (describe + wait for confirmation before applying)
+     - Duplication (extract if found)
+     - Naming and readability
+   - Report findings inline, even if the conclusion is "nothing to improve". A silent skip is not allowed.
+   - Apply safe, non-breaking improvements (naming, extraction) immediately.
+   - For structural changes (pattern, abstraction), describe the problem and wait for user confirmation.
+
+3. **Start from the domain layer**:
    - Create or update the domain entity first when needed.
    - Create/update the corresponding domain port (interface contract) first.
    - Adapt/create domain tests first, using in-memory fake implementations to simulate database behavior.
 
-3. **Then implement database/infrastructure (infra => SPI)**:
+4. **Then implement database/infrastructure (infra => SPI)**:
    - Implement the infrastructure adapter for the domain port.
    - Validate behavior with persistence-oriented tests to ensure real database behavior is correct.
 
-4. **Then implement application/API layer (infra => API)**:
+5. **Then implement application/API layer (infra => API)**:
    - Implement API layer changes only after domain and SPI are in place.
    - Add/update API tests to validate status codes and API behavior scope.
 
-5. **Always finish with full-layer validation**:
+6. **Always finish with full-layer validation**:
    - Execute and keep green end-to-end coverage across **API + Domain + Database**.
 
 ### Domain Tests
@@ -210,3 +222,4 @@ You must follow the following guidelines in depends on the contexte you are work
 - Whenever the user asks a technical backend question (REST API, caching, security, PostgreSQL, Spring Boot, observability, performance, migrations) that is NOT about domain business rules, you must load and follow `.github/skills/technical-backend/SKILL.md`
 - Whenever the user asks for a refactoring plan, you must load and follow `.github/skills/refactoring-plan/SKILL.md`
 - Whenever the user asks for a technical analysis report, you must load and follow `.github/skills/technical-analysis/SKILL.md`
+- Whenever the user asks "is it possible to", "how can I", "I'd like to know if", "what would it take to", "could we", "what's the best way to" — or any equivalent feasibility or architectural investigation question — you must load and follow `.github/skills/solution-investigation/SKILL.md`
