@@ -36,6 +36,7 @@ const tags = ref<TagDTO[]>([])
 const isCreationDialogVisible = ref(false)
 const isEditDialogVisible = ref(false)
 const isMobile = ref(false)
+const isSmallDesktop = ref(false)
 const isSidebarMode = ref(false)
 const csvImportDialogRef = ref<any>(null)
 const isMobileMenuOpen = ref(false)
@@ -557,19 +558,29 @@ function isSelected(transaction: DisplayTransaction): boolean {
 function checkMobile() {
   const width = window.innerWidth
   isMobile.value = width <= 768
-  isSidebarMode.value = !isMobile.value && window.innerHeight < 768
+  isSmallDesktop.value = width > 768 && width <= 1440
+  isSidebarMode.value = !isMobile.value && (window.innerHeight < 768 || isSmallDesktop.value)
 }
 
-const bookletTransactionColumns: AppTableColumn[] = [
+const bookletTransactionColumns = computed<AppTableColumn[]>(() => [
   { selectionMode: 'multiple', style: { width: '3rem' } },
   { field: 'date', header: 'Date', sortable: true, style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date' },
-  { field: 'label', header: 'Libellé', sortable: true, style: { minWidth: '300px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'label' },
+  {
+    field: 'label',
+    header: 'Libellé',
+    sortable: true,
+    style: isSmallDesktop.value
+      ? { width: '150px', minWidth: '150px', maxWidth: '150px', textAlign: 'center' }
+      : { minWidth: '300px', textAlign: 'center' },
+    headerClass: 'col-header-center',
+    slotName: 'label',
+  },
   { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'expenses', headerClass: 'col-header-center' },
   { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'income', headerClass: 'col-header-center' },
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px', textAlign: 'center' }, slotName: 'tag', headerSlotName: 'tagFilter' },
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag', headerSlotName: 'subTagFilter' },
   { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions', headerClass: 'col-header-center' },
-]
+])
 
 function openCsvImportDialog() {
   csvImportDialogRef.value?.openDialog()
@@ -711,9 +722,12 @@ onUnmounted(() => {
             </template>
 
             <template #body-label="{ data }">
-              <div class="flex items-center justify-center gap-2">
-                <span class="font-semibold text-[var(--text-primary)]">{{ data.label }}</span>
-                <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm" title="Transaction prévisionnelle" />
+              <div class="flex items-center justify-center gap-2 w-full overflow-hidden">
+                <span
+                  v-tooltip.top="data.label"
+                  class="font-semibold text-[var(--text-primary)] min-w-0 truncate"
+                >{{ data.label }}</span>
+                <i v-if="data.isPreview" class="pi pi-clock text-amber-500 text-sm shrink-0" title="Transaction prévisionnelle" />
               </div>
             </template>
 
@@ -880,7 +894,7 @@ onUnmounted(() => {
           />
           <div class="w-full h-px bg-[var(--card-border)] my-1" />
           <button
-            v-tooltip.right="`Tout (${transactionsCount})`"
+            v-tooltip.right="{ value: `Tout (${transactionsCount})`, pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
             :class="transactionFilter === 'all'
               ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(130,42,204,0.07)]'
@@ -890,7 +904,7 @@ onUnmounted(() => {
             <i class="pi pi-list" />
           </button>
           <button
-            v-tooltip.right="`Confirmées (${transactionsCount - previewTransactionsCount})`"
+            v-tooltip.right="{ value: `Confirmées (${transactionsCount - previewTransactionsCount})`, pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
             :class="transactionFilter === 'confirmed'
               ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'

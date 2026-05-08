@@ -557,4 +557,10 @@ onUnmounted(() => {
     top: 0;
   }
 }
+
+@media (min-width: 769px) and (max-width: 1440px) {
+  .sidebar {
+    width: 220px;
+  }
+}
 </style>
