@@ -103,13 +103,37 @@ watch(selectedTagFilter, (val) => {
 watch(selectedSubTagFilter, (val) => {
   if (val) selectedTagFilter.value = ''
 })
+const transactionTagIds = computed(() => {
+  const ids = new Set<string>()
+  for (const t of actualTransactions.value) {
+    if (t.tagDTO?.tagId) ids.add(t.tagDTO.tagId)
+  }
+  return ids
+})
+const usedParentTagIds = computed(() => {
+  const ids = new Set<string>()
+  for (const tagId of transactionTagIds.value) {
+    const found = tags.value.find(t => t.tagId === tagId)
+    if (found?.parentId) {
+      ids.add(found.parentId)
+    }
+    else if (found && !found.parentId) {
+      ids.add(tagId)
+    }
+  }
+  return ids
+})
 const tagFilterOptions = computed(() => [
   { label: 'Tous les tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
-  ...tags.value.filter(t => !t.parentId).map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
+  ...tags.value
+    .filter(t => !t.parentId && usedParentTagIds.value.has(t.tagId ?? ''))
+    .map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
 ])
 const subTagFilterOptions = computed(() => [
   { label: 'Tous les sous-tags', value: '', colorDTO: null as null | { red: number, green: number, blue: number } },
-  ...tags.value.filter(t => !!t.parentId).map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
+  ...tags.value
+    .filter(t => !!t.parentId && transactionTagIds.value.has(t.tagId ?? ''))
+    .map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
 ])
 const monthOptions = computed(() => useDate().months.map((m: string) => translate(m)))
 const previewTransactionsCount = computed(() => actualTransactions.value.filter(t => t.isPreview).length)
