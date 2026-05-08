@@ -65,6 +65,8 @@ class BookletJpaRepositoryAdapter(
             }
         }.toModel()
     }
+    @Transactional
+    @CacheEvict(cacheNames = ["allBooklets"], allEntries = true)
     override fun update(booklet: Booklet) {
         val id = booklet.id ?: return
         bookletRepository.update(booklet.label, booklet.amount.value, id)
