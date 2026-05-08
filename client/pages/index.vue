@@ -1055,8 +1055,8 @@ async function loadDashboardData() {
         )
       }
 
-      if (!selectedBookletId.value && booklets.value.length > 0) {
-        const firstBookletId = booklets.value[0]?.id
+      if (!selectedBookletId.value && orderedBooklets.value.length > 0) {
+        const firstBookletId = orderedBooklets.value[0]?.id
         selectedBookletId.value = firstBookletId ?? null
       }
 
@@ -1211,7 +1211,7 @@ watch(selectedBookletId, () => {
         </div>
         <div class="flex items-center gap-3 flex-wrap">
           <select v-model="selectedBookletId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
-            <option v-for="booklet in booklets" :key="booklet.id" :value="booklet.id">
+            <option v-for="booklet in orderedBooklets" :key="booklet.id" :value="booklet.id">
               {{ booklet.label }}
             </option>
           </select>
