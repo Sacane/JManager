@@ -1,56 +1,962 @@
 <script setup lang="ts">
+import type { Ref } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
+import {
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+} from 'chart.js'
+import { addDays, addMonths, endOfMonth, format, isAfter, startOfMonth, subMonths } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import { onBeforeUnmount } from 'vue'
+import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import useStats from '~/composables/useStats'
+import useUserSettings from '~/composables/useUserSettings'
+import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
+import { resolveMonthlyCycleRangeForTargetMonth, resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
+import { capitalizeFirst, rgbToHex, toReadableTagTextColor } from '~/utils/util'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+)
 
 definePageMeta({
-  layout: 'default',
+  layout: 'sidebar-layout',
   middleware: [authMiddleware],
 })
 
 const { user } = useAuth()
-const { createBooklet, fetch } = useBooklet()
-const isBookletDialogOpen = ref(false)
+const { createBooklet, fetch: fetchBooklets } = useBooklet()
+const { getRegularTransaction } = useRegularTransaction()
+const { getAllTags } = useTag()
+const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions, getDailyTrendStats } = useStats()
+const { getSettings: getUserSettings } = useUserSettings()
+const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
+const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByBooklet.v1'
 
+// Refs
+const isBookletDialogOpen = ref(false)
 const booklets = ref<BookletDTO[]>([])
-const sum = computed(() => booklets.value.reduce((acc: number, curr: BookletDTO) => acc + Number.parseFloat(curr.amount.toString()), 0.00))
 
-const { orderedItems: orderedBooklets, draggedIndex: indexDraggedIndex, dragOverIndex: indexDragOverIndex, onDragStart: onBookletDragStart, onDragOver: onBookletDragOver, onDrop: onBookletDrop, onDragEnd: onBookletDragEnd } = useBookletOrder(booklets)
+const { orderedItems: orderedBooklets, draggedIndex: dashboardDraggedIndex, dragOverIndex: dashboardDragOverIndex, onDragStart: onBookletDragStart, onDragOver: onBookletDragOver, onDrop: onBookletDrop, onDragEnd: onBookletDragEnd } = useBookletOrder(booklets)
+const regularTransactions = ref<RegularTransactionDTO[]>([])
+const tags = ref<TagDTO[]>([])
+const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
+const previousCategoryDistribution = ref<CategoryDistributionDTO | null>(null)
+const trendStats = ref<TrendStatsDTO | null>(null)
+const previousTrendStats = ref<TrendStatsDTO | null>(null)
+const evolutionTrendStats = ref<TrendStatsDTO | null>(null)
+const dailyTrendStats = ref<DailyTrendStatsDTO | null>(null)
+const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
+const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
+const selectedBookletId = ref<string | number | null>(null)
+const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
+const periodAnchorDate = ref(new Date())
+const hasInitializedDashboard = ref(false)
+const budgetTargetsByBooklet = ref<Record<string, number>>({})
+const budgetTargetInput = ref<number | undefined>(undefined)
+const projectionWindowDays = ref(15)
+const bookletMonthlyCycleById = ref<Record<string, { startDay: number, endDay: number | null }>>({})
+const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
+const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
-const heroRef = ref(null)
-const featuresRef = ref(null)
-const statsRef = ref(null)
-const isHeroVisible = ref(false)
-const isFeaturesVisible = ref(false)
-const isStatsVisible = ref(false)
+// Animation refs
+const overviewRef = ref(null)
+const chartsRef = ref(null)
+const isOverviewVisible = ref(false)
+const isChartsVisible = ref(false)
 
-useIntersectionObserver(heroRef, ([entry]) => {
+// Doughnut slice toggle state
+const selectedSliceIndex = ref<number | null>(null)
+const sliceDisplayMode = ref<'amount' | 'percentage'>('amount')
+const selectedParentCategoryIndex = ref<number | null>(null)
+const hiddenDoughnutIndices = ref(new Set<number>())
+
+// Y-axis scale overrides (null = auto-scale, non-null = custom bounds)
+const lineChartYMin = ref<number | null>(null)
+const lineChartYMax = ref<number | null>(null)
+const barChartYMin = ref<number | null>(null)
+const barChartYMax = ref<number | null>(null)
+
+// Setup intersection observers
+useIntersectionObserver(overviewRef, ([entry]) => {
   if (entry?.isIntersecting) {
-    isHeroVisible.value = true
+    isOverviewVisible.value = true
   }
 }, { threshold: 0.1 })
 
-useIntersectionObserver(featuresRef, ([entry]) => {
+useIntersectionObserver(chartsRef, ([entry]) => {
   if (entry?.isIntersecting) {
-    isFeaturesVisible.value = true
+    isChartsVisible.value = true
   }
-}, { threshold: 0.2 })
+}, { threshold: 0.1 })
 
-useIntersectionObserver(statsRef, ([entry]) => {
-  if (entry?.isIntersecting) {
-    isStatsVisible.value = true
+// Computed values
+const totalBalance = computed(() =>
+  booklets.value.reduce((acc, curr) => acc + Number.parseFloat(curr.amount.toString()), 0.00),
+)
+
+const selectedBooklet = computed(() =>
+  booklets.value.find(booklet => booklet.id === selectedBookletId.value) ?? null,
+)
+
+const scopedBookletId = computed(() => {
+  if (selectedBookletId.value === null) {
+    return undefined
   }
-}, { threshold: 0.2 })
 
+  const raw = String(selectedBookletId.value)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(raw) ? raw : undefined
+})
+
+const selectedBookletBalance = computed(() => {
+  if (!selectedBooklet.value) {
+    return totalBalance.value
+  }
+  return Number.parseFloat(selectedBooklet.value.amount.toString())
+})
+
+const selectedMonthlyPeriodStartDay = computed(() => {
+  if (!selectedBookletId.value) {
+    return 1
+  }
+
+  const configured = bookletMonthlyCycleById.value[String(selectedBookletId.value)]?.startDay
+  if (!configured) {
+    return 1
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(configured)))
+})
+
+const selectedMonthlyPeriodEndDay = computed(() => {
+  if (!selectedBookletId.value) {
+    return null
+  }
+
+  const configured = bookletMonthlyCycleById.value[String(selectedBookletId.value)]?.endDay
+  if (configured === null || configured === undefined) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(configured)))
+})
+
+const projectionWindowLabel = computed(() => `${projectionWindowDays.value} jours`)
+
+function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number | null {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null
+  }
+
+  return Math.min(31, Math.max(1, Math.trunc(value)))
+}
+
+function resolveCustomMonthlyRange(anchorDate: Date, cycleStartDay: number, cycleEndDay: number | null) {
+  return resolveMonthlyCycleRangeFromAnchor(anchorDate, cycleStartDay, cycleEndDay)
+}
+
+function resolvePreviousCustomMonthlyRange(startDate: Date, cycleStartDay: number, cycleEndDay: number | null) {
+  const dayBeforeCurrentRange = addDays(startDate, -1)
+  return resolveCustomMonthlyRange(dayBeforeCurrentRange, cycleStartDay, cycleEndDay)
+}
+
+function normalizeProjectionWindowDays(value: number | undefined): number {
+  if (value === undefined || Number.isNaN(value)) {
+    return 15
+  }
+
+  return Math.min(60, Math.max(7, Math.trunc(value)))
+}
+
+const selectedPeriodLabel = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    return format(periodAnchorDate.value, 'MMMM yyyy', { locale: fr })
+  }
+  if (selectedPeriod.value === 'quarter') {
+    const start = subMonths(periodAnchorDate.value, 2)
+    return `${format(start, 'MMM', { locale: fr })} - ${format(periodAnchorDate.value, 'MMM yyyy', { locale: fr })}`
+  }
+  const yearStart = subMonths(periodAnchorDate.value, 11)
+  return `${format(yearStart, 'MMM yyyy', { locale: fr })} - ${format(periodAnchorDate.value, 'MMM yyyy', { locale: fr })}`
+})
+
+const periodMetricLabel = computed(() =>
+  selectedPeriod.value === 'month' ? 'du mois' : 'de la période',
+)
+
+const currentDateRange = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    return resolveMonthlyCycleRangeForTargetMonth(
+      periodAnchorDate.value.getFullYear(),
+      periodAnchorDate.value.getMonth() + 1,
+      selectedMonthlyPeriodStartDay.value,
+      selectedMonthlyPeriodEndDay.value,
+    )
+  }
+
+  if (selectedPeriod.value === 'quarter') {
+    return {
+      start: startOfMonth(subMonths(periodAnchorDate.value, 2)),
+      end: endOfMonth(periodAnchorDate.value),
+    }
+  }
+
+  return {
+    start: startOfMonth(subMonths(periodAnchorDate.value, 11)),
+    end: endOfMonth(periodAnchorDate.value),
+  }
+})
+
+const previousDateRange = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    return resolvePreviousCustomMonthlyRange(
+      currentDateRange.value.start,
+      selectedMonthlyPeriodStartDay.value,
+      selectedMonthlyPeriodEndDay.value,
+    )
+  }
+
+  if (selectedPeriod.value === 'quarter') {
+    return {
+      start: startOfMonth(subMonths(periodAnchorDate.value, 5)),
+      end: endOfMonth(subMonths(periodAnchorDate.value, 3)),
+    }
+  }
+
+  return {
+    start: startOfMonth(subMonths(periodAnchorDate.value, 23)),
+    end: endOfMonth(subMonths(periodAnchorDate.value, 12)),
+  }
+})
+
+const evolutionDateRange = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    // For month, daily trends are used instead of multi-month evolution
+    return currentDateRange.value
+  }
+
+  return {
+    start: currentDateRange.value.start,
+    end: currentDateRange.value.end,
+  }
+})
+
+const currentDateRangeLabel = computed(() =>
+  `${format(currentDateRange.value.start, 'dd MMM', { locale: fr })} - ${format(currentDateRange.value.end, 'dd MMM yyyy', { locale: fr })}`,
+)
+
+const monthlyExpenses = computed(() => {
+  if (!trendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return trendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.expenses),
+    0,
+  )
+})
+
+const monthlyIncome = computed(() => {
+  if (!trendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return trendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.income),
+    0,
+  )
+})
+
+const previousPeriodExpenses = computed(() => {
+  if (!previousTrendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return previousTrendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.expenses),
+    0,
+  )
+})
+
+const previousPeriodIncome = computed(() => {
+  if (!previousTrendStats.value?.monthlyTrends.length) {
+    return 0
+  }
+  return previousTrendStats.value.monthlyTrends.reduce(
+    (acc, trend) => acc + Number.parseFloat(trend.income),
+    0,
+  )
+})
+
+const expensesGrowth = computed(() => {
+  if (previousPeriodExpenses.value === 0) {
+    return 0
+  }
+
+  return ((monthlyExpenses.value - previousPeriodExpenses.value) / previousPeriodExpenses.value * 100)
+})
+
+const incomeGrowth = computed(() => {
+  if (previousPeriodIncome.value === 0) {
+    return 0
+  }
+
+  return ((monthlyIncome.value - previousPeriodIncome.value) / previousPeriodIncome.value * 100)
+})
+
+const balanceGrowth = computed(() => {
+  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
+
+  if (previousBalance === 0) {
+    return 0
+  }
+
+  return ((currentBalance - previousBalance) / Math.abs(previousBalance) * 100)
+})
+
+const savingsRate = computed(() => {
+  if (monthlyIncome.value === 0 || monthlyExpenses.value > monthlyIncome.value) {
+    return 0
+  }
+
+  return ((monthlyIncome.value - monthlyExpenses.value) / monthlyIncome.value * 100)
+})
+
+const upcomingRegularPayments = computed(() =>
+  previsionalTransactions.value?.regularTransactions.slice(0, 5) || [],
+)
+
+const upcomingNonRegularPayments = computed(() =>
+  previsionalTransactions.value?.nonRegularTransactions.slice(0, 5) || [],
+)
+
+const totalPrevisionalTransactions = computed(() =>
+  previsionalTransactions.value?.transactions.length || 0,
+)
+
+const totalRegularUpcoming = computed(() =>
+  Number.parseFloat(previsionalTransactions.value?.totalRegularAmount || '0'),
+)
+
+const totalNonRegularUpcoming = computed(() =>
+  Number.parseFloat(previsionalTransactions.value?.totalNonRegularAmount || '0'),
+)
+
+const totalUpcomingNet = computed(() => totalRegularUpcoming.value + totalNonRegularUpcoming.value)
+
+const selectedBookletBudgetKey = computed(() => {
+  if (selectedBookletId.value === null || selectedBookletId.value === undefined) {
+    return null
+  }
+
+  return String(selectedBookletId.value)
+})
+
+const selectedBudgetTarget = computed(() => {
+  if (!selectedBookletBudgetKey.value) {
+    return 0
+  }
+
+  return budgetTargetsByBooklet.value[selectedBookletBudgetKey.value] ?? 0
+})
+
+const isBudgetConfigured = computed(() => selectedBudgetTarget.value > 0)
+
+const projectedRemainingExpenses = computed(() =>
+  Number.parseFloat(periodProjectionTransactions.value?.totalExpenses || '0'),
+)
+
+const projectedPeriodExpenses = computed(() =>
+  monthlyExpenses.value + projectedRemainingExpenses.value,
+)
+
+const budgetDelta = computed(() => selectedBudgetTarget.value - monthlyExpenses.value)
+
+const projectedBudgetDelta = computed(() => selectedBudgetTarget.value - projectedPeriodExpenses.value)
+
+const budgetConsumptionRate = computed(() => {
+  if (!isBudgetConfigured.value) {
+    return 0
+  }
+
+  return (monthlyExpenses.value / selectedBudgetTarget.value) * 100
+})
+
+const projectionPeriodEnded = computed(() => isAfter(new Date(), currentDateRange.value.end))
+
+const periodProjectionNet = computed(() => {
+  if (!periodProjectionTransactions.value) {
+    return 0
+  }
+
+  return Number.parseFloat(periodProjectionTransactions.value.totalAmount || '0')
+})
+
+const projectedEndPeriodBalance = computed(() =>
+  selectedBookletBalance.value + periodProjectionNet.value,
+)
+
+const dashboardAlerts = computed(() => {
+  const alerts: Array<{ key: string, level: 'danger' | 'warning' | 'info', title: string, detail: string }> = []
+
+  if (monthlyExpenses.value > monthlyIncome.value && monthlyIncome.value > 0) {
+    alerts.push({
+      key: 'overspending',
+      level: 'danger',
+      title: 'Dépenses supérieures aux revenus',
+      detail: `Le déficit de la période est de ${(monthlyExpenses.value - monthlyIncome.value).toFixed(2)} €`,
+    })
+  }
+
+  if (totalUpcomingNet.value < 0) {
+    alerts.push({
+      key: 'upcoming-negative',
+      level: 'warning',
+      title: `Fenêtre ${projectionWindowDays.value} jours négative`,
+      detail: `Impact prévisionnel: ${totalUpcomingNet.value.toFixed(2)} €`,
+    })
+  }
+
+  if (totalPrevisionalTransactions.value === 0) {
+    alerts.push({
+      key: 'no-upcoming',
+      level: 'info',
+      title: 'Aucun mouvement à venir',
+      detail: `Aucune transaction prévue dans les ${projectionWindowDays.value} prochains jours`,
+    })
+  }
+
+  if (isBudgetConfigured.value && projectedBudgetDelta.value < 0) {
+    alerts.push({
+      key: 'budget-overrun',
+      level: 'warning',
+      title: 'Budget projeté dépassé',
+      detail: `Dépassement estimé: ${Math.abs(projectedBudgetDelta.value).toFixed(2)} €`,
+    })
+  }
+
+  return alerts.slice(0, 3)
+})
+
+// Chart data
+const expensesTrendData = computed(() => {
+  if (selectedPeriod.value === 'month') {
+    // Daily granularity for month view
+    if (!dailyTrendStats.value?.dailyTrends.length) {
+      return { labels: [], datasets: [] }
+    }
+
+    const trends = dailyTrendStats.value.dailyTrends
+    const labels = trends.map((trend) => {
+      const [year, month, day] = trend.date.split('-').map(Number)
+      const d = new Date(year, month - 1, day)
+      return format(d, 'dd MMM', { locale: fr })
+    })
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Dépenses',
+          data: trends.map(t => Number.parseFloat(t.expenses)),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Revenus',
+          data: trends.map(t => Number.parseFloat(t.income)),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Solde cumulé',
+          data: trends.map(t => Number.parseFloat(t.cumulativeBalance)),
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.05)',
+          tension: 0.4,
+          fill: false,
+          borderDash: [5, 5],
+        },
+      ],
+    }
+  }
+
+  // Monthly granularity for quarter/year
+  if (!evolutionTrendStats.value?.monthlyTrends.length) {
+    return { labels: [], datasets: [] }
+  }
+
+  const sortedTrends = evolutionTrendStats.value.monthlyTrends.toSorted((a, b) => {
+    if (a.year !== b.year) {
+      return a.year - b.year
+    }
+    return a.month - b.month
+  })
+
+  const labels = sortedTrends.map((trend) => {
+    const date = new Date(trend.year, trend.month - 1)
+    return format(date, 'MMM', { locale: fr })
+  })
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Dépenses',
+        data: sortedTrends.map(trend => Number.parseFloat(trend.expenses)),
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Revenus',
+        data: sortedTrends.map(trend => Number.parseFloat(trend.income)),
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  }
+})
+
+const categoryExpensesData = computed(() => {
+  if (!categoryDistribution.value?.categories.length) {
+    return {
+      labels: [],
+      datasets: [{ data: [], backgroundColor: [], borderWidth: 0 }],
+    }
+  }
+
+  const sortedCategories = categoryDistribution.value.categories.toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
+
+  return {
+    labels: sortedCategories.map(cat => cat.tagLabel),
+    datasets: [
+      {
+        data: sortedCategories.map(cat => Number.parseFloat(cat.totalAmount)),
+        backgroundColor: sortedCategories.map(cat =>
+          `rgb(${cat.colorDTO.red}, ${cat.colorDTO.green}, ${cat.colorDTO.blue})`,
+        ),
+        borderWidth: 0,
+      },
+    ],
+  }
+})
+
+const doughnutCenterLabel = computed(() => {
+  if (selectedSliceIndex.value === null) {
+    return null
+  }
+
+  const data = categoryExpensesData.value.datasets[0]?.data ?? []
+  const value = data[selectedSliceIndex.value]
+  if (value === undefined) {
+    return null
+  }
+
+  if (sliceDisplayMode.value === 'percentage') {
+    const total = data.reduce((a: number, b: number, i: number) =>
+      hiddenDoughnutIndices.value.has(i) ? a : a + b, 0)
+    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0'
+    return `${percentage}%`
+  }
+
+  return `${value.toFixed(2)} €`
+})
+
+function onDoughnutClick(_event: any, elements: any[]) {
+  if (!elements.length) {
+    return
+  }
+
+  const clickedIndex = elements[0].index
+  const sortedCategories = categoryDistribution.value?.categories?.toSorted(
+    (a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount),
+  ) ?? []
+  const clickedCategory = sortedCategories[clickedIndex]
+
+  // Handle secondary chart toggle for parent categories with sub-tags
+  if (clickedCategory?.subCategories?.length) {
+    if (selectedParentCategoryIndex.value === clickedIndex) {
+      selectedParentCategoryIndex.value = null
+    } else {
+      selectedParentCategoryIndex.value = clickedIndex
+    }
+  } else {
+    selectedParentCategoryIndex.value = null
+  }
+
+  // Handle center label toggle (existing behavior)
+  if (selectedSliceIndex.value === clickedIndex) {
+    sliceDisplayMode.value = sliceDisplayMode.value === 'amount' ? 'percentage' : 'amount'
+  } else {
+    selectedSliceIndex.value = clickedIndex
+    sliceDisplayMode.value = 'amount'
+  }
+}
+
+const selectedParentCategory = computed(() => {
+  if (selectedParentCategoryIndex.value === null) return null
+  const sorted = categoryDistribution.value?.categories?.toSorted(
+    (a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount),
+  ) ?? []
+  return sorted[selectedParentCategoryIndex.value] ?? null
+})
+
+const secondaryChartData = computed(() => {
+  const parent = selectedParentCategory.value
+  if (!parent?.subCategories?.length) {
+    return null
+  }
+
+  const subs = parent.subCategories
+  return {
+    labels: subs.map(s => s.tagLabel),
+    datasets: [
+      {
+        data: subs.map(s => Number.parseFloat(s.totalAmount)),
+        backgroundColor: subs.map(s =>
+          `rgb(${s.colorDTO.red}, ${s.colorDTO.green}, ${s.colorDTO.blue})`,
+        ),
+        borderWidth: 0,
+      },
+    ],
+  }
+})
+
+// Responsive behavior for legends and chart sizing
+const isSmallScreen = ref(false)
+
+const secondaryDoughnutOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+      labels: {
+        padding: 10,
+        usePointStyle: true,
+        font: {
+          size: isSmallScreen.value ? 10 : 11,
+        },
+      },
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      padding: 10,
+      borderRadius: 8,
+      callbacks: {
+        label: (context: any) => {
+          const label = context.label || ''
+          const value = context.parsed || 0
+          const total = context.dataset.data.reduce((a: number, b: number, i: number) =>
+            context.chart?.getDataVisibility(i) === false ? a : a + b, 0)
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
+          return `${label}: ${value.toFixed(2)} € (${percentage}%)`
+        },
+      },
+    },
+  },
+  cutout: '60%',
+}))
+
+const topTagsInsights = computed(() => {
+  const currentCategories = categoryDistribution.value?.categories ?? []
+  if (currentCategories.length === 0) {
+    return []
+  }
+
+  const previousMap = new Map(
+    (previousCategoryDistribution.value?.categories ?? []).map(category => [
+      category.tagId ?? category.tagLabel,
+      Number.parseFloat(category.totalAmount),
+    ]),
+  )
+
+  return currentCategories
+    .toSorted((a, b) => Number.parseFloat(b.totalAmount) - Number.parseFloat(a.totalAmount))
+    .map((category) => {
+      const currentAmount = Number.parseFloat(category.totalAmount)
+      const previousAmount = previousMap.get(category.tagId ?? category.tagLabel) ?? 0
+      const variation = previousAmount === 0
+        ? null
+        : ((currentAmount - previousAmount) / previousAmount) * 100
+
+      return {
+        tagLabel: category.tagLabel,
+        currentAmount,
+        percentage: category.percentage,
+        variation,
+        colorDTO: category.colorDTO,
+      }
+    })
+})
+
+const monthlyComparisonData = computed(() => {
+  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
+
+  return {
+    labels: ['Revenus', 'Dépenses', 'Solde net'],
+    datasets: [
+      {
+        label: 'Période active',
+        data: [monthlyIncome.value, monthlyExpenses.value, currentBalance],
+        backgroundColor: '#822acc',
+        borderRadius: 8,
+      },
+      {
+        label: 'Période précédente',
+        data: [previousPeriodIncome.value, previousPeriodExpenses.value, previousBalance],
+        backgroundColor: '#b1aeae',
+        borderRadius: 8,
+      },
+    ],
+  }
+})
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+      labels: {
+        padding: 15,
+        usePointStyle: true,
+        font: {
+          size: 12,
+        },
+      },
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      padding: 12,
+      borderRadius: 8,
+      titleFont: {
+        size: 14,
+      },
+      bodyFont: {
+        size: 13,
+      },
+    },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      grid: {
+        color: 'rgba(0, 0, 0, 0.05)',
+      },
+    },
+    x: {
+      grid: {
+        display: false,
+      },
+    },
+  },
+}
+
+const doughnutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'right' as const,
+      labels: {
+        padding: 15,
+        usePointStyle: true,
+        font: {
+          size: 12,
+        },
+      },
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      padding: 12,
+      borderRadius: 8,
+      callbacks: {
+        label: (context: any) => {
+          const label = context.label || ''
+          const value = context.parsed || 0
+          const total = context.dataset.data.reduce((a: number, b: number, i: number) =>
+            hiddenDoughnutIndices.value.has(i) ? a : a + b, 0)
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0
+          return `${label}: ${value.toFixed(2)} € (${percentage}%)`
+        },
+      },
+    },
+  },
+  cutout: '65%',
+}
+
+function updateIsSmallScreen() {
+  if (typeof window !== 'undefined') {
+    isSmallScreen.value = window.innerWidth <= 640
+  }
+}
+
+// computed options factory — injects custom Y-axis bounds when set
+function makeChartOptions(yMin: Ref<number | null>, yMax: Ref<number | null>) {
+  return computed(() => {
+    const opts = JSON.parse(JSON.stringify(chartOptions))
+    opts.plugins = opts.plugins || {}
+    opts.plugins.legend = opts.plugins.legend || {}
+    opts.plugins.legend.position = 'bottom'
+    if (yMin.value !== null && yMax.value !== null) {
+      opts.scales.y.min = yMin.value
+      opts.scales.y.max = yMax.value
+      opts.scales.y.beginAtZero = false
+    }
+    return opts
+  })
+}
+
+const lineChartOptionsComputed = makeChartOptions(lineChartYMin, lineChartYMax)
+const barChartOptionsComputed = makeChartOptions(barChartYMin, barChartYMax)
+
+const doughnutOptionsComputed = computed(() => {
+  return {
+    ...doughnutOptions,
+    plugins: {
+      ...doughnutOptions.plugins,
+      legend: {
+        ...doughnutOptions.plugins.legend,
+        position: 'bottom' as const,
+        labels: {
+          ...doughnutOptions.plugins.legend.labels,
+          font: {
+            ...doughnutOptions.plugins.legend.labels.font,
+            size: isSmallScreen.value ? 11 : 12,
+          },
+        },
+        onClick: (e: any, legendItem: any, legend: any) => {
+          const index = legendItem.index as number
+          const chart = legend.chart
+          chart.toggleDataVisibility(index)
+          chart.update()
+          const newSet = new Set(hiddenDoughnutIndices.value)
+          if (!chart.getDataVisibility(index)) {
+            newSet.add(index)
+          } else {
+            newSet.delete(index)
+          }
+          hiddenDoughnutIndices.value = newSet
+          if (selectedSliceIndex.value !== null && newSet.has(selectedSliceIndex.value)) {
+            selectedSliceIndex.value = null
+          }
+        },
+      },
+    },
+    onClick: onDoughnutClick,
+  }
+})
+
+// --- Y-axis wheel zoom ---
+// Multiplicative factor per wheel step: zoom-in shrinks range, zoom-out expands it.
+// Using a factor means one zoom-in followed by one zoom-out returns to the exact same range.
+const CHART_ZOOM_FACTOR = 0.8
+
+function computeDataRange(chartData: { datasets: { data: number[] }[] }): { min: number, max: number } | null {
+  const allValues = chartData.datasets.flatMap(ds => ds.data).filter(v => Number.isFinite(v))
+  if (allValues.length === 0) return null
+  const dataMin = Math.min(...allValues)
+  const dataMax = Math.max(...allValues)
+  if (dataMax <= dataMin) return null
+  const padding = (dataMax - dataMin) * 0.1
+  return { min: dataMin - padding, max: dataMax + padding }
+}
+
+function applyWheelToScale(
+  yMin: Ref<number | null>,
+  yMax: Ref<number | null>,
+  chartData: { datasets: { data: number[] }[] },
+  deltaY: number,
+): void {
+  const dataRange = computeDataRange(chartData)
+  if (!dataRange) return
+
+  if (yMin.value === null || yMax.value === null) {
+    yMin.value = dataRange.min
+    yMax.value = dataRange.max
+  }
+
+  const center = (yMin.value + yMax.value) / 2
+  const halfRange = (yMax.value - yMin.value) / 2
+  if (halfRange <= 0) return
+
+  const zoomIn = deltaY < 0
+  const factor = zoomIn ? CHART_ZOOM_FACTOR : (1 / CHART_ZOOM_FACTOR)
+  const newHalfRange = halfRange * factor
+
+  // Bounds: do not zoom in beyond 5% of the data span, nor zoom out beyond 4× the data span
+  const dataSpan = dataRange.max - dataRange.min
+  const minHalfRange = dataSpan * 0.025
+  const maxHalfRange = dataSpan * 2
+
+  const clampedHalfRange = Math.min(maxHalfRange, Math.max(minHalfRange, newHalfRange))
+
+  yMin.value = center - clampedHalfRange
+  yMax.value = center + clampedHalfRange
+}
+
+function onLineChartWheel(event: WheelEvent): void {
+  applyWheelToScale(lineChartYMin, lineChartYMax, expensesTrendData.value, event.deltaY)
+}
+
+function onBarChartWheel(event: WheelEvent): void {
+  applyWheelToScale(barChartYMin, barChartYMax, monthlyComparisonData.value, event.deltaY)
+}
+
+if (typeof window !== 'undefined') {
+  updateIsSmallScreen()
+  window.addEventListener('resize', updateIsSmallScreen)
+}
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateIsSmallScreen)
+  }
+})
+
+// Functions
 function handleBookletCreation(booklet: { label: string, digit: number }) {
   createBooklet(booklet.label, booklet.digit, '€')
     .then((acc) => {
-      if (booklets.value.length < 3) {
+      if (booklets.value.length < 10) {
         booklets.value.push(acc)
       }
       toast.success('Le compte a bien été créé')
+      navigateTo(`/booklet/${acc.id}`)
     })
     .catch(err => toast.errorAxios(err))
 }
@@ -59,270 +965,866 @@ function cancel() {
   isBookletDialogOpen.value = false
 }
 
+function loadBudgetTargets() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(BUDGET_STORAGE_KEY)
+    if (!rawValue) {
+      budgetTargetsByBooklet.value = {}
+      return
+    }
+
+    const parsed = JSON.parse(rawValue)
+    if (parsed && typeof parsed === 'object') {
+      budgetTargetsByBooklet.value = parsed as Record<string, number>
+    }
+  } catch (error) {
+    console.error('Unable to load budget targets', error)
+    budgetTargetsByBooklet.value = {}
+  }
+}
+
+function persistBudgetTargets() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetTargetsByBooklet.value))
+}
+
+function syncBudgetInputFromSelection() {
+  if (!selectedBookletBudgetKey.value) {
+    budgetTargetInput.value = undefined
+    return
+  }
+
+  const configuredBudget = budgetTargetsByBooklet.value[selectedBookletBudgetKey.value]
+  budgetTargetInput.value = configuredBudget && configuredBudget > 0 ? configuredBudget : undefined
+}
+
+function saveBudgetTarget() {
+  if (!selectedBookletBudgetKey.value) {
+    return
+  }
+
+  const nextValue = Number(budgetTargetInput.value ?? 0)
+  if (Number.isNaN(nextValue) || nextValue <= 0) {
+    const { [selectedBookletBudgetKey.value]: _, ...remainingBudgets } = budgetTargetsByBooklet.value
+    budgetTargetsByBooklet.value = remainingBudgets
+    budgetTargetInput.value = undefined
+    persistBudgetTargets()
+    return
+  }
+
+  budgetTargetsByBooklet.value = {
+    ...budgetTargetsByBooklet.value,
+    [selectedBookletBudgetKey.value]: Number(nextValue.toFixed(2)),
+  }
+  budgetTargetInput.value = Number(nextValue.toFixed(2))
+  persistBudgetTargets()
+}
+
+async function loadDashboardData() {
+  await withLoading(async () => {
+    try {
+      // Load basic data
+      const [bookletsData, regularTransData, tagsData, settingsData] = await Promise.all([
+        fetchBooklets().catch(() => []),
+        getRegularTransaction().catch(() => []),
+        getAllTags().catch(() => []),
+        getUserSettings().catch(() => null),
+      ])
+
+      booklets.value = Array.isArray(bookletsData) ? bookletsData : []
+      regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
+      tags.value = Array.isArray(tagsData) ? tagsData : []
+
+      if (settingsData) {
+        projectionWindowDays.value = normalizeProjectionWindowDays(settingsData.projectionWindowDays)
+        bookletMonthlyCycleById.value = Object.fromEntries(
+          settingsData.bookletCycles.map((cycle: BookletMonthlyCycleDTO) => [
+            cycle.bookletId,
+            {
+              startDay: Math.min(31, Math.max(1, Math.trunc(cycle.monthlyPeriodStartDay))),
+              endDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
+            },
+          ]),
+        )
+      }
+
+      if (!selectedBookletId.value && booklets.value.length > 0) {
+        const firstBookletId = booklets.value[0]?.id
+        selectedBookletId.value = firstBookletId ?? null
+      }
+
+      await loadStatsData()
+      hasInitializedDashboard.value = true
+    } catch (error) {
+      toast.error('Erreur lors du chargement des données')
+      console.error(error)
+    }
+  }, dashboardLoadingScope)
+}
+
+async function loadStatsData() {
+  const startDate = format(currentDateRange.value.start, 'yyyy-MM-dd')
+  const endDate = format(currentDateRange.value.end, 'yyyy-MM-dd')
+  const previousStartDate = format(previousDateRange.value.start, 'yyyy-MM-dd')
+  const previousEndDate = format(previousDateRange.value.end, 'yyyy-MM-dd')
+  const evolutionStartDate = format(evolutionDateRange.value.start, 'yyyy-MM-dd')
+  const evolutionEndDate = format(evolutionDateRange.value.end, 'yyyy-MM-dd')
+
+  const upcomingStart = new Date()
+  const upcomingEnd = addDays(upcomingStart, projectionWindowDays.value)
+  const upcomingStartDate = format(upcomingStart, 'yyyy-MM-dd')
+  const upcomingEndDate = format(upcomingEnd, 'yyyy-MM-dd')
+
+  const now = new Date()
+  const projectionStart = isAfter(currentDateRange.value.start, now) ? currentDateRange.value.start : now
+  const projectionEnd = currentDateRange.value.end
+  const shouldLoadPeriodProjection = !isAfter(projectionStart, projectionEnd)
+  const periodProjectionPromise = shouldLoadPeriodProjection
+    ? getPrevisionalTransactions(
+        format(projectionStart, 'yyyy-MM-dd'),
+        format(projectionEnd, 'yyyy-MM-dd'),
+        scopedBookletId.value,
+      ).catch(() => null)
+    : Promise.resolve(null)
+
+  const [categoryData, previousCategoryData, trendsData, previousTrendsData, evolutionTrendsData, previsionalData, periodProjectionData, dailyTrendsData] = await Promise.all([
+    getCategoryDistribution({
+      bookletId: scopedBookletId.value,
+      startDate,
+      endDate,
+    }).catch(() => null),
+    getCategoryDistribution({
+      bookletId: scopedBookletId.value,
+      startDate: previousStartDate,
+      endDate: previousEndDate,
+    }).catch(() => null),
+    getTrendStats({
+      bookletId: scopedBookletId.value,
+      startDate,
+      endDate,
+    }).catch(() => null),
+    getTrendStats({
+      bookletId: scopedBookletId.value,
+      startDate: previousStartDate,
+      endDate: previousEndDate,
+    }).catch(() => null),
+    selectedPeriod.value !== 'month'
+      ? getTrendStats({
+          bookletId: scopedBookletId.value,
+          startDate: evolutionStartDate,
+          endDate: evolutionEndDate,
+        }).catch(() => null)
+      : Promise.resolve(null),
+    getPrevisionalTransactions(upcomingStartDate, upcomingEndDate, scopedBookletId.value).catch(() => null),
+    periodProjectionPromise,
+    selectedPeriod.value === 'month'
+      ? getDailyTrendStats(startDate, endDate, scopedBookletId.value).catch(() => null)
+      : Promise.resolve(null),
+  ])
+
+  categoryDistribution.value = categoryData
+  previousCategoryDistribution.value = previousCategoryData
+  trendStats.value = trendsData
+  previousTrendStats.value = previousTrendsData
+  evolutionTrendStats.value = evolutionTrendsData
+  dailyTrendStats.value = dailyTrendsData
+  previsionalTransactions.value = previsionalData
+  periodProjectionTransactions.value = periodProjectionData
+}
+
+function shiftPeriod(direction: -1 | 1) {
+  if (selectedPeriod.value === 'month') {
+    periodAnchorDate.value = addMonths(periodAnchorDate.value, direction)
+    return
+  }
+
+  if (selectedPeriod.value === 'quarter') {
+    periodAnchorDate.value = addMonths(periodAnchorDate.value, direction * 3)
+    return
+  }
+
+  periodAnchorDate.value = new Date(
+    periodAnchorDate.value.getFullYear() + direction,
+    periodAnchorDate.value.getMonth(),
+    1,
+  )
+}
+
 onMounted(() => {
-  fetch().then((result) => {
-    booklets.value = result
-  })
+  loadBudgetTargets()
+  loadDashboardData()
+})
+
+watch([selectedBookletId, selectedPeriod, periodAnchorDate], () => {
+  lineChartYMin.value = null
+  lineChartYMax.value = null
+  barChartYMin.value = null
+  barChartYMax.value = null
+  if (!hasInitializedDashboard.value || booklets.value.length === 0) {
+    return
+  }
+  selectedSliceIndex.value = null
+  selectedParentCategoryIndex.value = null
+  sliceDisplayMode.value = 'amount'
+  loadStatsData()
+})
+
+watch(selectedBookletId, () => {
+  syncBudgetInputFromSelection()
 })
 </script>
 
 <template>
-  <div class="landing-container">
-    <!-- Navigation Button -->
-    <div class="dashboard-nav">
-      <button class="dashboard-button" @click="navigateTo('/dashboard')">
-        <i class="pi pi-home" />
-        <span>Retour au Dashboard</span>
-      </button>
-    </div>
-    <!-- Hero Section -->
-    <section ref="heroRef" class="hero-section" :class="{ visible: isHeroVisible }">
-      <div class="hero-content">
-        <div class="hero-text">
-          <div class="welcome-badge">
-            <i class="pi pi-sparkles" />
-            <span>Bienvenue {{ user?.username }}</span>
-          </div>
-          <h1 class="hero-title">
-            Prenez le contrôle de vos
-            <span class="highlight-text">finances</span>
+  <div class="w-full min-h-screen p-5 relative" style="background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);">
+    <!-- Header Section -->
+    <div>
+      <div class="flex justify-between items-center flex-wrap gap-5">
+        <div>
+          <h1 class="text-4xl font-extrabold mb-2" style="color: var(--text-primary);">
+            Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
-          <p class="hero-description">
-            Gérez vos dépenses quotidiennes, visualisez vos budgets et planifiez votre avenir financier en toute simplicité
+          <p class="text-base" style="color: var(--text-secondary);">
+            Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label || 'Tous les comptes' }}
           </p>
-          <div class="hero-cta">
-            <button v-if="booklets.length === 0" class="cta-primary" @click="isBookletDialogOpen = true">
-              <i class="pi pi-plus-circle" />
-              <span>Créer mon premier livret</span>
+          <div class="flex items-center gap-2.5 mt-3 flex-wrap">
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
+              Période: {{ currentDateRangeLabel }}
+            </span>
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
+              À venir {{ projectionWindowLabel }}: {{ totalPrevisionalTransactions }} transaction(s)
+            </span>
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+              Solde prévisionnel court terme: {{ totalUpcomingNet.toFixed(2) }} €
+            </span>
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedBookletBalance ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+              Projection fin de période:
+              {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <select v-model="selectedBookletId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
+            <option v-for="booklet in booklets" :key="booklet.id" :value="booklet.id">
+              {{ booklet.label }}
+            </option>
+          </select>
+          <div class="period-toggle flex items-center rounded-lg p-1">
+            <button class="period-toggle-btn px-3 py-1.5 text-sm rounded-md" :class="selectedPeriod === 'month' ? 'is-active' : ''" @click="selectedPeriod = 'month'">
+              Mois
             </button>
-            <div v-else class="booklets-list">
-              <div class="booklets-header">
-                <h3>Mes livrets</h3>
-                <button class="add-booklet-btn" title="Ajouter un livret" @click="isBookletDialogOpen = true">
-                  <i class="pi pi-plus" />
-                </button>
-              </div>
-              <div class="booklets-grid">
-                <div
-                  v-for="(booklet, index) in orderedBooklets"
-                  :key="booklet.id"
-                  class="booklet-card"
-                  :class="{
-                    'is-dragging': indexDraggedIndex === index,
-                    'drag-over': indexDragOverIndex === index && indexDraggedIndex !== index,
-                  }"
-                  draggable="true"
-                  @click="navigateTo(`/booklet/${booklet.id}`)"
-                  @dragstart="onBookletDragStart($event, index)"
-                  @dragover="onBookletDragOver($event, index)"
-                  @drop="onBookletDrop($event, index)"
-                  @dragend="onBookletDragEnd"
-                >
-                  <div class="booklet-icon">
-                    <i class="pi pi-book" />
+            <button class="period-toggle-btn px-3 py-1.5 text-sm rounded-md" :class="selectedPeriod === 'quarter' ? 'is-active' : ''" @click="selectedPeriod = 'quarter'">
+              Trimestre
+            </button>
+            <button class="period-toggle-btn px-3 py-1.5 text-sm rounded-md" :class="selectedPeriod === 'year' ? 'is-active' : ''" @click="selectedPeriod = 'year'">
+              Année
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="period-nav-btn w-9 h-9 rounded-lg border" @click="shiftPeriod(-1)">
+              <i class="pi pi-chevron-left" />
+            </button>
+            <button class="period-nav-btn w-9 h-9 rounded-lg border" @click="shiftPeriod(1)">
+              <i class="pi pi-chevron-right" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-4 min-h-60vh">
+      <i class="pi pi-spin pi-spinner text-5xl text-purple-600" />
+      <p style="color: var(--text-secondary);">
+        Chargement de vos données...
+      </p>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else class="relative z-1 pb-10">
+      <!-- KPI Cards -->
+      <section ref="overviewRef" class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-purple-600 to-purple-700">
+              <i class="pi pi-wallet" />
+            </div>
+            <span v-if="balanceGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="balanceGrowth > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
+              <i :class="balanceGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(balanceGrowth).toFixed(1) }}%
+            </span>
+          </div>
+          <div>
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+              Solde du compte
+            </h3>
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+              {{ selectedBookletBalance.toFixed(2) }} €
+            </p>
+            <p class="text-xs" style="color: var(--text-tertiary);">
+              {{ selectedBooklet?.label || 'Compte sélectionné' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-red-500 to-red-600">
+              <i class="pi pi-arrow-down" />
+            </div>
+            <span v-if="expensesGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="expensesGrowth > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'">
+              <i :class="expensesGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(expensesGrowth).toFixed(1) }}%
+            </span>
+          </div>
+          <div>
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+              Dépenses {{ periodMetricLabel }}
+            </h3>
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+              {{ monthlyExpenses.toFixed(2) }} €
+            </p>
+            <p class="text-xs" style="color: var(--text-tertiary);">
+              Moy. journalière: {{ (monthlyExpenses / 30).toFixed(2) }} €
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-green-500 to-green-600">
+              <i class="pi pi-arrow-up" />
+            </div>
+            <span v-if="incomeGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="incomeGrowth > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
+              <i :class="incomeGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(incomeGrowth).toFixed(1) }}%
+            </span>
+          </div>
+          <div>
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+              Revenus {{ periodMetricLabel }}
+            </h3>
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+              {{ monthlyIncome.toFixed(2) }} €
+            </p>
+            <p class="text-xs" style="color: var(--text-tertiary);">
+              Épargne: {{ (monthlyIncome - monthlyExpenses).toFixed(2) }} €
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-yellow-400 to-yellow-500">
+              <i class="pi pi-chart-line" />
+            </div>
+            <span v-if="savingsRate !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="savingsRate > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
+              <i :class="savingsRate > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+              {{ Math.abs(savingsRate).toFixed(1) }}%
+            </span>
+          </div>
+          <div>
+            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+              Taux d'épargne
+            </h3>
+            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+              {{ savingsRate.toFixed(1) }}%
+            </p>
+            <p class="text-xs" style="color: var(--text-tertiary);">
+              Objectif: 30%
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts Section -->
+      <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
+        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
+          <div class="mb-5">
+            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+              <i class="pi pi-chart-line text-purple-600" />
+              Évolution des finances
+            </h2>
+            <p class="text-sm" style="color: var(--text-secondary);">
+              Comparaison revenus vs dépenses sur la période sélectionnée
+            </p>
+          </div>
+          <div class="chart-container h-75 relative" data-test="line-chart-container" @wheel.prevent="onLineChartWheel">
+            <Line :data="expensesTrendData" :options="lineChartOptionsComputed" />
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
+          <div class="flex flex-col gap-6">
+            <div class="flex flex-col sm:flex-row gap-6">
+              <div class="flex-1 flex flex-col" :class="secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2'">
+                <div class="mb-5">
+                  <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+                    <i class="pi pi-chart-pie text-purple-600" />
+                    Dépenses par catégorie
+                  </h2>
+                  <p class="text-sm" style="color: var(--text-secondary);">
+                    {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
+                  </p>
+                </div>
+                <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-72' : 'min-h-70'" data-test="doughnut-container">
+                  <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
+                  <div
+                    v-if="doughnutCenterLabel"
+                    class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    data-test="doughnut-center-label"
+                  >
+                    <span
+                      class="font-bold"
+                      :class="isSmallScreen ? 'text-sm' : 'text-base'"
+                      style="color: var(--text-primary);"
+                    >
+                      {{ doughnutCenterLabel }}
+                    </span>
                   </div>
-                  <div class="booklet-info">
-                    <h4 class="booklet-label">
-                      {{ booklet.label }}
-                    </h4>
-                    <p class="booklet-amount">
-                      {{ Number.parseFloat(booklet.amount.toString()).toFixed(2) }} {{ booklet.currency }}
+                </div>
+              </div>
+
+              <!-- Secondary doughnut chart for sub-tags breakdown -->
+              <Transition name="fade">
+                <div v-if="secondaryChartData" class="flex-1 flex flex-col sm:w-1/3" data-test="secondary-doughnut">
+                  <div class="mb-5">
+                    <h3 class="text-lg font-semibold mb-1 flex items-center gap-2" style="color: var(--text-primary);">
+                      <i class="pi pi-sitemap text-purple-500" />
+                      {{ selectedParentCategory?.tagLabel }}
+                    </h3>
+                    <p class="text-xs" style="color: var(--text-secondary);">
+                      Détail des sous-tags • {{ Number.parseFloat(selectedParentCategory?.totalAmount ?? '0').toFixed(2) }} €
                     </p>
                   </div>
-                  <div class="booklet-arrow">
-                    <i class="pi pi-bars drag-icon" />
-                    <i class="pi pi-arrow-right" />
+                  <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-60' : 'min-h-55'">
+                    <Doughnut :data="secondaryChartData" :options="secondaryDoughnutOptions" />
+                  </div>
+                </div>
+              </Transition>
+
+              <div class="flex-1 flex flex-col" :class="[secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2', isSmallScreen ? 'mt-2' : '']">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    Top tags de la période
+                  </h3>
+                  <span class="text-xs" style="color: var(--text-secondary);">
+                    Variation vs période précédente
+                  </span>
+                </div>
+                <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
+                  Aucun tag de dépense sur cette période
+                </div>
+                <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
+                  <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <span
+                        class="w-3 h-3 rounded-full flex-shrink-0"
+                        :style="{ backgroundColor: `rgb(${tag.colorDTO.red}, ${tag.colorDTO.green}, ${tag.colorDTO.blue})` }"
+                      />
+                      <div class="min-w-0">
+                        <p
+                          class="text-sm font-semibold m-0 truncate"
+                          :style="{ color: toReadableTagTextColor(tag.colorDTO) }"
+                        >
+                          {{ tag.tagLabel }}
+                        </p>
+                        <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                          {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
+                        </p>
+                      </div>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
+                      {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-            <button v-if="booklets.length > 0" class="cta-secondary" @click="navigateTo('/dashboard')">
-              <i class="pi pi-arrow-right" />
-              <span>Accéder à mon tableau de bord</span>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="mb-5">
+            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+              <i class="pi pi-chart-bar text-purple-600" />
+              Comparaison de période
+            </h2>
+            <p class="text-sm" style="color: var(--text-secondary);">
+              Période active vs période précédente
+            </p>
+          </div>
+          <div class="chart-container h-75 relative" data-test="bar-chart-container" @wheel.prevent="onBarChartWheel">
+            <Bar :data="monthlyComparisonData" :options="barChartOptionsComputed" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Actions & Info Section -->
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 mb-8">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
+            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
+              <i class="pi pi-book text-purple-600" />
+              Mes livrets
+            </h2>
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
+              <i class="pi pi-plus" />
+              Nouveau
             </button>
-            <div class="quick-stats">
-              <div class="stat-item">
-                <i class="pi pi-wallet" />
-                <span>{{ booklets.length }} livret{{ booklets.length > 1 ? 's' : '' }}</span>
+          </div>
+          <div class="max-h-87.5 overflow-y-auto">
+            <div v-if="booklets.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+              <i class="pi pi-inbox text-5xl" style="color: var(--text-muted);" />
+              <p class="m-0" style="color: var(--text-secondary);">
+                Aucun livret créé
+              </p>
+              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
+                Créer mon premier livret
+              </button>
+            </div>
+            <div v-else class="flex flex-col gap-3">
+              <div
+                v-for="(booklet, index) in orderedBooklets.slice(0, 4)"
+                :key="booklet.id"
+                class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all"
+                :class="[
+                  dashboardDraggedIndex === index ? 'opacity-40 scale-97' : 'hover:translate-x-1.5',
+                  dashboardDragOverIndex === index && dashboardDraggedIndex !== index ? 'ring-2 ring-purple-500 ring-offset-1' : '',
+                ]"
+                style="background-color: var(--bg-tertiary);"
+                draggable="true"
+                @click="navigateTo(`/booklet/${booklet.id}`)"
+                @dragstart="onBookletDragStart($event, index)"
+                @dragover="onBookletDragOver($event, index)"
+                @drop="onBookletDrop($event, index)"
+                @dragend="onBookletDragEnd"
+              >
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
+                  <i class="pi pi-wallet" />
+                </div>
+                <div class="flex-1">
+                  <p class="font-semibold m-0 mb-1" style="color: var(--text-primary);">
+                    {{ booklet.label }}
+                  </p>
+                  <p class="text-sm m-0" style="color: var(--text-secondary);">
+                    {{ Number.parseFloat(booklet.amount.toString()).toFixed(2) }} €
+                  </p>
+                </div>
+                <i class="pi pi-bars mr-1 cursor-grab text-sm" style="color: var(--text-tertiary);" />
+                <i class="pi pi-chevron-right" style="color: var(--text-tertiary);" />
               </div>
-              <div v-if="booklets.length > 0" class="stat-item highlight">
-                <i class="pi pi-chart-line" />
-                <span>{{ sum.toFixed(2) }} €</span>
-              </div>
+              <button v-if="booklets.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed rounded-lg font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600" style="border-color: var(--border-color); color: var(--text-secondary);" @click="navigateTo('/booklet')">
+                Voir tous les livrets ({{ booklets.length }})
+              </button>
             </div>
           </div>
         </div>
-        <div class="hero-visual">
-          <div class="floating-card card-1">
-            <div class="card-icon">
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
+            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
+              <i class="pi pi-calendar text-purple-600" />
+              Prochaines transactions
+            </h2>
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
+              <i class="pi pi-cog" />
+              Gérer
+            </button>
+          </div>
+          <div class="max-h-87.5 overflow-y-auto">
+            <div v-if="upcomingRegularPayments.length === 0 && upcomingNonRegularPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+              <i class="pi pi-calendar-times text-5xl" style="color: var(--text-muted);" />
+              <p class="m-0" style="color: var(--text-secondary);">
+                Aucune transaction prévue
+              </p>
+              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
+                Configurer une mensualité
+              </button>
+            </div>
+            <div v-else class="flex flex-col gap-4">
+              <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+                <div class="flex justify-between items-center mb-2">
+                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    Régulières
+                  </p>
+                  <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
+                    Total: {{ totalRegularUpcoming.toFixed(2) }} €
+                  </p>
+                </div>
+                <div v-if="upcomingRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
+                  Aucune régulière à venir
+                </div>
+                <div v-else class="flex flex-col gap-2">
+                  <div v-for="payment in upcomingRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
+                      <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+                    </div>
+                    <div class="flex-1">
+                      <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
+                        {{ payment.label }}
+                      </p>
+                      <p class="text-xs m-0" style="color: var(--text-secondary);">
+                        {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Régulière</span>
+                      </p>
+                    </div>
+                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
+                      {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+                <div class="flex justify-between items-center mb-2">
+                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    Non régulières
+                  </p>
+                  <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
+                    Total: {{ totalNonRegularUpcoming.toFixed(2) }} €
+                  </p>
+                </div>
+                <div v-if="upcomingNonRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
+                  Aucune non régulière à venir
+                </div>
+                <div v-else class="flex flex-col gap-2">
+                  <div v-for="payment in upcomingNonRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
+                      <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+                    </div>
+                    <div class="flex-1">
+                      <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
+                        {{ payment.label }}
+                      </p>
+                      <p class="text-xs m-0" style="color: var(--text-secondary);">
+                        {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Non régulière</span>
+                      </p>
+                    </div>
+                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
+                      {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-xs m-0" style="color: var(--text-tertiary);">
+                {{ totalPrevisionalTransactions }} transaction(s) sur la fenêtre de {{ projectionWindowLabel }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
+            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
+              <i class="pi pi-tags text-purple-600" />
+              Tags populaires
+            </h2>
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
+              <i class="pi pi-plus" />
+              Nouveau
+            </button>
+          </div>
+          <div class="max-h-87.5 overflow-y-auto">
+            <div v-if="tags.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+              <i class="pi pi-tag text-5xl" style="color: var(--text-muted);" />
+              <p class="m-0" style="color: var(--text-secondary);">
+                Aucun tag créé
+              </p>
+              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
+                Créer un tag
+              </button>
+            </div>
+            <div v-else class="flex flex-wrap gap-2.5">
+              <div
+                v-for="tag in tags.slice(0, 6)"
+                :key="tag.tagId"
+                class="inline-flex items-center gap-1.5 px-4 py-2 border-2 rounded-full text-xs font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
+                :style="{
+                  backgroundColor: `${rgbToHex(tag.colorDTO)}20`,
+                  borderColor: rgbToHex(tag.colorDTO),
+                  color: rgbToHex(tag.colorDTO),
+                }"
+              >
+                <i class="pi pi-tag" />
+                {{ tag.label }}
+              </div>
+              <button v-if="tags.length > 6" class="px-4 py-2 bg-yellow-400/10 border-2 border-yellow-400 rounded-full text-yellow-600 text-xs font-semibold cursor-pointer transition-all hover:bg-yellow-400/20 hover:-translate-y-0.5" @click="navigateTo('/tag')">
+                +{{ tags.length - 6 }} autres
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8">
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+              <i class="pi pi-bell text-orange-500" />
+              Alertes de la période
+            </h2>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
+              {{ dashboardAlerts.length }} active(s)
+            </span>
+          </div>
+
+          <div v-if="dashboardAlerts.length === 0" class="text-sm" style="color: var(--text-secondary);">
+            Aucun signal particulier sur cette période
+          </div>
+          <div v-else class="flex flex-col gap-3">
+            <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-red-500/8 border-red-500/25' : (alert.level === 'warning' ? 'bg-yellow-500/10 border-yellow-500/25' : 'bg-blue-500/8 border-blue-500/25')">
+              <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                {{ alert.title }}
+              </p>
+              <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                {{ alert.detail }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <h2 class="text-lg font-bold m-0 mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+            <i class="pi pi-bolt text-purple-600" />
+            Actions rapides
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button class="quick-action-btn" @click="navigateTo('/booklet')">
               <i class="pi pi-wallet" />
+              Voir mes comptes
+            </button>
+            <button class="quick-action-btn" @click="navigateTo('/regular-transaction')">
+              <i class="pi pi-calendar" />
+              Ajuster les régulières
+            </button>
+            <button class="quick-action-btn" @click="navigateTo('/tag')">
+              <i class="pi pi-tags" />
+              Revoir mes tags
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+              <i class="pi pi-euro text-green-500" />
+              Budget du compte
+            </h2>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="!isBudgetConfigured ? 'bg-gray-500/10 text-gray-500' : (projectedBudgetDelta >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500')">
+              {{ !isBudgetConfigured ? 'Non configuré' : (projectedBudgetDelta >= 0 ? 'Dans le budget' : 'Dépassement') }}
+            </span>
+          </div>
+
+          <div class="flex items-end gap-2 mb-4">
+            <div class="flex-1">
+              <label for="budget-target" class="text-xs font-semibold block mb-1" style="color: var(--text-secondary);">
+                Cible {{ selectedPeriod === 'month' ? 'mensuelle' : 'périodique' }} (€)
+              </label>
+              <input
+                id="budget-target"
+                v-model.number="budgetTargetInput"
+                data-test="budget-target-input"
+                type="number"
+                min="0"
+                step="0.01"
+                class="budget-input"
+                placeholder="Ex: 1200"
+                @blur="saveBudgetTarget"
+              >
             </div>
-            <div class="card-content">
-              <span class="card-label">Solde total</span>
-              <span class="card-value">{{ sum.toFixed(2) }} €</span>0
+            <button class="budget-save-btn" data-test="budget-save-btn" @click="saveBudgetTarget">
+              Enregistrer
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Dépenses consommées
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" style="color: var(--text-primary);">
+                {{ monthlyExpenses.toFixed(2) }} €
+              </p>
+            </div>
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Reste budget
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+                {{ isBudgetConfigured ? `${budgetDelta.toFixed(2)} €` : 'N/A' }}
+              </p>
+            </div>
+            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+              <p class="text-xs m-0" style="color: var(--text-secondary);">
+                Projection budget
+              </p>
+              <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+                {{ isBudgetConfigured ? `${projectedBudgetDelta.toFixed(2)} €` : 'N/A' }}
+              </p>
             </div>
           </div>
-          <div class="floating-card card-2">
-            <div class="card-icon success">
-              <i class="pi pi-arrow-up" />
-            </div>
-            <div class="card-content">
-              <span class="card-label">Revenus</span>
-              <span class="card-value success-text">+1,245 €</span>
-            </div>
-          </div>
-          <div class="floating-card card-3">
-            <div class="card-icon warning">
-              <i class="pi pi-arrow-down" />
-            </div>
-            <div class="card-content">
-              <span class="card-label">Dépenses</span>
-              <span class="card-value warning-text">-876 €</span>
-            </div>
-          </div>
-          <div class="center-circle">
-            <div class="pulse-ring" />
-            <div class="pulse-ring delay-1" />
-            <div class="pulse-ring delay-2" />
-            <i class="pi pi-chart-pie" />
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- Stats Section -->
-    <section ref="statsRef" class="stats-section" :class="{ visible: isStatsVisible }">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="pi pi-book" />
-          </div>
-          <h3>{{ booklets.length }}</h3>
-          <p>Livret{{ booklets.length > 1 ? 's' : '' }} actif{{ booklets.length > 1 ? 's' : '' }}</p>
+          <p class="text-xs m-0 mt-3" style="color: var(--text-secondary);">
+            {{ isBudgetConfigured ? `Consommation: ${budgetConsumptionRate.toFixed(1)}% du budget` : 'Définis une cible pour activer les alertes budget.' }}
+          </p>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="pi pi-calendar" />
-          </div>
-          <h3>100%</h3>
-          <p>Visibilité mensuelle</p>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="pi pi-bolt" />
-          </div>
-          <h3>Instantané</h3>
-          <p>Suivi en temps réel</p>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Features Section -->
-    <section ref="featuresRef" class="features-section" :class="{ visible: isFeaturesVisible }">
-      <h2 class="section-title">
-        Tout ce dont vous avez besoin pour
-        <span class="highlight-text">gérer vos finances</span>
-      </h2>
-
-      <div class="features-grid">
-        <div
-          class="feature-card"
-          @click="isBookletDialogOpen = true"
-        >
-          <div class="feature-icon gradient-1">
-            <i class="pi pi-book" />
-          </div>
-          <h3>Livrets de compte</h3>
-          <p>Créez plusieurs livrets pour organiser vos finances par projet ou objectif</p>
-          <div class="feature-action">
-            <span v-if="booklets.length === 0">Créer votre premier livret</span>
-            <span v-else>{{ booklets.length }} livret{{ booklets.length > 1 ? 's' : '' }} créé{{ booklets.length > 1 ? 's' : '' }}</span>
-            <i class="pi pi-arrow-right" />
+      <!-- Quick Stats Banner -->
+      <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 p-6 rounded-2xl shadow-lg mb-5" style="background-color: var(--card-bg);">
+        <div class="flex items-center gap-4">
+          <i class="pi pi-calendar-plus text-4xl text-purple-600" />
+          <div>
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
+              {{ regularTransactions.length }}
+            </p>
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
+              Mensualités actives
+            </p>
           </div>
         </div>
-
-        <div class="feature-card" @click="navigateTo('/transactions')">
-          <div class="feature-icon gradient-2">
-            <i class="pi pi-chart-line" />
-          </div>
-          <h3>Transactions intelligentes</h3>
-          <p>Suivez vos dépenses et recettes avec une vue mensuelle et annuelle détaillée</p>
-          <div class="feature-action">
-            <span>Gérer mes transactions</span>
-            <i class="pi pi-arrow-right" />
-          </div>
-        </div>
-
-        <div class="feature-card" @click="navigateTo('/tags')">
-          <div class="feature-icon gradient-3">
-            <i class="pi pi-tags" />
-          </div>
-          <h3>Organisation par tags</h3>
-          <p>Catégorisez vos transactions pour une meilleure analyse de vos habitudes</p>
-          <div class="feature-action">
-            <span>Créer des tags</span>
-            <i class="pi pi-arrow-right" />
+        <div class="flex items-center gap-4">
+          <i class="pi pi-tags text-4xl text-purple-600" />
+          <div>
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
+              {{ tags.length }}
+            </p>
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
+              Tags créés
+            </p>
           </div>
         </div>
-
-        <div class="feature-card highlight-card">
-          <div class="feature-icon gradient-4">
-            <i class="pi pi-clock" />
-          </div>
-          <h3>Transactions prévisionnelles</h3>
-          <p>Anticipez vos dépenses avec un solde théorique distinct de votre solde réel</p>
-          <div class="feature-badge">
-            <i class="pi pi-star-fill" />
-            <span>Fonctionnalité avancée</span>
-          </div>
-          <div class="feature-action">
-            <span>Découvrir</span>
-            <i class="pi pi-arrow-right" />
+        <div class="flex items-center gap-4">
+          <i class="pi pi-clock text-4xl text-purple-600" />
+          <div>
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
+              {{ totalPrevisionalTransactions }}
+            </p>
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
+              Transactions prévisionnelles
+            </p>
           </div>
         </div>
-
-        <div class="feature-card">
-          <div class="feature-icon gradient-5">
-            <i class="pi pi-refresh" />
-          </div>
-          <h3>Transactions régulières</h3>
-          <p>Configurez vos paiements récurrents et ne manquez plus jamais une échéance</p>
-          <div class="feature-action">
-            <span>Configurer</span>
-            <i class="pi pi-arrow-right" />
-          </div>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon gradient-6">
-            <i class="pi pi-shield" />
-          </div>
-          <h3>Sécurité & Confidentialité</h3>
-          <p>Vos données financières sont protégées et totalement confidentielles</p>
-          <div class="feature-action">
-            <span>En savoir plus</span>
-            <i class="pi pi-arrow-right" />
+        <div class="flex items-center gap-4">
+          <i class="pi pi-chart-line text-4xl text-purple-600" />
+          <div>
+            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
+              {{ categoryDistribution?.categories.length || 0 }}
+            </p>
+            <p class="text-xs m-0" style="color: var(--text-secondary);">
+              Catégories actives
+            </p>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-      <div class="cta-content">
-        <h2>Prêt à prendre en main vos finances ?</h2>
-        <p>Rejoignez les étudiants et professionnels qui font confiance à notre solution</p>
-        <button class="cta-button" @click="navigateTo('/dashboard')">
-          <i class="pi pi-play" />
-          <span>Commencer maintenant</span>
-        </button>
-      </div>
-      <div class="cta-decoration">
-        <div class="decoration-circle circle-1" />
-        <div class="decoration-circle circle-2" />
-        <div class="decoration-circle circle-3" />
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 
   <BookletBookingDialog
@@ -334,1047 +1836,124 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.landing-container {
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* ===== DASHBOARD NAV ===== */
-.dashboard-nav {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  animation: fadeSlideDown 0.6s ease-out;
-}
-
-.dashboard-button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  color: #822acc;
-  padding: 12px 24px;
-  border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 600;
-  border: 2px solid rgba(130, 42, 204, 0.2);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.dashboard-button:hover {
-  background: #822acc;
-  color: white;
-  border-color: #822acc;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(130, 42, 204, 0.3);
-}
-
-.dashboard-button i {
-  font-size: 18px;
-}
-
-/* ===== HERO SECTION ===== */
-.hero-section {
-  position: relative;
-  min-height: 90vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  background: linear-gradient(135deg, #822acc 0%, #651e9e 50%, #4a1575 100%);
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(224, 216, 36, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.hero-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.hero-content {
-  max-width: 1200px;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-text {
-  color: white;
-}
-
-.welcome-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  padding: 8px 20px;
-  border-radius: 50px;
-  font-size: 14px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  animation: fadeSlideDown 0.6s ease-out 0.2s backwards;
-}
-
-.welcome-badge i {
-  color: #e0d824;
-}
-
-.hero-title {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 24px;
-  animation: fadeSlideDown 0.6s ease-out 0.3s backwards;
-}
-
-.highlight-text {
-  background: linear-gradient(135deg, #e0d824 0%, #f5e84a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: inline-block;
-  position: relative;
-}
-
-.hero-description {
-  font-size: 1.25rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 40px;
-  animation: fadeSlideDown 0.6s ease-out 0.4s backwards;
-}
-
-.hero-cta {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  animation: fadeSlideDown 0.6s ease-out 0.5s backwards;
-}
-
-.cta-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #e0d824 0%, #f5e84a 100%);
-  color: #4a1575;
-  padding: 18px 36px;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(224, 216, 36, 0.3);
-  width: fit-content;
-}
-
-.cta-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(224, 216, 36, 0.4);
-}
-
-.cta-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  color: white;
-  padding: 18px 36px;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: fit-content;
-}
-
-.cta-secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-3px);
-}
-
-.quick-stats {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-weight: 600;
-}
-
-.stat-item.highlight {
-  background: rgba(224, 216, 36, 0.2);
-  border-color: rgba(224, 216, 36, 0.4);
-}
-
-/* ===== BOOKLETS LIST ===== */
-.booklets-list {
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.booklets-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.booklets-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.add-booklet-btn {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: white;
-  font-size: 18px;
-}
-
-.add-booklet-btn:hover {
-  background: rgba(224, 216, 36, 0.3);
-  border-color: rgba(224, 216, 36, 0.6);
-  transform: rotate(90deg) scale(1.1);
-}
-
-.booklets-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 400px;
-  overflow-y: auto;
-  padding-right: 8px;
-}
-
-/* Scrollbar personnalisée */
-.booklets-grid::-webkit-scrollbar {
+/* Custom scrollbar styling */
+*::-webkit-scrollbar {
   width: 6px;
 }
 
-.booklets-grid::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+*::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
   border-radius: 10px;
 }
 
-.booklets-grid::-webkit-scrollbar-thumb {
-  background: rgba(224, 216, 36, 0.5);
+*::-webkit-scrollbar-thumb {
+  background: #822acc;
   border-radius: 10px;
 }
 
-.booklets-grid::-webkit-scrollbar-thumb:hover {
-  background: rgba(224, 216, 36, 0.7);
+*::-webkit-scrollbar-thumb:hover {
+  background: #651e9e;
 }
 
-.booklet-card {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+/* Chart container responsive heights */
+.chart-container {
   position: relative;
-  overflow: hidden;
-
-  &.is-dragging {
-    opacity: 0.4;
-    transform: scale(0.97) !important;
-    box-shadow: none !important;
-  }
-
-  &.drag-over {
-    border-color: rgba(224, 216, 36, 0.9) !important;
-    box-shadow: 0 0 0 3px rgba(224, 216, 36, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-    transform: translateX(8px) !important;
-  }
-}
-
-.booklet-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(224, 216, 36, 0.1), rgba(224, 216, 36, 0.05));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.booklet-card:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(224, 216, 36, 0.6);
-  transform: translateX(8px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.booklet-card:hover::before {
-  opacity: 1;
-}
-
-.booklet-icon {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #e0d824, #f5e84a);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 24px;
-  color: #4a1575;
-  box-shadow: 0 4px 12px rgba(224, 216, 36, 0.3);
-  transition: all 0.3s ease;
-  z-index: 1;
-}
-
-.booklet-card:hover .booklet-icon {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 6px 16px rgba(224, 216, 36, 0.5);
-}
-
-.booklet-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 1;
-}
-
-.booklet-label {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: white;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.booklet-amount {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: #e0d824;
-  margin: 0;
-  line-height: 1;
-}
-
-.booklet-arrow {
-  width: auto;
-  min-width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 16px;
-  color: white;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-  z-index: 1;
-  padding: 0 8px;
-}
-
-.drag-icon {
-  font-size: 13px;
-  opacity: 0.6;
-  cursor: grab;
-
-  &:active {
-    cursor: grabbing;
-  }
-}
-
-.booklet-card:hover .booklet-arrow {
-  background: rgba(224, 216, 36, 0.4);
-  transform: translateX(4px);
-}
-
-/* ===== HERO VISUAL ===== */
-.hero-visual {
-  position: relative;
-  height: 500px;
-  animation: fadeSlideUp 0.8s ease-out 0.4s backwards;
-}
-
-.center-circle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 200px;
-  height: 200px;
-  background: linear-gradient(135deg, rgba(224, 216, 36, 0.3), rgba(224, 216, 36, 0.1));
-  backdrop-filter: blur(20px);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.center-circle i {
-  font-size: 80px;
-  color: white;
-  z-index: 2;
-}
-
-.pulse-ring {
-  position: absolute;
   width: 100%;
-  height: 100%;
-  border: 3px solid rgba(224, 216, 36, 0.6);
-  border-radius: 50%;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.pulse-ring.delay-1 {
-  animation-delay: 0.5s;
+.period-toggle {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
 }
 
-.pulse-ring.delay-2 {
-  animation-delay: 1s;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
-}
-
-.floating-card {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 16px 20px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  animation: float 3s ease-in-out infinite;
-}
-
-.floating-card.card-1 {
-  top: 10%;
-  left: 10%;
-  animation-delay: 0s;
-}
-
-.floating-card.card-2 {
-  top: 20%;
-  right: 5%;
-  animation-delay: 0.5s;
-}
-
-.floating-card.card-3 {
-  bottom: 15%;
-  left: 5%;
-  animation-delay: 1s;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
-.card-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #822acc, #651e9e);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.card-icon.success {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.card-icon.warning {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.card-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-label {
-  font-size: 12px;
-  color: #b1aeae;
-  font-weight: 500;
-}
-
-.card-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.success-text {
-  color: #10b981;
-}
-
-.warning-text {
-  color: #ef4444;
-}
-
-/* ===== STATS SECTION ===== */
-.stats-section {
-  padding: 48px 20px;
-  background: #f9fafb;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease;
-}
-
-.stats-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.stats-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 30px;
-}
-
-.stat-card {
-  background: white;
-  padding: 40px;
-  border-radius: 20px;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(130, 42, 204, 0.15);
-}
-
-.stat-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #822acc, #651e9e);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-  font-size: 36px;
-  color: white;
-}
-
-.stat-card h3 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #822acc;
-  margin: 0 0 10px 0;
-}
-
-.stat-card p {
-  font-size: 1rem;
-  color: #b1aeae;
-  margin: 0;
-}
-
-/* ===== FEATURES SECTION ===== */
-.features-section {
-  padding: 56px 20px;
-  background: white;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease;
-}
-
-.features-section.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.section-title {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 40px;
-  color: #1f2937;
-  line-height: 1.2;
-}
-
-.features-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 30px;
-}
-
-.feature-card {
-  background: white;
-  padding: 40px;
-  border-radius: 24px;
-  border: 2px solid #f3f4f6;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.feature-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #822acc, #e0d824);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
-}
-
-.feature-card:hover {
-  border-color: #822acc;
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(130, 42, 204, 0.15);
-}
-
-.feature-card:hover::before {
-  transform: scaleX(1);
-}
-
-.highlight-card {
-  background: linear-gradient(135deg, #822acc05, #e0d82405);
-  border-color: #822acc;
-}
-
-.feature-icon {
-  width: 70px;
-  height: 70px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  color: white;
-  margin-bottom: 24px;
-}
-
-.gradient-1 { background: linear-gradient(135deg, #822acc, #651e9e); }
-.gradient-2 { background: linear-gradient(135deg, #10b981, #059669); }
-.gradient-3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.gradient-4 { background: linear-gradient(135deg, #e0d824, #f5e84a); }
-.gradient-5 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.gradient-6 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-
-.feature-card h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 12px 0;
-}
-
-.feature-card p {
-  font-size: 1rem;
-  color: #6b7280;
-  line-height: 1.6;
-  margin: 0 0 24px 0;
-}
-
-.feature-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #822acc, #651e9e);
-  color: white;
-  padding: 6px 16px;
-  border-radius: 50px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.feature-badge i {
-  font-size: 12px;
-}
-
-.feature-action {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #822acc;
-  font-weight: 600;
-  margin-top: auto;
-}
-
-.feature-action i {
-  transition: transform 0.3s ease;
-}
-
-.feature-card:hover .feature-action i {
-  transform: translateX(5px);
-}
-
-/* ===== CTA SECTION ===== */
-.cta-section {
-  position: relative;
-  padding: 56px 20px;
-  background: linear-gradient(135deg, #822acc 0%, #651e9e 100%);
-  overflow: hidden;
-}
-
-.cta-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  color: white;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.cta-content h2 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  margin-bottom: 20px;
-}
-
-.cta-content p {
-  font-size: 1.25rem;
-  margin-bottom: 40px;
-  opacity: 0.9;
-}
-
-.cta-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #e0d824, #f5e84a);
-  color: #4a1575;
-  padding: 20px 48px;
-  border-radius: 50px;
-  font-size: 1.2rem;
-  font-weight: 700;
+.period-toggle-btn {
+  color: var(--text-secondary);
+  background-color: transparent;
   border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(224, 216, 36, 0.3);
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.cta-button:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 15px 40px rgba(224, 216, 36, 0.5);
+.period-toggle-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
-.cta-decoration {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
+.period-toggle-btn.is-active {
+  background-color: #822acc;
+  color: #fff;
 }
 
-.decoration-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(224, 216, 36, 0.1);
-  animation: float 6s ease-in-out infinite;
+.period-nav-btn {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+  background-color: var(--card-bg);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.circle-1 {
-  width: 300px;
-  height: 300px;
-  top: -100px;
-  right: -100px;
-  animation-delay: 0s;
+.period-nav-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
-.circle-2 {
-  width: 200px;
-  height: 200px;
-  bottom: -50px;
-  left: 10%;
-  animation-delay: 1s;
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.circle-3 {
-  width: 150px;
-  height: 150px;
-  top: 50%;
-  left: -75px;
-  animation-delay: 2s;
+.quick-action-btn:hover {
+  background-color: var(--card-bg);
+  border-color: #822acc;
 }
 
-/* ===== ANIMATIONS ===== */
-@keyframes fadeSlideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.budget-input {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
-@keyframes fadeSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.budget-save-btn {
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 1024px) {
-  .hero-content {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    text-align: center;
-  }
+.budget-save-btn:hover {
+  border-color: #822acc;
+  background-color: var(--card-bg);
+}
 
-  .hero-text {
-    order: 1;
-  }
+.doughnut-chart-container {
+  position: relative;
+  width: 100%;
+}
 
-  .hero-visual {
-    order: 2;
-    height: 400px;
-  }
-
-  .cta-primary,
-  .cta-secondary {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .quick-stats {
-    justify-content: center;
-  }
-
-  .hero-cta {
-    align-items: center;
-  }
-
-  .booklets-list {
-    width: 100%;
-  }
-
-  .booklets-header {
-    margin-bottom: 16px;
-  }
-
-  .booklets-header h3 {
-    font-size: 1.3rem;
-  }
-
-  .booklet-card {
-    padding: 16px;
-  }
-
-  .booklet-icon {
-    width: 45px;
-    height: 45px;
-    font-size: 20px;
-  }
-
-  .booklet-label {
-    font-size: 1rem;
-  }
-
-  .booklet-amount {
-    font-size: 1.2rem;
+@media (min-width: 640px) {
+  .chart-container.h-75 {
+    height: 20rem;
   }
 }
 
-@media (max-width: 768px) {
-  .hero-section {
-    min-height: auto;
-    padding: 40px 20px;
-  }
-
-  .hero-title {
-    font-size: 2rem;
-  }
-
-  .dashboard-button {
-    padding: 10px 20px;
-    font-size: 0.9rem;
-  }
-
-  .dashboard-button span {
-    display: none;
-  }
-
-  .dashboard-button i {
-    margin: 0;
-  }
-
-  .hero-description {
-    font-size: 1rem;
-  }
-
-  .floating-card {
-    padding: 12px 16px;
-  }
-
-  .card-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
-
-  .card-value {
-    font-size: 16px;
-  }
-
-  .center-circle {
-    width: 150px;
-    height: 150px;
-  }
-
-  .center-circle i {
-    font-size: 60px;
-  }
-
-  .booklets-list {
-    width: 100%;
-  }
-
-  .booklets-header h3 {
-    font-size: 1.2rem;
-  }
-
-  .add-booklet-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
-
-  .booklets-grid {
-    max-height: 300px;
-    gap: 10px;
-  }
-
-  .booklet-card {
-    padding: 14px;
-    gap: 12px;
-  }
-
-  .booklet-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-  }
-
-  .booklet-label {
-    font-size: 0.95rem;
-  }
-
-  .booklet-amount {
-    font-size: 1.1rem;
-  }
-
-  .booklet-arrow {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-
-  .cta-primary,
-  .cta-secondary {
-    padding: 14px 28px;
-    font-size: 1rem;
-  }
-
-  .stat-item {
-    padding: 10px 16px;
-    font-size: 0.9rem;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-section,
-  .features-section,
-  .cta-section {
-    padding: 60px 20px;
+@media (max-width: 639px) {
+  .chart-container.h-75 {
+    height: 18rem;
   }
 }
 </style>

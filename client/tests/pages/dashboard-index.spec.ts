@@ -1,6 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import DashboardPage from '../../pages/dashboard/index.vue'
+import DashboardPage from '../../pages/index.vue'
 
 vi.mock('@vueuse/core', () => ({
   useIntersectionObserver: vi.fn(),
@@ -150,7 +150,7 @@ function mountDashboardPage() {
   })
 }
 
-describe('pages/dashboard/index tags insights', () => {
+describe('pages/index tags insights', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useRealTimers()
@@ -300,7 +300,7 @@ describe('pages/dashboard/index tags insights', () => {
   })
 })
 
-describe('pages/dashboard/index category distribution chart completeness', () => {
+describe('pages/index category distribution chart completeness', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useRealTimers()
@@ -394,7 +394,7 @@ describe('pages/dashboard/index category distribution chart completeness', () =>
   })
 })
 
-describe('pages/dashboard/index doughnut slice click toggle', () => {
+describe('pages/index doughnut slice click toggle', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useRealTimers()
@@ -680,7 +680,7 @@ describe('pages/dashboard/index doughnut slice click toggle', () => {
   })
 })
 
-describe('pages/dashboard/index chart wheel Y-axis zoom', () => {
+describe('pages/index chart wheel Y-axis zoom', () => {
   const trendData = {
     dailyTrends: [
       { date: '2026-05-01', expenses: '1000', income: '2000', cumulativeBalance: '1000' },

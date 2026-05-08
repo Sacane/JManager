@@ -87,7 +87,7 @@ onUnmounted(() => {
         <nav class="sidebar-nav">
           <div v-if="isAuthenticated" class="nav-section">
             <NuxtLink
-              to="/dashboard"
+              to="/"
               class="nav-item"
               active-class="nav-item-active"
               @click="closeOnNavigateIfMobile()"
