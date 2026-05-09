@@ -1,11 +1,14 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   group: TagGroupItem
   disabled: boolean
   deleting: boolean
   selected: boolean
   selectedChildIds: string[]
 }>()
+
+const children = computed(() => props.group.children)
+const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useSubTagOrder(props.group.id, children)
 
 const emit = defineEmits<{
   (e: 'edit', tag: TagDisplayItem): void
@@ -18,53 +21,70 @@ const emit = defineEmits<{
 <template>
   <div
     class="tag-card"
-    :class="{ 'tag-card-personal': !group.isDefault, 'tag-card-selected': selected }"
-    :style="{ '--tag-color': group.color }"
+    :class="{ 'tag-card-personal': !props.group.isDefault, 'tag-card-selected': selected }"
+    :style="{ '--tag-color': props.group.color }"
   >
-    <div class="tag-color-band" :style="{ backgroundColor: group.color }" />
+    <div class="tag-color-band" :style="{ backgroundColor: props.group.color }" />
 
     <div class="tag-content">
       <div class="tag-info">
         <div class="tag-header">
           <Checkbox
-            v-if="!group.isDefault"
+            v-if="!props.group.isDefault"
             :binary="true"
             :model-value="selected"
             class="tag-select-checkbox"
             aria-label="Sélectionner ce tag"
-            @update:model-value="() => emit('toggle-select', group)"
+            @update:model-value="() => emit('toggle-select', props.group)"
           />
           <div class="tag-label-wrapper">
             <h3 class="tag-label">
-              {{ group.label }}
+              {{ props.group.label }}
             </h3>
             <Tag
-              :value="group.isDefault ? 'Par défaut' : 'Personnel'"
-              :severity="group.isDefault ? 'info' : 'success'"
+              :value="props.group.isDefault ? 'Par défaut' : 'Personnel'"
+              :severity="props.group.isDefault ? 'info' : 'success'"
               class="tag-badge"
             />
           </div>
         </div>
 
         <div class="color-preview">
-          <div class="color-circle" :style="{ backgroundColor: group.color }" />
-          <span class="color-label">{{ group.color }}</span>
+          <div class="color-circle" :style="{ backgroundColor: props.group.color }" />
+          <span class="color-label">{{ props.group.color }}</span>
         </div>
       </div>
 
-      <div v-if="group.children.length > 0" class="sub-tags-section">
+      <div v-if="props.group.children.length > 0" class="sub-tags-section">
         <p class="sub-tags-header">
           <i class="pi pi-sitemap" />
-          Sous-tags ({{ group.children.length }})
+          Sous-tags ({{ props.group.children.length }})
         </p>
         <div class="sub-tags-list">
           <div
-            v-for="child in group.children"
+            v-for="(child, index) in orderedItems"
             :key="child.id"
             class="sub-tag-chip"
-            :class="{ 'sub-tag-chip-selected': selectedChildIds.includes(child.id) }"
+            :class="{
+              'sub-tag-chip-selected': selectedChildIds.includes(child.id),
+              'is-dragging': draggedIndex === index,
+              'drag-over': dragOverIndex === index && draggedIndex !== index,
+            }"
             :style="{ borderLeftColor: child.color }"
+            :draggable="props.group.children.length > 1"
+            @dragstart="onDragStart($event, index)"
+            @dragover="onDragOver($event, index)"
+            @drop="onDrop($event, index)"
+            @dragend="onDragEnd"
           >
+            <button
+              v-if="props.group.children.length > 1"
+              v-tooltip.top="'Réorganiser'"
+              class="sub-tag-drag-handle"
+              @click.stop
+            >
+              <i class="pi pi-bars" />
+            </button>
             <Checkbox
               v-if="!child.isDefault"
               :binary="true"
@@ -103,7 +123,7 @@ const emit = defineEmits<{
         </div>
       </div>
 
-      <div v-if="!group.isDefault" class="tag-actions">
+      <div v-if="!props.group.isDefault" class="tag-actions">
         <Button
           v-tooltip.top="'Modifier'"
           icon="pi pi-pencil"
@@ -112,7 +132,7 @@ const emit = defineEmits<{
           severity="secondary"
           :disabled="disabled"
           aria-label="Modifier"
-          @click="emit('edit', group)"
+          @click="emit('edit', props.group)"
         />
         <Button
           v-tooltip.top="'Supprimer'"
@@ -123,7 +143,7 @@ const emit = defineEmits<{
           :loading="deleting"
           :disabled="disabled"
           aria-label="Supprimer"
-          @click="emit('delete', group)"
+          @click="emit('delete', props.group)"
         />
       </div>
     </div>
@@ -287,7 +307,7 @@ const emit = defineEmits<{
   border-radius: 6px;
   border-left: 3px solid;
   background: var(--bg-tertiary);
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     background: var(--bg-hover, var(--bg-tertiary));
@@ -295,6 +315,55 @@ const emit = defineEmits<{
     .sub-tag-actions {
       opacity: 1;
     }
+
+    .sub-tag-drag-handle {
+      opacity: 1;
+    }
+  }
+
+  &.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.98);
+    box-shadow: none;
+  }
+
+  &.drag-over {
+    box-shadow: 0 -2px 0 0 var(--p-primary-color, #6366f1);
+    background: color-mix(in srgb, var(--p-primary-color, #6366f1) 6%, var(--bg-tertiary));
+  }
+}
+
+.sub-tag-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: grab;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  padding: 0;
+  opacity: 0;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    opacity: 1;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:hover {
+    color: var(--primary, var(--p-primary-color));
+    background: color-mix(in srgb, var(--p-primary-color, #6366f1) 10%, transparent);
+  }
+
+  i {
+    font-size: 0.75rem;
   }
 }
 

@@ -37,6 +37,15 @@ vi.stubGlobal('useBookletOrder', (items: any) => ({
   onDrop: vi.fn(),
   onDragEnd: vi.fn(),
 }))
+vi.stubGlobal('useSubTagOrder', (_parentId: string, items: any) => ({
+  orderedItems: computed(() => items.value),
+  draggedIndex: ref(null),
+  dragOverIndex: ref(null),
+  onDragStart: vi.fn(),
+  onDragOver: vi.fn(),
+  onDrop: vi.fn(),
+  onDragEnd: vi.fn(),
+}))
 
 config.global.stubs = {
   Transition: false,
