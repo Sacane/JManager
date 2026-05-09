@@ -465,8 +465,7 @@ class RegularTransactionGeneratorService(
         regularTransaction: RegularTransaction,
         actualTransactionDate: LocalDate
     ): Boolean {
-        if (existingTransaction.isNotPreview &&
-            existingTransaction.regularTransactionId != null &&
+        if (existingTransaction.regularTransactionId != null &&
             existingTransaction.regularTransactionId == regularTransaction.id
         ) {
             return true
@@ -474,11 +473,6 @@ class RegularTransactionGeneratorService(
 
         if (!existingTransaction.isPreview || !existingTransaction.date.isEqual(actualTransactionDate)) {
             return false
-        }
-
-        val existingRegularId = existingTransaction.regularTransactionId
-        if (existingRegularId != null) {
-            return existingRegularId == regularTransaction.id
         }
 
         return existingTransaction.label == regularTransaction.label &&

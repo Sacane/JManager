@@ -12,6 +12,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.FeatureTest
+import fr.sacane.jmanager.domain.port.input.transaction.EditTransactionCommand
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -1019,6 +1020,59 @@ class RegularTransactionComputerTest : FeatureTest() {
 
                 assertEquals(1, withBounds.size)
                 assertEquals(LocalDate.of(2026, 3, 15), withBounds[0].date)
+            }
+        }
+    }
+
+    @Nested
+    inner class NonRegressionPreviewDateEdit {
+
+        @Test
+        fun `should not generate a duplicate preview when the user edits the date of an existing preview linked to a regular transaction`() {
+            launchWithUserId {
+                // Given: a monthly regular transaction recurring on the 5th
+                val regularTransaction = RegularTransaction(
+                    label = "Loyer",
+                    amount = 800.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-rent-date-edit"),
+                    startDate = LocalDate.of(2024, 5, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+
+                // When: a preview is generated for May 2024 → T1 on 2024-05-05
+                val firstGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(regularTransaction),
+                    targetMonth = Month.MAY,
+                    targetYear = 2024
+                )
+                assertEquals(1, firstGeneration.size)
+                val generatedPreview = firstGeneration[0]
+                assertEquals(5, generatedPreview.date.dayOfMonth)
+                assertNotNull(generatedPreview.id)
+
+                // And: the user edits the preview to move the date to the 15th
+                val editedPreview = generatedPreview.copy(date = LocalDate.of(2024, 5, 15))
+                FakeFactory.editTransactionService.handle(
+                    EditTransactionCommand(userId, booklet.id!!, editedPreview)
+                )
+
+                // When: generation is triggered again for the same month
+                val secondGeneration = regularTransactionGenerator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(regularTransaction),
+                    targetMonth = Month.MAY,
+                    targetYear = 2024
+                )
+
+                // Then: no duplicate should be created — the edited preview covers May 2024
+                assertEquals(
+                    0,
+                    secondGeneration.size,
+                    "An existing preview for a regular transaction, even with a modified date, must prevent re-generation for the same month"
+                )
             }
         }
     }
