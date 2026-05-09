@@ -1,6 +1,14 @@
 # Changelog
 
-## 2026-05-08
+## 2026-05-09
+
+- **Bug fix: Editing a preview transaction's date caused a duplicate to be generated on next preview computation**
+  - **Root cause**: `isDuplicateTransaction()` in `RegularTransactionComputer` checked `existingTransaction.date.isEqual(actualTransactionDate)` for preview transactions linked to a regular transaction. When the user moved the preview from the 5th to the 15th, the date comparison failed, so the deduplication logic did not recognise the edited preview as covering that month — a second preview was generated for the original date.
+  - **Fix — domain layer only**:
+    - `RegularTransactionComputer.isDuplicateTransaction()`: match any transaction (preview or not) by `regularTransactionId` first, regardless of date. The query already scopes to the target month, so a matching ID is sufficient proof of coverage.
+    - The now-redundant `isPreview`/`isNotPreview` guard was merged into a single ID check; the unreachable `val existingRegularId` branch was removed (dead code after the merge).
+  - **Non-regression test added** (`RegularTransactionComputerTest.NonRegressionPreviewDateEdit`): generates a preview, edits its date via `EditTransactionService`, then triggers generation again — asserts zero new transactions are produced.
+
 
 - **Fix: Daily balance curve now starts from the booklet's actual balance, not from zero**
   - **Root cause**: `DailyTrendCalculatorImpl` seeded `cumulativeBalance` at `BigDecimal.ZERO`, so the "Solde cumulé" curve on the dashboard represented the net delta over the period rather than the true running account balance.
