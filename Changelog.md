@@ -2,6 +2,12 @@
 
 ## 2026-05-09
 
+- **Bug fix: Editing a preview transaction's date caused it to be double-counted in previsional balance**
+  - **Root cause**: `calculateVirtualTransactions()` used two separate deduplication sets: confirmed transactions were matched by `(regularTransactionId, YearMonth)`, but preview transactions were matched by **exact date**. When a user moved a preview from Day 1 to Day 15 (still preview, `isPreview = true`), the exact-date key `"${id}-2026-05-01"` was not present in `previewExactKeys`, so the virtual occurrence for Day 1 was not suppressed. Result: the preview (Day 15) and the spurious virtual (Day 1) were both included in the balance computation → amount doubled in the UI.
+  - **Fix — domain layer only**: unified the two deduplication sets into a single `physicalByYearMonthKeys`: any physical transaction (preview **or** confirmed) with a `regularTransactionId` now suppresses the virtual for its entire `YearMonth`, regardless of exact date. This matches the existing behaviour of `generateMissingPrevisionalTransactions` and `checkIfTransactionExists`.
+  - **Test added** (`RegularTransactionComputerTest.EdgeCases`): `preview transaction with changed date must not produce a virtual on the original natural date` — generates a preview for May, moves its date to the 15th (still preview), then calls `calculateVirtualTransactions` for May–June and asserts only June's virtual is produced.
+  - All 14 EdgeCases tests pass (0 failures).
+
 - **Bug fix: Editing a preview transaction's date caused a duplicate to be generated on next preview computation**
   - **Root cause**: `isDuplicateTransaction()` in `RegularTransactionComputer` checked `existingTransaction.date.isEqual(actualTransactionDate)` for preview transactions linked to a regular transaction. When the user moved the preview from the 5th to the 15th, the date comparison failed, so the deduplication logic did not recognise the edited preview as covering that month — a second preview was generated for the original date.
   - **Fix — domain layer only**:

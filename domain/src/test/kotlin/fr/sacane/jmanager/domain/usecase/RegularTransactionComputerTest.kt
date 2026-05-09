@@ -838,6 +838,51 @@ class RegularTransactionComputerTest : FeatureTest() {
         }
 
         @Test
+        fun `preview transaction with changed date must not produce a virtual on the original natural date`() {
+            // Regression: when a preview transaction has its date edited (still preview),
+            // calculateVirtualTransactions must not re-create a virtual for that month.
+            launchWithUserId {
+                val regularTransactionId = RegularTransactionId("${user.id.value}-preview-date-change")
+
+                val monthlyTransaction = RegularTransaction(
+                    label = "Abonnement",
+                    amount = 20.toAmount(),
+                    isIncome = false,
+                    id = regularTransactionId,
+                    startDate = LocalDate.of(2026, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+
+                // User edited the May preview: date moved from May 1 to May 15, still preview
+                val previewWithChangedDate = Transaction(
+                    id = null,
+                    label = "Abonnement",
+                    amount = 20.toAmount(),
+                    date = LocalDate.of(2026, 5, 15),
+                    isIncome = false,
+                    isPreview = true,
+                    regularTransactionId = regularTransactionId
+                )
+
+                val virtualTransactions = regularTransactionGenerator.calculateVirtualTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(monthlyTransaction),
+                    startMonth = Month.MAY,
+                    startYear = 2026,
+                    endMonth = Month.JUNE,
+                    endYear = 2026,
+                    existingPhysicalTransactions = listOf(previewWithChangedDate)
+                )
+
+                // May is already covered by the edited preview — no virtual expected.
+                // Only June must be present.
+                assertEquals(1, virtualTransactions.size, "May should be suppressed because an edited preview already covers that month")
+                assertEquals(Month.JUNE, virtualTransactions[0].date.month)
+            }
+        }
+
+        @Test
         fun `confirmed preview with changed date must not produce a virtual on the original natural date`() {
             // Regression: when a preview transaction is confirmed with a different date,
             // calculateVirtualTransactions must not re-create a virtual for that month.
