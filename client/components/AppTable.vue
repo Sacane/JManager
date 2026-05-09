@@ -95,7 +95,7 @@ const visibleColumns = computed(() =>
 
 <style scoped>
 .app-table :deep(.p-datatable-thead > tr > th) {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  background: #45058C;
   color: #fff;
   font-weight: 700;
   padding: 16px;
