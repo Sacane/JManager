@@ -36,7 +36,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex items-center justify-center flex-col gap-2.5 relative">
     <div class="flex flex-row gap-2 items-center">
-      <div class="w-12.5 h-12.5 rounded-full bg-white flex items-center justify-center text-purple-600 text-3xl font-bold cursor-pointer" @click="toggleDropdown">
+      <div class="w-12.5 h-12.5 rounded-full profile-avatar flex items-center justify-center text-white text-3xl font-bold cursor-pointer" @click="toggleDropdown">
         {{ username.charAt(0) }}
       </div>
       <div class="flex flex-col gap-1">
@@ -48,8 +48,35 @@ onBeforeUnmount(() => {
         </p>
       </div>
     </div>
-    <Button class="btn-primary" @click="handleLogout">
+    <Button class="btn-logout" @click="handleLogout">
       Se déconnecter
     </Button>
   </div>
 </template>
+
+<style scoped>
+.profile-avatar {
+  background: linear-gradient(135deg, #A30053 0%, #FF084B 100%);
+  box-shadow: 0 2px 10px rgba(255, 8, 75, 0.4);
+}
+
+.btn-logout.p-button {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.9);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+</style>

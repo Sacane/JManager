@@ -53,7 +53,7 @@ const emit = defineEmits<{
           <div class="w-px h-10 md:h-9 bg-gradient-to-b from-transparent via-[var(--border-color)] to-transparent" />
           <div class="flex flex-col gap-1">
             <span class="text-[0.69rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] md:text-2xs">Prévisionnel</span>
-            <span class="text-xl font-extrabold text-amber-600 md:text-lg">{{ previewSold.toFixed(2) }} €</span>
+            <span class="text-xl font-extrabold text-[#FF5A08] md:text-lg">{{ previewSold.toFixed(2) }} €</span>
           </div>
         </div>
 
