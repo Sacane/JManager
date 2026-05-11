@@ -116,8 +116,7 @@ const usedParentTagIds = computed(() => {
     const found = tags.value.find(t => t.tagId === tagId)
     if (found?.parentId) {
       ids.add(found.parentId)
-    }
-    else if (found && !found.parentId) {
+    } else if (found && !found.parentId) {
       ids.add(tagId)
     }
   }
@@ -582,7 +581,7 @@ function isSelected(transaction: DisplayTransaction): boolean {
 function checkMobile() {
   const width = window.innerWidth
   isMobile.value = width <= 768
-  isSmallDesktop.value = width > 768 && width <= 1440
+  isSmallDesktop.value = width > 768 && width <= 1540
   isSidebarMode.value = !isMobile.value && (window.innerHeight < 768 || isSmallDesktop.value)
 }
 
