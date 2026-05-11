@@ -16,9 +16,9 @@ import java.util.UUID
 @DisplayName("FileImportExportFeature Tests")
 class FileImportExportFeatureTest : FeatureTest() {
 
-    private val validateCsvFileService = FakeFactory.validateCsvFileService
-    private val importTransactionsFromCsvService = FakeFactory.importTransactionsFromCsvService
-    private val exportTransactionsToCsvService = FakeFactory.exportTransactionsToCsvService
+    private val validateCsvFileService = factory.validateCsvFileService
+    private val importTransactionsFromCsvService = factory.importTransactionsFromCsvService
+    private val exportTransactionsToCsvService = factory.exportTransactionsToCsvService
 
     @Test
     @DisplayName("Should fail when booklet does not exist")
@@ -397,7 +397,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(2, importResult.successCount)
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val bookletState = FakeFactory.bookletState()
+                val bookletState = factory.bookletState()
                 val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
@@ -431,7 +431,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(2, importResult.successCount)
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val bookletState = FakeFactory.bookletState()
+                val bookletState = factory.bookletState()
                 val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
@@ -467,7 +467,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertEquals(4, importResult.successCount)
                 Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val bookletState = FakeFactory.bookletState()
+                val bookletState = factory.bookletState()
                 val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
@@ -496,7 +496,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isFailure())
 
-            val bookletState = FakeFactory.bookletState()
+            val bookletState = factory.bookletState()
             val updatedBooklets = bookletState.getStates().find { it.userId == userId }
             Assertions.assertNotNull(updatedBooklets)
             val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
@@ -523,7 +523,7 @@ class FileImportExportFeatureTest : FeatureTest() {
 
             Assertions.assertTrue(result.isSuccess())
 
-            val bookletState = FakeFactory.bookletState()
+            val bookletState = factory.bookletState()
             val persistedBooklets = bookletState.getStates().find { it.userId == userId }
             Assertions.assertNotNull(persistedBooklets)
             val persistedBooklet = persistedBooklets!!.booklets.find { it.id == booklet.id }
@@ -623,7 +623,7 @@ class FileImportExportFeatureTest : FeatureTest() {
                 Assertions.assertNotNull(transaction2)
                 Assertions.assertEquals(LocalDate.of(2026, 1, 15), transaction2!!.date)
 
-                val bookletState = FakeFactory.bookletState()
+                val bookletState = factory.bookletState()
                 val updatedBooklets = bookletState.getStates().find { it.userId == userId }
                 Assertions.assertNotNull(updatedBooklets)
                 val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }

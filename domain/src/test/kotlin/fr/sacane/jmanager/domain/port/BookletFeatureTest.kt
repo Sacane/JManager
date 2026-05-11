@@ -31,24 +31,22 @@ import kotlin.collections.emptyList
 
 class BookletFeatureTest: FeatureTest() {
 
-    companion object{
-        private val userRepository: UserRepository = FakeFactory.fakeUserRepository()
-        private val findBookletByIdService = FakeFactory.findBookletByIdService
-        private val editBookletService = FakeFactory.editBookletService
-        private val deleteBookletByIdService = FakeFactory.deleteBookletByIdService
-        private val findByLabelAndUserIdService = FakeFactory.findByLabelAndUserIdService
-        private val findAllRegisteredBookletsService = FakeFactory.findAllRegisteredBookletsService
-        private val saveBookletService = FakeFactory.saveBookletService
-        private val loadTransactionsForBookletForAMonthService = FakeFactory.loadTransactionsForBookletForAMonthService
-        private val loadBalancesForBookletForAMonthService = FakeFactory.loadBalancesForBookletForAMonthService
-        private val regenerateDeletedPrevisionalTransactionsService = FakeFactory.regenerateDeletedPrevisionalTransactionsService
-        private val user = userRepository.register("jojo", "test") as User
-        private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
-    }
+    private val userRepository: UserRepository = factory.fakeUserRepository()
+    private val findBookletByIdService = factory.findBookletByIdService
+    private val editBookletService = factory.editBookletService
+    private val deleteBookletByIdService = factory.deleteBookletByIdService
+    private val findByLabelAndUserIdService = factory.findByLabelAndUserIdService
+    private val findAllRegisteredBookletsService = factory.findAllRegisteredBookletsService
+    private val saveBookletService = factory.saveBookletService
+    private val loadTransactionsForBookletForAMonthService = factory.loadTransactionsForBookletForAMonthService
+    private val loadBalancesForBookletForAMonthService = factory.loadBalancesForBookletForAMonthService
+    private val regenerateDeletedPrevisionalTransactionsService = factory.regenerateDeletedPrevisionalTransactionsService
+    private val user: User = userRepository.register("jojo", "test")!!
+    private val bookletState: State<BookletsByOwner> = factory.bookletState()
 
     @AfterEach
     fun clear(){
-        FakeFactory.clearAll()
+        factory.clearAll()
     }
 
     @Test
@@ -108,7 +106,7 @@ class BookletFeatureTest: FeatureTest() {
     @Test
     fun `As an booklet's owner, I can retrieve it by its label`() {
         launchWithUserId {
-            val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = Companion.user, id = UUID.randomUUID())
+            val element = Booklet(Amount.fromString("100", "€".asCurrency()), "test22", owner = this@BookletFeatureTest.user, id = UUID.randomUUID())
             bookletState.init(listOf(
                 BookletsByOwner(listOf(element), this.user.id)
             ))
@@ -251,13 +249,13 @@ class BookletFeatureTest: FeatureTest() {
                     isIncome = true,
                     isPreview = false
                 )
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), mutableListOf(transaction1))))
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), mutableListOf(transaction2))))
 
 
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -303,7 +301,7 @@ class BookletFeatureTest: FeatureTest() {
                     isIncome = false,
                     isPreview = false
                 )
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(
                         listOf(
                             IdBookletByTransaction(
@@ -313,7 +311,7 @@ class BookletFeatureTest: FeatureTest() {
                         )
                     )
 
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -376,7 +374,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
 
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(
                         listOf(
                             IdBookletByTransaction(
@@ -387,7 +385,7 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -438,7 +436,7 @@ class BookletFeatureTest: FeatureTest() {
                     isIncome = false,
                     isPreview = true
                 )
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(
                         listOf(
                             IdBookletByTransaction(
@@ -447,7 +445,7 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -519,7 +517,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
 
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(
                         listOf(
                             IdBookletByTransaction(
@@ -530,7 +528,7 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -581,7 +579,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(
                         UserRegularTransaction(userId = user.id, transaction = regularTransaction1, bookletIds = listOf(bookletId)),
                         UserRegularTransaction(userId = user.id, transaction = regularTransaction2, bookletIds = listOf(bookletId))
@@ -616,7 +614,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -696,7 +694,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
 
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(
                         listOf(
                             IdBookletByTransaction(
@@ -707,7 +705,7 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -764,7 +762,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
 
-                FakeFactory.fakeTransactionRepository()
+                factory.fakeTransactionRepository()
                     .init(
                         listOf(
                             IdBookletByTransaction(
@@ -775,7 +773,7 @@ class BookletFeatureTest: FeatureTest() {
                             )
                         )
                     )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id,
@@ -803,7 +801,7 @@ class BookletFeatureTest: FeatureTest() {
                 )
                 bookletState.init(listOf(BookletsByOwner(listOf(booklet), user.id)))
 
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 var result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id, bookletId, java.time.Month.JANUARY, 2025,
@@ -821,7 +819,7 @@ class BookletFeatureTest: FeatureTest() {
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(
                         UserRegularTransaction(userId = user.id, transaction = regular, bookletIds = listOf(bookletId))
                     )
@@ -835,7 +833,7 @@ class BookletFeatureTest: FeatureTest() {
                 result.assertTrue { this.regularTransactions.size == 1 }
                 result.assertTrue { this.regularTransactions.any { it.label == "Monthly Income RT" } }
 
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
                 result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id, bookletId, java.time.Month.JANUARY, 2025,
                     startingMonth = java.time.Month.JANUARY,
@@ -878,7 +876,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(
                         UserRegularTransaction(userId = user.id, transaction = rtMine, bookletIds = listOf(bookletIdMine)),
                         UserRegularTransaction(userId = otherUser.id, transaction = rtOther, bookletIds = listOf(bookletIdOther))
@@ -919,7 +917,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(bookletId)))
                 )
 
@@ -974,7 +972,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(25)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(
                         UserRegularTransaction(userId = user.id, transaction = rt1, bookletIds = listOf(bookletId)),
                         UserRegularTransaction(userId = user.id, transaction = rt2, bookletIds = listOf(bookletId)),
@@ -1024,7 +1022,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
 
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(
                         IdBookletByTransaction(
                             IdUserBooklet(user.id, bookletId),
@@ -1043,7 +1041,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
 
@@ -1084,7 +1082,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = futureRT, bookletIds = listOf(bookletId)))
                 )
 
@@ -1119,7 +1117,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(bookletId)))
                 )
 
@@ -1142,7 +1140,7 @@ class BookletFeatureTest: FeatureTest() {
                     regularTransactionId = regularTransactionId
                 )
 
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(
                         IdBookletByTransaction(
                             IdUserBooklet(user.id, bookletId),
@@ -1187,7 +1185,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularIncome, bookletIds = listOf(bookletId)))
                 )
 
@@ -1201,7 +1199,7 @@ class BookletFeatureTest: FeatureTest() {
                     regularTransactionId = regularTransactionId
                 )
 
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(
                         IdBookletByTransaction(
                             IdUserBooklet(user.id, bookletId),
@@ -1244,7 +1242,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
 
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(
                         IdBookletByTransaction(
                             IdUserBooklet(user.id, bookletId),
@@ -1253,7 +1251,7 @@ class BookletFeatureTest: FeatureTest() {
                     )
                 )
 
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                     user.id,
@@ -1291,7 +1289,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
 
@@ -1330,7 +1328,7 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(1)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
 
@@ -1384,7 +1382,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false
                 )
 
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(
                         IdBookletByTransaction(
                             IdUserBooklet(user.id, bookletId),
@@ -1392,7 +1390,7 @@ class BookletFeatureTest: FeatureTest() {
                         )
                     )
                 )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     userId = user.id,
@@ -1438,7 +1436,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true
                 )
 
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(
                         IdBookletByTransaction(
                             IdUserBooklet(user.id, bookletId),
@@ -1446,7 +1444,7 @@ class BookletFeatureTest: FeatureTest() {
                         )
                     )
                 )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                     userId = user.id,
@@ -1484,10 +1482,10 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(15)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 // Simulate: current date is 1st April 2026, user views March 2026 with default settings (1→31)
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
@@ -1527,10 +1525,10 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(28)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 // Simulate: current date is 1st April 2026, user views March cycle (28 Feb → 27 Mar)
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
@@ -1570,10 +1568,10 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(28)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 // Simulate: current date is 1st April 2026, user views May cycle (28 Apr → 27 May)
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
@@ -1621,10 +1619,10 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 // Current cycle: March 28 → April 27. startingMonth = APRIL so today = April N.
                 // Works correctly for days 1-27 of April (today within cycle range).
@@ -1669,10 +1667,10 @@ class BookletFeatureTest: FeatureTest() {
                     recurrenceRule = RecurrenceRule.Monthly(29)
                 )
 
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 // Current cycle: March 28 → April 27. startingMonth = APRIL so today = April N.
                 // Works correctly for days 1-27 of April (today within cycle range).
@@ -1713,16 +1711,16 @@ class BookletFeatureTest: FeatureTest() {
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 val currentDate = LocalDate.now()
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     userId = user.id,
@@ -1756,13 +1754,13 @@ class BookletFeatureTest: FeatureTest() {
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 // Mark a past month as excluded
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, 2024, java.time.Month.FEBRUARY
                 )
 
@@ -1801,10 +1799,10 @@ class BookletFeatureTest: FeatureTest() {
                     frequencyProperty = FrequencyProperty.Forever(),
                     recurrenceRule = RecurrenceRule.Monthly(5)
                 )
-                FakeFactory.regularTransactionState.init(
+                factory.regularTransactionState.init(
                     listOf(UserRegularTransaction(userId = user.id, transaction = regularTx, bookletIds = listOf(bookletId)))
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     userId = user.id,
@@ -1836,10 +1834,10 @@ class BookletFeatureTest: FeatureTest() {
                         date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                         isIncome = true, isPreview = false)
                 }
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
                 )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id, bookletId, java.time.Month.JANUARY, 2025,
@@ -1867,10 +1865,10 @@ class BookletFeatureTest: FeatureTest() {
                         date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                         isIncome = true, isPreview = false)
                 }
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
                 )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id, bookletId, java.time.Month.JANUARY, 2025,
@@ -1896,10 +1894,10 @@ class BookletFeatureTest: FeatureTest() {
                         date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                         isIncome = true, isPreview = false)
                 }
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
                 )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id, bookletId, java.time.Month.JANUARY, 2025,
@@ -1925,10 +1923,10 @@ class BookletFeatureTest: FeatureTest() {
                         date = LocalDate.of(2025, 1, i), amount = 100.toAmount(),
                         isIncome = true, isPreview = false)
                 }
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
                 )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id, bookletId, java.time.Month.JANUARY, 2025,
@@ -1953,10 +1951,10 @@ class BookletFeatureTest: FeatureTest() {
                         date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                         isIncome = true, isPreview = false)
                 }
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), transactions.toMutableList()))
                 )
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
 
                 val page0Result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                     user.id, bookletId, java.time.Month.JANUARY, 2025,
@@ -1993,7 +1991,7 @@ class BookletFeatureTest: FeatureTest() {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(dayOfMonth)
             )
-            FakeFactory.regularTransactionState.init(
+            factory.regularTransactionState.init(
                 listOf(UserRegularTransaction(userId = userId, transaction = tx, bookletIds = listOf(bookletId)))
             )
             return tx
@@ -2014,10 +2012,10 @@ class BookletFeatureTest: FeatureTest() {
 
                 val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
 
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, futureDate.year, futureDate.month
                 )
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     userId = user.id,
@@ -2029,7 +2027,7 @@ class BookletFeatureTest: FeatureTest() {
                 result.assertTrue { this.isNotEmpty() }
                 result.assertTrue { this.any { it.label == "Loyer" } }
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
+                val tracker = factory.trackerRepository().findTracker(regularTx.id, bookletId)
                 assertFalse(tracker?.excludedMonths?.contains(YearMonth.from(futureDate)) == true,
                     "Future month should no longer be excluded after regeneration")
             }
@@ -2050,7 +2048,7 @@ class BookletFeatureTest: FeatureTest() {
                 val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 5)
 
                 val pastYearMonth = YearMonth.of(2024, java.time.Month.MARCH)
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, pastYearMonth.year, pastYearMonth.month
                 )
 
@@ -2063,7 +2061,7 @@ class BookletFeatureTest: FeatureTest() {
 
                 result.assertTrue { this.isEmpty() }
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
+                val tracker = factory.trackerRepository().findTracker(regularTx.id, bookletId)
                 assertTrue(tracker?.excludedMonths?.contains(pastYearMonth) == true,
                     "Past month tracker exclusion must remain unchanged")
             }
@@ -2072,7 +2070,7 @@ class BookletFeatureTest: FeatureTest() {
         @Test
         fun `regenerate for a non-existing booklet should return BOOKLET_NOT_FOUND`() {
             launchWithUserId {
-                FakeFactory.regularTransactionState.init(emptyList())
+                factory.regularTransactionState.init(emptyList())
                 val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                     userId = user.id,
                     bookletId = UUID.randomUUID(),
@@ -2097,9 +2095,9 @@ class BookletFeatureTest: FeatureTest() {
                 bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
 
                 val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 1)
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
 
@@ -2113,7 +2111,7 @@ class BookletFeatureTest: FeatureTest() {
                 result.assertTrue { this.isNotEmpty() }
                 result.assertTrue { this.any { it.label == "Loyer" && it.isPreview } }
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
+                val tracker = factory.trackerRepository().findTracker(regularTx.id, bookletId)
                 assertFalse(tracker?.excludedMonths?.contains(YearMonth.from(currentDate)) == true,
                     "Current month should no longer be excluded after regeneration")
             }
@@ -2144,12 +2142,12 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = false,
                     regularTransactionId = regularTx.id
                 )
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), mutableListOf(confirmed)))
                 )
 
                 // Month is excluded (user deleted the preview before confirming)
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
 
@@ -2190,7 +2188,7 @@ class BookletFeatureTest: FeatureTest() {
                     isPreview = true,
                     regularTransactionId = regularTx.id
                 )
-                FakeFactory.fakeTransactionRepository().init(
+                factory.fakeTransactionRepository().init(
                     listOf(IdBookletByTransaction(IdUserBooklet(user.id, bookletId), mutableListOf(existingPreview)))
                 )
 
@@ -2220,13 +2218,13 @@ class BookletFeatureTest: FeatureTest() {
                 bookletState.init(listOf(BookletsByOwner(listOf(bookletInstance), user.id)))
 
                 val regularTx = buildRegularTransaction(user.id, bookletId, dayOfMonth = 1)
-                FakeFactory.fakeTransactionRepository().init(emptyList())
+                factory.fakeTransactionRepository().init(emptyList())
 
                 // Exclude current month and next month
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, currentDate.year, currentDate.month
                 )
-                FakeFactory.trackerRepository().markMonthAsExcluded(
+                factory.trackerRepository().markMonthAsExcluded(
                     regularTx.id, bookletId, nextMonthDate.year, nextMonthDate.month
                 )
 
@@ -2238,7 +2236,7 @@ class BookletFeatureTest: FeatureTest() {
                     year = currentDate.year
                 )).assertSuccess()
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTx.id, bookletId)
+                val tracker = factory.trackerRepository().findTracker(regularTx.id, bookletId)
                 assertFalse(
                     tracker?.excludedMonths?.contains(YearMonth.from(currentDate)) == true,
                     "Current month should no longer be excluded"

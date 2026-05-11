@@ -23,20 +23,17 @@ import java.util.*
 
 class StatsFeatureTest : FeatureTest() {
 
-    companion object {
-        private val getMonthlyBookletStatsUseCase: GetMonthlyBookletStatsUseCase = FakeFactory.getMonthlyBookletStatsService
-        private val getCategoryDistributionUseCase: GetCategoryDistributionUseCase = FakeFactory.getCategoryDistributionService
-        private val getTrendStatsUseCase: GetTrendStatsUseCase = FakeFactory.getTrendStatsService
-        private val getPrevisionalTransactionsUseCase: GetPrevisionalTransactionsUseCase = FakeFactory.getPrevisionalTransactionsService
-        private val getDailyTrendStatsUseCase: GetDailyTrendStatsUseCase = FakeFactory.getDailyTrendStatsService
-        private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
-        private val transactionState = FakeFactory.fakeTransactionRepository()
-
-    }
+    private val getMonthlyBookletStatsUseCase: GetMonthlyBookletStatsUseCase = factory.getMonthlyBookletStatsService
+    private val getCategoryDistributionUseCase: GetCategoryDistributionUseCase = factory.getCategoryDistributionService
+    private val getTrendStatsUseCase: GetTrendStatsUseCase = factory.getTrendStatsService
+    private val getPrevisionalTransactionsUseCase: GetPrevisionalTransactionsUseCase = factory.getPrevisionalTransactionsService
+    private val getDailyTrendStatsUseCase: GetDailyTrendStatsUseCase = factory.getDailyTrendStatsService
+    private val bookletState: State<BookletsByOwner> = factory.bookletState()
+    private val transactionState = factory.fakeTransactionRepository()
 
     @AfterEach
     fun clear() {
-        FakeFactory.clearAll()
+        factory.clearAll()
     }
 
     @Nested

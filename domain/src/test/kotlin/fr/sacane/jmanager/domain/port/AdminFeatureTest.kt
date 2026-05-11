@@ -15,15 +15,13 @@ import java.util.*
 
 class AdminFeatureTest : FeatureTest() {
 
-    companion object {
-        private val userRepository = FakeFactory.fakeUserRepository()
-        private val paginator = PaginatorImpl()
-        private val adminFeature: GetUsersUseCase = GetUsersService(userRepository, paginator)
-    }
+    private val userRepository = factory.fakeUserRepository()
+    private val paginator = PaginatorImpl()
+    private val adminFeature: GetUsersUseCase = GetUsersService(userRepository, paginator)
 
     @AfterEach
     fun clear() {
-        FakeFactory.clearAll()
+        factory.clearAll()
     }
 
     private fun createAdmin(username: String): User {

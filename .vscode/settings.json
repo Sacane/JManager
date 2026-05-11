@@ -9,6 +9,8 @@
         "pwsh": true,
         "powershell": true,
         "pnpm": true,
-        "Add-Type": true
+        "Add-Type": true,
+        "Set-Content": true,
+        "Group-Object": true
     }
 }

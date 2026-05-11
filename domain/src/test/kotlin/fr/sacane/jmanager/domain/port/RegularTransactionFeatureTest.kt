@@ -21,17 +21,15 @@ import java.util.UUID
 
 class RegularTransactionFeatureTest : FeatureTest() {
 
-    companion object {
-        private val getAllRegularTransactionsUseCase = FakeFactory.getAllRegularTransactionsService
-        private val bookRegularTransactionUseCase = FakeFactory.bookRegularTransactionService
-        private val getRegularTransactionByIdUseCase = FakeFactory.getRegularTransactionByIdService
-        private val updateRegularTransactionUseCase = FakeFactory.updateRegularTransactionService
-        private val deleteRegularTransactionUseCase = FakeFactory.deleteRegularTransactionService
-        private val deleteRegularTransactionsUseCase = FakeFactory.deleteRegularTransactionsService
-        private val linkRegularTransactionToBookletUseCase = FakeFactory.linkRegularTransactionToBookletService
-        private val unlinkRegularTransactionFromBookletUseCase = FakeFactory.unlinkRegularTransactionFromBookletService
-        private val regularTransactionState = FakeFactory.regularTransactionState
-    }
+    private val getAllRegularTransactionsUseCase = factory.getAllRegularTransactionsService
+    private val bookRegularTransactionUseCase = factory.bookRegularTransactionService
+    private val getRegularTransactionByIdUseCase = factory.getRegularTransactionByIdService
+    private val updateRegularTransactionUseCase = factory.updateRegularTransactionService
+    private val deleteRegularTransactionUseCase = factory.deleteRegularTransactionService
+    private val deleteRegularTransactionsUseCase = factory.deleteRegularTransactionsService
+    private val linkRegularTransactionToBookletUseCase = factory.linkRegularTransactionToBookletService
+    private val unlinkRegularTransactionFromBookletUseCase = factory.unlinkRegularTransactionFromBookletService
+    private val regularTransactionState = factory.regularTransactionState
 
     @Nested
     inner class GetAllRegularTransactionsTest {

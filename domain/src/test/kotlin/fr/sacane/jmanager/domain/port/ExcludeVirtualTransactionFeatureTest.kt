@@ -18,12 +18,10 @@ import java.util.UUID
 
 class ExcludeVirtualTransactionFeatureTest : FeatureTest() {
 
-    companion object {
-        private val excludeVirtualTransactionUseCase: ExcludeVirtualTransactionUseCase =
-            FakeFactory.excludeVirtualTransactionService
-        private val trackerRepository: RegularTransactionTrackerRepository =
-            FakeFactory.trackerRepository()
-    }
+    private val excludeVirtualTransactionUseCase: ExcludeVirtualTransactionUseCase =
+        factory.excludeVirtualTransactionService
+    private val trackerRepository: RegularTransactionTrackerRepository =
+        factory.trackerRepository()
 
     @Nested
     inner class ExcludeVirtualTransactionSuccessScenarios {

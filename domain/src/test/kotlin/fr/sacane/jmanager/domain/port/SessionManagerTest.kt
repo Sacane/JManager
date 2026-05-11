@@ -17,13 +17,14 @@ import java.util.*
 
 class SessionManagerTest {
 
-    val sessionManager: SessionManager = FakeFactory.sessionManager()
-    val sessionState = FakeFactory.sessionState()
-    val userState = FakeFactory.fakeUserRepository()
+    private val factory = FakeFactory()
+    val sessionManager: SessionManager = factory.sessionManager()
+    val sessionState = factory.sessionState()
+    val userState = factory.fakeUserRepository()
 
     @AfterEach
     fun after() {
-        userState.clear()
+        factory.clearAll()
     }
 
     @Nested

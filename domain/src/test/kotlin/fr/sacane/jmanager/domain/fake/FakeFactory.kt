@@ -30,7 +30,7 @@ import fr.sacane.jmanager.domain.usecase.RegularTransactionGeneratorService
 import fr.sacane.jmanager.domain.usecase.TrendCalculatorImpl
 import java.util.*
 
-object FakeFactory {
+class FakeFactory {
     private val inMemoryDatabase = InMemoryDatabase()
     private val  inMemoryTrackerRepository: RegularTransactionTrackerRepository = InMemoryRegularTrackerRepository(inMemoryDatabase)
     private val  bookletRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)

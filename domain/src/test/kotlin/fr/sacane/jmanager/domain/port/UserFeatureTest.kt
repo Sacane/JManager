@@ -35,18 +35,16 @@ import java.util.UUID
 
 class UserFeatureTest: FeatureTest() {
 
-    companion object {
-        private val loginUseCase: LoginUseCase = FakeFactory.loginService
-        private val logoutUseCase: LogoutUseCase = FakeFactory.logoutService
-        private val refreshSessionUseCase: RefreshSessionUseCase = FakeFactory.refreshSessionService
-        private val registerUserUseCase: RegisterUserUseCase = FakeFactory.registerUserService
-        private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = FakeFactory.createAdminIfNotExistsService
-        private val getUserSettingsUseCase: GetUserSettingsUseCase = FakeFactory.getUserSettingsService
-        private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = FakeFactory.updateUserSettingsService
-        private val sessionFakeState = FakeFactory.sessionState()
-        private val userState = FakeFactory.fakeUserRepository()
-        private val tokenGenerator = FakeFactory.tokenGenerator
-    }
+    private val loginUseCase: LoginUseCase = factory.loginService
+    private val logoutUseCase: LogoutUseCase = factory.logoutService
+    private val refreshSessionUseCase: RefreshSessionUseCase = factory.refreshSessionService
+    private val registerUserUseCase: RegisterUserUseCase = factory.registerUserService
+    private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = factory.createAdminIfNotExistsService
+    private val getUserSettingsUseCase: GetUserSettingsUseCase = factory.getUserSettingsService
+    private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = factory.updateUserSettingsService
+    private val sessionFakeState = factory.sessionState()
+    private val userState = factory.fakeUserRepository()
+    private val tokenGenerator = factory.tokenGenerator
 
     @AfterEach
     fun afterEach() {

@@ -15,23 +15,22 @@ import java.util.*
 
 open class FeatureTest {
 
-    private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
-    private val transactionState: State<IdBookletByTransaction> = FakeFactory.fakeTransactionRepository()
-    private val userState: State<UserWithPassword> = FakeFactory.fakeUserRepository()
-    private val tagState: BiState<UserTag, List<Tag>> = FakeFactory.tagTestState()
+    protected val factory = FakeFactory()
+    private val bookletState: State<BookletsByOwner> = factory.bookletState()
+    private val transactionState: State<IdBookletByTransaction> = factory.fakeTransactionRepository()
+    private val userState: State<UserWithPassword> = factory.fakeUserRepository()
+    private val tagState: BiState<UserTag, List<Tag>> = factory.tagTestState()
+    private val tagRepository = factory.fakeTagRepository()
 
     @AfterEach
     fun cleanUp() {
-        userState.clear()
-        transactionState.clear()
-        bookletState.clear()
+        factory.clearAll()
     }
-    companion object {
-        private val tagRepository = FakeFactory.fakeTagRepository()
-        fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), tag: Tag? = null, isPreview: Boolean = false): Transaction {
-            return Transaction(UUID.randomUUID(), label, localDate, amount, isIncome, isPreview = isPreview, tag = tag ?: tagRepository.defaultTag())
-        }
+
+    fun generateTransaction(label: String, amount: Amount, isIncome: Boolean, localDate: LocalDate = LocalDate.now(), tag: Tag? = null, isPreview: Boolean = false): Transaction {
+        return Transaction(UUID.randomUUID(), label, localDate, amount, isIncome, isPreview = isPreview, tag = tag ?: tagRepository.defaultTag())
     }
+
     fun createBooklet(userId: User, label: String, amount: Amount): Booklet {
         val id = UUID.randomUUID()
         val booklet = Booklet(id = id, amount = amount, label = label, owner = userId)

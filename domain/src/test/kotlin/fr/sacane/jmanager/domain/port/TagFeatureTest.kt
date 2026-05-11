@@ -21,13 +21,13 @@ import java.util.UUID
 
 class TagFeatureTest: FeatureTest() {
 
-    private val tagState = FakeFactory.tagTestState()
-    private val addTagUseCase: AddTagUseCase = FakeFactory.addTagUseCase()
-    private val deleteTagUseCase: DeleteTagUseCase = FakeFactory.deleteTagUseCase()
-    private val getAllTagsUseCase: GetAllTagsUseCase = FakeFactory.getAllTagsUseCase()
-    private val addDefaultTagsUseCase: AddDefaultTagsUseCase = FakeFactory.addDefaultTagsUseCase()
-    private val editTagUseCase: EditTagUseCase = FakeFactory.editTagUseCase()
-    private val defaultTagUseCase: DefaultTagUseCase = FakeFactory.defaultTagUseCase()
+    private val tagState = factory.tagTestState()
+    private val addTagUseCase: AddTagUseCase = factory.addTagUseCase()
+    private val deleteTagUseCase: DeleteTagUseCase = factory.deleteTagUseCase()
+    private val getAllTagsUseCase: GetAllTagsUseCase = factory.getAllTagsUseCase()
+    private val addDefaultTagsUseCase: AddDefaultTagsUseCase = factory.addDefaultTagsUseCase()
+    private val editTagUseCase: EditTagUseCase = factory.editTagUseCase()
+    private val defaultTagUseCase: DefaultTagUseCase = factory.defaultTagUseCase()
 
     @AfterEach
     fun clearUp() {
@@ -111,7 +111,7 @@ class TagFeatureTest: FeatureTest() {
                 deleteTagUseCase.handle(DeleteTagCommand(this.userId, tagId, true))
                     .assertSuccess()
 
-                val updated = FakeFactory.transactionRepository().findTransactionById(transaction.id!!)
+                val updated = factory.transactionRepository().findTransactionById(transaction.id!!)
                 assertTrue(updated?.tag?.isDefault == true, "Transaction tag should be replaced with the default tag")
             }
         }
@@ -137,7 +137,7 @@ class TagFeatureTest: FeatureTest() {
                 assertTrue(remainingTags.none { it.id == subTagId1 }, "Sub-tag 1 should be deleted")
                 assertTrue(remainingTags.none { it.id == subTagId2 }, "Sub-tag 2 should be deleted")
 
-                val updatedTx = FakeFactory.transactionRepository().findTransactionById(tx.id!!)
+                val updatedTx = factory.transactionRepository().findTransactionById(tx.id!!)
                 assertTrue(updatedTx?.tag?.isDefault == true, "Sub-tag transaction should be reassigned to default")
             }
         }
@@ -326,7 +326,7 @@ class TagFeatureTest: FeatureTest() {
     @Nested
     inner class CreateSubTagFeatureTest {
 
-        private val createSubTagUseCase: CreateSubTagUseCase = FakeFactory.createSubTagUseCase()
+        private val createSubTagUseCase: CreateSubTagUseCase = factory.createSubTagUseCase()
 
         @Test
         fun `Create a sub-tag under an existing personal parent tag must return success`() {
@@ -362,7 +362,7 @@ class TagFeatureTest: FeatureTest() {
         @Test
         fun `Create a sub-tag under a default tag must return INVALID`() {
             launchWithUserId {
-                val defaultTag = FakeFactory.fakeTagRepository().defaultTag()
+                val defaultTag = factory.fakeTagRepository().defaultTag()
 
                 val result = createSubTagUseCase.handle(
                     CreateSubTagCommand(this.userId, Tag.Personal("SubDefault"), defaultTag.id!!)

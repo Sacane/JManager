@@ -25,16 +25,14 @@ fun <T> T.asSingleton(): List<T> = listOf(this)
 
 class TransactionFeatureTest: FeatureTest() {
 
-    companion object{
-        private val transactionState: State<IdBookletByTransaction> = FakeFactory.fakeTransactionRepository()
-        private val bookletState: State<BookletsByOwner> = FakeFactory.bookletState()
-        private val bookTransactionUseCase: BookTransactionUseCase = FakeFactory.bookTransactionService
-        private val retrieveTransactionsByMonthAndYearUseCase: RetrieveTransactionsByMonthAndYearUseCase = FakeFactory.retrieveTransactionsByMonthAndYearService
-        private val editTransactionUseCase: EditTransactionUseCase = FakeFactory.editTransactionService
-        private val findTransactionByIdUseCase: FindTransactionByIdUseCase = FakeFactory.findTransactionByIdService
-        private val deleteTransactionsByIdsUseCase: DeleteTransactionsByIdsUseCase = FakeFactory.deleteTransactionsByIdsService
-        private val confirmPreviewTransactionUseCase: ConfirmPreviewTransactionUseCase = FakeFactory.confirmPreviewTransactionService
-    }
+    private val transactionState: State<IdBookletByTransaction> = factory.fakeTransactionRepository()
+    private val bookletState: State<BookletsByOwner> = factory.bookletState()
+    private val bookTransactionUseCase: BookTransactionUseCase = factory.bookTransactionService
+    private val retrieveTransactionsByMonthAndYearUseCase: RetrieveTransactionsByMonthAndYearUseCase = factory.retrieveTransactionsByMonthAndYearService
+    private val editTransactionUseCase: EditTransactionUseCase = factory.editTransactionService
+    private val findTransactionByIdUseCase: FindTransactionByIdUseCase = factory.findTransactionByIdService
+    private val deleteTransactionsByIdsUseCase: DeleteTransactionsByIdsUseCase = factory.deleteTransactionsByIdsService
+    private val confirmPreviewTransactionUseCase: ConfirmPreviewTransactionUseCase = factory.confirmPreviewTransactionService
 
     @Nested
     inner class SaveTransactionInBookletFeatureTest {
@@ -338,7 +336,7 @@ class TransactionFeatureTest: FeatureTest() {
                 deleteTransactionsByIdsUseCase.handle(DeleteTransactionsByIdsCommand(userId, booklet.id!!, listOf(previewTransaction.id!!)))
                     .assertSuccess()
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id)
+                val tracker = factory.trackerRepository().findTracker(regularTransactionId, booklet.id)
                 assertNotNull(tracker)
                 assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2024, Month.JANUARY)))
             }
@@ -476,7 +474,7 @@ class TransactionFeatureTest: FeatureTest() {
     @Nested
     inner class ConfirmVirtualTransactionTest {
 
-        private val confirmVirtualTransactionUseCase: ConfirmVirtualTransactionUseCase = FakeFactory.confirmVirtualTransactionService
+        private val confirmVirtualTransactionUseCase: ConfirmVirtualTransactionUseCase = factory.confirmVirtualTransactionService
 
         @Test
         fun `shouldPersistRealTransactionAndExcludeSourceMonth_whenConfirmingVirtualTransactionWithUnchangedDate`() {
@@ -505,7 +503,7 @@ class TransactionFeatureTest: FeatureTest() {
                     assertEquals(LocalDate.of(2026, 5, 15), transactionResult.transaction.date)
                 }
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                val tracker = factory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
                 assertNotNull(tracker)
                 assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2026, Month.MAY)))
             }
@@ -535,7 +533,7 @@ class TransactionFeatureTest: FeatureTest() {
                     assertEquals(LocalDate.of(2026, 4, 20), transactionResult.transaction.date)
                 }
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                val tracker = factory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
                 assertNotNull(tracker)
                 assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2026, Month.MAY)))
                 assertFalse(tracker.excludedMonths.contains(YearMonth.of(2026, Month.APRIL)))
@@ -568,7 +566,7 @@ class TransactionFeatureTest: FeatureTest() {
             launchWithUserId {
                 val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-4")
 
-                val trackerBefore = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                val trackerBefore = factory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
                 assertNull(trackerBefore)
 
                 val result = confirmVirtualTransactionUseCase.handle(
@@ -587,7 +585,7 @@ class TransactionFeatureTest: FeatureTest() {
 
                 result.assertSuccess()
 
-                val tracker = FakeFactory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
+                val tracker = factory.trackerRepository().findTracker(regularTransactionId, booklet.id!!)
                 assertNotNull(tracker)
                 assertTrue(tracker!!.excludedMonths.contains(YearMonth.of(2026, Month.MAY)))
             }
