@@ -1,5 +1,13 @@
 # Changelog
 
+## [En cours]
+
+- **Refactoring: Migration complète des tests domain vers le DSL `TestScenario` + fixtures**
+  - Tous les fichiers de test dans `domain/src/test/kotlin/.../port/` ont été migrés : `ExcludeVirtualTransactionFeatureTest`, `SessionManagerTest`, `AdminFeatureTest`, `UserFeatureTest`, `TagFeatureTest`, `TransactionFeatureTest`, `FileImportExportFeatureTest`, `RegularTransactionFeatureTest`, `StatsFeatureTest`, `BookletFeatureTest` (53 tests, incluant 3 classes imbriquées).
+  - L'héritage de `FeatureTest` (helpers `launchWithUserId`/`launchWithNewUserId`) est remplacé par `FakeFactory` + `TestScenario` + blocs `given/act/then` + `BookletFixture`/`UserFixture`/`TransactionFixture`.
+  - `FeatureTest` est conservée pour la phase 2 (`RegularTransactionComputerTest` dans `usecase/`).
+  - Suite complète domain : **BUILD SUCCESSFUL**, 0 échec.
+
 ## 2026-05-09
 
 - **Bug fix: Editing a preview transaction's date caused it to be double-counted in previsional balance**

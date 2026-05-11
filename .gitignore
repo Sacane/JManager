@@ -35,3 +35,5 @@ out/
 
 ### Front Build Artifacts ###
 infra/src/main/resources/static/
+
+.vscode/settings.json

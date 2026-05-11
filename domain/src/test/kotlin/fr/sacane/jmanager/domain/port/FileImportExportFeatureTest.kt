@@ -1,11 +1,18 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.fake.BookletsByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
+import fr.sacane.jmanager.domain.fake.TestScenario
+import fr.sacane.jmanager.domain.given
+import fr.sacane.jmanager.domain.initWith
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.input.csv.*
 import fr.sacane.jmanager.domain.utils.ResultState
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -14,831 +21,793 @@ import java.time.LocalDate
 import java.util.UUID
 
 @DisplayName("FileImportExportFeature Tests")
-class FileImportExportFeatureTest : FeatureTest() {
+class FileImportExportFeatureTest {
 
-    private val validateCsvFileService = FakeFactory.validateCsvFileService
-    private val importTransactionsFromCsvService = FakeFactory.importTransactionsFromCsvService
-    private val exportTransactionsToCsvService = FakeFactory.exportTransactionsToCsvService
+    private val factory = FakeFactory()
+    private val scenario = TestScenario(factory)
+    private val validateCsvFileService = factory.validateCsvFileService
+    private val importTransactionsFromCsvService = factory.importTransactionsFromCsvService
+    private val exportTransactionsToCsvService = factory.exportTransactionsToCsvService
+
+    @AfterEach
+    fun clearUp() {
+        factory.clearAll()
+    }
+
+    private fun createOtherBooklet(): Booklet {
+        val otherUser = User(UserId(UUID.randomUUID()), "otherUser", "other@test.fr")
+        val booklet = Booklet(id = UUID.randomUUID(), amount = 100.toAmount(), label = "other booklet", owner = otherUser)
+        factory.bookletState().initWith(BookletsByOwner(listOf(booklet), otherUser.id))
+        return booklet
+    }
 
     @Test
     @DisplayName("Should fail when booklet does not exist")
     fun `validateCsvFile should fail when booklet does not exist`() {
-        launchWithUserId {
-            val nonExistentBookletId = UUID.randomUUID()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val nonExistentBookletId = UUID.randomUUID()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = nonExistentBookletId,
-                csvContent = "csv content"
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = nonExistentBookletId,
+            csvContent = "csv content"
+        ))
 
-            Assertions.assertTrue(result.isFailure())
-            Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
-            Assertions.assertEquals("domain.file.booklet.not_found", result.errorInfo?.key)
-        }
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
+        Assertions.assertEquals("domain.file.booklet.not_found", result.errorInfo?.key)
     }
 
     @Test
     @DisplayName("Should fail when user does not own the booklet")
     fun `validateCsvFile should fail when user does not own the booklet`() {
-        launchWithUserId {
-            val otherUser = createBooklet(
-                User(
-                    UserId(UUID.randomUUID()),
-                    "otherUser",
-                    "other@test.fr"
-                ),
-                "other booklet",
-                100.toAmount()
-            )
+        val ctx = given { scenario.withUser().withBooklet() }
+        val otherBooklet = createOtherBooklet()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = otherUser.id!!,
-                csvContent = "csv content"
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = otherBooklet.id!!,
+            csvContent = "csv content"
+        ))
 
-            Assertions.assertTrue(result.isFailure())
-            Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
-            Assertions.assertEquals("domain.file.booklet.forbidden_owner", result.errorInfo?.key)
-        }
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
+        Assertions.assertEquals("domain.file.booklet.forbidden_owner", result.errorInfo?.key)
     }
 
     @Test
     @DisplayName("Should return report with error when CSV is empty")
     fun `validateCsvFile should return report with error when CSV is empty`() {
-        launchWithUserId {
-            val csvContent = ""
+        val ctx = given { scenario.withUser().withBooklet() }
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = ""
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should return report with error when CSV header is invalid")
     fun `validateCsvFile should return report with error when CSV header is invalid`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,wrong_column,recette,tag
-                15-01-2025,Test,10.00,,
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,wrong_column,recette,tag
+            15-01-2025,Test,10.00,,
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should return report with error when line has invalid date format")
     fun `validateCsvFile should return report with error when line has invalid date format`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                2025-01-15,Test,10.00,,
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            2025-01-15,Test,10.00,,
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should succeed validation with valid CSV and no warnings")
     fun `validateCsvFile should succeed with valid CSV`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Groceries,45.50,,Alimentation & Restaurant
-                16-01-2025,Salary,,2500.00,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Groceries,45.50,,Alimentation & Restaurant
+            16-01-2025,Salary,,2500.00,Aucune
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertFalse(report.hasErrors)
-                Assertions.assertTrue(report.canImport)
-                Assertions.assertEquals(2, report.totalLines)
-                Assertions.assertEquals(2, report.validLines)
-                Assertions.assertEquals(0, report.errors.size)
-                Assertions.assertEquals(0, report.warnings.size)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertFalse(report.hasErrors)
+            Assertions.assertTrue(report.canImport)
+            Assertions.assertEquals(2, report.totalLines)
+            Assertions.assertEquals(2, report.validLines)
+            Assertions.assertEquals(0, report.errors.size)
+            Assertions.assertEquals(0, report.warnings.size)
         }
     }
 
     @Test
     @DisplayName("Should succeed validation with warnings for unknown tags")
     fun `validateCsvFile should succeed with warnings when tag is unknown`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Groceries,45.50,,UnknownTag
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Groceries,45.50,,UnknownTag
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertFalse(report.hasErrors)
-                Assertions.assertTrue(report.canImport)
-                Assertions.assertEquals(1, report.totalLines)
-                Assertions.assertEquals(1, report.validLines)
-                Assertions.assertEquals(0, report.errors.size)
-                Assertions.assertEquals(1, report.warnings.size)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertFalse(report.hasErrors)
+            Assertions.assertTrue(report.canImport)
+            Assertions.assertEquals(1, report.totalLines)
+            Assertions.assertEquals(1, report.validLines)
+            Assertions.assertEquals(0, report.errors.size)
+            Assertions.assertEquals(1, report.warnings.size)
         }
     }
 
     @Test
     @DisplayName("Should return report with error when both amounts are filled")
     fun `validateCsvFile should return report with error when both depense and recette are filled`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Test,45.50,100.00,
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Test,45.50,100.00,
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should return report with error when no amount is filled")
     fun `validateCsvFile should return report with error when neither amount is filled`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Test,,,
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Test,,,
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should return report with error when amount is negative")
     fun `validateCsvFile should return report with error when amount is negative`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Test,-45.50,,
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Test,-45.50,,
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should accept comma as decimal separator")
     fun `validateCsvFile should accept comma as decimal separator`() {
-        launchWithUserId {
-            val csvContent = "date;label;depense;recette;tag\n15-01-2025;Test;\"45,50\";;\n"
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = "date;label;depense;recette;tag\n15-01-2025;Test;\"45,50\";;\n"
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertFalse(report.hasErrors)
-                Assertions.assertTrue(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertFalse(report.hasErrors)
+            Assertions.assertTrue(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should return report with error when columns have wrong count")
     fun `validateCsvFile should return report with error when line has wrong column count`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Test,45.50
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Test,45.50
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     fun `importTransactionsFromCsv should fail when booklet does not exist`() {
-        launchWithUserId {
-            val nonExistentBookletId = UUID.randomUUID()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val nonExistentBookletId = UUID.randomUUID()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = nonExistentBookletId,
-                csvContent = "csv content"
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = nonExistentBookletId,
+            csvContent = "csv content"
+        ))
 
-            Assertions.assertTrue(result.isFailure())
-            Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
-            Assertions.assertEquals("domain.file.booklet.not_found", result.errorInfo?.key)
-        }
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.NOT_FOUND, result.status)
+        Assertions.assertEquals("domain.file.booklet.not_found", result.errorInfo?.key)
     }
 
     @Test
     fun `importTransactionsFromCsv should fail when user does not own the booklet`() {
-        launchWithUserId {
-            val otherUser = createBooklet(
-                User(
-                    UserId(UUID.randomUUID()),
-                    "otherUser",
-                    "other@test.fr"
-                ),
-                "other booklet",
-                100.toAmount()
-            )
+        val ctx = given { scenario.withUser().withBooklet() }
+        val otherBooklet = createOtherBooklet()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = otherUser.id!!,
-                csvContent = "csv content"
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = otherBooklet.id!!,
+            csvContent = "csv content"
+        ))
 
-            Assertions.assertTrue(result.isFailure())
-            Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
-            Assertions.assertEquals("domain.file.booklet.forbidden_owner", result.errorInfo?.key)
-        }
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.FORBIDDEN, result.status)
+        Assertions.assertEquals("domain.file.booklet.forbidden_owner", result.errorInfo?.key)
     }
 
     @Test
     fun `importTransactionsFromCsv should fail when CSV is empty`() {
-        launchWithUserId {
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = ""
-                ))
+        val ctx = given { scenario.withUser().withBooklet() }
 
-            Assertions.assertTrue(result.isFailure())
-            Assertions.assertEquals(ResultState.INVALID, result.status)
-            Assertions.assertTrue(result.message.contains("empty"))
-            Assertions.assertEquals("domain.file.import.validation_errors", result.errorInfo?.key)
-        }
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = ""
+        ))
+
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.INVALID, result.status)
+        Assertions.assertTrue(result.message.contains("empty"))
+        Assertions.assertEquals("domain.file.import.validation_errors", result.errorInfo?.key)
     }
 
     @Test
     fun `importTransactionsFromCsv should fail when CSV header is invalid`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,wrong_column,recette,tag
-                15-01-2025,Test,10.00,,
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,wrong_column,recette,tag
+            15-01-2025,Test,10.00,,
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isFailure())
-            Assertions.assertEquals(ResultState.INVALID, result.status)
-            Assertions.assertTrue(result.message.contains("header"))
-        }
+        Assertions.assertTrue(result.isFailure())
+        Assertions.assertEquals(ResultState.INVALID, result.status)
+        Assertions.assertTrue(result.message.contains("header"))
     }
 
     @Test
     @DisplayName("Should update booklet amount after importing expense transactions")
     fun `importTransactionsFromCsv should update booklet amount after importing expense transactions`() {
-        launchWithUserId {
-            val initialAmount = booklet.amount
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Groceries,45.50,,Alimentation & Restaurant
-                16-01-2025,Transport,30.00,,Transport
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val initialAmount = ctx.booklet.amount
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Groceries,45.50,,Alimentation & Restaurant
+            16-01-2025,Transport,30.00,,Transport
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { importResult ->
-                Assertions.assertEquals(2, importResult.successCount)
-                Assertions.assertEquals(0, importResult.failedLines.size)
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { importResult ->
+            Assertions.assertEquals(2, importResult.successCount)
+            Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
-                Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
-                Assertions.assertNotNull(updatedBooklet)
+            val bookletState = factory.bookletState()
+            val updatedBooklets = bookletState.getStates().find { it.userId == ctx.userId }
+            Assertions.assertNotNull(updatedBooklets)
+            val updatedBooklet = updatedBooklets!!.booklets.find { it.id == ctx.booklet.id }
+            Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.subtract(BigDecimal("75.50"))
-                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
-            }
+            val expectedAmount = initialAmount.value.subtract(BigDecimal("75.50"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
         }
     }
 
     @Test
     @DisplayName("Should update booklet amount after importing income transactions")
     fun `importTransactionsFromCsv should update booklet amount after importing income transactions`() {
-        launchWithUserId {
-            val initialAmount = booklet.amount
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Salary,,2500.00,Aucune
-                16-01-2025,Bonus,,500.00,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val initialAmount = ctx.booklet.amount
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Salary,,2500.00,Aucune
+            16-01-2025,Bonus,,500.00,Aucune
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { importResult ->
-                Assertions.assertEquals(2, importResult.successCount)
-                Assertions.assertEquals(0, importResult.failedLines.size)
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { importResult ->
+            Assertions.assertEquals(2, importResult.successCount)
+            Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
-                Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
-                Assertions.assertNotNull(updatedBooklet)
+            val bookletState = factory.bookletState()
+            val updatedBooklets = bookletState.getStates().find { it.userId == ctx.userId }
+            Assertions.assertNotNull(updatedBooklets)
+            val updatedBooklet = updatedBooklets!!.booklets.find { it.id == ctx.booklet.id }
+            Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.add(BigDecimal("3000.00"))
-                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
-            }
+            val expectedAmount = initialAmount.value.add(BigDecimal("3000.00"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
         }
     }
 
     @Test
     @DisplayName("Should update booklet amount correctly with mixed transactions")
     fun `importTransactionsFromCsv should update booklet amount with mixed income and expense transactions`() {
-        launchWithUserId {
-            val initialAmount = booklet.amount
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Salary,,2500.00,Aucune
-                16-01-2025,Groceries,45.50,,Alimentation & Restaurant
-                17-01-2025,Transport,30.00,,Transport
-                18-01-2025,Freelance,,800.00,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val initialAmount = ctx.booklet.amount
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Salary,,2500.00,Aucune
+            16-01-2025,Groceries,45.50,,Alimentation & Restaurant
+            17-01-2025,Transport,30.00,,Transport
+            18-01-2025,Freelance,,800.00,Aucune
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { importResult ->
-                Assertions.assertEquals(4, importResult.successCount)
-                Assertions.assertEquals(0, importResult.failedLines.size)
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { importResult ->
+            Assertions.assertEquals(4, importResult.successCount)
+            Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
-                Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
-                Assertions.assertNotNull(updatedBooklet)
+            val bookletState = factory.bookletState()
+            val updatedBooklets = bookletState.getStates().find { it.userId == ctx.userId }
+            Assertions.assertNotNull(updatedBooklets)
+            val updatedBooklet = updatedBooklets!!.booklets.find { it.id == ctx.booklet.id }
+            Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.add(BigDecimal("3224.50"))
-                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
-            }
+            val expectedAmount = initialAmount.value.add(BigDecimal("3224.50"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
         }
     }
 
     @Test
     @DisplayName("Should not change booklet amount when import fails")
     fun `importTransactionsFromCsv should not change booklet amount when import fails`() {
-        launchWithUserId {
-            val initialAmount = booklet.amount
-            val csvContent = """
-                invalid-date,Test,45.50,,
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val initialAmount = ctx.booklet.amount
+        val csvContent = """
+            invalid-date,Test,45.50,,
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isFailure())
+        Assertions.assertTrue(result.isFailure())
 
-            val bookletState = FakeFactory.bookletState()
-            val updatedBooklets = bookletState.getStates().find { it.userId == userId }
-            Assertions.assertNotNull(updatedBooklets)
-            val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
-            Assertions.assertNotNull(updatedBooklet)
-            Assertions.assertEquals(initialAmount.value, updatedBooklet!!.amount.value)
-        }
+        val bookletState = factory.bookletState()
+        val updatedBooklets = bookletState.getStates().find { it.userId == ctx.userId }
+        Assertions.assertNotNull(updatedBooklets)
+        val updatedBooklet = updatedBooklets!!.booklets.find { it.id == ctx.booklet.id }
+        Assertions.assertNotNull(updatedBooklet)
+        Assertions.assertEquals(initialAmount.value, updatedBooklet!!.amount.value)
     }
 
     @Test
     @DisplayName("Should persist booklet with updated amount after successful import")
     fun `importTransactionsFromCsv should persist booklet with updated amount in repository`() {
-        launchWithUserId {
-            val initialAmount = booklet.amount
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-01-2025,Purchase,100.00,,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val initialAmount = ctx.booklet.amount
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-01-2025,Purchase,100.00,,Aucune
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
+        Assertions.assertTrue(result.isSuccess())
 
-            val bookletState = FakeFactory.bookletState()
-            val persistedBooklets = bookletState.getStates().find { it.userId == userId }
-            Assertions.assertNotNull(persistedBooklets)
-            val persistedBooklet = persistedBooklets!!.booklets.find { it.id == booklet.id }
-            Assertions.assertNotNull(persistedBooklet)
+        val bookletState = factory.bookletState()
+        val persistedBooklets = bookletState.getStates().find { it.userId == ctx.userId }
+        Assertions.assertNotNull(persistedBooklets)
+        val persistedBooklet = persistedBooklets!!.booklets.find { it.id == ctx.booklet.id }
+        Assertions.assertNotNull(persistedBooklet)
 
-            val expectedAmount = initialAmount.value.subtract(BigDecimal("100.00"))
-            Assertions.assertEquals(expectedAmount, persistedBooklet!!.amount.value)
+        val expectedAmount = initialAmount.value.subtract(BigDecimal("100.00"))
+        Assertions.assertEquals(expectedAmount, persistedBooklet!!.amount.value)
 
-            result.onSuccess { importResult ->
-                Assertions.assertEquals(1, importResult.transactions.size)
-                Assertions.assertEquals("Purchase", importResult.transactions.first().label)
-            }
+        result.onSuccess { importResult ->
+            Assertions.assertEquals(1, importResult.transactions.size)
+            Assertions.assertEquals("Purchase", importResult.transactions.first().label)
         }
     }
 
     @Test
     @DisplayName("Should validate CSV with day-only dates when month and year are provided")
     fun `validateCsvFile should accept day-only dates when month and year are provided`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                1,Groceries,45.50,,Alimentation & Restaurant
-                15,Transport,30.00,,Transport
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            1,Groceries,45.50,,Alimentation & Restaurant
+            15,Transport,30.00,,Transport
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent,
-                month = 1,
-                year = 2026
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent,
+            month = 1,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertFalse(report.hasErrors)
-                Assertions.assertTrue(report.canImport)
-                Assertions.assertEquals(2, report.totalLines)
-                Assertions.assertEquals(2, report.validLines)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertFalse(report.hasErrors)
+            Assertions.assertTrue(report.canImport)
+            Assertions.assertEquals(2, report.totalLines)
+            Assertions.assertEquals(2, report.validLines)
         }
     }
 
     @Test
     @DisplayName("Should fail validation when day-only date is provided without month and year")
     fun `validateCsvFile should fail when day-only date without month and year`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                1,Groceries,45.50,,Alimentation & Restaurant
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            1,Groceries,45.50,,Alimentation & Restaurant
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should import transactions with day-only dates when month and year are provided")
     fun `importTransactionsFromCsv should import with day-only dates and month year`() {
-        launchWithUserId {
-            val initialAmount = booklet.amount
-            val csvContent = """
-                date,label,depense,recette,tag
-                1,Groceries,45.50,,Alimentation & Restaurant
-                15,Salary,,2500.00,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val initialAmount = ctx.booklet.amount
+        val csvContent = """
+            date,label,depense,recette,tag
+            1,Groceries,45.50,,Alimentation & Restaurant
+            15,Salary,,2500.00,Aucune
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent,
-                skipValidation = false,
-                month = 1,
-                year = 2026
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent,
+            skipValidation = false,
+            month = 1,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { importResult ->
-                Assertions.assertEquals(2, importResult.successCount)
-                Assertions.assertEquals(0, importResult.failedLines.size)
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { importResult ->
+            Assertions.assertEquals(2, importResult.successCount)
+            Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val transaction1 = importResult.transactions.find { it.label == "Groceries" }
-                Assertions.assertNotNull(transaction1)
-                Assertions.assertEquals(LocalDate.of(2026, 1, 1), transaction1!!.date)
+            val transaction1 = importResult.transactions.find { it.label == "Groceries" }
+            Assertions.assertNotNull(transaction1)
+            Assertions.assertEquals(LocalDate.of(2026, 1, 1), transaction1!!.date)
 
-                val transaction2 = importResult.transactions.find { it.label == "Salary" }
-                Assertions.assertNotNull(transaction2)
-                Assertions.assertEquals(LocalDate.of(2026, 1, 15), transaction2!!.date)
+            val transaction2 = importResult.transactions.find { it.label == "Salary" }
+            Assertions.assertNotNull(transaction2)
+            Assertions.assertEquals(LocalDate.of(2026, 1, 15), transaction2!!.date)
 
-                val bookletState = FakeFactory.bookletState()
-                val updatedBooklets = bookletState.getStates().find { it.userId == userId }
-                Assertions.assertNotNull(updatedBooklets)
-                val updatedBooklet = updatedBooklets!!.booklets.find { it.id == booklet.id }
-                Assertions.assertNotNull(updatedBooklet)
+            val bookletState = factory.bookletState()
+            val updatedBooklets = bookletState.getStates().find { it.userId == ctx.userId }
+            Assertions.assertNotNull(updatedBooklets)
+            val updatedBooklet = updatedBooklets!!.booklets.find { it.id == ctx.booklet.id }
+            Assertions.assertNotNull(updatedBooklet)
 
-                val expectedAmount = initialAmount.value.add(BigDecimal("2454.50"))
-                Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
-            }
+            val expectedAmount = initialAmount.value.add(BigDecimal("2454.50"))
+            Assertions.assertEquals(expectedAmount, updatedBooklet!!.amount.value)
         }
     }
 
     @Test
     @DisplayName("Should accept mixed full dates and day-only dates")
     fun `importTransactionsFromCsv should accept mixed date formats`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                15-02-2026,Full Date Transaction,100.00,,Aucune
-                20,Day Only Transaction,50.00,,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            15-02-2026,Full Date Transaction,100.00,,Aucune
+            20,Day Only Transaction,50.00,,Aucune
+        """.trimIndent()
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent,
-                skipValidation = false,
-                month = 1,
-                year = 2026
-                ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent,
+            skipValidation = false,
+            month = 1,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { importResult ->
-                Assertions.assertEquals(2, importResult.successCount)
-                Assertions.assertEquals(0, importResult.failedLines.size)
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { importResult ->
+            Assertions.assertEquals(2, importResult.successCount)
+            Assertions.assertEquals(0, importResult.failedLines.size)
 
-                val fullDateTx = importResult.transactions.find { it.label == "Full Date Transaction" }
-                Assertions.assertNotNull(fullDateTx)
-                Assertions.assertEquals(LocalDate.of(2026, 2, 15), fullDateTx!!.date)
+            val fullDateTx = importResult.transactions.find { it.label == "Full Date Transaction" }
+            Assertions.assertNotNull(fullDateTx)
+            Assertions.assertEquals(LocalDate.of(2026, 2, 15), fullDateTx!!.date)
 
-                val dayOnlyTx = importResult.transactions.find { it.label == "Day Only Transaction" }
-                Assertions.assertNotNull(dayOnlyTx)
-                Assertions.assertEquals(LocalDate.of(2026, 1, 20), dayOnlyTx!!.date)
-            }
+            val dayOnlyTx = importResult.transactions.find { it.label == "Day Only Transaction" }
+            Assertions.assertNotNull(dayOnlyTx)
+            Assertions.assertEquals(LocalDate.of(2026, 1, 20), dayOnlyTx!!.date)
         }
     }
 
     @Test
     @DisplayName("Should fail when day-only date is invalid (e.g., 32)")
     fun `validateCsvFile should fail when day-only date is out of range`() {
-        launchWithUserId {
-            val csvContent = """
-                date,label,depense,recette,tag
-                32,Invalid Day,45.50,,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = """
+            date,label,depense,recette,tag
+            32,Invalid Day,45.50,,Aucune
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent,
-                month = 1,
-                year = 2026
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent,
+            month = 1,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertTrue(report.hasErrors)
-                Assertions.assertFalse(report.canImport)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors)
+            Assertions.assertFalse(report.canImport)
         }
     }
 
     @Test
     @DisplayName("Should successfully validate CSV file with UTF-8 BOM")
     fun `validateCsvFile should successfully validate CSV file with UTF-8 BOM`() {
-        launchWithUserId {
-            // Simuler un fichier CSV avec BOM UTF-8 (comme celui exporté depuis Excel)
-            val bomChar = '\uFEFF'
-            val csvContent = """${bomChar}date,label,depense,recette,tag
-                1,Test transaction,10.50,,Aucune
-                2,Another transaction,,50.00,Aucune
-            """.trimIndent()
+        val ctx = given { scenario.withUser().withBooklet() }
+        val bomChar = '\uFEFF'
+        val csvContent = """${bomChar}date,label,depense,recette,tag
+            1,Test transaction,10.50,,Aucune
+            2,Another transaction,,50.00,Aucune
+        """.trimIndent()
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent,
-                month = 1,
-                year = 2026
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent,
+            month = 1,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                Assertions.assertFalse(report.hasErrors, "Le fichier CSV avec BOM UTF-8 ne devrait pas avoir d'erreurs")
-                Assertions.assertTrue(report.canImport)
-                Assertions.assertEquals(2, report.totalLines)
-                Assertions.assertEquals(2, report.validLines)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertFalse(report.hasErrors, "Le fichier CSV avec BOM UTF-8 ne devrait pas avoir d'erreurs")
+            Assertions.assertTrue(report.canImport)
+            Assertions.assertEquals(2, report.totalLines)
+            Assertions.assertEquals(2, report.validLines)
         }
     }
 
     @Test
     @DisplayName("Should successfully validate real CSV file with UTF-8 BOM and 100+ transactions")
     fun `validateCsvFile should successfully validate real CSV file with BOM`() {
-        launchWithUserId {
-            val csvContent = this::class.java.classLoader
-                .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
-                ?.readText(Charsets.UTF_8)
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = this::class.java.classLoader
+            .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
+            ?.readText(Charsets.UTF_8)
 
-            Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
+        Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent!!,
-                month = 1,
-                year = 2026
-                ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent!!,
+            month = 1,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                // Debug: afficher toutes les erreurs pour investigation
-                if (report.errors.isNotEmpty()) {
-                    println("=== ERRORS FOUND ===")
-                    report.errors.forEach { error ->
-                        println("Line ${error.lineNumber}: ${error.message}")
-                    }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            if (report.errors.isNotEmpty()) {
+                println("=== ERRORS FOUND ===")
+                report.errors.forEach { error ->
+                    println("Line ${error.lineNumber}: ${error.message}")
                 }
-                if (report.warnings.isNotEmpty()) {
-                    println("=== WARNINGS FOUND ===")
-                    report.warnings.forEach { warning ->
-                        println("Line ${warning.lineNumber}: ${warning.message}")
-                    }
-                }
-                if (report.suggestions.isNotEmpty()) {
-                    println("=== SUGGESTIONS ===")
-                    report.suggestions.forEach { suggestion ->
-                        println(suggestion)
-                    }
-                }
-
-                Assertions.assertFalse(report.hasErrors, "Le fichier CSV réel avec BOM UTF-8 ne devrait pas avoir d'erreurs. Errors: ${report.errors.joinToString { it.message }}")
-                Assertions.assertTrue(report.canImport)
-                Assertions.assertEquals(101, report.totalLines, "Le fichier contient 101 lignes de données valides")
-                Assertions.assertEquals(101, report.validLines, "Toutes les lignes devraient être valides")
             }
+            if (report.warnings.isNotEmpty()) {
+                println("=== WARNINGS FOUND ===")
+                report.warnings.forEach { warning ->
+                    println("Line ${warning.lineNumber}: ${warning.message}")
+                }
+            }
+            if (report.suggestions.isNotEmpty()) {
+                println("=== SUGGESTIONS ===")
+                report.suggestions.forEach { suggestion ->
+                    println(suggestion)
+                }
+            }
+
+            Assertions.assertFalse(report.hasErrors, "Le fichier CSV réel avec BOM UTF-8 ne devrait pas avoir d'erreurs. Errors: ${report.errors.joinToString { it.message }}")
+            Assertions.assertTrue(report.canImport)
+            Assertions.assertEquals(101, report.totalLines, "Le fichier contient 101 lignes de données valides")
+            Assertions.assertEquals(101, report.validLines, "Toutes les lignes devraient être valides")
         }
     }
 
     @Test
     @DisplayName("Should fail with clear error when validating January file with February month")
     fun `validateCsvFile should show clear error when using wrong month for January file`() {
-        launchWithUserId {
-            val csvContent = this::class.java.classLoader
-                .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
-                ?.readText(Charsets.UTF_8)
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = this::class.java.classLoader
+            .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
+            ?.readText(Charsets.UTF_8)
 
-            Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
+        Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
-            // Tentative de validation avec month=2 (février) alors que le fichier est pour janvier
-            val result = validateCsvFileService.handle(ValidateCsvFileQuery(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent!!,
-                month = 2,  // ERREUR: février au lieu de janvier
-                year = 2026
-            ))
+        val result = validateCsvFileService.handle(ValidateCsvFileQuery(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent!!,
+            month = 2,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { report ->
-                // Le fichier contient des jours 30 et 31 qui sont invalides pour février
-                Assertions.assertTrue(report.hasErrors, "Le fichier devrait avoir des erreurs car février n'a pas 30-31 jours")
-                Assertions.assertFalse(report.canImport)
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { report ->
+            Assertions.assertTrue(report.hasErrors, "Le fichier devrait avoir des erreurs car février n'a pas 30-31 jours")
+            Assertions.assertFalse(report.canImport)
 
-                // Vérifier que les erreurs sont du bon type et ont des messages clairs
-                val invalidDayErrors = report.errors.filter {
-                    it.message.contains("Day 30") || it.message.contains("Day 31")
-                }
-                Assertions.assertTrue(invalidDayErrors.isNotEmpty(),
-                    "Il devrait y avoir des erreurs pour les jours 30 et 31 invalides pour février")
-
-                // Vérifier que ce ne sont PAS des erreurs de swap
-                val swapErrors = report.errors.filter {
-                    it.message.contains("swap", ignoreCase = true) || it.message.contains("amount")
-                }
-                Assertions.assertTrue(swapErrors.isEmpty(),
-                    "Il ne devrait PAS y avoir d'erreurs de swap de colonnes. Found: ${swapErrors.joinToString { it.message }}")
+            val invalidDayErrors = report.errors.filter {
+                it.message.contains("Day 30") || it.message.contains("Day 31")
             }
+            Assertions.assertTrue(invalidDayErrors.isNotEmpty(),
+                "Il devrait y avoir des erreurs pour les jours 30 et 31 invalides pour février")
+
+            val swapErrors = report.errors.filter {
+                it.message.contains("swap", ignoreCase = true) || it.message.contains("amount")
+            }
+            Assertions.assertTrue(swapErrors.isEmpty(),
+                "Il ne devrait PAS y avoir d'erreurs de swap de colonnes. Found: ${swapErrors.joinToString { it.message }}")
         }
     }
 
     @Test
     @DisplayName("Should successfully import real CSV file with UTF-8 BOM and 100+ transactions")
     fun `importTransactionsFromCsv should successfully import real CSV file with BOM`() {
-        launchWithUserId {
-            val csvContent = this::class.java.classLoader
-                .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
-                ?.readText(Charsets.UTF_8)
+        val ctx = given { scenario.withUser().withBooklet() }
+        val csvContent = this::class.java.classLoader
+            .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
+            ?.readText(Charsets.UTF_8)
 
-            Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
+        Assertions.assertNotNull(csvContent, "Le fichier CSV test devrait exister")
 
-            val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
-                userId = userId,
-                bookletId = booklet.id!!,
-                csvContent = csvContent!!,
-                skipValidation = false,
-                month = 1,
-                year = 2026
-            ))
+        val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
+            userId = ctx.userId,
+            bookletId = ctx.booklet.id!!,
+            csvContent = csvContent!!,
+            skipValidation = false,
+            month = 1,
+            year = 2026
+        ))
 
-            Assertions.assertTrue(result.isSuccess())
-            result.onSuccess { importResult ->
-                Assertions.assertEquals(101, importResult.successCount, "Les 101 transactions devraient être importées")
-                Assertions.assertEquals(0, importResult.failedLines.size, "Aucune ligne ne devrait échouer")
-                Assertions.assertFalse(importResult.hasErrors)
-            }
+        Assertions.assertTrue(result.isSuccess())
+        result.onSuccess { importResult ->
+            Assertions.assertEquals(101, importResult.successCount, "Les 101 transactions devraient être importées")
+            Assertions.assertEquals(0, importResult.failedLines.size, "Aucune ligne ne devrait échouer")
+            Assertions.assertFalse(importResult.hasErrors)
         }
     }
 }

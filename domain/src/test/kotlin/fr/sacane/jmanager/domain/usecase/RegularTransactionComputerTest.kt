@@ -27,13 +27,13 @@ class RegularTransactionComputerTest : FeatureTest() {
     private lateinit var transactionRepository: InMemoryTransactionRepository
     private lateinit var trackerRepository: RegularTransactionTrackerRepository
     private lateinit var regularTransactionGenerator: RegularTransactionGenerator
-    private val transactionState: State<IdBookletByTransaction> = FakeFactory.fakeTransactionRepository()
+    private val transactionState: State<IdBookletByTransaction> = factory.fakeTransactionRepository()
 
     @BeforeEach
     fun setup() {
-        transactionRepository = FakeFactory.transactionRepository()
-        trackerRepository = FakeFactory.trackerRepository()
-        regularTransactionGenerator = FakeFactory.regularTransactionGenerator()
+        transactionRepository = factory.transactionRepository()
+        trackerRepository = factory.trackerRepository()
+        regularTransactionGenerator = factory.regularTransactionGenerator()
     }
 
     @AfterEach
@@ -1100,7 +1100,7 @@ class RegularTransactionComputerTest : FeatureTest() {
 
                 // And: the user edits the preview to move the date to the 15th
                 val editedPreview = generatedPreview.copy(date = LocalDate.of(2024, 5, 15))
-                FakeFactory.editTransactionService.handle(
+                factory.editTransactionService.handle(
                     EditTransactionCommand(userId, booklet.id!!, editedPreview)
                 )
 

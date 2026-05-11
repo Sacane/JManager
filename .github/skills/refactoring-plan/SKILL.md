@@ -68,7 +68,11 @@ Once the plan is validated by the developer, execute it step by step.
 3. Recall the step's validation criterion
 4. **Wait for the developer's confirmation** before moving to the next step
 5. If the developer requests an adjustment, apply it before continuing
-6. Update the step status in the plan (✅ / 🔄 / ⏸️)
+6. **Immediately** update the step status in `REFACTORING_PLAN.md` once validated (✅ / 🔄 / ⏸️) — **do not batch updates**
+7. Also update the **overall status** line at the top of the file (e.g. `Step N / Total completed`)
+
+**CRITICAL — Real-time plan updates:**
+> The `REFACTORING_PLAN.md` file is the single source of truth for progress. Every time a step transitions to a new state — started, validated, blocked — the file **must be edited immediately**, in the same response that marks the transition. Never let the plan fall behind the actual execution state.
 
 Never chain two steps without confirmation. Never modify something outside the plan without flagging it.
 
