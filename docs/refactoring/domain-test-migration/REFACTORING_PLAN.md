@@ -230,7 +230,7 @@ The test infrastructure refactoring (steps A–F) established fixture builders, 
 
 ### Step 10 — BookletFeatureTest (part 1: non-nested tests)
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 1  
 **Objective**: Migrate the top-level tests of BookletFeatureTest (the tests outside `@Nested` classes)
 
@@ -250,7 +250,7 @@ The test infrastructure refactoring (steps A–F) established fixture builders, 
 
 ### Step 11 — BookletFeatureTest (part 2: nested classes)
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Step 10  
 **Objective**: Migrate all `@Nested` inner class tests (47 `launchWithUserId` blocks)
 
@@ -268,7 +268,7 @@ The test infrastructure refactoring (steps A–F) established fixture builders, 
 
 ### Step 12 — Final cleanup & validation
 
-**Status**: ⏳ To do  
+**Status**: ✅ Done  
 **Depends on**: Steps 1–11  
 **Objective**: Verify full migration, clean up FeatureTest, full green suite
 
