@@ -27,7 +27,7 @@ const emit = defineEmits<{
     <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-4">
       <div class="flex items-center gap-4 min-w-0 md:gap-3">
         <Button
-          class="text-[var(--primary)] w-9 h-9 rounded-full grid place-items-center hover:bg-[rgba(130,42,204,0.1)]"
+          class="text-[#FF5A08] w-9 h-9 rounded-full grid place-items-center hover:bg-[#FF5A08]/10"
           icon="pi pi-arrow-left"
           text
           rounded
@@ -39,7 +39,7 @@ const emit = defineEmits<{
           </h1>
           <div class="flex gap-4 flex-wrap md:gap-2.5">
             <span class="inline-flex items-center text-sm font-semibold text-[var(--text-secondary)]">{{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}</span>
-            <span v-if="previewTransactionsCount > 0" class="text-amber-600 inline-flex items-center text-sm font-semibold">{{ previewTransactionsCount }} en attente</span>
+            <span v-if="previewTransactionsCount > 0" class="text-[#FF5A08] inline-flex items-center text-sm font-semibold">{{ previewTransactionsCount }} en attente</span>
           </div>
         </div>
       </div>

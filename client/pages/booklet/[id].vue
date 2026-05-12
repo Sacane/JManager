@@ -755,13 +755,13 @@ onUnmounted(() => {
             </template>
 
             <template #body-expenses="{ data }">
-              <span v-if="!data.isIncome" class="font-extrabold text-red-500">{{ data.expensesRepresentation }}</span>
+              <span v-if="!data.isIncome" class="font-extrabold text-[#FF084B]">{{ data.expensesRepresentation }}</span>
               <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
             </template>
 
             <template #body-income="{ data }">
-              <span v-if="data.isIncome" class="font-extrabold text-emerald-500">{{ data.incomeRepresentation }}</span>
-              <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
+              <span v-if="data.isIncome" class="font-extrabold text-[#009CFE]">{{ data.incomeRepresentation }}</span>
+              <span v-else class="text-[#009CFE] font-semibold">-</span>
             </template>
 
             <template #header-tagFilter>
@@ -784,7 +784,7 @@ onUnmounted(() => {
                     <Tag
                       v-else
                       :value="option.label"
-                      :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
+                      :style="getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 })"
                       class="text-xs"
                     />
                   </template>
@@ -812,7 +812,7 @@ onUnmounted(() => {
                     <Tag
                       v-else
                       :value="option.label"
-                      :style="{ ...getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 }), color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }"
+                      :style="getTagStyle(option.colorDTO ?? { red: 150, green: 150, blue: 150 })"
                       class="text-xs"
                     />
                   </template>
@@ -846,7 +846,7 @@ onUnmounted(() => {
               <div class="flex items-center justify-center gap-1">
                 <Button
                   v-if="data.id"
-                  class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
+                  class="text-[#A30053] hover:bg-[#A30053]/15"
                   icon="pi pi-pencil"
                   text
                   rounded
@@ -983,7 +983,7 @@ onUnmounted(() => {
               <div class="flex gap-1.5 md:gap-1.5">
                 <Button
                   v-if="transaction.id"
-                  class="text-[var(--primary)] hover:bg-[rgba(130,42,204,0.15)]"
+                  class="text-[#A30053] hover:bg-[#A30053]/15"
                   icon="pi pi-pencil"
                   text
                   rounded
@@ -1003,7 +1003,7 @@ onUnmounted(() => {
               </div>
               <div class="flex justify-between items-center gap-3 md:(flex-col items-start gap-2.5)">
                 <div class="flex-1 w-full">
-                  <span class="text-2xl font-extrabold font-mono" :class="transaction.isIncome ? 'text-emerald-500' : 'text-red-500'">
+                  <span class="text-2xl font-extrabold font-mono" :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'">
                     {{ transaction.isIncome ? '+' : '-' }} {{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }} €
                   </span>
                 </div>
@@ -1203,5 +1203,10 @@ onUnmounted(() => {
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
   }
+}
+
+:deep(.p-checkbox.p-checkbox-checked .p-checkbox-box) {
+  background: #FFC108 !important;
+  border-color: #FFC108 !important;
 }
 </style>

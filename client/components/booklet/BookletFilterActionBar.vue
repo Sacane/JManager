@@ -133,7 +133,7 @@ const emit = defineEmits<{
       @click="emit('new-transaction')"
     />
     <Button
-      class="flex-1 !bg-amber-500 !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(245,158,11,0.3)] hover:!bg-amber-600 transition-all"
+      class="flex-1 !bg-[#FF5A08] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(255,90,8,0.3)] hover:!bg-[#cc4806] transition-all"
       icon="pi pi-clock"
       label="Prévisionnelle"
       :disabled="isAnyActionLoading"
