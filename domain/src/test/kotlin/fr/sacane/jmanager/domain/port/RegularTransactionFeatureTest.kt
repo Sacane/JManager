@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.port
 
+import fr.sacane.jmanager.domain.act
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.BookletsByOwner
@@ -16,6 +17,7 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.input.regularTransaction.*
+import fr.sacane.jmanager.domain.then
 import fr.sacane.jmanager.domain.utils.ResultState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
@@ -48,30 +50,37 @@ class RegularTransactionFeatureTest {
 
         @Test
         fun `should retrieve all regular transactions for authenticated user`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = given {
+                val inCtx = scenario.withUser().withBooklet()
 
-            val monthlyTransaction1 = RegularTransaction(
-                label = "monthly salary", amount = 2500.toAmount(), isIncome = true,
-                id = RegularTransactionId("${ctx.userId}-monthly-1"),
-                startDate = LocalDate.of(2024, 1, 1),
-                frequencyProperty = FrequencyProperty.Forever(), recurrenceRule = RecurrenceRule.Monthly(1)
-            )
-            val monthlyTransaction2 = RegularTransaction(
-                label = "Rent", amount = 800.toAmount(), isIncome = false,
-                id = RegularTransactionId("${ctx.userId}-monthly-2"),
-                startDate = LocalDate.of(2024, 1, 5),
-                frequencyProperty = FrequencyProperty.Forever(), recurrenceRule = RecurrenceRule.Monthly(5)
-            )
-            regularTransactionState.init(listOf(UserRegularTransaction(ctx.userId, monthlyTransaction1), UserRegularTransaction(ctx.userId, monthlyTransaction2)))
-
-            val result = getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(ctx.userId, 0, 10))
-
-            result.assertSuccess()
-            result.onSuccess { page ->
-                assertEquals(2, page.content.size)
-                assertTrue(page.content.any { it.label == "monthly salary" })
-                assertTrue(page.content.any { it.label == "Rent" })
+                val monthlyTransaction1 = RegularTransaction(
+                    label = "monthly salary", amount = 2500.toAmount(), isIncome = true,
+                    id = RegularTransactionId("${inCtx.userId}-monthly-1"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(), recurrenceRule = RecurrenceRule.Monthly(1)
+                )
+                val monthlyTransaction2 = RegularTransaction(
+                    label = "Rent", amount = 800.toAmount(), isIncome = false,
+                    id = RegularTransactionId("${inCtx.userId}-monthly-2"),
+                    startDate = LocalDate.of(2024, 1, 5),
+                    frequencyProperty = FrequencyProperty.Forever(), recurrenceRule = RecurrenceRule.Monthly(5)
+                )
+                regularTransactionState.init(listOf(UserRegularTransaction(inCtx.userId, monthlyTransaction1), UserRegularTransaction(inCtx.userId, monthlyTransaction2)))
+                inCtx
             }
+
+
+            val result = act { getAllRegularTransactionsUseCase.handle(GetAllRegularTransactionsQuery(ctx.userId, 0, 10)) }
+
+            then(result) {
+                assertSuccess()
+                onSuccess { page ->
+                    assertEquals(2, page.content.size)
+                    assertTrue(page.content.any { it.label == "monthly salary" })
+                    assertTrue(page.content.any { it.label == "Rent" })
+                }
+            }
+
         }
 
         @Test
