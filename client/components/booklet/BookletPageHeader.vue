@@ -23,62 +23,61 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="bg-[var(--card-bg)] rounded-2xl p-5 shadow border border-[var(--card-border)] overflow-hidden mb-5 lg:(p-4 rounded-xl) md:(p-3 rounded-lg mb-4)">
-    <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-4">
-      <div class="flex items-center gap-4 min-w-0 md:gap-3">
+  <div class="bg-[var(--card-bg)] rounded-xl py-2 px-3 shadow border border-[var(--card-border)] overflow-hidden mb-3">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <!-- Left: back + title + counts -->
+      <div class="flex items-center gap-2 min-w-0">
         <Button
-          class="text-[#FF5A08] w-9 h-9 rounded-full grid place-items-center hover:bg-[#FF5A08]/10"
+          class="text-[#FF5A08] !w-7 !h-7 rounded-full grid place-items-center hover:bg-[#FF5A08]/10 shrink-0"
           icon="pi pi-arrow-left"
           text
           rounded
           @click="emit('back')"
         />
-        <div class="flex-1 min-w-0">
-          <h1 class="text-2xl font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 md:(text-xl mb-1)">
+        <div class="flex items-baseline gap-2 min-w-0 flex-wrap">
+          <h1 class="text-base font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 leading-tight truncate">
             {{ displayLabel }}
           </h1>
-          <div class="flex gap-4 flex-wrap md:gap-2.5">
-            <span class="inline-flex items-center text-sm font-semibold text-[var(--text-secondary)]">{{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}</span>
-            <span v-if="previewTransactionsCount > 0" class="text-[#FF5A08] inline-flex items-center text-sm font-semibold">{{ previewTransactionsCount }} en attente</span>
-          </div>
+          <span class="text-xs font-semibold text-[var(--text-secondary)] whitespace-nowrap">{{ transactionsCount }} trans.</span>
+          <span v-if="previewTransactionsCount > 0" class="text-[#FF5A08] text-xs font-semibold whitespace-nowrap">{{ previewTransactionsCount }} en attente</span>
         </div>
       </div>
+
       <!-- Right: balances + filters -->
-      <div class="flex flex-col items-stretch gap-3 shrink-0 w-full md:(w-auto flex-row items-center gap-6)">
-        <div class="flex items-center justify-between w-full md:w-auto gap-4 p-3 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--card-border)] md:(p-2.5 gap-4)">
-          <div class="flex flex-col gap-1">
-            <span class="text-[0.69rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] md:text-2xs">Réel</span>
-            <span class="text-xl font-extrabold text-[var(--primary)] md:text-lg">{{ realSold.toFixed(2) }} €</span>
+      <div class="flex items-center gap-2 shrink-0 flex-wrap">
+        <!-- Balances -->
+        <div class="flex items-center gap-3 px-2.5 py-1 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-lg border border-[var(--card-border)]">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Réel</span>
+            <span class="text-sm font-extrabold text-[var(--primary)]">{{ realSold.toFixed(2) }} €</span>
           </div>
-          <div class="w-px h-10 md:h-9 bg-gradient-to-b from-transparent via-[var(--border-color)] to-transparent" />
-          <div class="flex flex-col gap-1">
-            <span class="text-[0.69rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)] md:text-2xs">Prévisionnel</span>
-            <span class="text-xl font-extrabold text-[#FF5A08] md:text-lg">{{ previewSold.toFixed(2) }} €</span>
+          <div class="w-px h-5 bg-[var(--border-color)]" />
+          <div class="flex items-center gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Prév.</span>
+            <span class="text-sm font-extrabold text-[#FF5A08]">{{ previewSold.toFixed(2) }} €</span>
           </div>
         </div>
 
-        <div class="flex w-full md:w-auto gap-2 items-center">
-          <Select
-            :model-value="selectedMonth"
-            :options="monthOptions"
-            placeholder="Mois"
-            class="flex-1 min-w-0 w-full md:(flex-none min-w-[120px] w-auto) border-1 rounded-lg bg-transparent"
-            @update:model-value="(val: string) => emit('update:selectedMonth', val)"
-            @change="emit('month-change')"
-          />
-          <DatePicker
-            :model-value="dateYear"
-            view="year"
-            date-format="yy"
-            class="flex-1 min-w-0 w-full md:(flex-none min-w-[220px] w-[220px]) rounded-[14px] min-h-[46px] cursor-pointer bg-transparent"
-            placeholder="Année"
-            :show-icon="true"
-            icon-display="input"
-            @update:model-value="(val: Date) => emit('update:dateYear', val)"
-            @date-select="emit('year-change')"
-          />
-
-        </div>
+        <!-- Month + Year -->
+        <Select
+          :model-value="selectedMonth"
+          :options="monthOptions"
+          placeholder="Mois"
+          class="!w-[120px] border-1 rounded-lg bg-transparent"
+          size="small"
+          @update:model-value="(val: string) => emit('update:selectedMonth', val)"
+          @change="emit('month-change')"
+        />
+        <DatePicker
+          :model-value="dateYear"
+          view="year"
+          date-format="yy"
+          class="!w-[90px] rounded-lg cursor-pointer bg-transparent"
+          placeholder="Année"
+          :show-icon="false"
+          @update:model-value="(val: Date) => emit('update:dateYear', val)"
+          @date-select="emit('year-change')"
+        />
       </div>
     </div>
   </div>

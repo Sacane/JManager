@@ -42,8 +42,8 @@ const emit = defineEmits<{
     <Button
       v-tooltip.bottom="'Nouvelle transaction'"
       :class="orientation === 'vertical'
-        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-gradient-to-br !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 shadow-[0_2px_8px_rgba(130,42,204,0.3)] hover:!brightness-110 transition-all'
-        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-gradient-to-br !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 shadow-[0_2px_8px_rgba(130,42,204,0.3)] hover:!brightness-110 transition-all'"
+        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#A30053] !text-white !border-0 shadow-[0_2px_8px_rgba(163,0,83,0.3)] hover:!brightness-110 transition-all'
+        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#A30053] !text-white !border-0 shadow-[0_2px_8px_rgba(163,0,83,0.3)] hover:!brightness-110 transition-all'"
       icon="pi pi-plus"
       :disabled="isAnyActionLoading"
       @click="emit('new-transaction')"
@@ -52,11 +52,23 @@ const emit = defineEmits<{
       v-tooltip.bottom="'Transaction prévisionnelle'"
       :outlined="orientation === 'vertical'"
       :class="orientation === 'vertical'
-        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FF5A08] !text-white !border-0 shadow-[0_2px_8px_rgba(255,90,8,0.3)] hover:!bg-[#cc4806] transition-all'
-        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FF5A08] !text-white !border-0 shadow-[0_2px_8px_rgba(255,90,8,0.3)] hover:!bg-[#cc4806] transition-all'"
+        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'
+        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'"
       icon="pi pi-clock"
       :disabled="isAnyActionLoading"
       @click="emit('new-preview')"
+    />
+    <Button
+      v-if="hasRegenerableTransactions"
+      v-tooltip.bottom="'Régénérer les transactions supprimées'"
+      :outlined="orientation === 'vertical'"
+      :class="orientation === 'vertical'
+        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-violet-500 !text-white !border-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all'
+        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-violet-500 !text-white !border-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all'"
+      icon="pi pi-refresh"
+      :loading="isRegenerateLoading"
+      :disabled="isAnyActionLoading"
+      @click="emit('regenerate')"
     />
     <Button
       v-tooltip.bottom="'Importer CSV'"
@@ -79,18 +91,6 @@ const emit = defineEmits<{
       :loading="isExportCsvLoading"
       :disabled="isAnyActionLoading"
       @click="emit('export-csv')"
-    />
-    <Button
-      v-if="hasRegenerableTransactions"
-      v-tooltip.bottom="'Régénérer les transactions supprimées'"
-      :outlined="orientation === 'vertical'"
-      :class="orientation === 'vertical'
-        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-violet-500 !text-white !border-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all'
-        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-violet-500 !text-white !border-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all'"
-      icon="pi pi-refresh"
-      :loading="isRegenerateLoading"
-      :disabled="isAnyActionLoading"
-      @click="emit('regenerate')"
     />
 
     <template v-if="hasSelection">
