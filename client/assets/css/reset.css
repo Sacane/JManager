@@ -1,4 +1,9 @@
 /* Reset */
+html,
+body {
+  background-color: var(--bg-primary);
+}
+
 .dark {
   color-scheme: dark;
 }

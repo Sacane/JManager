@@ -198,7 +198,7 @@ onUnmounted(() => {
     font-size: 1.25rem;
   }
 
-:global(.dark) & {
+  html.dark & {
     background: #1e293b;
     border: 1px solid rgba(130, 42, 204, 0.4);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(130, 42, 204, 0.15);
@@ -244,7 +244,7 @@ onUnmounted(() => {
     width: 280px;
   }
 
-  :global(.dark) & {
+  html.dark & {
     background: #190233;
     border-right: 2px solid #45058C;
     box-shadow:
@@ -278,6 +278,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   flex-shrink: 0;
   position: relative;
 
@@ -292,7 +293,7 @@ onUnmounted(() => {
     border-radius: 0 0 2px 2px;
   }
 
-  :global(.dark) & {
+  html.dark & {
     border-bottom-color: transparent;
   }
 }
@@ -323,7 +324,7 @@ onUnmounted(() => {
   padding: 0.25rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 
-  :global(.dark) & {
+  html.dark & {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 10px rgba(130, 42, 204, 0.3);
   }
 }
@@ -334,7 +335,7 @@ onUnmounted(() => {
   font-weight: 600;
   letter-spacing: -0.02em;
 
-  :global(.dark) & {
+  html.dark & {
     text-shadow: 0 0 14px rgba(192, 132, 252, 0.35);
   }
 }
@@ -389,7 +390,7 @@ onUnmounted(() => {
     background: rgba(255, 255, 255, 0.25);
   }
 
-  :global(.dark) & {
+  html.dark & {
     &::-webkit-scrollbar-thumb {
       background: rgba(130, 42, 204, 0.35);
     }
@@ -460,7 +461,7 @@ onUnmounted(() => {
   }
 
   /* Dark mode hover */
-  :global(.dark) &:not(.nav-item-active):hover {
+  html.dark &:not(.nav-item-active):hover {
     background: rgba(130, 42, 204, 0.12);
     color: rgba(255, 255, 255, 0.95);
     border-color: rgba(130, 42, 204, 0.15);
@@ -486,7 +487,7 @@ onUnmounted(() => {
     transform: translateX(2px);
   }
 
-  :global(.dark) & {
+  html.dark & {
     background: #45058C;
     color: #ffffff;
     border-color: transparent;
@@ -527,7 +528,7 @@ onUnmounted(() => {
     box-shadow: 0 2px 12px rgba(255, 200, 100, 0.3), 0 0 8px rgba(255, 200, 100, 0.2);
   }
 
-  :global(.dark) & {
+  html.dark & {
     border-color: rgba(130, 42, 204, 0.3);
     background: rgba(130, 42, 204, 0.07);
 
@@ -551,7 +552,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   background: rgba(0, 0, 0, 0.08);
 
-  :global(.dark) & {
+  html.dark & {
     border-top-color: rgba(130, 42, 204, 0.2);
     background: rgba(130, 42, 204, 0.04);
   }
@@ -570,3 +571,4 @@ onUnmounted(() => {
   }
 }
 </style>
+
