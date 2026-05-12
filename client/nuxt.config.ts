@@ -148,8 +148,10 @@ export default defineNuxtConfig({
         },
       },
       theme: {
-        preset: Lara, // ou Aura
-        // options: { /* personnalisation (tokens) si besoin */ }
+        preset: Lara,
+        options: {
+          darkModeSelector: '.dark',
+        },
       },
     },
     zIndex: { modal: 1100, overlay: 1000, menu: 1000, tooltip: 1200 }, // fiabilise les overlays
