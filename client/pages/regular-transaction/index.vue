@@ -389,7 +389,7 @@ async function handleUnlink() {
     <div class="flex justify-start gap-3 md:flex-row">
       <Button
         class="border-none font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 md:w-auto md:text-3.5 md:px-4 md:py-2.5"
-        style="background-color: #26034C; color: #ffffff;"
+        style="background-color: #45058C; color: #ffffff;"
         icon="pi pi-plus"
         :label="isMobile ? 'Créer' : 'Créer une transaction régulière'"
         @click="openCreationRegularTransactionDialog"
