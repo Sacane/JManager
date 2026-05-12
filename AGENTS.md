@@ -223,3 +223,4 @@ You must follow the following guidelines in depends on the contexte you are work
 - Whenever the user asks for a refactoring plan, you must load and follow `.github/skills/refactoring-plan/SKILL.md`
 - Whenever the user asks for a technical analysis report, you must load and follow `.github/skills/technical-analysis/SKILL.md`
 - Whenever the user asks "is it possible to", "how can I", "I'd like to know if", "what would it take to", "could we", "what's the best way to" — or any equivalent feasibility or architectural investigation question — you must load and follow `.github/skills/solution-investigation/SKILL.md`
+- Whenever the user asks to implement or design a domain feature, model a business concept, apply a design pattern, improve domain code quality, find an elegant algorithm for a business rule, or review domain code for structural issues — you must load and follow `.github/skills/domain-engineer/SKILL.md`
