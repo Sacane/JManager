@@ -109,31 +109,31 @@ function handleTabKey(event: KeyboardEvent) {
     </div>
     <div v-else class="h-full mt-6">
       <div class="flex flex-col gap-3">
-        <label for="label" class="block text-sm font-medium text-gray-700">Libellé</label>
+        <label for="label" class="block text-label">Libellé</label>
         <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" maxlength="100" />
       </div>
       <div class="mt5 flex flex-col gap-3">
-        <label for="selectionType">Selectionner le type de transaction</label>
+        <label for="selectionType" class="text-label">Selectionner le type de transaction</label>
         <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
           <div class="flex gap-1">
             <RadioButton v-model="transactionResult.isIncome" input-id="selection1" :value="false" />
-            <label for="selection1">Dépense</label>
+            <label for="selection1" class="text-label">Dépense</label>
           </div>
           <div class="flex gap-1">
             <RadioButton v-model="transactionResult.isIncome" input-id="selection2" :value="true" />
-            <label for="selection2">Recette</label>
+            <label for="selection2" class="text-label">Recette</label>
           </div>
         </div>
       </div>
-      <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
+      <label for="labelAmount" class="block mt-4 text-label">Montant</label>
       <div id="labelAmount" class="flex-row">
         <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="(value: number) => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
       </div>
       <div class="flex flex-col gap-3 w-50%">
-        <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
+        <label for="calendar" class="block mt-4 text-label">Date</label>
         <DatePicker id="calendar" v-model="transactionResult.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
       </div>
-      <p>Tag</p>
+      <p class="text-label mt-4">Tag</p>
       <Select v-model="transactionResult.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
         <template #option="slotTag">
           <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
