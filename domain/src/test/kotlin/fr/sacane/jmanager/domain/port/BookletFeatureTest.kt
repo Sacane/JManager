@@ -52,18 +52,18 @@ class BookletFeatureTest {
     @Test
     fun `Should find booklet by its Id`() {
         val id = UUID.randomUUID()
-        val ctx = given { scenario.withUser() }
+        val ctx = scenario.withUser()
         val element = BookletFixture.aBooklet(id = id, label = "test", amount = Amount(100), owner = ctx.user)
-        given { factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId)) }
+        factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId))
         findBookletByIdService.handle(FindBookletByIdQuery(id, ctx.userId))
             .assertTrue { this.label == "test" }
     }
 
     @Test
     fun `Given an existing booklet it could be edit`() {
-        val ctx = given { scenario.withUser() }
+        val ctx = scenario.withUser()
         val element = BookletFixture.aBooklet(label = "test", amount = Amount(100), owner = ctx.user)
-        given { factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId)) }
+        factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId))
         val updatedBooklet = Booklet(
             Amount(BigDecimal(102)),
             label = element.label,
@@ -77,9 +77,9 @@ class BookletFeatureTest {
 
     @Test
     fun `As an owner of an booklet, I can delete it`() {
-        val ctx = given { scenario.withUser() }
+        val ctx = scenario.withUser()
         val element = BookletFixture.aBooklet(label = "test", amount = Amount(100), owner = ctx.user)
-        given { factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId)) }
+        factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId))
 
         deleteBookletByIdService.handle(DeleteBookletByIdCommand(element.id!!, ctx.userId)).assertTrue {
             val bookletsList = bookletState.getStates()
@@ -95,22 +95,22 @@ class BookletFeatureTest {
 
     @Test
     fun `As an booklet's owner, I can retrieve it by its label`() {
-        val ctx = given { scenario.withUser() }
+        val ctx = scenario.withUser()
         val element = BookletFixture.aBooklet(label = "test22", amount = Amount(100), owner = ctx.user)
-        given { factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId)) }
+        factory.bookletState().initWith(BookletsByOwner(listOf(element), ctx.userId))
         findByLabelAndUserIdService.handle(FindByLabelAndUserIdQuery(ctx.userId, element.label))
             .assertTrue { this.label == "test22" && this.amount == Amount(100) }
     }
 
     @Test
     fun `As a booklet's owner,  I can retrieve All of my Registered Booklets`() {
-        val ctx = given { scenario.withUser() }
+        val ctx = scenario.withUser()
         val booklet = BookletFixture.aBooklet(label = "test1", amount = Amount(100), owner = ctx.user)
         val booklet2 = BookletFixture.aBooklet(label = "test2", amount = Amount(100), owner = ctx.user)
         val booklet3 = BookletFixture.aBooklet(label = "test3", amount = Amount(100), owner = ctx.user)
         val booklet4 = BookletFixture.aBooklet(label = "test4", amount = Amount(100), owner = ctx.user)
         val expectedBookletList = listOf(booklet, booklet2, booklet3, booklet4)
-        given { factory.bookletState().initWith(BookletsByOwner(expectedBookletList, ctx.userId)) }
+        factory.bookletState().initWith(BookletsByOwner(expectedBookletList, ctx.userId))
         findAllRegisteredBookletsService.handle(FindAllRegisteredBookletsQuery(ctx.userId))
             .assertContainsAtPosition(0, booklet)
             .assertContainsAtPosition(1, booklet2)
@@ -120,7 +120,7 @@ class BookletFeatureTest {
 
     @Test
     fun `As a Jmanager user, I can create new booklet`() {
-        val ctx = given { scenario.withUser() }
+        val ctx = scenario.withUser()
         val bookletToSave = BookletFixture.aBooklet(label = "test1", amount = Amount(100), owner = ctx.user)
         saveBookletService.handle(SaveBookletCommand(ctx.userId, bookletToSave))
             .assertTrue { this.amount == Amount(100) && this.label == "test1" }
@@ -128,9 +128,9 @@ class BookletFeatureTest {
 
     @Test
     fun `As a simple user, I cannot create more than six booklets`() {
-        val ctx = given { scenario.withUser() }
+        val ctx = scenario.withUser()
         val bookletLists = (0 until 6).map { BookletFixture.aBooklet(label = "test$it", amount = Amount(100), owner = ctx.user) }
-        given { factory.bookletState().initWith(BookletsByOwner(bookletLists, ctx.userId)) }
+        factory.bookletState().initWith(BookletsByOwner(bookletLists, ctx.userId))
         val extraBooklet = BookletFixture.aBooklet(label = "test7", amount = Amount(100), owner = ctx.user)
         val result = act { saveBookletService.handle(SaveBookletCommand(ctx.userId, extraBooklet)) }
         then(result) {
@@ -141,9 +141,9 @@ class BookletFeatureTest {
 
     @Test
     fun `As a booklet's owner, I cannot register an existing booklet with the same label`() {
-        val testUser = given { userRepository.register("testBookletOwner", "pass") as User }
+        val testUser = userRepository.register("testBookletOwner", "pass") as User
         val existingBooklet = BookletFixture.aBooklet(label = "test1", amount = Amount(100), owner = testUser)
-        given { factory.bookletState().initWith(BookletsByOwner(listOf(existingBooklet), testUser.id)) }
+        factory.bookletState().initWith(BookletsByOwner(listOf(existingBooklet), testUser.id))
         val bookletToSave = BookletFixture.aBooklet(label = "test1", amount = Amount(150), owner = testUser)
         saveBookletService.handle(SaveBookletCommand(testUser.id, bookletToSave))
             .assertFailure(ResultState.BOOKLET_LABEL_EXIST)
@@ -151,20 +151,20 @@ class BookletFeatureTest {
 
     @Test
     fun `Deleting a booklet owned by another user should be forbidden`() {
-        val attackerCtx = given { scenario.withUser() }
-        val victimUser = given { userRepository.register("victim", "pass") as User }
+        val attackerCtx = scenario.withUser()
+        val victimUser = userRepository.register("victim", "pass") as User
         val victimBooklet = BookletFixture.aBooklet(label = "victim-booklet", amount = Amount(500), owner = victimUser)
-        given { factory.bookletState().initWith(BookletsByOwner(listOf(victimBooklet), victimUser.id)) }
+        factory.bookletState().initWith(BookletsByOwner(listOf(victimBooklet), victimUser.id))
         deleteBookletByIdService.handle(DeleteBookletByIdCommand(victimBooklet.id!!, attackerCtx.userId))
             .assertFailure(ResultState.FORBIDDEN)
     }
 
     @Test
     fun `Editing a booklet owned by another user should be forbidden`() {
-        val attackerCtx = given { scenario.withUser() }
-        val victimUser = given { userRepository.register("victim2", "pass") as User }
+        val attackerCtx = scenario.withUser()
+        val victimUser = userRepository.register("victim2", "pass") as User
         val victimBooklet = BookletFixture.aBooklet(label = "victim-booklet2", amount = Amount(500), owner = victimUser)
-        given { factory.bookletState().initWith(BookletsByOwner(listOf(victimBooklet), victimUser.id)) }
+        factory.bookletState().initWith(BookletsByOwner(listOf(victimBooklet), victimUser.id))
         val editedBooklet = BookletFixture.aBooklet(label = "hacked", amount = Amount(999), owner = victimUser, id = victimBooklet.id)
         editBookletService.handle(EditBookletCommand(editedBooklet, attackerCtx.userId))
             .assertFailure(ResultState.FORBIDDEN)
@@ -177,7 +177,7 @@ class BookletFeatureTest {
         fun `Should calculate real sold correctly with income transactions only`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Test Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transaction1 = Transaction(
                 id = UUID.randomUUID(), label = "Salary", date = LocalDate.of(2025, 1, 15),
                 amount = 2000.toAmount(), isIncome = true, isPreview = false
@@ -186,12 +186,10 @@ class BookletFeatureTest {
                 id = UUID.randomUUID(), label = "Bonus", date = LocalDate.of(2025, 1, 20),
                 amount = 500.toAmount(), isIncome = true, isPreview = false
             )
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(transaction1, transaction2))
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(transaction1, transaction2))
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025
@@ -205,7 +203,7 @@ class BookletFeatureTest {
         fun `Should calculate real sold correctly with expense transactions only`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Test Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transaction1 = Transaction(
                 id = UUID.randomUUID(),
                 label = "Rent",
@@ -222,12 +220,10 @@ class BookletFeatureTest {
                 isIncome = false,
                 isPreview = false
             )
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(transaction1, transaction2))
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(transaction1, transaction2))
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025
@@ -241,7 +237,7 @@ class BookletFeatureTest {
         fun `Should calculate real sold correctly with mixed income and expense transactions`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Mixed Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transaction1 = Transaction(id = UUID.randomUUID(), label = "Income 1", date = LocalDate.of(2025, 2, 5),
                 amount = 1500.toAmount(), isIncome = true, isPreview = false)
             val transaction2 = Transaction(id = UUID.randomUUID(), label = "Expense 1", date = LocalDate.of(2025, 2, 10),
@@ -250,15 +246,13 @@ class BookletFeatureTest {
                 amount = 800.toAmount(), isIncome = true, isPreview = false)
             val transaction4 = Transaction(id = UUID.randomUUID(), label = "Expense 2", date = java.time.LocalDate.of(2025, 2, 20),
                 amount = 500.toAmount(), isIncome = false, isPreview = false)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(
-                        IdUserBooklet(ctx.userId, bookletId),
-                        mutableListOf(transaction1, transaction2, transaction3, transaction4)
-                    )
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(
+                    IdUserBooklet(ctx.userId, bookletId),
+                    mutableListOf(transaction1, transaction2, transaction3, transaction4)
                 )
-                factory.regularTransactionState.init(emptyList())
-            }
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.FEBRUARY, 2025,
                 startingMonth = java.time.Month.FEBRUARY, startingYear = 2025
@@ -270,19 +264,17 @@ class BookletFeatureTest {
         fun `Should calculate previsional sold correctly with preview transactions`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Preview Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transaction1 = Transaction(id = UUID.randomUUID(), label = "Current Income", date = LocalDate.of(2025, 11, 5),
                 amount = 500.toAmount(), isIncome = true, isPreview = false)
             val transaction2 = Transaction(id = UUID.randomUUID(), label = "Future Income", date = LocalDate.of(2025, 11, 25),
                 amount = 1000.toAmount(), isIncome = true, isPreview = true)
             val transaction3 = Transaction(id = UUID.randomUUID(), label = "Future Expense", date = LocalDate.of(2025, 11, 28),
                 amount = 300.toAmount(), isIncome = false, isPreview = true)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(transaction1, transaction2, transaction3))
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(transaction1, transaction2, transaction3))
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.NOVEMBER, 2025,
                 startingMonth = java.time.Month.NOVEMBER, startingYear = 2025
@@ -297,7 +289,7 @@ class BookletFeatureTest {
         fun `Should separate current and previsional transactions correctly`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Separation Test", amount = 2000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transaction1 = Transaction(id = UUID.randomUUID(), label = "Current 1", date = LocalDate.of(2025, 4, 1),
                 amount = 100.toAmount(), isIncome = true, isPreview = false)
             val transaction2 = Transaction(id = UUID.randomUUID(), label = "Current 2", date = LocalDate.of(2025, 4, 10),
@@ -308,15 +300,13 @@ class BookletFeatureTest {
                 amount = 200.toAmount(), isIncome = true, isPreview = true)
             val transaction5 = Transaction(id = UUID.randomUUID(), label = "Preview 2", date = LocalDate.of(2025, 4, 25),
                 amount = 150.toAmount(), isIncome = false, isPreview = true)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(
-                        IdUserBooklet(ctx.userId, bookletId),
-                        mutableListOf(transaction1, transaction2, transaction3, transaction4, transaction5)
-                    )
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(
+                    IdUserBooklet(ctx.userId, bookletId),
+                    mutableListOf(transaction1, transaction2, transaction3, transaction4, transaction5)
                 )
-                factory.regularTransactionState.init(emptyList())
-            }
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.APRIL, 2025,
                 startingMonth = java.time.Month.APRIL, startingYear = 2025
@@ -331,7 +321,7 @@ class BookletFeatureTest {
         fun `Should retrieve regular transactions for the booklet`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Regular Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTransaction1 = RegularTransaction(
                 label = "Monthly Salary", amount = 3000.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-salary"),
@@ -346,12 +336,10 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(5)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTransaction1, bookletIds = listOf(bookletId)),
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTransaction2, bookletIds = listOf(bookletId))
-                ))
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTransaction1, bookletIds = listOf(bookletId)),
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTransaction2, bookletIds = listOf(bookletId))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025
@@ -365,8 +353,8 @@ class BookletFeatureTest {
         fun `Should return empty lists when booklet has no transactions`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Empty Booklet", amount = 500.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
-            given { factory.regularTransactionState.init(emptyList()) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.MAY, 2025,
                 startingMonth = java.time.Month.MAY, startingYear = 2025
@@ -379,7 +367,7 @@ class BookletFeatureTest {
 
         @Test
         fun `Should fail when booklet does not exist`() {
-            val ctx = given { scenario.withUser() }
+            val ctx = scenario.withUser()
             loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, UUID.randomUUID(), // Non-existent booklet ID
                 java.time.Month.JUNE, 2025,
@@ -391,7 +379,7 @@ class BookletFeatureTest {
         fun `Should only load transactions for the requested month and year`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Month Filter Test", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transaction1 = Transaction(id = UUID.randomUUID(), label = "January Transaction", date = LocalDate.of(2025, 1, 15),
                 amount = 100.toAmount(), isIncome = true, isPreview = false)
             val transaction2 = Transaction(id = UUID.randomUUID(), label = "February Transaction 1", date = java.time.LocalDate.of(2025, 2, 10),
@@ -400,15 +388,13 @@ class BookletFeatureTest {
                 amount = 150.toAmount(), isIncome = false, isPreview = false)
             val transaction4 = Transaction(id = UUID.randomUUID(), label = "March Transaction", date = LocalDate.of(2025, 3, 5),
                 amount = 50.toAmount(), isIncome = true, isPreview = false)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(
-                        IdUserBooklet(ctx.userId, bookletId),
-                        mutableListOf(transaction1, transaction2, transaction3, transaction4)
-                    )
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(
+                    IdUserBooklet(ctx.userId, bookletId),
+                    mutableListOf(transaction1, transaction2, transaction3, transaction4)
                 )
-                factory.regularTransactionState.init(emptyList())
-            }
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.FEBRUARY, 2025,
                 startingMonth = java.time.Month.FEBRUARY, startingYear = 2025
@@ -424,22 +410,20 @@ class BookletFeatureTest {
         fun `Should calculate previsional sold including future months transactions`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Future Sold Test", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transaction1 = Transaction(id = UUID.randomUUID(), label = "Current Income", date = LocalDate.of(2025, 11, 15),
                 amount = 500.toAmount(), isIncome = true, isPreview = false)
             val transaction2 = Transaction(id = UUID.randomUUID(), label = "Future Income", date = LocalDate.of(2025, 12, 10),
                 amount = 800.toAmount(), isIncome = true, isPreview = true)
             val transaction3 = Transaction(id = UUID.randomUUID(), label = "Future Expense", date = LocalDate.of(2026, 1, 5),
                 amount = 300.toAmount(), isIncome = false, isPreview = true)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(
-                        IdUserBooklet(ctx.userId, bookletId),
-                        mutableListOf(transaction1, transaction2, transaction3)
-                    )
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(
+                    IdUserBooklet(ctx.userId, bookletId),
+                    mutableListOf(transaction1, transaction2, transaction3)
                 )
-                factory.regularTransactionState.init(emptyList())
-            }
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2026,
                 startingMonth = java.time.Month.NOVEMBER, startingYear = 2025
@@ -452,8 +436,8 @@ class BookletFeatureTest {
         fun `Should reflect add and remove of regular transaction via regularTransactionState`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "RT CRUD Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
-            given { factory.regularTransactionState.init(emptyList()) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            factory.regularTransactionState.init(emptyList())
 
             var result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
@@ -492,10 +476,10 @@ class BookletFeatureTest {
             val bookletIdMine = UUID.randomUUID()
             val bookletIdOther = UUID.randomUUID()
             val myBooklet = BookletFixture.aBooklet(id = bookletIdMine, label = "My Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(myBooklet) }
-            val otherUser = given { userRepository.register("other${UUID.randomUUID()}", "pw") as User }
+            val ctx = scenario.withUser().withBooklet(myBooklet)
+            val otherUser = userRepository.register("other${UUID.randomUUID()}", "pw") as User
             val bookletOther = BookletFixture.aBooklet(id = bookletIdOther, label = "Other Booklet", amount = 1000.toAmount(), owner = otherUser)
-            given { factory.bookletState().initWith(BookletsByOwner(listOf(bookletOther), otherUser.id)) }
+            factory.bookletState().initWith(BookletsByOwner(listOf(bookletOther), otherUser.id))
             val rtMine = RegularTransaction(
                 label = "Mine RT", amount = 50.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-mine"),
@@ -510,12 +494,10 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(1)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = rtMine, bookletIds = listOf(bookletIdMine)),
-                    UserRegularTransaction(userId = otherUser.id, transaction = rtOther, bookletIds = listOf(bookletIdOther))
-                ))
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = rtMine, bookletIds = listOf(bookletIdMine)),
+                UserRegularTransaction(userId = otherUser.id, transaction = rtOther, bookletIds = listOf(bookletIdOther))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletIdMine, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025
@@ -529,7 +511,7 @@ class BookletFeatureTest {
         fun `Should include regular transactions in previsional sold calculation`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "RT Calculation Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularIncome = RegularTransaction(
                 label = "Monthly Salary", amount = 2000.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-salary"),
@@ -537,11 +519,9 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(1)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularIncome, bookletIds = listOf(bookletId))
-                ))
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularIncome, bookletIds = listOf(bookletId))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.NOVEMBER, 2025,
                 startingMonth = java.time.Month.NOVEMBER, startingYear = 2025
@@ -555,7 +535,7 @@ class BookletFeatureTest {
         fun `Should handle multiple regular transactions with different frequencies`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Multi RT Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val rt1 = RegularTransaction(
                 label = "RT Start Day 1", amount = 500.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-rt1"),
@@ -577,13 +557,11 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(25)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = rt1, bookletIds = listOf(bookletId)),
-                    UserRegularTransaction(userId = ctx.userId, transaction = rt2, bookletIds = listOf(bookletId)),
-                    UserRegularTransaction(userId = ctx.userId, transaction = rt3, bookletIds = listOf(bookletId))
-                ))
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = rt1, bookletIds = listOf(bookletId)),
+                UserRegularTransaction(userId = ctx.userId, transaction = rt2, bookletIds = listOf(bookletId)),
+                UserRegularTransaction(userId = ctx.userId, transaction = rt3, bookletIds = listOf(bookletId))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025
@@ -598,7 +576,7 @@ class BookletFeatureTest {
         fun `Should combine regular transactions with current and preview transactions correctly`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Combined Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val currentTx = Transaction(id = UUID.randomUUID(), label = "Current Expense", date = LocalDate.of(2025, 12, 5),
                 amount = 100.toAmount(), isIncome = false, isPreview = false)
             val previewTx = Transaction(id = UUID.randomUUID(), label = "Preview Income", date = LocalDate.of(2025, 12, 20),
@@ -610,14 +588,12 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(1)
             )
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(currentTx, previewTx))
-                )
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(currentTx, previewTx))
+            )
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.DECEMBER, 2025,
                 startingMonth = java.time.Month.DECEMBER, startingYear = 2025
@@ -632,7 +608,7 @@ class BookletFeatureTest {
         fun `Should not include regular transactions that started after the requested month`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Future RT Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val futureRT = RegularTransaction(
                 label = "Future RT", amount = 500.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-future"),
@@ -640,11 +616,9 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(1)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = futureRT, bookletIds = listOf(bookletId))
-                ))
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = futureRT, bookletIds = listOf(bookletId))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025
             ))
@@ -655,7 +629,7 @@ class BookletFeatureTest {
         fun `Should not double count virtual regular transactions when months already have confirmed physical transactions`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "No Double Count", amount = 2000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTransactionId = RegularTransactionId("${ctx.userId.value}-salary")
             val regularIncome = RegularTransaction(
                 label = "Monthly Salary", amount = 500.toAmount(), isIncome = true,
@@ -668,14 +642,12 @@ class BookletFeatureTest {
                 amount = 500.toAmount(), isIncome = true, isPreview = false, regularTransactionId = regularTransactionId)
             val marConfirmed = Transaction(id = UUID.randomUUID(), label = "Monthly Salary", date = LocalDate.of(2026, 3, 5),
                 amount = 500.toAmount(), isIncome = true, isPreview = false, regularTransactionId = regularTransactionId)
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularIncome, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(febConfirmed, marConfirmed))
-                )
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularIncome, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(febConfirmed, marConfirmed))
+            )
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.MARCH, 2026,
                 startingMonth = java.time.Month.FEBRUARY, startingYear = 2026
@@ -687,7 +659,7 @@ class BookletFeatureTest {
         fun `Balances endpoint should not double count virtual regular transactions when confirmed physical already exists`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "No Double Count Balances", amount = 2000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTransactionId = RegularTransactionId("${ctx.userId.value}-salary-balances")
             val regularIncome = RegularTransaction(
                 label = "Monthly Salary", amount = 500.toAmount(), isIncome = true,
@@ -698,14 +670,12 @@ class BookletFeatureTest {
             )
             val marConfirmed = Transaction(id = UUID.randomUUID(), label = "Monthly Salary", date = LocalDate.of(2026, 3, 5),
                 amount = 500.toAmount(), isIncome = true, isPreview = false, regularTransactionId = regularTransactionId)
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularIncome, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(marConfirmed))
-                )
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularIncome, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(marConfirmed))
+            )
             val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.MARCH, 2026,
                 startingMonth = java.time.Month.MARCH, startingYear = 2026
@@ -717,15 +687,13 @@ class BookletFeatureTest {
         fun `Balances endpoint should include preview transactions in current-to-target month range`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Range Coverage", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val febPreviewIncome = Transaction(id = UUID.randomUUID(), label = "Projected income", date = LocalDate.of(2026, 2, 10),
                 amount = 100.toAmount(), isIncome = true, isPreview = true)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(febPreviewIncome))
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(febPreviewIncome))
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.MARCH, 2026,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2026
@@ -738,7 +706,7 @@ class BookletFeatureTest {
         fun `Should not expose null id previsional transactions for current month`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Current Month No Null Id", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTx = RegularTransaction(
                 label = "Current month regular", amount = 120.toAmount(), isIncome = false,
                 id = RegularTransactionId("${ctx.userId.value}-current-null-id-check"),
@@ -746,11 +714,9 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(1)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.MARCH, 2026,
                 startingMonth = java.time.Month.MARCH, startingYear = 2026
@@ -762,7 +728,7 @@ class BookletFeatureTest {
         fun `Should expose virtual previsional transactions with null id for non current month`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Future Month Virtual Id", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTx = RegularTransaction(
                 label = "Future month regular", amount = 75.toAmount(), isIncome = false,
                 id = RegularTransactionId("${ctx.userId.value}-future-null-id-check"),
@@ -770,11 +736,9 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(1)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.APRIL, 2026,
                 startingMonth = java.time.Month.MARCH, startingYear = 2026
@@ -786,19 +750,17 @@ class BookletFeatureTest {
         fun `Explicit date range should include start and exclude end plus one day for transactions`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Explicit Range Tx", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val txAtStart = Transaction(id = UUID.randomUUID(), label = "At start", date = LocalDate.of(2026, 3, 28),
                 amount = 100.toAmount(), isIncome = false, isPreview = false)
             val txAtEnd = Transaction(id = UUID.randomUUID(), label = "At end", date = LocalDate.of(2026, 4, 27),
                 amount = 50.toAmount(), isIncome = false, isPreview = false)
             val txAfterEnd = Transaction(id = UUID.randomUUID(), label = "After end", date = LocalDate.of(2026, 4, 28),
                 amount = 75.toAmount(), isIncome = false, isPreview = false)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(txAtStart, txAtEnd, txAfterEnd))
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(txAtStart, txAtEnd, txAfterEnd))
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId, month = java.time.Month.APRIL, year = 2026,
                 startDate = LocalDate.of(2026, 3, 28), endDate = LocalDate.of(2026, 4, 27)
@@ -812,17 +774,15 @@ class BookletFeatureTest {
         fun `Explicit date range should bound previsional sold to provided end date`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Explicit Range Balance", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val inRangePreview = Transaction(id = UUID.randomUUID(), label = "In range preview", date = LocalDate.of(2026, 4, 27),
                 amount = 120.toAmount(), isIncome = true, isPreview = true)
             val outOfRangePreview = Transaction(id = UUID.randomUUID(), label = "Out of range preview", date = LocalDate.of(2026, 4, 28),
                 amount = 80.toAmount(), isIncome = true, isPreview = true)
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(inRangePreview, outOfRangePreview))
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(inRangePreview, outOfRangePreview))
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadBalancesForBookletForAMonthService.handle(LoadBalancesForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId, month = java.time.Month.APRIL, year = 2026,
                 startDate = LocalDate.of(2026, 3, 28), endDate = LocalDate.of(2026, 4, 27)
@@ -835,7 +795,7 @@ class BookletFeatureTest {
         fun `Should not generate virtual transactions for a past explicit range with default settings`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Past Default Range", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTx = RegularTransaction(
                 label = "Monthly salary", amount = 3000.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-past-default-range"),
@@ -843,13 +803,11 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(15)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
-            // Simulate: current date is 1st April 2026, user views March 2026 with default settings (1→31)
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
+            // Simulate: current date is 1st April 2026, user views March 2026 with default settings (1â†’31)
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId, month = java.time.Month.MARCH, year = 2026,
                 startingMonth = java.time.Month.APRIL, startingYear = 2026,
@@ -862,7 +820,7 @@ class BookletFeatureTest {
         fun `Should not generate virtual transactions for a past custom cycle range`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Past Custom Cycle", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTx = RegularTransaction(
                 label = "Monthly salary", amount = 3000.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-past-custom-cycle"),
@@ -870,13 +828,11 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(28)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
-            // Simulate: current date is 1st April 2026, user views March cycle (28 Feb → 27 Mar)
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
+            // Simulate: current date is 1st April 2026, user views March cycle (28 Feb â†’ 27 Mar)
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId, month = java.time.Month.MARCH, year = 2026,
                 startingMonth = java.time.Month.APRIL, startingYear = 2026,
@@ -889,7 +845,7 @@ class BookletFeatureTest {
         fun `Should generate virtual transaction for a future custom cycle range`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Future Custom Cycle", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val regularTx = RegularTransaction(
                 label = "Monthly salary", amount = 3000.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-future-custom-cycle"),
@@ -897,13 +853,11 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(28)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
-            // Simulate: current date is 1st April 2026, user views May cycle (28 Apr → 27 May)
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
+            // Simulate: current date is 1st April 2026, user views May cycle (28 Apr â†’ 27 May)
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId, month = java.time.Month.MAY, year = 2026,
                 startingMonth = java.time.Month.APRIL, startingYear = 2026,
@@ -921,10 +875,10 @@ class BookletFeatureTest {
         fun `Should not generate previsional for day outside cycle start boundary with custom date range`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Cycle Offset Start Boundary", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             // Monthly-on-5: without fix, March 5 would be generated by the full-month MARCH loop.
-            // With fix, March 5 is before the cycle start (March 28) → must NOT be generated.
-            // April 5 is within [March 28, April 27] → must be generated.
+            // With fix, March 5 is before the cycle start (March 28) â†’ must NOT be generated.
+            // April 5 is within [March 28, April 27] â†’ must be generated.
             val regularTx = RegularTransaction(
                 label = "Rent", amount = 800.toAmount(), isIncome = false,
                 id = RegularTransactionId("${ctx.userId.value}-rent-cycle-offset-start"),
@@ -932,13 +886,11 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(5)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
-            // Current cycle: March 28 → April 27. startingMonth = APRIL so today = April N.
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
+            // Current cycle: March 28 â†’ April 27. startingMonth = APRIL so today = April N.
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId, month = java.time.Month.APRIL, year = 2026,
                 startingMonth = java.time.Month.APRIL, startingYear = 2026,
@@ -952,10 +904,10 @@ class BookletFeatureTest {
         fun `Should not generate previsional for day outside cycle end boundary with custom date range`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Cycle Offset End Boundary", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             // Monthly-on-29: without fix, April 29 would be generated by the full-month APRIL loop.
-            // With fix, April 29 is after the cycle end (April 27) → must NOT be generated.
-            // March 29 is within [March 28, April 27] → must be generated.
+            // With fix, April 29 is after the cycle end (April 27) â†’ must NOT be generated.
+            // March 29 is within [March 28, April 27] â†’ must be generated.
             val regularTx = RegularTransaction(
                 label = "Salary", amount = 3000.toAmount(), isIncome = true,
                 id = RegularTransactionId("${ctx.userId.value}-salary-cycle-offset-end"),
@@ -963,13 +915,11 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(29)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
-            // Current cycle: March 28 → April 27. startingMonth = APRIL so today = April N.
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
+            // Current cycle: March 28 â†’ April 27. startingMonth = APRIL so today = April N.
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId, month = java.time.Month.APRIL, year = 2026,
                 startingMonth = java.time.Month.APRIL, startingYear = 2026,
@@ -982,7 +932,7 @@ class BookletFeatureTest {
         @Test
         fun `loadTransactions should signal hasRegenerableTransactions when a month is excluded for a regular transaction`() {
             val customBooklet = BookletFixture.aBooklet(label = "Test Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = RegularTransaction(
                 label = "Loyer", amount = 900.toAmount(), isIncome = false,
@@ -991,15 +941,13 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(5)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
             val currentDate = LocalDate.now()
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, currentDate.year, currentDate.month)
-            given { factory.fakeTransactionRepository().init(emptyList()) }
+            factory.fakeTransactionRepository().init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId,
                 month = currentDate.month, year = currentDate.year
@@ -1010,7 +958,7 @@ class BookletFeatureTest {
         @Test
         fun `loadTransactions should not signal hasRegenerableTransactions when the excluded month is a past month`() {
             val customBooklet = BookletFixture.aBooklet(label = "Test Booklet Past", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = RegularTransaction(
                 label = "Loyer", amount = 900.toAmount(), isIncome = false,
@@ -1019,12 +967,10 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(5)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
             // Mark a past month as excluded
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, 2024, java.time.Month.FEBRUARY)
             // Load for that same past month
@@ -1039,7 +985,7 @@ class BookletFeatureTest {
         @Test
         fun `loadTransactions should not signal hasRegenerableTransactions when no month is excluded`() {
             val customBooklet = BookletFixture.aBooklet(label = "Test Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = RegularTransaction(
                 label = "Loyer", amount = 900.toAmount(), isIncome = false,
@@ -1048,12 +994,10 @@ class BookletFeatureTest {
                 frequencyProperty = FrequencyProperty.Forever(),
                 recurrenceRule = RecurrenceRule.Monthly(5)
             )
-            given {
-                factory.regularTransactionState.init(listOf(
-                    UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
-                ))
-                factory.fakeTransactionRepository().init(emptyList())
-            }
+            factory.regularTransactionState.init(listOf(
+                UserRegularTransaction(userId = ctx.userId, transaction = regularTx, bookletIds = listOf(bookletId))
+            ))
+            factory.fakeTransactionRepository().init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 userId = ctx.userId, bookletId = bookletId,
                 month = java.time.Month.FEBRUARY, year = 2024,
@@ -1071,18 +1015,16 @@ class BookletFeatureTest {
         fun `should return first page of transactions when 25 transactions exist`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Paginated Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transactions = (1..25).map { i ->
                 Transaction(id = UUID.randomUUID(), label = "Transaction $i",
                     date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                     isIncome = true, isPreview = false)
             }
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025,
@@ -1099,18 +1041,16 @@ class BookletFeatureTest {
         fun `should return last page with fewer items when total is not divisible by pageSize`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Last Page Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transactions = (1..25).map { i ->
                 Transaction(id = UUID.randomUUID(), label = "Transaction $i",
                     date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                     isIncome = true, isPreview = false)
             }
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025,
@@ -1125,18 +1065,16 @@ class BookletFeatureTest {
         fun `should use default page=0 and size=10 when no pagination params are given`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Default Pagination Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transactions = (1..15).map { i ->
                 Transaction(id = UUID.randomUUID(), label = "Transaction $i",
                     date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                     isIncome = true, isPreview = false)
             }
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025
@@ -1151,18 +1089,16 @@ class BookletFeatureTest {
         fun `should return empty transaction list when requested page is out of range`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Out of Range Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transactions = (1..5).map { i ->
                 Transaction(id = UUID.randomUUID(), label = "Transaction $i",
                     date = LocalDate.of(2025, 1, i), amount = 100.toAmount(),
                     isIncome = true, isPreview = false)
             }
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
+            )
+            factory.regularTransactionState.init(emptyList())
             val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025,
@@ -1176,18 +1112,16 @@ class BookletFeatureTest {
         fun `should compute realSold on ALL transactions regardless of requested page`() {
             val bookletId = UUID.randomUUID()
             val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Balance Invariance Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val transactions = (1..20).map { i ->
                 Transaction(id = UUID.randomUUID(), label = "Income $i",
                     date = LocalDate.of(2025, 1, (i % 28) + 1), amount = 100.toAmount(),
                     isIncome = true, isPreview = false)
             }
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
-                )
-                factory.regularTransactionState.init(emptyList())
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
+            )
+            factory.regularTransactionState.init(emptyList())
             val page0Result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
                 ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025,
@@ -1198,7 +1132,7 @@ class BookletFeatureTest {
                 startingMonth = java.time.Month.JANUARY, startingYear = 2025,
                 pageNumber = 1, pageSize = 10
             ))
-            // realSold = booklet.amount (stored balance) — unaffected by pagination
+            // realSold = booklet.amount (stored balance) â€” unaffected by pagination
             page0Result.assertTrue { realSold == page1Result.mapNotNullOrFailure()!!.realSold }
         }
     }
@@ -1231,11 +1165,11 @@ class BookletFeatureTest {
         fun `regenerate for a future month should return virtual transactions and unmark the tracker`() {
             val futureDate = LocalDate.now().plusMonths(2)
             val customBooklet = BookletFixture.aBooklet(label = "Future Regen Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = buildRegularTransaction(ctx.userId, bookletId, dayOfMonth = 5)
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, futureDate.year, futureDate.month)
-            given { factory.fakeTransactionRepository().init(emptyList()) }
+            factory.fakeTransactionRepository().init(emptyList())
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                 userId = ctx.userId, bookletId = bookletId, month = futureDate.month, year = futureDate.year
             ))
@@ -1249,7 +1183,7 @@ class BookletFeatureTest {
         @Test
         fun `regenerate for a past month should return empty list without modifying the tracker`() {
             val customBooklet = BookletFixture.aBooklet(label = "Past Regen Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = buildRegularTransaction(ctx.userId, bookletId, dayOfMonth = 5)
             val pastYearMonth = YearMonth.of(2024, java.time.Month.MARCH)
@@ -1265,8 +1199,8 @@ class BookletFeatureTest {
 
         @Test
         fun `regenerate for a non-existing booklet should return BOOKLET_NOT_FOUND`() {
-            val ctx = given { scenario.withUser() }
-            given { factory.regularTransactionState.init(emptyList()) }
+            val ctx = scenario.withUser()
+            factory.regularTransactionState.init(emptyList())
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                 userId = ctx.userId, bookletId = UUID.randomUUID(),
                 month = java.time.Month.JANUARY, year = 2024
@@ -1278,10 +1212,10 @@ class BookletFeatureTest {
         fun `regenerate for the current month should recreate previsional transactions`() {
             val currentDate = LocalDate.now()
             val customBooklet = BookletFixture.aBooklet(label = "Regen Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = buildRegularTransaction(ctx.userId, bookletId, dayOfMonth = 1)
-            given { factory.fakeTransactionRepository().init(emptyList()) }
+            factory.fakeTransactionRepository().init(emptyList())
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, currentDate.year, currentDate.month)
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                 userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year
@@ -1297,7 +1231,7 @@ class BookletFeatureTest {
         fun `regenerate should not create duplicate if confirmed transaction already exists for that month`() {
             val currentDate = LocalDate.now()
             val customBooklet = BookletFixture.aBooklet(label = "No Dup Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = buildRegularTransaction(ctx.userId, bookletId, dayOfMonth = 1)
             // Existing confirmed transaction for same regular tx + current month
@@ -1305,11 +1239,9 @@ class BookletFeatureTest {
                 id = UUID.randomUUID(), label = "Loyer", date = currentDate.withDayOfMonth(1),
                 amount = 900.toAmount(), isIncome = false, isPreview = false, regularTransactionId = regularTx.id
             )
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(confirmed))
-                )
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(confirmed))
+            )
             // Month is excluded (user deleted the preview before confirming)
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, currentDate.year, currentDate.month)
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
@@ -1323,7 +1255,7 @@ class BookletFeatureTest {
         fun `regenerate should not create duplicate if preview transaction already exists for that month`() {
             val currentDate = LocalDate.now()
             val customBooklet = BookletFixture.aBooklet(label = "No Dup Preview Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = buildRegularTransaction(ctx.userId, bookletId, dayOfMonth = 1)
             // Existing preview transaction for same regular tx + current month
@@ -1331,11 +1263,9 @@ class BookletFeatureTest {
                 id = UUID.randomUUID(), label = "Loyer", date = currentDate.withDayOfMonth(1),
                 amount = 900.toAmount(), isIncome = false, isPreview = true, regularTransactionId = regularTx.id
             )
-            given {
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(existingPreview))
-                )
-            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(existingPreview))
+            )
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                 userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year
             ))
@@ -1343,14 +1273,14 @@ class BookletFeatureTest {
         }
 
         @Test
-        fun `regenerate should only unmark the requested month — other excluded months remain excluded`() {
+        fun `regenerate should only unmark the requested month â€” other excluded months remain excluded`() {
             val currentDate = LocalDate.now()
             val nextMonthDate = currentDate.plusMonths(1)
             val customBooklet = BookletFixture.aBooklet(label = "Only One Month Booklet", amount = 1000.toAmount())
-            val ctx = given { scenario.withUser().withBooklet(customBooklet) }
+            val ctx = scenario.withUser().withBooklet(customBooklet)
             val bookletId = ctx.booklet.id!!
             val regularTx = buildRegularTransaction(ctx.userId, bookletId, dayOfMonth = 1)
-            given { factory.fakeTransactionRepository().init(emptyList()) }
+            factory.fakeTransactionRepository().init(emptyList())
             // Exclude current month and next month
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, currentDate.year, currentDate.month)
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, nextMonthDate.year, nextMonthDate.month)

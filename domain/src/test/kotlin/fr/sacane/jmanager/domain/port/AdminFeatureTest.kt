@@ -5,7 +5,6 @@ import fr.sacane.jmanager.domain.act
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fixture.UserFixture
-import fr.sacane.jmanager.domain.given
 import fr.sacane.jmanager.domain.initWith
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.input.admin.GetUsersQuery
@@ -46,18 +45,15 @@ class AdminFeatureTest {
 
         @Test
         fun `Get users as admin should return success with paginated users`() {
-            val admin = given {
-                val a = createAdmin("admin")
-                (1..5).forEach { i ->
-                    val user = User(
-                        id = UserId(UUID.randomUUID()),
-                        username = "user$i",
-                        email = "user$i@test.fr",
-                        creationDate = LocalDateTime.now().minusDays(i.toLong())
-                    )
-                    userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
-                }
-                a
+            val admin = createAdmin("admin")
+            (1..5).forEach { i ->
+                val user = User(
+                    id = UserId(UUID.randomUUID()),
+                    username = "user$i",
+                    email = "user$i@test.fr",
+                    creationDate = LocalDateTime.now().minusDays(i.toLong())
+                )
+                userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
             }
 
             val result = act { adminFeature.handle(GetUsersQuery(admin.id!!, 0, 10)) }
@@ -67,14 +63,11 @@ class AdminFeatureTest {
 
         @Test
         fun `Get users should exclude the calling admin from results`() {
-            val admin = given {
-                val a = createAdmin("admin")
-                val user1 = User(id = UserId(UUID.randomUUID()), username = "user1", email = "user1@test.fr")
-                val user2 = User(id = UserId(UUID.randomUUID()), username = "user2", email = "user2@test.fr")
-                userRepository.initWith(UserFixture.aUserWithPassword(user = user1, password = "test"))
-                userRepository.initWith(UserFixture.aUserWithPassword(user = user2, password = "test"))
-                a
-            }
+            val admin = createAdmin("admin")
+            val user1 = User(id = UserId(UUID.randomUUID()), username = "user1", email = "user1@test.fr")
+            val user2 = User(id = UserId(UUID.randomUUID()), username = "user2", email = "user2@test.fr")
+            userRepository.initWith(UserFixture.aUserWithPassword(user = user1, password = "test"))
+            userRepository.initWith(UserFixture.aUserWithPassword(user = user2, password = "test"))
 
             val result = act { adminFeature.handle(GetUsersQuery(admin.id!!, 0, 10)) }
 
@@ -88,18 +81,15 @@ class AdminFeatureTest {
 
         @Test
         fun `Get users with pagination should return correct page`() {
-            val admin = given {
-                val a = createAdmin("admin")
-                (1..15).forEach { i ->
-                    val user = User(
-                        id = UserId(UUID.randomUUID()),
-                        username = "user$i",
-                        email = "user$i@test.fr",
-                        creationDate = LocalDateTime.now().minusDays(i.toLong())
-                    )
-                    userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
-                }
-                a
+            val admin = createAdmin("admin")
+            (1..15).forEach { i ->
+                val user = User(
+                    id = UserId(UUID.randomUUID()),
+                    username = "user$i",
+                    email = "user$i@test.fr",
+                    creationDate = LocalDateTime.now().minusDays(i.toLong())
+                )
+                userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
             }
 
             adminFeature.handle(GetUsersQuery(admin.id!!, 0, 5))
@@ -128,16 +118,13 @@ class AdminFeatureTest {
 
         @Test
         fun `Get users should sort by creation date descending`() {
-            val admin = given {
-                val a = createAdmin("admin")
-                val user1 = User(id = UserId(UUID.randomUUID()), username = "user1", email = "user1@test.fr", creationDate = LocalDateTime.now().minusDays(3))
-                val user2 = User(id = UserId(UUID.randomUUID()), username = "user2", email = "user2@test.fr", creationDate = LocalDateTime.now().minusDays(1))
-                val user3 = User(id = UserId(UUID.randomUUID()), username = "user3", email = "user3@test.fr", creationDate = LocalDateTime.now().minusDays(2))
-                userRepository.initWith(UserFixture.aUserWithPassword(user = user1, password = "test"))
-                userRepository.initWith(UserFixture.aUserWithPassword(user = user2, password = "test"))
-                userRepository.initWith(UserFixture.aUserWithPassword(user = user3, password = "test"))
-                a
-            }
+            val admin = createAdmin("admin")
+            val user1 = User(id = UserId(UUID.randomUUID()), username = "user1", email = "user1@test.fr", creationDate = LocalDateTime.now().minusDays(3))
+            val user2 = User(id = UserId(UUID.randomUUID()), username = "user2", email = "user2@test.fr", creationDate = LocalDateTime.now().minusDays(1))
+            val user3 = User(id = UserId(UUID.randomUUID()), username = "user3", email = "user3@test.fr", creationDate = LocalDateTime.now().minusDays(2))
+            userRepository.initWith(UserFixture.aUserWithPassword(user = user1, password = "test"))
+            userRepository.initWith(UserFixture.aUserWithPassword(user = user2, password = "test"))
+            userRepository.initWith(UserFixture.aUserWithPassword(user = user3, password = "test"))
 
             val result = act { adminFeature.handle(GetUsersQuery(admin.id!!, 0, 10)) }
 
@@ -153,7 +140,7 @@ class AdminFeatureTest {
 
         @Test
         fun `Get users with empty database should return empty page`() {
-            val admin = given { createAdmin("admin") }
+            val admin = createAdmin("admin")
 
             val result = act { adminFeature.handle(GetUsersQuery(admin.id!!, 0, 10)) }
 
@@ -168,13 +155,10 @@ class AdminFeatureTest {
 
         @Test
         fun `Get users with default pagination parameters`() {
-            val admin = given {
-                val a = createAdmin("admin")
-                (1..25).forEach { i ->
-                    val user = User(id = UserId(UUID.randomUUID()), username = "user$i", email = "user$i@test.fr")
-                    userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
-                }
-                a
+            val admin = createAdmin("admin")
+            (1..25).forEach { i ->
+                val user = User(id = UserId(UUID.randomUUID()), username = "user$i", email = "user$i@test.fr")
+                userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
             }
 
             val result = act { adminFeature.handle(GetUsersQuery(admin.id!!)) }
@@ -192,12 +176,9 @@ class AdminFeatureTest {
 
         @Test
         fun `Get users with page beyond available pages should return empty content`() {
-            val admin = given {
-                val a = createAdmin("admin")
-                val user = User(id = UserId(UUID.randomUUID()), username = "user1", email = "user1@test.fr")
-                userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
-                a
-            }
+            val admin = createAdmin("admin")
+            val user = User(id = UserId(UUID.randomUUID()), username = "user1", email = "user1@test.fr")
+            userRepository.initWith(UserFixture.aUserWithPassword(user = user, password = "test"))
 
             val result = act { adminFeature.handle(GetUsersQuery(admin.id!!, 10, 10)) }
 

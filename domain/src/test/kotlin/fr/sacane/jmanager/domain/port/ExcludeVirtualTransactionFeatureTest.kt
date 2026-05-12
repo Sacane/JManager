@@ -1,11 +1,10 @@
-package fr.sacane.jmanager.domain.port
+﻿package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.act
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.TestScenario
-import fr.sacane.jmanager.domain.given
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.input.transaction.ExcludeVirtualTransactionCommand
 import fr.sacane.jmanager.domain.port.input.transaction.ExcludeVirtualTransactionUseCase
@@ -39,7 +38,7 @@ class ExcludeVirtualTransactionFeatureTest {
 
         @Test
         fun `shouldExcludeVirtualTransaction_whenValidBookletAndRegularTransaction`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val regularTransactionId = RegularTransactionId("regular-exclude-1")
 
             val result = act {
@@ -64,7 +63,7 @@ class ExcludeVirtualTransactionFeatureTest {
 
         @Test
         fun `shouldExcludeVirtualTransaction_whenCurrentMonth`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val regularTransactionId = RegularTransactionId("regular-exclude-2")
 
             val result = act {
@@ -89,7 +88,7 @@ class ExcludeVirtualTransactionFeatureTest {
 
         @Test
         fun `shouldBeIdempotent_whenMonthAlreadyExcluded`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val regularTransactionId = RegularTransactionId("regular-exclude-3")
 
             excludeVirtualTransactionUseCase.handle(
@@ -128,7 +127,7 @@ class ExcludeVirtualTransactionFeatureTest {
 
         @Test
         fun `shouldReturnBookletNotFound_whenBookletDoesNotExist`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act {
                 excludeVirtualTransactionUseCase.handle(

@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.initWith
 import fr.sacane.jmanager.domain.fixture.BookletFixture
 import fr.sacane.jmanager.domain.fixture.UserFixture
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -60,17 +61,26 @@ class UserBookletScenario(
         return this
     }
 
-    fun withRegularTransactions(vararg txs: RegularTransaction): UserBookletScenario {
-        txs.forEach { tx ->
-            factory.regularTransactionState.init(
-                listOf(UserRegularTransaction(userId, tx))
-            )
-        }
+    fun withRegularTransactions(vararg txs: RegularTransaction): UserBookletScenario =
+        withRegularTransactions(txs.toList())
+
+    fun withRegularTransactions(transactions: List<RegularTransaction>): UserBookletScenario {
+        factory.regularTransactionState.init(
+            transactions.map { tx -> UserRegularTransaction(userId, tx, tx.associatedBooklets.mapNotNull { it.id }) }
+        )
         return this
     }
 
     fun withTags(vararg tags: UserTag): UserBookletScenario {
         tags.forEach { factory.tagTestState().init(it) }
+        return this
+    }
+
+    /**
+     * Convenience overload — wraps all given tags in a single [UserTag] for the current user.
+     */
+    fun withTags(vararg tags: Tag): UserBookletScenario {
+        factory.tagTestState().init(UserTag(userId, tags.toMutableList()))
         return this
     }
 }

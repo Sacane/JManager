@@ -5,7 +5,6 @@ import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fixture.UserFixture
-import fr.sacane.jmanager.domain.given
 import fr.sacane.jmanager.domain.initWith
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.port.output.SessionManager
@@ -36,7 +35,7 @@ class SessionManagerTest {
         @Test
         fun `Add a session must be findable by token`() {
             val id = UserId(UUID.randomUUID())
-            given { userState.initWith(UserFixture.aUserWithPassword(user = UserFixture.aUser(id = id, username = "test", email = "test"), password = "test")) }
+            userState.initWith(UserFixture.aUserWithPassword(user = UserFixture.aUser(id = id, username = "test", email = "test"), password = "test"))
 
             val accessToken = AccessToken(id, "test", "${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
             sessionManager.addSession(id, accessToken)
@@ -53,7 +52,7 @@ class SessionManagerTest {
     @Test
     fun `Remove a session must make it unfindable`() {
         val id = UserId(UUID.randomUUID())
-        given { userState.initWith(UserFixture.aUserWithPassword(user = UserFixture.aUser(id = id, username = "test", email = "test"), password = "test")) }
+        userState.initWith(UserFixture.aUserWithPassword(user = UserFixture.aUser(id = id, username = "test", email = "test"), password = "test"))
 
         val accessToken = AccessToken(id, "test", "${id.value}||${UUID.randomUUID()}||${Role.USER.name}||test")
         sessionManager.addSession(id, accessToken)
@@ -72,7 +71,7 @@ class SessionManagerTest {
             val id = UserId(UUID.randomUUID())
             val refreshToken = UUID.randomUUID()
 
-            given { sessionManager.saveRefreshToken(id, refreshToken, LocalDateTime.now().plusDays(1)) }
+            sessionManager.saveRefreshToken(id, refreshToken, LocalDateTime.now().plusDays(1))
 
             val result = act {
                 sessionManager.authenticateRefreshToken(refreshToken) {
@@ -89,10 +88,8 @@ class SessionManagerTest {
             val refreshToken = UUID.randomUUID()
             val expiresAt = LocalDateTime.now().plusDays(1)
 
-            given {
-                sessionManager.saveRefreshToken(id, refreshToken, expiresAt)
-                sessionManager.blacklistRefreshToken(refreshToken, expiresAt)
-            }
+            sessionManager.saveRefreshToken(id, refreshToken, expiresAt)
+            sessionManager.blacklistRefreshToken(refreshToken, expiresAt)
 
             val result = act {
                 sessionManager.authenticateRefreshToken(refreshToken) {

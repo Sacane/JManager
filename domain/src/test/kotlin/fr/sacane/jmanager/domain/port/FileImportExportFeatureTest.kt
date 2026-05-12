@@ -1,9 +1,8 @@
-package fr.sacane.jmanager.domain.port
+﻿package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.fake.BookletsByOwner
 import fr.sacane.jmanager.domain.fake.FakeFactory
 import fr.sacane.jmanager.domain.fake.TestScenario
-import fr.sacane.jmanager.domain.given
 import fr.sacane.jmanager.domain.initWith
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Booklet
@@ -44,7 +43,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should fail when booklet does not exist")
     fun `validateCsvFile should fail when booklet does not exist`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val nonExistentBookletId = UUID.randomUUID()
 
         val result = validateCsvFileService.handle(ValidateCsvFileQuery(
@@ -61,7 +60,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should fail when user does not own the booklet")
     fun `validateCsvFile should fail when user does not own the booklet`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val otherBooklet = createOtherBooklet()
 
         val result = validateCsvFileService.handle(ValidateCsvFileQuery(
@@ -78,7 +77,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should return report with error when CSV is empty")
     fun `validateCsvFile should return report with error when CSV is empty`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
 
         val result = validateCsvFileService.handle(ValidateCsvFileQuery(
             userId = ctx.userId,
@@ -96,7 +95,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should return report with error when CSV header is invalid")
     fun `validateCsvFile should return report with error when CSV header is invalid`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,wrong_column,recette,tag
             15-01-2025,Test,10.00,,
@@ -118,7 +117,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should return report with error when line has invalid date format")
     fun `validateCsvFile should return report with error when line has invalid date format`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             2025-01-15,Test,10.00,,
@@ -140,7 +139,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should succeed validation with valid CSV and no warnings")
     fun `validateCsvFile should succeed with valid CSV`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             15-01-2025,Groceries,45.50,,Alimentation & Restaurant
@@ -167,7 +166,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should succeed validation with warnings for unknown tags")
     fun `validateCsvFile should succeed with warnings when tag is unknown`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             15-01-2025,Groceries,45.50,,UnknownTag
@@ -193,7 +192,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should return report with error when both amounts are filled")
     fun `validateCsvFile should return report with error when both depense and recette are filled`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             15-01-2025,Test,45.50,100.00,
@@ -215,7 +214,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should return report with error when no amount is filled")
     fun `validateCsvFile should return report with error when neither amount is filled`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             15-01-2025,Test,,,
@@ -237,7 +236,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should return report with error when amount is negative")
     fun `validateCsvFile should return report with error when amount is negative`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             15-01-2025,Test,-45.50,,
@@ -259,7 +258,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should accept comma as decimal separator")
     fun `validateCsvFile should accept comma as decimal separator`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = "date;label;depense;recette;tag\n15-01-2025;Test;\"45,50\";;\n"
 
         val result = validateCsvFileService.handle(ValidateCsvFileQuery(
@@ -278,7 +277,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should return report with error when columns have wrong count")
     fun `validateCsvFile should return report with error when line has wrong column count`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             15-01-2025,Test,45.50
@@ -299,7 +298,7 @@ class FileImportExportFeatureTest {
 
     @Test
     fun `importTransactionsFromCsv should fail when booklet does not exist`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val nonExistentBookletId = UUID.randomUUID()
 
         val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
@@ -315,7 +314,7 @@ class FileImportExportFeatureTest {
 
     @Test
     fun `importTransactionsFromCsv should fail when user does not own the booklet`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val otherBooklet = createOtherBooklet()
 
         val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
@@ -331,7 +330,7 @@ class FileImportExportFeatureTest {
 
     @Test
     fun `importTransactionsFromCsv should fail when CSV is empty`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
 
         val result = importTransactionsFromCsvService.handle(ImportTransactionsFromCsvCommand(
             userId = ctx.userId,
@@ -347,7 +346,7 @@ class FileImportExportFeatureTest {
 
     @Test
     fun `importTransactionsFromCsv should fail when CSV header is invalid`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,wrong_column,recette,tag
             15-01-2025,Test,10.00,,
@@ -367,7 +366,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should update booklet amount after importing expense transactions")
     fun `importTransactionsFromCsv should update booklet amount after importing expense transactions`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val initialAmount = ctx.booklet.amount
         val csvContent = """
             date,label,depense,recette,tag
@@ -400,7 +399,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should update booklet amount after importing income transactions")
     fun `importTransactionsFromCsv should update booklet amount after importing income transactions`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val initialAmount = ctx.booklet.amount
         val csvContent = """
             date,label,depense,recette,tag
@@ -433,7 +432,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should update booklet amount correctly with mixed transactions")
     fun `importTransactionsFromCsv should update booklet amount with mixed income and expense transactions`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val initialAmount = ctx.booklet.amount
         val csvContent = """
             date,label,depense,recette,tag
@@ -468,7 +467,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should not change booklet amount when import fails")
     fun `importTransactionsFromCsv should not change booklet amount when import fails`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val initialAmount = ctx.booklet.amount
         val csvContent = """
             invalid-date,Test,45.50,,
@@ -493,7 +492,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should persist booklet with updated amount after successful import")
     fun `importTransactionsFromCsv should persist booklet with updated amount in repository`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val initialAmount = ctx.booklet.amount
         val csvContent = """
             date,label,depense,recette,tag
@@ -526,7 +525,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should validate CSV with day-only dates when month and year are provided")
     fun `validateCsvFile should accept day-only dates when month and year are provided`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             1,Groceries,45.50,,Alimentation & Restaurant
@@ -553,7 +552,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should fail validation when day-only date is provided without month and year")
     fun `validateCsvFile should fail when day-only date without month and year`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             1,Groceries,45.50,,Alimentation & Restaurant
@@ -575,7 +574,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should import transactions with day-only dates when month and year are provided")
     fun `importTransactionsFromCsv should import with day-only dates and month year`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val initialAmount = ctx.booklet.amount
         val csvContent = """
             date,label,depense,recette,tag
@@ -619,7 +618,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should accept mixed full dates and day-only dates")
     fun `importTransactionsFromCsv should accept mixed date formats`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             15-02-2026,Full Date Transaction,100.00,,Aucune
@@ -653,7 +652,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should fail when day-only date is invalid (e.g., 32)")
     fun `validateCsvFile should fail when day-only date is out of range`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = """
             date,label,depense,recette,tag
             32,Invalid Day,45.50,,Aucune
@@ -677,7 +676,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should successfully validate CSV file with UTF-8 BOM")
     fun `validateCsvFile should successfully validate CSV file with UTF-8 BOM`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val bomChar = '\uFEFF'
         val csvContent = """${bomChar}date,label,depense,recette,tag
             1,Test transaction,10.50,,Aucune
@@ -704,7 +703,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should successfully validate real CSV file with UTF-8 BOM and 100+ transactions")
     fun `validateCsvFile should successfully validate real CSV file with BOM`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = this::class.java.classLoader
             .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
             ?.readText(Charsets.UTF_8)
@@ -740,17 +739,17 @@ class FileImportExportFeatureTest {
                 }
             }
 
-            Assertions.assertFalse(report.hasErrors, "Le fichier CSV réel avec BOM UTF-8 ne devrait pas avoir d'erreurs. Errors: ${report.errors.joinToString { it.message }}")
+            Assertions.assertFalse(report.hasErrors, "Le fichier CSV rÃ©el avec BOM UTF-8 ne devrait pas avoir d'erreurs. Errors: ${report.errors.joinToString { it.message }}")
             Assertions.assertTrue(report.canImport)
-            Assertions.assertEquals(101, report.totalLines, "Le fichier contient 101 lignes de données valides")
-            Assertions.assertEquals(101, report.validLines, "Toutes les lignes devraient être valides")
+            Assertions.assertEquals(101, report.totalLines, "Le fichier contient 101 lignes de donnÃ©es valides")
+            Assertions.assertEquals(101, report.validLines, "Toutes les lignes devraient Ãªtre valides")
         }
     }
 
     @Test
     @DisplayName("Should fail with clear error when validating January file with February month")
     fun `validateCsvFile should show clear error when using wrong month for January file`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = this::class.java.classLoader
             .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
             ?.readText(Charsets.UTF_8)
@@ -767,14 +766,14 @@ class FileImportExportFeatureTest {
 
         Assertions.assertTrue(result.isSuccess())
         result.onSuccess { report ->
-            Assertions.assertTrue(report.hasErrors, "Le fichier devrait avoir des erreurs car février n'a pas 30-31 jours")
+            Assertions.assertTrue(report.hasErrors, "Le fichier devrait avoir des erreurs car fÃ©vrier n'a pas 30-31 jours")
             Assertions.assertFalse(report.canImport)
 
             val invalidDayErrors = report.errors.filter {
                 it.message.contains("Day 30") || it.message.contains("Day 31")
             }
             Assertions.assertTrue(invalidDayErrors.isNotEmpty(),
-                "Il devrait y avoir des erreurs pour les jours 30 et 31 invalides pour février")
+                "Il devrait y avoir des erreurs pour les jours 30 et 31 invalides pour fÃ©vrier")
 
             val swapErrors = report.errors.filter {
                 it.message.contains("swap", ignoreCase = true) || it.message.contains("amount")
@@ -787,7 +786,7 @@ class FileImportExportFeatureTest {
     @Test
     @DisplayName("Should successfully import real CSV file with UTF-8 BOM and 100+ transactions")
     fun `importTransactionsFromCsv should successfully import real CSV file with BOM`() {
-        val ctx = given { scenario.withUser().withBooklet() }
+        val ctx = scenario.withUser().withBooklet()
         val csvContent = this::class.java.classLoader
             .getResource("csv-test-files/OK/valid_file_even_with_wrong_character.csv")
             ?.readText(Charsets.UTF_8)
@@ -805,8 +804,8 @@ class FileImportExportFeatureTest {
 
         Assertions.assertTrue(result.isSuccess())
         result.onSuccess { importResult ->
-            Assertions.assertEquals(101, importResult.successCount, "Les 101 transactions devraient être importées")
-            Assertions.assertEquals(0, importResult.failedLines.size, "Aucune ligne ne devrait échouer")
+            Assertions.assertEquals(101, importResult.successCount, "Les 101 transactions devraient Ãªtre importÃ©es")
+            Assertions.assertEquals(0, importResult.failedLines.size, "Aucune ligne ne devrait Ã©chouer")
             Assertions.assertFalse(importResult.hasErrors)
         }
     }

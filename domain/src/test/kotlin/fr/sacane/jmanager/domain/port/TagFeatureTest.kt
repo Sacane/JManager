@@ -1,17 +1,12 @@
-package fr.sacane.jmanager.domain.port
+﻿package fr.sacane.jmanager.domain.port
 
 import fr.sacane.jmanager.domain.act
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
 import fr.sacane.jmanager.domain.assertTrue
 import fr.sacane.jmanager.domain.fake.FakeFactory
-import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
-import fr.sacane.jmanager.domain.fake.IdUserBooklet
 import fr.sacane.jmanager.domain.fake.TestScenario
-import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.fixture.TransactionFixture
-import fr.sacane.jmanager.domain.given
-import fr.sacane.jmanager.domain.initWith
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.defaultTags
@@ -49,7 +44,7 @@ class TagFeatureTest {
 
         @Test
         fun `Add a tag must return success`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { addTagUseCase.handle(AddTagCommand(ctx.userId, Tag.Personal("test"))) }
 
@@ -58,11 +53,7 @@ class TagFeatureTest {
 
         @Test
         fun `Add a tag with the same label must return failure`() {
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(Tag.Personal("test"))))
-                s
-            }
+            val ctx = scenario.withUser().withBooklet().withTags(Tag.Personal("test"))
 
             val result = act { addTagUseCase.handle(AddTagCommand(ctx.userId, Tag.Personal("test"))) }
 
@@ -71,7 +62,7 @@ class TagFeatureTest {
 
         @Test
         fun `Add a default tag must return failure`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { addTagUseCase.handle(AddTagCommand(ctx.userId, Tag.Default("test"))) }
 
@@ -87,11 +78,7 @@ class TagFeatureTest {
         @Test
         fun `Delete a tag must return success`() {
             val uuid = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(Tag.Personal("test", id = uuid))))
-                s
-            }
+            val ctx = scenario.withUser().withBooklet().withTags(Tag.Personal("test", id = uuid))
 
             val result = act { deleteTagUseCase.handle(DeleteTagCommand(ctx.userId, uuid, false)) }
 
@@ -100,7 +87,7 @@ class TagFeatureTest {
 
         @Test
         fun `Delete a tag that does not exist must return failure`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { deleteTagUseCase.handle(DeleteTagCommand(ctx.userId, UUID.randomUUID(), false)) }
 
@@ -111,15 +98,10 @@ class TagFeatureTest {
         fun `Delete a personal tag used in a transaction without force must return TAG_IN_USE`() {
             val tagId = UUID.randomUUID()
             val tag = Tag.Personal("usedTag", id = tagId)
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(tag)))
-                val tx = TransactionFixture.aTransaction(label = "tx1", amount = Amount(50L), isIncome = false, tag = tag)
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(s.userId, s.booklet.id!!), mutableListOf(tx))
-                )
-                s
-            }
+            val tx = TransactionFixture.aTransaction(label = "tx1", amount = Amount(50L), isIncome = false, tag = tag)
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(tag)
+                .withTransactions(tx)
 
             val result = act { deleteTagUseCase.handle(DeleteTagCommand(ctx.userId, tagId, false)) }
 
@@ -134,14 +116,9 @@ class TagFeatureTest {
             val tagId = UUID.randomUUID()
             val tag = Tag.Personal("usedTag", id = tagId)
             val tx = TransactionFixture.aTransaction(label = "tx1", amount = Amount(50L), isIncome = false, tag = tag)
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(tag)))
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(s.userId, s.booklet.id!!), mutableListOf(tx))
-                )
-                s
-            }
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(tag)
+                .withTransactions(tx)
 
             act { deleteTagUseCase.handle(DeleteTagCommand(ctx.userId, tagId, true)).assertSuccess() }
 
@@ -158,14 +135,9 @@ class TagFeatureTest {
             val subTag1 = Tag.Personal("Restaurants", id = subTagId1, parentId = parentId)
             val subTag2 = Tag.Personal("Groceries", id = subTagId2, parentId = parentId)
             val tx = TransactionFixture.aTransaction(label = "tx1", amount = Amount(50L), isIncome = false, tag = subTag1)
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(parentTag, subTag1, subTag2)))
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(s.userId, s.booklet.id!!), mutableListOf(tx))
-                )
-                s
-            }
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(parentTag, subTag1, subTag2)
+                .withTransactions(tx)
 
             act { deleteTagUseCase.handle(DeleteTagCommand(ctx.userId, parentId, true)).assertSuccess() }
 
@@ -184,15 +156,10 @@ class TagFeatureTest {
             val subTagId = UUID.randomUUID()
             val parentTag = Tag.Personal("Food", id = parentId)
             val subTag = Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(parentTag, subTag)))
-                val tx = TransactionFixture.aTransaction(label = "tx1", amount = Amount(20L), isIncome = false, tag = subTag)
-                factory.fakeTransactionRepository().initWith(
-                    IdBookletByTransaction(IdUserBooklet(s.userId, s.booklet.id!!), mutableListOf(tx))
-                )
-                s
-            }
+            val tx = TransactionFixture.aTransaction(label = "tx1", amount = Amount(20L), isIncome = false, tag = subTag)
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(parentTag, subTag)
+                .withTransactions(tx)
 
             val result = act { deleteTagUseCase.handle(DeleteTagCommand(ctx.userId, parentId, false)) }
 
@@ -205,11 +172,7 @@ class TagFeatureTest {
         @Test
         fun `Get all tags must return success`() {
             val uuid = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(Tag.Personal("test", id = uuid))))
-                s
-            }
+            val ctx = scenario.withUser().withBooklet().withTags(Tag.Personal("test", id = uuid))
 
             val result = act { getAllTagsUseCase.handle(GetAllTagsQuery(ctx.userId)) }
 
@@ -228,7 +191,7 @@ class TagFeatureTest {
 
         @Test
         fun `Add default tags must return success and should not add duplicated tags`() {
-            given { addDefaultTagsUseCase.handle() }
+            addDefaultTagsUseCase.handle()
 
             act { addDefaultTagsUseCase.handle() }
 
@@ -241,11 +204,7 @@ class TagFeatureTest {
         @Test
         fun `Patch a tag must return success`() {
             val uuid = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(Tag.Personal("test", id = uuid))))
-                s
-            }
+            val ctx = scenario.withUser().withBooklet().withTags(Tag.Personal("test", id = uuid))
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Personal("test2", id = uuid))) }
 
@@ -254,7 +213,7 @@ class TagFeatureTest {
 
         @Test
         fun `Patch a tag that does not exist must return failure`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Personal("test2", id = UUID.randomUUID()))) }
 
@@ -263,7 +222,7 @@ class TagFeatureTest {
 
         @Test
         fun `Patch a tag without id must return failure`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Personal("no-id"))) }
 
@@ -277,11 +236,8 @@ class TagFeatureTest {
         fun `Patch a tag when another tag has the same label must return failure`() {
             val id1 = UUID.randomUUID()
             val id2 = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(Tag.Personal("one", id = id1), Tag.Personal("two", id = id2))))
-                s
-            }
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(Tag.Personal("one", id = id1), Tag.Personal("two", id = id2))
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Personal("two", id = id1))) }
 
@@ -291,11 +247,7 @@ class TagFeatureTest {
         @Test
         fun `Patch a tag that is default must return failure`() {
             val uuid = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(Tag.Personal("test", id = uuid))))
-                s
-            }
+            val ctx = scenario.withUser().withBooklet().withTags(Tag.Personal("test", id = uuid))
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Default("test", id = uuid))) }
 
@@ -309,14 +261,11 @@ class TagFeatureTest {
         fun `Patch a sub-tag with null parentId must promote it to top-level tag`() {
             val parentId = UUID.randomUUID()
             val subTagId = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(
                     Tag.Personal("Food", id = parentId),
                     Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
-                )))
-                s
-            }
+                )
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Personal("Restaurants", id = subTagId, parentId = null))) }
 
@@ -336,14 +285,11 @@ class TagFeatureTest {
         fun `Patch a sub-tag with null parentId and new label must promote it with updated label`() {
             val parentId = UUID.randomUUID()
             val subTagId = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(
                     Tag.Personal("Food", id = parentId),
                     Tag.Personal("Fast Food", id = subTagId, parentId = parentId)
-                )))
-                s
-            }
+                )
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Personal("Dining", id = subTagId, parentId = null))) }
 
@@ -360,14 +306,11 @@ class TagFeatureTest {
         fun `Patch a sub-tag keeping its parentId must remain a sub-tag`() {
             val parentId = UUID.randomUUID()
             val subTagId = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(
                     Tag.Personal("Food", id = parentId),
                     Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
-                )))
-                s
-            }
+                )
 
             val result = act { editTagUseCase.handle(EditTagCommand(ctx.userId, Tag.Personal("Restaurants Updated", id = subTagId, parentId = parentId))) }
 
@@ -384,7 +327,7 @@ class TagFeatureTest {
     inner class DefaultTagFeatureTest {
         @Test
         fun `Default tag must return success`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { defaultTagUseCase.handle(DefaultTagQuery(ctx.userId)) }
 
@@ -400,11 +343,7 @@ class TagFeatureTest {
         @Test
         fun `Create a sub-tag under an existing personal parent tag must return success`() {
             val parentId = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(Tag.Personal("Food", id = parentId))))
-                s
-            }
+            val ctx = scenario.withUser().withBooklet().withTags(Tag.Personal("Food", id = parentId))
 
             val result = act { createSubTagUseCase.handle(CreateSubTagCommand(ctx.userId, Tag.Personal("Restaurants"), parentId)) }
 
@@ -420,7 +359,7 @@ class TagFeatureTest {
 
         @Test
         fun `Create a sub-tag under a non-existent parent must return NOT_FOUND`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { createSubTagUseCase.handle(CreateSubTagCommand(ctx.userId, Tag.Personal("Restaurants"), UUID.randomUUID())) }
 
@@ -432,7 +371,7 @@ class TagFeatureTest {
 
         @Test
         fun `Create a sub-tag under a default tag must return INVALID`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val defaultTag = factory.fakeTagRepository().defaultTag()
 
             val result = act { createSubTagUseCase.handle(CreateSubTagCommand(ctx.userId, Tag.Personal("SubDefault"), defaultTag.id!!)) }
@@ -447,14 +386,11 @@ class TagFeatureTest {
         fun `Create a sub-tag under another sub-tag must return TAG_PARENT_IS_SUBTAG`() {
             val parentId = UUID.randomUUID()
             val subTagId = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(
                     Tag.Personal("Food", id = parentId),
                     Tag.Personal("Restaurants", id = subTagId, parentId = parentId)
-                )))
-                s
-            }
+                )
 
             val result = act { createSubTagUseCase.handle(CreateSubTagCommand(ctx.userId, Tag.Personal("FastFood"), subTagId)) }
 
@@ -467,14 +403,11 @@ class TagFeatureTest {
         @Test
         fun `Create a sub-tag with duplicate label must return TAG_LABEL_ALREADY_TAKEN`() {
             val parentId = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(
                     Tag.Personal("Food", id = parentId),
                     Tag.Personal("Restaurants", id = UUID.randomUUID())
-                )))
-                s
-            }
+                )
 
             val result = act { createSubTagUseCase.handle(CreateSubTagCommand(ctx.userId, Tag.Personal("Restaurants"), parentId)) }
 
@@ -487,14 +420,11 @@ class TagFeatureTest {
         @Test
         fun `GetAllTags returns sub-tags with parentId set`() {
             val parentId = UUID.randomUUID()
-            val ctx = given {
-                val s = scenario.withUser().withBooklet()
-                tagState.init(UserTag(s.userId, mutableListOf(
+            val ctx = scenario.withUser().withBooklet()
+                .withTags(
                     Tag.Personal("Food", id = parentId),
                     Tag.Personal("Restaurants", id = UUID.randomUUID(), parentId = parentId)
-                )))
-                s
-            }
+                )
 
             val result = act { getAllTagsUseCase.handle(GetAllTagsQuery(ctx.userId)) }
 

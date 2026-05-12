@@ -10,7 +10,6 @@ import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.TestScenario
 import fr.sacane.jmanager.domain.fake.UserTag
 import fr.sacane.jmanager.domain.fixture.TransactionFixture
-import fr.sacane.jmanager.domain.given
 import fr.sacane.jmanager.domain.initWith
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -54,14 +53,12 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return monthly stats for a given booklet and year`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Salary", BigDecimal("2000"), true, LocalDate.of(2025, 1, 15)),
-                    tx("Rent", BigDecimal("-800"), false, LocalDate.of(2025, 1, 5)),
-                    tx("Groceries", BigDecimal("-200"), false, LocalDate.of(2025, 2, 10))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Salary", BigDecimal("2000"), true, LocalDate.of(2025, 1, 15)),
+                tx("Rent", BigDecimal("-800"), false, LocalDate.of(2025, 1, 5)),
+                tx("Groceries", BigDecimal("-200"), false, LocalDate.of(2025, 2, 10))
+            )))
 
             getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(ctx.booklet.id!!, 2025, ctx.userId))
                 .assertTrue { this.year == 2025 && this.monthlyData.size == 12 }
@@ -69,13 +66,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should calculate correct income and expenses per month`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Salary", BigDecimal("500"), true, LocalDate.of(2025, 1, 15)),
-                    tx("Groceries", BigDecimal("-200"), false, LocalDate.of(2025, 1, 10))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Salary", BigDecimal("500"), true, LocalDate.of(2025, 1, 15)),
+                tx("Groceries", BigDecimal("-200"), false, LocalDate.of(2025, 1, 10))
+            )))
 
             getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(ctx.booklet.id!!, 2025, ctx.userId))
                 .assertTrue {
@@ -88,7 +83,7 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return empty stats when no transactions exist for the year`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(ctx.booklet.id!!, 2025, ctx.userId))
                 .assertTrue {
@@ -101,7 +96,7 @@ class StatsFeatureTest {
 
         @Test
         fun `Should fail when booklet does not exist`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(UUID.randomUUID(), 2025, ctx.userId))
 
@@ -111,13 +106,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should not include previsional transactions in monthly stats`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Future Salary", BigDecimal("2000"), true, LocalDate.of(2025, 1, 15), isPreview = true),
-                    tx("Real Expense", BigDecimal("-100"), false, LocalDate.of(2025, 1, 10), isPreview = false)
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Future Salary", BigDecimal("2000"), true, LocalDate.of(2025, 1, 15), isPreview = true),
+                tx("Real Expense", BigDecimal("-100"), false, LocalDate.of(2025, 1, 10), isPreview = false)
+            )))
 
             getMonthlyBookletStatsUseCase.handle(GetMonthlyBookletStatsQuery(ctx.booklet.id!!, 2025, ctx.userId))
                 .assertTrue {
@@ -132,15 +125,13 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return category distribution for all user transactions`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val foodTag = Tag.Personal(id = UUID.randomUUID(), label = "Food")
-            given {
-                factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag)))
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag),
-                    txWithTag("Restaurant", BigDecimal("-50"), LocalDate.of(2025, 1, 15), foodTag)
-                )))
-            }
+            factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag)))
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag),
+                txWithTag("Restaurant", BigDecimal("-50"), LocalDate.of(2025, 1, 15), foodTag)
+            )))
 
             getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(ctx.userId))
                 .assertTrue { this.categories.isNotEmpty() }
@@ -148,15 +139,13 @@ class StatsFeatureTest {
 
         @Test
         fun `Should calculate correct amounts per category`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val foodTag = Tag.Personal(id = UUID.randomUUID(), label = "Food")
-            given {
-                factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag)))
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag),
-                    txWithTag("Restaurant", BigDecimal("-200"), LocalDate.of(2025, 1, 15), foodTag)
-                )))
-            }
+            factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag)))
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag),
+                txWithTag("Restaurant", BigDecimal("-200"), LocalDate.of(2025, 1, 15), foodTag)
+            )))
 
             getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(ctx.userId))
                 .assertTrue {
@@ -167,16 +156,14 @@ class StatsFeatureTest {
 
         @Test
         fun `Should calculate correct percentages for each category`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val foodTag = Tag.Personal("Food", UUID.randomUUID())
             val transportTag = Tag.Personal("Transport", UUID.randomUUID())
-            given {
-                factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag, transportTag)))
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    txWithTag("Groceries", BigDecimal("-500"), LocalDate.of(2025, 1, 10), foodTag),
-                    txWithTag("Gas", BigDecimal("-500"), LocalDate.of(2025, 1, 15), transportTag)
-                )))
-            }
+            factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag, transportTag)))
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                txWithTag("Groceries", BigDecimal("-500"), LocalDate.of(2025, 1, 10), foodTag),
+                txWithTag("Gas", BigDecimal("-500"), LocalDate.of(2025, 1, 15), transportTag)
+            )))
 
             getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(ctx.userId))
                 .assertTrue {
@@ -187,11 +174,9 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return empty distribution when no transactions exist`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = ctx.user, id = UUID.randomUUID())
-                bookletState.init(listOf(BookletsByOwner(listOf(booklet), ctx.userId)))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            val booklet = Booklet(Amount.fromString("1000", "€".asCurrency()), "test", owner = ctx.user, id = UUID.randomUUID())
+            bookletState.init(listOf(BookletsByOwner(listOf(booklet), ctx.userId)))
 
             getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(ctx.userId))
                 .assertTrue { this.categories.isEmpty() }
@@ -199,12 +184,10 @@ class StatsFeatureTest {
 
         @Test
         fun `Should group transactions without tags as uncategorized`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Untagged expense", BigDecimal("100"), false, LocalDate.of(2025, 1, 10))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Untagged expense", BigDecimal("100"), false, LocalDate.of(2025, 1, 10))
+            )))
 
             getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(ctx.userId))
                 .assertTrue {
@@ -215,16 +198,14 @@ class StatsFeatureTest {
 
         @Test
         fun `Should only include expenses in category distribution`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val foodTag = Tag.Personal(id = UUID.randomUUID(), label = "Food")
             val salaryTag = Tag.Personal(id = UUID.randomUUID(), label = "Salary")
-            given {
-                factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag, salaryTag)))
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag),
-                    txWithTag("Monthly Salary", BigDecimal("2000"), LocalDate.of(2025, 1, 15), salaryTag)
-                )))
-            }
+            factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag, salaryTag)))
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag),
+                txWithTag("Monthly Salary", BigDecimal("2000"), LocalDate.of(2025, 1, 15), salaryTag)
+            )))
 
             getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(ctx.userId))
                 .assertTrue { this.categories.all { it.totalAmount.value >= BigDecimal.ZERO } }
@@ -232,14 +213,12 @@ class StatsFeatureTest {
 
         @Test
         fun `Should scope category distribution to selected booklet`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val foodTag = Tag.Personal(id = UUID.randomUUID(), label = "Food")
-            given {
-                factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag)))
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag)
-                )))
-            }
+            factory.tagTestState().init(UserTag(ctx.userId, mutableListOf(foodTag)))
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                txWithTag("Groceries", BigDecimal("-100"), LocalDate.of(2025, 1, 10), foodTag)
+            )))
 
             val secondBooklet = Booklet(Amount.fromString("500", "€".asCurrency()), "booklet2", owner = ctx.user, id = UUID.randomUUID())
             bookletState.init(listOf(BookletsByOwner(listOf(secondBooklet), ctx.userId)))
@@ -253,7 +232,7 @@ class StatsFeatureTest {
 
         @Test
         fun `Should fail category distribution when period is partially provided`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = getCategoryDistributionUseCase.handle(GetCategoryDistributionQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = null
@@ -269,13 +248,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return trend for last 12 months`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val currentDate = LocalDate.now()
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    *(0..11).map { tx("Transaction $it", BigDecimal("100"), true, currentDate.minusMonths(it.toLong())) }.toTypedArray()
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                *(0..11).map { tx("Transaction $it", BigDecimal("100"), true, currentDate.minusMonths(it.toLong())) }.toTypedArray()
+            )))
 
             getTrendStatsUseCase.handle(GetTrendStatsQuery(ctx.userId))
                 .assertTrue { this.monthlyTrends.size == 12 }
@@ -283,13 +260,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should calculate balance evolution correctly`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val currentDate = LocalDate.now()
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    *(0..11).map { tx("Income $it", BigDecimal("${100 * (it + 1)}"), true, currentDate.minusMonths(it.toLong())) }.toTypedArray()
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                *(0..11).map { tx("Income $it", BigDecimal("${100 * (it + 1)}"), true, currentDate.minusMonths(it.toLong())) }.toTypedArray()
+            )))
 
             getTrendStatsUseCase.handle(GetTrendStatsQuery(ctx.userId))
                 .assertTrue {
@@ -301,13 +276,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should include all user booklets in trend calculation`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val currentDate = LocalDate.now()
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Transaction 1", BigDecimal("100"), true, currentDate)
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Transaction 1", BigDecimal("100"), true, currentDate)
+            )))
 
             val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "booklet2", owner = ctx.user, id = UUID.randomUUID())
             val tx2 = tx("Transaction 2", BigDecimal("200"), true, currentDate)
@@ -320,13 +293,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should order months from oldest to most recent`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val currentDate = LocalDate.now()
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    *(0..11).map { tx("Transaction $it", BigDecimal("100"), true, currentDate.minusMonths(it.toLong())) }.toTypedArray()
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                *(0..11).map { tx("Transaction $it", BigDecimal("100"), true, currentDate.minusMonths(it.toLong())) }.toTypedArray()
+            )))
 
             getTrendStatsUseCase.handle(GetTrendStatsQuery(ctx.userId))
                 .assertTrue {
@@ -337,14 +308,12 @@ class StatsFeatureTest {
 
         @Test
         fun `Should handle months with no transactions`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val currentDate = LocalDate.now()
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Transaction 1", BigDecimal("100"), true, currentDate.minusMonths(10)),
-                    tx("Transaction 2", BigDecimal("100"), true, currentDate.minusMonths(5))
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Transaction 1", BigDecimal("100"), true, currentDate.minusMonths(10)),
+                tx("Transaction 2", BigDecimal("100"), true, currentDate.minusMonths(5))
+            )))
 
             getTrendStatsUseCase.handle(GetTrendStatsQuery(ctx.userId))
                 .assertTrue {
@@ -356,13 +325,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should scope trend stats to selected booklet and period`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("A1 Jan", BigDecimal("100"), true, LocalDate.of(2025, 1, 5)),
-                    tx("A1 Feb", BigDecimal("100"), true, LocalDate.of(2025, 2, 5))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("A1 Jan", BigDecimal("100"), true, LocalDate.of(2025, 1, 5)),
+                tx("A1 Feb", BigDecimal("100"), true, LocalDate.of(2025, 2, 5))
+            )))
 
             getTrendStatsUseCase.handle(GetTrendStatsQuery(
                 userId = ctx.userId, bookletId = ctx.booklet.id,
@@ -374,7 +341,7 @@ class StatsFeatureTest {
 
         @Test
         fun `Should fail trend stats when period is partially provided`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = getTrendStatsUseCase.handle(GetTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = null
@@ -390,16 +357,14 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return previsional transactions within date range`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Future Rent", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true),
-                    tx("Future Salary", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true),
-                    tx("Future Bill", BigDecimal("-100"), false, startDate.plusMonths(2), isPreview = true)
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Future Rent", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true),
+                tx("Future Salary", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true),
+                tx("Future Bill", BigDecimal("-100"), false, startDate.plusMonths(2), isPreview = true)
+            )))
 
             getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(ctx.userId, startDate, endDate))
                 .assertTrue { this.transactions.all { it.date >= startDate && it.date <= endDate } }
@@ -407,16 +372,14 @@ class StatsFeatureTest {
 
         @Test
         fun `Should only include transactions marked as previsional`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Future Rent", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true),
-                    tx("Real Expense", BigDecimal("-100"), false, startDate.plusDays(10), isPreview = false),
-                    tx("Future Salary", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true)
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Future Rent", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true),
+                tx("Real Expense", BigDecimal("-100"), false, startDate.plusDays(10), isPreview = false),
+                tx("Future Salary", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true)
+            )))
 
             getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(ctx.userId, startDate, endDate))
                 .assertTrue { this.transactions.all { it.isPreview } }
@@ -424,14 +387,12 @@ class StatsFeatureTest {
 
         @Test
         fun `Should group previsional transactions by booklet`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Future Rent", BigDecimal("800"), false, startDate.plusDays(15), isPreview = true)
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Future Rent", BigDecimal("800"), false, startDate.plusDays(15), isPreview = true)
+            )))
 
             val booklet2 = Booklet(Amount.fromString("500", "€".asCurrency()), "booklet2", owner = ctx.user, id = UUID.randomUUID())
             bookletState.init(listOf(BookletsByOwner(listOf(booklet2), ctx.userId)))
@@ -445,15 +406,13 @@ class StatsFeatureTest {
 
         @Test
         fun `Should calculate total previsional amount`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Future Salary", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true),
-                    tx("Future Rent", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true)
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Future Salary", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true),
+                tx("Future Rent", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true)
+            )))
 
             getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(ctx.userId, startDate, endDate))
                 .assertTrue { this.totalAmount.value != BigDecimal.ZERO }
@@ -461,7 +420,7 @@ class StatsFeatureTest {
 
         @Test
         fun `Should fail when start date is after end date`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now().plusMonths(6)
             val endDate = LocalDate.now()
 
@@ -473,12 +432,10 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return empty result when no previsional transactions exist`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf()))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf()))
 
             getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(ctx.userId, startDate, endDate))
                 .assertTrue { this.transactions.isEmpty() }
@@ -486,16 +443,14 @@ class StatsFeatureTest {
 
         @Test
         fun `Should sort previsional transactions by date`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Future 3", BigDecimal("-100"), false, startDate.plusMonths(2), isPreview = true),
-                    tx("Future 1", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true),
-                    tx("Future 2", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true)
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Future 3", BigDecimal("-100"), false, startDate.plusMonths(2), isPreview = true),
+                tx("Future 1", BigDecimal("-800"), false, startDate.plusDays(15), isPreview = true),
+                tx("Future 2", BigDecimal("2000"), true, startDate.plusMonths(1), isPreview = true)
+            )))
 
             getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(ctx.userId, startDate, endDate))
                 .assertTrue {
@@ -506,14 +461,12 @@ class StatsFeatureTest {
 
         @Test
         fun `Should scope previsional transactions to selected booklet`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(3)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("A1 Future", BigDecimal("-100"), false, startDate.plusDays(5), isPreview = true)
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("A1 Future", BigDecimal("-100"), false, startDate.plusDays(5), isPreview = true)
+            )))
 
             val secondBooklet = Booklet(Amount.fromString("500", "€".asCurrency()), "booklet2", owner = ctx.user, id = UUID.randomUUID())
             bookletState.init(listOf(BookletsByOwner(listOf(secondBooklet), ctx.userId)))
@@ -527,7 +480,7 @@ class StatsFeatureTest {
 
         @Test
         fun `Should split previsional transactions by regular and non regular`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val startDate = LocalDate.now()
             val endDate = startDate.plusMonths(1)
 
@@ -535,9 +488,7 @@ class StatsFeatureTest {
                 .copy(regularTransactionId = RegularTransactionId(UUID.randomUUID().toString()))
             val nonRegularPreview = tx("Facture ponctuelle", BigDecimal("-120"), false, startDate.plusDays(8), isPreview = true)
 
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(regularPreview, nonRegularPreview)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(regularPreview, nonRegularPreview)))
 
             getPrevisionalTransactionsUseCase.handle(GetPrevisionalTransactionsQuery(ctx.userId, startDate, endDate))
                 .assertTrue {
@@ -551,13 +502,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return daily trends for a standard month`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Salary", BigDecimal("2000"), true, LocalDate.of(2025, 1, 5)),
-                    tx("Groceries", BigDecimal("100"), false, LocalDate.of(2025, 1, 12))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Salary", BigDecimal("2000"), true, LocalDate.of(2025, 1, 5)),
+                tx("Groceries", BigDecimal("100"), false, LocalDate.of(2025, 1, 12))
+            )))
 
             getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = LocalDate.of(2025, 1, 31), bookletId = ctx.booklet.id
@@ -566,13 +515,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return daily trends for cross-month custom cycle`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Income", BigDecimal("500"), true, LocalDate.of(2025, 5, 27)),
-                    tx("Expense", BigDecimal("200"), false, LocalDate.of(2025, 6, 3))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Income", BigDecimal("500"), true, LocalDate.of(2025, 5, 27)),
+                tx("Expense", BigDecimal("200"), false, LocalDate.of(2025, 6, 3))
+            )))
 
             getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 5, 25), endDate = LocalDate.of(2025, 6, 24), bookletId = ctx.booklet.id
@@ -585,13 +532,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should exclude preview transactions from daily trends`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Real", BigDecimal("100"), true, LocalDate.of(2025, 1, 5), isPreview = false),
-                    tx("Preview", BigDecimal("999"), true, LocalDate.of(2025, 1, 5), isPreview = true)
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Real", BigDecimal("100"), true, LocalDate.of(2025, 1, 5), isPreview = false),
+                tx("Preview", BigDecimal("999"), true, LocalDate.of(2025, 1, 5), isPreview = true)
+            )))
 
             getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = LocalDate.of(2025, 1, 31), bookletId = ctx.booklet.id
@@ -603,10 +548,8 @@ class StatsFeatureTest {
 
         @Test
         fun `Should return zero entries when no transactions in range`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf()))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf()))
 
             getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 3, 1), endDate = LocalDate.of(2025, 3, 31), bookletId = ctx.booklet.id
@@ -618,7 +561,7 @@ class StatsFeatureTest {
 
         @Test
         fun `Should fail when start date is after end date`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 6, 1), endDate = LocalDate.of(2025, 5, 1), bookletId = ctx.booklet.id
@@ -630,12 +573,10 @@ class StatsFeatureTest {
 
         @Test
         fun `Should scope daily trends to selected booklet`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("B1 Income", BigDecimal("300"), true, LocalDate.of(2025, 1, 5))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("B1 Income", BigDecimal("300"), true, LocalDate.of(2025, 1, 5))
+            )))
 
             getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = LocalDate.of(2025, 1, 31), bookletId = ctx.booklet.id
@@ -644,13 +585,11 @@ class StatsFeatureTest {
 
         @Test
         fun `Should compute cumulative balance correctly across days`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("Income", BigDecimal("1000"), true, LocalDate.of(2025, 1, 1)),
-                    tx("Expense", BigDecimal("300"), false, LocalDate.of(2025, 1, 10))
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Income", BigDecimal("1000"), true, LocalDate.of(2025, 1, 1)),
+                tx("Expense", BigDecimal("300"), false, LocalDate.of(2025, 1, 10))
+            )))
 
             getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
                 userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = LocalDate.of(2025, 1, 31), bookletId = ctx.booklet.id

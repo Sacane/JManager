@@ -52,7 +52,7 @@ class TransactionFeatureTest {
     inner class SaveTransactionInBookletFeatureTest {
         @Test
         fun `When I add a new transaction, it should persist it and update the booklet amount when its income and outcome`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transactionToSave = tx("test", 100, true)
             val transactionToSave2 = tx("test", 50, false)
 
@@ -74,15 +74,13 @@ class TransactionFeatureTest {
 
         @Test
         fun `When I add a transaction in a booklet that already have some, its position should be coherent regarding the date`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("test1", 100, true, "01/01/2024".toDate()),
-                    tx("test2", 100, true, "02/01/2024".toDate()),
-                    tx("tes3", 100, true, "03/01/2024".toDate()),
-                    tx("test4", 100, true, "04/01/2024".toDate())
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("test1", 100, true, "01/01/2024".toDate()),
+                tx("test2", 100, true, "02/01/2024".toDate()),
+                tx("tes3", 100, true, "03/01/2024".toDate()),
+                tx("test4", 100, true, "04/01/2024".toDate())
+            )))
 
             val toInsertAtFirst = tx("test0", 100, true, "31/12/2023".toDate())
             val toInsertAtLast = tx("test100", 100, true, "31/01/2024".toDate())
@@ -104,15 +102,13 @@ class TransactionFeatureTest {
 
         @Test
         fun `When I add a transaction in the middle of a booklet that already have some, its position should be coherent regarding the date`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("test1", 100, true, "01/01/2024".toDate()),
-                    tx("test2", 100, true, "02/01/2024".toDate()),
-                    tx("tes3", 100, true, "03/01/2024".toDate()),
-                    tx("test4", 100, true, "05/01/2024".toDate())
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("test1", 100, true, "01/01/2024".toDate()),
+                tx("test2", 100, true, "02/01/2024".toDate()),
+                tx("tes3", 100, true, "03/01/2024".toDate()),
+                tx("test4", 100, true, "05/01/2024".toDate())
+            )))
 
             val transactionToSave = tx("test", 100, true, "04/01/2024".toDate())
 
@@ -129,16 +125,14 @@ class TransactionFeatureTest {
 
         @Test
         fun `When I add a transaction with a same date as existing some, it should be in the last position of them`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("test1", 100, true, "01/01/2024".toDate()),
-                    tx("test2", 100, true, "02/01/2024".toDate()),
-                    tx("tes3", 100, true, "02/01/2024".toDate()),
-                    tx("tes10", 100, true, "02/01/2024".toDate()),
-                    tx("test4", 100, true, "03/01/2024".toDate())
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("test1", 100, true, "01/01/2024".toDate()),
+                tx("test2", 100, true, "02/01/2024".toDate()),
+                tx("tes3", 100, true, "02/01/2024".toDate()),
+                tx("tes10", 100, true, "02/01/2024".toDate()),
+                tx("test4", 100, true, "03/01/2024".toDate())
+            )))
             val transactionToSave = tx("test", 100, true, "02/01/2024".toDate())
             bookTransactionUseCase.handle(BookTransactionCommand(ctx.userId, ctx.booklet.label, transactionToSave))
                 .assertSuccess()
@@ -152,15 +146,13 @@ class TransactionFeatureTest {
 
         @Test
         fun `Giving a user with a transaction, when booking a transaction that is older that the others, it should have its position to 0`() {
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    tx("test1", 100, true, "01/01/2024".toDate()),
-                    tx("test2", 100, true, "02/01/2024".toDate()),
-                    tx("tes3", 100, true, "02/01/2024".toDate()),
-                    tx("test4", 100, true, "03/01/2024".toDate())
-                )))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("test1", 100, true, "01/01/2024".toDate()),
+                tx("test2", 100, true, "02/01/2024".toDate()),
+                tx("tes3", 100, true, "02/01/2024".toDate()),
+                tx("test4", 100, true, "03/01/2024".toDate())
+            )))
             val transactionToSave = tx("test", 100, true, "23/12/2023".toDate())
 
             bookTransactionUseCase.handle(BookTransactionCommand(ctx.userId, ctx.booklet.label, transactionToSave))
@@ -172,19 +164,17 @@ class TransactionFeatureTest {
     inner class RetrieveTransactionsByMonthAndYearFeature {
         @Test
         fun `As a user with existing transactions, I should retrieve them ordering by date and position`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val t1 = tx("test1", 100, true, "01/01/2024".toDate())
             val t2 = tx("test2", 100, true, "02/01/2024".toDate())
             val t3 = tx("tes3", 100, true, "02/01/2024".toDate())
             val t4 = tx("test4", 100, true, "03/01/2024".toDate())
             val t5 = tx("test4", 100, true, "03/01/2024".toDate())
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    t1, t2, t4, t3, t5,
-                    tx("test5", 100, true, "01/02/2024".toDate()),
-                    tx("test6", 100, true, "01/02/2024".toDate()),
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                t1, t2, t4, t3, t5,
+                tx("test5", 100, true, "01/02/2024".toDate()),
+                tx("test6", 100, true, "01/02/2024".toDate()),
+            )))
 
             val response = act { retrieveTransactionsByMonthAndYearUseCase.handle(RetrieveTransactionsByMonthAndYearQuery(ctx.userId, Month.JANUARY, 2024, ctx.booklet.label)) }
 
@@ -201,11 +191,9 @@ class TransactionFeatureTest {
 
         @Test
         fun `Giving an existing transaction, I should correctly edit label, amount and date from it`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val elements = tx("test1", 100, true, "01/02/2024".toDate())
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(elements)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(elements)))
             val expectedLabel = "test1.0"
             val expectedAmount = 105.toAmount()
             val expectedDate = "02/02/2024".toDate()
@@ -226,10 +214,8 @@ class TransactionFeatureTest {
             val t3 = tx("test3", 100, true, "02/01/2024".toDate())
             val t4 = tx("test4", 100, true, "03/01/2024".toDate())
             val t5 = tx("test5", 100, true, "03/01/2024".toDate())
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(t1, t2, t3, t4, t5)))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(t1, t2, t3, t4, t5)))
 
             act { editTransactionUseCase.handle(EditTransactionCommand(ctx.userId, ctx.booklet.id!!, t5.copy(date = "31/12/2023".toDate()))).assertSuccess() }
 
@@ -251,10 +237,8 @@ class TransactionFeatureTest {
             val t3 = tx("test3", 100, true, "02/01/2024".toDate())
             val t4 = tx("test4", 100, true, "03/01/2024".toDate())
             val t5 = tx("test5", 100, true, "04/01/2024".toDate())
-            val ctx = given { scenario.withUser().withBooklet() }
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(t1, t2, t3, t4, t5)))
-            }
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(t1, t2, t3, t4, t5)))
 
             act { editTransactionUseCase.handle(EditTransactionCommand(ctx.userId, ctx.booklet.id!!, t1.copy(date = "02/01/2024".toDate()))).assertSuccess() }
 
@@ -270,11 +254,9 @@ class TransactionFeatureTest {
 
         @Test
         fun `Giving a user that save a transaction, when we edit it, the new amount of the booklet should take in count`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transaction = tx("test0", 100, true, "02/01/2024".toDate())
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transaction)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transaction)))
             val transaction2 = tx("test1", 100, true, "02/01/2024".toDate())
             bookTransactionUseCase.handle(BookTransactionCommand(ctx.userId, ctx.booklet.label, transaction2))
 
@@ -286,11 +268,9 @@ class TransactionFeatureTest {
 
         @Test
         fun `Giving a user with existing transaction, it should be retrieving it by its ID`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val toInsert = tx("test1", 100, true, "01/01/2024".toDate())
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(toInsert)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(toInsert)))
 
             val result = act { findTransactionByIdUseCase.handle(FindTransactionByIdQuery(ctx.userId, toInsert.id!!)) }
 
@@ -302,7 +282,7 @@ class TransactionFeatureTest {
     inner class BookingPreviewTransaction {
         @Test
         fun `booking a preview transaction should not change the real amount of a booklet`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transactionPreviewTest = Transaction(UUID.randomUUID(), "test#0", "01/01/2024".toDate(), 100.toAmount(), true, isPreview = true)
 
             act { bookTransactionUseCase.handle(BookTransactionCommand(ctx.userId, ctx.booklet.label, transactionPreviewTest)).assertSuccess() }
@@ -319,16 +299,14 @@ class TransactionFeatureTest {
     inner class DeleteByIdFeature {
         @Test
         fun `Giving a user with existing transaction, when we delete it, the new amount of the booklet should take in count`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transaction = tx("test0", 100, true, "02/01/2024".toDate())
             val transaction2 = tx("test2", 100, true, "02/01/2024".toDate())
             val transaction3 = tx("test3", 100, true, "02/01/2024".toDate())
             val transaction4 = tx("test4", 100, true, "02/01/2024".toDate())
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
-                    transaction, transaction2, transaction3, transaction4
-                )))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                transaction, transaction2, transaction3, transaction4
+            )))
 
             act {
                 deleteTransactionsByIdsUseCase.handle(DeleteTransactionsByIdsCommand(ctx.userId, ctx.booklet.id!!, listOf(
@@ -344,7 +322,7 @@ class TransactionFeatureTest {
 
         @Test
         fun `delete transaction with invalid booklet must return not found`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act {
                 deleteTransactionsByIdsUseCase.handle(DeleteTransactionsByIdsCommand(ctx.userId, UUID.randomUUID(), listOf(
@@ -357,13 +335,11 @@ class TransactionFeatureTest {
 
         @Test
         fun `delete preview regular transaction should exclude month for regular transaction`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-1")
             val previewTransaction = tx("test-preview", 100, true, "02/01/2024".toDate(), isPreview = true)
                 .copy(regularTransactionId = regularTransactionId)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(previewTransaction)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(previewTransaction)))
 
             act { deleteTransactionsByIdsUseCase.handle(DeleteTransactionsByIdsCommand(ctx.userId, ctx.booklet.id!!, listOf(previewTransaction.id!!))).assertSuccess() }
 
@@ -377,11 +353,9 @@ class TransactionFeatureTest {
     inner class ConfirmPreviewTransactionTest {
         @Test
         fun `confirm preview conversion should be success`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transactionPreviewTest = tx("test#0", 100, true, "01/01/2024".toDate(), isPreview = true)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
 
             val result = act { confirmPreviewTransactionUseCase.handle(ConfirmPreviewTransactionCommand(ctx.userId, ctx.booklet.id!!, transactionPreviewTest.id!!, null, null)) }
 
@@ -390,11 +364,9 @@ class TransactionFeatureTest {
 
         @Test
         fun `Confirm preview transaction with invalid booklet id must resolve booklet not found`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transactionPreviewTest = tx("test#0", 100, true, "01/01/2024".toDate(), isPreview = true)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
 
             val result = act { confirmPreviewTransactionUseCase.handle(ConfirmPreviewTransactionCommand(ctx.userId, UUID.randomUUID(), transactionPreviewTest.id!!, null, null)) }
 
@@ -406,7 +378,7 @@ class TransactionFeatureTest {
 
         @Test
         fun `confirm preview transaction with a transaction that is not found must return to not found`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act { confirmPreviewTransactionUseCase.handle(ConfirmPreviewTransactionCommand(ctx.userId, ctx.booklet.id!!, UUID.randomUUID(), null, null)) }
 
@@ -415,11 +387,9 @@ class TransactionFeatureTest {
 
         @Test
         fun `confirm preview with new amount should update transaction and booklet amount`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transactionPreviewTest = tx("test#1", 100, true, "01/01/2024".toDate(), isPreview = true)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
             val newAmount = 150.toAmount()
 
             act { confirmPreviewTransactionUseCase.handle(ConfirmPreviewTransactionCommand(ctx.userId, ctx.booklet.id!!, transactionPreviewTest.id!!, newAmount, null)).assertSuccess() }
@@ -437,11 +407,9 @@ class TransactionFeatureTest {
 
         @Test
         fun `confirm preview with new date should update transaction date`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
             val transactionPreviewTest = tx("test#2", 100, true, "01/01/2024".toDate(), isPreview = true)
-            given {
-                transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
-            }
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(transactionPreviewTest)))
             val newDate = "12/01/2024".toDate()
 
             act { confirmPreviewTransactionUseCase.handle(ConfirmPreviewTransactionCommand(ctx.userId, ctx.booklet.id!!, transactionPreviewTest.id!!, null, newDate)).assertSuccess() }
@@ -462,7 +430,7 @@ class TransactionFeatureTest {
 
         @Test
         fun `shouldPersistRealTransactionAndExcludeSourceMonth_whenConfirmingVirtualTransactionWithUnchangedDate`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-1")
 
@@ -499,7 +467,7 @@ class TransactionFeatureTest {
 
         @Test
         fun `shouldPersistTransactionWithNewDateAndExcludeOnlySourceMonth_whenDateChangedToDifferentMonth`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-2")
 
@@ -534,7 +502,7 @@ class TransactionFeatureTest {
 
         @Test
         fun `shouldReturnBookletNotFound_whenBookletDoesNotExist`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val result = act {
                 confirmVirtualTransactionUseCase.handle(
@@ -557,7 +525,7 @@ class TransactionFeatureTest {
 
         @Test
         fun `shouldCreateTrackerAndExcludeMonth_whenNoTrackerExistsForBooklet`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-4")
             val trackerBefore = factory.trackerRepository().findTracker(regularTransactionId, ctx.booklet.id!!)
@@ -588,7 +556,7 @@ class TransactionFeatureTest {
 
         @Test
         fun `shouldPersistTransactionWithTagLabel_whenTagLabelIsProvided`() {
-            val ctx = given { scenario.withUser().withBooklet() }
+            val ctx = scenario.withUser().withBooklet()
 
             val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-5")
 
