@@ -33,7 +33,7 @@ const emit = defineEmits<{
 
 <template>
   <!-- Filtres + Actions -->
-  <div v-if="isMobile || !hideActionButtons" class="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+  <div v-if="isMobile || !hideActionButtons" class="flex items-center gap-2 mb-2 overflow-x-auto pb-0">
     <template v-if="isMobile">
       <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1 shrink-0">Afficher :</span>
       <button
@@ -71,7 +71,7 @@ const emit = defineEmits<{
     <!-- Filtres + Actions : desktop uniquement -->
     <template v-if="!isMobile">
       <button
-        class="px-3 py-1.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'all'
           ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(130,42,204,0.07)]'
           : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
@@ -81,7 +81,7 @@ const emit = defineEmits<{
         Tout ({{ transactionsCount }})
       </button>
       <button
-        class="px-3 py-1.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'confirmed'
           ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-emerald-500 hover:text-emerald-600'"
@@ -91,7 +91,7 @@ const emit = defineEmits<{
         Confirmées ({{ transactionsCount - previewTransactionsCount }})
       </button>
       <button
-        class="px-3 py-1.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'preview'
           ? 'border-amber-500 text-amber-600 bg-amber-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"

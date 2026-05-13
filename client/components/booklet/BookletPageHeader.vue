@@ -23,7 +23,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="bg-[var(--card-bg)] rounded-xl py-2 px-3 shadow border border-[var(--card-border)] overflow-hidden mb-3">
+  <div class="bg-[var(--card-bg)] rounded-xl py-1 px-3 shadow border border-[var(--card-border)] overflow-hidden mb-2">
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <!-- Left: back + title + counts -->
       <div class="flex items-center gap-2 min-w-0">
@@ -46,15 +46,15 @@ const emit = defineEmits<{
       <!-- Right: balances + filters -->
       <div class="flex items-center gap-2 shrink-0 flex-wrap">
         <!-- Balances -->
-        <div class="flex items-center gap-3 px-2.5 py-1 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-lg border border-[var(--card-border)]">
-          <div class="flex items-center gap-1.5">
-            <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Réel</span>
-            <span class="text-sm font-extrabold text-[var(--primary)]">{{ realSold.toFixed(2) }} €</span>
+        <div class="flex items-center gap-2 px-2 py-0.5 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-lg border border-[var(--card-border)]">
+          <div class="flex items-center gap-1">
+            <span class="text-[0.58rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Réel</span>
+            <span class="text-xs font-extrabold text-[var(--primary)]">{{ realSold.toFixed(2) }} €</span>
           </div>
-          <div class="w-px h-5 bg-[var(--border-color)]" />
-          <div class="flex items-center gap-1.5">
-            <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Prév.</span>
-            <span class="text-sm font-extrabold text-[#FF5A08]">{{ previewSold.toFixed(2) }} €</span>
+          <div class="w-px h-4 bg-[var(--border-color)]" />
+          <div class="flex items-center gap-1">
+            <span class="text-[0.58rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Prév.</span>
+            <span class="text-xs font-extrabold text-[#FF5A08]">{{ previewSold.toFixed(2) }} €</span>
           </div>
         </div>
 

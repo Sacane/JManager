@@ -661,7 +661,7 @@ onUnmounted(() => {
   <ConfirmDialog />
 
   <div class="flex flex-col bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)] md:(h-full overflow-hidden)">
-    <div class="flex flex-col w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-5 md:(py-4 flex-1 min-h-0)">
+    <div class="flex flex-col w-full max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-3 md:(py-2 flex-1 min-h-0)">
       <BookletPageHeader
         :display-label="displayLabel"
         :transactions-count="transactionsCount"
