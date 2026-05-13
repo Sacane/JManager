@@ -57,6 +57,7 @@ describe('pages/settings/index', () => {
 
     expect(getSettingsMock).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('Parametres utilisateur')
+    expect(wrapper.text()).toContain('Apparence')
     expect(wrapper.text()).toContain('Projection')
     expect(wrapper.text()).toContain('Cycle mensuel par compte')
     expect(wrapper.text()).toContain('Compte principal')

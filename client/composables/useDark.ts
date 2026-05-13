@@ -1,3 +1,5 @@
+export type ThemePreference = 'light' | 'dark' | 'system'
+
 export default function useDark() {
   const colorMode = useColorMode()
 
@@ -11,9 +13,14 @@ export default function useDark() {
     }
   }
 
+  function setPreference(pref: ThemePreference): void {
+    if (colorMode.unknown) return
+    colorMode.preference = pref
+  }
+
   const value = computed(() => colorMode.value)
   const isDark = computed(() => value.value === 'dark')
-  const preference = computed(() => colorMode.preference)
+  const preference = computed(() => colorMode.preference as ThemePreference)
 
-  return { toggle, value, isDark, preference }
+  return { toggle, setPreference, value, isDark, preference }
 }

@@ -77,7 +77,6 @@ onUnmounted(() => {
           </NuxtLink>
 
           <div class="header-actions">
-            <DarkModeToggle />
             <button v-if="isMobileView" class="close-btn" @click="isSidebarOpen = false">
               <i class="pi pi-times" />
             </button>

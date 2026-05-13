@@ -116,6 +116,14 @@ onMounted(() => {
 
     <div v-else class="settings-grid">
       <section class="settings-card">
+        <h2>Apparence</h2>
+        <p class="settings-help">
+          Choisissez le thème visuel de l'application.
+        </p>
+        <ThemePicker />
+      </section>
+
+      <section class="settings-card">
         <h2>Projection</h2>
         <p class="settings-help">
           Definis le nombre de jours à venir, utilisé pour les previsions sur le dashboard.
