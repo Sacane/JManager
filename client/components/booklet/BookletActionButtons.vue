@@ -63,8 +63,8 @@ const emit = defineEmits<{
       v-tooltip.bottom="'Régénérer les transactions supprimées'"
       :outlined="orientation === 'vertical'"
       :class="orientation === 'vertical'
-        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-violet-500 !text-white !border-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all'
-        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-violet-500 !text-white !border-0 shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all'"
+        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[primary] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'
+        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[primary] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'"
       icon="pi pi-refresh"
       :loading="isRegenerateLoading"
       :disabled="isAnyActionLoading"
@@ -74,8 +74,8 @@ const emit = defineEmits<{
       v-tooltip.bottom="'Importer CSV'"
       :outlined="orientation === 'vertical'"
       :class="orientation === 'vertical'
-        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-cyan-500 !text-white !border-0 shadow-[0_2px_8px_rgba(6,182,212,0.3)] hover:!bg-cyan-600 transition-all'
-        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-cyan-500 !text-white !border-0 shadow-[0_2px_8px_rgba(6,182,212,0.3)] hover:!bg-cyan-600 transition-all'"
+        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'
+        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'"
       icon="pi pi-file-import"
       :disabled="isAnyActionLoading"
       @click="emit('import-csv')"
@@ -85,8 +85,8 @@ const emit = defineEmits<{
       aria-label="Exporter CSV"
       :outlined="orientation === 'vertical'"
       :class="orientation === 'vertical'
-        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-emerald-500 !text-white !border-0 shadow-[0_2px_8px_rgba(16,185,129,0.3)] hover:!bg-emerald-600 transition-all'
-        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-emerald-500 !text-white !border-0 shadow-[0_2px_8px_rgba(16,185,129,0.3)] hover:!bg-emerald-600 transition-all'"
+        ? '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'
+        : '!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all'"
       icon="pi pi-file-export"
       :loading="isExportCsvLoading"
       :disabled="isAnyActionLoading"
