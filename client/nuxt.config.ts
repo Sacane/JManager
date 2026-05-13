@@ -1,7 +1,26 @@
 import process from 'node:process'
+import { definePreset } from '@primevue/themes'
 import Lara from '@primevue/themes/lara'
 import runtimeConfig from './env.config.json'
 import devRuntimeConfig from './env.dev.config.json'
+
+const JManagerTheme = definePreset(Lara, {
+  semantic: {
+    primary: {
+      50: '#f5e6ff',
+      100: '#e9ccff',
+      200: '#d299ff',
+      300: '#b866ff',
+      400: '#9d45e8',
+      500: '#822acc',
+      600: '#6a22a8',
+      700: '#531a82',
+      800: '#3c125c',
+      900: '#280c3d',
+      950: '#140620',
+    },
+  },
+})
 
 const isDev = process.env.NODE_ENV === 'development'
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -148,7 +167,7 @@ export default defineNuxtConfig({
         },
       },
       theme: {
-        preset: Lara,
+        preset: JManagerTheme,
         options: {
           darkModeSelector: '.dark',
         },

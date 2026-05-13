@@ -154,13 +154,13 @@ const visibleColumns = computed(() =>
   box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
 }
 
-.app-table :deep(.p-button.p-button-text.p-button-rounded.text-emerald-500) {
-  border-color: rgba(16, 185, 129, 0.4);
+.app-table :deep(.p-button.p-button-text.p-button-rounded.text-\[\#A30053\]) {
+  border-color: rgba(163, 0, 83, 0.4);
 }
 
-.app-table :deep(.p-button.p-button-text.p-button-rounded.text-emerald-500:hover) {
-  border-color: rgba(16, 185, 129, 0.8);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+.app-table :deep(.p-button.p-button-text.p-button-rounded.text-\[\#A30053\]:hover) {
+  border-color: rgba(163, 0, 83, 0.8);
+  box-shadow: 0 2px 8px rgba(163, 0, 83, 0.3);
 }
 
 /* Preview row amber highlight */

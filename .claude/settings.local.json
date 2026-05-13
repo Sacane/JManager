@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\johan\\\\Documents\\\\dev\\\\JManager\\\\\" | Where-Object { $_.Name -notmatch \"^node_modules|^\\\\.gradle\" } | Select-Object Name, PSIsContainer | Sort-Object PSIsContainer -Descending)"
-    ]
-  }
-}

@@ -857,12 +857,11 @@ onUnmounted(() => {
                 />
                 <Button
                   v-if="data.isPreview"
-                  class="text-emerald-500 hover:bg-emerald-500/15"
+                  class="text-[#A30053] hover:bg-[#A30053]/15"
                   icon="pi pi-check"
                   text
                   rounded
                   size="small"
-                  severity="success"
                   :loading="isConfirmPreviewLoading"
                   :disabled="isAnyActionLoading"
                   title="Valider la transaction prévisionnel"
@@ -992,7 +991,7 @@ onUnmounted(() => {
                   title="Modifier"
                   @click.stop="onEditTransaction({ data: transaction })"
                 />
-                <Button v-if="transaction.isPreview" class="text-emerald-500 hover:bg-emerald-500/15" icon="pi pi-check" text rounded severity="success" size="small" :loading="isConfirmPreviewLoading" :disabled="isAnyActionLoading" title="Valider" @click.stop="onConfirmPreview(transaction)" />
+                <Button v-if="transaction.isPreview" class="text-[#A30053] hover:bg-[#A30053]/15" icon="pi pi-check" text rounded size="small" :loading="isConfirmPreviewLoading" :disabled="isAnyActionLoading" title="Valider" @click.stop="onConfirmPreview(transaction)" />
               </div>
             </div>
 

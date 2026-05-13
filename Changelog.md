@@ -2,6 +2,15 @@
 
 ## [En cours]
 
+## 2026-05-13
+
+- **Fix UI: Suppression du contour vert sur la page des transactions régulières et uniformisation des boutons d'action**
+  - **Root cause (contour vert)** : le preset Lara de PrimeVue utilise Emerald comme palette primaire par défaut (`--p-primary-500: #10b981`), ce qui colorait en vert les checkboxes de sélection, les indicateurs de tri et les états de highlight du DataTable sur toutes les pages.
+  - **Fix** : création d'un preset `JManagerTheme` via `definePreset` dans `nuxt.config.ts`, remplaçant la palette primaire par le violet du design system (`#822acc` et ses déclinaisons). La correction est globale et s'applique à toutes les pages.
+  - **Boutons d'action (booklet)** : les boutons "valider la transaction prévisionnelle" (desktop et mobile dans `booklet/[id].vue`) passent de `text-emerald-500 severity="success"` à `text-[#A30053]`, cohérent avec le bouton "modifier" déjà en `#A30053`.
+  - **AppTable.vue** : les règles CSS scoped ciblant `.text-emerald-500` sont remplacées par `.text-[\#A30053]` avec les couleurs `rgba(163, 0, 83, *)`.
+  - Suite frontend : **25 fichiers / 187 tests — 0 échec**.
+
 - **Refactoring: Migration complète des tests domain vers le DSL `TestScenario` + fixtures**
   - Tous les fichiers de test dans `domain/src/test/kotlin/.../port/` ont été migrés : `ExcludeVirtualTransactionFeatureTest`, `SessionManagerTest`, `AdminFeatureTest`, `UserFeatureTest`, `TagFeatureTest`, `TransactionFeatureTest`, `FileImportExportFeatureTest`, `RegularTransactionFeatureTest`, `StatsFeatureTest`, `BookletFeatureTest` (53 tests, incluant 3 classes imbriquées).
   - L'héritage de `FeatureTest` (helpers `launchWithUserId`/`launchWithNewUserId`) est remplacé par `FakeFactory` + `TestScenario` + blocs `given/act/then` + `BookletFixture`/`UserFixture`/`TransactionFixture`.
