@@ -33,9 +33,12 @@ Before starting any task, **always read**:
 
 ---
 
-## Mobile Checkpoint (Before Designing)
+## Responsive Design — Non-Negotiable (New AND Updates)
 
-For any new page, layout, or significant component, evaluate whether mobile support is relevant.
+Responsive is **not optional and not only for new work**. Every task — whether creating or modifying — must go through this checkpoint.
+
+### For new pages, layouts, and components
+Evaluate whether mobile support is relevant before designing.
 
 If the request does not address mobile and the feature is likely used on mobile:
 
@@ -46,6 +49,13 @@ If the request does not address mobile and the feature is likely used on mobile:
    - *Adaptive layout* — distinct markup per breakpoint (e.g. `BottomNav` on mobile vs. sidebar on desktop).
    - *Desktop only for now* — explicitly out of scope; add a `TODO(mobile)` comment.
 3. Skip the question only if clearly desktop-only context (e.g. admin tables with dozens of columns).
+
+### For updates to existing components and pages
+Before touching the code:
+1. **Audit existing responsive behaviour** — identify which breakpoints (`sm:`, `md:`, `lg:`) are already in use.
+2. **Do not regress** — any change must preserve or improve the existing responsive layout; never remove a breakpoint variant without intent.
+3. If the change introduces new elements or significantly alters layout, apply the same breakpoint coverage as the surrounding code.
+4. If the existing component has **no** responsive handling and the change touches layout, flag it with ⚠️ and ask the user whether to add responsive support as part of this task.
 
 ---
 
@@ -120,11 +130,16 @@ If the request does not address mobile and the feature is likely used on mobile:
 ## Implementation Workflow
 
 1. Read Phase 0 files.
-2. Mobile checkpoint — ask the user now if mobile relevance is unclear.
+2. Responsive checkpoint — audit existing breakpoints (updates) or choose strategy (new). Ask the user if unclear.
 3. Design first — sketch layout and interaction model before writing code.
 4. Search `components/`, `composables/`, `utils/` for reusable building blocks.
 5. Identify design gaps — new UnoCSS shortcuts, breakpoint utilities, or type definitions needed?
 6. Implement bottom-up: types → utils → composable → component → page.
 7. Write tests alongside each unit.
 8. Run `pnpm test` — keep the suite green.
-9. Review against design system rules above.
+9. **Responsive review (mandatory)** — mentally walk through each changed template at `sm` / `md` / `lg` and verify:
+   - No layout overflow or truncation at small viewports.
+   - All new elements have the same breakpoint coverage as surrounding code.
+   - No existing `sm:` / `md:` / `lg:` variants were silently removed.
+   - Dark mode still works at every breakpoint.
+10. Review against design system rules above.
