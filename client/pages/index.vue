@@ -788,7 +788,7 @@ const monthlyComparisonData = computed(() => {
       {
         label: 'Période active',
         data: [monthlyIncome.value, monthlyExpenses.value, currentBalance],
-        backgroundColor: '#822acc',
+        backgroundColor: '#6508CC',
         borderRadius: 8,
       },
       {
@@ -1310,7 +1310,7 @@ watch(selectedBookletId, () => {
       <section ref="overviewRef" class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
         <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
           <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-purple-600 to-purple-700">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)]">
               <i class="pi pi-wallet" />
             </div>
             <span v-if="balanceGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="balanceGrowth > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
@@ -1532,7 +1532,7 @@ watch(selectedBookletId, () => {
               <i class="pi pi-book text-purple-600" />
               Mes livrets
             </h2>
-            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
               <i class="pi pi-plus" />
               Nouveau
             </button>
@@ -1543,7 +1543,7 @@ watch(selectedBookletId, () => {
               <p class="m-0" style="color: var(--text-secondary);">
                 Aucun livret créé
               </p>
-              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
+              <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
                 Créer mon premier livret
               </button>
             </div>
@@ -1564,7 +1564,7 @@ watch(selectedBookletId, () => {
                 @drop="onBookletDrop($event, index)"
                 @dragend="onBookletDragEnd"
               >
-                <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
+                <div class="w-12 h-12 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
                   <i class="pi pi-wallet" />
                 </div>
                 <div class="flex-1">
@@ -1591,7 +1591,7 @@ watch(selectedBookletId, () => {
               <i class="pi pi-calendar text-purple-600" />
               Prochaines transactions
             </h2>
-            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
               <i class="pi pi-cog" />
               Gérer
             </button>
@@ -1602,7 +1602,7 @@ watch(selectedBookletId, () => {
               <p class="m-0" style="color: var(--text-secondary);">
                 Aucune transaction prévue
               </p>
-              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
+              <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
                 Configurer une mensualité
               </button>
             </div>
@@ -1684,7 +1684,7 @@ watch(selectedBookletId, () => {
               <i class="pi pi-tags text-purple-600" />
               Tags populaires
             </h2>
-            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
+            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
               <i class="pi pi-plus" />
               Nouveau
             </button>
@@ -1695,7 +1695,7 @@ watch(selectedBookletId, () => {
               <p class="m-0" style="color: var(--text-secondary);">
                 Aucun tag créé
               </p>
-              <button class="px-5 py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
+              <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
                 Créer un tag
               </button>
             </div>
@@ -1905,12 +1905,12 @@ watch(selectedBookletId, () => {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #822acc;
+  background: var(--primary);
   border-radius: 10px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #651e9e;
+  background: var(--primary-2);
 }
 
 /* Chart container responsive heights */
@@ -1938,7 +1938,7 @@ watch(selectedBookletId, () => {
 }
 
 .period-toggle-btn.is-active {
-  background-color: #822acc;
+  background-color: var(--primary);
   color: #fff;
 }
 
@@ -1971,7 +1971,7 @@ watch(selectedBookletId, () => {
 
 .quick-action-btn:hover {
   background-color: var(--card-bg);
-  border-color: #822acc;
+  border-color: var(--primary);
 }
 
 .budget-input {
@@ -1994,7 +1994,7 @@ watch(selectedBookletId, () => {
 }
 
 .budget-save-btn:hover {
-  border-color: #822acc;
+  border-color: var(--primary);
   background-color: var(--card-bg);
 }
 

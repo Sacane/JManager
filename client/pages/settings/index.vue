@@ -316,7 +316,7 @@ onMounted(() => {
 
 .cycle-select:focus {
   outline: none;
-  border-color: #822acc;
+  border-color: var(--primary);
 }
 
 .cycle-field-hint {
@@ -357,7 +357,7 @@ onMounted(() => {
   border: none;
   border-radius: 0.75rem;
   padding: 0.65rem 1rem;
-  background: linear-gradient(135deg, #2167f3 0%, #1c4db6 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
   color: #fff;
   font-weight: 700;
   cursor: pointer;

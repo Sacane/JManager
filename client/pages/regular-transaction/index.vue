@@ -426,7 +426,7 @@ async function handleUnlink() {
               Commencez par créer votre première transaction régulière
             </p>
             <Button
-              class="bg-gradient-to-br from-purple-600 to-purple-800 border-none font-semibold shadow-lg shadow-purple-500/25"
+              class="btn-primary font-semibold"
               icon="pi pi-plus"
               label="Créer une transaction"
               @click="openCreationRegularTransactionDialog"
@@ -495,14 +495,14 @@ async function handleUnlink() {
 
         <template #body-regularity="{ data }">
           <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
-            <i class="pi pi-clock text-0.875rem text-purple-600" />
+            <i class="pi pi-clock text-0.875rem text-[var(--primary)]" />
             <span>{{ frequencyToString(data.regularity) }}</span>
           </div>
         </template>
 
         <template #body-startDate="{ data }">
           <div class="flex items-center gap-2 font-medium" style="color: var(--text-secondary);">
-            <i class="pi pi-calendar text-0.875rem text-purple-600" />
+            <i class="pi pi-calendar text-0.875rem text-[var(--primary)]" />
             <span>{{ data.startDate }}</span>
           </div>
         </template>
@@ -564,7 +564,7 @@ async function handleUnlink() {
           Commencez par créer votre première transaction régulière
         </p>
         <Button
-          class="bg-gradient-to-br from-purple-600 to-purple-800 border-none font-semibold shadow-lg shadow-purple-500/25"
+          class="btn-primary font-semibold"
           icon="pi pi-plus"
           label="Créer"
           @click="openCreationRegularTransactionDialog"
@@ -575,9 +575,9 @@ async function handleUnlink() {
         <div
           v-for="transaction in transactions"
           :key="transaction.id"
-          class="rounded-4 p-4 shadow-md border-2 border-transparent transition-all duration-300 cursor-pointer relative overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-purple-600 before:to-purple-800 before:transition-width before:duration-300 hover:border-purple-500 hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-50 hover:shadow-lg hover:shadow-purple-500/20 hover:before:w-1.5 active:scale-98 md:p-4.5 md:rounded-4.5 md:shadow-lg md:before:w-1.25 dark:hover:from-purple-950/30 dark:hover:to-purple-950/30"
+          class="rounded-4 p-4 shadow-md border-2 border-transparent transition-all duration-300 cursor-pointer relative overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-[var(--primary)] before:to-[var(--primary-2)] before:transition-width before:duration-300 hover:border-[var(--primary)] hover:bg-gradient-to-br hover:from-[rgba(101,8,204,0.05)] hover:to-[rgba(101,8,204,0.05)] hover:shadow-lg hover:shadow-[rgba(101,8,204,0.2)] hover:before:w-1.5 active:scale-98 md:p-4.5 md:rounded-4.5 md:shadow-lg md:before:w-1.25 dark:hover:from-[rgba(101,8,204,0.12)] dark:hover:to-[rgba(101,8,204,0.12)]"
           style="background-color: var(--card-bg); box-shadow: 0 4px 12px var(--shadow-purple); border-color: var(--card-border);"
-          :class="{ 'border-purple-600 bg-gradient-to-br from-purple-50 to-purple-50 shadow-lg shadow-purple-500/20 before:w-1.5 md:shadow-xl md:shadow-purple-500/25 dark:from-purple-950/30 dark:to-purple-950/30': isSelected(transaction) }"
+          :class="{ 'border-[var(--primary)] bg-gradient-to-br from-[rgba(101,8,204,0.05)] to-[rgba(101,8,204,0.05)] shadow-lg shadow-[rgba(101,8,204,0.2)] before:w-1.5 md:shadow-xl md:shadow-[rgba(101,8,204,0.25)] dark:from-[rgba(101,8,204,0.15)] dark:to-[rgba(101,8,204,0.15)]': isSelected(transaction) }"
           @click="handleRowDoubleClick({ data: transaction })"
         >
           <div class="flex justify-between items-center mb-3 pb-3 md:mb-3.5 md:pb-3.5" style="border-bottom: 1px solid var(--border-color);">
@@ -597,19 +597,19 @@ async function handleUnlink() {
 
             <div class="flex flex-col gap-2.5 md:gap-3">
               <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
-                <i class="pi pi-euro text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
+                <i class="pi pi-euro text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span class="text-1.4rem font-extrabold font-mono md:text-1.6rem" :class="transaction.isIncome ? 'text-green-500' : 'text-red-500'">
                   {{ transaction.isIncome ? '+' : '-' }}{{ Math.abs(transaction.value).toFixed(2) }} €
                 </span>
               </div>
 
               <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
-                <i class="pi pi-clock text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
+                <i class="pi pi-clock text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span>{{ frequencyToString(transaction.regularity) }}</span>
               </div>
 
               <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
-                <i class="pi pi-calendar text-1rem text-purple-600 w-5 text-center md:text-1.1rem md:w-5.5" />
+                <i class="pi pi-calendar text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
                 <span>{{ transaction.startDate }}</span>
               </div>
             </div>

@@ -60,9 +60,9 @@ const options: ThemeOption[] = [
   &:hover {
     border-color: var(--primary-lighter);
     color: var(--primary);
-    background: rgba(130, 42, 204, 0.04);
+    background: rgba(101, 8, 204, 0.04);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(130, 42, 204, 0.12);
+    box-shadow: 0 4px 12px rgba(101, 8, 204, 0.12);
   }
 
   &:active {
@@ -72,12 +72,12 @@ const options: ThemeOption[] = [
   &--active {
     border: 2px solid var(--primary);
     color: var(--primary);
-    background: rgba(130, 42, 204, 0.06);
-    box-shadow: 0 2px 8px rgba(130, 42, 204, 0.15);
+    background: rgba(101, 8, 204, 0.06);
+    box-shadow: 0 2px 8px rgba(101, 8, 204, 0.15);
 
     html.dark & {
-      background: rgba(130, 42, 204, 0.15);
-      box-shadow: 0 2px 12px rgba(130, 42, 204, 0.3);
+      background: rgba(101, 8, 204, 0.15);
+      box-shadow: 0 2px 12px rgba(101, 8, 204, 0.3);
     }
   }
 }

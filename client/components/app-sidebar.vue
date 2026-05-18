@@ -199,8 +199,8 @@ onUnmounted(() => {
 
   html.dark & {
     background: #1e293b;
-    border: 1px solid rgba(130, 42, 204, 0.4);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(130, 42, 204, 0.15);
+    border: 1px solid rgba(101, 8, 204, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(101, 8, 204, 0.15);
   }
 
   &:hover {
@@ -324,7 +324,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 
   html.dark & {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 10px rgba(130, 42, 204, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), 0 0 10px rgba(101, 8, 204, 0.3);
   }
 }
 
@@ -391,11 +391,11 @@ onUnmounted(() => {
 
   html.dark & {
     &::-webkit-scrollbar-thumb {
-      background: rgba(130, 42, 204, 0.35);
+      background: rgba(101, 8, 204, 0.35);
     }
 
     &::-webkit-scrollbar-thumb:hover {
-      background: rgba(130, 42, 204, 0.55);
+      background: rgba(101, 8, 204, 0.55);
     }
   }
 }
@@ -461,9 +461,9 @@ onUnmounted(() => {
 
   /* Dark mode hover */
   html.dark &:not(.nav-item-active):hover {
-    background: rgba(130, 42, 204, 0.12);
+    background: rgba(101, 8, 204, 0.12);
     color: rgba(255, 255, 255, 0.95);
-    border-color: rgba(130, 42, 204, 0.15);
+    border-color: rgba(101, 8, 204, 0.15);
   }
 }
 
@@ -528,12 +528,12 @@ onUnmounted(() => {
   }
 
   html.dark & {
-    border-color: rgba(130, 42, 204, 0.3);
-    background: rgba(130, 42, 204, 0.07);
+    border-color: rgba(101, 8, 204, 0.3);
+    background: rgba(101, 8, 204, 0.07);
 
     &:hover {
-      background: rgba(130, 42, 204, 0.14);
-      border-color: rgba(130, 42, 204, 0.5);
+      background: rgba(101, 8, 204, 0.14);
+      border-color: rgba(101, 8, 204, 0.5);
     }
 
     &.nav-item-active {
@@ -552,8 +552,8 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.08);
 
   html.dark & {
-    border-top-color: rgba(130, 42, 204, 0.2);
-    background: rgba(130, 42, 204, 0.04);
+    border-top-color: rgba(101, 8, 204, 0.2);
+    background: rgba(101, 8, 204, 0.04);
   }
 }
 

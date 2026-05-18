@@ -77,7 +77,7 @@ function onMonthChange() {
 
   &:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(130, 42, 204, 0.1);
+    box-shadow: 0 0 0 2px rgba(101, 8, 204, 0.1);
   }
 
   option {

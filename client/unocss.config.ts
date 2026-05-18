@@ -34,6 +34,8 @@ export default defineConfig({
 
     // --- Buttons ---
     ['btn', 'px-4 py-2 border rounded-lg inline-flex items-center justify-center font-medium text-sm cursor-pointer transition-all duration-200 ease-in-out hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'],
+    ['btn-primary', 'btn bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-0 shadow-[0_2px_8px_rgba(101,8,204,0.3)] hover:brightness-110 hover:opacity-100'],
+    ['btn-outline-primary', 'btn border-[var(--primary)] text-[var(--primary)] bg-transparent hover:bg-[rgba(101,8,204,0.07)]'],
     ['icon-btn', 'inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer select-none opacity-70 hover:opacity-100 hover:text-[var(--primary)] dark:hover:text-[var(--primary-lighter)] transition-all duration-200'],
 
     // --- Cards ---

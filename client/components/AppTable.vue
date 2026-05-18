@@ -117,7 +117,7 @@ const visibleColumns = computed(() =>
 }
 
 .app-table :deep(.p-datatable-tbody > tr:nth-child(even)) {
-  background: rgba(130, 42, 204, 0.04);
+  background: rgba(101, 8, 204, 0.04);
 }
 
 .app-table :deep(.p-datatable-tbody > tr:hover) {
@@ -146,12 +146,12 @@ const visibleColumns = computed(() =>
 }
 
 .app-table :deep(.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]) {
-  border-color: rgba(130, 42, 204, 0.4);
+  border-color: rgba(101, 8, 204, 0.4);
 }
 
 .app-table :deep(.p-button.p-button-text.p-button-rounded.text-\[var\(--primary\)\]:hover) {
-  border-color: rgba(130, 42, 204, 0.8);
-  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.3);
+  border-color: rgba(101, 8, 204, 0.8);
+  box-shadow: 0 2px 8px rgba(101, 8, 204, 0.3);
 }
 
 .app-table :deep(.p-button.p-button-text.p-button-rounded.text-\[\#A30053\]) {

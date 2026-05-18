@@ -919,7 +919,7 @@ onUnmounted(() => {
             v-tooltip.right="{ value: `Tout (${transactionsCount})`, pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
             :class="transactionFilter === 'all'
-              ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(130,42,204,0.07)]'
+              ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
               : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
             @click="transactionFilter = 'all'"
           >
@@ -1114,11 +1114,11 @@ onUnmounted(() => {
   color: var(--primary) !important;
   font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.15);
+  box-shadow: 0 2px 8px rgba(101, 8, 204, 0.15);
 }
 :deep(.p-button.btn-primary:hover) {
-  background: rgba(130, 42, 204, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(130, 42, 204, 0.25) !important;
+  background: rgba(101, 8, 204, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(101, 8, 204, 0.25) !important;
   transform: translateY(-1px);
 }
 :deep(.p-button.btn-primary:active) {

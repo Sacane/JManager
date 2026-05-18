@@ -524,7 +524,7 @@ function formatAmount(amount: string) {
 
   &.drag-over {
     border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px rgba(130, 42, 204, 0.2), 0 12px 40px var(--shadow-lg) !important;
+    box-shadow: 0 0 0 3px rgba(101, 8, 204, 0.2), 0 12px 40px var(--shadow-lg) !important;
     transform: translateY(-4px) !important;
   }
 
@@ -615,7 +615,7 @@ function formatAmount(amount: string) {
 
   &:hover {
     color: var(--primary);
-    background: rgba(130, 42, 204, 0.1);
+    background: rgba(101, 8, 204, 0.1);
   }
 
   i {

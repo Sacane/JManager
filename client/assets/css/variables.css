@@ -1,20 +1,49 @@
 /* ================================================================
-   Design Tokens — CSS Custom Properties
-   Single source of truth for colors, shadows, and surfaces.
+   Brand Palette — source of truth for all brand colors.
+   Do NOT use these raw tokens in components — use semantic variables below.
    ================================================================ */
 
 :root {
-  /* Brand palette */
-  --primary:          #822acc;
-  --primary-2:        #722aaa;
-  --primary-3:        #511e78;
-  --primary-4:        #391555;
-  --primary-light:    #9d5dd9;
-  --primary-lighter:  #b88ee0;
+  /* Violet brand range (dark → light handled by semantic aliases) */
+  --color-violet-950: #190233;
+  --color-violet-900: #200340;
+  --color-violet-800: #26034C;
+  --color-violet-700: #45058C;
+  --color-violet-600: #42009E;
+  --color-violet-500: #6508CC;  /* primary */
 
-  /* Accent */
-  --yellow: #e0d824;
-  --pink:   #f13c69;
+  /* Identity colors */
+  --color-brand-violet:     #42009E;
+  --color-brand-magenta:    #A30053;
+  --color-brand-red:        #FF084B;
+  --color-brand-orange:     #FF5A08;
+  --color-brand-amber:      #FFC108;
+  --color-brand-blue:       #009CFE;
+  --color-brand-blue-dark:  #006EA3;
+}
+
+/* ================================================================
+   Semantic Design Tokens — CSS Custom Properties
+   Components must reference these, never raw brand tokens.
+   ================================================================ */
+
+:root {
+  /* Primary accent */
+  --primary:          var(--color-violet-500);    /* #6508CC */
+  --primary-rgb:      101, 8, 204;               /* for rgba() usage */
+  --primary-2:        var(--color-violet-700);    /* #45058C — gradient end */
+  --primary-3:        var(--color-violet-600);    /* #42009E — deep accent */
+  --primary-4:        var(--color-violet-800);    /* #26034C — very dark */
+  --primary-light:    #9352DB;                   /* tint of #6508CC at 70% */
+  --primary-lighter:  #B283E5;                   /* tint of #6508CC at 50% */
+
+  /* Identity accents */
+  --accent-magenta:   var(--color-brand-magenta);
+  --accent-red:       var(--color-brand-red);
+  --accent-orange:    var(--color-brand-orange);
+  --accent-amber:     var(--color-brand-amber);
+  --accent-blue:      var(--color-brand-blue);
+  --accent-blue-dark: var(--color-brand-blue-dark);
 
   /* Backgrounds */
   --bg-primary:        #f5f7fa;
@@ -25,8 +54,8 @@
 
   /* Cards */
   --card-bg:        #ffffff;
-  --card-hover-bg:  #faf5ff;
-  --card-border:    rgba(130, 42, 204, 0.1);
+  --card-hover-bg:  #f5edff;
+  --card-border:    rgba(var(--primary-rgb), 0.1);
 
   /* Text */
   --text-primary:    #1e293b;
@@ -42,7 +71,7 @@
   --shadow-sm:      rgba(0, 0, 0, 0.05);
   --shadow-md:      rgba(0, 0, 0, 0.08);
   --shadow-lg:      rgba(0, 0, 0, 0.12);
-  --shadow-purple:  rgba(130, 42, 204, 0.08);
+  --shadow-purple:  rgba(var(--primary-rgb), 0.08);
 }
 
 .dark {
@@ -56,7 +85,7 @@
   /* Cards */
   --card-bg:        #1e293b;
   --card-hover-bg:  #2d3b52;
-  --card-border:    rgba(130, 42, 204, 0.2);
+  --card-border:    rgba(var(--primary-rgb), 0.2);
 
   /* Text */
   --text-primary:    #f1f5f9;
@@ -72,5 +101,5 @@
   --shadow-sm:      rgba(0, 0, 0, 0.3);
   --shadow-md:      rgba(0, 0, 0, 0.4);
   --shadow-lg:      rgba(0, 0, 0, 0.5);
-  --shadow-purple:  rgba(130, 42, 204, 0.3);
+  --shadow-purple:  rgba(var(--primary-rgb), 0.3);
 }

@@ -7,17 +7,17 @@ import devRuntimeConfig from './env.dev.config.json'
 const JManagerTheme = definePreset(Lara, {
   semantic: {
     primary: {
-      50: '#f5e6ff',
-      100: '#e9ccff',
-      200: '#d299ff',
-      300: '#b866ff',
-      400: '#9d45e8',
-      500: '#822acc',
-      600: '#6a22a8',
-      700: '#531a82',
-      800: '#3c125c',
-      900: '#280c3d',
-      950: '#140620',
+      50:  '#F7F3FC',  // tint 5%
+      100: '#ECE1F9',  // tint 12%
+      200: '#D8C1F2',  // tint 25%
+      300: '#BE97E9',  // tint 42%
+      400: '#9F66DF',  // tint 62%
+      500: '#6508CC',  // brand primary
+      600: '#42009E',  // brand violet deep
+      700: '#45058C',  // brand violet medium
+      800: '#26034C',  // brand violet dark
+      900: '#200340',  // brand violet very dark
+      950: '#190233',  // brand violet darkest
     },
   },
 })
