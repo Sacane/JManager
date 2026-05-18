@@ -46,15 +46,15 @@ const emit = defineEmits<{
       <!-- Right: balances + filters -->
       <div class="flex items-center gap-2 shrink-0 flex-wrap">
         <!-- Balances -->
-        <div class="flex items-center gap-2 px-2 py-0.5 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-lg border border-[var(--card-border)]">
-          <div class="flex items-center gap-1">
-            <span class="text-[0.58rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Réel</span>
-            <span class="text-xs font-extrabold text-[var(--primary)]">{{ realSold.toFixed(2) }} €</span>
+        <div class="flex items-center gap-4 px-5 py-2.5 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--card-border)] shadow-sm">
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Solde réel</span>
+            <span class="text-xl font-extrabold tabular-nums text-[var(--primary)]">{{ realSold.toFixed(2) }} €</span>
           </div>
-          <div class="w-px h-4 bg-[var(--border-color)]" />
-          <div class="flex items-center gap-1">
-            <span class="text-[0.58rem] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Prév.</span>
-            <span class="text-xs font-extrabold text-[#FF5A08]">{{ previewSold.toFixed(2) }} €</span>
+          <div class="w-px h-10 bg-[var(--border-color)]" />
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Prévisionnel</span>
+            <span class="text-xl font-extrabold tabular-nums text-[#FF5A08]">{{ previewSold.toFixed(2) }} €</span>
           </div>
         </div>
 

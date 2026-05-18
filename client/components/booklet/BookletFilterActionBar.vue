@@ -39,7 +39,7 @@ const emit = defineEmits<{
       <button
         class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
         :class="transactionFilter === 'all'
-          ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(130,42,204,0.25)]'
+          ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(101,8,204,0.25)]'
           : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--primary)]'"
         @click="emit('update:transactionFilter', 'all')"
       >
@@ -73,7 +73,7 @@ const emit = defineEmits<{
       <button
         class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'all'
-          ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(130,42,204,0.07)]'
+          ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
           : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
         @click="emit('update:transactionFilter', 'all')"
       >
@@ -126,14 +126,14 @@ const emit = defineEmits<{
   <!-- Boutons d'action mobile -->
   <div v-if="isMobile" class="flex gap-2 mb-4">
     <Button
-      class="flex-1 !bg-gradient-to-br !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(130,42,204,0.3)] hover:!brightness-110 transition-all"
+      class="flex-1 !bg-gradient-to-br !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(101,8,204,0.3)] hover:!brightness-110 transition-all"
       icon="pi pi-plus"
       label="Transaction"
       :disabled="isAnyActionLoading"
       @click="emit('new-transaction')"
     />
     <Button
-      class="flex-1 !bg-[#FF5A08] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(255,90,8,0.3)] hover:!bg-[#cc4806] transition-all"
+      class="flex-1 !bg-[#FFC108] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all"
       icon="pi pi-clock"
       label="Prévisionnelle"
       :disabled="isAnyActionLoading"
@@ -141,7 +141,7 @@ const emit = defineEmits<{
     />
     <Button
       v-if="hasRegenerableTransactions"
-      class="flex-1 !bg-violet-500 !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(139,92,246,0.3)] hover:!bg-violet-600 transition-all"
+      class="flex-1 !bg-[#FFC108] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all"
       icon="pi pi-refresh"
       label="Régénérer"
       :loading="isRegenerateLoading"
@@ -194,11 +194,11 @@ const emit = defineEmits<{
   color: var(--primary) !important;
   font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(130, 42, 204, 0.15);
+  box-shadow: 0 2px 8px rgba(101, 8, 204, 0.15);
 }
 :deep(.p-button.btn-primary:hover) {
-  background: rgba(130, 42, 204, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(130, 42, 204, 0.25) !important;
+  background: rgba(101, 8, 204, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(101, 8, 204, 0.25) !important;
   transform: translateY(-1px);
 }
 :deep(.p-button.btn-primary:active) {
