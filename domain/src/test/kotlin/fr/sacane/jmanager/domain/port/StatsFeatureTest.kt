@@ -572,6 +572,50 @@ class StatsFeatureTest {
         }
 
         @Test
+        fun `cumulative balance is seeded from booklet balance before period start`() {
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("Pre-period income", BigDecimal("500"), true, LocalDate.of(2024, 12, 31)),
+                tx("In-period expense", BigDecimal("200"), false, LocalDate.of(2025, 1, 5))
+            )))
+
+            // booklet initialSold = 0, pre-period income = +500 => startingBalance = 500
+            // day 1: no in-period tx => cumulative = 500
+            // day 5: expense 200 => cumulative = 300
+            getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
+                userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = LocalDate.of(2025, 1, 31), bookletId = ctx.booklet.id
+            )).assertTrue {
+                val day1 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 1) }
+                val day5 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 5) }
+                day1 != null && day1.cumulativeBalance.value.compareTo(BigDecimal("500")) == 0 &&
+                    day5 != null && day5.cumulativeBalance.value.compareTo(BigDecimal("300")) == 0
+            }
+        }
+
+        @Test
+        fun `cumulative balance aggregates starting balances of all booklets`() {
+            val ctx = scenario.withUser().withBooklet()
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(
+                tx("B1 pre-period", BigDecimal("300"), true, LocalDate.of(2024, 12, 31))
+            )))
+
+            val booklet2 = Booklet(Amount(BigDecimal("200")), "booklet2", owner = ctx.user, id = UUID.randomUUID())
+            bookletState.init(listOf(BookletsByOwner(listOf(booklet2), ctx.userId)))
+            transactionState.init(listOf(IdBookletByTransaction(IdUserBooklet(ctx.userId, booklet2.id!!), mutableListOf(
+                tx("B2 pre-period", BigDecimal("100"), true, LocalDate.of(2024, 12, 31))
+            ))))
+
+            // booklet1 initialSold=0 + 300 = 300, booklet2 initialSold=200 + 100 = 300
+            // combined startingBalance = 600
+            getDailyTrendStatsUseCase.handle(GetDailyTrendStatsQuery(
+                userId = ctx.userId, startDate = LocalDate.of(2025, 1, 1), endDate = LocalDate.of(2025, 1, 31), bookletId = null
+            )).assertTrue {
+                val day1 = this.dailyTrends.find { it.date == LocalDate.of(2025, 1, 1) }
+                day1 != null && day1.cumulativeBalance.value.compareTo(BigDecimal("600")) == 0
+            }
+        }
+
+        @Test
         fun `Should scope daily trends to selected booklet`() {
             val ctx = scenario.withUser().withBooklet()
             transactionState.initWith(IdBookletByTransaction(IdUserBooklet(ctx.userId, ctx.booklet.id!!), mutableListOf(

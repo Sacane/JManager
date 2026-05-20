@@ -245,6 +245,55 @@ class DailyTrendCalculatorTest {
     }
 
     @Test
+    fun `cumulative balance is seeded from a non-zero starting balance`() {
+        val booklet = Booklet(0.toAmount(), "Booklet")
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Income", LocalDate.of(2025, 1, 5), 500.toAmount(), isIncome = true)
+        )
+
+        val trends = calculator.calculateDailyTrend(
+            booklets = listOf(booklet),
+            startDate = LocalDate.of(2025, 1, 1),
+            endDate = LocalDate.of(2025, 1, 31),
+            startingBalance = 2000.toAmount()
+        )
+
+        val day1 = trends.find { it.date == LocalDate.of(2025, 1, 1) }!!
+        assertEquals(BigDecimal("2000.00"), day1.cumulativeBalance.value)
+
+        val day5 = trends.find { it.date == LocalDate.of(2025, 1, 5) }!!
+        assertEquals(BigDecimal("2500.00"), day5.cumulativeBalance.value)
+    }
+
+    @Test
+    fun `starting balance shifts all cumulative values uniformly`() {
+        val booklet = Booklet(0.toAmount(), "Booklet")
+        booklet.addTransaction(
+            Transaction(UUID.randomUUID(), "Expense", LocalDate.of(2025, 1, 10), 300.toAmount(), isIncome = false)
+        )
+
+        val trendsWithSeed = calculator.calculateDailyTrend(
+            booklets = listOf(booklet),
+            startDate = LocalDate.of(2025, 1, 1),
+            endDate = LocalDate.of(2025, 1, 31),
+            startingBalance = 1000.toAmount()
+        )
+        val trendsFromZero = calculator.calculateDailyTrend(
+            booklets = listOf(booklet),
+            startDate = LocalDate.of(2025, 1, 1),
+            endDate = LocalDate.of(2025, 1, 31),
+            startingBalance = 0.toAmount()
+        )
+
+        trendsWithSeed.zip(trendsFromZero).forEach { (seeded, zeroBased) ->
+            assertEquals(
+                BigDecimal("1000.00").add(zeroBased.cumulativeBalance.value),
+                seeded.cumulativeBalance.value
+            )
+        }
+    }
+
+    @Test
     fun `should exclude transactions outside the date range`() {
         val booklet = Booklet(1000.toAmount(), "Booklet")
         booklet.addTransaction(

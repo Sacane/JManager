@@ -243,4 +243,54 @@ class BookletTest {
 
         assertTrue(booklet.regularTransactions.isEmpty())
     }
+
+    @Test
+    fun `balanceAt returns initialSold when no transactions exist before the date`() {
+        val booklet = Booklet(1000.toAmount(), "Test")
+
+        val balance = booklet.balanceAt(LocalDate.of(2025, 1, 1))
+
+        assertEquals(1000.toAmount(), balance)
+    }
+
+    @Test
+    fun `balanceAt adds income transactions before the date to initialSold`() {
+        val booklet = Booklet(1000.toAmount(), "Test")
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Income", LocalDate.of(2024, 12, 31), 500.toAmount(), isIncome = true))
+
+        val balance = booklet.balanceAt(LocalDate.of(2025, 1, 1))
+
+        assertEquals(1500.toAmount(), balance)
+    }
+
+    @Test
+    fun `balanceAt subtracts expense transactions before the date from initialSold`() {
+        val booklet = Booklet(1000.toAmount(), "Test")
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Expense", LocalDate.of(2024, 12, 31), 200.toAmount(), isIncome = false))
+
+        val balance = booklet.balanceAt(LocalDate.of(2025, 1, 1))
+
+        assertEquals(800.toAmount(), balance)
+    }
+
+    @Test
+    fun `balanceAt excludes transactions on or after the date`() {
+        val booklet = Booklet(1000.toAmount(), "Test")
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Same day", LocalDate.of(2025, 1, 1), 500.toAmount(), isIncome = true))
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "After", LocalDate.of(2025, 1, 5), 500.toAmount(), isIncome = true))
+
+        val balance = booklet.balanceAt(LocalDate.of(2025, 1, 1))
+
+        assertEquals(1000.toAmount(), balance)
+    }
+
+    @Test
+    fun `balanceAt excludes preview transactions before the date`() {
+        val booklet = Booklet(1000.toAmount(), "Test")
+        booklet.addTransaction(Transaction(UUID.randomUUID(), "Preview", LocalDate.of(2024, 12, 31), 500.toAmount(), isIncome = true, isPreview = true))
+
+        val balance = booklet.balanceAt(LocalDate.of(2025, 1, 1))
+
+        assertEquals(1000.toAmount(), balance)
+    }
 }

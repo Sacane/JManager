@@ -16,12 +16,14 @@ interface DailyTrendCalculator {
      * @param booklets the list of booklets from which transactions are aggregated
      * @param startDate the first day of the range (inclusive)
      * @param endDate the last day of the range (inclusive)
+     * @param startingBalance the actual account balance at the start of the period; seeds the cumulative accumulator
      * @return a list of DailyTrend, one entry per day in the range, ordered chronologically
      */
     fun calculateDailyTrend(
         booklets: List<Booklet>,
         startDate: LocalDate,
-        endDate: LocalDate
+        endDate: LocalDate,
+        startingBalance: Amount = Amount(BigDecimal.ZERO)
     ): List<DailyTrend>
 }
 
@@ -30,10 +32,11 @@ class DailyTrendCalculatorImpl : DailyTrendCalculator {
     override fun calculateDailyTrend(
         booklets: List<Booklet>,
         startDate: LocalDate,
-        endDate: LocalDate
+        endDate: LocalDate,
+        startingBalance: Amount
     ): List<DailyTrend> {
         val days = generateDayRange(startDate, endDate)
-        var cumulativeBalance = BigDecimal.ZERO
+        var cumulativeBalance = startingBalance.value
 
         return days.map { day ->
             val dayTransactions = booklets.flatMap { booklet ->
