@@ -13,6 +13,7 @@ export const LOADING_SCOPES = {
   },
   bookletDetails: {
     load: 'booklet.loadBookletData',
+    loadGlobal: 'booklet.loadGlobalData',
     createTransaction: 'booklet.bookTransaction',
     fetchTransaction: 'booklet.fetchTransaction',
     editTransaction: 'booklet.editTransaction',
