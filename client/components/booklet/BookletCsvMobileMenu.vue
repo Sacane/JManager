@@ -2,6 +2,9 @@
 interface Props {
   isMobile: boolean
   modelValue: boolean
+  hasRegenerableTransactions: boolean
+  isAnyActionLoading: boolean
+  isRegenerateLoading: boolean
 }
 
 defineProps<Props>()
@@ -10,6 +13,9 @@ const emit = defineEmits<{
   'update:modelValue': [val: boolean]
   'import-csv': []
   'export-csv': []
+  'new-transaction': []
+  'new-preview': []
+  'regenerate': []
 }>()
 </script>
 
@@ -17,10 +23,11 @@ const emit = defineEmits<{
   <Transition name="fab">
     <button
       v-if="isMobile"
+      aria-label="Ouvrir les actions"
       class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-lg flex items-center justify-center z-40 transition-all duration-300 hover:shadow-xl hover:scale-110 active:scale-95"
       @click="emit('update:modelValue', !modelValue)"
     >
-      <i :class="modelValue ? 'pi pi-times text-xl' : 'pi pi-ellipsis-h text-xl'" />
+      <i :class="modelValue ? 'pi pi-times text-xl' : 'pi pi-plus text-xl'" />
     </button>
   </Transition>
 
@@ -33,56 +40,90 @@ const emit = defineEmits<{
       <Transition name="menu-slide">
         <div
           v-if="modelValue"
-          class="w-full max-w-md bg-[var(--card-bg)] rounded-t-3xl shadow-2xl p-6 mb-0"
+          class="w-full max-w-md bg-[var(--card-bg)] rounded-t-3xl shadow-2xl px-5 pt-5 pb-8"
           @click.stop
         >
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-bold text-[var(--text-primary)] m-0">
-              Actions CSV
+          <!-- Handle + Header -->
+          <div class="w-10 h-1 rounded-full bg-[var(--border-color)] mx-auto mb-4" />
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-[var(--text-primary)] m-0">
+              Actions
             </h3>
             <button
-              class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] transition-colors"
+              class="w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] transition-colors"
               @click="emit('update:modelValue', false)"
             >
-              <i class="pi pi-times" />
+              <i class="pi pi-times text-xs" />
             </button>
           </div>
 
-          <div class="flex flex-col gap-3">
+          <!-- Transactions section -->
+          <p class="text-[0.6rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+            Transactions
+          </p>
+          <div class="flex flex-col gap-2 mb-4">
             <button
-              class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-2 border-cyan-500/20 text-left transition-all hover:border-cyan-500/40 hover:shadow-lg active:scale-[0.98]"
-              @click="emit('import-csv'); emit('update:modelValue', false)"
+              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50"
+              :class="'bg-[var(--primary)]/5 border-[var(--primary)]/20 hover:border-[var(--primary)]/40'"
+              :disabled="isAnyActionLoading"
+              @click="emit('new-transaction'); emit('update:modelValue', false)"
             >
-              <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0">
-                <i class="pi pi-file-import text-xl text-cyan-600" />
+              <div class="w-8 h-8 rounded-full bg-[var(--primary)]/15 flex items-center justify-center shrink-0">
+                <i class="pi pi-plus text-[var(--primary)] text-sm" />
               </div>
-              <div class="flex-1">
-                <div class="font-semibold text-[var(--text-primary)] mb-1">
-                  Importer CSV
-                </div>
-                <div class="text-sm text-[var(--text-secondary)]">
-                  Importer des transactions depuis un fichier
-                </div>
-              </div>
-              <i class="pi pi-chevron-right text-[var(--text-secondary)]" />
+              <span class="font-semibold text-sm text-[var(--text-primary)]">Nouvelle transaction</span>
             </button>
 
             <button
-              class="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-2 border-emerald-500/20 text-left transition-all hover:border-emerald-500/40 hover:shadow-lg active:scale-[0.98]"
+              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50 bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40"
+              :disabled="isAnyActionLoading"
+              @click="emit('new-preview'); emit('update:modelValue', false)"
+            >
+              <div class="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+                <i class="pi pi-clock text-amber-600 text-sm" />
+              </div>
+              <span class="font-semibold text-sm text-[var(--text-primary)]">Transaction prévisionnelle</span>
+            </button>
+
+            <button
+              v-if="hasRegenerableTransactions"
+              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50 bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40"
+              :disabled="isAnyActionLoading || isRegenerateLoading"
+              @click="emit('regenerate'); emit('update:modelValue', false)"
+            >
+              <div class="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+                <i class="pi pi-refresh text-amber-600 text-sm" :class="isRegenerateLoading ? 'pi-spin' : ''" />
+              </div>
+              <span class="font-semibold text-sm text-[var(--text-primary)]">Régénérer les transactions</span>
+            </button>
+          </div>
+
+          <!-- Divider -->
+          <div class="h-px bg-[var(--border-color)] mb-4" />
+
+          <!-- CSV section -->
+          <p class="text-[0.6rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+            CSV
+          </p>
+          <div class="flex flex-col gap-2">
+            <button
+              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] bg-cyan-500/5 border-cyan-500/20 hover:border-cyan-500/40"
+              @click="emit('import-csv'); emit('update:modelValue', false)"
+            >
+              <div class="w-8 h-8 rounded-full bg-cyan-500/15 flex items-center justify-center shrink-0">
+                <i class="pi pi-file-import text-cyan-600 text-sm" />
+              </div>
+              <span class="font-semibold text-sm text-[var(--text-primary)]">Importer CSV</span>
+            </button>
+
+            <button
+              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40"
               @click="emit('export-csv'); emit('update:modelValue', false)"
             >
-              <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                <i class="pi pi-file-export text-xl text-emerald-600" />
+              <div class="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <i class="pi pi-file-export text-emerald-600 text-sm" />
               </div>
-              <div class="flex-1">
-                <div class="font-semibold text-[var(--text-primary)] mb-1">
-                  Exporter CSV
-                </div>
-                <div class="text-sm text-[var(--text-secondary)]">
-                  Télécharger vos transactions en CSV
-                </div>
-              </div>
-              <i class="pi pi-chevron-right text-[var(--text-secondary)]" />
+              <span class="font-semibold text-sm text-[var(--text-primary)]">Exporter CSV</span>
             </button>
           </div>
         </div>
@@ -109,7 +150,6 @@ const emit = defineEmits<{
 .overlay-enter-from,
 .overlay-leave-to {
   opacity: 0;
-  backdrop-filter: blur(0);
 }
 
 .menu-slide-enter-active,

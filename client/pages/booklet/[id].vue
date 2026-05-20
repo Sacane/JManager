@@ -48,6 +48,8 @@ const newDateForPreview = ref<Date | null>(null)
 const transactionToConfirm = ref<DisplayTransaction | null>(null)
 const hasRegenerableTransactions = ref(false)
 
+const MOBILE_PAGE_SIZE = 200
+
 const PAGE_SIZE_KEY_BOOKLET = 'jmanager.pagination.bookletTransactions.pageSize'
 const pageSizeOptions = [5, 10, 20, 30, 50]
 const pageSize = useLocalStorage(PAGE_SIZE_KEY_BOOKLET, 10)
@@ -260,7 +262,7 @@ async function loadBookletData() {
 
       const [balances, transactionsRes] = await Promise.all([
         findBalancesByIdMonthAndYear(bookletId, month, bookletData.year),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, currentPage.value, pageSize.value),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_PAGE_SIZE : pageSize.value),
       ])
 
       bookletData.label = balances.label
@@ -645,10 +647,10 @@ function onCsvImportSuccess(result: CsvImportResultDTO) {
 
 onMounted(async () => {
   bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
+  checkMobile()
   await loadBookletData()
   await retrieveTags()
   currentTransaction.tagDTO = await tag.getDefaultTag()
-  checkMobile()
   window.addEventListener('resize', checkMobile)
 })
 
@@ -694,7 +696,13 @@ onUnmounted(() => {
         :is-delete-loading="isDeleteTransactionLoading"
         :is-export-csv-loading="isExportCsvLoading"
         :is-regenerate-loading="isRegenerateLoading"
+        :tag-filter-options="tagFilterOptions.map(o => ({ label: o.label, value: o.value }))"
+        :sub-tag-filter-options="subTagFilterOptions.map(o => ({ label: o.label, value: o.value }))"
+        :selected-tag-filter="selectedTagFilter"
+        :selected-sub-tag-filter="selectedSubTagFilter"
         @update:transaction-filter="transactionFilter = $event"
+        @update:selected-tag-filter="selectedTagFilter = $event"
+        @update:selected-sub-tag-filter="selectedSubTagFilter = $event"
         @new-transaction="openCreationDialog"
         @new-preview="openPreviewCreationDialog"
         @import-csv="openCsvImportDialog"
@@ -948,7 +956,14 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-else class="flex flex-col">
+      <div v-else class="flex flex-col pb-20">
+        <!-- Warning: too many transactions even with large page size -->
+        <div v-if="totalPages > 1" class="flex items-center gap-2 px-3 py-2 mb-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <i class="pi pi-info-circle text-amber-600 text-xs shrink-0" />
+          <span class="text-xs font-medium text-amber-700 dark:text-amber-400">Volume élevé — utilisez les filtres pour affiner les résultats</span>
+        </div>
+
+        <!-- Empty state -->
         <div v-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
           <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
           <h3 class="text-lg font-bold text-[var(--text-primary)] mt-4 mb-2">
@@ -960,58 +975,70 @@ onUnmounted(() => {
           <Button class="btn-primary" icon="pi pi-plus" label="Créer" @click="openCreationDialog" />
         </div>
 
-        <div v-else class="p-1 flex flex-col gap-3 md:(gap-4 p-0)">
+        <!-- Compact transaction rows -->
+        <div v-else class="bg-[var(--card-bg)] rounded-xl overflow-hidden border border-[var(--card-border)] shadow-sm">
           <div
             v-for="(transaction, tIndex) in filteredTransactions"
             :key="transaction.selectionKey || transaction.id || `t-${tIndex}`"
-            class="relative bg-[var(--card-bg)] rounded-xl p-4 shadow border-2 border-[var(--card-border)] transition-all overflow-hidden hover:shadow-lg active:scale-[0.98]"
-            :class="[
-              transaction.isPreview ? 'bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-400/20' : '',
-              isSelected(transaction) ? 'border-[var(--primary)] bg-[var(--card-hover-bg)] shadow-lg' : '',
-            ]"
+            class="flex items-start gap-2 py-1.5 px-3 border-b border-[var(--border-color)] last:border-b-0 transition-colors active:bg-[var(--card-hover-bg)]"
+            :class="isSelected(transaction)
+              ? 'bg-[var(--primary)]/5'
+              : transaction.isPreview ? 'bg-amber-500/5' : ''"
             @click="toggleSelection(transaction)"
           >
-            <div class="flex justify-between items-center mb-3 pb-3 border-b border-[var(--border-color)]">
-              <div class="flex items-center gap-3 md:gap-3.5">
-                <Checkbox :model-value="isSelected(transaction)" :binary="true" @click.stop="toggleSelection(transaction)" />
-                <div class="flex items-center gap-1.5 text-[var(--text-secondary)] text-sm font-medium">
-                  <i class="pi pi-calendar text-[var(--primary)] text-sm" />
-                  <span>{{ transaction.date }}</span>
-                </div>
+            <!-- Checkbox -->
+            <Checkbox
+              :model-value="isSelected(transaction)"
+              :binary="true"
+              class="shrink-0 mt-1"
+              @click.stop="toggleSelection(transaction)"
+            />
+
+            <!-- Day -->
+            <span class="text-[0.65rem] font-bold text-[var(--text-tertiary)] w-5 text-center shrink-0 mt-1 tabular-nums leading-4">
+              {{ new Date(transaction.date).getDate() }}
+            </span>
+
+            <!-- Label + tag -->
+            <div class="flex-1 min-w-0 py-0.5">
+              <div class="flex items-center gap-1 leading-4">
+                <span class="text-xs font-semibold text-[var(--text-primary)] truncate">{{ transaction.label }}</span>
+                <i v-if="transaction.isPreview" class="pi pi-clock text-amber-500 text-[0.5rem] shrink-0" />
               </div>
-              <div class="flex gap-1.5 md:gap-1.5">
-                <Button
+              <span
+                class="inline-flex items-center mt-0.5 px-1.5 py-0 rounded text-[0.6rem] font-semibold leading-4"
+                :style="getTagStyle(getParentTag(transaction.tagDTO).colorDTO)"
+              >{{ getParentTag(transaction.tagDTO).label }}</span>
+            </div>
+
+            <!-- Amount + actions -->
+            <div class="shrink-0 flex flex-col items-end gap-0.5 py-0.5">
+              <span
+                class="text-xs font-extrabold tabular-nums leading-4"
+                :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'"
+              >
+                {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}€
+              </span>
+              <div class="flex items-center gap-0.5">
+                <button
                   v-if="transaction.id"
-                  class="text-[#A30053] hover:bg-[#A30053]/15"
-                  icon="pi pi-pencil"
-                  text
-                  rounded
-                  size="small"
+                  class="w-5 h-5 flex items-center justify-center text-[#A30053] rounded hover:bg-[#A30053]/10 transition-colors disabled:opacity-40"
                   :disabled="isAnyActionLoading"
-                  title="Modifier"
+                  aria-label="Modifier"
                   @click.stop="onEditTransaction({ data: transaction })"
-                />
-                <Button v-if="transaction.isPreview" class="text-[#A30053] hover:bg-[#A30053]/15" icon="pi pi-check" text rounded size="small" :loading="isConfirmPreviewLoading" :disabled="isAnyActionLoading" title="Valider" @click.stop="onConfirmPreview(transaction)" />
+                >
+                  <i class="pi pi-pencil text-[0.55rem]" />
+                </button>
+                <button
+                  v-if="transaction.isPreview"
+                  class="w-5 h-5 flex items-center justify-center text-emerald-600 rounded hover:bg-emerald-600/10 transition-colors disabled:opacity-40"
+                  :disabled="isAnyActionLoading"
+                  aria-label="Valider"
+                  @click.stop="onConfirmPreview(transaction)"
+                >
+                  <i class="pi pi-check text-[0.55rem]" :class="isConfirmPreviewLoading ? 'pi-spin' : ''" />
+                </button>
               </div>
-            </div>
-
-            <div class="flex flex-col gap-3 md:gap-3.5">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-base font-bold text-[var(--text-primary)] md:(text-[1.05rem] leading-snug)">{{ transaction.label }}</span>
-                <i v-if="transaction.isPreview" class="pi pi-clock text-amber-500 text-base" />
-              </div>
-              <div class="flex justify-between items-center gap-3 md:(flex-col items-start gap-2.5)">
-                <div class="flex-1 w-full">
-                  <span class="text-2xl font-extrabold font-mono" :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'">
-                    {{ transaction.isIncome ? '+' : '-' }} {{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }} €
-                  </span>
-                </div>
-                <Tag :value="transaction.tagDTO.label" :style="getTagStyle(transaction.tagDTO.colorDTO)" class="text-sm px-2.5 py-1 md:(text-base px-3 py-1.5 self-start)" />
-              </div>
-            </div>
-
-            <div v-if="isSelected(transaction)" class="absolute top-3 right-3 w-7 h-7 rounded-full grid place-items-center shadow bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] md:(w-8 h-8 top-3.5 right-3.5)">
-              <i class="pi pi-check text-white text-sm md:text-base" />
             </div>
           </div>
         </div>
@@ -1061,7 +1088,13 @@ onUnmounted(() => {
       <BookletCsvMobileMenu
         :is-mobile="isMobile"
         :model-value="isMobileMenuOpen"
+        :has-regenerable-transactions="hasRegenerableTransactions"
+        :is-any-action-loading="isAnyActionLoading"
+        :is-regenerate-loading="isRegenerateLoading"
         @update:model-value="isMobileMenuOpen = $event"
+        @new-transaction="openCreationDialog"
+        @new-preview="openPreviewCreationDialog"
+        @regenerate="regenerate"
         @import-csv="openCsvImportDialog"
         @export-csv="openCsvExportDialog"
       />
