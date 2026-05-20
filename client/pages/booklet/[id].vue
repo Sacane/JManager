@@ -10,7 +10,7 @@ definePageMeta({
   middleware: ['auth'],
 })
 
-const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear, regenerateDeletedPrevisionalTransactions } = useBooklet()
+const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear, findByIdMonthAndYear, regenerateDeletedPrevisionalTransactions } = useBooklet()
 const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
@@ -41,6 +41,8 @@ const isSidebarMode = ref(false)
 const csvImportDialogRef = ref<any>(null)
 const isMobileMenuOpen = ref(false)
 const transactionFilter = ref<'all' | 'preview' | 'confirmed'>('all')
+const globalFilter = ref<'none' | 'all' | 'preview'>('none')
+const allTransactions = ref<DisplayTransaction[]>([])
 const selectedTagFilter = ref<string>('')
 const isConfirmPreviewDialogVisible = ref(false)
 const newAmountForPreview = ref<number | null>(null)
@@ -86,7 +88,10 @@ const displayMonth = computed({
     }
   },
 })
-const transactionsCount = computed(() => actualTransactions.value.length)
+const transactionsCount = computed(() => {
+  const source = globalFilter.value !== 'none' ? allTransactions.value : actualTransactions.value
+  return source.length
+})
 const subTagsByParent = computed(() => {
   const map: Record<string, TagDTO[]> = {}
   for (const t of tags.value) {
@@ -137,7 +142,10 @@ const subTagFilterOptions = computed(() => [
     .map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
 ])
 const monthOptions = computed(() => useDate().months.map((m: string) => translate(m)))
-const previewTransactionsCount = computed(() => actualTransactions.value.filter(t => t.isPreview).length)
+const previewTransactionsCount = computed(() => {
+  const source = globalFilter.value !== 'none' ? allTransactions.value : actualTransactions.value
+  return source.filter(t => t.isPreview).length
+})
 const hasSelection = computed(() => selectedTransactions.value.length > 0)
 const selectedTransactionsAmount = computed(() => selectedTransactions.value.reduce((total, transaction) => {
   const amount = Number.parseFloat(transaction?.value?.toString() ?? '0')
@@ -157,6 +165,7 @@ const selectedTransactionsAmountLabel = computed(() => {
 
 const displayLabel = computed(() => capitalizeFirst(bookletData.label))
 const loadBookletScope = LOADING_SCOPES.bookletDetails.load
+const loadGlobalScope = LOADING_SCOPES.bookletDetails.loadGlobal
 const bookTransactionScope = LOADING_SCOPES.bookletDetails.createTransaction
 const editTransactionScope = LOADING_SCOPES.bookletDetails.editTransaction
 const fetchTransactionScope = LOADING_SCOPES.bookletDetails.fetchTransaction
@@ -165,6 +174,7 @@ const confirmPreviewScope = LOADING_SCOPES.bookletDetails.confirmPreview
 const exportCsvScope = LOADING_SCOPES.bookletDetails.exportCsv
 const regenerateScope = LOADING_SCOPES.bookletDetails.regenerate
 const isBookletLoading = computed(() => isScopeLoading(loadBookletScope))
+const isGlobalFilterLoading = computed(() => isScopeLoading(loadGlobalScope))
 const isBookTransactionLoading = computed(() => isScopeLoading(bookTransactionScope))
 const isEditTransactionLoading = computed(() => isScopeLoading(editTransactionScope))
 const isFetchTransactionLoading = computed(() => isScopeLoading(fetchTransactionScope))
@@ -184,12 +194,18 @@ const isAnyActionLoading = computed(() =>
 )
 
 const filteredTransactions = computed(() => {
-  let result = actualTransactions.value
-  if (transactionFilter.value === 'preview') {
+  let result = globalFilter.value !== 'none' ? allTransactions.value : actualTransactions.value
+
+  if (globalFilter.value === 'preview') {
     result = result.filter(t => t.isPreview)
-  } else if (transactionFilter.value === 'confirmed') {
-    result = result.filter(t => !t.isPreview)
+  } else {
+    if (transactionFilter.value === 'preview') {
+      result = result.filter(t => t.isPreview)
+    } else if (transactionFilter.value === 'confirmed') {
+      result = result.filter(t => !t.isPreview)
+    }
   }
+
   if (selectedParentTagFilter.value !== '') {
     const childIds = (subTagsByParent.value[selectedParentTagFilter.value] ?? []).map(c => c.tagId)
     const allowedIds = new Set([selectedParentTagFilter.value, ...childIds])
@@ -287,6 +303,41 @@ async function loadBookletData() {
   }, loadBookletScope)
 }
 
+function exitGlobalMode() {
+  globalFilter.value = 'none'
+  allTransactions.value = []
+}
+
+async function loadGlobalTransactions() {
+  await withLoading(async () => {
+    try {
+      const bookletId = (route.params as any)?.id as string
+      const month = numberFromMonth(bookletData.month) as number
+      const report = await findByIdMonthAndYear(bookletId, month, bookletData.year)
+      allTransactions.value = report.transactions
+        .map((transaction, index) => asDisplayableTransaction(transaction, index))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    } catch (err) {
+      toast.errorAxios(err as AxiosError)
+      globalFilter.value = 'none'
+    }
+  }, loadGlobalScope)
+}
+
+async function onGlobalFilterChange(newFilter: 'none' | 'all' | 'preview') {
+  if (newFilter === 'none') {
+    exitGlobalMode()
+    selectedTransactions.value = []
+    return
+  }
+  const wasAlreadyGlobal = globalFilter.value !== 'none'
+  globalFilter.value = newFilter
+  selectedTransactions.value = []
+  if (!wasAlreadyGlobal || allTransactions.value.length === 0) {
+    await loadGlobalTransactions()
+  }
+}
+
 async function retrieveTags() {
   try {
     tags.value = await tag.getAllTags()
@@ -296,11 +347,13 @@ async function retrieveTags() {
 }
 
 function onMonthChange() {
+  exitGlobalMode()
   currentPage.value = 0
   loadBookletData()
 }
 
 function onYearChange() {
+  exitGlobalMode()
   currentPage.value = 0
   bookletData.year = bookletData.dateYear.getFullYear()
   loadBookletData()
@@ -337,6 +390,7 @@ async function bookTransaction(transaction: TransactionCreationDTO) {
       actualTransactions.value.push(newTransaction)
       actualTransactions.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
+      exitGlobalMode()
       await loadBookletData()
 
       isCreationDialogVisible.value = false
@@ -383,6 +437,7 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
         actualTransactions.value[index] = asDisplayableTransaction(result)
       }
 
+      exitGlobalMode()
       await loadBookletData()
 
       isEditDialogVisible.value = false
@@ -448,6 +503,7 @@ async function confirmDelete() {
       })
       selectedTransactions.value = []
 
+      exitGlobalMode()
       await loadBookletData()
 
       toast.success('Transactions supprimées avec succès')
@@ -514,6 +570,7 @@ async function confirmPreview() {
         )
       }
 
+      exitGlobalMode()
       await loadBookletData()
 
       toast.success('Transaction validée avec succès')
@@ -541,6 +598,7 @@ async function regenerate() {
       const bookletId = (route.params as any)?.id as string
       const month = numberFromMonth(bookletData.month) as number
       const response = await regenerateDeletedPrevisionalTransactions(bookletId, month, bookletData.year)
+      exitGlobalMode()
       await loadBookletData()
       if (response.type === 'PREVISIONAL') {
         toast.success('Transactions prévisionnelles régénérées avec succès')
@@ -641,6 +699,7 @@ function openCsvExportDialog() {
 }
 
 function onCsvImportSuccess(result: CsvImportResultDTO) {
+  exitGlobalMode()
   loadBookletData()
   toast.success(`${result.successCount} transactions importées avec succès !`)
 }
@@ -685,8 +744,10 @@ onUnmounted(() => {
         :is-mobile="isMobile"
         :hide-action-buttons="isSidebarMode"
         :transaction-filter="transactionFilter"
+        :global-filter="globalFilter"
         :transactions-count="transactionsCount"
         :preview-transactions-count="previewTransactionsCount"
+        :is-global-filter-loading="isGlobalFilterLoading"
         :has-selection="hasSelection"
         :selected-count="selectedTransactions.length"
         :selected-amount="selectedTransactionsAmount"
@@ -701,6 +762,7 @@ onUnmounted(() => {
         :selected-tag-filter="selectedTagFilter"
         :selected-sub-tag-filter="selectedSubTagFilter"
         @update:transaction-filter="transactionFilter = $event"
+        @update:global-filter="onGlobalFilterChange($event)"
         @update:selected-tag-filter="selectedTagFilter = $event"
         @update:selected-sub-tag-filter="selectedSubTagFilter = $event"
         @new-transaction="openCreationDialog"
@@ -878,7 +940,7 @@ onUnmounted(() => {
               </div>
             </template>
           </AppTable>
-          <div class="shrink-0 flex items-center justify-between flex-wrap gap-2 px-3 py-2 border-t border-[var(--card-border)]">
+          <div v-if="globalFilter === 'none'" class="shrink-0 flex items-center justify-between flex-wrap gap-2 px-3 py-2 border-t border-[var(--card-border)]">
             <div class="flex items-center gap-2">
               <span class="text-xs text-[var(--text-secondary)]">Lignes par page&nbsp;:</span>
               <Select
@@ -896,6 +958,13 @@ onUnmounted(() => {
               :total-records="totalElements"
               @page="onPageChange"
             />
+          </div>
+          <div v-else class="shrink-0 flex items-center gap-2 px-3 py-2 border-t border-[var(--card-border)]">
+            <i class="pi pi-globe text-[var(--primary)] text-xs" />
+            <span class="text-xs font-medium text-[var(--text-secondary)]">
+              {{ globalFilter === 'preview' ? 'Toutes les transactions prévisionnelles du mois' : 'Toutes les transactions du mois' }}
+              — <button class="text-[var(--primary)] hover:underline" @click="onGlobalFilterChange('none')">Retour à la pagination</button>
+            </span>
           </div>
         </div>
 
@@ -926,7 +995,7 @@ onUnmounted(() => {
           <button
             v-tooltip.right="{ value: `Tout (${transactionsCount})`, pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
-            :class="transactionFilter === 'all'
+            :class="transactionFilter === 'all' && globalFilter === 'none'
               ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
               : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
             @click="transactionFilter = 'all'"
@@ -936,7 +1005,7 @@ onUnmounted(() => {
           <button
             v-tooltip.right="{ value: `Confirmées (${transactionsCount - previewTransactionsCount})`, pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
-            :class="transactionFilter === 'confirmed'
+            :class="transactionFilter === 'confirmed' && globalFilter === 'none'
               ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
               : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-emerald-500 hover:text-emerald-600'"
             @click="transactionFilter = 'confirmed'"
@@ -946,12 +1015,35 @@ onUnmounted(() => {
           <button
             v-tooltip.right="`Prévisionnelles (${previewTransactionsCount})`"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
-            :class="transactionFilter === 'preview'
+            :class="transactionFilter === 'preview' && globalFilter === 'none'
               ? 'border-amber-500 text-amber-600 bg-amber-500/8'
               : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"
             @click="transactionFilter = 'preview'"
           >
             <i class="pi pi-clock" />
+          </button>
+          <div class="w-full h-px bg-[var(--card-border)] my-1" />
+          <button
+            v-tooltip.right="{ value: 'Tout le mois', pt: { text: { style: 'white-space: nowrap' } } }"
+            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
+            :class="globalFilter === 'all'
+              ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
+              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
+            :disabled="isGlobalFilterLoading"
+            @click="onGlobalFilterChange(globalFilter === 'all' ? 'none' : 'all')"
+          >
+            <i :class="isGlobalFilterLoading && globalFilter === 'all' ? 'pi pi-spin pi-spinner' : 'pi pi-globe'" />
+          </button>
+          <button
+            v-tooltip.right="{ value: 'Prév. du mois', pt: { text: { style: 'white-space: nowrap' } } }"
+            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
+            :class="globalFilter === 'preview'
+              ? 'border-amber-500 text-amber-600 bg-amber-500/8'
+              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"
+            :disabled="isGlobalFilterLoading"
+            @click="onGlobalFilterChange(globalFilter === 'preview' ? 'none' : 'preview')"
+          >
+            <i :class="isGlobalFilterLoading && globalFilter === 'preview' ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'" />
           </button>
         </div>
       </div>

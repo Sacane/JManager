@@ -8,8 +8,10 @@ interface Props {
   isMobile: boolean
   hideActionButtons?: boolean
   transactionFilter: 'all' | 'preview' | 'confirmed'
+  globalFilter: 'none' | 'all' | 'preview'
   transactionsCount: number
   previewTransactionsCount: number
+  isGlobalFilterLoading?: boolean
   hasSelection: boolean
   selectedCount: number
   selectedAmount: number
@@ -27,6 +29,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   hideActionButtons: false,
+  isGlobalFilterLoading: false,
   tagFilterOptions: () => [],
   subTagFilterOptions: () => [],
   selectedTagFilter: '',
@@ -35,6 +38,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'update:transactionFilter': [val: 'all' | 'preview' | 'confirmed']
+  'update:globalFilter': [val: 'none' | 'all' | 'preview']
   'update:selectedTagFilter': [val: string]
   'update:selectedSubTagFilter': [val: string]
   'new-transaction': []
@@ -53,7 +57,7 @@ const emit = defineEmits<{
     <template v-if="isMobile">
       <button
         class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
-        :class="transactionFilter === 'all'
+        :class="transactionFilter === 'all' && globalFilter === 'none'
           ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'all')"
@@ -63,7 +67,7 @@ const emit = defineEmits<{
       </button>
       <button
         class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
-        :class="transactionFilter === 'confirmed'
+        :class="transactionFilter === 'confirmed' && globalFilter === 'none'
           ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'confirmed')"
@@ -73,13 +77,42 @@ const emit = defineEmits<{
       </button>
       <button
         class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
-        :class="transactionFilter === 'preview'
+        :class="transactionFilter === 'preview' && globalFilter === 'none'
           ? 'border-amber-500 text-amber-600 bg-amber-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'preview')"
       >
         <i class="pi pi-clock text-[0.6rem]" />
         <span>{{ previewTransactionsCount }}</span>
+      </button>
+
+      <!-- Global filter separator -->
+      <div class="w-px h-4 bg-[var(--border-color)] mx-0.5 shrink-0" />
+
+      <!-- Global: all month -->
+      <button
+        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
+        :class="globalFilter === 'all'
+          ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
+        :disabled="isGlobalFilterLoading"
+        aria-label="Tout le mois"
+        @click="emit('update:globalFilter', globalFilter === 'all' ? 'none' : 'all')"
+      >
+        <i class="text-[0.6rem]" :class="isGlobalFilterLoading && globalFilter === 'all' ? 'pi pi-spin pi-spinner' : 'pi pi-globe'" />
+      </button>
+
+      <!-- Global: previews month -->
+      <button
+        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
+        :class="globalFilter === 'preview'
+          ? 'border-amber-500 text-amber-600 bg-amber-500/8'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
+        :disabled="isGlobalFilterLoading"
+        aria-label="Prévisionnelles du mois"
+        @click="emit('update:globalFilter', globalFilter === 'preview' ? 'none' : 'preview')"
+      >
+        <i class="text-[0.6rem]" :class="isGlobalFilterLoading && globalFilter === 'preview' ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'" />
       </button>
 
       <!-- Tag filters (when options available) -->
@@ -128,9 +161,10 @@ const emit = defineEmits<{
 
     <!-- Desktop: filter buttons + action buttons -->
     <template v-if="!isMobile">
+      <!-- Local filter buttons -->
       <button
         class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
-        :class="transactionFilter === 'all'
+        :class="transactionFilter === 'all' && globalFilter === 'none'
           ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
           : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
         @click="emit('update:transactionFilter', 'all')"
@@ -140,7 +174,7 @@ const emit = defineEmits<{
       </button>
       <button
         class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
-        :class="transactionFilter === 'confirmed'
+        :class="transactionFilter === 'confirmed' && globalFilter === 'none'
           ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-emerald-500 hover:text-emerald-600'"
         @click="emit('update:transactionFilter', 'confirmed')"
@@ -150,7 +184,7 @@ const emit = defineEmits<{
       </button>
       <button
         class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
-        :class="transactionFilter === 'preview'
+        :class="transactionFilter === 'preview' && globalFilter === 'none'
           ? 'border-amber-500 text-amber-600 bg-amber-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"
         @click="emit('update:transactionFilter', 'preview')"
@@ -158,6 +192,36 @@ const emit = defineEmits<{
         <i class="pi pi-clock mr-1.5" />
         Prévisionnelles ({{ previewTransactionsCount }})
       </button>
+
+      <!-- Global filter separator -->
+      <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
+
+      <!-- Global: all month -->
+      <button
+        class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        :class="globalFilter === 'all'
+          ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
+        :disabled="isGlobalFilterLoading"
+        @click="emit('update:globalFilter', globalFilter === 'all' ? 'none' : 'all')"
+      >
+        <i class="mr-1.5" :class="isGlobalFilterLoading && globalFilter === 'all' ? 'pi pi-spin pi-spinner' : 'pi pi-globe'" />
+        Tout le mois
+      </button>
+
+      <!-- Global: previews month -->
+      <button
+        class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
+        :class="globalFilter === 'preview'
+          ? 'border-amber-500 text-amber-600 bg-amber-500/8'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"
+        :disabled="isGlobalFilterLoading"
+        @click="emit('update:globalFilter', globalFilter === 'preview' ? 'none' : 'preview')"
+      >
+        <i class="mr-1.5" :class="isGlobalFilterLoading && globalFilter === 'preview' ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'" />
+        Prév. du mois
+      </button>
+
       <div class="w-px h-7 bg-[var(--border-color)] mx-1 shrink-0" />
       <BookletActionButtons
         class="ml-auto"

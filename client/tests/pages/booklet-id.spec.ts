@@ -81,6 +81,13 @@ const findTransactionsByIdMonthAndYearMock = vi.fn().mockResolvedValue({
   totalPages: 1,
 })
 
+const findByIdMonthAndYearMock = vi.fn().mockResolvedValue({
+  label: 'compte courant',
+  transactions: [],
+  realSold: '1500.00',
+  previewSold: '1700.00',
+})
+
 function createTransaction(overrides: Partial<TransactionResultDTO> = {}): TransactionResultDTO {
   return {
     id: 'tx-1',
@@ -115,6 +122,7 @@ function mountPage(activeScopes: string[] = []) {
   vi.stubGlobal('useBooklet', () => ({
     findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
     findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+    findByIdMonthAndYear: findByIdMonthAndYearMock,
   }))
   vi.stubGlobal('useTag', () => ({
     getAllTags: vi.fn().mockResolvedValue([defaultTag]),
@@ -350,6 +358,7 @@ describe('pages/booklet/[id] confirmDelete with virtual transactions', () => {
     vi.stubGlobal('useBooklet', () => ({
       findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
       findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+      findByIdMonthAndYear: findByIdMonthAndYearMock,
     }))
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue([defaultTag]),
@@ -579,6 +588,7 @@ describe('pages/booklet/[id] confirmPreview with virtual transactions', () => {
     vi.stubGlobal('useBooklet', () => ({
       findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
       findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+      findByIdMonthAndYear: findByIdMonthAndYearMock,
     }))
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue([defaultTag]),
@@ -772,6 +782,7 @@ describe('pages/booklet/[id] resolveDisplayTag', () => {
     vi.stubGlobal('useBooklet', () => ({
       findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
       findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+      findByIdMonthAndYear: findByIdMonthAndYearMock,
     }))
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue(tagsToLoad),
@@ -891,6 +902,7 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
         totalElements: transactions.length,
         totalPages: 1,
       }),
+      findByIdMonthAndYear: findByIdMonthAndYearMock,
     }))
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue([parentTag, subTag]),
@@ -1048,6 +1060,7 @@ describe('pages/booklet/[id] tagFilterOptions and subTagFilterOptions scoped to 
         totalElements: transactions.length,
         totalPages: 1,
       }),
+      findByIdMonthAndYear: findByIdMonthAndYearMock,
     }))
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue(allTags),
@@ -1162,5 +1175,225 @@ describe('pages/booklet/[id] tagFilterOptions and subTagFilterOptions scoped to 
     expect(subOpts.some(o => o.value === 'sub-B')).toBe(true)
     // subTagA is not used in any transaction
     expect(subOpts.some(o => o.value === 'sub-A')).toBe(false)
+  })
+})
+
+describe('pages/booklet/[id] global filter', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function mountForGlobal(reportTransactions: TransactionResultDTO[] = []) {
+    findByIdMonthAndYearMock.mockResolvedValue({
+      label: 'compte courant',
+      transactions: reportTransactions,
+      realSold: '1500.00',
+      previewSold: '1700.00',
+    })
+
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useRoute', () => ({ params: { id: 'booklet-1' } }))
+    vi.stubGlobal('useJToast', () => ({ success: vi.fn(), errorAxios: vi.fn(), warn: vi.fn() }))
+    vi.stubGlobal('useLoading', () => ({
+      isScopeLoading: () => false,
+      withLoading: async <T>(action: () => Promise<T>) => action(),
+    }))
+    vi.stubGlobal('useBooklet', () => ({
+      findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
+      findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+      findByIdMonthAndYear: findByIdMonthAndYearMock,
+    }))
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([defaultTag]),
+      getDefaultTag: vi.fn().mockResolvedValue(defaultTag),
+    }))
+    vi.stubGlobal('useDate', () => ({
+      months: ['JANUARY', 'FEBRUARY', 'MARCH'],
+      englishMonth: (v: string) => v,
+      translate: (v: string) => v,
+      monthFromNumber: (n: number) => ['JANUARY', 'FEBRUARY', 'MARCH'][n - 1] || 'JANUARY',
+      numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
+    }))
+    vi.stubGlobal('navigateTo', vi.fn())
+
+    return shallowMount(BookletDetailsPage, {
+      global: {
+        mocks: { useDate: () => ({ months: ['JANUARY', 'FEBRUARY', 'MARCH'] }) },
+        stubs: {
+          ConfirmDialog: true, AppTable: true, TransactionCreationDialog: true,
+          Dialog: true, CsvImportDialog: true, Select: true, DatePicker: true,
+          Tag: true, Checkbox: true, Paginator: true, Button: true,
+        },
+      },
+    })
+  }
+
+  it('starts with globalFilter none and empty allTransactions', async () => {
+    const wrapper = mountForGlobal()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    expect(vm.globalFilter).toBe('none')
+    expect(vm.allTransactions).toHaveLength(0)
+  })
+
+  it('onGlobalFilterChange all loads report transactions and sets globalFilter to all', async () => {
+    const tx = createTransaction({ id: 'global-1', label: 'Global tx' })
+    const wrapper = mountForGlobal([tx])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
+    await flushPromises()
+
+    expect(vm.globalFilter).toBe('all')
+    expect(findByIdMonthAndYearMock).toHaveBeenCalledWith('booklet-1', 3, 2026)
+    expect(vm.allTransactions).toHaveLength(1)
+    expect(vm.allTransactions[0].id).toBe('global-1')
+  })
+
+  it('onGlobalFilterChange preview sets globalFilter to preview', async () => {
+    const preview = createTransaction({ id: 'prv-1', isPreview: true })
+    const confirmed = createTransaction({ id: 'cnf-1', isPreview: false })
+    const wrapper = mountForGlobal([preview, confirmed])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('preview')
+    await flushPromises()
+
+    expect(vm.globalFilter).toBe('preview')
+    expect(vm.allTransactions).toHaveLength(2)
+  })
+
+  it('filteredTransactions in global preview mode returns only previews', async () => {
+    const preview = createTransaction({ id: 'prv-1', isPreview: true })
+    const confirmed = createTransaction({ id: 'cnf-1', isPreview: false })
+    const wrapper = mountForGlobal([preview, confirmed])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('preview')
+    await flushPromises()
+
+    const result = vm.filteredTransactions as { id: string }[]
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('prv-1')
+  })
+
+  it('filteredTransactions in global all mode returns all transactions', async () => {
+    const preview = createTransaction({ id: 'prv-1', isPreview: true })
+    const confirmed = createTransaction({ id: 'cnf-1', isPreview: false })
+    const wrapper = mountForGlobal([preview, confirmed])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
+    await flushPromises()
+
+    expect(vm.filteredTransactions).toHaveLength(2)
+  })
+
+  it('transactionsCount reflects global data when in global mode', async () => {
+    const tx1 = createTransaction({ id: 'g-1' })
+    const tx2 = createTransaction({ id: 'g-2' })
+    findTransactionsByIdMonthAndYearMock.mockResolvedValue({
+      transactions: [tx1],
+      hasRegenerableTransactions: false,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 1,
+      totalPages: 1,
+    })
+    const wrapper = mountForGlobal([tx1, tx2])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    expect(vm.transactionsCount).toBe(1)
+
+    await vm.onGlobalFilterChange('all')
+    await flushPromises()
+
+    expect(vm.transactionsCount).toBe(2)
+  })
+
+  it('onGlobalFilterChange none exits global mode and clears allTransactions', async () => {
+    const tx = createTransaction({ id: 'g-1' })
+    const wrapper = mountForGlobal([tx])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
+    await flushPromises()
+    expect(vm.globalFilter).toBe('all')
+
+    await vm.onGlobalFilterChange('none')
+    await flushPromises()
+
+    expect(vm.globalFilter).toBe('none')
+    expect(vm.allTransactions).toHaveLength(0)
+  })
+
+  it('switching between global all and global preview does not reload report', async () => {
+    const wrapper = mountForGlobal([createTransaction({ id: 'g-1' })])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
+    await flushPromises()
+    const callCount = findByIdMonthAndYearMock.mock.calls.length
+
+    await vm.onGlobalFilterChange('preview')
+    await flushPromises()
+
+    expect(findByIdMonthAndYearMock.mock.calls.length).toBe(callCount)
+  })
+
+  it('onMonthChange exits global mode', async () => {
+    const wrapper = mountForGlobal([createTransaction({ id: 'g-1' })])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
+    await flushPromises()
+    expect(vm.globalFilter).toBe('all')
+
+    vm.onMonthChange()
+    await flushPromises()
+
+    expect(vm.globalFilter).toBe('none')
+    expect(vm.allTransactions).toHaveLength(0)
+  })
+
+  it('selecting in global mode is cleared when exiting global mode', async () => {
+    const tx = createTransaction({ id: 'g-1' })
+    const wrapper = mountForGlobal([tx])
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
+    await flushPromises()
+
+    vm.selectedTransactions = [vm.filteredTransactions[0]]
+    expect(vm.selectedTransactions).toHaveLength(1)
+
+    await vm.onGlobalFilterChange('none')
+    expect(vm.selectedTransactions).toHaveLength(0)
   })
 })
