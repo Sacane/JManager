@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain.models
 
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import java.time.LocalDate
 import java.time.Month
 import java.util.UUID
 
@@ -94,6 +95,15 @@ class Booklet(
             monthlyPeriodEndDay: $monthlyPeriodEndDay
             owner: ${owner?.id}
         """.trimIndent()
+    }
+
+    fun balanceAt(date: LocalDate): Amount {
+        return transactions
+            .filter { !it.isPreview && it.date.isBefore(date) }
+            .fold(initialSold) { balance, transaction ->
+                if (transaction.isIncome) balance + transaction.amount
+                else balance - transaction.amount
+            }
     }
 
     fun addTransaction(transaction: Transaction) {

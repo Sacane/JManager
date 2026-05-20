@@ -3,6 +3,8 @@ package fr.sacane.jmanager.domain.port.input.stats
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.Amount
+import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.DailyTrendStatsOutput
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
@@ -12,9 +14,13 @@ import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 import java.util.logging.Logger
+
+private fun List<Booklet>.aggregateBalanceAt(date: LocalDate): Amount =
+    fold(Amount(BigDecimal.ZERO)) { acc, booklet -> acc + booklet.balanceAt(date) }
 
 data class GetDailyTrendStatsQuery(
     val userId: UserId,
@@ -51,10 +57,12 @@ class GetDailyTrendStatsService(
         }
 
         return withScopedBooklets(bookletRepository, userId, query.bookletId) { scopedBooklets ->
+            val startingBalance = scopedBooklets.aggregateBalanceAt(query.startDate)
             val dailyTrends = dailyTrendCalculator.calculateDailyTrend(
                 booklets = scopedBooklets,
                 startDate = query.startDate,
-                endDate = query.endDate
+                endDate = query.endDate,
+                startingBalance = startingBalance
             )
 
             LOGGER.info("Daily trend stats calculated: ${dailyTrends.size} days processed")
