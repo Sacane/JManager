@@ -46,15 +46,15 @@ const emit = defineEmits<{
       <!-- Right: balances + filters -->
       <div class="flex items-center gap-2 shrink-0 flex-wrap">
         <!-- Balances -->
-        <div class="flex items-center gap-4 px-5 py-2.5 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--card-border)] shadow-sm">
+        <div class="flex items-center gap-2 sm:gap-4 px-3 py-1.5 sm:(px-5 py-2.5) bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] rounded-xl border border-[var(--card-border)] shadow-sm">
           <div class="flex flex-col items-center gap-0.5">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Solde réel</span>
-            <span class="text-xl font-extrabold tabular-nums text-[var(--primary)]">{{ realSold.toFixed(2) }} €</span>
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Réel</span>
+            <span class="text-sm sm:text-xl font-extrabold tabular-nums text-[var(--primary)]">{{ realSold.toFixed(2) }} €</span>
           </div>
-          <div class="w-px h-10 bg-[var(--border-color)]" />
+          <div class="w-px h-6 sm:h-10 bg-[var(--border-color)]" />
           <div class="flex flex-col items-center gap-0.5">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Prévisionnel</span>
-            <span class="text-xl font-extrabold tabular-nums text-[#FF5A08]">{{ previewSold.toFixed(2) }} €</span>
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Prévis.</span>
+            <span class="text-sm sm:text-xl font-extrabold tabular-nums text-[#FF5A08]">{{ previewSold.toFixed(2) }} €</span>
           </div>
         </div>
 
@@ -63,7 +63,7 @@ const emit = defineEmits<{
           :model-value="selectedMonth"
           :options="monthOptions"
           placeholder="Mois"
-          class="!w-[120px] border-1 rounded-lg bg-transparent"
+          class="!w-[90px] sm:!w-[120px] border-1 rounded-lg bg-transparent"
           size="small"
           @update:model-value="(val: string) => emit('update:selectedMonth', val)"
           @change="emit('month-change')"
@@ -72,7 +72,7 @@ const emit = defineEmits<{
           :model-value="dateYear"
           view="year"
           date-format="yy"
-          class="!w-[90px] rounded-lg cursor-pointer bg-transparent"
+          class="!w-[70px] sm:!w-[90px] rounded-lg cursor-pointer bg-transparent"
           placeholder="Année"
           :show-icon="false"
           @update:model-value="(val: Date) => emit('update:dateYear', val)"

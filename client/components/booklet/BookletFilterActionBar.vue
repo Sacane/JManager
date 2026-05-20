@@ -1,4 +1,9 @@
 <script setup lang="ts">
+interface TagFilterOption {
+  label: string
+  value: string
+}
+
 interface Props {
   isMobile: boolean
   hideActionButtons?: boolean
@@ -14,14 +19,24 @@ interface Props {
   isDeleteLoading: boolean
   isExportCsvLoading: boolean
   isRegenerateLoading: boolean
+  tagFilterOptions?: TagFilterOption[]
+  subTagFilterOptions?: TagFilterOption[]
+  selectedTagFilter?: string
+  selectedSubTagFilter?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   hideActionButtons: false,
+  tagFilterOptions: () => [],
+  subTagFilterOptions: () => [],
+  selectedTagFilter: '',
+  selectedSubTagFilter: '',
 })
 
 const emit = defineEmits<{
   'update:transactionFilter': [val: 'all' | 'preview' | 'confirmed']
+  'update:selectedTagFilter': [val: string]
+  'update:selectedSubTagFilter': [val: string]
   'new-transaction': []
   'new-preview': []
   'import-csv': []
@@ -33,42 +48,85 @@ const emit = defineEmits<{
 
 <template>
   <!-- Filtres + Actions -->
-  <div v-if="isMobile || !hideActionButtons" class="flex items-center gap-2 mb-2 overflow-x-auto pb-0">
+  <div v-if="isMobile || !hideActionButtons" class="flex items-center gap-2 mb-2 overflow-x-auto">
+    <!-- Mobile: compact filter chips -->
     <template v-if="isMobile">
-      <span class="text-sm font-semibold text-[var(--text-secondary)] whitespace-nowrap mr-1 shrink-0">Afficher :</span>
       <button
-        class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
+        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'all'
-          ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white shadow-[0_2px_8px_rgba(101,8,204,0.25)]'
-          : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--primary)]'"
+          ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'all')"
       >
-        <i class="pi pi-list mr-2" />
-        Tout ({{ transactionsCount }})
+        <i class="pi pi-list text-[0.6rem]" />
+        <span>{{ transactionsCount }}</span>
       </button>
       <button
-        class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
+        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'confirmed'
-          ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.25)]'
-          : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-emerald-600'"
+          ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'confirmed')"
       >
-        <i class="pi pi-check-circle mr-2" />
-        Confirmées ({{ transactionsCount - previewTransactionsCount }})
+        <i class="pi pi-check-circle text-[0.6rem]" />
+        <span>{{ transactionsCount - previewTransactionsCount }}</span>
       </button>
       <button
-        class="px-4 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0"
+        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'preview'
-          ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.25)]'
-          : 'bg-[var(--card-bg)] text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-[var(--card-hover-bg)] hover:text-amber-600'"
+          ? 'border-amber-500 text-amber-600 bg-amber-500/8'
+          : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'preview')"
       >
-        <i class="pi pi-clock mr-2" />
-        Prévisionnelles ({{ previewTransactionsCount }})
+        <i class="pi pi-clock text-[0.6rem]" />
+        <span>{{ previewTransactionsCount }}</span>
       </button>
+
+      <!-- Tag filters (when options available) -->
+      <template v-if="props.tagFilterOptions && props.tagFilterOptions.length > 1">
+        <div class="w-px h-4 bg-[var(--border-color)] mx-0.5 shrink-0" />
+        <Select
+          :model-value="selectedTagFilter"
+          :options="tagFilterOptions"
+          option-label="label"
+          option-value="value"
+          size="small"
+          class="!w-[80px] shrink-0"
+          @update:model-value="(val: string) => emit('update:selectedTagFilter', val)"
+        >
+          <template #value="{ value: val }">
+            <span class="text-[0.65rem] font-semibold truncate block" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+              {{ val ? (tagFilterOptions?.find(o => o.value === val)?.label ?? val) : 'Tag' }}
+            </span>
+          </template>
+          <template #option="{ option }">
+            <span class="text-xs">{{ option.label || 'Tous' }}</span>
+          </template>
+        </Select>
+      </template>
+      <template v-if="props.subTagFilterOptions && props.subTagFilterOptions.length > 1">
+        <Select
+          :model-value="selectedSubTagFilter"
+          :options="subTagFilterOptions"
+          option-label="label"
+          option-value="value"
+          size="small"
+          class="!w-[80px] shrink-0"
+          @update:model-value="(val: string) => emit('update:selectedSubTagFilter', val)"
+        >
+          <template #value="{ value: val }">
+            <span class="text-[0.65rem] font-semibold truncate block" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+              {{ val ? (subTagFilterOptions?.find(o => o.value === val)?.label ?? val) : 'S-tag' }}
+            </span>
+          </template>
+          <template #option="{ option }">
+            <span class="text-xs">{{ option.label || 'Tous' }}</span>
+          </template>
+        </Select>
+      </template>
     </template>
 
-    <!-- Filtres + Actions : desktop uniquement -->
+    <!-- Desktop: filter buttons + action buttons -->
     <template v-if="!isMobile">
       <button
         class="px-2.5 py-1 rounded-lg font-semibold text-sm transition-all whitespace-nowrap shrink-0 border"
@@ -123,50 +181,23 @@ const emit = defineEmits<{
     </template>
   </div>
 
-  <!-- Boutons d'action mobile -->
-  <div v-if="isMobile" class="flex gap-2 mb-4">
-    <Button
-      class="flex-1 !bg-gradient-to-br !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(101,8,204,0.3)] hover:!brightness-110 transition-all"
-      icon="pi pi-plus"
-      label="Transaction"
-      :disabled="isAnyActionLoading"
-      @click="emit('new-transaction')"
-    />
-    <Button
-      class="flex-1 !bg-[#FFC108] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all"
-      icon="pi pi-clock"
-      label="Prévisionnelle"
-      :disabled="isAnyActionLoading"
-      @click="emit('new-preview')"
-    />
-    <Button
-      v-if="hasRegenerableTransactions"
-      class="flex-1 !bg-[#FFC108] !text-white !border-0 font-semibold shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all"
-      icon="pi pi-refresh"
-      label="Régénérer"
-      :loading="isRegenerateLoading"
-      :disabled="isAnyActionLoading"
-      @click="emit('regenerate')"
-    />
-  </div>
-
   <!-- Mobile selection bar -->
-  <div v-if="isMobile" class="flex flex-col gap-3 mb-5 md:mb-4">
+  <div v-if="isMobile" class="flex flex-col gap-2 mb-2">
     <Transition name="fade">
-      <div v-if="hasSelection" class="flex items-center gap-3">
-        <div class="flex items-center justify-between gap-4 px-4 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm flex-1">
-          <div class="flex items-center gap-2">
-            <i class="pi pi-check-square text-[var(--primary)] text-sm" />
-            <span class="text-sm font-semibold text-[var(--text-secondary)]">{{ selectedCount }} sélectionnée{{ selectedCount > 1 ? 's' : '' }}</span>
+      <div v-if="hasSelection" class="flex items-center gap-2">
+        <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-sm flex-1">
+          <div class="flex items-center gap-1.5">
+            <i class="pi pi-check-square text-[var(--primary)] text-xs" />
+            <span class="text-xs font-semibold text-[var(--text-secondary)]">{{ selectedCount }} sélectionnée{{ selectedCount > 1 ? 's' : '' }}</span>
           </div>
-          <div class="w-px h-6 bg-[var(--border-color)]" />
-          <span class="text-base font-extrabold" :class="selectedAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">
+          <div class="w-px h-4 bg-[var(--border-color)]" />
+          <span class="text-sm font-extrabold" :class="selectedAmount >= 0 ? 'text-emerald-600' : 'text-red-500'">
             {{ selectedAmountLabel }}
           </span>
         </div>
         <Button
           v-tooltip.bottom="`Supprimer (${selectedCount})`"
-          class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-red-500 !text-white !border-0 shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:!bg-red-600 transition-all"
+          class="!w-8 !h-8 !p-0 !flex !items-center !justify-center shrink-0 !bg-red-500 !text-white !border-0 shadow-[0_2px_8px_rgba(239,68,68,0.3)] hover:!bg-red-600 transition-all"
           icon="pi pi-trash"
           :loading="isDeleteLoading"
           :disabled="isAnyActionLoading"
@@ -188,54 +219,22 @@ const emit = defineEmits<{
   transform: translateY(-4px);
 }
 
-:deep(.p-button.btn-primary) {
+:deep(.p-select) {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+:deep(.p-select-label) {
   background: transparent !important;
-  border: 2px solid var(--primary) !important;
-  color: var(--primary) !important;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(101, 8, 204, 0.15);
+  color: var(--text-primary) !important;
+  padding: 0.2rem 0.4rem !important;
 }
-:deep(.p-button.btn-primary:hover) {
-  background: rgba(101, 8, 204, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(101, 8, 204, 0.25) !important;
-  transform: translateY(-1px);
+:deep(.p-select-trigger) {
+  color: var(--text-secondary) !important;
+  width: 1.2rem !important;
 }
-:deep(.p-button.btn-primary:active) {
-  transform: translateY(0);
-}
-:deep(.p-button.p-button-outlined) {
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-:deep(.p-button.p-button-outlined.border-amber-500) {
-  border-color: rgb(245 158 11) !important;
-  color: rgb(217 119 6) !important;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
-}
-:deep(.p-button.p-button-outlined.border-amber-500:hover) {
-  background: rgba(245, 158, 11, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25) !important;
-  transform: translateY(-1px);
-}
-:deep(.p-button.p-button-outlined.border-cyan-500) {
-  border-color: rgb(6 182 212) !important;
-  color: rgb(8 145 178) !important;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
-}
-:deep(.p-button.p-button-outlined.border-cyan-500:hover) {
-  background: rgba(6, 182, 212, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25) !important;
-  transform: translateY(-1px);
-}
-:deep(.p-button.p-button-outlined.border-emerald-500) {
-  border-color: rgb(16 185 129) !important;
-  color: rgb(5 150 105) !important;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
-}
-:deep(.p-button.p-button-outlined.border-emerald-500:hover) {
-  background: rgba(16, 185, 129, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
-  transform: translateY(-1px);
+:deep(.p-select.p-focus) {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--card-border) !important;
 }
 </style>
