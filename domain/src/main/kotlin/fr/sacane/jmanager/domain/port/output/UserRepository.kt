@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.output
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
@@ -64,7 +65,12 @@ interface UserRepository {
      * @param roles Set of roles assigned to the user (defaults to Role.USER)
      * @return persisted User or null on failure
      */
-    fun register(username: String, password: String, roles: Set<Role> = setOf(Role.USER)): User?
+    fun register(
+        username: String,
+        password: String,
+        roles: Set<Role> = setOf(Role.USER),
+        subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
+    ): User?
 
     /**
      * Upsert (insert or update) a user aggregate.

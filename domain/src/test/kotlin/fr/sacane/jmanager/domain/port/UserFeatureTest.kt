@@ -20,6 +20,7 @@ import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
 import fr.sacane.jmanager.domain.port.input.user.LogoutUseCase
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionCommand
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
+import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
@@ -185,6 +186,16 @@ class UserFeatureTest {
             then(result) {
                 assertFailure(ResultState.PASSWORD_NOT_MATCH)
                 assertEquals("domain.user.register.password_mismatch", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Registered user defaults to BETA_TESTER subscription plan`() {
+            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test")) }
+
+            then(result) {
+                assertSuccess()
+                assertEquals(SubscriptionPlan.BETA_TESTER, mapNotNullOrFailure()!!.subscriptionPlan)
             }
         }
     }

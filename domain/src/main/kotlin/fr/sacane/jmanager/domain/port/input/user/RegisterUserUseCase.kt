@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.domain.port.output.UserRepository
@@ -35,7 +36,7 @@ class RegisterUserService(
             )
         }
         val hashedPassword = hasher.hash(command.password)
-        val userResult = userRepository.register(command.username, hashedPassword)
+        val userResult = userRepository.register(command.username, hashedPassword, subscriptionPlan = SubscriptionPlan.BETA_TESTER)
             ?: return failure(
                 ResultState.INVALID,
                 DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")

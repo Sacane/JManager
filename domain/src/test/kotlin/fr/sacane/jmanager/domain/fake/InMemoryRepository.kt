@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
@@ -131,8 +132,8 @@ class InMemoryUserRepository (
         return user.user
     }
 
-    override fun register(username: String, password: String, roles: Set<Role>): User {
-        val element = User(id = UserId(UUID.randomUUID()), username = username, null, roles = roles)
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan): User {
+        val element = User(id = UserId(UUID.randomUUID()), username = username, null, roles = roles, subscriptionPlan = subscriptionPlan)
         inMemoryDatabase.users[element.id] = UserWithPassword(element, password, roles)
         return element
     }

@@ -12,7 +12,8 @@ data class UserDTO(
     val username: String,
     val email: String? = null,
     val createdDate: String? = null,
-    val roles: List<String> = emptyList()
+    val roles: List<String> = emptyList(),
+    val subscriptionPlan: String = "BETA_TESTER",
 )
 
 @Serializable

@@ -40,7 +40,7 @@ class ConfirmPreviewTransactionService(
     }
 
     override fun handle(command: ConfirmPreviewTransactionCommand): Result<TransactionResumeResult> {
-        return infraTransactionManager.executeInTransaction(Any()) {
+        return infraTransactionManager.executeInTransaction(Unit) {
             val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,

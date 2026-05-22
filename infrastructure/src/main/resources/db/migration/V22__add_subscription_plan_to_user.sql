@@ -1,0 +1,2 @@
+ALTER TABLE user_resource
+    ADD COLUMN subscription_plan VARCHAR(50) NOT NULL DEFAULT 'BETA_TESTER';

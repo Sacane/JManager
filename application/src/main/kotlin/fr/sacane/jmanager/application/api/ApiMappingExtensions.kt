@@ -47,15 +47,21 @@ internal fun Transaction.toDTO(): TransactionResult {
 }
 
 
-internal fun User.toDTO(): UserDTO
-= UserDTO(this.id.value?.toString() ?: "", this.username, this.email, creationDate.toString(), roles = this.roles.map { it.name })
+internal fun User.toDTO(): UserDTO = UserDTO(
+    id = this.id.value?.toString() ?: "",
+    username = this.username,
+    email = this.email,
+    createdDate = creationDate.toString(),
+    roles = this.roles.map { it.name },
+    subscriptionPlan = this.subscriptionPlan.name,
+)
 
-internal fun UserForAdmin.toDTO(): UserDTO
-= UserDTO(
-    this.user.id.value?.toString() ?: "",
-    this.user.username,
-    this.user.email,
-    this.createdDate.toString()
+internal fun UserForAdmin.toDTO(): UserDTO = UserDTO(
+    id = this.user.id.value?.toString() ?: "",
+    username = this.user.username,
+    email = this.user.email,
+    createdDate = this.createdDate.toString(),
+    subscriptionPlan = this.user.subscriptionPlan.name,
 )
 
 internal fun String.id(): UserId = UserId(java.util.UUID.fromString(this))
