@@ -41,7 +41,7 @@ const emit = defineEmits<{
 
     <Button
       v-tooltip.bottom="'Nouvelle transaction'"
-      class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-gradient-to-br !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 shadow-[0_2px_8px_rgba(101,8,204,0.3)] hover:!brightness-110 transition-all"
+      class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#A30053] !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 shadow-[0_2px_8px_rgba(101,8,204,0.3)] hover:!brightness-110 transition-all"
       icon="pi pi-plus"
       :disabled="isAnyActionLoading"
       @click="emit('new-transaction')"
@@ -56,7 +56,7 @@ const emit = defineEmits<{
     <Button
       v-if="hasRegenerableTransactions"
       v-tooltip.bottom="'Régénérer les transactions supprimées'"
-      class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all"
+      class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#A30053] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all"
       icon="pi pi-refresh"
       :loading="isRegenerateLoading"
       :disabled="isAnyActionLoading"
