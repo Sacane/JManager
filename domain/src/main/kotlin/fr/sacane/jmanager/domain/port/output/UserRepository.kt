@@ -70,6 +70,7 @@ interface UserRepository {
         password: String,
         roles: Set<Role> = setOf(Role.USER),
         subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
+        email: String? = null,
     ): User?
 
     /**

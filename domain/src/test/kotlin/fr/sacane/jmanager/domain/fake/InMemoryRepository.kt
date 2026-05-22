@@ -132,8 +132,8 @@ class InMemoryUserRepository (
         return user.user
     }
 
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan): User {
-        val element = User(id = UserId(UUID.randomUUID()), username = username, null, roles = roles, subscriptionPlan = subscriptionPlan)
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?): User {
+        val element = User(id = UserId(UUID.randomUUID()), username = username, email = email, roles = roles, subscriptionPlan = subscriptionPlan)
         inMemoryDatabase.users[element.id] = UserWithPassword(element, password, roles)
         return element
     }

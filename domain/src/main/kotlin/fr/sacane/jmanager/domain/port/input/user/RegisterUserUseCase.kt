@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.output.Hasher
+import fr.sacane.jmanager.domain.port.output.NotificationPort
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
@@ -15,7 +16,12 @@ import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 
-data class RegisterUserCommand(val username: String, val password: String, val confirmPassword: String) : Command<User>
+data class RegisterUserCommand(
+    val username: String,
+    val password: String,
+    val confirmPassword: String,
+    val email: String,
+) : Command<User>
 
 @Port(Side.APPLICATION)
 interface RegisterUserUseCase : CommandHandler<RegisterUserCommand, User> {
@@ -25,7 +31,8 @@ interface RegisterUserUseCase : CommandHandler<RegisterUserCommand, User> {
 @DomainService
 class RegisterUserService(
     private val userRepository: UserRepository,
-    private val hasher: Hasher
+    private val hasher: Hasher,
+    private val notificationPort: NotificationPort,
 ) : RegisterUserUseCase {
 
     override fun handle(command: RegisterUserCommand): Result<User> {
@@ -35,12 +42,22 @@ class RegisterUserService(
                 DomainError(ResultState.PASSWORD_NOT_MATCH.code, "domain.user.register.password_mismatch", "Les mots de passes ne correspondent pas")
             )
         }
-        val hashedPassword = hasher.hash(command.password)
-        val userResult = userRepository.register(command.username, hashedPassword, subscriptionPlan = SubscriptionPlan.BETA_TESTER)
-            ?: return failure(
+        if (command.email.isBlank()) {
+            return failure(
                 ResultState.INVALID,
-                DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")
+                DomainError(ResultState.INVALID.code, "domain.user.register.email_required", "L'email est obligatoire")
             )
+        }
+        val hashedPassword = hasher.hash(command.password)
+        val userResult = userRepository.register(
+            command.username, hashedPassword,
+            email = command.email,
+            subscriptionPlan = SubscriptionPlan.BETA_TESTER,
+        ) ?: return failure(
+            ResultState.INVALID,
+            DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")
+        )
+        notificationPort.sendWelcomeEmail(userResult.username, command.email)
         return success(userResult)
     }
 }

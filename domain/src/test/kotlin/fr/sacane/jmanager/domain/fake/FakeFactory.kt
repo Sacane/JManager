@@ -110,7 +110,8 @@ class FakeFactory {
     val loginService = LoginService(userRepository, sessionManager, DefaultHasher, tokenGenerator)
     val logoutService = LogoutService(sessionManager)
     val refreshSessionService = RefreshSessionService(sessionManager, userRepository, tokenGenerator)
-    val registerUserService = RegisterUserService(userRepository, DefaultHasher)
+    val fakeNotificationPort = FakeNotificationPort()
+    val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort)
     val createAdminIfNotExistsService = CreateAdminIfNotExistsService(userRepository, DefaultHasher)
     val getUserSettingsService = GetUserSettingsService(userRepository)
     val updateUserSettingsService = UpdateUserSettingsService(userRepository, bookletRepository)
@@ -150,6 +151,7 @@ class FakeFactory {
         userRepository.clear()
         transactionRepository.clear()
         inMemoryTagRepository.clear()
+        fakeNotificationPort.clear()
     }
 
     fun fakeUserRepository(): InMemoryUserRepository {

@@ -2,6 +2,32 @@
 
 ## [En cours]
 
+## 2026-05-23
+
+- **Feature: Subscription Plan model (`BETA_TESTER`, `FREE`, `PREMIUM`)**
+  - Added `SubscriptionPlan` enum to the domain (`BETA_TESTER`, `FREE`, `PREMIUM`).
+  - `User` entity now carries `subscriptionPlan: SubscriptionPlan`, defaulting to `BETA_TESTER`.
+  - `UserRepository.register()` port extended with `subscriptionPlan` parameter (default `BETA_TESTER`).
+  - `RegisterUserService` passes `BETA_TESTER` on every registration.
+  - Flyway migration V22: `ALTER TABLE user_resource ADD COLUMN subscription_plan VARCHAR(50) NOT NULL DEFAULT 'BETA_TESTER'` — zero-downtime back-fill for existing users.
+  - `UserResource` JPA entity and all datasource mappers updated.
+  - `UserDTO` now exposes `subscriptionPlan` as a string.
+  - All three module test suites green (domain, infrastructure, application).
+
+- **Feature: Welcome Email on account creation**
+  - New domain port `NotificationPort` (SPI) with `sendWelcomeEmail(username, email)`.
+  - `RegisterUserCommand` now requires `email: String`; registration fails with `INVALID / domain.user.register.email_required` when blank.
+  - `RegisterUserService` calls `notificationPort.sendWelcomeEmail()` after a successful persist.
+  - `SpringMailNotificationAdapter` in infrastructure: `@Async`, SMTP failures caught and logged — never blocks the HTTP response.
+  - `@EnableAsync` added to `JmanagerApplication`.
+  - `spring-boot-starter-mail` added to `infrastructure/build.gradle.kts`.
+  - SMTP config in `application.properties` driven by env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_AUTH`, `SMTP_STARTTLS`).
+  - `spring.mail.test-connection=false` in both test property files.
+  - `RegisteredUserDTO` gains `@field:Email val email: String`.
+  - `FakeNotificationPort` for domain tests — collects sent emails for assertions.
+  - 4 new domain tests: welcome email sent on success, not sent on password mismatch, not sent on blank email, registration fails on blank email.
+  - All three module test suites green (domain, infrastructure, application).
+
 ## 2026-05-13
 
 - **Fix UI: Suppression du contour vert sur la page des transactions régulières et uniformisation des boutons d'action**

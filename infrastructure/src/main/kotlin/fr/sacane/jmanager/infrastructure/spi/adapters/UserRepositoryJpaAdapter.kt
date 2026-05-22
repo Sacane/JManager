@@ -66,9 +66,9 @@ class UserRepositoryJpaAdapter (
         }
     }
     @Transactional
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan): User? {
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?): User? {
         return try {
-            val userResource = UserResource(username = username, password = password, roles = roles.toMutableSet(), subscriptionPlan = subscriptionPlan)
+            val userResource = UserResource(username = username, password = password, email = email, roles = roles.toMutableSet(), subscriptionPlan = subscriptionPlan)
             val userResponse = userPostgresRepository.save(userResource)
             userResponse.toModel()
         } catch (e: Exception) {

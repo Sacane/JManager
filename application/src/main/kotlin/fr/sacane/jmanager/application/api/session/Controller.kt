@@ -142,7 +142,7 @@ class SessionController(
 
     @PostMapping(path = ["/create"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun createUser(@Valid @RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-        val response = commandBus.dispatch(RegisterUserCommand(userDTO.username, userDTO.password, userDTO.confirmPassword))
+        val response = commandBus.dispatch(RegisterUserCommand(userDTO.username, userDTO.password, userDTO.confirmPassword, userDTO.email))
         return response.map { u -> u.toDTO() }.toHttpResponse()
     }
 
