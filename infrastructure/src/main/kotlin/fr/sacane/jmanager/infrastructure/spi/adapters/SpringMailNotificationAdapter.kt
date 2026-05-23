@@ -14,7 +14,7 @@ import java.util.logging.Logger
 @Adapter(Side.INFRASTRUCTURE)
 class SpringMailNotificationAdapter(
     private val mailSender: JavaMailSender,
-    @Value("\${spring.mail.from:noreply@jmanager.app}") private val from: String,
+    @param:Value("\${spring.mail.from:noreply@jmanager.app}") private val fromValue: String,
 ) : NotificationPort {
 
     companion object {
@@ -26,7 +26,7 @@ class SpringMailNotificationAdapter(
         try {
             val message = SimpleMailMessage().apply {
                 setTo(email)
-                setFrom(from)
+                from = fromValue
                 subject = "Bienvenue sur JManager !"
                 text = "Bonjour $username,\n\nVotre compte JManager a été créé avec succès.\n\nÀ bientôt sur JManager !"
             }
