@@ -205,7 +205,10 @@ class UserFeatureTest {
             act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com")) }
 
             assertEquals(1, sentEmails.size)
-            assertEquals("John" to "john@example.com", sentEmails.first())
+            val sent = sentEmails.first()
+            assertEquals("John", sent.username)
+            assertEquals("john@example.com", sent.email)
+            assertEquals(SubscriptionPlan.BETA_TESTER, sent.subscriptionPlan)
         }
 
         @Test

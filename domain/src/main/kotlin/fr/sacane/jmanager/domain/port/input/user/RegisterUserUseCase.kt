@@ -57,7 +57,7 @@ class RegisterUserService(
             ResultState.INVALID,
             DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")
         )
-        notificationPort.sendWelcomeEmail(userResult.username, command.email)
+        notificationPort.sendWelcomeEmail(userResult.username, command.email, userResult.subscriptionPlan)
         return success(userResult)
     }
 }
