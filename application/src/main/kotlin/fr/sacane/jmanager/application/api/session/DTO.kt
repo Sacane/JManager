@@ -12,7 +12,8 @@ data class UserDTO(
     val username: String,
     val email: String? = null,
     val createdDate: String? = null,
-    val roles: List<String> = emptyList()
+    val roles: List<String> = emptyList(),
+    val subscriptionPlan: String = "BETA_TESTER",
 )
 
 @Serializable
@@ -25,7 +26,11 @@ data class RegisteredUserDTO(
     val password: String,
     @field:NotBlank
     @field:Size(min = 1, max = 100)
-    val confirmPassword: String
+    val confirmPassword: String,
+    @field:NotBlank
+    @field:jakarta.validation.constraints.Email
+    @field:Size(max = 255)
+    val email: String,
 )
 
 @Serializable

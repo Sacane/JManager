@@ -20,6 +20,7 @@ import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
 import fr.sacane.jmanager.domain.port.input.user.LogoutUseCase
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionCommand
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
+import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
@@ -49,6 +50,7 @@ class UserFeatureTest {
     private val sessionFakeState = factory.sessionState()
     private val userState = factory.fakeUserRepository()
     private val tokenGenerator = factory.tokenGenerator
+    private val sentEmails get() = factory.fakeNotificationPort.sentEmails
 
     @AfterEach
     fun afterEach() {
@@ -173,18 +175,63 @@ class UserFeatureTest {
     inner class RegisterFeatureTest {
         @Test
         fun `Register a user must return success`() {
-            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test")) }
+            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com")) }
 
             then(result) { assertSuccess() }
         }
 
         @Test
         fun `Register a user with different password must return password not match`() {
-            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "wrong")) }
+            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "wrong", "john@example.com")) }
 
             then(result) {
                 assertFailure(ResultState.PASSWORD_NOT_MATCH)
                 assertEquals("domain.user.register.password_mismatch", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Registered user defaults to BETA_TESTER subscription plan`() {
+            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com")) }
+
+            then(result) {
+                assertSuccess()
+                assertEquals(SubscriptionPlan.BETA_TESTER, mapNotNullOrFailure()!!.subscriptionPlan)
+            }
+        }
+
+        @Test
+        fun `Welcome email is sent after successful registration`() {
+            act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com")) }
+
+            assertEquals(1, sentEmails.size)
+            val sent = sentEmails.first()
+            assertEquals("John", sent.username)
+            assertEquals("john@example.com", sent.email)
+            assertEquals(SubscriptionPlan.BETA_TESTER, sent.subscriptionPlan)
+        }
+
+        @Test
+        fun `Welcome email is not sent when passwords do not match`() {
+            act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "wrong", "john@example.com")) }
+
+            assertEquals(0, sentEmails.size)
+        }
+
+        @Test
+        fun `Welcome email is not sent when email is blank`() {
+            act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "")) }
+
+            assertEquals(0, sentEmails.size)
+        }
+
+        @Test
+        fun `Registration fails when email is blank`() {
+            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "")) }
+
+            then(result) {
+                assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.register.email_required", errorInfo?.key)
             }
         }
     }
@@ -224,7 +271,7 @@ class UserFeatureTest {
     inner class UserSettingsFeatureTest {
         @Test
         fun `Get settings for a connected user must return defaults`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act { getUserSettingsUseCase.handle(GetUserSettingsQuery(userToken.user.id)) }
@@ -234,7 +281,7 @@ class UserFeatureTest {
 
         @Test
         fun `Update settings must persist projection window`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act {
@@ -248,7 +295,7 @@ class UserFeatureTest {
 
         @Test
         fun `Update settings with projection outside range must fail`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act {
@@ -265,7 +312,7 @@ class UserFeatureTest {
 
         @Test
         fun `Update settings with non owned booklet must fail`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act {

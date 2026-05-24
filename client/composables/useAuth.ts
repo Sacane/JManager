@@ -12,8 +12,9 @@ interface User {
   email: string
   roles: string[]
 }
-interface UserRegister {
+export interface UserRegister {
   username: string
+  email: string
   password: string
   confirmPassword: string
 }

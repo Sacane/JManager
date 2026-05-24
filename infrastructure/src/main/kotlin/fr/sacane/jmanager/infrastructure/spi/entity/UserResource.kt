@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.spi.entity
 
 import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.UUID
@@ -24,6 +25,9 @@ class UserResource(
     val isEnabled: Boolean = true,
     @Column(name = "projection_window_days", nullable = false)
     var projectionWindowDays: Int = 15,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subscription_plan", nullable = false, length = 50)
+    var subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",

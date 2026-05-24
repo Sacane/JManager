@@ -24,6 +24,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
     implementation("org.springframework.boot:spring-boot-starter-cache:${springBootVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-mail:${springBootVersion}")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
     implementation("org.postgresql:postgresql")
     implementation("org.flywaydb:flyway-core:${flywayVersion}")

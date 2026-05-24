@@ -139,6 +139,7 @@ fun UserResource.toModel()
     creationDate = creationDate,
     isEnabled = isEnabled,
     projectionWindowDays = projectionWindowDays,
+    subscriptionPlan = subscriptionPlan,
 )
 fun UserResource.toModelWithSimpleBooklets()
         : User = User(
@@ -147,6 +148,7 @@ fun UserResource.toModelWithSimpleBooklets()
     email = this.email,
     booklets = this.booklets.map { it.toSimpleModel() }.toMutableList(),
     projectionWindowDays = projectionWindowDays,
+    subscriptionPlan = subscriptionPlan,
 )
 
 fun BookletResource.toSimpleModel(): Booklet = Booklet(
@@ -164,6 +166,7 @@ fun UserResource.toModelWithPasswords() : UserWithPassword =
             username = this.username,
             email = email,
             projectionWindowDays = projectionWindowDays,
+            subscriptionPlan = subscriptionPlan,
         ),
         password,
         roles,
@@ -195,6 +198,7 @@ fun User.asExistingResource(): UserResource
     booklets = this.booklets.map {it.asResource()}.toMutableList(),
     tags = this.tags.map { it.toPersonalTag() }.toMutableList(),
     projectionWindowDays = this.projectionWindowDays,
+    subscriptionPlan = this.subscriptionPlan,
 )
 
 @Component

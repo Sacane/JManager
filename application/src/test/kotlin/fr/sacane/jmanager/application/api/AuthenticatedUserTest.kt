@@ -65,7 +65,7 @@ abstract class AuthenticatedUserTest {
 
     @BeforeEach
     fun beforeEach() {
-        registerUserUseCase.handle(RegisterUserCommand("test", "test", "test")).onSuccess { user = it }
+        registerUserUseCase.handle(RegisterUserCommand("test", "test", "test", "test@example.com")).onSuccess { user = it }
         loginUseCase.handle(LoginCommand("test", "test")).onSuccess {
             token = it.token
             refreshToken = sessionManager.findSessionByToken(SessionToken(it.token))?.refreshToken?.toString()

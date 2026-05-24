@@ -54,9 +54,11 @@ As a visitor, I want to register an account so that I can start managing my fina
 ### Scenario: Successful registration
 ```gherkin
 Given no user exists with username "bob"
-When a visitor registers with username "bob", password "secret123" and confirmPassword "secret123"
+When a visitor registers with username "bob", password "secret123", confirmPassword "secret123", and email "bob@example.com"
 Then a new User is created and returned
 And the password is stored in hashed form
+And the user's subscriptionPlan is BETA_TESTER
+And a welcome email is sent asynchronously to "bob@example.com"
 ```
 
 ### Scenario: Registration with mismatched passwords
@@ -64,6 +66,34 @@ And the password is stored in hashed form
 Given a visitor provides password "secret123" and confirmPassword "other456"
 When the visitor attempts to register
 Then the system returns a validation failure
+And no welcome email is sent
+```
+
+### Scenario: Registration without email is rejected
+```gherkin
+Given a visitor submits a registration request with no email field
+When the visitor attempts to register
+Then the system returns a validation failure
+```
+
+---
+
+## Feature: Subscription Plan
+
+As the system, I want every user to carry an explicit subscription plan so that features can be
+gated per tier.
+
+### Scenario: New user defaults to BETA_TESTER plan
+```gherkin
+Given a new user registers successfully
+Then their subscriptionPlan is BETA_TESTER
+```
+
+### Scenario: Subscription plan is exposed in the registration response
+```gherkin
+Given a successful registration
+When the API returns the created UserDTO
+Then the response includes subscriptionPlan equal to "BETA_TESTER"
 ```
 
 ---

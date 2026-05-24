@@ -50,9 +50,9 @@ class AdminControllerTest(
 
         @Test
         fun `Get users as admin should return 200 with paginated users`() {
-            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test"))
-            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test"))
-            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test", "user1@example.com"))
+            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test", "user2@example.com"))
+            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test", "user3@example.com"))
 
             Given {
                 port(port)
@@ -74,7 +74,7 @@ class AdminControllerTest(
 
         @Test
         fun `Get users as admin with bearer token should return 200 with paginated users`() {
-            registerUserUseCase.handle(RegisterUserCommand("user4", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("user4", "test", "test", "user4@example.com"))
 
             Given {
                 port(port)
@@ -95,7 +95,7 @@ class AdminControllerTest(
         @Test
         fun `Get users with pagination should return correct page size`() {
             repeat(5) { i ->
-                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test"))
+                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test", "user$i@example.com"))
             }
 
             Given {
@@ -117,7 +117,7 @@ class AdminControllerTest(
         @Test
         fun `Get users on second page should return correct content`() {
             repeat(5) { i ->
-                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test"))
+                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test", "user$i@example.com"))
             }
 
             Given {
@@ -182,9 +182,9 @@ class AdminControllerTest(
 
         @Test
         fun `Get users should return users sorted by creation date descending`() {
-            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test"))
-            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test"))
-            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test"))
+            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test", "user1@example.com"))
+            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test", "user2@example.com"))
+            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test", "user3@example.com"))
 
             Given {
                 port(port)

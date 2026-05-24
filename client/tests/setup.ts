@@ -1,16 +1,29 @@
 import { config } from '@vue/test-utils'
 import { afterEach, beforeEach, vi } from 'vitest'
-import { computed, onMounted, onUnmounted, reactive, ref, watch, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, readonly, ref, watch, watchEffect } from 'vue'
 
 // Simulate common Nuxt auto-imported Vue APIs used directly in components.
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('reactive', reactive)
+vi.stubGlobal('readonly', readonly)
 vi.stubGlobal('watch', watch)
 vi.stubGlobal('watchEffect', watchEffect)
 vi.stubGlobal('onMounted', onMounted)
 vi.stubGlobal('onUnmounted', onUnmounted)
+vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
 vi.stubGlobal('defineNuxtRouteMiddleware', (guard: any) => guard)
+
+// Nuxt runtime
+vi.stubGlobal('useState', vi.fn((_key: string, init?: () => unknown) => ref(init ? init() : null)))
+vi.stubGlobal('navigateTo', vi.fn())
+vi.stubGlobal('useRuntimeConfig', vi.fn(() => ({ public: { apiUrl: 'http://localhost:8080/api/' } })))
+vi.stubGlobal('definePageMeta', vi.fn())
+vi.stubGlobal('useRoute', vi.fn(() => ({ params: {}, query: {} })))
+vi.stubGlobal('useRouter', vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })))
+
+// PrimeVue composables
+vi.stubGlobal('useToast', vi.fn(() => ({ add: vi.fn() })))
 
 // Stub auto-imported composables that require Nuxt runtime context.
 vi.stubGlobal('useLocalStorage', (key: string, defaultValue: any) => ref(defaultValue))
@@ -53,6 +66,51 @@ vi.stubGlobal('useSubTagOrder', (_parentId: string, items: any) => ({
   onDrop: vi.fn(),
   onDragEnd: vi.fn(),
 }))
+
+// App composables — default stubs; override per test file via vi.stubGlobal in beforeEach
+vi.stubGlobal('useLoading', vi.fn(() => ({
+  isLoading: ref(false),
+  pendingScopes: ref<Record<string, number>>({}),
+  isScopeLoading: vi.fn(() => false),
+  startLoading: vi.fn(),
+  stopLoading: vi.fn(),
+  withLoading: vi.fn(async (action: () => Promise<unknown>) => action()),
+})))
+
+vi.stubGlobal('useJToast', vi.fn(() => ({
+  success: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  errorAxios: vi.fn(),
+})))
+
+vi.stubGlobal('useAuth', vi.fn(() => ({
+  user: ref(null),
+  isAuthenticated: ref(false),
+  login: vi.fn(),
+  logout: vi.fn(),
+  register: vi.fn(),
+  isAdmin: ref(false),
+  tryRefresh: vi.fn(),
+  initializeSession: vi.fn(),
+})))
+
+vi.stubGlobal('useAdmin', vi.fn(() => ({
+  users: ref([]),
+  totalUsers: ref(0),
+  totalPages: ref(0),
+  currentPage: ref(0),
+  pageSize: ref(10),
+  isLoading: ref(false),
+  fetchUsers: vi.fn(),
+})))
+
+vi.stubGlobal('useQuery', vi.fn(() => ({
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+})))
 
 config.global.stubs = {
   Transition: false,

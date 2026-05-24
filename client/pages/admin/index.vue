@@ -19,6 +19,7 @@ const toastr = useJToast()
 
 const newUser = ref({
   username: '',
+  email: '',
   password: '',
   confirmPassword: '',
 })
@@ -30,14 +31,21 @@ const isMobileWidth = ref(false)
 function resetForm() {
   newUser.value = {
     username: '',
+    email: '',
     password: '',
     confirmPassword: '',
   }
 }
 
 async function createUser() {
-  if (!newUser.value.username || !newUser.value.password) {
+  if (!newUser.value.username || !newUser.value.email || !newUser.value.password) {
     toastr.error('Veuillez remplir tous les champs')
+    return
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(newUser.value.email)) {
+    toastr.error("L'adresse email n'est pas valide")
     return
   }
 
@@ -178,6 +186,21 @@ onBeforeUnmount(() => {
               type="text"
               class="w-full"
               placeholder="Entrez le nom d'utilisateur"
+              :disabled="isCreating"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">
+              <i class="pi pi-envelope" />
+              Adresse email
+            </label>
+            <InputText
+              id="email"
+              v-model="newUser.email"
+              type="email"
+              class="w-full"
+              placeholder="Entrez l'adresse email"
               :disabled="isCreating"
             />
           </div>
