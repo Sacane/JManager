@@ -13,6 +13,8 @@ import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTracke
 import fr.sacane.jmanager.domain.port.output.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
@@ -23,7 +25,7 @@ import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
 import java.util.UUID
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 data class LoadTransactionsForBookletForAMonthQuery(
     val userId: UserId,
@@ -36,7 +38,9 @@ data class LoadTransactionsForBookletForAMonthQuery(
     val endDate: LocalDate? = null,
     val pageNumber: Int = 0,
     val pageSize: Int = 10,
-) : Query<BookletLoadingResult>
+) : Query<BookletLoadingResult>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface LoadTransactionsForBookletForAMonthUseCase : QueryHandler<LoadTransactionsForBookletForAMonthQuery, BookletLoadingResult> {
@@ -55,14 +59,14 @@ class LoadTransactionsForBookletForAMonthService(
 ) : LoadTransactionsForBookletForAMonthUseCase {
 
     companion object {
-        private val LOGGER = Logger.getLogger(LoadTransactionsForBookletForAMonthService::class.java.name)
+        private val log = LoggerFactory.getLogger(LoadTransactionsForBookletForAMonthService::class.java)
     }
 
     override fun handle(query: LoadTransactionsForBookletForAMonthQuery): Result<BookletLoadingResult> {
         val (userId, bookletId, month, year, startingMonth, startingYear, startDate, endDate, pageNumber, pageSize) = query
         return unitOfWorkTransactionProviderPort.executeInTransaction(Unit) {
             val totalStartNs = System.nanoTime()
-            LOGGER.info("Loading transactions for booklet $bookletId for month $month and year $year")
+            log.info("Loading transactions for {}/{}", month, year)
 
             val fetchBookletStartNs = System.nanoTime()
             val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(bookletId)
@@ -71,7 +75,7 @@ class LoadTransactionsForBookletForAMonthService(
                     "Requested booklet is not registered",
                     "domain.booklet.load_transactions.not_found"
                 )
-            LOGGER.info { "Fetched booklet: ${booklet.label} (${booklet.id})" }
+            log.info("Fetched booklet: label={}", booklet.label)
             val fetchBookletMs = Duration.ofNanos(System.nanoTime() - fetchBookletStartNs).toMillis()
 
             val fetchRegularStartNs = System.nanoTime()
@@ -116,7 +120,7 @@ class LoadTransactionsForBookletForAMonthService(
                     month,
                     year
                 )
-                LOGGER.info("Generated ${transactions.size} physical transactions for current month $month/$year")
+                log.info("Generated {} physical transactions for current month {}/{}", transactions.size, month, year)
                 transactions.size
             } else if (hasExplicitDateRange) {
                 if (!today.isBefore(resolvedRangeStart) && !YearMonth.from(today).isAfter(YearMonth.from(resolvedRangeEnd))) {
@@ -138,14 +142,14 @@ class LoadTransactionsForBookletForAMonthService(
                         generated += transactions.size
                         ym = ym.plusMonths(1)
                     }
-                    LOGGER.info("Generated $generated physical transactions for custom-range current period $resolvedRangeStart..$resolvedRangeEnd")
+                    log.info("Generated {} physical transactions for custom range {}..{}", generated, resolvedRangeStart, resolvedRangeEnd)
                     generated
                 } else {
-                    LOGGER.info("Skipping physical generation for custom-range non-current period $resolvedRangeStart..$resolvedRangeEnd")
+                    log.info("Skipping generation for non-current custom range {}..{}", resolvedRangeStart, resolvedRangeEnd)
                     0
                 }
             } else {
-                LOGGER.info("Skipping physical transaction generation for non-current month $month/$year")
+                log.info("Skipping generation for non-current month {}/{}", month, year)
                 0
             }
             val generationMs = Duration.ofNanos(System.nanoTime() - generationStartNs).toMillis()
@@ -269,14 +273,13 @@ class LoadTransactionsForBookletForAMonthService(
             )
 
             val totalMs = Duration.ofNanos(System.nanoTime() - totalStartNs).toMillis()
-            LOGGER.info(
-                """
-                Booklet loaded successfully:
-                - bookletId: $bookletId
-                - period: $month/$year (range=$resolvedRangeStart..$resolvedRangeEnd)
-                - sizes: monthTransactions=${allTransactionsForPeriod.size}, current=${transactions.second.size}, preview=${transactions.first.size}, virtualPreview=${virtualTransactionsForTargetPeriod.size}, regular=${regularTransactions.size}, trackers=${trackersByRegularId.size}
-                - timings(ms): fetchBooklet=$fetchBookletMs, fetchRegular=$fetchRegularMs, generate=$generationMs (generated=$generatedCount), updateBooklet=$updateBookletMs, monthQuery=$monthTransactionMs, preloadTrackers=$preloadTrackersMs, filterExcluded=$filterExcludedMs, previsionalSold=$previsionalMs, total=$totalMs
-                """.trimIndent()
+            log.info(
+                "Booklet loaded: period={}/{} range={}..{} | sizes: month={} current={} preview={} virtual={} regular={} trackers={} | timings(ms): fetchBooklet={} fetchRegular={} generate={}(n={}) monthQuery={} trackers={} filterExcluded={} previsional={} total={}",
+                month, year, resolvedRangeStart, resolvedRangeEnd,
+                allTransactionsForPeriod.size, transactions.second.size, transactions.first.size,
+                virtualTransactionsForTargetPeriod.size, regularTransactions.size, trackersByRegularId.size,
+                fetchBookletMs, fetchRegularMs, generationMs, generatedCount,
+                monthTransactionMs, preloadTrackersMs, filterExcludedMs, previsionalMs, totalMs
             )
 
             return@executeInTransaction success(bookletLoadingResult)

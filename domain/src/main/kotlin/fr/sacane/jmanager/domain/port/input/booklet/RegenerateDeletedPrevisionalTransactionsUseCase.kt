@@ -13,6 +13,8 @@ import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionPro
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -26,7 +28,9 @@ data class RegenerateDeletedPrevisionalTransactionsCommand(
     val bookletId: UUID,
     val month: Month,
     val year: Int
-) : Command<List<Transaction>>
+) : Command<List<Transaction>>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface RegenerateDeletedPrevisionalTransactionsUseCase : CommandHandler<RegenerateDeletedPrevisionalTransactionsCommand, List<Transaction>> {

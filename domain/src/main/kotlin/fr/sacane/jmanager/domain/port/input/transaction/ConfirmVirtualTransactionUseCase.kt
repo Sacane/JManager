@@ -11,6 +11,8 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
@@ -30,7 +32,9 @@ data class ConfirmVirtualTransactionCommand(
     val date: LocalDate,
     val isIncome: Boolean,
     val tag: Tag? = null
-) : Command<TransactionResumeResult>
+) : Command<TransactionResumeResult>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface ConfirmVirtualTransactionUseCase : CommandHandler<ConfirmVirtualTransactionCommand, TransactionResumeResult> {

@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -15,7 +17,11 @@ import fr.sacane.jmanager.domain.utils.success
 data class EditBookletCommand(
     val booklet: Booklet,
     val userId: UserId
-) : Command<Booklet>
+) : Command<Booklet>, MdcContextProvider {
+    override fun mdcContext() = buildMap {
+        booklet.id?.let { put(MdcKeys.BOOKLET_ID, it.toString()) }
+    }
+}
 
 @Port(Side.APPLICATION)
 interface EditBookletUseCase : CommandHandler<EditBookletCommand, Booklet> {

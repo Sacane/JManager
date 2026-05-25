@@ -9,15 +9,20 @@ import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTracke
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 data class DeleteBookletByIdCommand(
     val bookletId: UUID,
     val userId: UserId
-) : Command<Nothing>
+) : Command<Nothing>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface DeleteBookletByIdUseCase : CommandHandler<DeleteBookletByIdCommand, Nothing> {
@@ -30,6 +35,11 @@ class DeleteBookletByIdService(
     private val unitOfWorkTransactionProviderPort: UnitOfWorkTransactionProvider,
     private val trackerRepository: RegularTransactionTrackerRepository
 ) : DeleteBookletByIdUseCase {
+
+    companion object {
+        private val log = LoggerFactory.getLogger(DeleteBookletByIdService::class.java)
+    }
+
     override fun handle(command: DeleteBookletByIdCommand): Result<Nothing> {
         val userId = command.userId
         val bookletId = command.bookletId
@@ -50,6 +60,7 @@ class DeleteBookletByIdService(
             }
             bookletRepository.deleteBookletById(bookletId)
             trackerRepository.deleteTrackerByBookletId(bookletId)
+            log.info("Booklet deleted: id={}", bookletId)
             return@executeInTransaction success()
         }
     }

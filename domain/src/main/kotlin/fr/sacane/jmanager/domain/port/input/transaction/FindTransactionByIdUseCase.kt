@@ -6,16 +6,20 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 data class FindTransactionByIdQuery(
     val userId: UserId,
     val id: UUID
-) : Query<Transaction>
+) : Query<Transaction>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.TRANSACTION_ID to id.toString())
+}
 
 @Port(Side.APPLICATION)
 interface FindTransactionByIdUseCase : QueryHandler<FindTransactionByIdQuery, Transaction> {
@@ -28,11 +32,10 @@ class FindTransactionByIdService(
 ) : FindTransactionByIdUseCase {
 
     companion object {
-        private val logger = Logger.getLogger(FindTransactionByIdService::class.java.name)
+        private val log = LoggerFactory.getLogger(FindTransactionByIdService::class.java)
     }
 
     override fun handle(query: FindTransactionByIdQuery): Result<Transaction> {
-        logger.info("Request for a transaction with id ${query.id}")
         val transaction = transactionRepository.findTransactionById(query.id)
             ?: return domainFailure(
                 ResultState.TRANSACTION_NOT_FOUND,

@@ -12,6 +12,8 @@ import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionReposi
 import fr.sacane.jmanager.domain.port.output.repository.TransactionQueryRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
@@ -31,7 +33,9 @@ data class LoadBalancesForBookletForAMonthQuery(
     val startingYear: Int? = null,
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null,
-) : Query<BookletBalances>
+) : Query<BookletBalances>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface LoadBalancesForBookletForAMonthUseCase : QueryHandler<LoadBalancesForBookletForAMonthQuery, BookletBalances> {

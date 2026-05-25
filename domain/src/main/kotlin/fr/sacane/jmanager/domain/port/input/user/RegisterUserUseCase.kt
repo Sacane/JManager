@@ -15,6 +15,7 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
+import org.slf4j.LoggerFactory
 
 data class RegisterUserCommand(
     val username: String,
@@ -34,6 +35,10 @@ class RegisterUserService(
     private val hasher: Hasher,
     private val notificationPort: NotificationPort,
 ) : RegisterUserUseCase {
+
+    companion object {
+        private val log = LoggerFactory.getLogger(RegisterUserService::class.java)
+    }
 
     override fun handle(command: RegisterUserCommand): Result<User> {
         if (command.password != command.confirmPassword) {
@@ -58,6 +63,7 @@ class RegisterUserService(
             DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")
         )
         notificationPort.sendWelcomeEmail(userResult.username, command.email, userResult.subscriptionPlan)
+        log.info("User registered successfully: plan={}", userResult.subscriptionPlan)
         return success(userResult)
     }
 }

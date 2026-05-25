@@ -2,6 +2,33 @@
 
 ## [En cours]
 
+## 2026-05-25
+
+- **Observability: VPS-tuned Logback configuration (`logback-spring.xml`)**
+  - Created `application/src/main/resources/logback-spring.xml` with full Spring profile separation (`local/test` and `prod`).
+  - `prod` profile: two `RollingFileAppender` instances — `app.log` (INFO+, 100 MB rotation, 30 days, 1.5 GB cap) and `error.log` (ERROR only, 50 MB rotation, 90 days, 300 MB cap); both wrapped in `AsyncAppender` (`queueSize=1024`, `discardingThreshold=0`, `neverBlock=false`) to decouple disk I/O from HTTP threads.
+  - `local/test` profile: colour console appender with highlighted levels, SQL visibility (`org.hibernate.SQL=DEBUG`), and Spring Web request mapping logs.
+  - Noisy third-party libs (`hibernate`, `spring`, `hikari`, `tomcat`) silenced to WARN in production.
+
+- **Observability: Bus-level dispatch logging + JUL → SLF4J migration**
+  - Created `LoggingCommandBus` and `LoggingQueryBus` as `@Primary` `@Component` decorators wrapping `SpringCommandBus` / `SpringQueryBus`.
+  - Each dispatch emits one structured INFO line: `COMMAND | <name> | <ResultState> | <ms> ms` / `QUERY  | ...`.
+  - Fixed `CommandBus` and `QueryBus` Spring components: migrated from `java.util.logging.Logger` (JUL) to SLF4J; renamed `LOGGER` → `log`; replaced string concatenation with `{}` parameterised syntax.
+  - Added `docs/technical/bus-logging/2026-05-25-command-query-dispatch-logging.md` documenting the Decorator vs AOP trade-off.
+
+- **Observability: Domain logging pass**
+  - Removed PII-leaking logs: `LoginUseCase` no longer logs user ID or username; `BookTransactionUseCase` no longer prints full object `toString()`.
+  - Removed useless / expensive logs: removed echoing of input parameters that duplicate what the bus already traces; replaced costly object interpolation with targeted field references.
+  - Added pertinent logs where missing: `RegisterUserUseCase` now logs subscription plan on success; `DeleteBookletByIdUseCase` logs booklet ID on delete; `DeleteTagUseCase` logs force-delete with tag-in-use count.
+  - Added SLF4J dependency to `domain/build.gradle.kts` (`slf4j-api:2.0.16`) — domain previously had no logging façade.
+  - Completed JUL → SLF4J migration across all domain use cases that still used `java.util.logging`.
+
+- **Observability: MDC context propagation**
+  - Created `MdcContextProvider` interface and `MdcKeys` constants object in `domain/port/input/MdcContext.kt` — pure domain, zero SLF4J import.
+  - `LoggingCommandBus` and `LoggingQueryBus` extract the MDC context from the command/query (when it implements `MdcContextProvider`), call `MDC.put()` before dispatch, and guarantee `MDC.remove()` in a `finally` block to prevent cross-request context leaks.
+  - 13 commands and queries now implement `MdcContextProvider`: `LoadTransactionsForBookletForAMonthQuery`, `FindBookletByIdQuery`, `LoadBalancesForBookletForAMonthQuery`, `DeleteBookletByIdCommand`, `EditBookletCommand`, `RegenerateDeletedPrevisionalTransactionsCommand`, `DeleteTransactionsByIdsCommand`, `EditTransactionCommand`, `ConfirmVirtualTransactionCommand`, `ConfirmPreviewTransactionCommand`, `ExcludeVirtualTransactionCommand`, `FindTransactionByIdQuery`, `ImportTransactionsFromCsvCommand`.
+  - Logback patterns updated in both profiles to conditionally render `[booklet=<id>]` and `[tx=<id>]` only when the MDC key is populated, using `%replace` with empty-value suppression.
+
 ## 2026-05-23
 
 - **Feature: Subscription Plan model (`BETA_TESTER`, `FREE`, `PREMIUM`)**
