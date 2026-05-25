@@ -11,6 +11,8 @@ import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDateTime
 import java.util.UUID
@@ -19,7 +21,12 @@ data class EditTransactionCommand(
     val userId: UserId,
     val bookletID: UUID,
     val transaction: Transaction
-) : Command<TransactionResumeResult>
+) : Command<TransactionResumeResult>, MdcContextProvider {
+    override fun mdcContext() = buildMap {
+        put(MdcKeys.BOOKLET_ID, bookletID.toString())
+        transaction.id?.let { put(MdcKeys.TRANSACTION_ID, it.toString()) }
+    }
+}
 
 @Port(Side.APPLICATION)
 interface EditTransactionUseCase : CommandHandler<EditTransactionCommand, TransactionResumeResult> {

@@ -1,20 +1,25 @@
 package fr.sacane.jmanager.application.bus
 
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.utils.Result
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
 /**
- * Decorator around [SpringQueryBus] that logs every query dispatch.
+ * Decorator around [SpringQueryBus] that:
+ * 1. Injects domain context (bookletId, transactionId) into the SLF4J MDC for the duration
+ *    of the dispatch when the query implements [MdcContextProvider].
+ * 2. Emits one INFO line per dispatch with the query name, result state, and execution time.
  *
- * Emits one INFO line per dispatch:
  * ```
  * QUERY  | FindAllRegisteredBookletsQuery  | OK               |   8 ms
  * QUERY  | FindBookletByIdQuery            | NOT_FOUND        |   2 ms
  * ```
  *
+ * MDC is cleared in a `finally` block — no context leaks across requests.
  * No payload is logged — query fields may contain user data.
  */
 @Primary
@@ -27,10 +32,23 @@ class LoggingQueryBus(
 
     override fun <R> dispatch(query: Query<R>): Result<R> {
         val name = query::class.simpleName ?: "UnknownQuery"
+        val mdcKeys = putMdcContext(query)
         val start = System.nanoTime()
-        val result = delegate.dispatch(query)
-        val ms = (System.nanoTime() - start) / 1_000_000
-        log.info("QUERY  | {:<50} | {:<30} | {} ms", name, result.status.name, ms)
-        return result
+        return try {
+            val result = delegate.dispatch(query)
+            val ms = (System.nanoTime() - start) / 1_000_000
+            log.info("QUERY  | {:<50} | {:<30} | {} ms", name, result.status.name, ms)
+            result
+        } finally {
+            mdcKeys.forEach { MDC.remove(it) }
+        }
+    }
+
+    private fun putMdcContext(query: Query<*>): Set<String> {
+        if (query !is MdcContextProvider) return emptySet()
+        return query.mdcContext()
+            .filterValues { it.isNotBlank() }
+            .also { ctx -> ctx.forEach { (k, v) -> MDC.put(k, v) } }
+            .keys
     }
 }

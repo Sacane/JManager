@@ -11,6 +11,8 @@ import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDate
 import java.util.UUID
@@ -21,7 +23,12 @@ data class ConfirmPreviewTransactionCommand(
     val transactionId: UUID,
     val newAmount: Amount? = null,
     val newDate: LocalDate? = null
-) : Command<TransactionResumeResult>
+) : Command<TransactionResumeResult>, MdcContextProvider {
+    override fun mdcContext() = mapOf(
+        MdcKeys.BOOKLET_ID to bookletID.toString(),
+        MdcKeys.TRANSACTION_ID to transactionId.toString()
+    )
+}
 
 @Port(Side.APPLICATION)
 interface ConfirmPreviewTransactionUseCase : CommandHandler<ConfirmPreviewTransactionCommand, TransactionResumeResult> {

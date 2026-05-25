@@ -15,6 +15,8 @@ import fr.sacane.jmanager.domain.usecase.csv.CsvTransactionValidator
 import fr.sacane.jmanager.domain.usecase.csv.CsvValidationUtils
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
@@ -28,7 +30,9 @@ data class ImportTransactionsFromCsvCommand(
     val skipValidation: Boolean = false,
     val month: Int? = null,
     val year: Int? = null
-) : Command<CsvImportResult>
+) : Command<CsvImportResult>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface ImportTransactionsFromCsvUseCase : CommandHandler<ImportTransactionsFromCsvCommand, CsvImportResult> {

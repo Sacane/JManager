@@ -6,6 +6,8 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
 import fr.sacane.jmanager.domain.utils.Result
@@ -16,7 +18,9 @@ import java.util.UUID
 data class FindBookletByIdQuery(
     val bookletId: UUID,
     val userId: UserId
-) : Query<Booklet>
+) : Query<Booklet>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface FindBookletByIdUseCase : QueryHandler<FindBookletByIdQuery, Booklet> {

@@ -7,6 +7,8 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.utils.*
@@ -19,7 +21,9 @@ data class ExcludeVirtualTransactionCommand(
     val regularTransactionId: RegularTransactionId,
     val month: Month,
     val year: Int
-) : Command<Unit>
+) : Command<Unit>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
+}
 
 @Port(Side.APPLICATION)
 interface ExcludeVirtualTransactionUseCase : CommandHandler<ExcludeVirtualTransactionCommand, Unit> {

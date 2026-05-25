@@ -12,6 +12,8 @@ import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 import org.slf4j.LoggerFactory
@@ -20,7 +22,9 @@ data class DeleteTransactionsByIdsCommand(
     val userId: UserId,
     val bookletID: UUID,
     val transactionIds: List<UUID>
-) : Command<TransactionDeletionResult>
+) : Command<TransactionDeletionResult>, MdcContextProvider {
+    override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletID.toString())
+}
 
 @Port(Side.APPLICATION)
 interface DeleteTransactionsByIdsUseCase : CommandHandler<DeleteTransactionsByIdsCommand, TransactionDeletionResult> {
