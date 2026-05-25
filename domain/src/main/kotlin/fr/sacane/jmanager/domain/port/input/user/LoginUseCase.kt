@@ -15,7 +15,7 @@ import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 data class LoginCommand(val pseudonym: String, val userPassword: String) : Command<UserToken>
 
@@ -33,7 +33,7 @@ class LoginService(
 ) : LoginUseCase {
 
     companion object {
-        private val LOGGER = Logger.getLogger(LoginService::class.java.name)
+        private val log = LoggerFactory.getLogger(LoginService::class.java)
     }
 
     override fun handle(command: LoginCommand): Result<UserToken> {
@@ -42,10 +42,8 @@ class LoginService(
                 ResultState.NOT_FOUND,
                 DomainError(ResultState.NOT_FOUND.code, "domain.user.login.user_not_found", "L'utilisateur ${command.pseudonym} n'existe pas")
             )
-        LOGGER.info("LOGIN request for user ${userWithPassword.user.id}")
         val user = userWithPassword.user
         if (hasher.verify(command.userPassword, userWithPassword.password)) {
-            LOGGER.info("User ${userWithPassword.user.username} logged")
             val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, userWithPassword.roles)
             session.addSession(user.id, accessToken)
             accessToken.refreshToken?.let {
@@ -53,7 +51,7 @@ class LoginService(
             }
             return success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
         }
-        LOGGER.warning("Failed to log user ${command.pseudonym}")
+        log.warn("Authentication failed: invalid credentials for an existing account")
         return failure(
             ResultState.USER_UNAUTHORIZED,
             DomainError(ResultState.USER_UNAUTHORIZED.code, "domain.user.login.invalid_credentials", "Le pseudonyme ou le mot de passe est incorrect")

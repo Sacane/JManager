@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionPro
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 data class BookTransactionCommand(
     val userId: UserId,
@@ -35,13 +35,12 @@ class BookTransactionService(
 ) : BookTransactionUseCase {
 
     companion object {
-        private val logger = Logger.getLogger(BookTransactionService::class.java.name)
+        private val log = LoggerFactory.getLogger(BookTransactionService::class.java)
     }
 
     override fun handle(command: BookTransactionCommand): Result<TransactionResumeResult> {
         val userId = command.userId
         return infraTransactionManager.executeInTransaction(command.transaction) {
-            logger.info("Request for a transaction with id $userId")
             if (command.transaction.amount.isNegative()) {
                 return@executeInTransaction domainFailure(
                     ResultState.TRANSACTION_ENTRY_ERROR,
@@ -66,7 +65,7 @@ class BookTransactionService(
             } else newTr
             booklet.addTransaction(toSaveTransaction)
             bookletRepository.update(booklet)
-            logger.info("Transaction $toSaveTransaction has been created, the booklet sold has been updated : $booklet")
+            log.info("Transaction created: id={}, bookletId={}", toSaveTransaction.id, booklet.id)
             success(TransactionResumeResult(toSaveTransaction, booklet.amount))
         }
     }

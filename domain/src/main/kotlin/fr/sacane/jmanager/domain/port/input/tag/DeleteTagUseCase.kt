@@ -11,6 +11,7 @@ import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
+import org.slf4j.LoggerFactory
 
 data class DeleteTagCommand(
     val userId: UserId,
@@ -29,6 +30,10 @@ class DeleteTagService(
     private val transactionRepository: TransactionRepository,
     private val regularTransactionRepository: RegularTransactionRepository
 ) : DeleteTagUseCase {
+
+    companion object {
+        private val log = LoggerFactory.getLogger(DeleteTagService::class.java)
+    }
 
     private fun <S> domainFailure(state: ResultState, detail: String, key: String): Result<S> {
         return failure(state, DomainError(state.code, key, detail))
@@ -49,6 +54,7 @@ class DeleteTagService(
             )
         }
         if (command.force && (isUsedInTransactions || isUsedInRegular)) {
+            log.warn("Force-deleting tag in use — replacing with default: tagId={}, subTags={}", command.tagId, allTagIds.size)
             val defaultTag = tagRepository.defaultTag()
             for (tagId in allTagIds) {
                 if (transactionRepository.isPersonalTagUsed(tagId)) {

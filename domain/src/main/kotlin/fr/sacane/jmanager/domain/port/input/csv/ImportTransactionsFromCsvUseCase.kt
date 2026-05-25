@@ -19,7 +19,7 @@ import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.success
 import java.util.UUID
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 data class ImportTransactionsFromCsvCommand(
     val userId: UserId,
@@ -45,7 +45,7 @@ class ImportTransactionsFromCsvService(
 ) : ImportTransactionsFromCsvUseCase {
 
     companion object {
-        private val logger = Logger.getLogger(ImportTransactionsFromCsvService::class.java.name)
+        private val log = LoggerFactory.getLogger(ImportTransactionsFromCsvService::class.java)
     }
 
     private val validator = CsvTransactionValidator()
@@ -71,12 +71,12 @@ class ImportTransactionsFromCsvService(
                         val results = convertRowsToTransactions(validator, rows, userTags, command.skipValidation, command.month, command.year)
                         val csvImportResult = saveTransactions(transactionRepository, bookletRepository, bookletParam, results)
 
-                        logger.info("CSV import completed: ${csvImportResult.successCount} transactions imported, ${csvImportResult.failedLines.size} errors")
+                        log.info("CSV import completed: {} transactions imported, {} failures", csvImportResult.successCount, csvImportResult.failedLines.size)
                     success(csvImportResult)
                 }
             }
         } catch (e: Exception) {
-            logger.severe("Error during CSV import: ${e.message}")
+            log.error("CSV import failed unexpectedly", e)
             return csvDomainFailure(
                 ResultState.INTERNAL_SERVER_ERROR,
                 "Error during import: ${e.message}",

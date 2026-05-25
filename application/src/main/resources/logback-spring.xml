@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+
+  <springProfile name="local,test">
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <charset>UTF-8</charset>
+        <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5level){highlight} %clr(%-40.40logger{39}){cyan} %msg%n</pattern>
+      </encoder>
+    </appender>
+
+    <!-- Code métier en DEBUG pour le développement -->
+    <logger name="fr.sacane.jmanager" level="DEBUG"/>
+
+    <!-- SQL visible en local uniquement -->
+    <logger name="org.hibernate.SQL"                         level="DEBUG"/>
+    <logger name="org.hibernate.orm.jdbc.bind"               level="TRACE"/>
+
+    <!-- Spring Web en DEBUG pour voir les mappings/requêtes -->
+    <logger name="org.springframework.web"                   level="DEBUG"/>
+
+    <!-- Flyway en INFO pour suivre les migrations -->
+    <logger name="org.flywaydb"                              level="INFO"/>
+
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+
+  </springProfile>
+
+
+  <springProfile name="prod">
+
+    <!-- ─────────────────────────────────────────
+         Appender fichier principal : INFO et plus
+         /var/log/jmanager/app.log
+         Max 1 500 MB — rotation quotidienne + 100 MB intra-journalier
+         ───────────────────────────────────────── -->
+    <appender name="FILE_APP" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>/var/log/jmanager/app.log</file>
+
+      <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+        <!-- Archives compressées : économie ~75 % d'espace -->
+        <fileNamePattern>/var/log/jmanager/app.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+        <!-- Rotation intra-journalière si le fichier dépasse 100 MB -->
+        <maxFileSize>100MB</maxFileSize>
+        <!-- Conservation 30 jours -->
+        <maxHistory>30</maxHistory>
+        <totalSizeCap>1500MB</totalSizeCap>
+      </rollingPolicy>
+
+      <encoder>
+        <charset>UTF-8</charset>
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+      </encoder>
+
+      <!-- Filtre : INFO et au-dessus uniquement -->
+      <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+        <level>INFO</level>
+      </filter>
+    </appender>
+
+    <!-- ─────────────────────────────────────────
+         Appender erreurs : ERROR uniquement
+         /var/log/jmanager/error.log
+         Max 300 MB — rétention 90 jours (post-mortem)
+         ───────────────────────────────────────── -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>/var/log/jmanager/error.log</file>
+
+      <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+        <fileNamePattern>/var/log/jmanager/error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+        <maxFileSize>50MB</maxFileSize>
+        <!-- 90 jours : les erreurs sont précieuses pour les post-mortems -->
+        <maxHistory>90</maxHistory>
+        <totalSizeCap>300MB</totalSizeCap>
+      </rollingPolicy>
+
+      <encoder>
+        <charset>UTF-8</charset>
+        <!-- Stack trace complète sur les erreurs -->
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n%ex{full}</pattern>
+      </encoder>
+
+      <!-- Filtre strict : ERROR uniquement -->
+      <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <level>ERROR</level>
+        <onMatch>ACCEPT</onMatch>
+        <onMismatch>DENY</onMismatch>
+      </filter>
+    </appender>
+
+    <!-- ─────────────────────────────────────────
+         AsyncAppender — app.log
+         Délègue le flush disque à un thread dédié,
+         libère les threads HTTP Tomcat pendant l'I/O
+         ───────────────────────────────────────── -->
+    <appender name="ASYNC_APP" class="ch.qos.logback.classic.AsyncAppender">
+      <appender-ref ref="FILE_APP"/>
+      <!-- 1024 slots (~8 MB) — négligeable sur 8 GB RAM -->
+      <queueSize>1024</queueSize>
+      <!-- 0 = jamais de discard même si la queue est à 80% — aucune perte de log -->
+      <discardingThreshold>0</discardingThreshold>
+      <!-- false = backpressure sur le thread appelant si queue saturée (pas de perte silencieuse) -->
+      <neverBlock>false</neverBlock>
+      <!-- Caller data (fichier/ligne) coûteux : OFF sur le flux principal -->
+      <includeCallerData>false</includeCallerData>
+    </appender>
+
+    <!-- ─────────────────────────────────────────
+         AsyncAppender — error.log
+         Petite queue (erreurs rares), caller data ON
+         pour avoir le fichier/numéro de ligne dans les erreurs
+         ───────────────────────────────────────── -->
+    <appender name="ASYNC_ERROR" class="ch.qos.logback.classic.AsyncAppender">
+      <appender-ref ref="FILE_ERROR"/>
+      <queueSize>256</queueSize>
+      <discardingThreshold>0</discardingThreshold>
+      <neverBlock>false</neverBlock>
+      <!-- ON : on veut le contexte complet dans error.log -->
+      <includeCallerData>true</includeCallerData>
+    </appender>
+
+    <!-- ─────────────────────────────────────────
+         Niveaux par package
+         ───────────────────────────────────────── -->
+
+    <!-- Code JManager : INFO — les deux fichiers -->
+    <logger name="fr.sacane.jmanager" level="INFO" additivity="false">
+      <appender-ref ref="ASYNC_APP"/>
+      <appender-ref ref="ASYNC_ERROR"/>
+    </logger>
+
+    <!-- Flyway : INFO pour tracer les migrations en prod -->
+    <logger name="org.flywaydb"                              level="INFO"/>
+
+    <!-- Libs bruyantes : WARN -->
+    <logger name="org.hibernate"                             level="WARN"/>
+    <logger name="org.hibernate.SQL"                         level="OFF"/>
+    <logger name="org.hibernate.orm.jdbc.bind"               level="OFF"/>
+    <logger name="org.springframework"                       level="WARN"/>
+    <logger name="org.springframework.security"              level="WARN"/>
+    <logger name="org.springframework.web"                   level="WARN"/>
+    <logger name="com.zaxxer.hikari"                         level="WARN"/>
+    <logger name="org.apache.tomcat"                         level="WARN"/>
+    <logger name="org.apache.catalina"                       level="WARN"/>
+    <logger name="org.apache.coyote"                         level="WARN"/>
+
+    <!-- Root catch-all : WARN -->
+    <root level="WARN">
+      <appender-ref ref="ASYNC_APP"/>
+      <appender-ref ref="ASYNC_ERROR"/>
+    </root>
+
+  </springProfile>
+
+</configuration>

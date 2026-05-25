@@ -14,7 +14,7 @@ import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 data class DeleteTransactionsByIdsCommand(
     val userId: UserId,
@@ -36,7 +36,7 @@ class DeleteTransactionsByIdsService(
 ) : DeleteTransactionsByIdsUseCase {
 
     companion object {
-        private val logger = Logger.getLogger(DeleteTransactionsByIdsService::class.java.name)
+        private val log = LoggerFactory.getLogger(DeleteTransactionsByIdsService::class.java)
     }
 
     override fun handle(command: DeleteTransactionsByIdsCommand): Result<TransactionDeletionResult> {
@@ -73,7 +73,7 @@ class DeleteTransactionsByIdsService(
                             year = transaction.date.year,
                             month = transaction.date.month
                         )
-                        logger.info("Marked month ${transaction.date.month}/${transaction.date.year} as excluded for regular transaction ${transaction.regularTransactionId}")
+                        log.info("Marked {}/{} as excluded for regular transaction: id={}", transaction.date.month, transaction.date.year, transaction.regularTransactionId)
                     }
                 }
 
