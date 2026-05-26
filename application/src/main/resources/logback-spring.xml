@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds">
 
+  <!-- Convertisseurs Spring Boot requis dans un logback-spring.xml custom -->
+  <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+  <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+  <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
   <springProfile name="local,test">
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -125,13 +130,25 @@
     </appender>
 
     <!-- ─────────────────────────────────────────
+         Appender console — stdout pour docker logs
+         Pas d'AsyncAppender : le daemon Docker bufferise stdout nativement
+         ───────────────────────────────────────── -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <charset>UTF-8</charset>
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36}%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}%replace( [tx=%X{transactionId}]){' \[tx=\]', ''} - %msg%n</pattern>
+      </encoder>
+    </appender>
+
+    <!-- ─────────────────────────────────────────
          Niveaux par package
          ───────────────────────────────────────── -->
 
-    <!-- Code JManager : INFO — les deux fichiers -->
+    <!-- Code JManager : INFO — fichiers + console -->
     <logger name="fr.sacane.jmanager" level="INFO" additivity="false">
       <appender-ref ref="ASYNC_APP"/>
       <appender-ref ref="ASYNC_ERROR"/>
+      <appender-ref ref="CONSOLE"/>
     </logger>
 
     <!-- Flyway : INFO pour tracer les migrations en prod -->
@@ -149,10 +166,11 @@
     <logger name="org.apache.catalina"                       level="WARN"/>
     <logger name="org.apache.coyote"                         level="WARN"/>
 
-    <!-- Root catch-all : WARN -->
+    <!-- Root catch-all : WARN — fichiers + console -->
     <root level="WARN">
       <appender-ref ref="ASYNC_APP"/>
       <appender-ref ref="ASYNC_ERROR"/>
+      <appender-ref ref="CONSOLE"/>
     </root>
 
   </springProfile>
