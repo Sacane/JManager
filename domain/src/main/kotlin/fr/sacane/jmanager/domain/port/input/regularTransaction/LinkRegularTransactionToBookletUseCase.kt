@@ -10,6 +10,7 @@ import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionReposi
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
@@ -17,7 +18,16 @@ data class LinkRegularTransactionToBookletCommand(
     val userId: UserId,
     val transactionId: String,
     val bookletId: UUID
-) : Command<RegularTransaction>
+) : Command<RegularTransaction>, MdcContextProvider {
+
+    override fun mdcContext(): Map<String, String> {
+        return mapOf(
+            "userId" to userId.toString(),
+            "transactionId" to transactionId,
+            "bookletId" to bookletId.toString()
+        )
+    }
+}
 
 @Port(Side.APPLICATION)
 interface LinkRegularTransactionToBookletUseCase : CommandHandler<LinkRegularTransactionToBookletCommand, RegularTransaction> {

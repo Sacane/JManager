@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionReposi
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.MdcContextProvider
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 
