@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # bump-version.sh
 # Computes semantic version bump rules based on commit type:
-# - fix:                    -> PATCH
-# - feat:, chore:, patch:   -> MINOR
-# - release:                -> MAJOR
+# - fix:, chore:, patch:    -> PATCH (right)
+# - feat:                   -> MINOR (middle)
+# - release:                -> MAJOR (left)
 #
 # Source of truth priority for current version:
 # 1) latest git tag matching vX.Y.Z
@@ -86,7 +86,7 @@ if [ "$BUMP" = "none" ]; then
       continue
     fi
 
-    if echo "$commit" | grep -qiE '^(feat|chore|patch)(\(.+\))?:'; then
+    if echo "$commit" | grep -qiE '^feat(\(.+\))?:'; then
       BUMP="minor"
       break
     fi
@@ -99,7 +99,7 @@ if [ "$BUMP" = "none" ]; then
       continue
     fi
 
-    if echo "$commit" | grep -qiE '^fix(\(.+\))?:'; then
+    if echo "$commit" | grep -qiE '^(fix|chore|patch)(\(.+\))?:'; then
       BUMP="patch"
       break
     fi
