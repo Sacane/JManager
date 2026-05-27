@@ -14,6 +14,7 @@ import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -134,6 +135,36 @@ class SessionControllerTest(
                 post("/api/user/logout")
             } Then {
                 statusCode(200)
+            }
+        }
+    }
+
+    @Nested
+    inner class DeleteAccountEndpointTest {
+        @Test
+        fun `Delete own account with valid token must return 204`() {
+            val userId = user!!.id.value!!
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/user/me")
+            } Then {
+                statusCode(204)
+            }
+
+            assertNull(userRepository.findById(userId).orElse(null))
+        }
+
+        @Test
+        fun `Delete account without token must return 401`() {
+            Given {
+                port(port)
+            } When {
+                delete("/api/user/me")
+            } Then {
+                statusCode(401)
             }
         }
     }

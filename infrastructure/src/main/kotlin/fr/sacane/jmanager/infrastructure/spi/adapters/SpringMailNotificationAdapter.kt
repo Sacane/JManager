@@ -41,7 +41,7 @@ class SpringMailNotificationAdapter(
             }
             mailSender.send(mimeMessage)
         } catch (e: Exception) {
-            LOGGER.severe("Failed to send welcome email to $email: ${e.message}")
+            LOGGER.severe("Failed to send welcome email: ${e.javaClass.simpleName}")
         }
     }
 }

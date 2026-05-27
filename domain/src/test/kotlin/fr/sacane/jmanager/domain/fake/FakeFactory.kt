@@ -16,6 +16,7 @@ import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.*
 import fr.sacane.jmanager.domain.port.input.transaction.*
 import fr.sacane.jmanager.domain.port.input.user.*
+import fr.sacane.jmanager.domain.port.input.user.DeleteAccountService
 import fr.sacane.jmanager.domain.port.output.*
 import fr.sacane.jmanager.domain.port.output.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
@@ -115,6 +116,7 @@ class FakeFactory {
     val createAdminIfNotExistsService = CreateAdminIfNotExistsService(userRepository, DefaultHasher)
     val getUserSettingsService = GetUserSettingsService(userRepository)
     val updateUserSettingsService = UpdateUserSettingsService(userRepository, bookletRepository)
+    val deleteAccountService = DeleteAccountService(userRepository)
     private val addTagService = AddTagService(inMemoryTagRepository)
     private val getAllTagsService = GetAllTagsService(inMemoryTagRepository)
     private val addDefaultTagsService = AddDefaultTagsService(inMemoryTagRepository)

@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
 import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsQuery
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
@@ -29,6 +30,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.PutMapping
@@ -76,9 +78,8 @@ class SessionController(
             addAccessCookie(httpResponse, it.token)
             addRefreshCookie(httpResponse, it.refreshToken)
             UserStorageDTO(
-                it.user.id.value.toString(),
+                id = it.user.id.value.toString(),
                 username = it.user.username,
-                email = it.user.email,
                 token = it.token,
                 refreshToken = it.refreshToken?.toString(),
             )
@@ -97,6 +98,16 @@ class SessionController(
                 SecurityContextHolder.getContext().authentication = null
                 SecurityContextHolder.clearContext()
             }.toHttpResponse()
+    }
+
+    @DeleteMapping(path = ["/me"])
+    fun deleteAccount(httpResponse: HttpServletResponse): ResponseEntity<Void> {
+        // toHttpResponse() throws a mapped exception on any failure (e.g. NotFoundException for USER_NOT_FOUND)
+        commandBus.dispatch(DeleteAccountCommand(UserId(currentUser.id))).toHttpResponse()
+        clearCookie(httpResponse, "token")
+        clearCookie(httpResponse, "refresh_token")
+        SecurityContextHolder.clearContext()
+        return ResponseEntity.noContent().build()
     }
 
     @PostMapping(path = ["/auth/refresh/{userId}"])
@@ -261,7 +272,6 @@ class SessionController(
     private fun UserToken.toStorageDTO(): UserStorageDTO = UserStorageDTO(
         id = user.id.value.toString(),
         username = user.username,
-        email = user.email,
         token = token,
         refreshToken = refreshToken?.toString(),
     )

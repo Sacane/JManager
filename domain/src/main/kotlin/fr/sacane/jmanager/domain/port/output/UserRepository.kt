@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
+import fr.sacane.jmanager.domain.utils.Result
 
 @Port(Side.INFRASTRUCTURE)
 /**
@@ -96,4 +97,13 @@ interface UserRepository {
      * @return a list of all users in the repository, or an empty list if none exist.
      */
     fun findAll(): List<User>
+
+    /**
+     * Permanently delete a user and all their associated data (booklets, transactions, tags).
+     * Implements the GDPR right to erasure (Art. 17).
+     *
+     * @param userId domain UserId of the account to delete
+     * @return success or a failure result if the user was not found or deletion failed
+     */
+    fun deleteById(userId: UserId): Result<Unit>
 }

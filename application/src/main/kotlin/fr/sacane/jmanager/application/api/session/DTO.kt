@@ -47,7 +47,6 @@ data class UserPasswordDTO(
 data class UserStorageDTO(
     val id: String? = null,
     val username: String,
-    val email: String? = null,
     val token: String,
     val refreshToken: String? = null,
 )

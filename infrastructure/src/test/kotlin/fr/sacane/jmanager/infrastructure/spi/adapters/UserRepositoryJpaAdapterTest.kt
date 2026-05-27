@@ -75,4 +75,22 @@ class UserRepositoryJpaAdapterTest(
         assertThat(refreshed).isNotNull
         assertThat(refreshed!!.projectionWindowDays).isEqualTo(30)
     }
+
+    @Test
+    fun `deleteById should remove user and return success`() {
+        val registered = userRepositoryJpaAdapter.register("u6", "p6", emptySet())
+        assertThat(registered).isNotNull
+
+        val result = userRepositoryJpaAdapter.deleteById(registered!!.id)
+
+        assertThat(result.isSuccess()).isTrue()
+        assertThat(userRepositoryJpaAdapter.findByPseudonym("u6")).isNull()
+    }
+
+    @Test
+    fun `deleteById on unknown user should return failure`() {
+        val result = userRepositoryJpaAdapter.deleteById(UserId(UUID.randomUUID()))
+
+        assertThat(result.isFailure()).isTrue()
+    }
 }

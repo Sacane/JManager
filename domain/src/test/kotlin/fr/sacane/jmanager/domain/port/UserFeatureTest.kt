@@ -23,6 +23,8 @@ import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
+import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
+import fr.sacane.jmanager.domain.port.input.user.DeleteAccountUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
 import fr.sacane.jmanager.domain.port.output.DefaultHasher
@@ -47,6 +49,7 @@ class UserFeatureTest {
     private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = factory.createAdminIfNotExistsService
     private val getUserSettingsUseCase: GetUserSettingsUseCase = factory.getUserSettingsService
     private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = factory.updateUserSettingsService
+    private val deleteAccountUseCase: DeleteAccountUseCase = factory.deleteAccountService
     private val sessionFakeState = factory.sessionState()
     private val userState = factory.fakeUserRepository()
     private val tokenGenerator = factory.tokenGenerator
@@ -388,6 +391,41 @@ class UserFeatureTest {
                             && bookletCycles.first().monthlyPeriodStartDay == 28
                             && bookletCycles.first().monthlyPeriodEndDay == 27
                 }
+            }
+        }
+    }
+
+    @Nested
+    inner class DeleteAccountFeatureTest {
+
+        @Test
+        fun `Deleting an existing account must return success`() {
+            val user = UserFixture.aUser(username = "John", email = "john@example.com")
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
+
+            val result = act { deleteAccountUseCase.handle(DeleteAccountCommand(user.id)) }
+
+            then(result) { assertSuccess() }
+        }
+
+        @Test
+        fun `Deleting an existing account must remove the user from the repository`() {
+            val user = UserFixture.aUser(username = "John", email = "john@example.com")
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
+
+            act { deleteAccountUseCase.handle(DeleteAccountCommand(user.id)) }
+
+            val found = userState.findUserById(user.id)
+            assertEquals(null, found)
+        }
+
+        @Test
+        fun `Deleting a non-existent account must return USER_NOT_FOUND`() {
+            val result = act { deleteAccountUseCase.handle(DeleteAccountCommand(UserFixture.aUser().id)) }
+
+            then(result) {
+                assertFailure(ResultState.USER_NOT_FOUND)
+                assertEquals("domain.user.delete.user_not_found", errorInfo?.key)
             }
         }
     }

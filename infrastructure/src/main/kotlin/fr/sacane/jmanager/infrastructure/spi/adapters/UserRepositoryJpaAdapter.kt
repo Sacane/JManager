@@ -8,6 +8,11 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
+import fr.sacane.jmanager.domain.utils.success
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asExistingResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
@@ -97,5 +102,22 @@ class UserRepositoryJpaAdapter (
 
     override fun findAll(): List<User> {
         return userPostgresRepository.findAll().map { it.toModel() }
+    }
+
+    @Transactional
+    override fun deleteById(userId: UserId): Result<Unit> {
+        val id = userId.value ?: return failure(
+            ResultState.USER_NOT_FOUND,
+            DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.delete.user_not_found", "Identifiant utilisateur invalide")
+        )
+        return if (userPostgresRepository.existsById(id)) {
+            userPostgresRepository.deleteById(id)
+            success(Unit)
+        } else {
+            failure(
+                ResultState.USER_NOT_FOUND,
+                DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.delete.user_not_found", "Le compte à supprimer est introuvable")
+            )
+        }
     }
 }

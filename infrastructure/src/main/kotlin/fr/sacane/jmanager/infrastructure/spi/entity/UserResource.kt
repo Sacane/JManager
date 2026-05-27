@@ -17,7 +17,7 @@ class UserResource(
     var email: String? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var booklets: MutableList<BookletResource> = mutableListOf(),
-    @OneToMany(mappedBy = "owner")
+    @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "owner")
     var tags: MutableList<TagPersonalResource> = mutableListOf(),
     @Column(name = "creation_date", nullable = false, updatable = false)
     val creationDate: LocalDateTime = LocalDateTime.now(),
