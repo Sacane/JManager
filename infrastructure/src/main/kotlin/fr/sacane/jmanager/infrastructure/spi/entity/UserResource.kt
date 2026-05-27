@@ -6,6 +6,7 @@ import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.UUID
 
+
 @Table(name="user_resource")
 @Entity
 class UserResource(
@@ -28,6 +29,12 @@ class UserResource(
     @Enumerated(EnumType.STRING)
     @Column(name = "subscription_plan", nullable = false, length = 50)
     var subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
+    @Column(name = "tos_accepted_at")
+    var tosAcceptedAt: LocalDateTime? = null,
+    @Column(name = "tos_version", length = 20)
+    var tosVersion: String? = null,
+    @Column(name = "privacy_accepted_at")
+    var privacyAcceptedAt: LocalDateTime? = null,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",

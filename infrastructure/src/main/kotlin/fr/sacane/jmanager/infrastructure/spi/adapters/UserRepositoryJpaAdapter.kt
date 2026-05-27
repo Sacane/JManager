@@ -13,6 +13,7 @@ import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
+import java.time.LocalDateTime
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asExistingResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.asResource
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
@@ -71,9 +72,18 @@ class UserRepositoryJpaAdapter (
         }
     }
     @Transactional
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?): User? {
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?): User? {
         return try {
-            val userResource = UserResource(username = username, password = password, email = email, roles = roles.toMutableSet(), subscriptionPlan = subscriptionPlan)
+            val userResource = UserResource(
+                username = username,
+                password = password,
+                email = email,
+                roles = roles.toMutableSet(),
+                subscriptionPlan = subscriptionPlan,
+                tosAcceptedAt = tosAcceptedAt,
+                tosVersion = tosVersion,
+                privacyAcceptedAt = privacyAcceptedAt,
+            )
             val userResponse = userPostgresRepository.save(userResource)
             userResponse.toModel()
         } catch (e: Exception) {

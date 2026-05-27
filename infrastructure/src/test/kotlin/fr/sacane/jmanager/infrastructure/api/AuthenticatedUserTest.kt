@@ -10,6 +10,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
+import java.time.LocalDateTime
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
@@ -58,7 +59,18 @@ abstract class AuthenticatedUserTest {
 
     @BeforeEach
     fun beforeEach() {
-        registerUserUseCase.handle(RegisterUserCommand("test", "test", "test", "test@example.com")).onSuccess { user = it }
+        val now = LocalDateTime.now()
+        registerUserUseCase.handle(
+            RegisterUserCommand(
+                username = "test",
+                password = "test",
+                confirmPassword = "test",
+                email = "test@example.com",
+                tosAcceptedAt = now,
+                tosVersion = "1.0",
+                privacyAcceptedAt = now,
+            )
+        ).onSuccess { user = it }
         loginUseCase.handle(LoginCommand("test", "test")).onSuccess {
             token = it.token
             refreshToken = sessionManager.findSessionByToken(SessionToken(it.token))?.refreshToken?.toString()

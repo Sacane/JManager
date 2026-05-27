@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDateTime
 import java.util.UUID
 import java.util.logging.Logger
 
@@ -153,7 +154,18 @@ class SessionController(
 
     @PostMapping(path = ["/create"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun createUser(@Valid @RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-        val response = commandBus.dispatch(RegisterUserCommand(userDTO.username, userDTO.password, userDTO.confirmPassword, userDTO.email))
+        val now = LocalDateTime.now()
+        val response = commandBus.dispatch(
+            RegisterUserCommand(
+                username = userDTO.username,
+                password = userDTO.password,
+                confirmPassword = userDTO.confirmPassword,
+                email = userDTO.email,
+                tosAcceptedAt = if (userDTO.tosAccepted) now else null,
+                tosVersion = userDTO.tosVersion,
+                privacyAcceptedAt = if (userDTO.privacyAccepted) now else null,
+            )
+        )
         return response.map { u -> u.toDTO() }.toHttpResponse()
     }
 

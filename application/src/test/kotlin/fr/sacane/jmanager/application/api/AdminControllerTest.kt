@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
+import java.time.LocalDateTime
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -45,14 +46,19 @@ class AdminControllerTest(
         }
     }
 
+    private fun consentCommand(username: String, email: String) = RegisterUserCommand(
+        username = username, password = "test", confirmPassword = "test", email = email,
+        tosAcceptedAt = LocalDateTime.now(), tosVersion = "1.0", privacyAcceptedAt = LocalDateTime.now(),
+    )
+
     @Nested
     inner class GetUsersEndpointTest {
 
         @Test
         fun `Get users as admin should return 200 with paginated users`() {
-            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test", "user1@example.com"))
-            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test", "user2@example.com"))
-            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test", "user3@example.com"))
+            registerUserUseCase.handle(consentCommand("user1", "user1@example.com"))
+            registerUserUseCase.handle(consentCommand("user2", "user2@example.com"))
+            registerUserUseCase.handle(consentCommand("user3", "user3@example.com"))
 
             Given {
                 port(port)
@@ -74,7 +80,7 @@ class AdminControllerTest(
 
         @Test
         fun `Get users as admin with bearer token should return 200 with paginated users`() {
-            registerUserUseCase.handle(RegisterUserCommand("user4", "test", "test", "user4@example.com"))
+            registerUserUseCase.handle(consentCommand("user4", "user4@example.com"))
 
             Given {
                 port(port)
@@ -95,7 +101,7 @@ class AdminControllerTest(
         @Test
         fun `Get users with pagination should return correct page size`() {
             repeat(5) { i ->
-                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test", "user$i@example.com"))
+                registerUserUseCase.handle(consentCommand("user$i", "user$i@example.com"))
             }
 
             Given {
@@ -117,7 +123,7 @@ class AdminControllerTest(
         @Test
         fun `Get users on second page should return correct content`() {
             repeat(5) { i ->
-                registerUserUseCase.handle(RegisterUserCommand("user$i", "test", "test", "user$i@example.com"))
+                registerUserUseCase.handle(consentCommand("user$i", "user$i@example.com"))
             }
 
             Given {
@@ -182,9 +188,9 @@ class AdminControllerTest(
 
         @Test
         fun `Get users should return users sorted by creation date descending`() {
-            registerUserUseCase.handle(RegisterUserCommand("user1", "test", "test", "user1@example.com"))
-            registerUserUseCase.handle(RegisterUserCommand("user2", "test", "test", "user2@example.com"))
-            registerUserUseCase.handle(RegisterUserCommand("user3", "test", "test", "user3@example.com"))
+            registerUserUseCase.handle(consentCommand("user1", "user1@example.com"))
+            registerUserUseCase.handle(consentCommand("user2", "user2@example.com"))
+            registerUserUseCase.handle(consentCommand("user3", "user3@example.com"))
 
             Given {
                 port(port)

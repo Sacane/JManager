@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.utils.Result
+import java.time.LocalDateTime
 
 @Port(Side.INFRASTRUCTURE)
 /**
@@ -72,6 +73,9 @@ interface UserRepository {
         roles: Set<Role> = setOf(Role.USER),
         subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
         email: String? = null,
+        tosAcceptedAt: LocalDateTime? = null,
+        tosVersion: String? = null,
+        privacyAcceptedAt: LocalDateTime? = null,
     ): User?
 
     /**

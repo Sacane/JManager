@@ -31,6 +31,13 @@ data class RegisteredUserDTO(
     @field:jakarta.validation.constraints.Email
     @field:Size(max = 255)
     val email: String,
+    /** RGPD Art. 6 — L'utilisateur doit accepter les CGU avant de s'inscrire. */
+    val tosAccepted: Boolean = false,
+    /** Version des CGU acceptées (ex: "1.0"). */
+    @field:Size(max = 20)
+    val tosVersion: String? = null,
+    /** RGPD Art. 6 — L'utilisateur doit accepter la politique de confidentialité. */
+    val privacyAccepted: Boolean = false,
 )
 
 @Serializable

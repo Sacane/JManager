@@ -3,6 +3,7 @@ package fr.sacane.jmanager.infrastructure.spi.adapters
 import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
+import java.time.LocalDateTime
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -92,5 +93,33 @@ class UserRepositoryJpaAdapterTest(
         val result = userRepositoryJpaAdapter.deleteById(UserId(UUID.randomUUID()))
 
         assertThat(result.isFailure()).isTrue()
+    }
+
+    @Test
+    fun `register with consent should persist and return consent record`() {
+        val consentTime = LocalDateTime.of(2026, 1, 1, 10, 0)
+
+        val registered = userRepositoryJpaAdapter.register(
+            username = "consent-user",
+            password = "pwd",
+            roles = emptySet(),
+            tosAcceptedAt = consentTime,
+            tosVersion = "1.0",
+            privacyAcceptedAt = consentTime,
+        )
+
+        assertThat(registered).isNotNull
+        assertThat(registered!!.consent).isNotNull
+        assertThat(registered.consent!!.tosAcceptedAt).isEqualTo(consentTime)
+        assertThat(registered.consent!!.tosVersion).isEqualTo("1.0")
+        assertThat(registered.consent!!.privacyAcceptedAt).isEqualTo(consentTime)
+    }
+
+    @Test
+    fun `register without consent should persist null consent`() {
+        val registered = userRepositoryJpaAdapter.register("no-consent-user", "pwd", emptySet())
+
+        assertThat(registered).isNotNull
+        assertThat(registered!!.consent).isNull()
     }
 }
