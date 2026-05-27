@@ -169,6 +169,12 @@ class InMemoryUserRepository (
         return success(Unit)
     }
 
+    override fun recordConsent(userId: UserId, consent: ConsentRecord): Result<Unit> {
+        val userWithPassword = inMemoryDatabase.users[userId] ?: return Result(ResultState.USER_NOT_FOUND)
+        userWithPassword.user.consent = consent
+        return success(Unit)
+    }
+
     override fun getStates(): Collection<UserWithPassword> {
         return inMemoryDatabase.users.values
     }

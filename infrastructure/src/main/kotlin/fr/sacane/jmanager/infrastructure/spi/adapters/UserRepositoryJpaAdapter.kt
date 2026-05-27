@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
+import fr.sacane.jmanager.domain.models.ConsentRecord
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
@@ -112,6 +113,24 @@ class UserRepositoryJpaAdapter (
 
     override fun findAll(): List<User> {
         return userPostgresRepository.findAll().map { it.toModel() }
+    }
+
+    @Transactional
+    override fun recordConsent(userId: UserId, consent: ConsentRecord): Result<Unit> {
+        val id = userId.value ?: return failure(
+            ResultState.USER_NOT_FOUND,
+            DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.consent.user_not_found", "L'utilisateur est introuvable")
+        )
+        val resource = userPostgresRepository.findById(id).orElse(null)
+            ?: return failure(
+                ResultState.USER_NOT_FOUND,
+                DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.consent.user_not_found", "L'utilisateur est introuvable")
+            )
+        resource.tosAcceptedAt = consent.tosAcceptedAt
+        resource.tosVersion = consent.tosVersion
+        resource.privacyAcceptedAt = consent.privacyAcceptedAt
+        userPostgresRepository.save(resource)
+        return success(Unit)
     }
 
     @Transactional

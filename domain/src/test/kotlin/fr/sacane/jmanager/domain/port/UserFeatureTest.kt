@@ -26,6 +26,11 @@ import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
 import java.time.LocalDateTime
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountUseCase
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedQuery
+import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedUseCase
+import fr.sacane.jmanager.domain.port.input.user.RecordConsentCommand
+import fr.sacane.jmanager.domain.port.input.user.RecordConsentUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
 import fr.sacane.jmanager.domain.port.output.DefaultHasher
@@ -67,6 +72,8 @@ class UserFeatureTest {
     private val getUserSettingsUseCase: GetUserSettingsUseCase = factory.getUserSettingsService
     private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = factory.updateUserSettingsService
     private val deleteAccountUseCase: DeleteAccountUseCase = factory.deleteAccountService
+    private val recordConsentUseCase: RecordConsentUseCase = factory.recordConsentService
+    private val hasUserConsentedUseCase: HasUserConsentedUseCase = factory.hasUserConsentedService
     private val sessionFakeState = factory.sessionState()
     private val userState = factory.fakeUserRepository()
     private val tokenGenerator = factory.tokenGenerator
@@ -444,6 +451,112 @@ class UserFeatureTest {
                             && bookletCycles.first().monthlyPeriodEndDay == 27
                 }
             }
+        }
+    }
+
+    @Nested
+    inner class ConsentFeatureTest {
+
+        private val consentTimestamp = LocalDateTime.of(2026, 1, 1, 10, 0)
+
+        private fun recordCommand(
+            userId: UserId,
+            tosAccepted: Boolean = true,
+            privacyAccepted: Boolean = true,
+        ) = RecordConsentCommand(
+            userId = userId,
+            tosAccepted = tosAccepted,
+            tosVersion = "1.0",
+            privacyAccepted = privacyAccepted,
+            consentTimestamp = consentTimestamp,
+        )
+
+        @Test
+        fun `Recording consent with both accepted must return success`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { recordConsentUseCase.handle(recordCommand(user.id)) }
+
+            then(result) { assertSuccess() }
+        }
+
+        @Test
+        fun `Recording consent must persist ConsentRecord on the user`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            act { recordConsentUseCase.handle(recordCommand(user.id)) }
+
+            val persisted = userState.findUserById(user.id)
+            assertNotNull(persisted?.consent)
+            assertEquals(consentTimestamp, persisted!!.consent!!.tosAcceptedAt)
+            assertEquals("1.0", persisted.consent!!.tosVersion)
+            assertEquals(consentTimestamp, persisted.consent!!.privacyAcceptedAt)
+        }
+
+        @Test
+        fun `Recording consent for non-existent user must return USER_NOT_FOUND`() {
+            val result = act { recordConsentUseCase.handle(recordCommand(UserFixture.aUser().id)) }
+
+            then(result) { assertFailure(ResultState.USER_NOT_FOUND) }
+        }
+
+        @Test
+        fun `Recording consent with TOS not accepted must return INVALID`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { recordConsentUseCase.handle(recordCommand(user.id, tosAccepted = false)) }
+
+            then(result) {
+                assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.consent.tos_required", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Recording consent with privacy policy not accepted must return INVALID`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { recordConsentUseCase.handle(recordCommand(user.id, privacyAccepted = false)) }
+
+            then(result) {
+                assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.consent.privacy_required", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `HasUserConsentedQuery returns false for user without consent`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { hasUserConsentedUseCase.handle(HasUserConsentedQuery(user.id)) }
+
+            then(result) { assertTrue { this == false } }
+        }
+
+        @Test
+        fun `HasUserConsentedQuery returns true for user with existing consent`() {
+            val user = UserFixture.aUserWithConsent()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { hasUserConsentedUseCase.handle(HasUserConsentedQuery(user.id)) }
+
+            then(result) { assertTrue { this == true } }
+        }
+
+        @Test
+        fun `After recording consent HasUserConsentedQuery must return true`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+            recordConsentUseCase.handle(recordCommand(user.id))
+
+            val result = act { hasUserConsentedUseCase.handle(HasUserConsentedQuery(user.id)) }
+
+            then(result) { assertTrue { this == true } }
         }
     }
 

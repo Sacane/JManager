@@ -122,4 +122,32 @@ class UserRepositoryJpaAdapterTest(
         assertThat(registered).isNotNull
         assertThat(registered!!.consent).isNull()
     }
+
+    @Test
+    fun `recordConsent should persist all three columns and be readable`() {
+        val registered = userRepositoryJpaAdapter.register("consent-record-user", "pwd", emptySet())
+        assertThat(registered).isNotNull
+        val consentTime = LocalDateTime.of(2026, 1, 1, 10, 0)
+        val consent = fr.sacane.jmanager.domain.models.ConsentRecord(consentTime, "1.0", consentTime)
+
+        val result = userRepositoryJpaAdapter.recordConsent(registered!!.id, consent)
+
+        assertThat(result.isSuccess()).isTrue()
+        val refreshed = userRepositoryJpaAdapter.findUserById(registered.id)
+        assertThat(refreshed?.consent).isNotNull
+        assertThat(refreshed!!.consent!!.tosAcceptedAt).isEqualTo(consentTime)
+        assertThat(refreshed.consent!!.tosVersion).isEqualTo("1.0")
+        assertThat(refreshed.consent!!.privacyAcceptedAt).isEqualTo(consentTime)
+    }
+
+    @Test
+    fun `recordConsent on unknown user should return USER_NOT_FOUND`() {
+        val consent = fr.sacane.jmanager.domain.models.ConsentRecord(
+            LocalDateTime.now(), "1.0", LocalDateTime.now()
+        )
+
+        val result = userRepositoryJpaAdapter.recordConsent(UserId(UUID.randomUUID()), consent)
+
+        assertThat(result.isFailure()).isTrue()
+    }
 }

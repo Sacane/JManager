@@ -37,7 +37,7 @@ class User(
     val isEnabled: Boolean = true,
     var projectionWindowDays: Int = 15,
     val subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
-    val consent: ConsentRecord? = null,
+    var consent: ConsentRecord? = null,
 ) {
 
     init {
