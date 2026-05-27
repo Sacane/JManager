@@ -9,8 +9,10 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
 import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsQuery
+import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedQuery
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
+import fr.sacane.jmanager.domain.port.input.user.RecordConsentCommand
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
@@ -109,6 +111,37 @@ class SessionController(
         clearCookie(httpResponse, "refresh_token")
         SecurityContextHolder.clearContext()
         return ResponseEntity.noContent().build()
+    }
+
+    /**
+     * Records the user's explicit GDPR consent (TOS + Privacy Policy).
+     * Intended for the first-login consent gate for admin-created accounts.
+     * The consent timestamp is generated server-side — never passed by the client.
+     */
+    @PostMapping(path = ["/consent"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun recordConsent(@Valid @RequestBody dto: RecordConsentDTO): ResponseEntity<Void> {
+        val now = LocalDateTime.now()
+        commandBus.dispatch(
+            RecordConsentCommand(
+                userId = UserId(currentUser.id),
+                tosAccepted = dto.tosAccepted,
+                tosVersion = dto.tosVersion,
+                privacyAccepted = dto.privacyAccepted,
+                consentTimestamp = now,
+            )
+        ).toHttpResponse()
+        return ResponseEntity.noContent().build()
+    }
+
+    /**
+     * Returns the current user's consent status.
+     * `consentRequired = true` means the user was admin-created and has not yet gone through the consent gate.
+     */
+    @GetMapping(path = ["/me"])
+    fun getUserStatus(): ResponseEntity<UserStatusDTO> {
+        return queryBus.dispatch(HasUserConsentedQuery(UserId(currentUser.id)))
+            .map { consented -> UserStatusDTO(consentRequired = !consented) }
+            .toHttpResponse()
     }
 
     @PostMapping(path = ["/auth/refresh/{userId}"])

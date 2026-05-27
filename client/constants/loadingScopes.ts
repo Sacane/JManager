@@ -1,4 +1,7 @@
 export const LOADING_SCOPES = {
+  consent: {
+    submit: 'consent.submit',
+  },
   admin: {
     fetchUsers: 'admin.fetchUsers',
     createUser: 'admin.createUser',
