@@ -616,6 +616,37 @@ And preview transactions are excluded from the output
 
 ---
 
+## Feature: Data Retention Policy
+
+As the system, I want to automatically purge personal data that has exceeded its configured
+retention period so that JManager complies with GDPR Art. 5(1)(e) data minimisation.
+
+### Scenario: Purge unconsented accounts past the retention threshold
+```gherkin
+Given a retention policy with unconsentedAccountRetentionDays = 30
+And one or more user accounts with consent = null created more than 30 days ago
+When the scheduled retention job runs
+Then all expired unconsented accounts are permanently deleted
+And a summary log entry records the number of deleted accounts
+```
+
+### Scenario: Recent unconsented accounts are not purged
+```gherkin
+Given a retention policy with unconsentedAccountRetentionDays = 30
+And a user account with consent = null created less than 30 days ago
+When the scheduled retention job runs
+Then the account is NOT deleted
+```
+
+### Scenario: Consented accounts are never purged by the retention job
+```gherkin
+Given a user account with a non-null ConsentRecord regardless of age
+When the scheduled retention job runs
+Then the account is NOT deleted
+```
+
+---
+
 ## Feature: Administration
 
 As an administrator, I want to manage users so that I can oversee the platform.

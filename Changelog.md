@@ -2,6 +2,13 @@
 
 ## [En cours]
 
+## 2026-05-28
+
+- **GDPR Data Retention — scheduled purge of unconsented accounts (Art. 5(1)(e))**
+  - **Domain**: Added `RetentionDays` (`@JvmInline value class`), `RetentionPolicy`, `PurgeSummary` in `domain/models/retention/`. Created `DataRetentionCandidatePort` (output port) and `PurgeExpiredDataUseCase` / `PurgeExpiredDataService` (input port + service). Purge logic uses strictly-before semantics; each deletion is best-effort (independent transaction). 5 unit tests (no Spring context).
+  - **Infrastructure**: Added `RetentionProperties` (`@ConfigurationProperties(prefix="jmanager.retention")`) registered via `@EnableConfigurationProperties` on `JpaAutoConfiguration`. Added JPQL query `findIdsByConsentNullAndCreationDateBefore` to `UserPostgresRepository`. Created `DataRetentionCandidateJpaAdapter` (output port adapter) and `RetentionScheduler` (`@Scheduled(cron=...)`). Added partial index `V25__add_retention_candidate_index.sql` on `creation_date WHERE tos_accepted_at IS NULL`. 4 integration tests (Testcontainers).
+  - **Application**: Added `SchedulingConfiguration` (`@Configuration @EnableScheduling`). Wired `jmanager.retention.unconsented-account-days=30` and `jmanager.retention.cron=0 0 2 * * *` in `application.properties`; cron disabled in tests via `jmanager.retention.cron=-` in `application-test.properties`. 4 tests covering property binding, cron override, and `@EnableScheduling` activation.
+
 ## 2026-05-25
 
 - **Observability: VPS-tuned Logback configuration (`logback-spring.xml`)**
