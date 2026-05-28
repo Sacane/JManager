@@ -19,6 +19,7 @@ import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountService
 import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
+import fr.sacane.jmanager.domain.port.input.retention.PurgeExpiredDataService
 import fr.sacane.jmanager.domain.port.output.*
 import fr.sacane.jmanager.domain.port.output.repository.BookletBalanceQueryRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
@@ -121,6 +122,8 @@ class FakeFactory {
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)
+    private val retentionCandidatePort = InMemoryDataRetentionCandidatePort(inMemoryDatabase)
+    val purgeExpiredDataService = PurgeExpiredDataService(retentionCandidatePort, userRepository)
     private val addTagService = AddTagService(inMemoryTagRepository)
     private val getAllTagsService = GetAllTagsService(inMemoryTagRepository)
     private val addDefaultTagsService = AddDefaultTagsService(inMemoryTagRepository)

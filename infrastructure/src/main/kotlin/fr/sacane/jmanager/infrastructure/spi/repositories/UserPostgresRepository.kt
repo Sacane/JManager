@@ -7,6 +7,7 @@ import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Repository
@@ -26,4 +27,15 @@ interface UserPostgresRepository: CrudRepository<UserResource, UUID> {
     @Transactional
     @Query("UPDATE UserResource user SET user.projectionWindowDays = :projectionWindowDays WHERE user.idUser = :id")
     fun updateProjectionWindowDays(@Param("id") id: UUID, @Param("projectionWindowDays") projectionWindowDays: Int): Int
+
+    /**
+     * Returns the IDs of users whose ToS consent is absent ([tosAcceptedAt] IS NULL)
+     * and whose account was created **strictly before** [cutoff].
+     *
+     * Projects only the ID column to avoid loading lazy associations for a deletion path.
+     */
+    @Query("SELECT u.idUser FROM UserResource u WHERE u.tosAcceptedAt IS NULL AND u.creationDate < :cutoff")
+    fun findIdsByConsentNullAndCreationDateBefore(
+        @Param("cutoff") cutoff: LocalDateTime,
+    ): List<UUID>
 }
