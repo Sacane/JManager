@@ -130,6 +130,12 @@ fun BookletResource.toModel(): Booklet
 )
 
 
+private fun UserResource.toConsentRecord(): ConsentRecord? {
+    val tos = tosAcceptedAt ?: return null
+    val privacy = privacyAcceptedAt ?: return null
+    return ConsentRecord(tos, tosVersion, privacy)
+}
+
 fun UserResource.toModel()
 : User = User(
     id = UserId(this.idUser),
@@ -140,6 +146,7 @@ fun UserResource.toModel()
     isEnabled = isEnabled,
     projectionWindowDays = projectionWindowDays,
     subscriptionPlan = subscriptionPlan,
+    consent = toConsentRecord(),
 )
 fun UserResource.toModelWithSimpleBooklets()
         : User = User(

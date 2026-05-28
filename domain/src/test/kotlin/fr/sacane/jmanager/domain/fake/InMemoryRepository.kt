@@ -13,6 +13,11 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.models.ConsentRecord
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.success
+import java.time.LocalDateTime
 import java.time.Month
 import java.util.*
 
@@ -132,8 +137,11 @@ class InMemoryUserRepository (
         return user.user
     }
 
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?): User {
-        val element = User(id = UserId(UUID.randomUUID()), username = username, email = email, roles = roles, subscriptionPlan = subscriptionPlan)
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?): User {
+        val consent = if (tosAcceptedAt != null && privacyAcceptedAt != null) {
+            ConsentRecord(tosAcceptedAt, tosVersion, privacyAcceptedAt)
+        } else null
+        val element = User(id = UserId(UUID.randomUUID()), username = username, email = email, roles = roles, subscriptionPlan = subscriptionPlan, consent = consent)
         inMemoryDatabase.users[element.id] = UserWithPassword(element, password, roles)
         return element
     }
@@ -153,6 +161,18 @@ class InMemoryUserRepository (
 
     override fun findAll(): List<User> {
         return inMemoryDatabase.users.values.map { it.user }
+    }
+
+    override fun deleteById(userId: UserId): Result<Unit> {
+        if (!inMemoryDatabase.users.containsKey(userId)) return Result(ResultState.USER_NOT_FOUND)
+        inMemoryDatabase.users.remove(userId)
+        return success(Unit)
+    }
+
+    override fun recordConsent(userId: UserId, consent: ConsentRecord): Result<Unit> {
+        val userWithPassword = inMemoryDatabase.users[userId] ?: return Result(ResultState.USER_NOT_FOUND)
+        userWithPassword.user.consent = consent
+        return success(Unit)
     }
 
     override fun getStates(): Collection<UserWithPassword> {

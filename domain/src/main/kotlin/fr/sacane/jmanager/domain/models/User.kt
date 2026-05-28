@@ -3,6 +3,12 @@ package fr.sacane.jmanager.domain.models
 import java.time.LocalDateTime
 import java.util.UUID
 
+data class ConsentRecord(
+    val tosAcceptedAt: LocalDateTime,
+    val tosVersion: String?,
+    val privacyAcceptedAt: LocalDateTime,
+)
+
 
 @JvmInline
 value class UserId(val value: UUID?)
@@ -31,6 +37,7 @@ class User(
     val isEnabled: Boolean = true,
     var projectionWindowDays: Int = 15,
     val subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
+    var consent: ConsentRecord? = null,
 ) {
 
     init {

@@ -31,6 +31,13 @@ data class RegisteredUserDTO(
     @field:jakarta.validation.constraints.Email
     @field:Size(max = 255)
     val email: String,
+    /** RGPD Art. 6 — L'utilisateur doit accepter les CGU avant de s'inscrire. */
+    val tosAccepted: Boolean = false,
+    /** Version des CGU acceptées (ex: "1.0"). */
+    @field:Size(max = 20)
+    val tosVersion: String? = null,
+    /** RGPD Art. 6 — L'utilisateur doit accepter la politique de confidentialité. */
+    val privacyAccepted: Boolean = false,
 )
 
 @Serializable
@@ -47,7 +54,6 @@ data class UserPasswordDTO(
 data class UserStorageDTO(
     val id: String? = null,
     val username: String,
-    val email: String? = null,
     val token: String,
     val refreshToken: String? = null,
 )
@@ -84,4 +90,23 @@ data class BookletMonthlyCycleUpdateDTO(
     @field:Min(1)
     @field:Max(31)
     val monthlyPeriodEndDay: Int? = null,
+)
+
+/** GDPR — payload for the first-login consent gate (`POST /api/user/consent`). */
+@Serializable
+data class RecordConsentDTO(
+    /** Whether the user explicitly accepted the Terms of Service. */
+    val tosAccepted: Boolean = false,
+    /** Version string of the TOS accepted (e.g. "1.0"). */
+    @field:Size(max = 20)
+    val tosVersion: String? = null,
+    /** Whether the user explicitly accepted the Privacy Policy. */
+    val privacyAccepted: Boolean = false,
+)
+
+/** Lightweight status payload returned by `GET /api/user/me`. */
+@Serializable
+data class UserStatusDTO(
+    /** `true` when the account was created without explicit consent (e.g. admin-created) and the user must go through the consent gate. */
+    val consentRequired: Boolean,
 )

@@ -95,6 +95,19 @@ vi.stubGlobal('useAuth', vi.fn(() => ({
   initializeSession: vi.fn(),
 })))
 
+vi.stubGlobal('useConsent', vi.fn(() => ({
+  tosAccepted: ref(false),
+  privacyAccepted: ref(false),
+  canSubmit: computed(() => false),
+  isSubmitting: computed(() => false),
+  tosVersion: '1.0',
+  consentRequired: ref(false),
+  consentChecked: ref(false),
+  checkConsentStatus: vi.fn().mockResolvedValue(false),
+  submitConsent: vi.fn(),
+  clearConsentCache: vi.fn(),
+})))
+
 vi.stubGlobal('useAdmin', vi.fn(() => ({
   users: ref([]),
   totalUsers: ref(0),

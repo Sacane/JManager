@@ -7,9 +7,12 @@ import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
 import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsQuery
+import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedQuery
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
+import fr.sacane.jmanager.domain.port.input.user.RecordConsentCommand
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
@@ -29,6 +32,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.PutMapping
@@ -37,6 +41,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDateTime
 import java.util.UUID
 import java.util.logging.Logger
 
@@ -76,9 +81,8 @@ class SessionController(
             addAccessCookie(httpResponse, it.token)
             addRefreshCookie(httpResponse, it.refreshToken)
             UserStorageDTO(
-                it.user.id.value.toString(),
+                id = it.user.id.value.toString(),
                 username = it.user.username,
-                email = it.user.email,
                 token = it.token,
                 refreshToken = it.refreshToken?.toString(),
             )
@@ -97,6 +101,47 @@ class SessionController(
                 SecurityContextHolder.getContext().authentication = null
                 SecurityContextHolder.clearContext()
             }.toHttpResponse()
+    }
+
+    @DeleteMapping(path = ["/me"])
+    fun deleteAccount(httpResponse: HttpServletResponse): ResponseEntity<Void> {
+        // toHttpResponse() throws a mapped exception on any failure (e.g. NotFoundException for USER_NOT_FOUND)
+        commandBus.dispatch(DeleteAccountCommand(UserId(currentUser.id))).toHttpResponse()
+        clearCookie(httpResponse, "token")
+        clearCookie(httpResponse, "refresh_token")
+        SecurityContextHolder.clearContext()
+        return ResponseEntity.noContent().build()
+    }
+
+    /**
+     * Records the user's explicit GDPR consent (TOS + Privacy Policy).
+     * Intended for the first-login consent gate for admin-created accounts.
+     * The consent timestamp is generated server-side — never passed by the client.
+     */
+    @PostMapping(path = ["/consent"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun recordConsent(@Valid @RequestBody dto: RecordConsentDTO): ResponseEntity<Void> {
+        val now = LocalDateTime.now()
+        commandBus.dispatch(
+            RecordConsentCommand(
+                userId = UserId(currentUser.id),
+                tosAccepted = dto.tosAccepted,
+                tosVersion = dto.tosVersion,
+                privacyAccepted = dto.privacyAccepted,
+                consentTimestamp = now,
+            )
+        ).toHttpResponse()
+        return ResponseEntity.noContent().build()
+    }
+
+    /**
+     * Returns the current user's consent status.
+     * `consentRequired = true` means the user was admin-created and has not yet gone through the consent gate.
+     */
+    @GetMapping(path = ["/me"])
+    fun getUserStatus(): ResponseEntity<UserStatusDTO> {
+        return queryBus.dispatch(HasUserConsentedQuery(UserId(currentUser.id)))
+            .map { consented -> UserStatusDTO(consentRequired = !consented) }
+            .toHttpResponse()
     }
 
     @PostMapping(path = ["/auth/refresh/{userId}"])
@@ -142,7 +187,18 @@ class SessionController(
 
     @PostMapping(path = ["/create"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun createUser(@Valid @RequestBody userDTO: RegisteredUserDTO): ResponseEntity<UserDTO> {
-        val response = commandBus.dispatch(RegisterUserCommand(userDTO.username, userDTO.password, userDTO.confirmPassword, userDTO.email))
+        val now = LocalDateTime.now()
+        val response = commandBus.dispatch(
+            RegisterUserCommand(
+                username = userDTO.username,
+                password = userDTO.password,
+                confirmPassword = userDTO.confirmPassword,
+                email = userDTO.email,
+                tosAcceptedAt = if (userDTO.tosAccepted) now else null,
+                tosVersion = userDTO.tosVersion,
+                privacyAcceptedAt = if (userDTO.privacyAccepted) now else null,
+            )
+        )
         return response.map { u -> u.toDTO() }.toHttpResponse()
     }
 
@@ -261,7 +317,6 @@ class SessionController(
     private fun UserToken.toStorageDTO(): UserStorageDTO = UserStorageDTO(
         id = user.id.value.toString(),
         username = user.username,
-        email = user.email,
         token = token,
         refreshToken = refreshToken?.toString(),
     )

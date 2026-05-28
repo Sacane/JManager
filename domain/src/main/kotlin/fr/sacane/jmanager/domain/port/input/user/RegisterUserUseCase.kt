@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.ConsentRecord
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.output.Hasher
@@ -16,12 +17,16 @@ import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
 
 data class RegisterUserCommand(
     val username: String,
     val password: String,
     val confirmPassword: String,
     val email: String,
+    val tosAcceptedAt: LocalDateTime? = null,
+    val tosVersion: String? = null,
+    val privacyAcceptedAt: LocalDateTime? = null,
 ) : Command<User>
 
 @Port(Side.APPLICATION)
@@ -53,11 +58,20 @@ class RegisterUserService(
                 DomainError(ResultState.INVALID.code, "domain.user.register.email_required", "L'email est obligatoire")
             )
         }
+        if (command.tosAcceptedAt == null || command.privacyAcceptedAt == null) {
+            return failure(
+                ResultState.INVALID,
+                DomainError(ResultState.INVALID.code, "domain.user.register.consent_required", "Le consentement aux CGU et à la politique de confidentialité est obligatoire")
+            )
+        }
         val hashedPassword = hasher.hash(command.password)
         val userResult = userRepository.register(
             command.username, hashedPassword,
             email = command.email,
             subscriptionPlan = SubscriptionPlan.BETA_TESTER,
+            tosAcceptedAt = command.tosAcceptedAt,
+            tosVersion = command.tosVersion,
+            privacyAcceptedAt = command.privacyAcceptedAt,
         ) ?: return failure(
             ResultState.INVALID,
             DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")

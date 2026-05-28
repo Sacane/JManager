@@ -2,11 +2,14 @@ package fr.sacane.jmanager.domain.port.output
 
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.ConsentRecord
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.UserWithPassword
+import fr.sacane.jmanager.domain.utils.Result
+import java.time.LocalDateTime
 
 @Port(Side.INFRASTRUCTURE)
 /**
@@ -71,6 +74,9 @@ interface UserRepository {
         roles: Set<Role> = setOf(Role.USER),
         subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
         email: String? = null,
+        tosAcceptedAt: LocalDateTime? = null,
+        tosVersion: String? = null,
+        privacyAcceptedAt: LocalDateTime? = null,
     ): User?
 
     /**
@@ -96,4 +102,23 @@ interface UserRepository {
      * @return a list of all users in the repository, or an empty list if none exist.
      */
     fun findAll(): List<User>
+
+    /**
+     * Permanently delete a user and all their associated data (booklets, transactions, tags).
+     * Implements the GDPR right to erasure (Art. 17).
+     *
+     * @param userId domain UserId of the account to delete
+     * @return success or a failure result if the user was not found or deletion failed
+     */
+    fun deleteById(userId: UserId): Result<Unit>
+
+    /**
+     * Record explicit GDPR consent (Art. 6 / Art. 7) for a user.
+     * Typically called at first login for admin-created accounts that bypassed the registration form.
+     *
+     * @param userId domain UserId of the consenting user
+     * @param consent the consent record with timestamps and TOS version
+     * @return success or a failure result if the user was not found
+     */
+    fun recordConsent(userId: UserId, consent: ConsentRecord): Result<Unit>
 }

@@ -3,10 +3,15 @@ package fr.sacane.jmanager.application.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.toAmount
+import fr.sacane.jmanager.domain.port.input.user.LoginCommand
+import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
+import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.application.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.application.api.session.BookletMonthlyCycleUpdateDTO
+import fr.sacane.jmanager.application.api.session.RecordConsentDTO
 import fr.sacane.jmanager.application.api.session.UserPasswordDTO
 import fr.sacane.jmanager.application.api.session.UserSettingsUpdateDTO
+import fr.sacane.jmanager.infrastructure.spi.adapters.UserRepositoryJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
@@ -14,6 +19,7 @@ import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,6 +36,9 @@ class SessionControllerTest(
     @Autowired val objectMapper: ObjectMapper,
     @Autowired val userRepository: UserPostgresRepository,
     @Autowired private val BookletStateTestAdapter: BookletStateTestAdapter,
+    @Autowired private val loginUseCase: LoginUseCase,
+    @Autowired private val userRepositoryJpaAdapter: UserRepositoryJpaAdapter,
+    @Autowired private val hasher: Hasher,
 ): AuthenticatedUserTest() {
 
     @AfterEach
@@ -134,6 +143,36 @@ class SessionControllerTest(
                 post("/api/user/logout")
             } Then {
                 statusCode(200)
+            }
+        }
+    }
+
+    @Nested
+    inner class DeleteAccountEndpointTest {
+        @Test
+        fun `Delete own account with valid token must return 204`() {
+            val userId = user!!.id.value!!
+
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                delete("/api/user/me")
+            } Then {
+                statusCode(204)
+            }
+
+            assertNull(userRepository.findById(userId).orElse(null))
+        }
+
+        @Test
+        fun `Delete account without token must return 401`() {
+            Given {
+                port(port)
+            } When {
+                delete("/api/user/me")
+            } Then {
+                statusCode(401)
             }
         }
     }
@@ -374,4 +413,93 @@ class SessionControllerTest(
 //            }
 //        }
 //    }
+
+    @Nested
+    inner class ConsentEndpointTest {
+
+        @Test
+        fun `POST consent with valid data must return 204`() {
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(RecordConsentDTO(tosAccepted = true, tosVersion = "1.0", privacyAccepted = true)))
+            } When {
+                post("/api/user/consent")
+            } Then {
+                statusCode(204)
+            }
+        }
+
+        @Test
+        fun `POST consent without tosAccepted must return 400`() {
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(RecordConsentDTO(tosAccepted = false, tosVersion = "1.0", privacyAccepted = true)))
+            } When {
+                post("/api/user/consent")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `POST consent without authentication must return 401`() {
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(RecordConsentDTO(tosAccepted = true, tosVersion = "1.0", privacyAccepted = true)))
+            } When {
+                post("/api/user/consent")
+            } Then {
+                statusCode(401)
+            }
+        }
+
+        @Test
+        fun `GET me for consented user must return consentRequired false`() {
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                get("/api/user/me")
+            } Then {
+                statusCode(200)
+                body("consentRequired", equalTo(false))
+            }
+        }
+
+        @Test
+        fun `GET me for non-consented user must return consentRequired true`() {
+            // Simulates an admin-created account — bypasses domain validation, no consent stored.
+            // Password must be pre-hashed since UserRepositoryJpaAdapter stores it as-is.
+            userRepositoryJpaAdapter.register("no-consent-user", hasher.hash("pwd"), emptySet())
+            var noConsentToken: String? = null
+            loginUseCase.handle(LoginCommand("no-consent-user", "pwd"))
+                .onSuccess { noConsentToken = it.token }
+
+            Given {
+                port(port)
+                cookie("token", noConsentToken!!)
+            } When {
+                get("/api/user/me")
+            } Then {
+                statusCode(200)
+                body("consentRequired", equalTo(true))
+            }
+        }
+
+        @Test
+        fun `GET me without authentication must return 401`() {
+            Given {
+                port(port)
+            } When {
+                get("/api/user/me")
+            } Then {
+                statusCode(401)
+            }
+        }
+    }
 }

@@ -23,6 +23,14 @@ import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
+import java.time.LocalDateTime
+import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
+import fr.sacane.jmanager.domain.port.input.user.DeleteAccountUseCase
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedQuery
+import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedUseCase
+import fr.sacane.jmanager.domain.port.input.user.RecordConsentCommand
+import fr.sacane.jmanager.domain.port.input.user.RecordConsentUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
 import fr.sacane.jmanager.domain.port.output.DefaultHasher
@@ -36,6 +44,22 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
+private fun registerCommand(
+    username: String = "John",
+    password: String = "test",
+    confirmPassword: String = "test",
+    email: String = "john@example.com",
+    withConsent: Boolean = true,
+) = RegisterUserCommand(
+    username = username,
+    password = password,
+    confirmPassword = confirmPassword,
+    email = email,
+    tosAcceptedAt = if (withConsent) LocalDateTime.of(2026, 1, 1, 10, 0) else null,
+    tosVersion = if (withConsent) "1.0" else null,
+    privacyAcceptedAt = if (withConsent) LocalDateTime.of(2026, 1, 1, 10, 0) else null,
+)
+
 class UserFeatureTest {
 
     private val factory = FakeFactory()
@@ -47,6 +71,9 @@ class UserFeatureTest {
     private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = factory.createAdminIfNotExistsService
     private val getUserSettingsUseCase: GetUserSettingsUseCase = factory.getUserSettingsService
     private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = factory.updateUserSettingsService
+    private val deleteAccountUseCase: DeleteAccountUseCase = factory.deleteAccountService
+    private val recordConsentUseCase: RecordConsentUseCase = factory.recordConsentService
+    private val hasUserConsentedUseCase: HasUserConsentedUseCase = factory.hasUserConsentedService
     private val sessionFakeState = factory.sessionState()
     private val userState = factory.fakeUserRepository()
     private val tokenGenerator = factory.tokenGenerator
@@ -175,14 +202,14 @@ class UserFeatureTest {
     inner class RegisterFeatureTest {
         @Test
         fun `Register a user must return success`() {
-            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com")) }
+            val result = act { registerUserUseCase.handle(registerCommand()) }
 
             then(result) { assertSuccess() }
         }
 
         @Test
         fun `Register a user with different password must return password not match`() {
-            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "wrong", "john@example.com")) }
+            val result = act { registerUserUseCase.handle(registerCommand(confirmPassword = "wrong")) }
 
             then(result) {
                 assertFailure(ResultState.PASSWORD_NOT_MATCH)
@@ -192,7 +219,7 @@ class UserFeatureTest {
 
         @Test
         fun `Registered user defaults to BETA_TESTER subscription plan`() {
-            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com")) }
+            val result = act { registerUserUseCase.handle(registerCommand()) }
 
             then(result) {
                 assertSuccess()
@@ -202,7 +229,7 @@ class UserFeatureTest {
 
         @Test
         fun `Welcome email is sent after successful registration`() {
-            act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com")) }
+            act { registerUserUseCase.handle(registerCommand()) }
 
             assertEquals(1, sentEmails.size)
             val sent = sentEmails.first()
@@ -213,25 +240,60 @@ class UserFeatureTest {
 
         @Test
         fun `Welcome email is not sent when passwords do not match`() {
-            act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "wrong", "john@example.com")) }
+            act { registerUserUseCase.handle(registerCommand(confirmPassword = "wrong")) }
 
             assertEquals(0, sentEmails.size)
         }
 
         @Test
         fun `Welcome email is not sent when email is blank`() {
-            act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "")) }
+            act { registerUserUseCase.handle(registerCommand(email = "")) }
 
             assertEquals(0, sentEmails.size)
         }
 
         @Test
         fun `Registration fails when email is blank`() {
-            val result = act { registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "")) }
+            val result = act { registerUserUseCase.handle(registerCommand(email = "")) }
 
             then(result) {
                 assertFailure(ResultState.INVALID)
                 assertEquals("domain.user.register.email_required", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Registration without TOS consent must return INVALID`() {
+            val result = act { registerUserUseCase.handle(registerCommand(withConsent = false)) }
+
+            then(result) {
+                assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.register.consent_required", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Registered user has consent record persisted`() {
+            val consentTime = LocalDateTime.of(2026, 1, 1, 10, 0)
+            val command = RegisterUserCommand(
+                username = "John",
+                password = "test",
+                confirmPassword = "test",
+                email = "john@example.com",
+                tosAcceptedAt = consentTime,
+                tosVersion = "1.0",
+                privacyAcceptedAt = consentTime,
+            )
+
+            val result = act { registerUserUseCase.handle(command) }
+
+            then(result) {
+                assertSuccess()
+                val user = mapNotNullOrFailure()!!
+                assertNotNull(user.consent)
+                assertEquals(consentTime, user.consent!!.tosAcceptedAt)
+                assertEquals("1.0", user.consent!!.tosVersion)
+                assertEquals(consentTime, user.consent!!.privacyAcceptedAt)
             }
         }
     }
@@ -271,7 +333,7 @@ class UserFeatureTest {
     inner class UserSettingsFeatureTest {
         @Test
         fun `Get settings for a connected user must return defaults`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
+            registerUserUseCase.handle(registerCommand())
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act { getUserSettingsUseCase.handle(GetUserSettingsQuery(userToken.user.id)) }
@@ -281,7 +343,7 @@ class UserFeatureTest {
 
         @Test
         fun `Update settings must persist projection window`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
+            registerUserUseCase.handle(registerCommand())
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act {
@@ -295,7 +357,7 @@ class UserFeatureTest {
 
         @Test
         fun `Update settings with projection outside range must fail`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
+            registerUserUseCase.handle(registerCommand())
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act {
@@ -312,7 +374,7 @@ class UserFeatureTest {
 
         @Test
         fun `Update settings with non owned booklet must fail`() {
-            registerUserUseCase.handle(RegisterUserCommand("John", "test", "test", "john@example.com"))
+            registerUserUseCase.handle(registerCommand())
             val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
 
             val result = act {
@@ -388,6 +450,147 @@ class UserFeatureTest {
                             && bookletCycles.first().monthlyPeriodStartDay == 28
                             && bookletCycles.first().monthlyPeriodEndDay == 27
                 }
+            }
+        }
+    }
+
+    @Nested
+    inner class ConsentFeatureTest {
+
+        private val consentTimestamp = LocalDateTime.of(2026, 1, 1, 10, 0)
+
+        private fun recordCommand(
+            userId: UserId,
+            tosAccepted: Boolean = true,
+            privacyAccepted: Boolean = true,
+        ) = RecordConsentCommand(
+            userId = userId,
+            tosAccepted = tosAccepted,
+            tosVersion = "1.0",
+            privacyAccepted = privacyAccepted,
+            consentTimestamp = consentTimestamp,
+        )
+
+        @Test
+        fun `Recording consent with both accepted must return success`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { recordConsentUseCase.handle(recordCommand(user.id)) }
+
+            then(result) { assertSuccess() }
+        }
+
+        @Test
+        fun `Recording consent must persist ConsentRecord on the user`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            act { recordConsentUseCase.handle(recordCommand(user.id)) }
+
+            val persisted = userState.findUserById(user.id)
+            assertNotNull(persisted?.consent)
+            assertEquals(consentTimestamp, persisted!!.consent!!.tosAcceptedAt)
+            assertEquals("1.0", persisted.consent!!.tosVersion)
+            assertEquals(consentTimestamp, persisted.consent!!.privacyAcceptedAt)
+        }
+
+        @Test
+        fun `Recording consent for non-existent user must return USER_NOT_FOUND`() {
+            val result = act { recordConsentUseCase.handle(recordCommand(UserFixture.aUser().id)) }
+
+            then(result) { assertFailure(ResultState.USER_NOT_FOUND) }
+        }
+
+        @Test
+        fun `Recording consent with TOS not accepted must return INVALID`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { recordConsentUseCase.handle(recordCommand(user.id, tosAccepted = false)) }
+
+            then(result) {
+                assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.consent.tos_required", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Recording consent with privacy policy not accepted must return INVALID`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { recordConsentUseCase.handle(recordCommand(user.id, privacyAccepted = false)) }
+
+            then(result) {
+                assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.consent.privacy_required", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `HasUserConsentedQuery returns false for user without consent`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { hasUserConsentedUseCase.handle(HasUserConsentedQuery(user.id)) }
+
+            then(result) { assertTrue { this == false } }
+        }
+
+        @Test
+        fun `HasUserConsentedQuery returns true for user with existing consent`() {
+            val user = UserFixture.aUserWithConsent()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+
+            val result = act { hasUserConsentedUseCase.handle(HasUserConsentedQuery(user.id)) }
+
+            then(result) { assertTrue { this == true } }
+        }
+
+        @Test
+        fun `After recording consent HasUserConsentedQuery must return true`() {
+            val user = UserFixture.aUser()
+            userState.initWith(UserFixture.aUserWithPassword(user = user))
+            recordConsentUseCase.handle(recordCommand(user.id))
+
+            val result = act { hasUserConsentedUseCase.handle(HasUserConsentedQuery(user.id)) }
+
+            then(result) { assertTrue { this == true } }
+        }
+    }
+
+    @Nested
+    inner class DeleteAccountFeatureTest {
+
+        @Test
+        fun `Deleting an existing account must return success`() {
+            val user = UserFixture.aUser(username = "John", email = "john@example.com")
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
+
+            val result = act { deleteAccountUseCase.handle(DeleteAccountCommand(user.id)) }
+
+            then(result) { assertSuccess() }
+        }
+
+        @Test
+        fun `Deleting an existing account must remove the user from the repository`() {
+            val user = UserFixture.aUser(username = "John", email = "john@example.com")
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
+
+            act { deleteAccountUseCase.handle(DeleteAccountCommand(user.id)) }
+
+            val found = userState.findUserById(user.id)
+            assertEquals(null, found)
+        }
+
+        @Test
+        fun `Deleting a non-existent account must return USER_NOT_FOUND`() {
+            val result = act { deleteAccountUseCase.handle(DeleteAccountCommand(UserFixture.aUser().id)) }
+
+            then(result) {
+                assertFailure(ResultState.USER_NOT_FOUND)
+                assertEquals("domain.user.delete.user_not_found", errorInfo?.key)
             }
         }
     }
