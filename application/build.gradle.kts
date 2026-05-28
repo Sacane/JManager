@@ -59,6 +59,7 @@ tasks {
         append("META-INF/spring.handlers")
         append("META-INF/spring.schemas")
         append("META-INF/spring.tooling")
+        append("META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports")
         transform(
             PropertiesFileTransformer().apply {
                 paths = mutableListOf("META-INF/spring.factories")
