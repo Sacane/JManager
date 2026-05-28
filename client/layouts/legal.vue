@@ -1,17 +1,5 @@
-<script setup lang="ts">
-onMounted(() => {
-  document.documentElement.style.overflow = 'auto'
-  document.body.style.overflow = 'auto'
-})
-
-onUnmounted(() => {
-  document.documentElement.style.overflow = ''
-  document.body.style.overflow = ''
-})
-</script>
-
 <template>
-  <div class="min-h-screen surface-page">
+  <div class="fixed inset-0 overflow-y-auto surface-page">
     <NHeader />
     <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
       <slot />
