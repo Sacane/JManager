@@ -1,3 +1,15 @@
+<script setup lang="ts">
+onMounted(() => {
+  document.documentElement.style.overflow = 'auto'
+  document.body.style.overflow = 'auto'
+})
+
+onUnmounted(() => {
+  document.documentElement.style.overflow = ''
+  document.body.style.overflow = ''
+})
+</script>
+
 <template>
   <div class="min-h-screen surface-page">
     <NHeader />
