@@ -63,7 +63,9 @@ async function handleSubmit() {
         <label for="consent-tos" class="body-base cursor-pointer leading-relaxed">
           J'accepte les
           <a
-            href="#"
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
             class="text-[var(--primary)] dark:text-[var(--primary-lighter)] hover:underline font-medium"
             aria-label="Lire les Conditions Générales d'Utilisation"
           >
@@ -82,7 +84,9 @@ async function handleSubmit() {
         <label for="consent-privacy" class="body-base cursor-pointer leading-relaxed">
           J'accepte la
           <a
-            href="#"
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
             class="text-[var(--primary)] dark:text-[var(--primary-lighter)] hover:underline font-medium"
             aria-label="Lire la Politique de confidentialité"
           >

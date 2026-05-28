@@ -50,6 +50,10 @@ class SecurityConfig(
                 authorize("/user/**", permitAll)
                 authorize("/regular-transaction", permitAll)
                 authorize("/regular-transaction/**", permitAll)
+                // Legal pages (public, no auth)
+                authorize("/privacy", permitAll)
+                authorize("/terms", permitAll)
+                authorize("/consent", permitAll)
                 // Public API
                 authorize("/api/user/create", permitAll)
                 authorize("/api/user/auth", permitAll)
