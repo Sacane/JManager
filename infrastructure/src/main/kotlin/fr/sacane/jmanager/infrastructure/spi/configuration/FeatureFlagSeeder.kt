@@ -9,9 +9,11 @@ import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.stereotype.Component
 
 /**
- * Ensures every known [FeatureKey] has a row in the `feature_flag` table after each deploy.
- * Newly added keys are inserted as **disabled** (safe-by-default).
- * Existing rows — including those toggled ON by an administrator — are never overwritten.
+ * Synchronises the `feature_flag` table with the known [FeatureKey] enum on every deploy.
+ *
+ * - Keys present in the enum but absent from the DB are inserted as **disabled** (safe-by-default).
+ * - Keys present in the DB but removed from the enum are **deleted** (orphan cleanup).
+ * - Existing rows whose key is still in the enum are never touched, preserving admin-configured values.
  */
 @Component
 class FeatureFlagSeeder(
@@ -28,13 +30,22 @@ class FeatureFlagSeeder(
     }
 
     internal fun seed() {
-        var inserted = 0
-        FeatureKey.entries.forEach { key ->
-            if (!jpaRepository.existsById(key.name)) {
-                jpaRepository.save(FeatureFlagEntity(key = key.name, enabled = false))
-                inserted++
-            }
+        val knownKeys = FeatureKey.entries.map { it.name }.toSet()
+        val existingKeys = jpaRepository.findAll().map { it.key }.toSet()
+
+        val toDelete = existingKeys - knownKeys
+        val toInsert = knownKeys - existingKeys
+
+        if (toDelete.isNotEmpty()) {
+            jpaRepository.deleteAllById(toDelete)
         }
-        log.info("Feature flag seeding complete: $inserted new flag(s) inserted (${FeatureKey.entries.size} total known)")
+        toInsert.forEach { key ->
+            jpaRepository.save(FeatureFlagEntity(key = key, enabled = false))
+        }
+
+        log.info(
+            "Feature flag seeding complete: ${toInsert.size} inserted, ${toDelete.size} removed" +
+                " (${knownKeys.size} total known)"
+        )
     }
 }
