@@ -35,4 +35,8 @@ export const LOADING_SCOPES = {
     load: 'settings.load',
     save: 'settings.save',
   },
+  featureFlags: {
+    fetch: 'featureFlags.fetch',
+    toggle: 'featureFlags.toggle',
+  },
 } as const

@@ -118,6 +118,15 @@ vi.stubGlobal('useAdmin', vi.fn(() => ({
   fetchUsers: vi.fn(),
 })))
 
+vi.stubGlobal('useFeatureFlags', vi.fn(() => ({
+  flags: readonly(ref([])),
+  isFetching: ref(false),
+  isToggling: ref(false),
+  isEnabled: vi.fn(() => false),
+  fetchFlags: vi.fn(),
+  toggleFlag: vi.fn(),
+})))
+
 vi.stubGlobal('useQuery', vi.fn(() => ({
   get: vi.fn(),
   post: vi.fn(),
