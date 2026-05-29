@@ -146,16 +146,6 @@ onUnmounted(() => {
               <span>Administration</span>
             </NuxtLink>
 
-            <NuxtLink
-              v-if="isAdmin"
-              to="/admin/feature-flags"
-              class="nav-item admin-item"
-              active-class="nav-item-active"
-              @click="closeOnNavigateIfMobile()"
-            >
-              <i class="pi pi-flag" />
-              <span>Feature Flags</span>
-            </NuxtLink>
           </div>
         </nav>
 
