@@ -33,6 +33,9 @@ class FeatureFlagControllerTest(
 
     private lateinit var adminToken: String
 
+    /** First available key at runtime — avoids coupling to a specific enum constant. */
+    private val anyKey get() = FeatureKey.entries.first().name
+
     @BeforeEach
     fun setupFlags() {
         featureFlagJpaRepository.deleteAll()
@@ -97,7 +100,7 @@ class FeatureFlagControllerTest(
                 get("/api/feature-flags")
             } Then {
                 statusCode(200)
-                body("find { it.key == 'EMAIL_VERIFICATION' }.enabled", equalTo(false))
+                body("find { it.key == '$anyKey' }.enabled", equalTo(false))
             }
         }
     }
@@ -113,10 +116,10 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(200)
-                body("key", equalTo("EMAIL_VERIFICATION"))
+                body("key", equalTo(anyKey))
                 body("enabled", equalTo(true))
             }
         }
@@ -129,7 +132,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(200)
             }
@@ -140,7 +143,7 @@ class FeatureFlagControllerTest(
                 get("/api/feature-flags")
             } Then {
                 statusCode(200)
-                body("find { it.key == 'EMAIL_VERIFICATION' }.enabled", equalTo(true))
+                body("find { it.key == '$anyKey' }.enabled", equalTo(true))
             }
         }
 
@@ -152,7 +155,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(403)
             }
@@ -165,7 +168,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(401)
             }
@@ -193,7 +196,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             }
 
             Given {
@@ -202,7 +205,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": false}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(200)
                 body("enabled", equalTo(false))
