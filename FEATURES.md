@@ -76,6 +76,10 @@ When the visitor attempts to register
 Then the system returns a validation failure
 ```
 
+> **Note**: when the `email-verification` feature flag is enabled, registration behaviour adapts to the
+> subscription plan (see the *Email Verification* feature). When the flag is disabled, registration behaves
+> exactly as described above.
+
 ---
 
 ## Feature: Subscription Plan
@@ -664,4 +668,91 @@ And the admin's own account is excluded from the results
 Given an authenticated user without the ADMIN role
 When the user attempts to list all users
 Then the system returns an authorization failure
+```
+
+---
+
+## Feature: Feature Flags
+
+As the system, I want global, runtime-controlled feature flags so that behaviour can be toggled without
+redeploying. Flags are global ON/OFF (no per-user/per-plan targeting at flag level), persisted in the database,
+and exposed to the frontend via a dedicated endpoint.
+
+### Scenario: Resolve a flag state
+```gherkin
+Given a feature flag "email-verification" persisted with enabled = true
+When the system checks whether "email-verification" is enabled
+Then the service returns true
+```
+
+### Scenario: Unknown flag defaults to disabled
+```gherkin
+Given no persisted state exists for a flag key
+When the system checks whether it is enabled
+Then the service returns false
+```
+
+### Scenario: Administrator toggles a flag at runtime
+```gherkin
+Given an authenticated admin user
+And a flag "email-verification" currently disabled
+When the admin toggles it to enabled = true
+Then subsequent reads report it as enabled
+```
+
+### Scenario: Frontend reads all flags
+```gherkin
+Given several known flags with mixed states
+When the client calls GET /feature-flags
+Then it receives a map of every known flag key to its boolean state
+```
+
+---
+
+## Feature: Email Verification
+
+As the system, I want to verify that users own a real mailbox. This is the inaugural feature flag
+(`email-verification`); behaviour adapts to the subscription plan, and the simple-user path is further gated by
+the sub-flag `email-verification-simple-user-registration`.
+
+### Scenario: Beta tester is auto-confirmed via the access link
+```gherkin
+Given the flag "email-verification" is enabled
+And a BETA_TESTER received an access email with a valid token
+When the user follows the access link
+Then their emailVerified becomes true
+```
+
+### Scenario: Simple user receives a verification email and can still log in
+```gherkin
+Given the flag "email-verification" is enabled
+And the sub-flag "email-verification-simple-user-registration" is enabled
+When a visitor registers
+Then the user is created with subscriptionPlan = FREE and emailVerified = false
+And a verification email is sent
+And the user can authenticate while seeing an "email not verified" indication
+```
+
+### Scenario: Verify email via token
+```gherkin
+Given a valid, unexpired verification token
+When the user confirms it
+Then their emailVerified becomes true
+And outstanding tokens are cleared
+```
+
+### Scenario: Expired or unknown token is rejected
+```gherkin
+Given a verification token that is expired or unknown
+When the user attempts to confirm it
+Then the system returns a failure
+And emailVerified remains unchanged
+```
+
+### Scenario: Flag disabled keeps current behaviour
+```gherkin
+Given the flag "email-verification" is disabled
+When a user registers
+Then no verification flow runs
+And no verified state is surfaced to the client
 ```

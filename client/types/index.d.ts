@@ -291,6 +291,11 @@ declare global {
     month: number
     year: number
   }
+
+  interface FeatureFlagDTO {
+    key: string
+    enabled: boolean
+  }
 }
 
 export {}

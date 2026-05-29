@@ -29,6 +29,31 @@ const ButtonStub = {
   template: '<button :type="$props.type || \'button\'" :disabled="disabled || loading" @click="$emit(\'click\')">{{ label }}</button>',
 }
 
+// Tabs stubs must render their default slot so child content stays in the DOM.
+const TabsStub = {
+  name: 'Tabs',
+  props: ['value'],
+  template: '<div class="tabs-stub"><slot /></div>',
+}
+const TabListStub = {
+  name: 'TabList',
+  template: '<div class="tab-list-stub"><slot /></div>',
+}
+const TabStub = {
+  name: 'Tab',
+  props: ['value'],
+  template: '<button class="tab-stub"><slot /></button>',
+}
+const TabPanelsStub = {
+  name: 'TabPanels',
+  template: '<div class="tab-panels-stub"><slot /></div>',
+}
+const TabPanelStub = {
+  name: 'TabPanel',
+  props: ['value'],
+  template: '<div class="tab-panel-stub"><slot /></div>',
+}
+
 // ---------------------------------------------------------------------------
 describe('pages/admin/index', () => {
   let registerMock: ReturnType<typeof vi.fn>
@@ -68,8 +93,6 @@ describe('pages/admin/index', () => {
       errorAxios: () => {},
     }))
 
-    // Plain functions — not vi.fn() — so vi.restoreAllMocks() does not clear
-    // the withLoading implementation between tests.
     vi.stubGlobal('useLoading', () => ({
       isScopeLoading: (_scope: string) => false,
       withLoading: async <T>(action: () => Promise<T>) => action(),
@@ -82,6 +105,11 @@ describe('pages/admin/index', () => {
         stubs: {
           InputText: InputTextStub,
           Button: ButtonStub,
+          Tabs: TabsStub,
+          TabList: TabListStub,
+          Tab: TabStub,
+          TabPanels: TabPanelsStub,
+          TabPanel: TabPanelStub,
         },
       },
     })
@@ -103,6 +131,12 @@ describe('pages/admin/index', () => {
 
   // --- Rendering ---
 
+  it('renders both the user management form and the feature flags panel', () => {
+    const wrapper = mountPage()
+    expect(wrapper.find('form').exists()).toBe(true)
+    expect(wrapper.find('.flags-card').exists()).toBe(true)
+  })
+
   it('renders all four form fields including email', () => {
     const wrapper = mountPage()
     const stubs = wrapper.findAllComponents(InputTextStub)
@@ -111,6 +145,28 @@ describe('pages/admin/index', () => {
     expect(ids).toContain('email')
     expect(ids).toContain('password')
     expect(ids).toContain('confirmPassword')
+  })
+
+  it('renders the feature flags empty state when no flags are configured', () => {
+    // useFeatureFlags global stub (setup.ts) returns empty flags by default
+    const wrapper = mountPage()
+    expect(wrapper.find('.empty-state').exists()).toBe(true)
+    expect(wrapper.find('.flag-list').exists()).toBe(false)
+  })
+
+  it('renders the flag list when flags are available', () => {
+    vi.stubGlobal('useFeatureFlags', vi.fn(() => ({
+      flags: ref([{ key: 'EMAIL_VERIFICATION', enabled: false }]) as any,
+      isFetching: ref(false),
+      isToggling: ref(false),
+      isEnabled: vi.fn(() => false),
+      fetchFlags: vi.fn(),
+      toggleFlag: vi.fn(),
+    })))
+
+    const wrapper = mountPage()
+    expect(wrapper.find('.flag-list').exists()).toBe(true)
+    expect(wrapper.find('.empty-state').exists()).toBe(false)
   })
 
   // --- Validation ---
@@ -127,7 +183,6 @@ describe('pages/admin/index', () => {
   it('shows an error when email is empty', async () => {
     const wrapper = mountPage()
     await setFormValues(wrapper, { username: 'alice', password: 'password123', confirmPassword: 'password123' })
-    // email intentionally omitted
 
     await wrapper.find('form').trigger('submit')
 

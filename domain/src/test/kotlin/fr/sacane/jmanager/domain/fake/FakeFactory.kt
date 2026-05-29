@@ -11,6 +11,9 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.port.input.csv.*
+import fr.sacane.jmanager.domain.port.input.featureflag.GetAllFeatureFlagsService
+import fr.sacane.jmanager.domain.port.input.featureflag.IsFeatureEnabledService
+import fr.sacane.jmanager.domain.port.input.featureflag.ToggleFeatureFlagService
 import fr.sacane.jmanager.domain.port.input.regularTransaction.*
 import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.*
@@ -122,6 +125,11 @@ class FakeFactory {
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)
+    private val inMemoryFeatureFlagRepository = InMemoryFeatureFlagRepository()
+    val isFeatureEnabledService = IsFeatureEnabledService(inMemoryFeatureFlagRepository)
+    val getAllFeatureFlagsService = GetAllFeatureFlagsService(inMemoryFeatureFlagRepository)
+    val toggleFeatureFlagService = ToggleFeatureFlagService(inMemoryFeatureFlagRepository)
+
     private val retentionCandidatePort = InMemoryDataRetentionCandidatePort(inMemoryDatabase)
     val purgeExpiredDataService = PurgeExpiredDataService(retentionCandidatePort, userRepository)
     private val addTagService = AddTagService(inMemoryTagRepository)
@@ -161,6 +169,7 @@ class FakeFactory {
         transactionRepository.clear()
         inMemoryTagRepository.clear()
         fakeNotificationPort.clear()
+        inMemoryFeatureFlagRepository.clear()
     }
 
     fun fakeUserRepository(): InMemoryUserRepository {

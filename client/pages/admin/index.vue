@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { AppTableColumn } from '~/components/AppTable.vue'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import type { FeatureKey } from '~/constants/featureKeys'
+import { FEATURE_KEY_LABELS } from '~/constants/featureKeys'
 import useAdmin from '~/composables/useAdmin'
 import useAuth from '~/composables/useAuth'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
@@ -11,6 +13,8 @@ definePageMeta({
   layout: 'sidebar-layout',
   middleware: [authMiddleware, adminMiddleware],
 })
+
+// ── User management ──────────────────────────────────────────────────────────
 
 const { register } = useAuth()
 const { users, totalUsers, totalPages, currentPage, isLoading, fetchUsers } = useAdmin()
@@ -145,6 +149,42 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', updateIsMobile)
   }
 })
+
+// ── Feature Flags ─────────────────────────────────────────────────────────────
+// Write access (toggleFlag) is intentionally restricted to this admin console.
+// The composable itself is stateless regarding auth — access control is enforced
+// by the adminMiddleware declared on this page.
+
+const { flags, isFetching, isToggling, fetchFlags, toggleFlag } = useFeatureFlags()
+const togglingKey = ref<FeatureKey | null>(null)
+
+const flagsWithMeta = computed(() =>
+  flags.value.map(flag => ({
+    ...flag,
+    label: FEATURE_KEY_LABELS[flag.key as FeatureKey] ?? flag.key,
+  })),
+)
+
+async function onToggle(key: FeatureKey, enabled: boolean) {
+  togglingKey.value = key
+  try {
+    await toggleFlag(key, enabled)
+    toastr.success(
+      enabled
+        ? `Flag "${FEATURE_KEY_LABELS[key] ?? key}" activé`
+        : `Flag "${FEATURE_KEY_LABELS[key] ?? key}" désactivé`,
+    )
+  } catch {
+    toastr.error('Impossible de modifier le flag. Veuillez réessayer.')
+    await fetchFlags()
+  } finally {
+    togglingKey.value = null
+  }
+}
+
+function isKeyToggling(key: FeatureKey): boolean {
+  return isToggling.value && togglingKey.value === key
+}
 </script>
 
 <template>
@@ -159,263 +199,348 @@ onBeforeUnmount(() => {
             Console d'administration
           </h1>
           <p class="page-subtitle">
-            Gestion des comptes utilisateurs
+            Gestion des comptes utilisateurs et des fonctionnalités
           </p>
         </div>
       </div>
     </div>
 
-    <div class="admin-content">
-      <div class="creation-card">
-        <div class="card-header">
-          <div class="header-left">
-            <i class="pi pi-user-plus" />
-            <h2>Créer un nouveau compte</h2>
-          </div>
-        </div>
+    <div class="admin-tabs-wrapper">
+      <Tabs value="users">
+        <TabList>
+          <Tab value="users">
+            <i class="pi pi-users tab-icon" />
+            <span>Utilisateurs</span>
+          </Tab>
+          <Tab value="feature-flags">
+            <i class="pi pi-flag tab-icon" />
+            <span>Feature Flags</span>
+          </Tab>
+        </TabList>
 
-        <form class="user-form" @submit.prevent="createUser">
-          <div class="form-group">
-            <label for="username" class="form-label">
-              <i class="pi pi-user" />
-              Nom d'utilisateur
-            </label>
-            <InputText
-              id="username"
-              v-model="newUser.username"
-              type="text"
-              class="w-full"
-              placeholder="Entrez le nom d'utilisateur"
-              :disabled="isCreating"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="email" class="form-label">
-              <i class="pi pi-envelope" />
-              Adresse email
-            </label>
-            <InputText
-              id="email"
-              v-model="newUser.email"
-              type="email"
-              class="w-full"
-              placeholder="Entrez l'adresse email"
-              :disabled="isCreating"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="password" class="form-label">
-              <i class="pi pi-lock" />
-              Mot de passe
-            </label>
-            <InputText
-              id="password"
-              v-model="newUser.password"
-              type="password"
-              class="w-full"
-              placeholder="Entrez le mot de passe"
-              :disabled="isCreating"
-            />
-            <small class="form-hint">Minimum 6 caractères</small>
-          </div>
-
-          <div class="form-group">
-            <label for="confirmPassword" class="form-label">
-              <i class="pi pi-lock" />
-              Confirmer le mot de passe
-            </label>
-            <InputText
-              id="confirmPassword"
-              v-model="newUser.confirmPassword"
-              type="password"
-              class="w-full"
-              placeholder="Confirmez le mot de passe"
-              :disabled="isCreating"
-            />
-          </div>
-
-          <div class="form-actions">
-            <Button
-              type="button"
-              label="Réinitialiser"
-              icon="pi pi-refresh"
-              severity="secondary"
-              outlined
-              :disabled="isCreating"
-              @click="resetForm"
-            />
-            <Button
-              type="submit"
-              label="Créer le compte"
-              icon="pi pi-check"
-              :loading="isCreating"
-            />
-          </div>
-        </form>
-      </div>
-
-      <div class="users-table-card">
-        <div class="card-header">
-          <div class="header-left">
-            <i class="pi pi-users" />
-            <h2>Utilisateurs enregistrés</h2>
-          </div>
-          <div v-if="!isMobileWidth" class="user-count">
-            <span class="count-badge">{{ totalUsers }}</span>
-            <span class="count-label">utilisateurs</span>
-          </div>
-        </div>
-
-        <!-- Mobile list view: shown only on small screens -->
-        <div v-if="isMobileWidth" class="users-mobile-list">
-          <div v-if="isLoading" class="loading-container">
-            <ProgressSpinner
-              style="width: 50px; height: 50px"
-              stroke-width="4"
-            />
-            <p class="loading-text">
-              Chargement des utilisateurs...
-            </p>
-          </div>
-          <template v-else>
-            <div class="users-mobile-count">
-              {{ users.length }} utilisateur(s)
-            </div>
-            <div v-for="user in users" :key="user.id" class="user-mobile-card">
-              <div class="user-mobile-row">
-                <div class="user-avatar-small">
-                  <i class="pi pi-user" />
+        <TabPanels>
+          <!-- ── Tab 1 : User management ─────────────────────────────────── -->
+          <TabPanel value="users">
+            <div class="admin-users-content">
+              <div class="creation-card">
+                <div class="card-header">
+                  <div class="header-left">
+                    <i class="pi pi-user-plus" />
+                    <h2>Créer un nouveau compte</h2>
+                  </div>
                 </div>
 
-                <div class="user-mobile-info">
-                  <div class="user-mobile-top">
-                    <div class="user-mobile-title">
-                      <span class="username-text">{{ user.username }}</span>
-                      <Tag
-                        :value="getRoleLabel(user.roles)"
-                        :class="getRoleBadgeClass(user.roles)"
-                        class="role-badge-mobile"
-                      />
-                    </div>
+                <form class="user-form" @submit.prevent="createUser">
+                  <div class="form-group">
+                    <label for="username" class="form-label">
+                      <i class="pi pi-user" />
+                      Nom d'utilisateur
+                    </label>
+                    <InputText
+                      id="username"
+                      v-model="newUser.username"
+                      type="text"
+                      class="w-full"
+                      placeholder="Entrez le nom d'utilisateur"
+                      :disabled="isCreating"
+                    />
                   </div>
 
-                  <div class="user-mobile-meta">
-                    <div v-if="user.email" class="email-text">
+                  <div class="form-group">
+                    <label for="email" class="form-label">
                       <i class="pi pi-envelope" />
-                      <span class="email-val">{{ user.email }}</span>
-                    </div>
-                    <div v-else class="text-muted">
-                      N/A
-                    </div>
+                      Adresse email
+                    </label>
+                    <InputText
+                      id="email"
+                      v-model="newUser.email"
+                      type="email"
+                      class="w-full"
+                      placeholder="Entrez l'adresse email"
+                      :disabled="isCreating"
+                    />
+                  </div>
 
-                    <div class="created-date-inline">
-                      {{ formatDateTime(user.createdDate) }}
-                    </div>
+                  <div class="form-group">
+                    <label for="password" class="form-label">
+                      <i class="pi pi-lock" />
+                      Mot de passe
+                    </label>
+                    <InputText
+                      id="password"
+                      v-model="newUser.password"
+                      type="password"
+                      class="w-full"
+                      placeholder="Entrez le mot de passe"
+                      :disabled="isCreating"
+                    />
+                    <small class="form-hint">Minimum 6 caractères</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="confirmPassword" class="form-label">
+                      <i class="pi pi-lock" />
+                      Confirmer le mot de passe
+                    </label>
+                    <InputText
+                      id="confirmPassword"
+                      v-model="newUser.confirmPassword"
+                      type="password"
+                      class="w-full"
+                      placeholder="Confirmez le mot de passe"
+                      :disabled="isCreating"
+                    />
+                  </div>
+
+                  <div class="form-actions">
+                    <Button
+                      type="button"
+                      label="Réinitialiser"
+                      icon="pi pi-refresh"
+                      severity="secondary"
+                      outlined
+                      :disabled="isCreating"
+                      @click="resetForm"
+                    />
+                    <Button
+                      type="submit"
+                      label="Créer le compte"
+                      icon="pi pi-check"
+                      :loading="isCreating"
+                    />
+                  </div>
+                </form>
+              </div>
+
+              <div class="users-table-card">
+                <div class="card-header">
+                  <div class="header-left">
+                    <i class="pi pi-users" />
+                    <h2>Utilisateurs enregistrés</h2>
+                  </div>
+                  <div v-if="!isMobileWidth" class="user-count">
+                    <span class="count-badge">{{ totalUsers }}</span>
+                    <span class="count-label">utilisateurs</span>
                   </div>
                 </div>
 
-                <div class="user-mobile-actions">
-                  <Button
-                    class="user-action-btn"
-                    icon="pi pi-ellipsis-v"
-                    severity="secondary"
-                    text
-                    rounded
-                    aria-label="Actions"
+                <!-- Mobile list view: shown only on small screens -->
+                <div v-if="isMobileWidth" class="users-mobile-list">
+                  <div v-if="isLoading" class="loading-container">
+                    <ProgressSpinner
+                      style="width: 50px; height: 50px"
+                      stroke-width="4"
+                    />
+                    <p class="loading-text">
+                      Chargement des utilisateurs...
+                    </p>
+                  </div>
+                  <template v-else>
+                    <div class="users-mobile-count">
+                      {{ users.length }} utilisateur(s)
+                    </div>
+                    <div v-for="user in users" :key="user.id" class="user-mobile-card">
+                      <div class="user-mobile-row">
+                        <div class="user-avatar-small">
+                          <i class="pi pi-user" />
+                        </div>
+
+                        <div class="user-mobile-info">
+                          <div class="user-mobile-top">
+                            <div class="user-mobile-title">
+                              <span class="username-text">{{ user.username }}</span>
+                              <Tag
+                                :value="getRoleLabel(user.roles)"
+                                :class="getRoleBadgeClass(user.roles)"
+                                class="role-badge-mobile"
+                              />
+                            </div>
+                          </div>
+
+                          <div class="user-mobile-meta">
+                            <div v-if="user.email" class="email-text">
+                              <i class="pi pi-envelope" />
+                              <span class="email-val">{{ user.email }}</span>
+                            </div>
+                            <div v-else class="text-muted">
+                              N/A
+                            </div>
+
+                            <div class="created-date-inline">
+                              {{ formatDateTime(user.createdDate) }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="user-mobile-actions">
+                          <Button
+                            class="user-action-btn"
+                            icon="pi pi-ellipsis-v"
+                            severity="secondary"
+                            text
+                            rounded
+                            aria-label="Actions"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <AppTable
+                  v-else
+                  :columns="adminUserColumns"
+                  :rows="users"
+                  data-key="id"
+                  :loading="isLoading"
+                  class="users-datatable"
+                >
+                  <template #empty>
+                    <div class="empty-state">
+                      <i class="pi pi-users empty-icon" />
+                      <p class="empty-text">
+                        Aucun utilisateur trouvé
+                      </p>
+                      <p class="empty-subtext">
+                        Créez votre premier utilisateur pour commencer
+                      </p>
+                    </div>
+                  </template>
+
+                  <template #loading>
+                    <div class="loading-container">
+                      <ProgressSpinner
+                        style="width: 50px; height: 50px"
+                        stroke-width="4"
+                      />
+                      <p class="loading-text">
+                        Chargement des utilisateurs...
+                      </p>
+                    </div>
+                  </template>
+
+                  <template #body-username="{ data }">
+                    <div class="user-cell">
+                      <div class="user-avatar-small">
+                        <i class="pi pi-user" />
+                      </div>
+                      <span class="username-text">{{ data.username }}</span>
+                    </div>
+                  </template>
+
+                  <template #body-email="{ data }">
+                    <span v-if="data.email" class="email-text">
+                      <i class="pi pi-envelope" />
+                      {{ data.email }}
+                    </span>
+                    <span v-else class="text-muted">N/A</span>
+                  </template>
+
+                  <template #body-roles="{ data }">
+                    <Tag
+                      :value="getRoleLabel(data.roles)"
+                      :class="getRoleBadgeClass(data.roles)"
+                      class="role-badge"
+                    />
+                  </template>
+
+                  <template #body-createdDate="{ data }">
+                    <div class="date-cell">
+                      <i class="pi pi-calendar" />
+                      <span>{{ formatDateTime(data.createdDate) }}</span>
+                    </div>
+                  </template>
+
+                  <template #body-actions>
+                    <Button
+                      icon="pi pi-ellipsis-v"
+                      severity="secondary"
+                      text
+                      rounded
+                      aria-label="Actions"
+                    />
+                  </template>
+                </AppTable>
+
+                <div v-if="totalPages > 1" class="pagination-container">
+                  <Paginator
+                    :first="currentPage * 10"
+                    :rows="10"
+                    :total-records="totalUsers"
+                    :disabled="isLoading"
+                    @page="onPageChange"
                   />
                 </div>
               </div>
             </div>
-          </template>
-        </div>
+          </TabPanel>
 
-        <AppTable
-          v-else
-          :columns="adminUserColumns"
-          :rows="users"
-          data-key="id"
-          :loading="isLoading"
-          class="users-datatable"
-        >
-          <template #empty>
-            <div class="empty-state">
-              <i class="pi pi-users empty-icon" />
-              <p class="empty-text">
-                Aucun utilisateur trouvé
-              </p>
-              <p class="empty-subtext">
-                Créez votre premier utilisateur pour commencer
-              </p>
-            </div>
-          </template>
-
-          <template #loading>
-            <div class="loading-container">
-              <ProgressSpinner
-                style="width: 50px; height: 50px"
-                stroke-width="4"
-              />
-              <p class="loading-text">
-                Chargement des utilisateurs...
-              </p>
-            </div>
-          </template>
-
-          <template #body-username="{ data }">
-            <div class="user-cell">
-              <div class="user-avatar-small">
-                <i class="pi pi-user" />
+          <!-- ── Tab 2 : Feature Flags (admin write only) ───────────────── -->
+          <TabPanel value="feature-flags">
+            <div class="flags-card">
+              <div class="card-header">
+                <div class="header-left">
+                  <i class="pi pi-sliders-h" />
+                  <h2>Fonctionnalités disponibles</h2>
+                </div>
+                <Button
+                  icon="pi pi-refresh"
+                  severity="secondary"
+                  text
+                  rounded
+                  :loading="isFetching"
+                  aria-label="Rafraîchir les flags"
+                  @click="fetchFlags()"
+                />
               </div>
-              <span class="username-text">{{ data.username }}</span>
+
+              <div v-if="isFetching && flagsWithMeta.length === 0" class="loading-container">
+                <ProgressSpinner style="width: 48px; height: 48px" stroke-width="4" />
+                <p class="loading-text">
+                  Chargement des flags...
+                </p>
+              </div>
+
+              <div v-else-if="flagsWithMeta.length === 0" class="empty-state">
+                <i class="pi pi-inbox empty-icon" />
+                <p class="empty-text">
+                  Aucun feature flag configuré
+                </p>
+                <p class="empty-subtext">
+                  Ajoutez des clés dans l'enum FeatureKey du backend pour les voir apparaître ici.
+                </p>
+              </div>
+
+              <ul v-else class="flag-list">
+                <li
+                  v-for="flag in flagsWithMeta"
+                  :key="flag.key"
+                  class="flag-row"
+                >
+                  <div class="flag-info">
+                    <span class="flag-label">{{ flag.label }}</span>
+                    <code class="flag-key">{{ flag.key }}</code>
+                  </div>
+
+                  <div class="flag-control">
+                    <Tag
+                      :value="flag.enabled ? 'Actif' : 'Inactif'"
+                      :class="flag.enabled ? 'tag-enabled' : 'tag-disabled'"
+                      class="flag-status-tag"
+                    />
+                    <ToggleSwitch
+                      :model-value="flag.enabled"
+                      :disabled="isKeyToggling(flag.key as FeatureKey)"
+                      :aria-label="`Activer ou désactiver ${flag.label}`"
+                      @update:model-value="(val: boolean) => onToggle(flag.key as FeatureKey, val)"
+                    />
+                  </div>
+                </li>
+              </ul>
             </div>
-          </template>
-
-          <template #body-email="{ data }">
-            <span v-if="data.email" class="email-text">
-              <i class="pi pi-envelope" />
-              {{ data.email }}
-            </span>
-            <span v-else class="text-muted">N/A</span>
-          </template>
-
-          <template #body-roles="{ data }">
-            <Tag
-              :value="getRoleLabel(data.roles)"
-              :class="getRoleBadgeClass(data.roles)"
-              class="role-badge"
-            />
-          </template>
-
-          <template #body-createdDate="{ data }">
-            <div class="date-cell">
-              <i class="pi pi-calendar" />
-              <span>{{ formatDateTime(data.createdDate) }}</span>
-            </div>
-          </template>
-
-          <template #body-actions>
-            <Button
-              icon="pi pi-ellipsis-v"
-              severity="secondary"
-              text
-              rounded
-              aria-label="Actions"
-            />
-          </template>
-        </AppTable>
-
-        <div v-if="totalPages > 1" class="pagination-container">
-          <Paginator
-            :first="currentPage * 10"
-            :rows="10"
-            :total-records="totalUsers"
-            :disabled="isLoading"
-            @page="onPageChange"
-          />
-        </div>
-      </div>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </div>
   </div>
 </template>
@@ -468,12 +593,44 @@ onBeforeUnmount(() => {
   }
 }
 
-.admin-content {
+// ── Tabs shell ───────────────────────────────────────────────────────────────
+
+.admin-tabs-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .tab-icon {
+    margin-right: 0.4rem;
+    font-size: 1rem;
+  }
+
+  :deep(.p-tabs-tablist) {
+    background: transparent;
+    border-color: var(--border-color);
+    margin-bottom: 1.5rem;
+  }
+
+  :deep(.p-tabs-tab) {
+    font-weight: 500;
+    gap: 0.5rem;
+  }
+
+  :deep(.p-tabpanels) {
+    background: transparent;
+    padding: 0;
+  }
+
+  :deep(.p-tabpanel) {
+    padding: 0;
+  }
+}
+
+// ── Users tab ────────────────────────────────────────────────────────────────
+
+.admin-users-content {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
   width: 100%;
 
   @media (min-width: 1200px) {
@@ -756,8 +913,132 @@ onBeforeUnmount(() => {
   display: none;
 }
 
+// ── Feature Flags tab ─────────────────────────────────────────────────────────
+
+.flags-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 4px 24px var(--shadow-md);
+  border: 1px solid var(--card-border);
+  max-width: 900px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 32px var(--shadow-lg);
+    border-color: var(--primary);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      i {
+        font-size: 1.5rem;
+        color: var(--primary);
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+    }
+  }
+}
+
+.flag-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.flag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--card-hover-bg, var(--bg-tertiary));
+  }
+}
+
+.flag-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.flag-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.flag-key {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flag-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.flag-status-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  white-space: nowrap;
+
+  &.tag-enabled {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+
+  &.tag-disabled {
+    background: var(--bg-secondary);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
 @media (max-width: 1024px) {
-  .admin-content {
+  .admin-users-content {
     max-width: 100%;
     grid-template-columns: 1fr;
   }
@@ -798,10 +1079,6 @@ onBeforeUnmount(() => {
     .page-subtitle {
       font-size: 0.95rem;
     }
-  }
-
-  .admin-content {
-    gap: 1.5rem;
   }
 
   .creation-card,
@@ -909,15 +1186,12 @@ onBeforeUnmount(() => {
 
   .user-mobile-meta {
     color: var(--text-secondary);
-    font-size: 0.92rem; /* fallback will be fixed below */
+    font-size: 0.92rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     align-items: flex-start;
   }
-
-  /* correct mis-typed font-size fallback */
-  .user-mobile-meta { font-size: 0.92rem; }
 
   .created-date-inline {
     font-size: 0.82rem;
@@ -950,6 +1224,27 @@ onBeforeUnmount(() => {
     font-size: 0.95rem;
     color: var(--text-secondary);
     margin-bottom: 0.5rem;
+  }
+
+  .flags-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+
+    .card-header h2 {
+      font-size: 1.2rem;
+    }
+  }
+
+  .flag-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .flag-control {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>
