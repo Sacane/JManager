@@ -54,6 +54,9 @@ jobs:
       - name: Allow execution permission
         run: chmod +x ./gradlew
 
+      - name: Clean domain module to prevent stale compiled classes
+        run: ./gradlew :domain:clean
+
       - name: Run tests
         run: ./gradlew :domain:test :infrastructure:test :application:test jacocoTestReport --info --stacktrace
 

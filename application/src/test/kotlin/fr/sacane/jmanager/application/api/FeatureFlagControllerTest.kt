@@ -5,19 +5,20 @@ import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsCommand
 import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsUseCase
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
+import fr.sacane.jmanager.infrastructure.spi.entity.FeatureFlagEntity
 import fr.sacane.jmanager.infrastructure.spi.repositories.FeatureFlagJpaRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.cache.CacheManager
 import org.springframework.test.context.TestPropertySource
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -25,6 +26,7 @@ import org.springframework.test.context.TestPropertySource
 class FeatureFlagControllerTest(
     @LocalServerPort private val port: Int,
     @Autowired private val featureFlagJpaRepository: FeatureFlagJpaRepository,
+    @Autowired private val cacheManager: CacheManager,
     @Autowired private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase,
     @Autowired private val loginUseCase: LoginUseCase,
 ) : AuthenticatedUserTest() {
@@ -32,16 +34,20 @@ class FeatureFlagControllerTest(
     private lateinit var adminToken: String
 
     @BeforeEach
+    fun setupFlags() {
+        featureFlagJpaRepository.deleteAll()
+        cacheManager.getCache("featureFlags")?.clear()
+        FeatureKey.entries.forEach { key ->
+            featureFlagJpaRepository.save(FeatureFlagEntity(key = key.name, enabled = false))
+        }
+    }
+
+    @BeforeEach
     fun setupAdmin() {
         createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin-flag", "admin123"))
         loginUseCase.handle(LoginCommand("admin-flag", "admin123")).onSuccess {
             adminToken = it.token
         }
-    }
-
-    @AfterEach
-    fun clearFlags() {
-        featureFlagJpaRepository.deleteAll()
     }
 
     @Nested
