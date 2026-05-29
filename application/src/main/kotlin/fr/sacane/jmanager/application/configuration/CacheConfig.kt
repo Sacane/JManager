@@ -20,6 +20,7 @@ class CacheConfig {
             buildCache("allTags", maximumSize = 500, expireAfterWrite = Duration.ofMinutes(30)),
             buildCache("allBooklets", maximumSize = 500, expireAfterWrite = Duration.ofMinutes(30)),
             buildCache("userSettings", maximumSize = 500, expireAfterWrite = Duration.ofMinutes(60)),
+            buildCache("featureFlags", maximumSize = 1, expireAfterWrite = Duration.ofMinutes(5)),
         )
         return SimpleCacheManager().apply { setCaches(caches) }
     }
