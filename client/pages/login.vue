@@ -2,13 +2,10 @@
 import { FEATURE_KEYS } from '~/constants/featureKeys'
 
 const { login, register } = useAuth()
-const { isEnabled } = useFeatureFlags()
 const toastr = useJToast()
 
 type Mode = 'login' | 'register'
 const mode = ref<Mode>('login')
-
-const isRegistrationEnabled = computed(() => isEnabled(FEATURE_KEYS.USER_REGISTRATION))
 
 // --- Login state ---
 const userAuth = reactive({ username: '', password: '' })
@@ -163,17 +160,19 @@ async function registerUser() {
             Se connecter
           </Button>
 
-          <div v-if="isRegistrationEnabled" class="mode-toggle">
-            <span class="mode-toggle-text">Vous n'avez pas de compte ?</span>
-            <button
-              type="button"
-              class="toggle-link"
-              data-testid="switch-to-register"
-              @click="switchMode('register')"
-            >
-              S'inscrire
-            </button>
-          </div>
+          <FeatureGate :feature="FEATURE_KEYS.USER_REGISTRATION">
+            <div class="mode-toggle">
+              <span class="mode-toggle-text">Vous n'avez pas de compte ?</span>
+              <button
+                type="button"
+                class="toggle-link"
+                data-testid="switch-to-register"
+                @click="switchMode('register')"
+              >
+                S'inscrire
+              </button>
+            </div>
+          </FeatureGate>
         </form>
 
         <!-- Registration form -->
