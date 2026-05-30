@@ -4,11 +4,12 @@
 
 ## 2026-05-30
 
-- **Feature flag gate — USER_REGISTRATION**
-  - **Domain**: Injected `FeatureFlagRepository` into `RegisterUserService`. Added `ResultState.FEATURE_DISABLED(4001)`. Guard clause as first statement in `handle()` — null flag treated as disabled (safe-by-default). `FakeFactory` seeds `USER_REGISTRATION=enabled` so existing tests stay green. 3 new unit tests (flag disabled, flag absent, no welcome email when disabled).
-  - **Application**: Mapped `FEATURE_DISABLED → NotFoundException → HTTP 404` in `toHttpResponse()`. `AuthenticatedUserTest` seeds `USER_REGISTRATION=enabled` before each test. 4 new tests: unit (`ApiMappingExtensionsTest`) + integration endpoint 200/404 flag on/off + 401 mismatch.
-  - **Client**: Added `USER_REGISTRATION` to `featureKeys.ts`. Extended `UserRegister` interface with `tosAccepted`, `tosVersion`, `privacyAccepted`. Registration form in `login.vue` gated by `v-if="isRegistrationEnabled"` — hidden when flag is off, shows full form (username, email, password, confirm, TOS + privacy checkboxes) when on. On success: toast + redirect to login mode. Fixed `vitest.config.ts` — `transformAssetUrls: false` to prevent `@vitejs/plugin-vue` from resolving `public/` assets as Vite imports. 12 new page tests.
-  - **Docs**: `development-workflow.md` §4 — "Code First, Gate Second" pattern documented. Technical report `docs/technical/feature-flag-http-mapping/2026-05-30-feature-disabled-http-mapping.md`.
+- **Feature flag gate — USER_REGISTRATION (Decorator + Marker Interface pattern)**
+  - **Domain**: Added `FeatureFlagged` marker interface in `domain/port/input/` (mirrors `MdcContextProvider`). `RegisterUserCommand` implements `FeatureFlagged { featureKey = USER_REGISTRATION }`. `RegisterUserService` is completely clean — no flag knowledge. Added `ResultState.FEATURE_DISABLED(4001)`.
+  - **Application bus**: `FeatureFlagCommandBus` (`@Primary`) wraps `LoggingCommandBus` — checks `FeatureFlagged` before any dispatch, returns `FEATURE_DISABLED` if absent/disabled, delegates otherwise. Universal: any future Command/Query implementing `FeatureFlagged` is automatically gated. Mapped `FEATURE_DISABLED → HTTP 404` in `toHttpResponse()`. 4 unit tests on the new decorator. Integration endpoint tests (200/404 flag on/off).
+  - **Client**: Added `USER_REGISTRATION` to `featureKeys.ts`. Extended `UserRegister` interface with TOS/privacy consent fields. Registration form in `login.vue` gated by `v-if="isRegistrationEnabled"`. Fixed `vitest.config.ts` (`transformAssetUrls: false`). 12 new page tests.
+  - **Infrastructure**: Seeded `USER_REGISTRATION=enabled` in both `AuthenticatedUserTest` base classes (application + infrastructure modules) so test setup registration passes through the flag gate.
+  - **Docs**: `development-workflow.md` §4 — "Code First, Gate Second" pattern. Technical report `docs/technical/feature-flag-http-mapping/`.
 
 ## 2026-05-28
 

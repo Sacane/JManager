@@ -6,15 +6,15 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.FeatureKey
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
-import fr.sacane.jmanager.domain.port.output.FeatureFlagRepository
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.FeatureFlagged
 import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.domain.port.output.NotificationPort
 import fr.sacane.jmanager.domain.port.output.UserRepository
-import fr.sacane.jmanager.domain.port.input.Command
-import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
-import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import org.slf4j.LoggerFactory
@@ -28,7 +28,9 @@ data class RegisterUserCommand(
     val tosAcceptedAt: LocalDateTime? = null,
     val tosVersion: String? = null,
     val privacyAcceptedAt: LocalDateTime? = null,
-) : Command<User>
+) : Command<User>, FeatureFlagged {
+    override val featureKey get() = FeatureKey.USER_REGISTRATION
+}
 
 @Port(Side.APPLICATION)
 interface RegisterUserUseCase : CommandHandler<RegisterUserCommand, User> {
@@ -40,7 +42,6 @@ class RegisterUserService(
     private val userRepository: UserRepository,
     private val hasher: Hasher,
     private val notificationPort: NotificationPort,
-    private val featureFlagRepository: FeatureFlagRepository,
 ) : RegisterUserUseCase {
 
     companion object {
@@ -48,17 +49,6 @@ class RegisterUserService(
     }
 
     override fun handle(command: RegisterUserCommand): Result<User> {
-        val flag = featureFlagRepository.findByKey(FeatureKey.USER_REGISTRATION)
-        if (flag == null || !flag.enabled) {
-            return failure(
-                ResultState.FEATURE_DISABLED,
-                DomainError(
-                    ResultState.FEATURE_DISABLED.code,
-                    "domain.user.register.feature_disabled",
-                    "L'inscription des utilisateurs est désactivée"
-                )
-            )
-        }
         if (command.password != command.confirmPassword) {
             return failure(
                 ResultState.PASSWORD_NOT_MATCH,

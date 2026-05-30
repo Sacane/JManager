@@ -5,7 +5,6 @@ import fr.sacane.jmanager.domain.port.input.MdcContextProvider
 import fr.sacane.jmanager.domain.utils.Result
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
-import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
 /**
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Component
  * MDC is cleared in a `finally` block — no context leaks across requests.
  * No payload is logged — command fields may contain user data.
  */
-@Primary
 @Component
 class LoggingCommandBus(
     private val delegate: SpringCommandBus

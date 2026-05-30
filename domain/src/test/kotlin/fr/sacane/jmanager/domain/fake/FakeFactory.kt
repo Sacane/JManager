@@ -11,8 +11,6 @@ import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.port.input.csv.*
-import fr.sacane.jmanager.domain.models.FeatureFlag
-import fr.sacane.jmanager.domain.models.FeatureKey
 import fr.sacane.jmanager.domain.port.input.featureflag.GetAllFeatureFlagsService
 import fr.sacane.jmanager.domain.port.input.featureflag.IsFeatureEnabledService
 import fr.sacane.jmanager.domain.port.input.featureflag.ToggleFeatureFlagService
@@ -120,21 +118,17 @@ class FakeFactory {
     val logoutService = LogoutService(sessionManager)
     val refreshSessionService = RefreshSessionService(sessionManager, userRepository, tokenGenerator)
     val fakeNotificationPort = FakeNotificationPort()
-    val inMemoryFeatureFlagRepository = InMemoryFeatureFlagRepository()
-    val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort, inMemoryFeatureFlagRepository)
+    val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort)
     val createAdminIfNotExistsService = CreateAdminIfNotExistsService(userRepository, DefaultHasher)
     val getUserSettingsService = GetUserSettingsService(userRepository)
     val updateUserSettingsService = UpdateUserSettingsService(userRepository, bookletRepository)
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)
+    private val inMemoryFeatureFlagRepository = InMemoryFeatureFlagRepository()
     val isFeatureEnabledService = IsFeatureEnabledService(inMemoryFeatureFlagRepository)
     val getAllFeatureFlagsService = GetAllFeatureFlagsService(inMemoryFeatureFlagRepository)
     val toggleFeatureFlagService = ToggleFeatureFlagService(inMemoryFeatureFlagRepository)
-
-    init {
-        inMemoryFeatureFlagRepository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
-    }
 
     private val retentionCandidatePort = InMemoryDataRetentionCandidatePort(inMemoryDatabase)
     val purgeExpiredDataService = PurgeExpiredDataService(retentionCandidatePort, userRepository)
@@ -176,7 +170,6 @@ class FakeFactory {
         inMemoryTagRepository.clear()
         fakeNotificationPort.clear()
         inMemoryFeatureFlagRepository.clear()
-        inMemoryFeatureFlagRepository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
     }
 
     fun fakeUserRepository(): InMemoryUserRepository {
