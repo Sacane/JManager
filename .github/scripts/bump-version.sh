@@ -69,12 +69,17 @@ fi
 BUMP="none"
 
 while IFS= read -r commit; do
-  # Ignore the CI-generated bump commit to prevent loops on bot pushes.
   if echo "$commit" | grep -qiE '^chore\(version\): bump to '; then
     continue
   fi
 
   if echo "$commit" | grep -qiE '^release(\(.+\))?:'; then
+    BUMP="major"
+    break
+  fi
+
+  # Merge commit from a release/* branch: "Merge pull request #N from .../release/..."
+  if echo "$commit" | grep -qiE '^Merge pull request #[0-9]+ from .+/release/'; then
     BUMP="major"
     break
   fi
@@ -90,6 +95,12 @@ if [ "$BUMP" = "none" ]; then
       BUMP="minor"
       break
     fi
+
+    # Merge commit from a feat/* branch: "Merge pull request #N from .../feat/..."
+    if echo "$commit" | grep -qiE '^Merge pull request #[0-9]+ from .+/feat/'; then
+      BUMP="minor"
+      break
+    fi
   done <<< "$COMMITS"
 fi
 
@@ -100,6 +111,12 @@ if [ "$BUMP" = "none" ]; then
     fi
 
     if echo "$commit" | grep -qiE '^(fix|chore|patch)(\(.+\))?:'; then
+      BUMP="patch"
+      break
+    fi
+
+    # Merge commit from a fix/chore/patch/refactor/* branch
+    if echo "$commit" | grep -qiE '^Merge pull request #[0-9]+ from .+/(fix|chore|patch|refactor)/'; then
       BUMP="patch"
       break
     fi

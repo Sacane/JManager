@@ -213,6 +213,14 @@ jobs:
           echo "jar_file_name=${JAR_FILE_NAME}" >> "$GITHUB_OUTPUT"
           echo "jar_download_url=${JAR_DOWNLOAD_URL}" >> "$GITHUB_OUTPUT"
 
+      - name: Tag version on master
+        if: steps.bump.outputs.should_bump == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.bump.outputs.new_version }}"
+          git push origin "v${{ steps.bump.outputs.new_version }}"
+
       - name: Trigger Deploy repository
         if: steps.bump.outputs.should_bump == 'true'
         env:
