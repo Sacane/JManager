@@ -17,6 +17,9 @@ export interface UserRegister {
   email: string
   password: string
   confirmPassword: string
+  tosAccepted: boolean
+  tosVersion: string | null
+  privacyAccepted: boolean
 }
 
 interface RefreshOptions {

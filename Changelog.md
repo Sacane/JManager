@@ -2,6 +2,14 @@
 
 ## [En cours]
 
+## 2026-05-30
+
+- **Feature flag gate — USER_REGISTRATION**
+  - **Domain**: Injected `FeatureFlagRepository` into `RegisterUserService`. Added `ResultState.FEATURE_DISABLED(4001)`. Guard clause as first statement in `handle()` — null flag treated as disabled (safe-by-default). `FakeFactory` seeds `USER_REGISTRATION=enabled` so existing tests stay green. 3 new unit tests (flag disabled, flag absent, no welcome email when disabled).
+  - **Application**: Mapped `FEATURE_DISABLED → NotFoundException → HTTP 404` in `toHttpResponse()`. `AuthenticatedUserTest` seeds `USER_REGISTRATION=enabled` before each test. 4 new tests: unit (`ApiMappingExtensionsTest`) + integration endpoint 200/404 flag on/off + 401 mismatch.
+  - **Client**: Added `USER_REGISTRATION` to `featureKeys.ts`. Extended `UserRegister` interface with `tosAccepted`, `tosVersion`, `privacyAccepted`. Registration form in `login.vue` gated by `v-if="isRegistrationEnabled"` — hidden when flag is off, shows full form (username, email, password, confirm, TOS + privacy checkboxes) when on. On success: toast + redirect to login mode. Fixed `vitest.config.ts` — `transformAssetUrls: false` to prevent `@vitejs/plugin-vue` from resolving `public/` assets as Vite imports. 12 new page tests.
+  - **Docs**: `development-workflow.md` §4 — "Code First, Gate Second" pattern documented. Technical report `docs/technical/feature-flag-http-mapping/2026-05-30-feature-disabled-http-mapping.md`.
+
 ## 2026-05-28
 
 - **GDPR Data Retention — scheduled purge of unconsented accounts (Art. 5(1)(e))**

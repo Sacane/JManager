@@ -2,6 +2,15 @@ import { config } from '@vue/test-utils'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, readonly, ref, watch, watchEffect } from 'vue'
 
+// Prevent happy-dom from throwing when it tries to load image resources via the filesystem.
+// In tests the document base URL is file://, so /favicon.ico resolves to an unresolvable
+// file:/// path. Silencing the src setter is the minimal, non-invasive fix.
+Object.defineProperty(window.HTMLImageElement.prototype, 'src', {
+  configurable: true,
+  set() {},
+  get() { return '' },
+})
+
 // Simulate common Nuxt auto-imported Vue APIs used directly in components.
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)

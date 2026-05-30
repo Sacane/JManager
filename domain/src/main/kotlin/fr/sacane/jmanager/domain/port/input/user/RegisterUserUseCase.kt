@@ -3,9 +3,10 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.ConsentRecord
+import fr.sacane.jmanager.domain.models.FeatureKey
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.port.output.FeatureFlagRepository
 import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.domain.port.output.NotificationPort
 import fr.sacane.jmanager.domain.port.output.UserRepository
@@ -39,6 +40,7 @@ class RegisterUserService(
     private val userRepository: UserRepository,
     private val hasher: Hasher,
     private val notificationPort: NotificationPort,
+    private val featureFlagRepository: FeatureFlagRepository,
 ) : RegisterUserUseCase {
 
     companion object {
@@ -46,6 +48,17 @@ class RegisterUserService(
     }
 
     override fun handle(command: RegisterUserCommand): Result<User> {
+        val flag = featureFlagRepository.findByKey(FeatureKey.USER_REGISTRATION)
+        if (flag == null || !flag.enabled) {
+            return failure(
+                ResultState.FEATURE_DISABLED,
+                DomainError(
+                    ResultState.FEATURE_DISABLED.code,
+                    "domain.user.register.feature_disabled",
+                    "L'inscription des utilisateurs est désactivée"
+                )
+            )
+        }
         if (command.password != command.confirmPassword) {
             return failure(
                 ResultState.PASSWORD_NOT_MATCH,

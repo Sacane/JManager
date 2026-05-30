@@ -92,3 +92,61 @@ For each layer:
 - Only proceed to the next layer when the current one is fully green and reviewed.
 
 For changes scoped to a single layer (e.g. a frontend-only fix), the same workflow applies — no layer is exempt.
+
+---
+
+## 4. Feature Flag Integration — Code First, Gate Second
+
+When a feature must be gated behind a feature flag, apply the following rule without exception:
+
+**Code the feature in full first.** Complete the Red → Green → Refactor cycle for every layer
+as if the flag did not exist. All tests must be green and the final quality analysis (Section 2)
+must be done before touching the flag integration.
+
+**Only then add the flag check.** The check is a separate, atomic commit on top of a working
+feature — not mixed into the business logic.
+
+### 4.1 Domain: flag check position
+
+- The flag check must be the **first statement** in the use case `handle()` method — before any
+  input validation or business invariant check.
+- Read the flag via the `FeatureFlagRepository` output port (already available in domain).
+- A missing flag row (`findByKey()` returns `null`) must be treated as **disabled** (safe-by-default,
+  consistent with the seeder).
+- Return a dedicated failure state (e.g. `ResultState.FEATURE_DISABLED`) — never reuse
+  `FORBIDDEN` or `INVALID`, which carry different business semantics.
+
+```kotlin
+override fun handle(command: MyCommand): Result<MyResult> {
+    val flag = featureFlagRepository.findByKey(FeatureKey.MY_FEATURE)
+    if (flag == null || !flag.enabled) {
+        return failure(
+            ResultState.FEATURE_DISABLED,
+            DomainError(ResultState.FEATURE_DISABLED.code, "domain.my_feature.disabled", "Feature is disabled")
+        )
+    }
+    // existing business logic unchanged below
+}
+```
+
+### 4.2 Application: HTTP mapping
+
+- Map `ResultState.FEATURE_DISABLED` in `ProblemDetailHandler` to **HTTP 404** (hides the
+  endpoint's existence when the feature is off — safer than 403 for public-facing registration
+  endpoints). Discuss with the team if a different status is required.
+
+### 4.3 Client: conditional rendering
+
+- Gate the UI section with `v-if="isEnabled(FEATURE_KEYS.MY_FEATURE)"` using the existing
+  `useFeatureFlags()` composable.
+- The feature key must be declared in `client/constants/featureKeys.ts` before use.
+- Default visual state (flag disabled) must be clean — no empty containers, no broken layouts.
+
+### 4.4 Tests
+
+- Tests for the feature's own business logic must not depend on the flag state (they were written
+  before the gate was added).
+- Add separate tests for the flag-disabled path in each layer:
+  - Domain: use case returns `FEATURE_DISABLED` when flag is off.
+  - Application: endpoint returns the expected HTTP status when flag is off.
+  - Client: UI element is absent when flag is off.

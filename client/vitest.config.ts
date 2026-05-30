@@ -3,7 +3,18 @@ import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: {
+        // Disable asset URL transformation in the test environment.
+        // Without this, <img src="/favicon.ico"> is transformed into a Vite
+        // import that Vite cannot resolve (public/ assets are not imported,
+        // they are served as-is). The Nuxt production build is unaffected —
+        // it uses its own plugin pipeline via nuxt.config.ts.
+        transformAssetUrls: false,
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./', import.meta.url)),

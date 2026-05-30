@@ -33,6 +33,8 @@ import fr.sacane.jmanager.domain.port.input.user.RecordConsentCommand
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentUseCase
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsUseCase
+import fr.sacane.jmanager.domain.models.FeatureFlag
+import fr.sacane.jmanager.domain.models.FeatureKey
 import fr.sacane.jmanager.domain.port.output.DefaultHasher
 import fr.sacane.jmanager.domain.then
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -270,6 +272,39 @@ class UserFeatureTest {
                 assertFailure(ResultState.INVALID)
                 assertEquals("domain.user.register.consent_required", errorInfo?.key)
             }
+        }
+
+        @Test
+        fun `Registration is rejected when USER_REGISTRATION flag is disabled`() {
+            factory.inMemoryFeatureFlagRepository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = false))
+
+            val result = act { registerUserUseCase.handle(registerCommand()) }
+
+            then(result) {
+                assertFailure(ResultState.FEATURE_DISABLED)
+                assertEquals("domain.user.register.feature_disabled", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Registration is rejected when USER_REGISTRATION flag is absent from repository`() {
+            factory.inMemoryFeatureFlagRepository.clear()
+
+            val result = act { registerUserUseCase.handle(registerCommand()) }
+
+            then(result) {
+                assertFailure(ResultState.FEATURE_DISABLED)
+                assertEquals("domain.user.register.feature_disabled", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `No welcome email is sent when USER_REGISTRATION flag is disabled`() {
+            factory.inMemoryFeatureFlagRepository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = false))
+
+            act { registerUserUseCase.handle(registerCommand()) }
+
+            assertEquals(0, sentEmails.size)
         }
 
         @Test

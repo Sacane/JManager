@@ -1,25 +1,95 @@
 <script setup lang="ts">
-import useAuth from '../composables/useAuth'
+import { FEATURE_KEYS } from '~/constants/featureKeys'
 
-const { login } = useAuth()
+const { login, register } = useAuth()
+const { isEnabled } = useFeatureFlags()
 const toastr = useJToast()
-const userAuth = reactive({
-  username: '',
-  password: '',
-})
 
-const hasFailedlogin = ref(false)
+type Mode = 'login' | 'register'
+const mode = ref<Mode>('login')
+
+const isRegistrationEnabled = computed(() => isEnabled(FEATURE_KEYS.USER_REGISTRATION))
+
+// --- Login state ---
+const userAuth = reactive({ username: '', password: '' })
+const hasFailedLogin = ref(false)
 const isLogging = ref(false)
+
+// --- Register state ---
+const userRegistered = reactive({
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  tosAccepted: false,
+  privacyAccepted: false,
+})
+const hasFailedRegister = ref(false)
+const registerError = ref('')
+const isRegistering = ref(false)
+
+const canRegister = computed(() =>
+  userRegistered.username.length > 0
+  && userRegistered.email.length > 0
+  && userRegistered.password.length > 0
+  && userRegistered.confirmPassword.length > 0
+  && userRegistered.tosAccepted
+  && userRegistered.privacyAccepted,
+)
+
+const subtitle = computed(() =>
+  mode.value === 'login' ? 'Connectez-vous à votre espace' : 'Créez votre compte',
+)
+
+function switchMode(target: Mode) {
+  mode.value = target
+  hasFailedLogin.value = false
+  hasFailedRegister.value = false
+  registerError.value = ''
+}
 
 async function log() {
   if (isLogging.value) return
   isLogging.value = true
-  hasFailedlogin.value = false
+  hasFailedLogin.value = false
   await login(userAuth, (e) => {
-    hasFailedlogin.value = true
+    hasFailedLogin.value = true
     toastr.errorAxios(e)
     isLogging.value = false
   })
+}
+
+async function registerUser() {
+  if (isRegistering.value) return
+  if (userRegistered.password !== userRegistered.confirmPassword) {
+    hasFailedRegister.value = true
+    registerError.value = 'Les mots de passe ne correspondent pas'
+    return
+  }
+  isRegistering.value = true
+  hasFailedRegister.value = false
+  await register(
+    {
+      username: userRegistered.username,
+      email: userRegistered.email,
+      password: userRegistered.password,
+      confirmPassword: userRegistered.confirmPassword,
+      tosAccepted: userRegistered.tosAccepted,
+      tosVersion: '1.0',
+      privacyAccepted: userRegistered.privacyAccepted,
+    },
+    () => {
+      toastr.success('Inscription réussie ! Vous pouvez maintenant vous connecter.')
+      switchMode('login')
+      isRegistering.value = false
+    },
+    (e) => {
+      hasFailedRegister.value = true
+      registerError.value = 'Une erreur est survenue lors de l\'inscription'
+      toastr.errorAxios(e)
+      isRegistering.value = false
+    },
+  )
 }
 </script>
 
@@ -41,11 +111,12 @@ async function log() {
             JManager Application
           </h1>
           <p class="app-subtitle">
-            Connectez-vous à votre espace
+            {{ subtitle }}
           </p>
         </div>
 
-        <form class="login-form" @submit.prevent="log">
+        <!-- Login form -->
+        <form v-if="mode === 'login'" class="login-form" @submit.prevent="log">
           <div class="form-group">
             <label for="username" class="form-label">
               <i class="pi pi-user mr-2" />
@@ -76,45 +147,150 @@ async function log() {
             />
           </div>
 
-          <div v-if="hasFailedlogin" class="error-message">
+          <div v-if="hasFailedLogin" class="error-message" role="alert">
             <i class="pi pi-exclamation-circle mr-2" />
             Identifiants incorrects
           </div>
 
-          <Button type="submit" class="w-full submit-btn" size="large" :loading="isLogging" :disabled="isLogging || !userAuth.username || !userAuth.password">
+          <Button
+            type="submit"
+            class="w-full submit-btn"
+            size="large"
+            :loading="isLogging"
+            :disabled="isLogging || !userAuth.username || !userAuth.password"
+          >
             <i class="pi pi-sign-in mr-2" />
             Se connecter
           </Button>
+
+          <div v-if="isRegistrationEnabled" class="mode-toggle">
+            <span class="mode-toggle-text">Vous n'avez pas de compte ?</span>
+            <button
+              type="button"
+              class="toggle-link"
+              data-testid="switch-to-register"
+              @click="switchMode('register')"
+            >
+              S'inscrire
+            </button>
+          </div>
         </form>
 
-        <!--      <div v-else> -->
-        <!--        <form @submit.prevent="registerUser"> -->
-        <!--          <div class="mb-4"> -->
-        <!--            <label for="username" class="">Nom d'utilisateur *</label> -->
-        <!--            <InputText id="username" v-model="userRegistered.username" type="text" class="mt-1 p-2 w-full border rounded-md" /> -->
-        <!--          </div> -->
-        <!--          <div class="mb-4"> -->
-        <!--            <label for="password">Mot de passe *</label> -->
-        <!--            <InputText v-model="userRegistered.password" type="password" class="mt-1 p-2 w-full border rounded-md" /> -->
-        <!--          </div> -->
-        <!--          <div class="mb-4"> -->
-        <!--            <label for="confirm">Confirmer le mot de passe *</label> -->
-        <!--            <InputText id="confirm" v-model="userRegistered.confirmPassword" type="password" class="mt-1 p-2 w-full border rounded-md" /> -->
-        <!--          </div> -->
-        <!--          <Button type="submit" class=""> -->
-        <!--            S'enregistrer -->
-        <!--          </Button> -->
-        <!--        </form> -->
-        <!--      </div> -->
+        <!-- Registration form -->
+        <form v-else class="login-form" @submit.prevent="registerUser">
+          <div class="form-group">
+            <label for="reg-username" class="form-label">
+              <i class="pi pi-user mr-2" />
+              Nom d'utilisateur
+            </label>
+            <InputText
+              id="reg-username"
+              v-model="userRegistered.username"
+              type="text"
+              class="w-full"
+              placeholder="Choisissez un nom d'utilisateur"
+              maxlength="100"
+            />
+          </div>
 
-        <!--      <div class="mt-4"> -->
-        <!--                <p class="text-black-600"> -->
-        <!--                  {{ mode ? "Vous n'avez pas de compte ?" : 'Vous avez déjà un compte ?' }} -->
-        <!--                </p> -->
-        <!--        <Button> -->
-        <!--          Se connecter -->
-        <!--        </Button> -->
-        <!--      </div> -->
+          <div class="form-group">
+            <label for="reg-email" class="form-label">
+              <i class="pi pi-envelope mr-2" />
+              Adresse e-mail
+            </label>
+            <InputText
+              id="reg-email"
+              v-model="userRegistered.email"
+              type="email"
+              class="w-full"
+              placeholder="votre@email.com"
+              maxlength="255"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password" class="form-label">
+              <i class="pi pi-lock mr-2" />
+              Mot de passe
+            </label>
+            <InputText
+              id="reg-password"
+              v-model="userRegistered.password"
+              type="password"
+              class="w-full"
+              placeholder="Choisissez un mot de passe"
+              maxlength="100"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="reg-confirm-password" class="form-label">
+              <i class="pi pi-lock mr-2" />
+              Confirmer le mot de passe
+            </label>
+            <InputText
+              id="reg-confirm-password"
+              v-model="userRegistered.confirmPassword"
+              type="password"
+              class="w-full"
+              placeholder="Répétez votre mot de passe"
+              maxlength="100"
+            />
+          </div>
+
+          <div class="form-group consent-group">
+            <div class="consent-item">
+              <Checkbox
+                v-model="userRegistered.tosAccepted"
+                input-id="tos-accepted"
+                :binary="true"
+              />
+              <label for="tos-accepted" class="consent-label">
+                J'accepte les
+                <NuxtLink to="/terms" class="consent-link" target="_blank">Conditions Générales d'Utilisation</NuxtLink>
+              </label>
+            </div>
+            <div class="consent-item">
+              <Checkbox
+                v-model="userRegistered.privacyAccepted"
+                input-id="privacy-accepted"
+                :binary="true"
+              />
+              <label for="privacy-accepted" class="consent-label">
+                J'accepte la
+                <NuxtLink to="/privacy" class="consent-link" target="_blank">Politique de Confidentialité</NuxtLink>
+              </label>
+            </div>
+          </div>
+
+          <div v-if="hasFailedRegister" class="error-message" role="alert">
+            <i class="pi pi-exclamation-circle mr-2" />
+            {{ registerError }}
+          </div>
+
+          <Button
+            type="submit"
+            class="w-full submit-btn"
+            size="large"
+            :loading="isRegistering"
+            :disabled="isRegistering || !canRegister"
+          >
+            <i class="pi pi-user-plus mr-2" />
+            Créer mon compte
+          </Button>
+
+          <div class="mode-toggle">
+            <span class="mode-toggle-text">Vous avez déjà un compte ?</span>
+            <button
+              type="button"
+              class="toggle-link"
+              data-testid="switch-to-login"
+              @click="switchMode('login')"
+            >
+              Se connecter
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -155,7 +331,6 @@ async function log() {
   100% { background-position: 0% 50%; }
 }
 
-/* Formes décoratives */
 .decorative-shape {
   position: absolute;
   border-radius: 50%;
@@ -201,6 +376,8 @@ async function log() {
   width: 100%;
   max-width: 450px;
   padding: 2rem;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .login-card {
@@ -215,14 +392,8 @@ async function log() {
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .card-header {
@@ -296,6 +467,35 @@ async function log() {
   color: #667eea;
 }
 
+/* Consent checkboxes */
+.consent-group {
+  gap: 0.75rem;
+}
+
+.consent-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.consent-label {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.consent-link {
+  color: #667eea;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.consent-link:hover {
+  color: #764ba2;
+}
+
+/* Error message */
 .error-message {
   display: flex;
   align-items: center;
@@ -315,6 +515,7 @@ async function log() {
   75% { transform: translateX(10px); }
 }
 
+/* Submit button */
 .submit-btn {
   margin-top: 0.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -334,6 +535,37 @@ async function log() {
   transform: translateY(0);
 }
 
+/* Mode toggle */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.mode-toggle-text {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.toggle-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #667eea;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.toggle-link:hover {
+  color: #764ba2;
+}
+
+/* Responsive */
 @media (max-width: 640px) {
   .login-content {
     padding: 1rem;
@@ -350,10 +582,6 @@ async function log() {
   .logo-circle {
     width: 80px;
     height: 80px;
-  }
-
-  .logo-circle i {
-    font-size: 2.5rem;
   }
 }
 </style>
