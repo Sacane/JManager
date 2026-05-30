@@ -5,19 +5,20 @@ import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsCommand
 import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsUseCase
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
+import fr.sacane.jmanager.infrastructure.spi.entity.FeatureFlagEntity
 import fr.sacane.jmanager.infrastructure.spi.repositories.FeatureFlagJpaRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.cache.CacheManager
 import org.springframework.test.context.TestPropertySource
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -25,11 +26,24 @@ import org.springframework.test.context.TestPropertySource
 class FeatureFlagControllerTest(
     @LocalServerPort private val port: Int,
     @Autowired private val featureFlagJpaRepository: FeatureFlagJpaRepository,
+    @Autowired private val cacheManager: CacheManager,
     @Autowired private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase,
     @Autowired private val loginUseCase: LoginUseCase,
 ) : AuthenticatedUserTest() {
 
     private lateinit var adminToken: String
+
+    /** First available key at runtime — avoids coupling to a specific enum constant. */
+    private val anyKey get() = FeatureKey.entries.first().name
+
+    @BeforeEach
+    fun setupFlags() {
+        featureFlagJpaRepository.deleteAll()
+        cacheManager.getCache("featureFlags")?.clear()
+        FeatureKey.entries.forEach { key ->
+            featureFlagJpaRepository.save(FeatureFlagEntity(key = key.name, enabled = false))
+        }
+    }
 
     @BeforeEach
     fun setupAdmin() {
@@ -37,11 +51,6 @@ class FeatureFlagControllerTest(
         loginUseCase.handle(LoginCommand("admin-flag", "admin123")).onSuccess {
             adminToken = it.token
         }
-    }
-
-    @AfterEach
-    fun clearFlags() {
-        featureFlagJpaRepository.deleteAll()
     }
 
     @Nested
@@ -91,7 +100,7 @@ class FeatureFlagControllerTest(
                 get("/api/feature-flags")
             } Then {
                 statusCode(200)
-                body("find { it.key == 'EMAIL_VERIFICATION' }.enabled", equalTo(false))
+                body("find { it.key == '$anyKey' }.enabled", equalTo(false))
             }
         }
     }
@@ -107,10 +116,10 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(200)
-                body("key", equalTo("EMAIL_VERIFICATION"))
+                body("key", equalTo(anyKey))
                 body("enabled", equalTo(true))
             }
         }
@@ -123,7 +132,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(200)
             }
@@ -134,7 +143,7 @@ class FeatureFlagControllerTest(
                 get("/api/feature-flags")
             } Then {
                 statusCode(200)
-                body("find { it.key == 'EMAIL_VERIFICATION' }.enabled", equalTo(true))
+                body("find { it.key == '$anyKey' }.enabled", equalTo(true))
             }
         }
 
@@ -146,7 +155,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(403)
             }
@@ -159,7 +168,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(401)
             }
@@ -187,7 +196,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": true}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             }
 
             Given {
@@ -196,7 +205,7 @@ class FeatureFlagControllerTest(
                 header("Content-Type", "application/json")
                 body("""{"enabled": false}""")
             } When {
-                patch("/api/admin/feature-flags/EMAIL_VERIFICATION")
+                patch("/api/admin/feature-flags/$anyKey")
             } Then {
                 statusCode(200)
                 body("enabled", equalTo(false))

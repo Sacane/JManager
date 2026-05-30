@@ -29,55 +29,55 @@ class FeatureFlagRepositoryJpaAdapterIT(
 
     @Test
     fun `findByKey returns null for a flag that has never been persisted`() {
-        val result = adapter.findByKey(FeatureKey.EMAIL_VERIFICATION)
+        val result = adapter.findByKey(FeatureKey.USER_REGISTRATION)
 
         assertThat(result).isNull()
     }
 
     @Test
     fun `findByKey returns the flag with its persisted enabled state`() {
-        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.EMAIL_VERIFICATION.name, enabled = true))
+        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.USER_REGISTRATION.name, enabled = true))
 
-        val result = adapter.findByKey(FeatureKey.EMAIL_VERIFICATION)
+        val result = adapter.findByKey(FeatureKey.USER_REGISTRATION)
 
-        assertThat(result).isEqualTo(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+        assertThat(result).isEqualTo(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
     }
 
     @Test
     fun `findByKey returns disabled flag when persisted as disabled`() {
-        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.EMAIL_VERIFICATION.name, enabled = false))
+        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.USER_REGISTRATION.name, enabled = false))
 
-        val result = adapter.findByKey(FeatureKey.EMAIL_VERIFICATION)
+        val result = adapter.findByKey(FeatureKey.USER_REGISTRATION)
 
-        assertThat(result).isEqualTo(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = false))
+        assertThat(result).isEqualTo(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = false))
     }
 
     // ── Adapter: upsert ────────────────────────────────────────────────────
 
     @Test
     fun `upsert inserts a new flag and returns it`() {
-        val flag = FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true)
+        val flag = FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true)
 
         val result = adapter.upsert(flag)
 
         assertThat(result).isEqualTo(flag)
-        assertThat(jpaRepository.findById(FeatureKey.EMAIL_VERIFICATION.name).get().enabled).isTrue()
+        assertThat(jpaRepository.findById(FeatureKey.USER_REGISTRATION.name).get().enabled).isTrue()
     }
 
     @Test
     fun `upsert updates an existing flag without creating a duplicate`() {
-        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.EMAIL_VERIFICATION.name, enabled = false))
+        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.USER_REGISTRATION.name, enabled = false))
 
-        adapter.upsert(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+        adapter.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
 
-        val all = jpaRepository.findAll().filter { it.key == FeatureKey.EMAIL_VERIFICATION.name }
+        val all = jpaRepository.findAll().filter { it.key == FeatureKey.USER_REGISTRATION.name }
         assertThat(all).hasSize(1)
         assertThat(all.first().enabled).isTrue()
     }
 
     @Test
     fun `upsert is idempotent when called twice with the same state`() {
-        val flag = FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true)
+        val flag = FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true)
 
         adapter.upsert(flag)
         val result = adapter.upsert(flag)
@@ -97,16 +97,12 @@ class FeatureFlagRepositoryJpaAdapterIT(
 
     @Test
     fun `findAll returns all persisted flags`() {
-        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.EMAIL_VERIFICATION.name, enabled = true))
-        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.EMAIL_VERIFICATION_SIMPLE_USER_REGISTRATION.name, enabled = false))
+        jpaRepository.save(FeatureFlagEntity(key = FeatureKey.USER_REGISTRATION.name, enabled = true))
 
         val result = adapter.findAll()
 
-        assertThat(result).hasSize(2)
-        assertThat(result.map { it.key }).containsExactlyInAnyOrder(
-            FeatureKey.EMAIL_VERIFICATION,
-            FeatureKey.EMAIL_VERIFICATION_SIMPLE_USER_REGISTRATION,
-        )
+        assertThat(result).hasSize(1)
+        assertThat(result.map { it.key }).containsExactly(FeatureKey.USER_REGISTRATION)
     }
 
     // ── Seeder ─────────────────────────────────────────────────────────────
@@ -125,11 +121,11 @@ class FeatureFlagRepositoryJpaAdapterIT(
 
         @Test
         fun `seeder does not overwrite an admin-enabled flag`() {
-            jpaRepository.save(FeatureFlagEntity(key = FeatureKey.EMAIL_VERIFICATION.name, enabled = true))
+            jpaRepository.save(FeatureFlagEntity(key = FeatureKey.USER_REGISTRATION.name, enabled = true))
 
             seeder.seed()
 
-            val flag = jpaRepository.findById(FeatureKey.EMAIL_VERIFICATION.name).get()
+            val flag = jpaRepository.findById(FeatureKey.USER_REGISTRATION.name).get()
             assertThat(flag.enabled).isTrue()
         }
 
@@ -138,6 +134,16 @@ class FeatureFlagRepositoryJpaAdapterIT(
             seeder.seed()
             seeder.seed()
 
+            assertThat(jpaRepository.count()).isEqualTo(FeatureKey.entries.size.toLong())
+        }
+
+        @Test
+        fun `seeder removes orphaned flags that are no longer in the enum`() {
+            jpaRepository.save(FeatureFlagEntity(key = "OBSOLETE_FLAG", enabled = true))
+
+            seeder.seed()
+
+            assertThat(jpaRepository.existsById("OBSOLETE_FLAG")).isFalse()
             assertThat(jpaRepository.count()).isEqualTo(FeatureKey.entries.size.toLong())
         }
     }

@@ -38,25 +38,25 @@ class FeatureFlagFeatureTest {
 
         @Test
         fun `unpersisted flag defaults to disabled`() {
-            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.EMAIL_VERIFICATION)) }
+            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.USER_REGISTRATION)) }
 
             then(result) { assertTrue { this == false } }
         }
 
         @Test
         fun `enabled flag returns true`() {
-            repository.upsert(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+            repository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
 
-            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.EMAIL_VERIFICATION)) }
+            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.USER_REGISTRATION)) }
 
             then(result) { assertTrue { this == true } }
         }
 
         @Test
         fun `explicitly disabled flag returns false`() {
-            repository.upsert(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = false))
+            repository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = false))
 
-            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.EMAIL_VERIFICATION)) }
+            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.USER_REGISTRATION)) }
 
             then(result) { assertTrue { this == false } }
         }
@@ -88,28 +88,14 @@ class FeatureFlagFeatureTest {
 
         @Test
         fun `persisted enabled flag is reflected in the list`() {
-            repository.upsert(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+            repository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
 
             val result = act { getAllFeatureFlagsUseCase.handle(GetAllFeatureFlagsQuery()) }
 
             then(result) {
                 assertSuccess()
-                val emailVerification = mapNotNullOrFailure()!!.first { it.key == FeatureKey.EMAIL_VERIFICATION }
-                assertTrue { emailVerification.enabled }
-            }
-        }
-
-        @Test
-        fun `keys not yet persisted appear as disabled alongside persisted ones`() {
-            repository.upsert(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true))
-
-            val result = act { getAllFeatureFlagsUseCase.handle(GetAllFeatureFlagsQuery()) }
-
-            then(result) {
-                assertSuccess()
-                val subFlag = mapNotNullOrFailure()!!
-                    .first { it.key == FeatureKey.EMAIL_VERIFICATION_SIMPLE_USER_REGISTRATION }
-                assertTrue { !subFlag.enabled }
+                val userRegistration = mapNotNullOrFailure()!!.first { it.key == FeatureKey.USER_REGISTRATION }
+                assertTrue { userRegistration.enabled }
             }
         }
     }
@@ -120,7 +106,7 @@ class FeatureFlagFeatureTest {
         @Test
         fun `toggling a flag to enabled persists the change`() {
             val result = act {
-                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.USER_REGISTRATION, enabled = true))
             }
 
             then(result) {
@@ -131,10 +117,10 @@ class FeatureFlagFeatureTest {
 
         @Test
         fun `toggling an enabled flag to disabled persists the change`() {
-            repository.upsert(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+            repository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
 
             val result = act {
-                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.EMAIL_VERIFICATION, enabled = false))
+                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.USER_REGISTRATION, enabled = false))
             }
 
             then(result) {
@@ -146,20 +132,20 @@ class FeatureFlagFeatureTest {
         @Test
         fun `isEnabled reflects state after toggle`() {
             act {
-                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.USER_REGISTRATION, enabled = true))
             }
 
-            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.EMAIL_VERIFICATION)) }
+            val result = act { isFeatureEnabledUseCase.handle(IsFeatureEnabledQuery(FeatureKey.USER_REGISTRATION)) }
 
             then(result) { assertTrue { this == true } }
         }
 
         @Test
         fun `toggling is idempotent — enabling an already enabled flag succeeds`() {
-            repository.upsert(FeatureFlag(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+            repository.upsert(FeatureFlag(FeatureKey.USER_REGISTRATION, enabled = true))
 
             val result = act {
-                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.EMAIL_VERIFICATION, enabled = true))
+                toggleFeatureFlagUseCase.handle(ToggleFeatureFlagCommand(FeatureKey.USER_REGISTRATION, enabled = true))
             }
 
             then(result) {
