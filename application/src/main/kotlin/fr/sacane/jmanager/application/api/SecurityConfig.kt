@@ -56,6 +56,7 @@ class SecurityConfig(
                 authorize("/consent", permitAll)
                 // Actuator
                 authorize("/actuator/health", permitAll)
+                authorize("/actuator/info", permitAll)
                 // Public API
                 authorize("/api/feature-flags", permitAll)
                 authorize("/api/user/create", permitAll)

@@ -5,6 +5,7 @@ import useAuth from '../composables/useAuth'
 import 'primeicons/primeicons.css'
 
 const { isAuthenticated, isAdmin } = useAuth()
+const { version, fetchVersion } = useAppVersion()
 const isSidebarOpen = ref(false)
 const isMobileView = ref(false)
 
@@ -37,6 +38,7 @@ function handleClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   checkMobile()
+  fetchVersion()
   window.addEventListener('resize', checkMobile)
   document.addEventListener('click', handleClickOutside)
 })
@@ -151,6 +153,7 @@ onUnmounted(() => {
 
         <div class="sidebar-footer">
           <Profile />
+          <span v-if="version" class="app-version">{{ `v${version}` }}</span>
         </div>
       </div>
     </aside>
@@ -556,6 +559,16 @@ onUnmounted(() => {
     border-top-color: rgba(101, 8, 204, 0.2);
     background: rgba(101, 8, 204, 0.04);
   }
+}
+
+.app-version {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.03em;
+  user-select: none;
 }
 
 @media (min-width: 769px) {
