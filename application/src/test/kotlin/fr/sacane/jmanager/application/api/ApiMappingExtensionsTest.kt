@@ -354,6 +354,18 @@ class ApiMappingExtensionsTest {
     }
 
     @Test
+    fun `Result toHttpResponse should throw NotFoundException for FEATURE_DISABLED status`() {
+        val result = failure<String>(ResultState.FEATURE_DISABLED, "Feature disabled")
+
+        val exception = assertThrows<NotFoundException> {
+            result.toHttpResponse()
+        }
+
+        assertEquals(ResultState.FEATURE_DISABLED.code, exception.errCode)
+        assertEquals("Feature disabled", exception.message)
+    }
+
+    @Test
     fun `Result toHttpResponse should handle all UNAUTHORIZED variants`() {
         val unauthorizedStates = listOf(
             ResultState.USER_NOT_AUTHENTICATED,

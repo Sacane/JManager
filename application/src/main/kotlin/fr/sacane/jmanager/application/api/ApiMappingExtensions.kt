@@ -70,6 +70,7 @@ internal fun <T> Result<T>.toHttpResponse()
 : ResponseEntity<T> = when(this.status){
     ResultState.OK -> mapNullable { ResponseEntity.ok(it) }
     ResultState.NOT_FOUND,
+    ResultState.FEATURE_DISABLED,
     ResultState.TAG_NOT_FOUND,
     ResultState.USER_NOT_FOUND,
     ResultState.BOOKLET_NOT_FOUND, ResultState.TRANSACTION_NOT_FOUND,

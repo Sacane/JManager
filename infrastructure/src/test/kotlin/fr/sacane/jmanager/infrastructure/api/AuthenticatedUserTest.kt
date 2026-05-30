@@ -1,11 +1,14 @@
 package fr.sacane.jmanager.infrastructure.api
 
 import fr.sacane.jmanager.domain.asTokenUUID
+import fr.sacane.jmanager.domain.models.FeatureKey
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.output.SessionManager
+import fr.sacane.jmanager.infrastructure.spi.entity.FeatureFlagEntity
+import fr.sacane.jmanager.infrastructure.spi.repositories.FeatureFlagJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -24,6 +27,9 @@ abstract class AuthenticatedUserTest {
 
     @Autowired
     private lateinit var userPostgresRepository: UserPostgresRepository
+
+    @Autowired
+    private lateinit var featureFlagJpaRepository: FeatureFlagJpaRepository
 
     @Autowired
     private lateinit var registerUserUseCase: RegisterUserUseCase
@@ -59,6 +65,7 @@ abstract class AuthenticatedUserTest {
 
     @BeforeEach
     fun beforeEach() {
+        featureFlagJpaRepository.save(FeatureFlagEntity(key = FeatureKey.USER_REGISTRATION.name, enabled = true))
         val now = LocalDateTime.now()
         registerUserUseCase.handle(
             RegisterUserCommand(

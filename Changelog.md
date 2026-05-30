@@ -2,6 +2,15 @@
 
 ## [En cours]
 
+## 2026-05-30
+
+- **Feature flag gate — USER_REGISTRATION (Decorator + Marker Interface pattern)**
+  - **Domain**: Added `FeatureFlagged` marker interface in `domain/port/input/` (mirrors `MdcContextProvider`). `RegisterUserCommand` implements `FeatureFlagged { featureKey = USER_REGISTRATION }`. `RegisterUserService` is completely clean — no flag knowledge. Added `ResultState.FEATURE_DISABLED(4001)`.
+  - **Application bus**: `FeatureFlagCommandBus` (`@Primary`) wraps `LoggingCommandBus` — checks `FeatureFlagged` before any dispatch, returns `FEATURE_DISABLED` if absent/disabled, delegates otherwise. Universal: any future Command/Query implementing `FeatureFlagged` is automatically gated. Mapped `FEATURE_DISABLED → HTTP 404` in `toHttpResponse()`. 4 unit tests on the new decorator. Integration endpoint tests (200/404 flag on/off).
+  - **Client**: Added `USER_REGISTRATION` to `featureKeys.ts`. Extended `UserRegister` interface with TOS/privacy consent fields. Registration form in `login.vue` gated by `v-if="isRegistrationEnabled"`. Fixed `vitest.config.ts` (`transformAssetUrls: false`). 12 new page tests.
+  - **Infrastructure**: Seeded `USER_REGISTRATION=enabled` in both `AuthenticatedUserTest` base classes (application + infrastructure modules) so test setup registration passes through the flag gate.
+  - **Docs**: `development-workflow.md` §4 — "Code First, Gate Second" pattern. Technical report `docs/technical/feature-flag-http-mapping/`.
+
 ## 2026-05-28
 
 - **GDPR Data Retention — scheduled purge of unconsented accounts (Art. 5(1)(e))**

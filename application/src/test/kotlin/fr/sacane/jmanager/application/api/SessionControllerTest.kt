@@ -11,7 +11,10 @@ import fr.sacane.jmanager.application.api.session.BookletMonthlyCycleUpdateDTO
 import fr.sacane.jmanager.application.api.session.RecordConsentDTO
 import fr.sacane.jmanager.application.api.session.UserPasswordDTO
 import fr.sacane.jmanager.application.api.session.UserSettingsUpdateDTO
+import fr.sacane.jmanager.domain.models.FeatureKey
 import fr.sacane.jmanager.infrastructure.spi.adapters.UserRepositoryJpaAdapter
+import fr.sacane.jmanager.infrastructure.spi.entity.FeatureFlagEntity
+import fr.sacane.jmanager.infrastructure.spi.repositories.FeatureFlagJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
@@ -39,6 +42,7 @@ class SessionControllerTest(
     @Autowired private val loginUseCase: LoginUseCase,
     @Autowired private val userRepositoryJpaAdapter: UserRepositoryJpaAdapter,
     @Autowired private val hasher: Hasher,
+    @Autowired private val featureFlagJpaRepository: FeatureFlagJpaRepository,
 ): AuthenticatedUserTest() {
 
     @AfterEach
@@ -386,33 +390,74 @@ class SessionControllerTest(
             }
         }
     }
-//    @Nested
-//    inner class CreateUserEndpointTest {
-//        @Test
-//        fun `Create a user must return 200`() {
-//            Given {
-//                port(port)
-//                header("Content-Type", "application/json")
-//                body(objectMapper.writeValueAsString(RegisteredUserDTO("test2", "test2", "test2")))
-//            } When {
-//                post("/api/user/create")
-//            } Then {
-//                statusCode(200)
-//            }
-//        }
-//        @Test
-//        fun `Create a user that has not the same password and confirm password must return 401`() {
-//            Given {
-//                port(port)
-//                header("Content-Type", "application/json")
-//                body(objectMapper.writeValueAsString(RegisteredUserDTO("test", "test", "test2")))
-//            } When {
-//                post("/api/user/create")
-//            } Then {
-//                statusCode(401)
-//            }
-//        }
-//    }
+    @Nested
+    inner class CreateUserEndpointTest {
+
+        private val validPayload = """
+            {
+              "username": "newuser",
+              "password": "pass123",
+              "confirmPassword": "pass123",
+              "email": "newuser@example.com",
+              "tosAccepted": true,
+              "tosVersion": "1.0",
+              "privacyAccepted": true
+            }
+        """.trimIndent()
+
+        @Test
+        fun `POST create returns 200 when USER_REGISTRATION flag is enabled`() {
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(validPayload)
+            } When {
+                post("/api/user/create")
+            } Then {
+                statusCode(200)
+            }
+        }
+
+        @Test
+        fun `POST create returns 404 when USER_REGISTRATION flag is disabled`() {
+            featureFlagJpaRepository.save(FeatureFlagEntity(key = FeatureKey.USER_REGISTRATION.name, enabled = false))
+
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(validPayload)
+            } When {
+                post("/api/user/create")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `POST create with mismatched passwords returns 401 regardless of flag`() {
+            val mismatchPayload = """
+                {
+                  "username": "newuser2",
+                  "password": "pass123",
+                  "confirmPassword": "other456",
+                  "email": "newuser2@example.com",
+                  "tosAccepted": true,
+                  "tosVersion": "1.0",
+                  "privacyAccepted": true
+                }
+            """.trimIndent()
+
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(mismatchPayload)
+            } When {
+                post("/api/user/create")
+            } Then {
+                statusCode(401)
+            }
+        }
+    }
 
     @Nested
     inner class ConsentEndpointTest {

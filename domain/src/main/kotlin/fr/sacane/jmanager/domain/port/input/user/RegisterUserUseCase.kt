@@ -3,17 +3,18 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.ConsentRecord
+import fr.sacane.jmanager.domain.models.FeatureKey
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.input.FeatureFlagged
 import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.domain.port.output.NotificationPort
 import fr.sacane.jmanager.domain.port.output.UserRepository
-import fr.sacane.jmanager.domain.port.input.Command
-import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
-import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import org.slf4j.LoggerFactory
@@ -27,7 +28,9 @@ data class RegisterUserCommand(
     val tosAcceptedAt: LocalDateTime? = null,
     val tosVersion: String? = null,
     val privacyAcceptedAt: LocalDateTime? = null,
-) : Command<User>
+) : Command<User>, FeatureFlagged {
+    override val featureKey get() = FeatureKey.USER_REGISTRATION
+}
 
 @Port(Side.APPLICATION)
 interface RegisterUserUseCase : CommandHandler<RegisterUserCommand, User> {

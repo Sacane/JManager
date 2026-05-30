@@ -76,6 +76,10 @@ When the visitor attempts to register
 Then the system returns a validation failure
 ```
 
+> **Feature flag gate**: the entire registration flow is gated behind the `USER_REGISTRATION` flag.
+> When the flag is disabled, `POST /api/user/create` returns HTTP 404 and the registration form is
+> hidden in the UI. When enabled, all scenarios above apply.
+>
 > **Note**: when the `email-verification` feature flag is enabled, registration behaviour adapts to the
 > subscription plan (see the *Email Verification* feature). When the flag is disabled, registration behaves
 > exactly as described above.
