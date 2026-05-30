@@ -205,3 +205,73 @@ The `commandClass`/`queryClass` property (not `GenericTypeResolver`) is the regi
 - Orchestrates use cases by wiring ports to adapters.
 - Maps API DTOs to/from domain objects.
 - Handles HTTP concerns (status codes, error responses) — never leaks them into domain.
+
+---
+
+## 9. Feature Flag Integration
+
+Feature flags in this project follow a **Decorator + Marker Interface** pattern.
+The full workflow is in `development-workflow.md §4` (Code First, Gate Second).
+
+### 9.1 Architecture
+
+```
+Controller
+  → FeatureFlagCommandBus  (@Primary)   ← checks FeatureFlagged before dispatch
+      → LoggingCommandBus
+          → SpringCommandBus            ← invokes the handler
+```
+
+`FeatureFlagCommandBus` intercepts every dispatch. If the command/query implements
+`FeatureFlagged`, it checks the flag in `FeatureFlagRepository`. Flag absent or disabled
+→ immediate `FEATURE_DISABLED` failure. Flag enabled → delegates normally.
+
+**Handlers have zero knowledge of feature flags.**
+
+### 9.2 Gating a Command or Query
+
+Implement `FeatureFlagged` on the input data class — nothing else changes:
+
+```kotlin
+// domain/port/input/user/RegisterUserUseCase.kt
+data class RegisterUserCommand(...) : Command<User>, FeatureFlagged {
+    override val featureKey get() = FeatureKey.USER_REGISTRATION
+}
+
+// RegisterUserService — completely clean, no FeatureFlagRepository dependency
+@DomainService
+class RegisterUserService(
+    private val userRepository: UserRepository,
+    private val hasher: Hasher,
+    private val notificationPort: NotificationPort,
+) : RegisterUserUseCase {
+    override fun handle(command: RegisterUserCommand): Result<User> { ... }
+}
+```
+
+Multiple commands/queries can share the same `FeatureKey` — each independently
+declares its key, the bus resolves it on every dispatch.
+
+### 9.3 Adding a New Feature Flag
+
+1. Add the key to `FeatureKey` enum in `domain/src/main/kotlin/.../models/FeatureFlag.kt`.
+2. `FeatureFlagSeeder` auto-inserts it as `enabled = false` on next deploy (safe by default).
+3. Declare it on the command/query as shown in §9.2.
+4. HTTP mapping: `ResultState.FEATURE_DISABLED` is already mapped to **HTTP 404** in
+   `ApiMappingExtensions.toHttpResponse()` — no change needed.
+
+### 9.4 Tests
+
+- **Domain** — test the handler directly; no flag seeding required (the flag check lives in
+  the bus, not in the service).
+- **Application bus** — test `FeatureFlagCommandBus` in isolation with a mocked
+  `FeatureFlagRepository` (see `FeatureFlagCommandBusTest`).
+- **Integration** — seed the flag as enabled in `AuthenticatedUserTest.beforeEach()` so the
+  test-user registration setup succeeds through the bus. Do this for both the `application` and
+  `infrastructure` module base test classes.
+
+### 9.5 Scope — when NOT to use FeatureFlagged
+
+- Access control → use Spring Security (`hasRole("ADMIN")`)
+- Business validation failures → model as domain `Result` errors
+- `FeatureFlagged` is exclusively for runtime on/off switches toggled by admins

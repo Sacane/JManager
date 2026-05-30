@@ -166,6 +166,81 @@ All commands must be run from the `client/` directory:
 
 ---
 
+---
+
+## Feature Flag Integration
+
+Feature flags use the **`FeatureGate` wrapper component** — the frontend equivalent of the
+backend `FeatureFlagCommandBus` decorator. Pages and components never call `isEnabled()`
+inline; they delegate the check to `FeatureGate`.
+
+### Gating a UI section
+
+Wrap the content in `<FeatureGate>`. The component renders the default slot when the flag is
+enabled, the named `fallback` slot (optional) when it is disabled, and nothing if no fallback
+is provided:
+
+```vue
+<script setup lang="ts">
+import { FEATURE_KEYS } from '~/constants/featureKeys'  // not auto-imported
+</script>
+
+<template>
+  <!-- Flag-gated section — no isEnabled() call in the page -->
+  <FeatureGate :feature="FEATURE_KEYS.USER_REGISTRATION">
+    <button @click="switchMode('register')">S'inscrire</button>
+
+    <template #fallback>
+      <!-- optional: shown when flag is disabled -->
+    </template>
+  </FeatureGate>
+</template>
+```
+
+`FeatureGate` auto-imports like any other component in `components/`. `FEATURE_KEYS` is in
+`client/constants/featureKeys.ts` and requires an **explicit import** (it is not
+auto-imported by Nuxt).
+
+### Adding a new flag key
+
+1. Add the key to `FEATURE_KEYS` and `FEATURE_KEY_LABELS` in
+   `client/constants/featureKeys.ts`. The key string must exactly match the backend `FeatureKey`
+   enum name.
+
+### Testing components that use FeatureGate
+
+`shallowMount` stubs `FeatureGate` as an empty component — slot content will not render.
+Provide a functional stub that honours the `isEnabled` mock:
+
+```typescript
+const FeatureGateStub = {
+  name: 'FeatureGate',
+  props: ['feature'],
+  setup(props: { feature: string }) {
+    const enabled = computed(() => isEnabledMock(props.feature))
+    return { enabled }
+  },
+  template: '<slot v-if="enabled" /><slot v-else name="fallback" />',
+}
+
+// in mountComponent():
+shallowMount(MyPage, {
+  global: { stubs: { FeatureGate: FeatureGateStub, ... } },
+})
+```
+
+### What NOT to do
+
+```vue
+<!-- ❌ inline check — couples the page to the flag mechanism -->
+<div v-if="isEnabled(FEATURE_KEYS.USER_REGISTRATION)">...</div>
+
+<!-- ✅ declarative wrapper — page only declares intent -->
+<FeatureGate :feature="FEATURE_KEYS.USER_REGISTRATION">...</FeatureGate>
+```
+
+---
+
 ## References
 
 - [Nuxt docs](https://nuxt.com/docs)
