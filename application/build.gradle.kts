@@ -49,6 +49,10 @@ tasks.test {
     systemProperty("testcontainers.reuse.enable", "true")
 }
 
+springBoot {
+    buildInfo()
+}
+
 tasks {
     shadowJar {
         mergeServiceFiles()

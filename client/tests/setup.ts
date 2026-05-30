@@ -118,6 +118,11 @@ vi.stubGlobal('useAdmin', vi.fn(() => ({
   fetchUsers: vi.fn(),
 })))
 
+vi.stubGlobal('useAppVersion', vi.fn(() => ({
+  version: ref(null),
+  fetchVersion: vi.fn(),
+})))
+
 vi.stubGlobal('useFeatureFlags', vi.fn(() => ({
   flags: readonly(ref([])),
   isFetching: ref(false),
