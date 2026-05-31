@@ -96,7 +96,13 @@ internal fun <T> Result<T>.toHttpResponse()
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,
     )
-    ResultState.TAG_IN_USE -> throw ConflictException(
+    ResultState.TAG_IN_USE,
+    ResultState.EMAIL_ALREADY_VERIFIED -> throw ConflictException(
+        this.errorInfo?.code ?: this.status.code,
+        this.errorInfo?.detail ?: this.message,
+        this.errorInfo?.key,
+    )
+    ResultState.EMAIL_VERIFICATION_TOKEN_EXPIRED -> throw GoneException(
         this.errorInfo?.code ?: this.status.code,
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,

@@ -22,6 +22,11 @@ import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountService
 import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
+import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
+import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import fr.sacane.jmanager.domain.port.input.retention.PurgeExpiredDataService
 import fr.sacane.jmanager.domain.port.output.*
 import fr.sacane.jmanager.domain.port.output.repository.BookletBalanceQueryRepository
@@ -38,6 +43,8 @@ import fr.sacane.jmanager.domain.usecase.TrendCalculatorImpl
 import java.util.*
 
 class FakeFactory {
+    val fixedClock: Clock = Clock.fixed(Instant.parse("2026-05-31T10:00:00Z"), ZoneOffset.UTC)
+
     private val inMemoryDatabase = InMemoryDatabase()
     private val  inMemoryTrackerRepository: RegularTransactionTrackerRepository = InMemoryRegularTrackerRepository(inMemoryDatabase)
     private val  bookletRepository: InMemoryBookletRepository = InMemoryBookletRepository(inMemoryDatabase)
@@ -118,13 +125,23 @@ class FakeFactory {
     val logoutService = LogoutService(sessionManager)
     val refreshSessionService = RefreshSessionService(sessionManager, userRepository, tokenGenerator)
     val fakeNotificationPort = FakeNotificationPort()
-    val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort)
+    private val fakeSecureTokenGenerator = object : SecureTokenGenerator {
+        override fun generate(): String = java.util.UUID.randomUUID().toString()
+    }
+    private val inMemoryEmailVerificationTokenRepository = InMemoryEmailVerificationTokenRepository()
+    val emailVerificationIssuer = EmailVerificationIssuer(
+        inMemoryEmailVerificationTokenRepository, fakeSecureTokenGenerator, fakeNotificationPort, fixedClock
+    )
+    val verifyEmailService = VerifyEmailService(inMemoryEmailVerificationTokenRepository, userRepository, fixedClock)
+    val resendVerificationEmailService = ResendVerificationEmailService(userRepository, emailVerificationIssuer)
+    val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort, emailVerificationIssuer)
     val createAdminIfNotExistsService = CreateAdminIfNotExistsService(userRepository, DefaultHasher)
     val getUserSettingsService = GetUserSettingsService(userRepository)
     val updateUserSettingsService = UpdateUserSettingsService(userRepository, bookletRepository)
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)
+    val getUserEmailVerifiedService = GetUserEmailVerifiedService(userRepository)
     private val inMemoryFeatureFlagRepository = InMemoryFeatureFlagRepository()
     val isFeatureEnabledService = IsFeatureEnabledService(inMemoryFeatureFlagRepository)
     val getAllFeatureFlagsService = GetAllFeatureFlagsService(inMemoryFeatureFlagRepository)
@@ -170,11 +187,13 @@ class FakeFactory {
         inMemoryTagRepository.clear()
         fakeNotificationPort.clear()
         inMemoryFeatureFlagRepository.clear()
+        inMemoryEmailVerificationTokenRepository.clear()
     }
 
-    fun fakeUserRepository(): InMemoryUserRepository {
-        return userRepository
-    }
+    fun fakeUserRepository(): InMemoryUserRepository = userRepository
+
+    fun fakeEmailVerificationTokenRepository(): InMemoryEmailVerificationTokenRepository =
+        inMemoryEmailVerificationTokenRepository
 
     fun fakeTransactionRepository(): State<IdBookletByTransaction> {
         return transactionRepository

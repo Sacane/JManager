@@ -3,6 +3,8 @@ import { LOADING_SCOPES } from '~/constants/loadingScopes'
 
 interface UserStatusDTO {
   consentRequired: boolean
+  emailVerified?: boolean
+  email?: string | null
 }
 
 /** Current TOS version — update here when terms are revised. */
@@ -12,6 +14,9 @@ export default function useConsent() {
   // useState persists across navigations in the same SPA session — HTTP call made only once.
   const consentChecked = useState<boolean>('consent:checked', () => false)
   const consentRequired = useState<boolean>('consent:required', () => false)
+  // Default true to avoid banner flash before the first /me call completes.
+  const emailVerified = useState<boolean>('consent:emailVerified', () => true)
+  const userEmail = useState<string | null>('consent:userEmail', () => null)
 
   const tosAccepted = ref(false)
   const privacyAccepted = ref(false)
@@ -30,6 +35,8 @@ export default function useConsent() {
     try {
       const data = await get('user/me') as UserStatusDTO | undefined
       consentRequired.value = data?.consentRequired ?? false
+      emailVerified.value = data?.emailVerified ?? true
+      userEmail.value = data?.email ?? null
     } catch {
       // Fail open: if the check fails, don't block the user
       consentRequired.value = false
@@ -70,6 +77,8 @@ export default function useConsent() {
   function clearConsentCache(): void {
     consentChecked.value = false
     consentRequired.value = false
+    emailVerified.value = true
+    userEmail.value = null
   }
 
   return {
@@ -80,6 +89,8 @@ export default function useConsent() {
     tosVersion: CURRENT_TOS_VERSION,
     consentRequired: readonly(consentRequired),
     consentChecked: readonly(consentChecked),
+    emailVerified: readonly(emailVerified),
+    userEmail: readonly(userEmail),
     checkConsentStatus,
     submitConsent,
     clearConsentCache,

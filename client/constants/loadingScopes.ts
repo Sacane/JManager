@@ -39,4 +39,8 @@ export const LOADING_SCOPES = {
     fetch: 'featureFlags.fetch',
     toggle: 'featureFlags.toggle',
   },
+  emailVerification: {
+    verify: 'emailVerification.verify',
+    resend: 'emailVerification.resend',
+  },
 } as const

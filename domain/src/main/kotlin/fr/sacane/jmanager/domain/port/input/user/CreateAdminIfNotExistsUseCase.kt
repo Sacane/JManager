@@ -45,7 +45,7 @@ class CreateAdminIfNotExistsService(
                 )
             else success(existingAdmin.user)
         }
-        val adminUser = userRepository.register(command.username, hashedPassword, setOf(Role.USER, Role.ADMIN))
+        val adminUser = userRepository.register(command.username, hashedPassword, setOf(Role.USER, Role.ADMIN), emailVerified = true)
             ?: return failure(
                 ResultState.INVALID,
                 DomainError(ResultState.INVALID.code, "domain.user.admin.creation_failed", "Une erreur est survenue lors de la création de l'administrateur")

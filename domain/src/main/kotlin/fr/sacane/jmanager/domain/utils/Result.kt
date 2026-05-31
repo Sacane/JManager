@@ -27,7 +27,10 @@ enum class ResultState (val code: Int){
     TRANSACTION_ENTRY_ERROR(5000),
     REGISTRATION_ERROR(5001),
 
-    BOOKLET_MAXIMUM_SIZE_REACHED(2004);
+    BOOKLET_MAXIMUM_SIZE_REACHED(2004),
+
+    EMAIL_VERIFICATION_TOKEN_EXPIRED(6001),
+    EMAIL_ALREADY_VERIFIED(6002);
 
     fun isSuccess(): Boolean = this == OK
     fun isFailure(): Boolean = !isSuccess()

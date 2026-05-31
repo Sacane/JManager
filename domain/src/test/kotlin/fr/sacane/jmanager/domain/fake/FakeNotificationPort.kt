@@ -5,19 +5,30 @@ import fr.sacane.jmanager.domain.port.output.NotificationPort
 
 class FakeNotificationPort : NotificationPort {
 
-    data class SentEmail(
+    data class SentWelcomeEmail(
         val username: String,
         val email: String,
         val subscriptionPlan: SubscriptionPlan,
     )
 
-    val sentEmails: MutableList<SentEmail> = mutableListOf()
+    data class SentVerificationEmail(
+        val email: String,
+        val token: String,
+    )
+
+    val sentEmails: MutableList<SentWelcomeEmail> = mutableListOf()
+    val sentVerificationEmails: MutableList<SentVerificationEmail> = mutableListOf()
 
     override fun sendWelcomeEmail(username: String, email: String, subscriptionPlan: SubscriptionPlan) {
-        sentEmails.add(SentEmail(username, email, subscriptionPlan))
+        sentEmails.add(SentWelcomeEmail(username, email, subscriptionPlan))
+    }
+
+    override fun sendVerificationEmail(email: String, token: String) {
+        sentVerificationEmails.add(SentVerificationEmail(email, token))
     }
 
     fun clear() {
         sentEmails.clear()
+        sentVerificationEmails.clear()
     }
 }

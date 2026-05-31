@@ -317,6 +317,13 @@ class UserFeatureTest {
         }
 
         @Test
+        fun `Admin-created user is automatically email-verified`() {
+            val result = act { createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin", "test")) }
+
+            then(result) { assertTrue { emailVerified } }
+        }
+
+        @Test
         fun `Create admin with different password must return password not match`() {
             createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin", "test"))
 

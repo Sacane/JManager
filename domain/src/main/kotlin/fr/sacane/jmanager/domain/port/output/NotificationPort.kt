@@ -15,4 +15,13 @@ interface NotificationPort {
      * @param subscriptionPlan the plan the user was registered under
      */
     fun sendWelcomeEmail(username: String, email: String, subscriptionPlan: SubscriptionPlan)
+
+    /**
+     * Sends a verification email carrying a raw token.
+     * The infrastructure adapter is responsible for constructing the full verification link.
+     *
+     * @param email the destination address
+     * @param token the raw verification token to embed in the link
+     */
+    fun sendVerificationEmail(email: String, token: String)
 }

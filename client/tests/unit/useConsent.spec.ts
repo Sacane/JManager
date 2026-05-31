@@ -47,6 +47,25 @@ describe('composables/useConsent', () => {
       expect(result).toBe(false)
     })
 
+    it('populates emailVerified from the API response', async () => {
+      getMock.mockResolvedValue({ consentRequired: false, emailVerified: false, email: 'user@example.com' })
+
+      const { checkConsentStatus, emailVerified, userEmail } = useConsent()
+      await checkConsentStatus()
+
+      expect(emailVerified.value).toBe(false)
+      expect(userEmail.value).toBe('user@example.com')
+    })
+
+    it('defaults emailVerified to true when not in the API response', async () => {
+      getMock.mockResolvedValue({ consentRequired: false })
+
+      const { checkConsentStatus, emailVerified } = useConsent()
+      await checkConsentStatus()
+
+      expect(emailVerified.value).toBe(true)
+    })
+
     it('returns false and does not throw when the API call fails', async () => {
       getMock.mockRejectedValue(new Error('network error'))
 
@@ -122,16 +141,18 @@ describe('composables/useConsent', () => {
   // clearConsentCache
   // -------------------------------------------------------------------------
   describe('clearConsentCache', () => {
-    it('resets consentChecked and consentRequired', async () => {
-      getMock.mockResolvedValue({ consentRequired: true })
+    it('resets consentChecked, consentRequired, emailVerified and userEmail', async () => {
+      getMock.mockResolvedValue({ consentRequired: true, emailVerified: false, email: 'x@x.com' })
 
-      const { checkConsentStatus, clearConsentCache, consentRequired, consentChecked } = useConsent()
+      const { checkConsentStatus, clearConsentCache, consentRequired, consentChecked, emailVerified, userEmail } = useConsent()
       await checkConsentStatus() // primes the cache
 
       clearConsentCache()
 
       expect(consentChecked.value).toBe(false)
       expect(consentRequired.value).toBe(false)
+      expect(emailVerified.value).toBe(true)
+      expect(userEmail.value).toBe(null)
     })
   })
 

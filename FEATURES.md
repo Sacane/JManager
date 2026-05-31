@@ -80,9 +80,8 @@ Then the system returns a validation failure
 > When the flag is disabled, `POST /api/user/create` returns HTTP 404 and the registration form is
 > hidden in the UI. When enabled, all scenarios above apply.
 >
-> **Note**: when the `email-verification` feature flag is enabled, registration behaviour adapts to the
-> subscription plan (see the *Email Verification* feature). When the flag is disabled, registration behaves
-> exactly as described above.
+> **Note**: self-registered users always go through the email verification flow (see *Email Verification*).
+> The welcome email scenario above still applies — the verification email is sent in addition to it.
 
 ---
 
@@ -715,48 +714,51 @@ Then it receives a map of every known flag key to its boolean state
 
 ## Feature: Email Verification
 
-As the system, I want to verify that users own a real mailbox. This is the inaugural feature flag
-(`email-verification`); behaviour adapts to the subscription plan, and the simple-user path is further gated by
-the sub-flag `email-verification-simple-user-registration`.
+As the system, I want to verify that self-registered users own a real mailbox.
+Admin-created users are implicitly trusted and marked as verified from creation.
 
-### Scenario: Beta tester is auto-confirmed via the access link
+### Scenario: Self-registered user must verify their email
 ```gherkin
-Given the flag "email-verification" is enabled
-And a BETA_TESTER received an access email with a valid token
-When the user follows the access link
-Then their emailVerified becomes true
+Given a visitor completes the registration form
+When the account is created
+Then emailVerified = false
+And a verification email with a unique token is sent
 ```
 
-### Scenario: Simple user receives a verification email and can still log in
+### Scenario: Admin-created user is auto-verified
 ```gherkin
-Given the flag "email-verification" is enabled
-And the sub-flag "email-verification-simple-user-registration" is enabled
-When a visitor registers
-Then the user is created with subscriptionPlan = FREE and emailVerified = false
-And a verification email is sent
-And the user can authenticate while seeing an "email not verified" indication
+Given an admin creates a user through the admin interface
+When the account is created
+Then emailVerified = true
+And no verification email is sent
 ```
 
-### Scenario: Verify email via token
+### Scenario: Valid token confirms the email
 ```gherkin
-Given a valid, unexpired verification token
-When the user confirms it
-Then their emailVerified becomes true
-And outstanding tokens are cleared
+Given a self-registered user with a valid, unexpired verification token
+When the user follows the link in the verification email
+Then emailVerified becomes true
+And all outstanding tokens for that user are cleared
 ```
 
 ### Scenario: Expired or unknown token is rejected
 ```gherkin
 Given a verification token that is expired or unknown
-When the user attempts to confirm it
+When the user follows the link
 Then the system returns a failure
-And emailVerified remains unchanged
+And emailVerified remains false
 ```
 
-### Scenario: Flag disabled keeps current behaviour
+### Scenario: Unverified user sees a warning indicator on the Paramètres tab
 ```gherkin
-Given the flag "email-verification" is disabled
-When a user registers
-Then no verification flow runs
-And no verified state is surfaced to the client
+Given an authenticated user with emailVerified = false
+When any authenticated page renders
+Then the "Paramètres" tab shows a warning indicator with tooltip "Votre compte doit être vérifié"
+```
+
+### Scenario: Unverified user can request a new verification email from settings
+```gherkin
+Given an authenticated user with emailVerified = false on the settings page
+When the user clicks "Vérifier mon e-mail"
+Then a new verification email is dispatched
 ```

@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
 import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsQuery
+import fr.sacane.jmanager.domain.port.input.user.GetUserEmailVerifiedQuery
 import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedQuery
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
@@ -139,8 +140,10 @@ class SessionController(
      */
     @GetMapping(path = ["/me"])
     fun getUserStatus(): ResponseEntity<UserStatusDTO> {
-        return queryBus.dispatch(HasUserConsentedQuery(UserId(currentUser.id)))
-            .map { consented -> UserStatusDTO(consentRequired = !consented) }
+        val userId = UserId(currentUser.id)
+        val consented = queryBus.dispatch(HasUserConsentedQuery(userId)).mapNotNullOrFailure() ?: true
+        return queryBus.dispatch(GetUserEmailVerifiedQuery(userId))
+            .map { status -> UserStatusDTO(consentRequired = !consented, emailVerified = status.emailVerified, email = status.email) }
             .toHttpResponse()
     }
 

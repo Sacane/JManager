@@ -73,7 +73,7 @@ class UserRepositoryJpaAdapter (
         }
     }
     @Transactional
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?): User? {
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?, emailVerified: Boolean): User? {
         return try {
             val userResource = UserResource(
                 username = username,
@@ -84,6 +84,7 @@ class UserRepositoryJpaAdapter (
                 tosAcceptedAt = tosAcceptedAt,
                 tosVersion = tosVersion,
                 privacyAcceptedAt = privacyAcceptedAt,
+                emailVerified = emailVerified,
             )
             val userResponse = userPostgresRepository.save(userResource)
             userResponse.toModel()
@@ -91,6 +92,22 @@ class UserRepositoryJpaAdapter (
             LOGGER.severe("Failed to register user: ${e.message}")
             null
         }
+    }
+
+    @Transactional
+    override fun markEmailVerified(userId: UserId): Result<Unit> {
+        val id = userId.value ?: return failure(
+            ResultState.USER_NOT_FOUND,
+            DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.email_verification.user_not_found", "Identifiant utilisateur invalide")
+        )
+        val resource = userPostgresRepository.findById(id).orElse(null)
+            ?: return failure(
+                ResultState.USER_NOT_FOUND,
+                DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.email_verification.user_not_found", "L'utilisateur est introuvable")
+            )
+        resource.emailVerified = true
+        userPostgresRepository.save(resource)
+        return success(Unit)
     }
     @Transactional
     override fun upsert(user: User): User? {

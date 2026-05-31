@@ -1,52 +1,53 @@
 # Application Module — Email Verification
 
 **Context**
-Expose the verification endpoints, surface the verified state to the frontend, and wire the flag-gated
-registration branching through the existing buses. The link in the emails lands on the client, which calls the
-verify endpoint with the token.
+Expose the verification endpoints publicly and surface `emailVerified` on the authenticated user
+payload so the client can render the appropriate UI. No feature flag involved — endpoints are always
+active. The verification link in the email lands on the client page, which calls the API with the token.
 
 **Scope (application)**
-- `POST /verify-email` (token in body or query) → consumes the token via `VerifyEmailUseCase`; returns success,
-  expired, or not-found outcomes mapped to appropriate status codes.
-- `POST /verify-email/resend` (authenticated) → `ResendVerificationEmailUseCase`.
-- Surface `emailVerified` on the authenticated user payload (session/refresh response and/or a `/me` settings
-  endpoint) so the client can render the unverified banner and settings indicator.
-- Wire `RegisterUserService` flag-gated behaviour through the command bus (no behavioural logic in the controller).
+- `GET /verify-email?token={token}` (public, no auth) — delegates to `VerifyEmailUseCase`;
+  returns 200 on success, 410 Gone on expiry, 404 on unknown token.
+- `POST /verify-email/resend` (authenticated) — delegates to `ResendVerificationEmailUseCase`;
+  returns 200, or 409 Conflict if already verified.
+- Add `emailVerified: Boolean` to the authenticated user payload (the response returned by `/me`,
+  session, and refresh endpoints) so the client always has the current state.
+- No business logic in controllers — all branching lives in the use cases.
 
 **Acceptance Criteria**
 Feature: Email verification API
   In order to let users confirm their email
   As a client
-  I want endpoints to verify and resend, and verified state in the user payload
+  I want public verification and authenticated resend endpoints, and verified state in the user payload
 
-Scenario: Verify with a valid token
+Scenario: Valid token is accepted
   Given a valid, unexpired verification token
-  When the client calls POST /verify-email with that token
+  When the client calls GET /verify-email?token=<valid>
   Then the response is 200
   And the user's emailVerified becomes true
 
-Scenario: Verify with an expired token
+Scenario: Expired token returns 410
   Given an expired verification token
-  When the client calls POST /verify-email with that token
-  Then the response is a 4xx error indicating the link expired
+  When the client calls GET /verify-email?token=<expired>
+  Then the response is 410 Gone
 
-Scenario: Verify with an unknown token
-  Given a token matching no record
-  When the client calls POST /verify-email with that token
+Scenario: Unknown token returns 404
+  Given a token value matching no record
+  When the client calls GET /verify-email?token=<unknown>
   Then the response is 404
 
-Scenario: Resend verification email
+Scenario: Resend dispatches a new verification email
   Given an authenticated user with emailVerified = false
-  When the user calls POST /verify-email/resend
+  When the client calls POST /verify-email/resend
   Then the response is 200
   And a new verification email is dispatched
 
-Scenario: Verified state is exposed to the client
-  Given an authenticated user
-  When the client fetches the user/session payload
-  Then the payload includes emailVerified
-
 Scenario: Resend is rejected for a verified user
   Given an authenticated user with emailVerified = true
-  When the user calls POST /verify-email/resend
-  Then the response is a 4xx error
+  When the client calls POST /verify-email/resend
+  Then the response is 409 Conflict
+
+Scenario: emailVerified is exposed in the user payload
+  Given an authenticated user
+  When the client calls the session or /me endpoint
+  Then the response body includes emailVerified as a boolean

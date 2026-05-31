@@ -35,6 +35,8 @@ class UserResource(
     var tosVersion: String? = null,
     @Column(name = "privacy_accepted_at")
     var privacyAcceptedAt: LocalDateTime? = null,
+    @Column(name = "email_verified", nullable = false)
+    var emailVerified: Boolean = false,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",

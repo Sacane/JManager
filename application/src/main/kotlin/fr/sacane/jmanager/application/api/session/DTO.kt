@@ -109,4 +109,8 @@ data class RecordConsentDTO(
 data class UserStatusDTO(
     /** `true` when the account was created without explicit consent (e.g. admin-created) and the user must go through the consent gate. */
     val consentRequired: Boolean,
+    /** `false` when the user has not yet clicked the verification link sent at registration. */
+    val emailVerified: Boolean = true,
+    /** The user's registered email address. */
+    val email: String? = null,
 )

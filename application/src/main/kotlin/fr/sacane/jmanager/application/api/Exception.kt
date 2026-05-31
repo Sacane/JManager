@@ -7,3 +7,4 @@ class InvalidRequestException(val errCode: Int, override val message: String, va
 class UnauthorizedRequestException(val errCode: Int, override val message: String, val errKey: String? = null): RuntimeException(message)
 class InternalServerErrorException(val errCode: Int, override val message: String, val errKey: String? = null) : RuntimeException(message)
 class ConflictException(val errCode: Int, override val message: String, val errKey: String? = null) : RuntimeException(message)
+class GoneException(val errCode: Int, override val message: String, val errKey: String? = null) : RuntimeException(message)
