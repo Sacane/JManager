@@ -1,6 +1,5 @@
 package fr.sacane.jmanager.infrastructure.spi.configuration
 
-import fr.sacane.jmanager.domain.port.output.NotificationPort
 import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
 import fr.sacane.jmanager.domain.port.output.repository.EmailVerificationTokenRepository
 import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
@@ -20,13 +19,11 @@ class EmailVerificationConfiguration {
     fun emailVerificationIssuer(
         tokenRepository: EmailVerificationTokenRepository,
         secureTokenGenerator: SecureTokenGenerator,
-        notificationPort: NotificationPort,
         clock: Clock,
         props: EmailVerificationProperties,
     ): EmailVerificationIssuer = EmailVerificationIssuer(
         tokenRepository = tokenRepository,
         secureTokenGenerator = secureTokenGenerator,
-        notificationPort = notificationPort,
         clock = clock,
         tokenTtl = props.tokenTtl,
     )

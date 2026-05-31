@@ -43,11 +43,17 @@ class SpringMailNotificationAdapter(
     }
 
     @Async
-    override fun sendWelcomeEmail(username: String, email: String, subscriptionPlan: SubscriptionPlan) {
+    override fun sendWelcomeWithVerificationEmail(
+        username: String,
+        email: String,
+        subscriptionPlan: SubscriptionPlan,
+        verificationToken: String,
+    ) {
+        val verificationLink = "$appUrl/verify-email?token=$verificationToken"
         val content = when (subscriptionPlan) {
-            SubscriptionPlan.BETA_TESTER -> EmailTemplates.betaTester(username, appUrl)
-            SubscriptionPlan.FREE        -> EmailTemplates.freeUser(username, appUrl)
-            SubscriptionPlan.PREMIUM     -> EmailTemplates.premiumUser(username, appUrl)
+            SubscriptionPlan.BETA_TESTER -> EmailTemplates.betaTester(username, verificationLink)
+            SubscriptionPlan.FREE        -> EmailTemplates.freeUser(username, verificationLink)
+            SubscriptionPlan.PREMIUM     -> EmailTemplates.premiumUser(username, verificationLink)
         }
         try {
             val mimeMessage = mailSender.createMimeMessage()

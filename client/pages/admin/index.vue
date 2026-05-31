@@ -16,8 +16,7 @@ definePageMeta({
 
 // ── User management ──────────────────────────────────────────────────────────
 
-const { register } = useAuth()
-const { users, totalUsers, totalPages, currentPage, isLoading, fetchUsers } = useAdmin()
+const { users, totalUsers, totalPages, currentPage, isLoading, fetchUsers, createUser } = useAdmin()
 const { isScopeLoading, withLoading } = useLoading()
 const toastr = useJToast()
 
@@ -41,7 +40,7 @@ function resetForm() {
   }
 }
 
-async function createUser() {
+async function submitCreateUser() {
   if (!newUser.value.username || !newUser.value.email || !newUser.value.password) {
     toastr.error('Veuillez remplir tous les champs')
     return
@@ -63,19 +62,17 @@ async function createUser() {
     return
   }
 
-  await withLoading(async () => {
-    await register(
-      newUser.value,
-      () => {
-        toastr.success(`Utilisateur ${newUser.value.username} créé avec succès`)
-        resetForm()
-        loadUsers()
-      },
-      (error) => {
-        toastr.errorAxios(error)
-      },
-    )
-  }, userCreationLoadingScope)
+  await createUser(
+    newUser.value,
+    () => {
+      toastr.success(`Utilisateur ${newUser.value.username} créé avec succès`)
+      resetForm()
+      loadUsers()
+    },
+    (error) => {
+      toastr.errorAxios(error)
+    },
+  )
 }
 
 async function loadUsers(page: number = 0) {
@@ -230,7 +227,7 @@ function isKeyToggling(key: FeatureKey): boolean {
                   </div>
                 </div>
 
-                <form class="user-form" @submit.prevent="createUser">
+                <form class="user-form" @submit.prevent="submitCreateUser">
                   <div class="form-group">
                     <label for="username" class="form-label">
                       <i class="pi pi-user" />

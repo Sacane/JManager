@@ -19,6 +19,8 @@ import fr.sacane.jmanager.domain.port.input.stats.*
 import fr.sacane.jmanager.domain.port.input.tag.*
 import fr.sacane.jmanager.domain.port.input.transaction.*
 import fr.sacane.jmanager.domain.port.input.user.*
+import fr.sacane.jmanager.domain.port.input.admin.AdminCreateUserService
+import fr.sacane.jmanager.domain.port.input.admin.AdminCreateUserUseCase
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountService
 import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
@@ -130,11 +132,12 @@ class FakeFactory {
     }
     private val inMemoryEmailVerificationTokenRepository = InMemoryEmailVerificationTokenRepository()
     val emailVerificationIssuer = EmailVerificationIssuer(
-        inMemoryEmailVerificationTokenRepository, fakeSecureTokenGenerator, fakeNotificationPort, fixedClock
+        inMemoryEmailVerificationTokenRepository, fakeSecureTokenGenerator, fixedClock
     )
     val verifyEmailService = VerifyEmailService(inMemoryEmailVerificationTokenRepository, userRepository, fixedClock)
-    val resendVerificationEmailService = ResendVerificationEmailService(userRepository, emailVerificationIssuer)
+    val resendVerificationEmailService = ResendVerificationEmailService(userRepository, fakeNotificationPort, emailVerificationIssuer)
     val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort, emailVerificationIssuer)
+    val adminCreateUserUseCase: AdminCreateUserUseCase = AdminCreateUserService(userRepository, DefaultHasher, fakeNotificationPort, emailVerificationIssuer)
     val createAdminIfNotExistsService = CreateAdminIfNotExistsService(userRepository, DefaultHasher)
     val getUserSettingsService = GetUserSettingsService(userRepository)
     val updateUserSettingsService = UpdateUserSettingsService(userRepository, bookletRepository)

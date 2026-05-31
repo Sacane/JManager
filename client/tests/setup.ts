@@ -137,6 +137,7 @@ vi.stubGlobal('useAdmin', vi.fn(() => ({
   pageSize: ref(10),
   isLoading: ref(false),
   fetchUsers: vi.fn(),
+  createUser: vi.fn(),
 })))
 
 vi.stubGlobal('useAppVersion', vi.fn(() => ({

@@ -65,6 +65,23 @@ client/
 
 ---
 
+## Input Length Limits (Mandatory)
+
+Every text input (`<InputText>`, `<Textarea>`, `<input>`, or equivalent PrimeVue component) **must** carry a `maxlength` attribute (or `:maxlength` binding). Use the reference table below — it mirrors the backend `@Size` constraints so the two layers stay in sync.
+
+| Field type | `maxlength` |
+|---|---|
+| Username | `100` |
+| Password | `100` |
+| Email | `255` |
+| Label (booklet, transaction, tag, …) | `100` |
+| Description / free-text note | `500` |
+| Version string (e.g. TOS) | `20` |
+
+> **Checklist at the end of every frontend task** — for each new or modified text input, verify that `maxlength` is set and matches the corresponding backend DTO constraint. A missing limit is a defect.
+
+---
+
 ## Component Duplication Policy
 
 > Before creating any new UI element, always check whether an existing component already covers the need.

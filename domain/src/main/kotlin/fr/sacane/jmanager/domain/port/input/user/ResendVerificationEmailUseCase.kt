@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.output.NotificationPort
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
 import fr.sacane.jmanager.domain.utils.DomainError
@@ -24,6 +25,7 @@ interface ResendVerificationEmailUseCase : CommandHandler<ResendVerificationEmai
 @DomainService
 class ResendVerificationEmailService(
     private val userRepository: UserRepository,
+    private val notificationPort: NotificationPort,
     private val emailVerificationIssuer: EmailVerificationIssuer,
 ) : ResendVerificationEmailUseCase {
 
@@ -48,7 +50,8 @@ class ResendVerificationEmailService(
                 ResultState.INVALID,
                 DomainError(ResultState.INVALID.code, "domain.user.email_verification.no_email", "Aucune adresse e-mail associée à ce compte")
             )
-        emailVerificationIssuer.issue(user.id, email)
+        val token = emailVerificationIssuer.issue(user.id)
+        notificationPort.sendVerificationEmail(email, token.token)
         return success(Unit)
     }
 }

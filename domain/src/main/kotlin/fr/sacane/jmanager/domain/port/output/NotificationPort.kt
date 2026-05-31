@@ -6,19 +6,27 @@ import fr.sacane.jmanager.domain.models.SubscriptionPlan
 
 @Port(Side.INFRASTRUCTURE)
 interface NotificationPort {
-    /**
-     * Sends a welcome email to a newly registered user.
-     * The content adapts to the user's subscription plan.
-     *
-     * @param username the registered username
-     * @param email the destination email address
-     * @param subscriptionPlan the plan the user was registered under
-     */
-    fun sendWelcomeEmail(username: String, email: String, subscriptionPlan: SubscriptionPlan)
 
     /**
-     * Sends a verification email carrying a raw token.
-     * The infrastructure adapter is responsible for constructing the full verification link.
+     * Sends a single welcome email that also contains the email-verification link.
+     * Used by registration flows (self-registration and admin creation) so the user
+     * receives exactly one email per sign-up.
+     *
+     * @param username the registered username
+     * @param email the destination address
+     * @param subscriptionPlan drives the welcome message variant (FREE, BETA_TESTER, PREMIUM)
+     * @param verificationToken the raw token; the adapter builds the full verification URL
+     */
+    fun sendWelcomeWithVerificationEmail(
+        username: String,
+        email: String,
+        subscriptionPlan: SubscriptionPlan,
+        verificationToken: String,
+    )
+
+    /**
+     * Sends a standalone verification email.
+     * Used exclusively by the resend-verification flow when the user already exists.
      *
      * @param email the destination address
      * @param token the raw verification token to embed in the link

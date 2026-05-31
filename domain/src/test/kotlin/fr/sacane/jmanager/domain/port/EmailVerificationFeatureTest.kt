@@ -41,6 +41,7 @@ class EmailVerificationFeatureTest {
     private val resendVerificationEmailUseCase = factory.resendVerificationEmailService
     private val registerUserUseCase = factory.registerUserService
     private val sentVerificationEmails get() = factory.fakeNotificationPort.sentVerificationEmails
+    private val sentCombinedEmails get() = factory.fakeNotificationPort.sentCombinedEmails
 
     @AfterEach
     fun tearDown() {
@@ -166,11 +167,12 @@ class EmailVerificationFeatureTest {
         }
 
         @Test
-        fun `self-registered user receives a verification email`() {
+        fun `self-registered user receives a single combined welcome and verification email`() {
             act { registerUserUseCase.handle(registerCommand(email = "dave@example.com")) }
 
-            assertEquals(1, sentVerificationEmails.size)
-            assertEquals("dave@example.com", sentVerificationEmails.first().email)
+            assertEquals(1, sentCombinedEmails.size)
+            assertEquals("dave@example.com", sentCombinedEmails.first().email)
+            assertEquals(0, sentVerificationEmails.size)
         }
 
         @Test

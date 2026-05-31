@@ -73,7 +73,7 @@ class RegisterUserService(
         val userResult = userRepository.register(
             command.username, hashedPassword,
             email = command.email,
-            subscriptionPlan = SubscriptionPlan.BETA_TESTER,
+            subscriptionPlan = SubscriptionPlan.FREE,
             tosAcceptedAt = command.tosAcceptedAt,
             tosVersion = command.tosVersion,
             privacyAcceptedAt = command.privacyAcceptedAt,
@@ -81,8 +81,8 @@ class RegisterUserService(
             ResultState.INVALID,
             DomainError(ResultState.INVALID.code, "domain.user.register.invalid", "Une erreur est survenue")
         )
-        notificationPort.sendWelcomeEmail(userResult.username, command.email, userResult.subscriptionPlan)
-        emailVerificationIssuer.issue(userResult.id, command.email)
+        val verificationToken = emailVerificationIssuer.issue(userResult.id)
+        notificationPort.sendWelcomeWithVerificationEmail(userResult.username, command.email, userResult.subscriptionPlan, verificationToken.token)
         log.info("User registered successfully: plan={}", userResult.subscriptionPlan)
         return success(userResult)
     }

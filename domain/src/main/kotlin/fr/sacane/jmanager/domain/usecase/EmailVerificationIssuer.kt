@@ -10,19 +10,22 @@ import java.time.Duration
 import java.time.LocalDateTime
 
 /**
- * Domain service that encapsulates the "issue a verification token and notify the user" operation.
- * Used by both registration and resend flows to avoid duplicating token-lifecycle logic.
+ * Domain service responsible solely for the verification-token lifecycle:
+ * invalidate any existing token for the user, generate a fresh one, persist it, and return it.
+ *
+ * Notification is intentionally excluded — callers decide which email variant to send
+ * (combined welcome+verification for new registrations, standalone for resend).
+ *
  * Instantiated explicitly by EmailVerificationConfiguration (not via component scan) because it
  * requires Clock and Duration which are not default Spring beans.
  */
 class EmailVerificationIssuer(
     private val tokenRepository: EmailVerificationTokenRepository,
     private val secureTokenGenerator: SecureTokenGenerator,
-    private val notificationPort: NotificationPort,
     private val clock: Clock,
     private val tokenTtl: Duration = Duration.ofHours(24),
 ) {
-    fun issue(userId: UserId, email: String): EmailVerificationToken {
+    fun issue(userId: UserId): EmailVerificationToken {
         tokenRepository.deleteByUserId(userId)
         val rawToken = secureTokenGenerator.generate()
         val token = EmailVerificationToken(
@@ -31,7 +34,6 @@ class EmailVerificationIssuer(
             expiresAt = LocalDateTime.now(clock).plus(tokenTtl),
         )
         tokenRepository.save(token)
-        notificationPort.sendVerificationEmail(email, rawToken)
         return token
     }
 }

@@ -31,6 +31,21 @@ Guidelines to follow whenever working on any of the three backend layers: `domai
 - Mapping between domain objects and DTOs happens in the application layer (controllers, mappers).
 - Mapping between domain objects and entities happens in the infrastructure layer (adapters).
 
+### 1.4 Input Length Validation (Mandatory)
+
+Every text field in a request DTO **must** carry a `@Size` (or `@Length`) constraint. Use the reference table below. If a field type is not listed, pick the nearest equivalent and document the choice.
+
+| Field type | Constraint |
+|---|---|
+| Username | `@Size(min = 1, max = 100)` |
+| Password | `@Size(min = 1, max = 100)` |
+| Email | `@Size(max = 255)` |
+| Label (booklet, transaction, tag, …) | `@Size(min = 1, max = 100)` |
+| Description / free-text note | `@Size(max = 500)` |
+| Version string (e.g. TOS) | `@Size(max = 20)` |
+
+> **Checklist at the end of every backend task** — for each new or modified request DTO, verify that every `String` field has an explicit `@Size` bound. A missing constraint is a defect.
+
 ---
 
 > **Development workflow (TDD, SOLID, duplication, design patterns)** is defined in the cross-cutting file  

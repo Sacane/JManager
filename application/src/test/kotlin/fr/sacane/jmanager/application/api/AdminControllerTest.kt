@@ -1,5 +1,7 @@
 package fr.sacane.jmanager.application.api
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import fr.sacane.jmanager.application.api.admin.AdminCreateUserRequest
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
@@ -21,6 +23,7 @@ import java.time.LocalDateTime
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 class AdminControllerTest(
     @LocalServerPort private val port: Int,
+    @Autowired val objectMapper: ObjectMapper,
     @Autowired val userRepository: UserPostgresRepository,
     @Autowired private val registerUserUseCase: RegisterUserUseCase,
     @Autowired private val loginUseCase: LoginUseCase,
@@ -50,6 +53,90 @@ class AdminControllerTest(
         username = username, password = "test", confirmPassword = "test", email = email,
         tosAcceptedAt = LocalDateTime.now(), tosVersion = "1.0", privacyAcceptedAt = LocalDateTime.now(),
     )
+
+    @Nested
+    inner class CreateUserEndpointTest {
+
+        private fun validRequest(
+            username: String = "betauser",
+            email: String = "beta@example.com",
+            password: String = "secret123",
+            confirmPassword: String = "secret123",
+        ) = AdminCreateUserRequest(username, password, confirmPassword, email)
+
+        @Test
+        fun `POST admin-users with admin token should return 200 with BETA_TESTER user`() {
+            Given {
+                port(port)
+                cookie("token", adminToken)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(validRequest()))
+            } When {
+                post("/api/admin/users")
+            } Then {
+                statusCode(200)
+                body("username", equalTo("betauser"))
+                body("email", equalTo("beta@example.com"))
+                body("subscriptionPlan", equalTo("BETA_TESTER"))
+                body("id", notNullValue())
+            }
+        }
+
+        @Test
+        fun `POST admin-users without admin token should return 403`() {
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(validRequest()))
+            } When {
+                post("/api/admin/users")
+            } Then {
+                statusCode(403)
+            }
+        }
+
+        @Test
+        fun `POST admin-users without token should return 401`() {
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(validRequest()))
+            } When {
+                post("/api/admin/users")
+            } Then {
+                statusCode(401)
+            }
+        }
+
+        @Test
+        fun `POST admin-users with mismatched passwords should return 400`() {
+            Given {
+                port(port)
+                cookie("token", adminToken)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(validRequest(password = "abc123", confirmPassword = "different")))
+            } When {
+                post("/api/admin/users")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `POST admin-users with blank email should return 400`() {
+            Given {
+                port(port)
+                cookie("token", adminToken)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(validRequest(email = "")))
+            } When {
+                post("/api/admin/users")
+            } Then {
+                statusCode(400)
+            }
+        }
+    }
 
     @Nested
     inner class GetUsersEndpointTest {

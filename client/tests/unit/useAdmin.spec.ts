@@ -4,11 +4,13 @@ import useAdmin from '../../composables/useAdmin'
 
 describe('composables/useAdmin', () => {
   const get = vi.fn()
+  const post = vi.fn()
 
   beforeEach(() => {
     get.mockReset()
+    post.mockReset()
 
-    vi.stubGlobal('useQuery', () => ({ get }))
+    vi.stubGlobal('useQuery', () => ({ get, post }))
 
     vi.stubGlobal('useLoading', () => {
       const activeScope = ref<string | null>(null)
@@ -70,5 +72,38 @@ describe('composables/useAdmin', () => {
 
     expect(onError).toHaveBeenCalledTimes(1)
     expect(isLoading.value).toBe(false)
+  })
+
+  it('createUser calls POST admin/users and invokes onSuccess on success', async () => {
+    post.mockResolvedValue({ id: 'u-1', username: 'beta', subscriptionPlan: 'BETA_TESTER' })
+
+    const { createUser } = useAdmin()
+    const onSuccess = vi.fn()
+    const onError = vi.fn()
+
+    await createUser({ username: 'beta', password: 'pass', confirmPassword: 'pass', email: 'beta@example.com' }, onSuccess, onError)
+
+    expect(post).toHaveBeenCalledWith('admin/users', {
+      username: 'beta',
+      password: 'pass',
+      confirmPassword: 'pass',
+      email: 'beta@example.com',
+    })
+    expect(onSuccess).toHaveBeenCalledTimes(1)
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  it('createUser calls onError when the request fails', async () => {
+    const error = new Error('network error')
+    post.mockRejectedValue(error)
+
+    const { createUser } = useAdmin()
+    const onSuccess = vi.fn()
+    const onError = vi.fn()
+
+    await createUser({ username: 'beta', password: 'pass', confirmPassword: 'pass', email: 'beta@example.com' }, onSuccess, onError)
+
+    expect(onError).toHaveBeenCalledTimes(1)
+    expect(onSuccess).not.toHaveBeenCalled()
   })
 })

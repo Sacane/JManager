@@ -10,10 +10,10 @@ import kotlinx.serialization.Serializable
 data class UserDTO(
     val id: String,
     val username: String,
+    val subscriptionPlan: String,
     val email: String? = null,
     val createdDate: String? = null,
     val roles: List<String> = emptyList(),
-    val subscriptionPlan: String = "BETA_TESTER",
 )
 
 @Serializable

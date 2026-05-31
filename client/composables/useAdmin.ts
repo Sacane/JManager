@@ -5,13 +5,21 @@ import { LOADING_SCOPES } from '~/constants/loadingScopes'
 export interface UserDTO {
   id: string
   username: string
+  subscriptionPlan: string
   email: string | null
   createdDate: string | null
   roles: string[]
 }
 
+export interface AdminCreateUserRequest {
+  username: string
+  password: string
+  confirmPassword: string
+  email: string
+}
+
 export default function useAdmin() {
-  const { get } = useQuery()
+  const { get, post } = useQuery()
   const loadingScope = LOADING_SCOPES.admin.fetchUsers
   const { isScopeLoading, withLoading } = useLoading()
   const users = ref<UserDTO[]>([])
@@ -48,6 +56,21 @@ export default function useAdmin() {
     }, loadingScope)
   }
 
+  async function createUser(
+    payload: AdminCreateUserRequest,
+    onSuccess: () => void,
+    onError: (error: AxiosError) => void,
+  ) {
+    await withLoading(async () => {
+      try {
+        await post('admin/users', payload)
+        onSuccess()
+      } catch (error) {
+        onError(error as AxiosError)
+      }
+    }, LOADING_SCOPES.admin.createUser)
+  }
+
   return {
     users,
     totalUsers,
@@ -56,5 +79,6 @@ export default function useAdmin() {
     pageSize,
     isLoading,
     fetchUsers,
+    createUser,
   }
 }
