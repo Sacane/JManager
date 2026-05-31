@@ -77,7 +77,16 @@ interface UserRepository {
         tosAcceptedAt: LocalDateTime? = null,
         tosVersion: String? = null,
         privacyAcceptedAt: LocalDateTime? = null,
+        emailVerified: Boolean = false,
     ): User?
+
+    /**
+     * Mark a user's email address as verified.
+     *
+     * @param userId domain UserId of the user to update
+     * @return success or USER_NOT_FOUND if the user does not exist
+     */
+    fun markEmailVerified(userId: UserId): Result<Unit>
 
     /**
      * Upsert (insert or update) a user aggregate.

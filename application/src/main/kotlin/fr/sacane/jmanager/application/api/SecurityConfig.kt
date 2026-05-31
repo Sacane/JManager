@@ -62,6 +62,7 @@ class SecurityConfig(
                 authorize("/api/user/create", permitAll)
                 authorize("/api/user/auth", permitAll)
                 authorize("/api/user/auth/refresh/**", permitAll)
+                authorize("/api/verify-email", permitAll)
                 // Protected API
                 authorize("/api/user/me", authenticated)
                 authorize("/api/admin/**", hasRole("ADMIN"))

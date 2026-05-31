@@ -38,6 +38,7 @@ class User(
     var projectionWindowDays: Int = 15,
     val subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
     var consent: ConsentRecord? = null,
+    var emailVerified: Boolean = false,
 ) {
 
     init {

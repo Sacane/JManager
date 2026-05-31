@@ -102,6 +102,18 @@ class ProblemDetailHandler {
         )
     }
 
+    @ExceptionHandler(GoneException::class)
+    fun onGoneException(ex: GoneException): ResponseEntity<ProblemDetail> {
+        logException("Gone", ex.message)
+        return buildResponse(
+            status = HttpStatus.GONE,
+            title = "Gone",
+            detail = ex.message,
+            code = ex.errCode,
+            errorKey = ex.errKey,
+        )
+    }
+
     @ExceptionHandler(ConflictException::class)
     fun onConflictException(ex: ConflictException): ResponseEntity<ProblemDetail> {
         logException("Conflict", ex.cause?.message ?: ex.message)

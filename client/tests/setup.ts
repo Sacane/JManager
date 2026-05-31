@@ -112,9 +112,21 @@ vi.stubGlobal('useConsent', vi.fn(() => ({
   tosVersion: '1.0',
   consentRequired: ref(false),
   consentChecked: ref(false),
+  emailVerified: ref(true),
+  userEmail: ref(null),
   checkConsentStatus: vi.fn().mockResolvedValue(false),
   submitConsent: vi.fn(),
   clearConsentCache: vi.fn(),
+})))
+
+vi.stubGlobal('useEmailVerification', vi.fn(() => ({
+  verifyResult: ref(null),
+  isVerifying: ref(false),
+  isResending: ref(false),
+  isResendOnCooldown: ref(false),
+  resendCooldown: ref(0),
+  verifyEmail: vi.fn().mockResolvedValue('success'),
+  resendVerificationEmail: vi.fn(),
 })))
 
 vi.stubGlobal('useAdmin', vi.fn(() => ({
@@ -125,6 +137,7 @@ vi.stubGlobal('useAdmin', vi.fn(() => ({
   pageSize: ref(10),
   isLoading: ref(false),
   fetchUsers: vi.fn(),
+  createUser: vi.fn(),
 })))
 
 vi.stubGlobal('useAppVersion', vi.fn(() => ({

@@ -37,12 +37,35 @@ function flushPromises() {
   return new Promise(resolve => setTimeout(resolve, 0))
 }
 
-function mountSettingsPage(activeScopes: string[] = []) {
+function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
   vi.stubGlobal('definePageMeta', vi.fn())
   vi.stubGlobal('useJToast', () => ({ success: vi.fn(), error: vi.fn() }))
   vi.stubGlobal('useLoading', () => ({
     isScopeLoading: (scope: string) => activeScopes.includes(scope),
     withLoading: async <T>(action: () => Promise<T>) => action(),
+  }))
+  vi.stubGlobal('useConsent', () => ({
+    emailVerified: ref(emailVerified),
+    userEmail: ref('user@example.com'),
+    consentRequired: ref(false),
+    consentChecked: ref(false),
+    tosAccepted: ref(false),
+    privacyAccepted: ref(false),
+    canSubmit: { value: false },
+    isSubmitting: { value: false },
+    tosVersion: '1.0',
+    checkConsentStatus: vi.fn(),
+    submitConsent: vi.fn(),
+    clearConsentCache: vi.fn(),
+  }))
+  vi.stubGlobal('useEmailVerification', () => ({
+    verifyResult: ref(null),
+    isVerifying: ref(false),
+    isResending: ref(false),
+    isResendOnCooldown: ref(false),
+    resendCooldown: ref(0),
+    verifyEmail: vi.fn(),
+    resendVerificationEmail: vi.fn(),
   }))
 
   return shallowMount(SettingsPage)
@@ -61,6 +84,24 @@ describe('pages/settings/index', () => {
     expect(wrapper.text()).toContain('Projection')
     expect(wrapper.text()).toContain('Cycle mensuel par compte')
     expect(wrapper.text()).toContain('Compte principal')
+  })
+
+  it('hides email verification section when emailVerified is true', async () => {
+    const wrapper = mountSettingsPage([], true)
+    await flushPromises()
+    expect(wrapper.find('[data-test="email-verification-section"]').exists()).toBe(false)
+  })
+
+  it('shows email verification section when emailVerified is false', async () => {
+    const wrapper = mountSettingsPage([], false)
+    await flushPromises()
+    expect(wrapper.find('[data-test="email-verification-section"]').exists()).toBe(true)
+  })
+
+  it('displays the user email in the verification section', async () => {
+    const wrapper = mountSettingsPage([], false)
+    await flushPromises()
+    expect(wrapper.find('[data-test="email-display"]').text()).toContain('user@example.com')
   })
 
   it('submits updated settings payload', async () => {

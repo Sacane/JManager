@@ -137,13 +137,19 @@ class InMemoryUserRepository (
         return user.user
     }
 
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?): User {
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?, emailVerified: Boolean): User {
         val consent = if (tosAcceptedAt != null && privacyAcceptedAt != null) {
             ConsentRecord(tosAcceptedAt, tosVersion, privacyAcceptedAt)
         } else null
-        val element = User(id = UserId(UUID.randomUUID()), username = username, email = email, roles = roles, subscriptionPlan = subscriptionPlan, consent = consent)
+        val element = User(id = UserId(UUID.randomUUID()), username = username, email = email, roles = roles, subscriptionPlan = subscriptionPlan, consent = consent, emailVerified = emailVerified)
         inMemoryDatabase.users[element.id] = UserWithPassword(element, password, roles)
         return element
+    }
+
+    override fun markEmailVerified(userId: UserId): Result<Unit> {
+        val userWithPassword = inMemoryDatabase.users[userId] ?: return Result(ResultState.USER_NOT_FOUND)
+        userWithPassword.user.emailVerified = true
+        return success(Unit)
     }
 
     override fun upsert(user: User): User? {

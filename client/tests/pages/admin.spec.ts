@@ -56,12 +56,12 @@ const TabPanelStub = {
 
 // ---------------------------------------------------------------------------
 describe('pages/admin/index', () => {
-  let registerMock: ReturnType<typeof vi.fn>
+  let createUserMock: ReturnType<typeof vi.fn>
   let toastrErrorMock: ReturnType<typeof vi.fn>
   let toastrSuccessMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    registerMock = vi.fn()
+    createUserMock = vi.fn()
     toastrErrorMock = vi.fn()
     toastrSuccessMock = vi.fn()
 
@@ -70,7 +70,7 @@ describe('pages/admin/index', () => {
       isAuthenticated: ref(false) as any,
       login: vi.fn(),
       logout: vi.fn(),
-      register: registerMock,
+      register: vi.fn(),
       isAdmin: ref(true) as any,
       tryRefresh: vi.fn(),
       initializeSession: vi.fn(),
@@ -84,7 +84,8 @@ describe('pages/admin/index', () => {
       pageSize: ref(10) as any,
       isLoading: ref(false) as any,
       fetchUsers: vi.fn(),
-    })
+      createUser: createUserMock,
+    } as any)
 
     vi.stubGlobal('useJToast', () => ({
       success: toastrSuccessMock,
@@ -177,7 +178,7 @@ describe('pages/admin/index', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(toastrErrorMock).toHaveBeenCalledWith('Veuillez remplir tous les champs')
-    expect(registerMock).not.toHaveBeenCalled()
+    expect(createUserMock).not.toHaveBeenCalled()
   })
 
   it('shows an error when email is empty', async () => {
@@ -187,7 +188,7 @@ describe('pages/admin/index', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(toastrErrorMock).toHaveBeenCalledWith('Veuillez remplir tous les champs')
-    expect(registerMock).not.toHaveBeenCalled()
+    expect(createUserMock).not.toHaveBeenCalled()
   })
 
   it('shows an error when the email format is invalid', async () => {
@@ -197,7 +198,7 @@ describe('pages/admin/index', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(toastrErrorMock).toHaveBeenCalledWith("L'adresse email n'est pas valide")
-    expect(registerMock).not.toHaveBeenCalled()
+    expect(createUserMock).not.toHaveBeenCalled()
   })
 
   it('shows an error when passwords do not match', async () => {
@@ -207,7 +208,7 @@ describe('pages/admin/index', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(toastrErrorMock).toHaveBeenCalledWith('Les mots de passe ne correspondent pas')
-    expect(registerMock).not.toHaveBeenCalled()
+    expect(createUserMock).not.toHaveBeenCalled()
   })
 
   it('shows an error when the password is shorter than 6 characters', async () => {
@@ -217,12 +218,12 @@ describe('pages/admin/index', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(toastrErrorMock).toHaveBeenCalledWith('Le mot de passe doit contenir au moins 6 caractères')
-    expect(registerMock).not.toHaveBeenCalled()
+    expect(createUserMock).not.toHaveBeenCalled()
   })
 
   // --- Successful submission ---
 
-  it('calls register with username, email, password and confirmPassword on valid form', async () => {
+  it('calls createUser with username, email, password and confirmPassword on valid form', async () => {
     const wrapper = mountPage()
     await setFormValues(wrapper, {
       username: 'alice',
@@ -235,7 +236,7 @@ describe('pages/admin/index', () => {
     await flushPromises()
 
     expect(toastrErrorMock).not.toHaveBeenCalled()
-    expect(registerMock).toHaveBeenCalledWith(
+    expect(createUserMock).toHaveBeenCalledWith(
       expect.objectContaining({
         username: 'alice',
         email: 'alice@example.com',

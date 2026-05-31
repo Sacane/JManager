@@ -9,26 +9,47 @@ internal object EmailTemplates {
 
     data class EmailContent(val subject: String, val htmlBody: String)
 
-    fun betaTester(username: String, loginUrl: String): EmailContent = EmailContent(
+    fun betaTester(username: String, verificationLink: String): EmailContent = EmailContent(
         subject = "Bienvenue dans la bêta JManager 🎉",
-        htmlBody = betaTesterHtml(username, loginUrl),
+        htmlBody = betaTesterHtml(username, verificationLink),
     )
 
-    fun freeUser(username: String, loginUrl: String): EmailContent = EmailContent(
+    fun freeUser(username: String, verificationLink: String): EmailContent = EmailContent(
         subject = "Bienvenue sur JManager !",
-        htmlBody = freeUserHtml(username, loginUrl),
+        htmlBody = freeUserHtml(username, verificationLink),
     )
 
-    fun premiumUser(username: String, loginUrl: String): EmailContent = EmailContent(
+    fun verificationEmail(verificationLink: String): EmailContent = EmailContent(
+        subject = "Vérifiez votre adresse e-mail JManager",
+        htmlBody = verificationEmailHtml(verificationLink),
+    )
+
+    fun premiumUser(username: String, verificationLink: String): EmailContent = EmailContent(
         subject = "Bienvenue dans JManager Premium ✨",
-        htmlBody = premiumHtml(username, loginUrl),
+        htmlBody = premiumHtml(username, verificationLink),
     )
 
     // ─────────────────────────────────────────────────────────────────────────
     // Private HTML builders
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun betaTesterHtml(username: String, loginUrl: String): String = baseLayout(
+    private fun verificationEmailHtml(verificationLink: String): String = baseLayout(
+        badge = null,
+        body = """
+            <h2 style="margin:0 0 6px;color:#1a1a2e;font-size:22px;font-weight:700;">Confirmez votre adresse e-mail 📬</h2>
+            <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">
+              Pour finaliser la création de votre compte JManager, cliquez sur le bouton ci-dessous.
+              Ce lien est valable <strong>24 heures</strong>.
+            </p>
+            <p style="margin:0 0 28px;color:#4b5563;font-size:13px;line-height:1.6;">
+              Si vous n'avez pas créé de compte, vous pouvez ignorer cet e-mail en toute sécurité.
+            </p>
+        """.trimIndent(),
+        ctaLabel = "Vérifier mon adresse e-mail →",
+        loginUrl = verificationLink,
+    )
+
+    private fun betaTesterHtml(username: String, verificationLink: String): String = baseLayout(
         badge = """<span style="display:inline-block;background:#822acc;color:#ffffff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">✦ Accès Bêta Exclusif</span>""",
         body = """
             <h2 style="margin:0 0 6px;color:#1a1a2e;font-size:22px;font-weight:700;">Bonjour $username 👋</h2>
@@ -52,11 +73,11 @@ internal object EmailTemplates {
               Chaque retour que vous nous ferez — bug, suggestion, coup de cœur — sera lu et pris en compte personnellement.
             </p>
         """.trimIndent(),
-        ctaLabel = "Accéder à JManager →",
-        loginUrl = loginUrl,
+        ctaLabel = "Vérifier mon adresse e-mail →",
+        loginUrl = verificationLink,
     )
 
-    private fun freeUserHtml(username: String, loginUrl: String): String = baseLayout(
+    private fun freeUserHtml(username: String, verificationLink: String): String = baseLayout(
         badge = null,
         body = """
             <h2 style="margin:0 0 6px;color:#1a1a2e;font-size:22px;font-weight:700;">Bienvenue, $username 👋</h2>
@@ -77,11 +98,11 @@ internal object EmailTemplates {
               Notre équipe est disponible pour répondre à toutes vos questions. N'hésitez pas à nous contacter.
             </p>
         """.trimIndent(),
-        ctaLabel = "Découvrir JManager →",
-        loginUrl = loginUrl,
+        ctaLabel = "Vérifier mon adresse e-mail →",
+        loginUrl = verificationLink,
     )
 
-    private fun premiumHtml(username: String, loginUrl: String): String = baseLayout(
+    private fun premiumHtml(username: String, verificationLink: String): String = baseLayout(
         badge = """<span style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:#ffffff;padding:3px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">✦ Membre Premium</span>""",
         body = """
             <h2 style="margin:0 0 6px;color:#1a1a2e;font-size:22px;font-weight:700;">Bienvenue dans le Premium, $username ✨</h2>
@@ -105,8 +126,8 @@ internal object EmailTemplates {
               pour prendre en main votre compte, notre équipe est là pour vous.
             </p>
         """.trimIndent(),
-        ctaLabel = "Accéder à mon espace Premium →",
-        loginUrl = loginUrl,
+        ctaLabel = "Vérifier mon adresse e-mail →",
+        loginUrl = verificationLink,
     )
 
     // ─────────────────────────────────────────────────────────────────────────

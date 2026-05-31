@@ -25,11 +25,35 @@ class SpringMailNotificationAdapter(
     }
 
     @Async
-    override fun sendWelcomeEmail(username: String, email: String, subscriptionPlan: SubscriptionPlan) {
+    override fun sendVerificationEmail(email: String, token: String) {
+        val verificationLink = "$appUrl/verify-email?token=$token"
+        val content = EmailTemplates.verificationEmail(verificationLink)
+        try {
+            val mimeMessage = mailSender.createMimeMessage()
+            MimeMessageHelper(mimeMessage, false, "UTF-8").apply {
+                setTo(email)
+                setFrom(fromValue)
+                setSubject(content.subject)
+                setText(content.htmlBody, true)
+            }
+            mailSender.send(mimeMessage)
+        } catch (e: Exception) {
+            LOGGER.severe("Failed to send verification email: ${e.javaClass.simpleName}")
+        }
+    }
+
+    @Async
+    override fun sendWelcomeWithVerificationEmail(
+        username: String,
+        email: String,
+        subscriptionPlan: SubscriptionPlan,
+        verificationToken: String,
+    ) {
+        val verificationLink = "$appUrl/verify-email?token=$verificationToken"
         val content = when (subscriptionPlan) {
-            SubscriptionPlan.BETA_TESTER -> EmailTemplates.betaTester(username, appUrl)
-            SubscriptionPlan.FREE        -> EmailTemplates.freeUser(username, appUrl)
-            SubscriptionPlan.PREMIUM     -> EmailTemplates.premiumUser(username, appUrl)
+            SubscriptionPlan.BETA_TESTER -> EmailTemplates.betaTester(username, verificationLink)
+            SubscriptionPlan.FREE        -> EmailTemplates.freeUser(username, verificationLink)
+            SubscriptionPlan.PREMIUM     -> EmailTemplates.premiumUser(username, verificationLink)
         }
         try {
             val mimeMessage = mailSender.createMimeMessage()

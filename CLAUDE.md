@@ -103,7 +103,12 @@ For every backend feature or fix:
 
 3. **Layer order**: `domain` → `infrastructure` → `application` → `client`.
 
-4. **Full-suite green** before considering any task complete.
+4. **Input length limits — verify at task completion**:
+   - Backend: every `String` field in a request DTO must have `@Size` (see `docs/agents/instructions/backend.instructions.md` §1.4).
+   - Frontend: every text input must have `maxlength` matching the backend constraint (see `docs/agents/instructions/frontend.instructions.md`).
+   - Reference table: username/password `100`, email `255`, label `100`, description `500`, version `20`.
+
+5. **Full-suite green** before considering any task complete.
 
 ---
 

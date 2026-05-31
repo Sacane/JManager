@@ -3,6 +3,9 @@ import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
 
+const { emailVerified, userEmail } = useConsent()
+const { resendVerificationEmail, isResending, isResendOnCooldown, resendCooldown } = useEmailVerification()
+
 definePageMeta({
   layout: 'sidebar-layout',
   middleware: [authMiddleware],
@@ -11,6 +14,13 @@ definePageMeta({
 const { getSettings, updateSettings } = useUserSettings()
 const { withLoading, isScopeLoading } = useLoading()
 const toast = useJToast()
+
+async function handleResend() {
+  await resendVerificationEmail(
+    () => toast.success('E-mail de vérification envoyé. Vérifiez votre boîte de réception.'),
+    () => toast.error('Impossible d\'envoyer l\'e-mail de vérification.'),
+  )
+}
 
 const loadSettingsScope = LOADING_SCOPES.settings.load
 const saveSettingsScope = LOADING_SCOPES.settings.save
@@ -187,6 +197,37 @@ onMounted(() => {
         </div>
       </section>
     </div>
+
+      <section v-if="!emailVerified" class="settings-card email-verification-card" data-test="email-verification-section">
+        <div class="email-verification-header">
+          <div class="email-verification-icon">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true" />
+          </div>
+          <div>
+            <h2>Vérification de l'e-mail</h2>
+            <p class="settings-help">
+              Votre adresse e-mail n'est pas encore vérifiée.
+            </p>
+          </div>
+        </div>
+
+        <div v-if="userEmail" class="email-verification-address" data-test="email-display">
+          <span class="settings-label">Adresse e-mail</span>
+          <span class="email-value">{{ userEmail }}</span>
+        </div>
+
+        <button
+          class="verify-btn"
+          data-test="resend-verification-btn"
+          :disabled="isResending || isResendOnCooldown"
+          @click="handleResend"
+        >
+          <i class="pi pi-envelope" aria-hidden="true" />
+          <span v-if="isResending">Envoi en cours…</span>
+          <span v-else-if="isResendOnCooldown">Renvoyer dans {{ resendCooldown }}s</span>
+          <span v-else>Vérifier mon e-mail</span>
+        </button>
+      </section>
 
     <div class="actions">
       <button class="save-btn" data-test="save-settings-btn" :disabled="isSaving" @click="saveUserSettings">
@@ -366,6 +407,79 @@ onMounted(() => {
 .save-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.email-verification-card {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+
+  .dark & {
+    background-color: rgba(245, 158, 11, 0.07);
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+}
+
+.email-verification-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.email-verification-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  font-size: 1rem;
+
+  .dark & {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+  }
+}
+
+.email-verification-address {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.email-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.verify-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1.1rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 @media (max-width: 640px) {

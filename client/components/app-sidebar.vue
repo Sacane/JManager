@@ -5,6 +5,7 @@ import useAuth from '../composables/useAuth'
 import 'primeicons/primeicons.css'
 
 const { isAuthenticated, isAdmin } = useAuth()
+const { emailVerified } = useConsent()
 const { version, fetchVersion } = useAppVersion()
 const isSidebarOpen = ref(false)
 const isMobileView = ref(false)
@@ -135,6 +136,14 @@ onUnmounted(() => {
             >
               <i class="pi pi-cog" />
               <span>Paramètres</span>
+              <span
+                v-if="!emailVerified"
+                v-tooltip.right="'Votre compte doit être vérifié'"
+                class="verify-badge"
+                aria-label="E-mail non vérifié"
+              >
+                <i class="pi pi-exclamation-triangle" />
+              </span>
             </NuxtLink>
 
             <NuxtLink
@@ -511,6 +520,19 @@ onUnmounted(() => {
       transform: translateX(2px);
       box-shadow: 0 4px 20px rgba(88, 28, 160, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
+  }
+}
+
+.verify-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: #f59e0b;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+
+  html.dark & {
+    color: #fbbf24;
   }
 }
 

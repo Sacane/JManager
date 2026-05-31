@@ -21,6 +21,8 @@ import fr.sacane.jmanager.domain.port.input.user.LogoutUseCase
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionCommand
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionUseCase
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
+import fr.sacane.jmanager.domain.port.input.admin.AdminCreateUserCommand
+import fr.sacane.jmanager.domain.port.input.admin.AdminCreateUserUseCase
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserUseCase
 import java.time.LocalDateTime
@@ -68,6 +70,7 @@ class UserFeatureTest {
     private val logoutUseCase: LogoutUseCase = factory.logoutService
     private val refreshSessionUseCase: RefreshSessionUseCase = factory.refreshSessionService
     private val registerUserUseCase: RegisterUserUseCase = factory.registerUserService
+    private val adminCreateUserUseCase: AdminCreateUserUseCase = factory.adminCreateUserUseCase
     private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase = factory.createAdminIfNotExistsService
     private val getUserSettingsUseCase: GetUserSettingsUseCase = factory.getUserSettingsService
     private val updateUserSettingsUseCase: UpdateUserSettingsUseCase = factory.updateUserSettingsService
@@ -77,7 +80,7 @@ class UserFeatureTest {
     private val sessionFakeState = factory.sessionState()
     private val userState = factory.fakeUserRepository()
     private val tokenGenerator = factory.tokenGenerator
-    private val sentEmails get() = factory.fakeNotificationPort.sentEmails
+    private val sentCombinedEmails get() = factory.fakeNotificationPort.sentCombinedEmails
 
     @AfterEach
     fun afterEach() {
@@ -218,38 +221,39 @@ class UserFeatureTest {
         }
 
         @Test
-        fun `Registered user defaults to BETA_TESTER subscription plan`() {
+        fun `Self-registered user gets FREE subscription plan`() {
             val result = act { registerUserUseCase.handle(registerCommand()) }
 
             then(result) {
                 assertSuccess()
-                assertEquals(SubscriptionPlan.BETA_TESTER, mapNotNullOrFailure()!!.subscriptionPlan)
+                assertEquals(SubscriptionPlan.FREE, mapNotNullOrFailure()!!.subscriptionPlan)
             }
         }
 
         @Test
-        fun `Welcome email is sent after successful registration`() {
+        fun `Welcome email with verification link is sent after successful registration`() {
             act { registerUserUseCase.handle(registerCommand()) }
 
-            assertEquals(1, sentEmails.size)
-            val sent = sentEmails.first()
+            assertEquals(1, sentCombinedEmails.size)
+            val sent = sentCombinedEmails.first()
             assertEquals("John", sent.username)
             assertEquals("john@example.com", sent.email)
-            assertEquals(SubscriptionPlan.BETA_TESTER, sent.subscriptionPlan)
+            assertEquals(SubscriptionPlan.FREE, sent.subscriptionPlan)
+            assertNotNull(sent.verificationToken)
         }
 
         @Test
         fun `Welcome email is not sent when passwords do not match`() {
             act { registerUserUseCase.handle(registerCommand(confirmPassword = "wrong")) }
 
-            assertEquals(0, sentEmails.size)
+            assertEquals(0, sentCombinedEmails.size)
         }
 
         @Test
         fun `Welcome email is not sent when email is blank`() {
             act { registerUserUseCase.handle(registerCommand(email = "")) }
 
-            assertEquals(0, sentEmails.size)
+            assertEquals(0, sentCombinedEmails.size)
         }
 
         @Test
@@ -299,6 +303,49 @@ class UserFeatureTest {
     }
 
     @Nested
+    inner class AdminCreateUserFeatureTest {
+
+        @Test
+        fun `Admin-created user gets BETA_TESTER subscription plan`() {
+            val result = act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "beta@example.com")) }
+
+            then(result) {
+                assertSuccess()
+                assertEquals(SubscriptionPlan.BETA_TESTER, mapNotNullOrFailure()!!.subscriptionPlan)
+            }
+        }
+
+        @Test
+        fun `Admin-created user receives beta-tester welcome email with verification link`() {
+            act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "beta@example.com")) }
+
+            assertEquals(1, sentCombinedEmails.size)
+            val sent = sentCombinedEmails.first()
+            assertEquals("beta", sent.username)
+            assertEquals("beta@example.com", sent.email)
+            assertEquals(SubscriptionPlan.BETA_TESTER, sent.subscriptionPlan)
+            assertNotNull(sent.verificationToken)
+        }
+
+        @Test
+        fun `Admin creation fails when email is blank`() {
+            val result = act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "")) }
+
+            then(result) {
+                assertFailure(ResultState.INVALID)
+                assertEquals("domain.user.admin.create.email_required", errorInfo?.key)
+            }
+        }
+
+        @Test
+        fun `Admin creation welcome email is not sent when email is blank`() {
+            act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "")) }
+
+            assertEquals(0, sentCombinedEmails.size)
+        }
+    }
+
+    @Nested
     inner class CreateAdminFeatureTest {
         @Test
         fun `Create admin that doesn't exists must return success`() {
@@ -314,6 +361,13 @@ class UserFeatureTest {
             val result = act { createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin", "test")) }
 
             then(result) { assertSuccess() }
+        }
+
+        @Test
+        fun `Admin-created user is automatically email-verified`() {
+            val result = act { createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin", "test")) }
+
+            then(result) { assertTrue { emailVerified } }
         }
 
         @Test

@@ -13,8 +13,9 @@ object UserFixture {
     fun aUser(
         id: UserId = UserId(UUID.randomUUID()),
         username: String = "john",
-        email: String? = ""
-    ) = User(id, username, email)
+        email: String? = "",
+        emailVerified: Boolean = false,
+    ) = User(id = id, username = username, email = email, emailVerified = emailVerified)
 
     fun aUserWithPassword(
         user: User = aUser(),
