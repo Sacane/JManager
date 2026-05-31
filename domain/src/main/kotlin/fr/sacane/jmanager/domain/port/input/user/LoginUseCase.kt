@@ -17,7 +17,7 @@ import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 import org.slf4j.LoggerFactory
 
-data class LoginCommand(val pseudonym: String, val userPassword: String) : Command<UserToken>
+data class LoginCommand(val email: String, val userPassword: String) : Command<UserToken>
 
 @Port(Side.APPLICATION)
 interface LoginUseCase : CommandHandler<LoginCommand, UserToken> {
@@ -37,10 +37,10 @@ class LoginService(
     }
 
     override fun handle(command: LoginCommand): Result<UserToken> {
-        val userWithPassword = userRepository.findByPseudonymWithEncodedPassword(command.pseudonym)
+        val userWithPassword = userRepository.findByEmailWithEncodedPassword(command.email)
             ?: return failure(
                 ResultState.NOT_FOUND,
-                DomainError(ResultState.NOT_FOUND.code, "domain.user.login.user_not_found", "L'utilisateur ${command.pseudonym} n'existe pas")
+                DomainError(ResultState.NOT_FOUND.code, "domain.user.login.user_not_found", "Aucun compte associé à l'adresse ${command.email}")
             )
         val user = userWithPassword.user
         if (hasher.verify(command.userPassword, userWithPassword.password)) {
@@ -54,7 +54,7 @@ class LoginService(
         log.warn("Authentication failed: invalid credentials for an existing account")
         return failure(
             ResultState.USER_UNAUTHORIZED,
-            DomainError(ResultState.USER_UNAUTHORIZED.code, "domain.user.login.invalid_credentials", "Le pseudonyme ou le mot de passe est incorrect")
+            DomainError(ResultState.USER_UNAUTHORIZED.code, "domain.user.login.invalid_credentials", "L'adresse e-mail ou le mot de passe est incorrect")
         )
     }
 }

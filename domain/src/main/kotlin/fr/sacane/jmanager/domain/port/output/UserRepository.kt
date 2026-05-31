@@ -53,6 +53,14 @@ interface UserRepository {
     fun findByPseudonymWithEncodedPassword(pseudonym: String): UserWithPassword?
 
     /**
+     * Find a user by email address and include encoded password information required for authentication.
+     *
+     * @param email email address to search for
+     * @return UserWithPassword containing encoded credentials or null if not found
+     */
+    fun findByEmailWithEncodedPassword(email: String): UserWithPassword?
+
+    /**
      * Create a user aggregate with encoded password information.
      *
      * @param user user aggregate with encoded password
