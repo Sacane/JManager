@@ -126,6 +126,7 @@ async function registerUser() {
               class="w-full"
               placeholder="Entrez votre adresse e-mail"
               maxlength="255"
+              autocomplete="email"
             />
           </div>
 
