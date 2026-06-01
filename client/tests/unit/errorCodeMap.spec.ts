@@ -37,9 +37,26 @@ describe('utils/errorCodeMap', () => {
   })
 
   describe('extractDiagnosticContext', () => {
-    it('extracts requestId, userId and code from payload', () => {
+    it('extracts requestId, userId and code from root payload', () => {
       const ctx = extractDiagnosticContext({ code: 404, requestId: 'req-abc', userId: 'user-xyz' })
       expect(ctx).toEqual({ requestId: 'req-abc', userId: 'user-xyz', code: 404 })
+    })
+
+    it('extracts requestId and userId from nested properties (Spring ProblemDetail format)', () => {
+      const ctx = extractDiagnosticContext({
+        properties: { code: 1001, requestId: 'req-nested', userId: 'user-nested' },
+      })
+      expect(ctx.requestId).toBe('req-nested')
+      expect(ctx.userId).toBe('user-nested')
+      expect(ctx.code).toBe(1001)
+    })
+
+    it('prefers root-level requestId over properties when both present', () => {
+      const ctx = extractDiagnosticContext({
+        requestId: 'root-id',
+        properties: { requestId: 'nested-id' },
+      })
+      expect(ctx.requestId).toBe('root-id')
     })
 
     it('returns empty object for null payload', () => {

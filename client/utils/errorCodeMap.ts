@@ -1,5 +1,7 @@
 type ProblemDetailProperties = {
   code?: number
+  requestId?: string
+  userId?: string
 }
 
 export type DiagnosticContext = {
@@ -71,9 +73,15 @@ export function extractErrorCode(payload: unknown): number | undefined {
 export function extractDiagnosticContext(payload: unknown): DiagnosticContext {
   if (!payload || typeof payload !== 'object') return {}
   const pd = payload as ApiProblemDetail
+  const requestId = typeof pd.requestId === 'string'
+    ? pd.requestId
+    : typeof pd.properties?.requestId === 'string' ? pd.properties.requestId : undefined
+  const userId = typeof pd.userId === 'string'
+    ? pd.userId
+    : typeof pd.properties?.userId === 'string' ? pd.properties.userId : undefined
   return {
-    requestId: typeof pd.requestId === 'string' ? pd.requestId : undefined,
-    userId: typeof pd.userId === 'string' ? pd.userId : undefined,
+    requestId,
+    userId,
     code: extractErrorCode(payload),
   }
 }

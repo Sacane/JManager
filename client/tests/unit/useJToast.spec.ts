@@ -64,7 +64,7 @@ describe('composables/useJToast', () => {
     }))
   })
 
-  it('passes requestId and userId in toast message when present in response', () => {
+  it('passes requestId and userId in toast message when present at root level', () => {
     const { errorAxios } = useJToast()
     const axiosError = {
       response: {
@@ -77,6 +77,24 @@ describe('composables/useJToast', () => {
     expect(add).toHaveBeenCalledWith(expect.objectContaining({
       requestId: 'req-abc-123',
       userId: 'user-xyz-456',
+    }))
+  })
+
+  it('passes requestId and userId from nested properties (Spring ProblemDetail format)', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: {
+        data: {
+          properties: { code: 1001, requestId: 'req-from-props', userId: 'user-from-props' },
+        },
+      },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-from-props',
+      userId: 'user-from-props',
     }))
   })
 
