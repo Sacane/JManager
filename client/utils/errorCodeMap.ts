@@ -2,9 +2,17 @@ type ProblemDetailProperties = {
   code?: number
 }
 
+export type DiagnosticContext = {
+  requestId?: string
+  userId?: string
+  code?: number
+}
+
 export type ApiProblemDetail = {
   code?: number
   properties?: ProblemDetailProperties
+  requestId?: string
+  userId?: string
 }
 
 type ErrorMessage = {
@@ -58,6 +66,25 @@ export function extractErrorCode(payload: unknown): number | undefined {
   if (typeof problemDetail.properties?.code === 'number') return problemDetail.properties.code
 
   return undefined
+}
+
+export function extractDiagnosticContext(payload: unknown): DiagnosticContext {
+  if (!payload || typeof payload !== 'object') return {}
+  const pd = payload as ApiProblemDetail
+  return {
+    requestId: typeof pd.requestId === 'string' ? pd.requestId : undefined,
+    userId: typeof pd.userId === 'string' ? pd.userId : undefined,
+    code: extractErrorCode(payload),
+  }
+}
+
+export function buildDiagnosticText(ctx: DiagnosticContext): string {
+  return [
+    ctx.requestId ? `requestId: ${ctx.requestId}` : null,
+    ctx.userId ? `userId: ${ctx.userId}` : null,
+    ctx.code !== undefined ? `code: ${ctx.code}` : null,
+    `date: ${new Date().toISOString()}`,
+  ].filter(Boolean).join('\n')
 }
 
 export function getErrorMessageByCode(code?: number): ErrorMessage {

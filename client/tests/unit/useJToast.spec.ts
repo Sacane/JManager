@@ -63,4 +63,55 @@ describe('composables/useJToast', () => {
       detail: 'Une erreur inconnue est survenue.',
     }))
   })
+
+  it('passes requestId and userId in toast message when present in response', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: {
+        data: { code: 500, requestId: 'req-abc-123', userId: 'user-xyz-456' },
+      },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-abc-123',
+      userId: 'user-xyz-456',
+    }))
+  })
+
+  it('uses 8000ms life when requestId is present', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: { data: { code: 500, requestId: 'req-abc' } },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ life: 8000 }))
+  })
+
+  it('uses 3000ms life when requestId is absent', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: { data: { code: 404 } },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ life: 3000 }))
+  })
+
+  it('does not include requestId in toast message when absent', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: { data: { code: 404 } },
+    } as any
+
+    errorAxios(axiosError)
+
+    const call = add.mock.calls[0][0]
+    expect(call.requestId).toBeUndefined()
+    expect(call.userId).toBeUndefined()
+  })
 })

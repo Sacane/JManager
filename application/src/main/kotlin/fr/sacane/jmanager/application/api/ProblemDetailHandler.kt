@@ -1,14 +1,17 @@
 package fr.sacane.jmanager.application.api
 
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import jakarta.validation.ConstraintViolationException
-import org.springframework.dao.OptimisticLockingFailureException
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.beans.TypeMismatchException
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ControllerAdvice
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import java.time.DateTimeException
+import java.util.UUID
 
 @ControllerAdvice(annotations = [RestController::class])
 class ProblemDetailHandler {
@@ -36,8 +40,13 @@ class ProblemDetailHandler {
         problemDetail.detail = detail
         problemDetail.setProperty("code", code)
         problemDetail.setProperty("errorKey", errorKey ?: ErrorCatalog.keyForCode(code))
+        MDC.get(MdcKeys.REQUEST_ID)?.let { problemDetail.setProperty("requestId", it) }
+        currentUserIdOrNull()?.let { problemDetail.setProperty("userId", it.toString()) }
         return ResponseEntity.status(status).body(problemDetail)
     }
+
+    private fun currentUserIdOrNull(): UUID? =
+        (SecurityContextHolder.getContext().authentication?.principal as? JmanagerUserAuthDetail)?.id
 
     private fun logException(context: String, message: String?) {
         LOGGER.error("{} : {}", context, message)
