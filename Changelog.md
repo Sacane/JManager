@@ -2,6 +2,17 @@
 
 ## [En cours]
 
+## 2026-06-02
+
+- **Contexte de diagnostic dans les réponses d'erreur (requestId / userId / bookletId)**
+  - **Application — `RequestIdFilter`**: filtre `OncePerRequestFilter` `@Order(HIGHEST_PRECEDENCE)` enregistré au niveau conteneur servlet. Génère un UUID par requête HTTP et le place dans le MDC sous la clé `requestId`. MDC vidé dans un bloc `finally` en fin de requête.
+  - **Application — `LoggingCommandBus` / `LoggingQueryBus`**: décorateurs autour des buses Spring. Avant chaque dispatch, injectent le contexte MDC de la commande/query si elle implémente `MdcContextProvider` (`bookletId`, `transactionId`, etc.) — les clés persistent jusqu'au `MDC.clear()` du filtre, donc disponibles dans les handlers d'erreur.
+  - **Domain — `MdcContextProvider` / `MdcKeys`**: port et constantes partagés (`requestId`, `bookletId`, `transactionId`) implémentés par `FindBookletByIdQuery`, `DeleteBookletByIdCommand` et une douzaine d'autres commandes/queries à contexte identifiable.
+  - **Application — `ProblemDetailHandler`**: `buildResponse` lit le MDC complet (`getCopyOfContextMap`) et l'injecte dans `ProblemDetail.properties`; `userId` ajouté depuis `SecurityContextHolder` si l'utilisateur est authentifié. Tous les handlers d'exception (404, 403, 400, 401, 500…) exposent ainsi `requestId`, `userId`, et le contexte domaine dans `properties`.
+  - **Application — `ProblemDetailAuthenticationEntryPoint`**: remplace `HttpStatusEntryPoint` dans `SecurityConfig`. Les rejets Spring Security (401 sans contrôleur) retournent désormais un body `application/problem+json` avec `properties.requestId`.
+  - **Logback**: pattern JSON enrichi avec `%X{requestId}`, `%X{bookletId}`, `%X{transactionId}` pour corréler logs et réponses d'erreur côté support.
+  - **Tests**: `ProblemDetailHandlerTest` (unit), `DiagnosticContextIntegrationTest` (chaîne complète filter→bus→handler→JSON), `BookletControllerTest` et `SessionControllerTest` mis à jour — assertions sur `properties.requestId`, `properties.userId`, `properties.bookletId`.
+
 ## 2026-06-01
 
 - **Login par adresse e-mail (remplace le pseudonyme)**

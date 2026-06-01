@@ -26,7 +26,7 @@ class ProblemDetailHandlerTest {
 
     @AfterEach
     fun cleanup() {
-        MDC.remove(MdcKeys.REQUEST_ID)
+        MDC.clear()
         SecurityContextHolder.clearContext()
     }
 
@@ -256,20 +256,24 @@ class ProblemDetailHandlerTest {
     }
 
     @Test
-    fun `requestId from MDC is included in error response`() {
-        val id = UUID.randomUUID().toString()
-        MDC.put(MdcKeys.REQUEST_ID, id)
+    fun `all MDC entries are included in error response`() {
+        val requestId = UUID.randomUUID().toString()
+        val bookletId = UUID.randomUUID().toString()
+        MDC.put(MdcKeys.REQUEST_ID, requestId)
+        MDC.put(MdcKeys.BOOKLET_ID, bookletId)
 
         val resp = handler.handleNotFoundException(NotFoundException(404, "not found"))
 
-        assertThat(resp.body!!.properties!!["requestId"]).isEqualTo(id)
+        assertThat(resp.body!!.properties!!["requestId"]).isEqualTo(requestId)
+        assertThat(resp.body!!.properties!!["bookletId"]).isEqualTo(bookletId)
     }
 
     @Test
-    fun `requestId is absent when MDC has no entry`() {
+    fun `no MDC properties in response when MDC is empty`() {
         val resp = handler.handleNotFoundException(NotFoundException(404, "not found"))
 
         assertThat(resp.body!!.properties!!).doesNotContainKey("requestId")
+        assertThat(resp.body!!.properties!!).doesNotContainKey("bookletId")
     }
 
     @Test

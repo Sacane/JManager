@@ -9,8 +9,10 @@ import org.springframework.stereotype.Component
 
 /**
  * Decorator around [SpringCommandBus] that:
- * 1. Injects domain context (bookletId, transactionId) into the SLF4J MDC for the duration
- *    of the dispatch when the command implements [MdcContextProvider].
+ * 1. Injects domain context (bookletId, transactionId) into the SLF4J MDC when the command
+ *    implements [MdcContextProvider]. Keys are NOT removed after dispatch — [RequestIdFilter]
+ *    calls MDC.clear() at the end of the HTTP request so the full context remains available
+ *    to error handlers (e.g. ProblemDetailHandler) if the request fails.
  * 2. Emits one INFO line per dispatch with the command name, result state, and execution time.
  *
  * ```
@@ -18,7 +20,6 @@ import org.springframework.stereotype.Component
  * COMMAND | DeleteBookletByIdCommand        | BOOKLET_NOT_FOUND |   3 ms
  * ```
  *
- * MDC is cleared in a `finally` block — no context leaks across requests.
  * No payload is logged — command fields may contain user data.
  */
 @Component
@@ -30,23 +31,18 @@ class LoggingCommandBus(
 
     override fun <R> dispatch(command: Command<R>): Result<R> {
         val name = command::class.simpleName ?: "UnknownCommand"
-        val mdcKeys = putMdcContext(command)
+        putMdcContext(command)
         val start = System.nanoTime()
-        return try {
-            val result = delegate.dispatch(command)
-            val ms = (System.nanoTime() - start) / 1_000_000
-            log.info("COMMAND | {:<50} | {:<30} | {} ms", name, result.status.name, ms)
-            result
-        } finally {
-            mdcKeys.forEach { MDC.remove(it) }
-        }
+        val result = delegate.dispatch(command)
+        val ms = (System.nanoTime() - start) / 1_000_000
+        log.info("COMMAND | {:<50} | {:<30} | {} ms", name, result.status.name, ms)
+        return result
     }
 
-    private fun putMdcContext(command: Command<*>): Set<String> {
-        if (command !is MdcContextProvider) return emptySet()
-        return command.mdcContext()
+    private fun putMdcContext(command: Command<*>) {
+        if (command !is MdcContextProvider) return
+        command.mdcContext()
             .filterValues { it.isNotBlank() }
-            .also { ctx -> ctx.forEach { (k, v) -> MDC.put(k, v) } }
-            .keys
+            .forEach { (k, v) -> MDC.put(k, v) }
     }
 }

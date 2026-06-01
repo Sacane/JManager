@@ -28,7 +28,7 @@ class RequestIdFilter : OncePerRequestFilter() {
         try {
             chain.doFilter(request, response)
         } finally {
-            MDC.remove(MdcKeys.REQUEST_ID)
+            MDC.clear()
         }
     }
 }

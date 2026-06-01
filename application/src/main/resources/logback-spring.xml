@@ -11,8 +11,8 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
       <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
         <charset>UTF-8</charset>
-        <!-- MDC context affiché en jaune uniquement quand présent -->
-        <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5level){highlight} %clr(%-40.40logger{39}){cyan}%clr(%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}){yellow}%clr(%replace( [tx=%X{transactionId}]){' \[tx=\]', ''}){yellow} %msg%n</pattern>
+        <!-- requestId toujours présent (filter), bookletId/transactionId conditionnels (bus) -->
+        <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5level){highlight} %clr(%-40.40logger{39}){cyan} %clr([req=%X{requestId}]){magenta}%clr(%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}){yellow}%clr(%replace( [tx=%X{transactionId}]){' \[tx=\]', ''}){yellow} %msg%n</pattern>
       </encoder>
     </appender>
 
@@ -58,8 +58,8 @@
 
       <encoder>
         <charset>UTF-8</charset>
-        <!-- MDC context injecté conditionnellement entre le logger et le message -->
-        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36}%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}%replace( [tx=%X{transactionId}]){' \[tx=\]', ''} - %msg%n</pattern>
+        <!-- requestId toujours présent, bookletId/transactionId conditionnels -->
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} [req=%X{requestId}]%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}%replace( [tx=%X{transactionId}]){' \[tx=\]', ''} - %msg%n</pattern>
       </encoder>
 
       <!-- Filtre : INFO et au-dessus uniquement -->
@@ -86,8 +86,8 @@
 
       <encoder>
         <charset>UTF-8</charset>
-        <!-- MDC context + stack trace complète sur les erreurs -->
-        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36}%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}%replace( [tx=%X{transactionId}]){' \[tx=\]', ''} - %msg%n%ex{full}</pattern>
+        <!-- requestId toujours présent, bookletId/transactionId conditionnels, stack trace complète -->
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} [req=%X{requestId}]%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}%replace( [tx=%X{transactionId}]){' \[tx=\]', ''} - %msg%n%ex{full}</pattern>
       </encoder>
 
       <!-- Filtre strict : ERROR uniquement -->
@@ -136,7 +136,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
       <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
         <charset>UTF-8</charset>
-        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36}%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}%replace( [tx=%X{transactionId}]){' \[tx=\]', ''} - %msg%n</pattern>
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} [req=%X{requestId}]%replace( [booklet=%X{bookletId}]){' \[booklet=\]', ''}%replace( [tx=%X{transactionId}]){' \[tx=\]', ''} - %msg%n</pattern>
       </encoder>
     </appender>
 

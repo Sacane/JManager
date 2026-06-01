@@ -1,7 +1,6 @@
 package fr.sacane.jmanager.application.api
 
 import fr.sacane.jmanager.domain.models.InvalidCurrencyException
-import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
@@ -40,7 +39,7 @@ class ProblemDetailHandler {
         problemDetail.detail = detail
         problemDetail.setProperty("code", code)
         problemDetail.setProperty("errorKey", errorKey ?: ErrorCatalog.keyForCode(code))
-        MDC.get(MdcKeys.REQUEST_ID)?.let { problemDetail.setProperty("requestId", it) }
+        MDC.getCopyOfContextMap()?.forEach { (key, value) -> problemDetail.setProperty(key, value) }
         currentUserIdOrNull()?.let { problemDetail.setProperty("userId", it.toString()) }
         return ResponseEntity.status(status).body(problemDetail)
     }
