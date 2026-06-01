@@ -132,6 +132,10 @@ class InMemoryUserRepository (
         return inMemoryDatabase.users.values.find { it.user.username == pseudonym }
     }
 
+    override fun findByEmailWithEncodedPassword(email: String): UserWithPassword? {
+        return inMemoryDatabase.users.values.find { it.user.email == email }
+    }
+
     override fun create(user: UserWithPassword): User? {
         if(inMemoryDatabase.users.put(user.user.id, UserWithPassword(user.user, user.password)) == null) return null
         return user.user

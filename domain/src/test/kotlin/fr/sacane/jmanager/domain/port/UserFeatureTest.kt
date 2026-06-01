@@ -91,21 +91,21 @@ class UserFeatureTest {
     inner class LoginFeatureTest {
 
         @Test
-        fun `Login a user must return success`() {
+        fun `Login with correct email and password returns success`() {
             val user = UserFixture.aUser(username = "John", email = "john.doe@gmail.com")
             userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
 
-            val result = act { loginUseCase.handle(LoginCommand("John", "test")) }
+            val result = act { loginUseCase.handle(LoginCommand(email = "john.doe@gmail.com", userPassword = "test")) }
 
             then(result) { assertSuccess() }
         }
 
         @Test
-        fun `Login a user with incorrect password must lead to unauthorized user result`() {
-            val user = UserFixture.aUser(username = "John", email = "")
+        fun `Login with correct email but wrong password returns USER_UNAUTHORIZED`() {
+            val user = UserFixture.aUser(username = "John", email = "john.doe@gmail.com")
             userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
 
-            val result = act { loginUseCase.handle(LoginCommand("John", "wrong")) }
+            val result = act { loginUseCase.handle(LoginCommand(email = "john.doe@gmail.com", userPassword = "wrong")) }
 
             then(result) {
                 assertFailure(ResultState.USER_UNAUTHORIZED)
@@ -114,11 +114,18 @@ class UserFeatureTest {
         }
 
         @Test
-        fun `Login a user must persist refresh token in session manager`() {
+        fun `Login with unknown email returns NOT_FOUND`() {
+            val result = act { loginUseCase.handle(LoginCommand(email = "ghost@example.com", userPassword = "test")) }
+
+            then(result) { assertFailure(ResultState.NOT_FOUND) }
+        }
+
+        @Test
+        fun `Login persists refresh token in session manager`() {
             val user = UserFixture.aUser(username = "John", email = "john.doe@gmail.com")
             userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
 
-            val loginResult = act { loginUseCase.handle(LoginCommand("John", "test")) }
+            val loginResult = act { loginUseCase.handle(LoginCommand(email = "john.doe@gmail.com", userPassword = "test")) }
 
             then(loginResult) {
                 assertSuccess()
@@ -151,10 +158,10 @@ class UserFeatureTest {
 
         @Test
         fun `Logout must blacklist current refresh token`() {
-            val user = UserFixture.aUser(username = "John", email = "")
+            val user = UserFixture.aUser(username = "John", email = "john.doe@gmail.com")
             userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
 
-            val loginResult = loginUseCase.handle(LoginCommand("John", "test"))
+            val loginResult = loginUseCase.handle(LoginCommand(email = "john.doe@gmail.com", userPassword = "test"))
             val accessToken = loginResult.mapNotNullOrFailure()!!.token
             val activeSession = sessionFakeState.findSessionByToken(SessionToken(accessToken))
             val refreshToken = activeSession?.refreshToken
@@ -175,7 +182,7 @@ class UserFeatureTest {
             val user = UserFixture.aUser(username = "John", email = "john.doe@gmail.com")
             userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
 
-            val loginResult = loginUseCase.handle(LoginCommand("John", "test"))
+            val loginResult = loginUseCase.handle(LoginCommand(email = "john.doe@gmail.com", userPassword = "test"))
             val initialAccessToken = loginResult.mapNotNullOrFailure()!!.token
             val initialSession = sessionFakeState.findSessionByToken(SessionToken(initialAccessToken))
             val initialRefreshToken = initialSession?.refreshToken
@@ -388,7 +395,7 @@ class UserFeatureTest {
         @Test
         fun `Get settings for a connected user must return defaults`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
 
             val result = act { getUserSettingsUseCase.handle(GetUserSettingsQuery(userToken.user.id)) }
 
@@ -398,7 +405,7 @@ class UserFeatureTest {
         @Test
         fun `Update settings must persist projection window`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
 
             val result = act {
                 updateUserSettingsUseCase.handle(
@@ -412,7 +419,7 @@ class UserFeatureTest {
         @Test
         fun `Update settings with projection outside range must fail`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
 
             val result = act {
                 updateUserSettingsUseCase.handle(
@@ -429,7 +436,7 @@ class UserFeatureTest {
         @Test
         fun `Update settings with non owned booklet must fail`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand("John", "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
 
             val result = act {
                 updateUserSettingsUseCase.handle(

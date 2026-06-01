@@ -11,22 +11,22 @@ As a user, I want to authenticate so that I can securely access my personal fina
 
 ### Scenario: Successful login
 ```gherkin
-Given a registered user with pseudonym "alice" and a valid password
-When the user logs in with pseudonym "alice" and the correct password
+Given a registered user with email "alice@example.com" and a valid password
+When the user logs in with email "alice@example.com" and the correct password
 Then the system returns a UserToken containing an access token and a refresh token
 ```
 
 ### Scenario: Login with wrong password
 ```gherkin
-Given a registered user with pseudonym "alice"
-When the user logs in with pseudonym "alice" and an incorrect password
+Given a registered user with email "alice@example.com"
+When the user logs in with email "alice@example.com" and an incorrect password
 Then the system returns an unauthorized failure
 ```
 
-### Scenario: Login with unknown pseudonym
+### Scenario: Login with unknown email
 ```gherkin
-Given no user exists with pseudonym "unknown"
-When the user logs in with pseudonym "unknown"
+Given no user exists with email "ghost@example.com"
+When the user logs in with email "ghost@example.com"
 Then the system returns a not-found failure
 ```
 

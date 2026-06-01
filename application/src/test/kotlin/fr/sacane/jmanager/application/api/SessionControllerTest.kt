@@ -54,15 +54,54 @@ class SessionControllerTest(
     @Nested
     inner class LoginEndpointTest {
         @Test
-        fun `Login a user must return 200`() {
+        fun `Login with correct email and password returns 200`() {
             Given {
                 port(port)
                 header("Content-Type", "application/json")
-                body(objectMapper.writeValueAsString(UserPasswordDTO(user!!.username, "test")))
+                body(objectMapper.writeValueAsString(UserPasswordDTO(email = user!!.email!!, password = "test")))
             } When {
                 post("/api/user/auth")
             } Then {
                 statusCode(200)
+            }
+        }
+
+        @Test
+        fun `Login with unknown email returns 404`() {
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(UserPasswordDTO(email = "ghost@example.com", password = "test")))
+            } When {
+                post("/api/user/auth")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `Login with wrong password returns 403`() {
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(UserPasswordDTO(email = user!!.email!!, password = "wrong")))
+            } When {
+                post("/api/user/auth")
+            } Then {
+                statusCode(403)
+            }
+        }
+
+        @Test
+        fun `Login with malformed email returns 400`() {
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body("""{"email":"not-an-email","password":"test"}""")
+            } When {
+                post("/api/user/auth")
+            } Then {
+                statusCode(400)
             }
         }
 
@@ -520,9 +559,9 @@ class SessionControllerTest(
         fun `GET me for non-consented user must return consentRequired true`() {
             // Simulates an admin-created account — bypasses domain validation, no consent stored.
             // Password must be pre-hashed since UserRepositoryJpaAdapter stores it as-is.
-            userRepositoryJpaAdapter.register("no-consent-user", hasher.hash("pwd"), emptySet())
+            userRepositoryJpaAdapter.register("no-consent-user", hasher.hash("pwd"), emptySet(), email = "no-consent@example.com")
             var noConsentToken: String? = null
-            loginUseCase.handle(LoginCommand("no-consent-user", "pwd"))
+            loginUseCase.handle(LoginCommand(email = "no-consent@example.com", userPassword = "pwd"))
                 .onSuccess { noConsentToken = it.token }
 
             Given {

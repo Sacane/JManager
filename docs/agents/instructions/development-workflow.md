@@ -75,6 +75,17 @@ Actively search for duplication at three levels:
 - Verify that names express **intent**, not mechanics.
 - Check that responsibilities are correctly distributed across the layer's units.
 
+### 2.5 Out-of-Scope Findings — Backlog
+
+During any task, observations that are real problems but **outside the current scope** must be recorded so they are not lost. **Do not silently discard them.**
+
+- Create a file in `docs/backlog/{short-slug}.md` describing the finding.
+- Include: what was observed, where exactly (file + line), what the correct behaviour should be, and estimated impact.
+- Do **not** fix the issue inline — stay focused on the current task.
+- Mention the backlog entry in the chat so the developer is aware.
+
+> This applies to any layer and any type of finding: incorrect HTTP mapping, naming inconsistency, missing constraint, potential security gap, stale comment, etc.
+
 ---
 
 ## 3. Layer-by-Layer Application

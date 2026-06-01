@@ -3,7 +3,7 @@ import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 
 export interface UserAuth {
-  username: string
+  email: string
   password: string
 }
 interface User {

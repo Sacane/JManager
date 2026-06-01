@@ -2,6 +2,16 @@
 
 ## [En cours]
 
+## 2026-06-01
+
+- **Login par adresse e-mail (remplace le pseudonyme)**
+  - **Domain**: `LoginCommand.pseudonym` renommé en `email`. Nouvelle méthode `findByEmailWithEncodedPassword(email)` ajoutée au port `UserRepository`. `LoginService` résout désormais l'utilisateur par e-mail ; message d'erreur mis à jour. `findByPseudonymWithEncodedPassword` conservé pour le bootstrap admin (`CreateAdminIfNotExistsService`). 4 tests mis à jour, 1 nouveau scénario ("email inconnu → NOT_FOUND").
+  - **Infrastructure**: `findByEmail(email)` ajouté à `UserPostgresRepository` (requête dérivée Spring Data). `UserRepositoryJpaAdapter` implémente `findByEmailWithEncodedPassword` en une ligne via le mapper `toModelWithPasswords()` existant. Aucune migration Flyway requise — contrainte `UNIQUE` sur `email` présente depuis V1. `AuthenticatedUserTest` (infrastructure) corrigé pour utiliser le login par e-mail. 2 nouveaux tests d'intégration (Testcontainers).
+  - **Application**: `UserPasswordDTO.username` renommé en `email` avec contraintes `@Email` + `@Size(max=255)`. `SessionController` dispatche `LoginCommand(email=…)`. `AuthenticatedUserTest` (application), `AdminControllerTest` et `FeatureFlagControllerTest` mis à jour — les admins de test sont désormais créés avec un e-mail via l'adapter direct. 4 nouveaux tests REST (200/404/403/400).
+  - **Client**: `UserAuth.username` renommé en `email` dans `useAuth.ts`. Formulaire de login : champ `type="email"` avec `maxlength="255"` et icône `pi-envelope`, libellé "Adresse e-mail". Bouton submit désactivé sur `!email`. Stub `InputTextStub` dans les tests corrigé pour transmettre `maxlength`. 2 nouveaux tests composable, tests page mis à jour.
+  - **Backlog**: `docs/backlog/USER_UNAUTHORIZED-http-mapping.md` — `USER_UNAUTHORIZED` mappe sur HTTP 403 au lieu de 401 (hors scope, à traiter séparément).
+  - **Docs agents**: `development-workflow.md §2.5` et `CLAUDE.md §Backlog` — protocole formalisé pour noter les trouvailles hors-scope dans `docs/backlog/`.
+
 ## 2026-05-30
 
 - **Feature flag gate — USER_REGISTRATION (Decorator + Marker Interface pattern)**

@@ -43,8 +43,9 @@ data class RegisteredUserDTO(
 @Serializable
 data class UserPasswordDTO(
     @field:NotBlank
-    @field:Size(min = 1, max = 100)
-    val username: String,
+    @field:jakarta.validation.constraints.Email
+    @field:Size(max = 255)
+    val email: String,
     @field:NotBlank
     @field:Size(min = 1, max = 100)
     val password: String

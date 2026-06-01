@@ -1,10 +1,11 @@
 package fr.sacane.jmanager.application.api
 
 import fr.sacane.jmanager.domain.models.FeatureKey
-import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsCommand
-import fr.sacane.jmanager.domain.port.input.user.CreateAdminIfNotExistsUseCase
+import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.port.input.user.LoginCommand
 import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
+import fr.sacane.jmanager.domain.port.output.Hasher
+import fr.sacane.jmanager.infrastructure.spi.adapters.UserRepositoryJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.entity.FeatureFlagEntity
 import fr.sacane.jmanager.infrastructure.spi.repositories.FeatureFlagJpaRepository
 import io.restassured.module.kotlin.extensions.Given
@@ -27,7 +28,8 @@ class FeatureFlagControllerTest(
     @LocalServerPort private val port: Int,
     @Autowired private val featureFlagJpaRepository: FeatureFlagJpaRepository,
     @Autowired private val cacheManager: CacheManager,
-    @Autowired private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase,
+    @Autowired private val userRepositoryJpaAdapter: UserRepositoryJpaAdapter,
+    @Autowired private val hasher: Hasher,
     @Autowired private val loginUseCase: LoginUseCase,
 ) : AuthenticatedUserTest() {
 
@@ -47,10 +49,14 @@ class FeatureFlagControllerTest(
 
     @BeforeEach
     fun setupAdmin() {
-        createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin-flag", "admin123"))
-        loginUseCase.handle(LoginCommand("admin-flag", "admin123")).onSuccess {
-            adminToken = it.token
-        }
+        userRepositoryJpaAdapter.register(
+            username = "admin-flag",
+            password = hasher.hash("admin123"),
+            roles = setOf(Role.USER, Role.ADMIN),
+            email = "admin-flag@example.com",
+        )
+        loginUseCase.handle(LoginCommand(email = "admin-flag@example.com", userPassword = "admin123"))
+            .onSuccess { adminToken = it.token }
     }
 
     @Nested

@@ -2,9 +2,12 @@ package fr.sacane.jmanager.application.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.application.api.admin.AdminCreateUserRequest
+import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.input.user.*
+import fr.sacane.jmanager.infrastructure.spi.adapters.UserRepositoryJpaAdapter
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
+import fr.sacane.jmanager.domain.port.output.Hasher
 import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
@@ -27,18 +30,22 @@ class AdminControllerTest(
     @Autowired val userRepository: UserPostgresRepository,
     @Autowired private val registerUserUseCase: RegisterUserUseCase,
     @Autowired private val loginUseCase: LoginUseCase,
-    @Autowired private val createAdminIfNotExistsUseCase: CreateAdminIfNotExistsUseCase
+    @Autowired private val userRepositoryJpaAdapter: UserRepositoryJpaAdapter,
+    @Autowired private val hasher: Hasher,
 ) : AuthenticatedUserTest() {
 
     private lateinit var adminToken: String
 
     @BeforeEach
     fun setupAdmin() {
-        createAdminIfNotExistsUseCase.handle(CreateAdminIfNotExistsCommand("admin2", "admin123")).onSuccess {
-            loginUseCase.handle(LoginCommand("admin2", "admin123")).onSuccess { loginResult ->
-                adminToken = loginResult.token
-            }
-        }
+        userRepositoryJpaAdapter.register(
+            username = "admin2",
+            password = hasher.hash("admin123"),
+            roles = setOf(Role.USER, Role.ADMIN),
+            email = "admin2@example.com",
+        )
+        loginUseCase.handle(LoginCommand(email = "admin2@example.com", userPassword = "admin123"))
+            .onSuccess { loginResult -> adminToken = loginResult.token }
     }
 
     @AfterEach

@@ -71,8 +71,8 @@ class SessionController(
             LOGGER.warning("Rate limit exceeded for IP $clientIp")
             return ResponseEntity.status(429).build()
         }
-        val domainResult = commandBus.dispatch(LoginCommand(userDTO.username, userDTO.password))
-        LOGGER.info("Start authenticate user ${userDTO.username}...")
+        val domainResult = commandBus.dispatch(LoginCommand(email = userDTO.email, userPassword = userDTO.password))
+        LOGGER.info("Start authenticate user ${userDTO.email}...")
         if (domainResult.isFailure()) {
             loginRateLimiter.recordFailedAttempt(clientIp)
         } else {
