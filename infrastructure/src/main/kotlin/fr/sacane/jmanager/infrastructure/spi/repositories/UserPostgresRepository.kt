@@ -14,6 +14,8 @@ import java.util.UUID
 interface UserPostgresRepository: CrudRepository<UserResource, UUID> {
     fun findByUsername(username: String): UserResource?
 
+    fun findByEmail(email: String): UserResource?
+
     @Transactional
     fun deleteByUsername(username: String)
 

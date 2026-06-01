@@ -78,7 +78,7 @@ abstract class AuthenticatedUserTest {
                 privacyAcceptedAt = now,
             )
         ).onSuccess { user = it }
-        loginUseCase.handle(LoginCommand("test", "test")).onSuccess {
+        loginUseCase.handle(LoginCommand(email = "test@example.com", userPassword = "test")).onSuccess {
             token = it.token
             refreshToken = sessionManager.findSessionByToken(SessionToken(it.token))?.refreshToken?.toString()
                 ?: error("Refresh token should be initialized for authenticated test user")

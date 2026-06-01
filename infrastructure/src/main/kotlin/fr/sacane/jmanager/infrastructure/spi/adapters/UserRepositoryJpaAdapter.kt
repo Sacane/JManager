@@ -61,6 +61,9 @@ class UserRepositoryJpaAdapter (
         return user.toModelWithPasswords()
     }
 
+    override fun findByEmailWithEncodedPassword(email: String): UserWithPassword? =
+        userPostgresRepository.findByEmail(email)?.toModelWithPasswords()
+
     @Transactional
     override fun create(user: UserWithPassword): User?{
         return try{

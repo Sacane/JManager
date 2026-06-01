@@ -124,6 +124,24 @@ class UserRepositoryJpaAdapterTest(
     }
 
     @Test
+    fun `findByEmailWithEncodedPassword returns user with hashed password for a known email`() {
+        userRepositoryJpaAdapter.register("email-user", "hashed-pwd", emptySet(), email = "email-user@example.com")
+
+        val result = userRepositoryJpaAdapter.findByEmailWithEncodedPassword("email-user@example.com")
+
+        assertThat(result).isNotNull
+        assertThat(result!!.user.email).isEqualTo("email-user@example.com")
+        assertThat(result.password).isEqualTo("hashed-pwd")
+    }
+
+    @Test
+    fun `findByEmailWithEncodedPassword returns null for an unknown email`() {
+        val result = userRepositoryJpaAdapter.findByEmailWithEncodedPassword("ghost@example.com")
+
+        assertThat(result).isNull()
+    }
+
+    @Test
     fun `recordConsent should persist all three columns and be readable`() {
         val registered = userRepositoryJpaAdapter.register("consent-record-user", "pwd", emptySet())
         assertThat(registered).isNotNull
