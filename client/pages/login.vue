@@ -8,7 +8,7 @@ type Mode = 'login' | 'register'
 const mode = ref<Mode>('login')
 
 // --- Login state ---
-const userAuth = reactive({ username: '', password: '' })
+const userAuth = reactive({ email: '', password: '' })
 const hasFailedLogin = ref(false)
 const isLogging = ref(false)
 
@@ -115,17 +115,17 @@ async function registerUser() {
         <!-- Login form -->
         <form v-if="mode === 'login'" class="login-form" @submit.prevent="log">
           <div class="form-group">
-            <label for="username" class="form-label">
-              <i class="pi pi-user mr-2" />
-              Nom d'utilisateur
+            <label for="email" class="form-label">
+              <i class="pi pi-envelope mr-2" />
+              Adresse e-mail
             </label>
             <InputText
-              id="username"
-              v-model="userAuth.username"
-              type="text"
+              id="email"
+              v-model="userAuth.email"
+              type="email"
               class="w-full"
-              placeholder="Entrez votre nom d'utilisateur"
-              maxlength="100"
+              placeholder="Entrez votre adresse e-mail"
+              maxlength="255"
             />
           </div>
 
@@ -154,7 +154,7 @@ async function registerUser() {
             class="w-full submit-btn"
             size="large"
             :loading="isLogging"
-            :disabled="isLogging || !userAuth.username || !userAuth.password"
+            :disabled="isLogging || !userAuth.email || !userAuth.password"
           >
             <i class="pi pi-sign-in mr-2" />
             Se connecter

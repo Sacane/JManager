@@ -10,7 +10,7 @@ const InputTextStub = {
   name: 'InputText',
   props: ['modelValue', 'type', 'placeholder', 'maxlength', 'disabled'],
   emits: ['update:modelValue'],
-  template: '<input :type="type" :value="modelValue" :placeholder="placeholder" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+  template: '<input :type="type" :value="modelValue" :placeholder="placeholder" :maxlength="maxlength" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 }
 
 const ButtonStub = {
@@ -103,10 +103,17 @@ describe('pages/login', () => {
 
   // -------------------------------------------------------------------------
   describe('login mode (default)', () => {
-    it('renders the login form by default', () => {
+    it('renders the email and password fields by default', () => {
       const wrapper = mountPage()
-      expect(wrapper.find('#username').exists()).toBe(true)
+      expect(wrapper.find('#email').exists()).toBe(true)
       expect(wrapper.find('#password').exists()).toBe(true)
+    })
+
+    it('email field has type email and maxlength 255', () => {
+      const wrapper = mountPage()
+      const emailInput = wrapper.find('#email')
+      expect(emailInput.attributes('type')).toBe('email')
+      expect(emailInput.attributes('maxlength')).toBe('255')
     })
 
     it('does not render the registration form initially', () => {
@@ -126,13 +133,13 @@ describe('pages/login', () => {
       expect(wrapper.find('[data-testid="switch-to-register"]').exists()).toBe(true)
     })
 
-    it('calls login with username and password on form submit', async () => {
+    it('calls login with email and password on form submit', async () => {
       const wrapper = mountPage()
-      await wrapper.find('#username').setValue('alice')
+      await wrapper.find('#email').setValue('alice@example.com')
       await wrapper.find('#password').setValue('secret')
       await wrapper.find('form').trigger('submit')
       expect(loginMock).toHaveBeenCalledWith(
-        { username: 'alice', password: 'secret' },
+        { email: 'alice@example.com', password: 'secret' },
         expect.any(Function),
       )
     })
@@ -148,7 +155,7 @@ describe('pages/login', () => {
       const wrapper = mountPage()
       await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
       expect(wrapper.find('#reg-username').exists()).toBe(true)
-      expect(wrapper.find('#username').exists()).toBe(false)
+      expect(wrapper.find('#email').exists()).toBe(false)
     })
 
     it('shows all registration fields', async () => {
@@ -172,7 +179,7 @@ describe('pages/login', () => {
       const wrapper = mountPage()
       await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
       await wrapper.find('[data-testid="switch-to-login"]').trigger('click')
-      expect(wrapper.find('#username').exists()).toBe(true)
+      expect(wrapper.find('#email').exists()).toBe(true)
       expect(wrapper.find('#reg-username').exists()).toBe(false)
     })
   })
@@ -246,7 +253,7 @@ describe('pages/login', () => {
 
       await wrapper.find('form').trigger('submit')
 
-      expect(wrapper.find('#username').exists()).toBe(true)
+      expect(wrapper.find('#email').exists()).toBe(true)
       expect(toastSuccessMock).toHaveBeenCalledTimes(1)
     })
   })

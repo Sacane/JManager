@@ -159,6 +159,19 @@ Key rules:
 
 ---
 
+## Backlog
+
+Real problems spotted **out of scope** during a task go in `docs/backlog/{short-slug}.md`.
+
+- One file per finding. Include: observation, exact location, expected behaviour, impact.
+- **Never fix inline** — note it and stay focused on the current task.
+- Always mention the created file in chat so the developer is aware.
+- When the item is addressed, delete the file (no `.gitkeep` needed — the folder is self-cleaning).
+
+Full protocol: `docs/agents/instructions/development-workflow.md §2.5`
+
+---
+
 ## Documentation Cleanup (Post-Completion)
 
 After work is fully complete and merged:
