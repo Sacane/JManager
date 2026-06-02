@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.application.api
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.application.api.session.JwtCookieAuthenticationFilter
@@ -12,7 +13,6 @@ import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.access.AccessDeniedHandler
-import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
@@ -20,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityConfig(
     private val tokenGenerator: TokenGenerator,
     private val userDetailsService: UserRepository,
+    private val objectMapper: ObjectMapper,
 ) {
 
     @Bean
@@ -72,7 +73,7 @@ class SecurityConfig(
             }
             httpBasic { disable() }
             exceptionHandling {
-                authenticationEntryPoint = HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+                authenticationEntryPoint = ProblemDetailAuthenticationEntryPoint(objectMapper)
                 accessDeniedHandler = AccessDeniedHandler { _, response, _ -> response.status = HttpStatus.FORBIDDEN.value() }
             }
             addFilterBefore<UsernamePasswordAuthenticationFilter>(JwtCookieAuthenticationFilter(tokenGenerator, userDetailsService))

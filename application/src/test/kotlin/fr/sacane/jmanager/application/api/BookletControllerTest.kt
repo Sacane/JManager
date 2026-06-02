@@ -21,6 +21,7 @@ import io.restassured.module.kotlin.extensions.Given
 import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.Matchers.matchesPattern
 import java.time.YearMonth
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -31,6 +32,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.time.LocalDate
+
+private const val UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -65,7 +68,7 @@ class BookletControllerTest(
             }
         }
         @Test
-        fun `Should return invalid request 400 when trying to save more than 6 booklets`() {
+        fun `Should return invalid request 400 with requestId and userId when trying to save more than 6 booklets`() {
             val body = BookletBookingRequest("test7", 1000.toDouble(), "€")
             val booklets = mutableListOf<Booklet>()
             repeat(6) {
@@ -88,11 +91,13 @@ class BookletControllerTest(
                 post("/api/booklet")
             } Then {
                 statusCode(400)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", equalTo(user!!.id.value.toString()))
             }
         }
 
         @Test
-        fun `Should send 400 with bad currency request`() {
+        fun `Should send 400 with requestId and userId on bad currency request`() {
             val body = BookletBookingRequest("test", 1000.toDouble(), "ERR")
             Given {
                 port(port)
@@ -103,6 +108,8 @@ class BookletControllerTest(
                 post("/api/booklet")
             } Then {
                 statusCode(400)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", equalTo(user!!.id.value.toString()))
             }
         }
     }
@@ -136,7 +143,7 @@ class BookletControllerTest(
         }
 
         @Test
-        fun `Delete booklet from an ID of a booklet that does not exists should return 404`() {
+        fun `Delete booklet from an ID of a booklet that does not exists should return 404 with requestId and userId`() {
             Given {
                 port(port)
                 cookie("token", token)
@@ -145,6 +152,8 @@ class BookletControllerTest(
                 delete("/api/booklet/231")
             } Then {
                 statusCode(404)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", equalTo(user!!.id.value.toString()))
             }
         }
         @Test

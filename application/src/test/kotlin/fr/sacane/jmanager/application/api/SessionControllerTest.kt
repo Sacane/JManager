@@ -21,6 +21,8 @@ import io.restassured.module.kotlin.extensions.Then
 import io.restassured.module.kotlin.extensions.When
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
+import org.hamcrest.CoreMatchers.nullValue
+import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
@@ -31,6 +33,8 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.TestPropertySource
 import java.util.UUID
 
+
+private const val UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -76,6 +80,8 @@ class SessionControllerTest(
                 post("/api/user/auth")
             } Then {
                 statusCode(404)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", nullValue())
             }
         }
 
@@ -89,6 +95,8 @@ class SessionControllerTest(
                 post("/api/user/auth")
             } Then {
                 statusCode(403)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", nullValue())
             }
         }
 
@@ -102,6 +110,8 @@ class SessionControllerTest(
                 post("/api/user/auth")
             } Then {
                 statusCode(400)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", nullValue())
             }
         }
 
@@ -286,6 +296,8 @@ class SessionControllerTest(
                 put("/api/user/settings")
             } Then {
                 statusCode(400)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", equalTo(user!!.id.value.toString()))
             }
         }
 
@@ -357,6 +369,8 @@ class SessionControllerTest(
                 put("/api/user/settings")
             } Then {
                 statusCode(403)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", equalTo(user!!.id.value.toString()))
             }
         }
 
@@ -539,6 +553,8 @@ class SessionControllerTest(
                 post("/api/user/consent")
             } Then {
                 statusCode(401)
+                body("properties.requestId", matchesPattern(UUID_PATTERN))
+                body("properties.userId", nullValue())
             }
         }
 

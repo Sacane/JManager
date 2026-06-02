@@ -1,5 +1,6 @@
 import type { AxiosError } from 'axios'
 import axios from 'axios'
+import { extractErrorCode } from '~/utils/errorCodeMap'
 import useAuth from './useAuth'
 
 type RequestExecutor<T> = () => Promise<{ data: T }>
@@ -86,7 +87,7 @@ export default function useQuery() {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<any, any>
       const status = axiosError.response?.status
-      const domainCode = axiosError.response?.data?.code
+      const domainCode = extractErrorCode(axiosError.response?.data)
 
       if (domainCode === 1 && request) {
         const refreshed = await tryRefresh({ redirectOnFailure: false })

@@ -1,5 +1,5 @@
 import type { AxiosError } from 'axios'
-import { extractErrorCode, getErrorMessageByCode } from '~/utils/errorCodeMap'
+import { extractDiagnosticContext, getErrorMessageByCode } from '~/utils/errorCodeMap'
 
 export default function useJToast() {
   const toast = useToast()
@@ -29,14 +29,18 @@ export default function useJToast() {
       life: 3000,
     })
   }
-  function errorAxios(axiosError: AxiosError, title: string = 'Erreur') {
-    const code = extractErrorCode(axiosError.response?.data)
+  function errorAxios(axiosError: AxiosError, title?: string) {
+    const data = axiosError.response?.data
+    const { requestId, userId, code } = extractDiagnosticContext(data)
     const mappedError = getErrorMessageByCode(code)
     toast.add({
       severity: 'error',
-      summary: title === 'Erreur' ? mappedError.summary : title,
+      summary: title ?? mappedError.summary,
       detail: mappedError.detail,
-      life: 3000,
+      life: requestId ? 8000 : 3000,
+      requestId,
+      userId,
+      code,
     })
   }
   return { success, warn, error, errorAxios }

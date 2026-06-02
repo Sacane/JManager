@@ -23,4 +23,5 @@ interface MdcContextProvider {
 object MdcKeys {
     const val BOOKLET_ID = "bookletId"
     const val TRANSACTION_ID = "transactionId"
+    const val REQUEST_ID = "requestId"
 }

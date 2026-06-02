@@ -63,4 +63,73 @@ describe('composables/useJToast', () => {
       detail: 'Une erreur inconnue est survenue.',
     }))
   })
+
+  it('passes requestId and userId in toast message when present at root level', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: {
+        data: { code: 500, requestId: 'req-abc-123', userId: 'user-xyz-456' },
+      },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-abc-123',
+      userId: 'user-xyz-456',
+    }))
+  })
+
+  it('passes requestId and userId from nested properties (Spring ProblemDetail format)', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: {
+        data: {
+          properties: { code: 1001, requestId: 'req-from-props', userId: 'user-from-props' },
+        },
+      },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-from-props',
+      userId: 'user-from-props',
+    }))
+  })
+
+  it('uses 8000ms life when requestId is present', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: { data: { code: 500, requestId: 'req-abc' } },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ life: 8000 }))
+  })
+
+  it('uses 3000ms life when requestId is absent', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: { data: { code: 404 } },
+    } as any
+
+    errorAxios(axiosError)
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ life: 3000 }))
+  })
+
+  it('does not include requestId in toast message when absent', () => {
+    const { errorAxios } = useJToast()
+    const axiosError = {
+      response: { data: { code: 404 } },
+    } as any
+
+    errorAxios(axiosError)
+
+    const call = add.mock.calls[0][0]
+    expect(call.requestId).toBeUndefined()
+    expect(call.userId).toBeUndefined()
+  })
 })
