@@ -343,7 +343,7 @@ class CsvFileValidatorTest {
     }
 
     @Test
-    fun `should return error for column swap detection - label column contains number`() {
+    fun `should warn but not block when label column contains a numeric value`() {
         val rows = listOf(
             arrayOf("date", "label", "depense", "recette", "tag"),
             arrayOf("15-01-2025", "45.50", "Groceries", "", "")
@@ -353,9 +353,30 @@ class CsvFileValidatorTest {
 
         result.assertSuccess()
         result.onSuccess { report ->
+            // "Groceries" as amount is still an invalid format error
             assertTrue(report.hasErrors)
-            assertEquals(1, report.errors.size)
-            assertEquals(CsvReportType.POSSIBLE_COLUMN_SWAP, report.errors[0].type)
+            assertEquals(CsvReportType.INVALID_AMOUNT_FORMAT, report.errors[0].type)
+            // The numeric label itself must not generate a POSSIBLE_COLUMN_SWAP error
+            assertTrue(report.errors.none { it.type == CsvReportType.POSSIBLE_COLUMN_SWAP })
+        }
+    }
+
+    @Test
+    @DisplayName("Should accept a purely numeric label without error")
+    fun `should accept a numeric label without blocking the import`() {
+        val rows = listOf(
+            arrayOf("date", "label", "depense", "recette", "tag"),
+            arrayOf("15-01-2025", "123", "45.50", "", ""),
+            arrayOf("16-01-2025", "4501", "", "2500.00", "")
+        )
+
+        val result = validator.validate(rows, availableTags)
+
+        result.assertSuccess()
+        result.onSuccess { report ->
+            assertFalse(report.hasErrors, "A numeric label should not block import. Errors: ${report.errors.joinToString { it.message }}")
+            assertTrue(report.canImport)
+            assertEquals(2, report.validLines)
         }
     }
 
