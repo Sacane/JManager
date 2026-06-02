@@ -176,6 +176,9 @@ class CsvFileValidator {
         val labelError = validateLabelColumn(row[LABEL_COLUMN], lineNumber)
         if (labelError != null) return LineValidationResult(error = labelError)
 
+        val labelWarning = checkLabelAmountPattern(row[LABEL_COLUMN], lineNumber)
+        labelWarning?.let { warnings.add(it) }
+
         val amountResult = validateAmountColumns(row[DEPENSE_COLUMN], row[RECETTE_COLUMN], lineNumber, expectedDecimalSeparator, csvSeparator)
         if (amountResult.error != null) return LineValidationResult(error = amountResult.error)
         amountResult.warnings?.let { warnings.addAll(it) }
@@ -245,14 +248,6 @@ class CsvFileValidator {
             )
         }
 
-        if (CsvValidationUtils.looksLikeAmount(labelStr)) {
-            return CsvValidationIssue(
-                lineNumber = lineNumber,
-                type = CsvReportType.POSSIBLE_COLUMN_SWAP,
-                message = "Line $lineNumber: Label looks like a numeric value ($labelStr). Check if columns are swapped"
-            )
-        }
-
         if (labelStr.trim().length > 200) {
             return CsvValidationIssue(
                 lineNumber = lineNumber,
@@ -262,6 +257,15 @@ class CsvFileValidator {
         }
 
         return null
+    }
+
+    private fun checkLabelAmountPattern(labelStr: String, lineNumber: Int): CsvValidationIssue? {
+        if (!CsvValidationUtils.looksLikeAmount(labelStr)) return null
+        return CsvValidationIssue(
+            lineNumber = lineNumber,
+            type = CsvReportType.POSSIBLE_COLUMN_SWAP,
+            message = "Line $lineNumber: Label looks like a numeric value ($labelStr). Check if columns are swapped"
+        )
     }
 
     private data class AmountValidationResult(
