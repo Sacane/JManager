@@ -1,21 +1,34 @@
 package fr.sacane.jmanager.application.api
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.slf4j.MDC
 import org.springframework.http.HttpStatus
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.beans.TypeMismatchException
 import java.time.DateTimeException
+import java.util.UUID
 import org.mockito.Mockito
+import fr.sacane.jmanager.domain.models.InvalidCurrencyException
+import fr.sacane.jmanager.domain.models.Role
+import fr.sacane.jmanager.domain.port.input.MdcKeys
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import fr.sacane.jmanager.domain.utils.ResultState
-import fr.sacane.jmanager.domain.models.InvalidCurrencyException
 
 class ProblemDetailHandlerTest {
 
     private val handler = ProblemDetailHandler()
+
+    @AfterEach
+    fun cleanup() {
+        MDC.clear()
+        SecurityContextHolder.clearContext()
+    }
 
     @Test
     fun `handle missing parameter returns bad request with code 65`() {
@@ -240,6 +253,46 @@ class ProblemDetailHandlerTest {
         assertThat(pd.detail).isEqualTo("Access denied")
         assertThat(pd.properties!!["code"]).isEqualTo(777)
         assertThat(pd.properties!!["errorKey"]).isEqualTo("unknown.error")
+    }
+
+    @Test
+    fun `all MDC entries are included in error response`() {
+        val requestId = UUID.randomUUID().toString()
+        val bookletId = UUID.randomUUID().toString()
+        MDC.put(MdcKeys.REQUEST_ID, requestId)
+        MDC.put(MdcKeys.BOOKLET_ID, bookletId)
+
+        val resp = handler.handleNotFoundException(NotFoundException(404, "not found"))
+
+        assertThat(resp.body!!.properties!!["requestId"]).isEqualTo(requestId)
+        assertThat(resp.body!!.properties!!["bookletId"]).isEqualTo(bookletId)
+    }
+
+    @Test
+    fun `no MDC properties in response when MDC is empty`() {
+        val resp = handler.handleNotFoundException(NotFoundException(404, "not found"))
+
+        assertThat(resp.body!!.properties!!).doesNotContainKey("requestId")
+        assertThat(resp.body!!.properties!!).doesNotContainKey("bookletId")
+    }
+
+    @Test
+    fun `userId from SecurityContext is included when authenticated`() {
+        val userId = UUID.randomUUID()
+        val principal = JmanagerUserAuthDetail(id = userId, username = "alice", role = setOf(Role.USER), token = "tok")
+        val auth = UsernamePasswordAuthenticationToken(principal, null, emptyList())
+        SecurityContextHolder.getContext().authentication = auth
+
+        val resp = handler.handleNotFoundException(NotFoundException(404, "not found"))
+
+        assertThat(resp.body!!.properties!!["userId"]).isEqualTo(userId.toString())
+    }
+
+    @Test
+    fun `userId is absent when unauthenticated`() {
+        val resp = handler.handleNotFoundException(NotFoundException(404, "not found"))
+
+        assertThat(resp.body!!.properties!!).doesNotContainKey("userId")
     }
 
     @Test

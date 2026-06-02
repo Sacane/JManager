@@ -1,10 +1,20 @@
 type ProblemDetailProperties = {
   code?: number
+  requestId?: string
+  userId?: string
+}
+
+export type DiagnosticContext = {
+  requestId?: string
+  userId?: string
+  code?: number
 }
 
 export type ApiProblemDetail = {
   code?: number
   properties?: ProblemDetailProperties
+  requestId?: string
+  userId?: string
 }
 
 type ErrorMessage = {
@@ -58,6 +68,31 @@ export function extractErrorCode(payload: unknown): number | undefined {
   if (typeof problemDetail.properties?.code === 'number') return problemDetail.properties.code
 
   return undefined
+}
+
+export function extractDiagnosticContext(payload: unknown): DiagnosticContext {
+  if (!payload || typeof payload !== 'object') return {}
+  const pd = payload as ApiProblemDetail
+  const requestId = typeof pd.requestId === 'string'
+    ? pd.requestId
+    : typeof pd.properties?.requestId === 'string' ? pd.properties.requestId : undefined
+  const userId = typeof pd.userId === 'string'
+    ? pd.userId
+    : typeof pd.properties?.userId === 'string' ? pd.properties.userId : undefined
+  return {
+    requestId,
+    userId,
+    code: extractErrorCode(payload),
+  }
+}
+
+export function buildDiagnosticText(ctx: DiagnosticContext): string {
+  return [
+    ctx.requestId ? `requestId: ${ctx.requestId}` : null,
+    ctx.userId ? `userId: ${ctx.userId}` : null,
+    ctx.code !== undefined ? `code: ${ctx.code}` : null,
+    `date: ${new Date().toISOString()}`,
+  ].filter(Boolean).join('\n')
 }
 
 export function getErrorMessageByCode(code?: number): ErrorMessage {

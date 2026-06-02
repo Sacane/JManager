@@ -1,6 +1,7 @@
 import type { AxiosError } from 'axios'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
+import { extractErrorCode } from '~/utils/errorCodeMap'
 
 export interface UserAuth {
   email: string
@@ -142,7 +143,7 @@ export default function useAuth() {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<any, any>
       const httpStatus = axiosError.response?.status
-      const domainCode = axiosError.response?.data?.code
+      const domainCode = extractErrorCode(axiosError.response?.data)
       const legacyStatus = axiosError.response?.data?.status
 
       if (domainCode === 1 || legacyStatus === 307) {
