@@ -1,5 +1,10 @@
 ---
-description: Structured protocol to investigate, reproduce, locate, and fix a bug
+name: bug-investigation
+description: >-
+  Structured protocol to investigate, reproduce, locate, and fix a bug. Activate when the user reports
+  unexpected behaviour, a crash, an incorrect HTTP response, a wrong database state, or a failing test.
+  Trigger keywords: "bug", "ça plante", "comportement inattendu", "erreur", "ça marche pas",
+  "stacktrace", "exception", "regression", "test qui échoue".
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 

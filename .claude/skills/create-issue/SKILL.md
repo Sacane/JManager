@@ -1,5 +1,9 @@
 ---
-description: Create a structured feature issue — title, description, Gherkin scenarios, per module
+name: create-issue
+description: >-
+  Create a structured feature issue — title, description, Gherkin scenarios, per module — as a
+  markdown file from a functional request. Use when needing structured, testable issues.
+  Trigger keywords: "crée une issue", "create an issue", "feature issue", "Gherkin", "acceptance criteria".
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 
@@ -18,7 +22,8 @@ Create a well-structured feature issue as a markdown file with title, descriptio
    2. Identify specific success criteria for the module.
    3. Generate a concise title and structured description.
    4. Produce 1–N Gherkin scenarios covering happy path and edge cases.
-   5. Create the issue at `docs/features/{feature_name}/{module_name}_{issue_title}.md`.
+   5. Create the issue at `docs/features/{feature_name}/{module_name}_{issue_title}.md`, following the `template.md` structure.
+   6. **Validate** the generated file with `python validate_issue_format.py <issue_file>` (script in this skill folder). Fix any reported error before moving on.
 
 4. **Do not** include implementation details for a module that is not impacted.
 5. **Do not** include testing scenarios for a module that is not impacted. For example, if the request only impacts the domain module, the application and infrastructure issues should contain no implementation plan or testing scenarios.
@@ -30,12 +35,14 @@ Create a well-structured feature issue as a markdown file with title, descriptio
 
 ## Notes
 
-- This command is for manageable, focused issues. It should not span more than one module per file.
+- This skill is for manageable, focused issues. It should not span more than one module per file.
 - If the request is too broad, propose breaking it down per module before generating.
 
 ---
 
 ## Issue format
+
+See `template.md` for the exact skeleton and `reference.md` for the full section-by-section specification and naming convention. Summary:
 
 ```markdown
 # {Module} Module — {Feature Title}
@@ -91,3 +98,11 @@ Scenario: No contacts to export
   When executing a query to fetch contacts
   Then the system returns an empty export result
 ```
+
+---
+
+## Reference Files
+
+- `template.md` — Exact skeleton for the generated issue file. **Use when creating the file.**
+- `reference.md` — Output format specification (required sections) and file naming convention.
+- `validate_issue_format.py` — Validates issue structure and Gherkin syntax. **Run on every generated file.**

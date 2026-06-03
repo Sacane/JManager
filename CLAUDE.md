@@ -196,11 +196,11 @@ After work is fully complete and merged:
 
 ---
 
-## Slash Commands (Skills)
+## Skills
 
-Use `/command` when the task matches — they activate the full structured protocol:
+Use the skill when the task matches — they activate the full structured protocol:
 
-| When to use | Command |
+| When to use | Skill |
 |---|---|
 | Any frontend task under `client/` | `/dev-frontend` |
 | Bug, crash, unexpected behaviour, failing test | `/bug-investigation` |

@@ -1,5 +1,10 @@
 ---
-description: Expert frontend developer workflow — Nuxt 4, Vue 3, TypeScript, PrimeVue, UnoCSS
+name: dev-frontend
+description: >-
+  Expert frontend developer workflow — Nuxt 4, Vue 3, TypeScript, PrimeVue, UnoCSS. Activate for any
+  frontend task under `client/`: new features, component design, composables, layouts, routing, stores,
+  middlewares, design-system coherence, UnoCSS/PrimeVue styling, and frontend testing.
+applyTo: "client/**"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 

@@ -1,5 +1,14 @@
 ---
-description: Senior full-stack architect — feasibility analysis and solution investigation. Produces a report under docs/investigations/.
+name: solution-investigation
+description: >-
+  Senior full-stack architect — feasibility analysis and solution investigation. Produces a report under
+  docs/investigations/. Activate when the user asks whether something is possible, how to achieve a goal,
+  or wants the architectural impact of an idea before any implementation.
+  Trigger keywords: "is it possible to", "how can I", "I'd like to know if", "what would it take to",
+  "could we", "what's the best way to", "est-ce possible de", "comment faire pour", "quel impact".
+  DO NOT trigger for: known bugs (→ bug-investigation), backend cross-cutting concerns like
+  cache/security/transactions (→ technical-backend), refactoring planning (→ refactoring-plan),
+  creating actionable issues (→ create-issue).
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 

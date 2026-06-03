@@ -1,5 +1,11 @@
 ---
-description: Analyse code and generate a structured REFACTORING_PLAN.md, then execute step by step with developer validation
+name: refactoring-plan
+description: >-
+  Analyse code and generate a structured REFACTORING_PLAN.md, then execute step by step with developer
+  validation between each step. Use whenever the user mentions a refactoring to perform (hexagonal, CQRS,
+  use case split, extract service, clean architecture, package restructuring) and wants a plan before acting.
+  Trigger keywords: "prepare the refactoring", "make a plan", "what needs to change", "where do I start",
+  "analyse my code before refactoring", "prépare le refactoring", "fais un plan".
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 
@@ -30,10 +36,12 @@ If the full project structure is not provided, ask for the missing files before 
 
 Choose the refactoring strategy best suited to the **real state** of the project. Do not impose a dogmatic pattern if the project does not need it.
 
+Consult `references/patterns.md` to identify the relevant pattern(s) and their selection criteria.
+
 Selection criteria:
 - Interfaces with too many unrelated methods → Use Case Split
 - Domain depends on Spring/JPA → Hexagonal (isolate the domain)
-- Reads and writes mixed with complex logic → CQRS
+- Reads and writes mixed with complex logic → CQRS / Command-Query Bus
 - A class does everything → Extract Service
 - Layers are unclear → Package restructuring first, then the rest
 
@@ -43,7 +51,7 @@ Justify the chosen strategy in the plan.
 
 ## Phase 3 — Planning File Generation
 
-Produce the `REFACTORING_PLAN.md` at:
+Produce the `REFACTORING_PLAN.md` following the exact structure in `references/plan-template.md`, at:
 
 ```
 docs/refactoring/{refactoring-name}/REFACTORING_PLAN.md
@@ -74,3 +82,10 @@ Once the plan is validated by the developer, execute it step by step.
 > **CRITICAL**: The `REFACTORING_PLAN.md` file is the single source of truth for progress. Every time a step transitions, edit the file **in the same response** that marks the transition. Never let the plan fall behind.
 
 Never chain two steps without confirmation. Never modify something outside the plan without flagging it.
+
+---
+
+## Reference Files
+
+- `references/plan-template.md` — Exact template for the `REFACTORING_PLAN.md` to produce. **Read before generating the plan.**
+- `references/patterns.md` — Common refactoring patterns (Use Case Split, Hexagonal, Command/Query Bus, Extract Service, Package Restructuring) with selection criteria. **Read during Phase 2.**
