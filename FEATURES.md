@@ -654,6 +654,57 @@ Then the account is NOT deleted
 
 ---
 
+## Feature: Password Management
+
+As an authenticated user, I want to change my password so that I can keep my account secure.
+As an admin-created user, I am required to change my temporary password on first login before I can access the application.
+
+### Scenario: Voluntary password change
+
+```gherkin
+Given an authenticated user
+When the user submits their current password, a new password, and a matching confirmation
+Then the system verifies the current password, hashes the new one, and persists it
+```
+
+### Scenario: Voluntary change rejected with wrong current password
+
+```gherkin
+Given an authenticated user
+When the user submits an incorrect current password
+Then the system returns an unauthorized failure
+```
+
+### Scenario: Voluntary change rejected when new password matches the current one
+
+```gherkin
+Given an authenticated user
+When the user submits a new password identical to the current one
+Then the system returns a validation failure with code PASSWORD_UNCHANGED
+```
+
+### Scenario: Admin-created user must change password on first login
+
+```gherkin
+Given an admin creates a user account
+When the account is created
+Then the user has mustChangePassword = true
+And on first login the user is redirected to a mandatory password change page
+And cannot access any other route until the change is complete
+```
+
+### Scenario: Mandatory password change completes successfully
+
+```gherkin
+Given an authenticated admin-created user with mustChangePassword = true
+When the user submits a new password and a matching confirmation
+Then the system hashes and persists the new password
+And sets mustChangePassword = false
+And the user can access the application normally
+```
+
+---
+
 ## Feature: Administration
 
 As an administrator, I want to manage users so that I can oversee the platform.

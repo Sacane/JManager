@@ -1,0 +1,53 @@
+package fr.sacane.jmanager.domain.port.input.user
+
+import fr.sacane.jmanager.domain.hexadoc.DomainService
+import fr.sacane.jmanager.domain.hexadoc.Port
+import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.input.Command
+import fr.sacane.jmanager.domain.port.input.CommandHandler
+import fr.sacane.jmanager.domain.port.output.Hasher
+import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.utils.DomainError
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
+
+data class ForceChangePasswordCommand(
+    val userId: UserId,
+    val newPassword: String,
+    val confirmPassword: String,
+) : Command<Unit>
+
+@Port(Side.APPLICATION)
+interface ForceChangePasswordUseCase : CommandHandler<ForceChangePasswordCommand, Unit> {
+    override val commandClass get() = ForceChangePasswordCommand::class
+}
+
+@DomainService
+class ForceChangePasswordService(
+    private val userRepository: UserRepository,
+    private val hasher: Hasher,
+) : ForceChangePasswordUseCase {
+
+    override fun handle(command: ForceChangePasswordCommand): Result<Unit> {
+        if (command.newPassword != command.confirmPassword) {
+            return failure(
+                ResultState.PASSWORD_NOT_MATCH,
+                DomainError(ResultState.PASSWORD_NOT_MATCH.code, "domain.user.password.mismatch", "Les mots de passe ne correspondent pas"),
+            )
+        }
+
+        userRepository.findUserById(command.userId)
+            ?: return failure(
+                ResultState.USER_NOT_FOUND,
+                DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.password.user_not_found", "L'utilisateur est introuvable"),
+            )
+
+        return userRepository.updatePassword(
+            userId = command.userId,
+            hashedPassword = hasher.hash(command.newPassword),
+            clearMustChange = true,
+        )
+    }
+}

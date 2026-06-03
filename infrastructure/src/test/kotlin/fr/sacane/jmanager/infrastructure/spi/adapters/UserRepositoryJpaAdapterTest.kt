@@ -168,4 +168,101 @@ class UserRepositoryJpaAdapterTest(
 
         assertThat(result.isFailure()).isTrue()
     }
+
+    @Test
+    fun `register with mustChangePassword true persists the flag`() {
+        val registered = userRepositoryJpaAdapter.register(
+            username = "must-change-user",
+            password = "temp-pwd",
+            roles = emptySet(),
+            email = "must-change@example.com",
+            mustChangePassword = true,
+        )
+
+        assertThat(registered).isNotNull
+        assertThat(registered!!.mustChangePassword).isTrue()
+    }
+
+    @Test
+    fun `register without mustChangePassword defaults to false`() {
+        val registered = userRepositoryJpaAdapter.register("no-force-user", "pwd", emptySet())
+
+        assertThat(registered).isNotNull
+        assertThat(registered!!.mustChangePassword).isFalse()
+    }
+
+    @Test
+    fun `findByIdWithEncodedPassword returns user with password for a known id`() {
+        val registered = userRepositoryJpaAdapter.register(
+            username = "by-id-user",
+            password = "hashed-pwd",
+            roles = emptySet(),
+        )
+        assertThat(registered).isNotNull
+
+        val result = userRepositoryJpaAdapter.findByIdWithEncodedPassword(registered!!.id)
+
+        assertThat(result).isNotNull
+        assertThat(result!!.user.username).isEqualTo("by-id-user")
+        assertThat(result.password).isEqualTo("hashed-pwd")
+    }
+
+    @Test
+    fun `findByIdWithEncodedPassword returns null for an unknown id`() {
+        val result = userRepositoryJpaAdapter.findByIdWithEncodedPassword(UserId(UUID.randomUUID()))
+
+        assertThat(result).isNull()
+    }
+
+    @Test
+    fun `updatePassword persists the new hashed password`() {
+        val registered = userRepositoryJpaAdapter.register("pwd-update-user", "old-pwd", emptySet())
+        assertThat(registered).isNotNull
+
+        val result = userRepositoryJpaAdapter.updatePassword(registered!!.id, "new-pwd", clearMustChange = false)
+
+        assertThat(result.isSuccess()).isTrue()
+        val stored = userRepositoryJpaAdapter.findByIdWithEncodedPassword(registered.id)
+        assertThat(stored!!.password).isEqualTo("new-pwd")
+    }
+
+    @Test
+    fun `updatePassword with clearMustChange true resets the mustChangePassword flag`() {
+        val registered = userRepositoryJpaAdapter.register(
+            username = "force-pwd-user",
+            password = "temp-pwd",
+            roles = emptySet(),
+            mustChangePassword = true,
+        )
+        assertThat(registered).isNotNull
+        assertThat(registered!!.mustChangePassword).isTrue()
+
+        userRepositoryJpaAdapter.updatePassword(registered.id, "new-pwd", clearMustChange = true)
+
+        val refreshed = userRepositoryJpaAdapter.findUserById(registered.id)
+        assertThat(refreshed!!.mustChangePassword).isFalse()
+    }
+
+    @Test
+    fun `updatePassword with clearMustChange false leaves mustChangePassword unchanged`() {
+        val registered = userRepositoryJpaAdapter.register(
+            username = "keep-flag-user",
+            password = "temp-pwd",
+            roles = emptySet(),
+            mustChangePassword = true,
+        )
+        assertThat(registered).isNotNull
+
+        userRepositoryJpaAdapter.updatePassword(registered!!.id, "new-pwd", clearMustChange = false)
+
+        val refreshed = userRepositoryJpaAdapter.findUserById(registered.id)
+        assertThat(refreshed!!.mustChangePassword).isTrue()
+    }
+
+    @Test
+    fun `updatePassword on unknown user returns USER_NOT_FOUND`() {
+        val result = userRepositoryJpaAdapter.updatePassword(UserId(UUID.randomUUID()), "new-pwd", clearMustChange = false)
+
+        assertThat(result.isFailure()).isTrue()
+    }
 }

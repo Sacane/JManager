@@ -33,6 +33,17 @@ vi.mock('~/composables/useUserSettings', () => ({
   }),
 }))
 
+vi.mock('~/composables/useChangePassword', () => ({
+  default: () => ({
+    currentPassword: ref(''),
+    newPassword: ref(''),
+    confirmPassword: ref(''),
+    confirmPasswordError: ref(null),
+    isSubmitting: ref(false),
+    changePassword: vi.fn(),
+  }),
+}))
+
 function flushPromises() {
   return new Promise(resolve => setTimeout(resolve, 0))
 }
@@ -54,9 +65,11 @@ function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
     canSubmit: { value: false },
     isSubmitting: { value: false },
     tosVersion: '1.0',
+    mustChangePassword: ref(false),
     checkConsentStatus: vi.fn(),
     submitConsent: vi.fn(),
     clearConsentCache: vi.fn(),
+    clearMustChangePassword: vi.fn(),
   }))
   vi.stubGlobal('useEmailVerification', () => ({
     verifyResult: ref(null),
@@ -102,6 +115,28 @@ describe('pages/settings/index', () => {
     const wrapper = mountSettingsPage([], false)
     await flushPromises()
     expect(wrapper.find('[data-test="email-display"]').text()).toContain('user@example.com')
+  })
+
+  it('always shows the change password section', async () => {
+    const wrapper = mountSettingsPage()
+    expect(wrapper.find('[data-test="change-password-section"]').exists()).toBe(true)
+  })
+
+  it('renders all three password fields in the change password section', async () => {
+    const wrapper = mountSettingsPage()
+    expect(wrapper.find('[data-test="current-password-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="new-password-input"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="confirm-password-input"]').exists()).toBe(true)
+  })
+
+  it('renders the change password button', async () => {
+    const wrapper = mountSettingsPage()
+    expect(wrapper.find('[data-test="change-password-btn"]').exists()).toBe(true)
+  })
+
+  it('does not show confirm password error when null', async () => {
+    const wrapper = mountSettingsPage()
+    expect(wrapper.find('[data-test="confirm-password-error"]').exists()).toBe(false)
   })
 
   it('submits updated settings payload', async () => {

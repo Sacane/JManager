@@ -86,6 +86,7 @@ interface UserRepository {
         tosVersion: String? = null,
         privacyAcceptedAt: LocalDateTime? = null,
         emailVerified: Boolean = false,
+        mustChangePassword: Boolean = false,
     ): User?
 
     /**
@@ -138,4 +139,25 @@ interface UserRepository {
      * @return success or a failure result if the user was not found
      */
     fun recordConsent(userId: UserId, consent: ConsentRecord): Result<Unit>
+
+    /**
+     * Find a user by domain identifier and include encoded password information.
+     * Used by password-change flows that must verify the current credential.
+     *
+     * @param userId domain UserId
+     * @return UserWithPassword or null if not found
+     */
+    fun findByIdWithEncodedPassword(userId: UserId): UserWithPassword?
+
+    /**
+     * Persist a new hashed password for the user.
+     * When [clearMustChange] is true the mustChangePassword flag is also set to false,
+     * marking the mandatory first-login change as fulfilled.
+     *
+     * @param userId domain UserId
+     * @param hashedPassword BCrypt-hashed new password
+     * @param clearMustChange whether to clear the mustChangePassword flag
+     * @return success or USER_NOT_FOUND if the user does not exist
+     */
+    fun updatePassword(userId: UserId, hashedPassword: String, clearMustChange: Boolean): Result<Unit>
 }

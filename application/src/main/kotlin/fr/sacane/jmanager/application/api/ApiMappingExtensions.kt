@@ -86,7 +86,8 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.TAG_SHOULD_NOT_BE_DEFAULT,
     ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR,
     ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
-    ResultState.TAG_PARENT_IS_SUBTAG -> throw InvalidRequestException(
+    ResultState.TAG_PARENT_IS_SUBTAG,
+    ResultState.PASSWORD_UNCHANGED -> throw InvalidRequestException(
         this.errorInfo?.code ?: this.status.code,
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,

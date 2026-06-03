@@ -7,7 +7,9 @@ import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.models.SessionToken
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.port.input.user.ChangePasswordCommand
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountCommand
+import fr.sacane.jmanager.domain.port.input.user.ForceChangePasswordCommand
 import fr.sacane.jmanager.domain.port.input.user.GetUserSettingsQuery
 import fr.sacane.jmanager.domain.port.input.user.GetUserEmailVerifiedQuery
 import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedQuery
@@ -33,14 +35,17 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDateTime
 import java.util.UUID
@@ -137,14 +142,49 @@ class SessionController(
     /**
      * Returns the current user's consent status.
      * `consentRequired = true` means the user was admin-created and has not yet gone through the consent gate.
+     * `mustChangePassword = true` means the user must change their temporary password before proceeding.
      */
     @GetMapping(path = ["/me"])
     fun getUserStatus(): ResponseEntity<UserStatusDTO> {
         val userId = UserId(currentUser.id)
         val consented = queryBus.dispatch(HasUserConsentedQuery(userId)).mapNotNullOrFailure() ?: true
         return queryBus.dispatch(GetUserEmailVerifiedQuery(userId))
-            .map { status -> UserStatusDTO(consentRequired = !consented, emailVerified = status.emailVerified, email = status.email) }
+            .map { status ->
+                UserStatusDTO(
+                    consentRequired = !consented,
+                    emailVerified = status.emailVerified,
+                    email = status.email,
+                    mustChangePassword = status.mustChangePassword,
+                )
+            }
             .toHttpResponse()
+    }
+
+    @PatchMapping(path = ["/password"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun changePassword(@Valid @RequestBody dto: ChangePasswordDTO): ResponseEntity<Void> {
+        commandBus.dispatch(
+            ChangePasswordCommand(
+                userId = UserId(currentUser.id),
+                currentPassword = dto.currentPassword,
+                newPassword = dto.newPassword,
+                confirmPassword = dto.confirmPassword,
+            )
+        ).toHttpResponse()
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping(path = ["/password/force"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun forceChangePassword(@Valid @RequestBody dto: ForceChangePasswordDTO): ResponseEntity<Void> {
+        commandBus.dispatch(
+            ForceChangePasswordCommand(
+                userId = UserId(currentUser.id),
+                newPassword = dto.newPassword,
+                confirmPassword = dto.confirmPassword,
+            )
+        ).toHttpResponse()
+        return ResponseEntity.noContent().build()
     }
 
     @PostMapping(path = ["/auth/refresh/{userId}"])

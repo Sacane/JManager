@@ -148,6 +148,7 @@ fun UserResource.toModel()
     subscriptionPlan = subscriptionPlan,
     consent = toConsentRecord(),
     emailVerified = emailVerified,
+    mustChangePassword = mustChangePassword,
 )
 fun UserResource.toModelWithSimpleBooklets()
         : User = User(
@@ -176,6 +177,7 @@ fun UserResource.toModelWithPasswords() : UserWithPassword =
             projectionWindowDays = projectionWindowDays,
             subscriptionPlan = subscriptionPlan,
             emailVerified = emailVerified,
+            mustChangePassword = mustChangePassword,
         ),
         password,
         roles,

@@ -43,4 +43,8 @@ export const LOADING_SCOPES = {
     verify: 'emailVerification.verify',
     resend: 'emailVerification.resend',
   },
+  password: {
+    change: 'password.change',
+    forceChange: 'password.forceChange',
+  },
 } as const

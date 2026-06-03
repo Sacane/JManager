@@ -13,7 +13,7 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
 import fr.sacane.jmanager.domain.utils.success
 
-data class EmailVerifiedStatus(val emailVerified: Boolean, val email: String?)
+data class EmailVerifiedStatus(val emailVerified: Boolean, val email: String?, val mustChangePassword: Boolean = false)
 
 data class GetUserEmailVerifiedQuery(val userId: UserId) : Query<EmailVerifiedStatus>
 
@@ -33,6 +33,6 @@ class GetUserEmailVerifiedService(
                 ResultState.USER_NOT_FOUND,
                 DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.email_verification.user_not_found", "L'utilisateur est introuvable"),
             )
-        return success(EmailVerifiedStatus(emailVerified = user.emailVerified, email = user.email))
+        return success(EmailVerifiedStatus(emailVerified = user.emailVerified, email = user.email, mustChangePassword = user.mustChangePassword))
     }
 }

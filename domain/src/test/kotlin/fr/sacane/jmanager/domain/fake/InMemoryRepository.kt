@@ -141,11 +141,11 @@ class InMemoryUserRepository (
         return user.user
     }
 
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?, emailVerified: Boolean): User {
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?, emailVerified: Boolean, mustChangePassword: Boolean): User {
         val consent = if (tosAcceptedAt != null && privacyAcceptedAt != null) {
             ConsentRecord(tosAcceptedAt, tosVersion, privacyAcceptedAt)
         } else null
-        val element = User(id = UserId(UUID.randomUUID()), username = username, email = email, roles = roles, subscriptionPlan = subscriptionPlan, consent = consent, emailVerified = emailVerified)
+        val element = User(id = UserId(UUID.randomUUID()), username = username, email = email, roles = roles, subscriptionPlan = subscriptionPlan, consent = consent, emailVerified = emailVerified, mustChangePassword = mustChangePassword)
         inMemoryDatabase.users[element.id] = UserWithPassword(element, password, roles)
         return element
     }
@@ -182,6 +182,17 @@ class InMemoryUserRepository (
     override fun recordConsent(userId: UserId, consent: ConsentRecord): Result<Unit> {
         val userWithPassword = inMemoryDatabase.users[userId] ?: return Result(ResultState.USER_NOT_FOUND)
         userWithPassword.user.consent = consent
+        return success(Unit)
+    }
+
+    override fun findByIdWithEncodedPassword(userId: UserId): UserWithPassword? {
+        return inMemoryDatabase.users[userId]
+    }
+
+    override fun updatePassword(userId: UserId, hashedPassword: String, clearMustChange: Boolean): Result<Unit> {
+        val entry = inMemoryDatabase.users[userId] ?: return Result(ResultState.USER_NOT_FOUND)
+        if (clearMustChange) entry.user.mustChangePassword = false
+        inMemoryDatabase.users[userId] = UserWithPassword(entry.user, hashedPassword, entry.roles)
         return success(Unit)
     }
 

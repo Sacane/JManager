@@ -21,7 +21,9 @@ import fr.sacane.jmanager.domain.port.input.transaction.*
 import fr.sacane.jmanager.domain.port.input.user.*
 import fr.sacane.jmanager.domain.port.input.admin.AdminCreateUserService
 import fr.sacane.jmanager.domain.port.input.admin.AdminCreateUserUseCase
+import fr.sacane.jmanager.domain.port.input.user.ChangePasswordService
 import fr.sacane.jmanager.domain.port.input.user.DeleteAccountService
+import fr.sacane.jmanager.domain.port.input.user.ForceChangePasswordService
 import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
 import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
@@ -144,6 +146,8 @@ class FakeFactory {
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)
+    val changePasswordService = ChangePasswordService(userRepository, DefaultHasher)
+    val forceChangePasswordService = ForceChangePasswordService(userRepository, DefaultHasher)
     val getUserEmailVerifiedService = GetUserEmailVerifiedService(userRepository)
     private val inMemoryFeatureFlagRepository = InMemoryFeatureFlagRepository()
     val isFeatureEnabledService = IsFeatureEnabledService(inMemoryFeatureFlagRepository)

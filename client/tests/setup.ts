@@ -114,9 +114,11 @@ vi.stubGlobal('useConsent', vi.fn(() => ({
   consentChecked: ref(false),
   emailVerified: ref(true),
   userEmail: ref(null),
+  mustChangePassword: ref(false),
   checkConsentStatus: vi.fn().mockResolvedValue(false),
   submitConsent: vi.fn(),
   clearConsentCache: vi.fn(),
+  clearMustChangePassword: vi.fn(),
 })))
 
 vi.stubGlobal('useEmailVerification', vi.fn(() => ({
@@ -158,7 +160,25 @@ vi.stubGlobal('useQuery', vi.fn(() => ({
   get: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
+  patch: vi.fn(),
   delete: vi.fn(),
+})))
+
+vi.stubGlobal('useForceChangePassword', vi.fn(() => ({
+  newPassword: ref(''),
+  confirmPassword: ref(''),
+  passwordError: ref(null),
+  isSubmitting: ref(false),
+  submit: vi.fn(),
+})))
+
+vi.stubGlobal('useChangePassword', vi.fn(() => ({
+  currentPassword: ref(''),
+  newPassword: ref(''),
+  confirmPassword: ref(''),
+  confirmPasswordError: ref(null),
+  isSubmitting: ref(false),
+  changePassword: vi.fn(),
 })))
 
 config.global.stubs = {
