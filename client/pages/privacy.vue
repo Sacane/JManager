@@ -15,7 +15,7 @@ definePageMeta({ layout: 'legal' })
         Politique de Confidentialité
       </h1>
       <p class="body-sm">
-        Version 1.0 &mdash; En vigueur à compter du 28 mai 2026
+        Version 1.1 &mdash; En vigueur à compter du 4 juin 2026
       </p>
     </header>
 
@@ -187,8 +187,14 @@ definePageMeta({ layout: 'legal' })
       <ul class="list body-base flex flex-col gap-1 pl-5">
         <li>L'équipe technique de JManager dans le cadre de la maintenance et du support.</li>
         <li>
-          Le prestataire d'hébergement <strong>Pulseheberge</strong>, lié par des clauses contractuelles
+          Le prestataire d'hébergement <strong>PulseHeberg</strong>, lié par des clauses contractuelles
           conformes au RGPD.
+        </li>
+        <li>
+          Le prestataire d'envoi d'e-mails <strong>Resend</strong> (Resend Inc., États-Unis), qui reçoit
+          uniquement les adresses e-mail nécessaires à l'acheminement des messages transactionnels
+          (ex. : e-mail de bienvenue). Un accord de traitement des données (DPA) incluant les
+          Clauses Contractuelles Types (CCT) de la Commission européenne est en place.
         </li>
       </ul>
     </section>
@@ -199,8 +205,14 @@ definePageMeta({ layout: 'legal' })
         5. Transferts hors Union européenne
       </h2>
       <p class="body-base">
-        Les données sont hébergées sur des serveurs situés dans l'Union européenne.
-        Aucun transfert vers des pays tiers n'est effectué.
+        Les données sont hébergées sur des serveurs situés dans l'Union européenne (hébergeur : PulseHeberg).
+      </p>
+      <p class="body-base">
+        L'envoi des e-mails transactionnels implique la transmission de l'adresse e-mail du destinataire
+        à <strong>Resend Inc.</strong> (États-Unis). Ce transfert est encadré par les
+        <strong>Clauses Contractuelles Types (CCT)</strong> approuvées par la Commission européenne
+        (Art. 46 RGPD), incluses dans le DPA signé avec Resend. Les données traitées par Resend
+        sont hébergées sur des serveurs AWS situés dans l'Union européenne (région eu-west-1, Irlande).
       </p>
     </section>
 

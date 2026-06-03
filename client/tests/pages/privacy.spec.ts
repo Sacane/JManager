@@ -39,6 +39,12 @@ describe('pages/privacy', () => {
     expect(wrapper.text()).toContain('CNIL')
   })
 
+  it('mentions Resend as an email sub-processor', () => {
+    const wrapper = mountPage()
+    expect(wrapper.text()).toContain('Resend')
+    expect(wrapper.text()).toContain('Clauses Contractuelles Types')
+  })
+
   it('uses the legal layout', () => {
     // definePageMeta is stubbed — just verify the page mounts without errors
     expect(mountPage().exists()).toBe(true)
