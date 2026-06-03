@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import useChangePassword from '~/composables/useChangePassword'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
@@ -108,6 +109,15 @@ async function saveUserSettings() {
   }, saveSettingsScope)
 }
 
+const {
+  currentPassword,
+  newPassword: newPasswordChange,
+  confirmPassword: confirmPasswordChange,
+  confirmPasswordError,
+  isSubmitting: isChangingPassword,
+  changePassword,
+} = useChangePassword()
+
 onMounted(() => {
   loadUserSettings()
 })
@@ -197,6 +207,66 @@ onMounted(() => {
         </div>
       </section>
     </div>
+
+      <section class="settings-card" data-test="change-password-section">
+        <h2>Changer le mot de passe</h2>
+        <p class="settings-help">
+          Modifiez votre mot de passe de connexion.
+        </p>
+
+        <div class="change-password-form">
+          <div class="change-password-field">
+            <label for="current-password" class="settings-label">Mot de passe actuel</label>
+            <input
+              id="current-password"
+              v-model="currentPassword"
+              type="password"
+              class="settings-input"
+              placeholder="Mot de passe actuel"
+              maxlength="100"
+              data-test="current-password-input"
+            >
+          </div>
+
+          <div class="change-password-field">
+            <label for="new-password-settings" class="settings-label">Nouveau mot de passe</label>
+            <input
+              id="new-password-settings"
+              v-model="newPasswordChange"
+              type="password"
+              class="settings-input"
+              placeholder="Nouveau mot de passe"
+              maxlength="100"
+              data-test="new-password-input"
+            >
+          </div>
+
+          <div class="change-password-field">
+            <label for="confirm-password-settings" class="settings-label">Confirmer le mot de passe</label>
+            <input
+              id="confirm-password-settings"
+              v-model="confirmPasswordChange"
+              type="password"
+              class="settings-input"
+              placeholder="Confirmer le mot de passe"
+              maxlength="100"
+              data-test="confirm-password-input"
+            >
+            <p v-if="confirmPasswordError" class="change-password-error" data-test="confirm-password-error">
+              {{ confirmPasswordError }}
+            </p>
+          </div>
+
+          <button
+            class="save-btn"
+            data-test="change-password-btn"
+            :disabled="isChangingPassword"
+            @click="changePassword"
+          >
+            {{ isChangingPassword ? 'Modification...' : 'Changer le mot de passe' }}
+          </button>
+        </div>
+      </section>
 
       <section v-if="!emailVerified" class="settings-card email-verification-card" data-test="email-verification-section">
         <div class="email-verification-header">
@@ -407,6 +477,24 @@ onMounted(() => {
 .save-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.change-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.change-password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.change-password-error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #ef4444;
 }
 
 .email-verification-card {

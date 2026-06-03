@@ -8,6 +8,8 @@ import fr.sacane.jmanager.domain.port.input.user.LoginUseCase
 import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.application.api.setup.BookletStateTestAdapter
 import fr.sacane.jmanager.application.api.session.BookletMonthlyCycleUpdateDTO
+import fr.sacane.jmanager.application.api.session.ChangePasswordDTO
+import fr.sacane.jmanager.application.api.session.ForceChangePasswordDTO
 import fr.sacane.jmanager.application.api.session.RecordConsentDTO
 import fr.sacane.jmanager.application.api.session.UserPasswordDTO
 import fr.sacane.jmanager.application.api.session.UserSettingsUpdateDTO
@@ -508,6 +510,184 @@ class SessionControllerTest(
                 post("/api/user/create")
             } Then {
                 statusCode(401)
+            }
+        }
+    }
+
+    @Nested
+    inner class PasswordChangeEndpointTest {
+
+        @Test
+        fun `PATCH password with correct current password must return 204`() {
+            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "newPass123", confirmPassword = "newPass123")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/user/password")
+            } Then {
+                statusCode(204)
+            }
+        }
+
+        @Test
+        fun `PATCH password with wrong current password must return 403`() {
+            val body = ChangePasswordDTO(currentPassword = "wrongPass", newPassword = "newPass123", confirmPassword = "newPass123")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/user/password")
+            } Then {
+                statusCode(403)
+            }
+        }
+
+        @Test
+        fun `PATCH password with mismatched new passwords must return 401`() {
+            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "newPass123", confirmPassword = "different")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/user/password")
+            } Then {
+                statusCode(401)
+            }
+        }
+
+        @Test
+        fun `PATCH password with same password as current must return 400`() {
+            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "test", confirmPassword = "test")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/user/password")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `PATCH password without authentication must return 401`() {
+            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "newPass123", confirmPassword = "newPass123")
+
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                patch("/api/user/password")
+            } Then {
+                statusCode(401)
+            }
+        }
+
+        @Test
+        fun `POST password force with matching passwords must return 204`() {
+            userRepositoryJpaAdapter.register(
+                username = "force-user",
+                password = hasher.hash("tempPass"),
+                roles = emptySet(),
+                email = "force-user@example.com",
+                mustChangePassword = true,
+            )
+            var forceToken: String? = null
+            loginUseCase.handle(LoginCommand(email = "force-user@example.com", userPassword = "tempPass"))
+                .onSuccess { forceToken = it.token }
+
+            val body = ForceChangePasswordDTO(newPassword = "newPass123", confirmPassword = "newPass123")
+
+            Given {
+                port(port)
+                cookie("token", forceToken!!)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/user/password/force")
+            } Then {
+                statusCode(204)
+            }
+        }
+
+        @Test
+        fun `POST password force with mismatched passwords must return 401`() {
+            val body = ForceChangePasswordDTO(newPassword = "newPass123", confirmPassword = "different")
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/user/password/force")
+            } Then {
+                statusCode(401)
+            }
+        }
+
+        @Test
+        fun `POST password force without authentication must return 401`() {
+            val body = ForceChangePasswordDTO(newPassword = "newPass123", confirmPassword = "newPass123")
+
+            Given {
+                port(port)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/user/password/force")
+            } Then {
+                statusCode(401)
+            }
+        }
+
+        @Test
+        fun `GET me for admin-created user must return mustChangePassword true`() {
+            userRepositoryJpaAdapter.register(
+                username = "must-change-api-user",
+                password = hasher.hash("tempPass"),
+                roles = emptySet(),
+                email = "must-change-api@example.com",
+                mustChangePassword = true,
+            )
+            var mustChangeToken: String? = null
+            loginUseCase.handle(LoginCommand(email = "must-change-api@example.com", userPassword = "tempPass"))
+                .onSuccess { mustChangeToken = it.token }
+
+            Given {
+                port(port)
+                cookie("token", mustChangeToken!!)
+            } When {
+                get("/api/user/me")
+            } Then {
+                statusCode(200)
+                body("mustChangePassword", equalTo(true))
+            }
+        }
+
+        @Test
+        fun `GET me for self-registered user must return mustChangePassword false`() {
+            Given {
+                port(port)
+                cookie("token", token)
+            } When {
+                get("/api/user/me")
+            } Then {
+                statusCode(200)
+                body("mustChangePassword", equalTo(false))
             }
         }
     }

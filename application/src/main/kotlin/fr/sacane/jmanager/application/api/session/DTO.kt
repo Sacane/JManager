@@ -114,4 +114,19 @@ data class UserStatusDTO(
     val emailVerified: Boolean = true,
     /** The user's registered email address. */
     val email: String? = null,
+    /** `true` when the account was admin-created with a temporary password that must be changed on first login. */
+    val mustChangePassword: Boolean,
+)
+
+@Serializable
+data class ChangePasswordDTO(
+    @field:NotBlank @field:Size(max = 100) val currentPassword: String,
+    @field:NotBlank @field:Size(max = 100) val newPassword: String,
+    @field:NotBlank @field:Size(max = 100) val confirmPassword: String,
+)
+
+@Serializable
+data class ForceChangePasswordDTO(
+    @field:NotBlank @field:Size(max = 100) val newPassword: String,
+    @field:NotBlank @field:Size(max = 100) val confirmPassword: String,
 )

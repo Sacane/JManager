@@ -49,6 +49,7 @@ class AdminCreateUserService(
             password = hashedPassword,
             subscriptionPlan = SubscriptionPlan.BETA_TESTER,
             email = command.email,
+            mustChangePassword = true,
         ) ?: return failure(
             ResultState.INVALID,
             DomainError(ResultState.INVALID.code, "domain.user.admin.create.failed", "Une erreur est survenue lors de la création de l'utilisateur")

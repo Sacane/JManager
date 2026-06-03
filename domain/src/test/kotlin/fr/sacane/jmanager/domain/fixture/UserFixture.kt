@@ -15,7 +15,8 @@ object UserFixture {
         username: String = "john",
         email: String? = "",
         emailVerified: Boolean = false,
-    ) = User(id = id, username = username, email = email, emailVerified = emailVerified)
+        mustChangePassword: Boolean = false,
+    ) = User(id = id, username = username, email = email, emailVerified = emailVerified, mustChangePassword = mustChangePassword)
 
     fun aUserWithPassword(
         user: User = aUser(),

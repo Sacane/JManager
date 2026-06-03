@@ -37,6 +37,8 @@ class UserResource(
     var privacyAcceptedAt: LocalDateTime? = null,
     @Column(name = "email_verified", nullable = false)
     var emailVerified: Boolean = false,
+    @Column(name = "must_change_password", nullable = false)
+    var mustChangePassword: Boolean = false,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",

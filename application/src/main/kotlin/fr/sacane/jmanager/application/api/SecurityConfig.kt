@@ -55,6 +55,7 @@ class SecurityConfig(
                 authorize("/privacy", permitAll)
                 authorize("/terms", permitAll)
                 authorize("/consent", permitAll)
+                authorize("/force-password-change", permitAll)
                 // Actuator
                 authorize("/actuator/health", permitAll)
                 authorize("/actuator/info", permitAll)

@@ -5,6 +5,7 @@ interface UserStatusDTO {
   consentRequired: boolean
   emailVerified?: boolean
   email?: string | null
+  mustChangePassword?: boolean
 }
 
 /** Current TOS version — update here when terms are revised. */
@@ -17,6 +18,7 @@ export default function useConsent() {
   // Default true to avoid banner flash before the first /me call completes.
   const emailVerified = useState<boolean>('consent:emailVerified', () => true)
   const userEmail = useState<string | null>('consent:userEmail', () => null)
+  const mustChangePassword = useState<boolean>('consent:mustChangePassword', () => false)
 
   const tosAccepted = ref(false)
   const privacyAccepted = ref(false)
@@ -37,6 +39,7 @@ export default function useConsent() {
       consentRequired.value = data?.consentRequired ?? false
       emailVerified.value = data?.emailVerified ?? true
       userEmail.value = data?.email ?? null
+      mustChangePassword.value = data?.mustChangePassword ?? false
     } catch {
       // Fail open: if the check fails, don't block the user
       consentRequired.value = false
@@ -79,6 +82,11 @@ export default function useConsent() {
     consentRequired.value = false
     emailVerified.value = true
     userEmail.value = null
+    mustChangePassword.value = false
+  }
+
+  function clearMustChangePassword(): void {
+    mustChangePassword.value = false
   }
 
   return {
@@ -91,8 +99,10 @@ export default function useConsent() {
     consentChecked: readonly(consentChecked),
     emailVerified: readonly(emailVerified),
     userEmail: readonly(userEmail),
+    mustChangePassword: readonly(mustChangePassword),
     checkConsentStatus,
     submitConsent,
     clearConsentCache,
+    clearMustChangePassword,
   }
 }

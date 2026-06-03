@@ -39,6 +39,7 @@ class User(
     val subscriptionPlan: SubscriptionPlan = SubscriptionPlan.BETA_TESTER,
     var consent: ConsentRecord? = null,
     var emailVerified: Boolean = false,
+    var mustChangePassword: Boolean = false,
 ) {
 
     init {

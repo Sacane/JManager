@@ -76,7 +76,7 @@ class UserRepositoryJpaAdapter (
         }
     }
     @Transactional
-    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?, emailVerified: Boolean): User? {
+    override fun register(username: String, password: String, roles: Set<Role>, subscriptionPlan: SubscriptionPlan, email: String?, tosAcceptedAt: LocalDateTime?, tosVersion: String?, privacyAcceptedAt: LocalDateTime?, emailVerified: Boolean, mustChangePassword: Boolean): User? {
         return try {
             val userResource = UserResource(
                 username = username,
@@ -88,6 +88,7 @@ class UserRepositoryJpaAdapter (
                 tosVersion = tosVersion,
                 privacyAcceptedAt = privacyAcceptedAt,
                 emailVerified = emailVerified,
+                mustChangePassword = mustChangePassword,
             )
             val userResponse = userPostgresRepository.save(userResource)
             userResponse.toModel()
@@ -149,6 +150,28 @@ class UserRepositoryJpaAdapter (
         resource.tosAcceptedAt = consent.tosAcceptedAt
         resource.tosVersion = consent.tosVersion
         resource.privacyAcceptedAt = consent.privacyAcceptedAt
+        userPostgresRepository.save(resource)
+        return success(Unit)
+    }
+
+    override fun findByIdWithEncodedPassword(userId: UserId): UserWithPassword? {
+        val id = userId.value ?: return null
+        return userPostgresRepository.findById(id).orElse(null)?.toModelWithPasswords()
+    }
+
+    @Transactional
+    override fun updatePassword(userId: UserId, hashedPassword: String, clearMustChange: Boolean): Result<Unit> {
+        val id = userId.value ?: return failure(
+            ResultState.USER_NOT_FOUND,
+            DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.password.user_not_found", "Identifiant utilisateur invalide")
+        )
+        val resource = userPostgresRepository.findById(id).orElse(null)
+            ?: return failure(
+                ResultState.USER_NOT_FOUND,
+                DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.password.user_not_found", "L'utilisateur est introuvable")
+            )
+        resource.password = hashedPassword
+        if (clearMustChange) resource.mustChangePassword = false
         userPostgresRepository.save(resource)
         return success(Unit)
     }

@@ -23,6 +23,14 @@ const authMiddleware = defineNuxtRouteMiddleware(async (to) => {
   if (required) {
     return navigateTo('/consent')
   }
+
+  // Don't intercept navigation to /force-password-change itself — avoids infinite redirect loop
+  if (to.path === '/force-password-change') return
+
+  const { mustChangePassword } = useConsent()
+  if (mustChangePassword.value) {
+    return navigateTo('/force-password-change')
+  }
 })
 
 export default authMiddleware
