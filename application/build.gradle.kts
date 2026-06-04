@@ -81,4 +81,10 @@ tasks {
     processResources {
         mustRunAfter(":client:bundle")
     }
+    // Ensure build-info.properties is generated before the app starts locally.
+    // springBoot { buildInfo() } only wires bootBuildInfo into jar/bootJar by
+    // default — bootRun must declare the dependency explicitly.
+    named("bootRun") {
+        dependsOn("bootBuildInfo")
+    }
 }

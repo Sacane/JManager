@@ -163,6 +163,15 @@ onUnmounted(() => {
         <div class="sidebar-footer">
           <Profile />
           <span v-if="version" class="app-version">{{ `v${version}` }}</span>
+          <div class="legal-links">
+            <NuxtLink to="/privacy" class="legal-link" @click="closeOnNavigateIfMobile()">
+              Confidentialité
+            </NuxtLink>
+            <span class="legal-sep" aria-hidden="true">·</span>
+            <NuxtLink to="/terms" class="legal-link" @click="closeOnNavigateIfMobile()">
+              CGU
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </aside>
@@ -590,6 +599,31 @@ onUnmounted(() => {
   font-family: monospace;
   color: rgba(255, 255, 255, 0.3);
   letter-spacing: 0.03em;
+  user-select: none;
+}
+
+.legal-links {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.legal-link {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: underline;
+  }
+}
+
+.legal-sep {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.2);
   user-select: none;
 }
 
