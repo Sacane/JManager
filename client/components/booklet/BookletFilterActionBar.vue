@@ -53,45 +53,46 @@ const emit = defineEmits<{
 <template>
   <!-- Filtres + Actions -->
   <div v-if="isMobile || !hideActionButtons" class="flex items-center gap-2 mb-2 overflow-x-auto">
-    <!-- Mobile: compact filter chips -->
+    <!-- Mobile: filter chips -->
     <template v-if="isMobile">
+      <!-- Local filters -->
       <button
-        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'all' && globalFilter === 'none'
           ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'all')"
       >
-        <i class="pi pi-list text-[0.6rem]" />
+        <i class="pi pi-list text-xs" />
         <span>{{ transactionsCount }}</span>
       </button>
       <button
-        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'confirmed' && globalFilter === 'none'
           ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'confirmed')"
       >
-        <i class="pi pi-check-circle text-[0.6rem]" />
+        <i class="pi pi-check-circle text-xs" />
         <span>{{ transactionsCount - previewTransactionsCount }}</span>
       </button>
       <button
-        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
         :class="transactionFilter === 'preview' && globalFilter === 'none'
           ? 'border-amber-500 text-amber-600 bg-amber-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
         @click="emit('update:transactionFilter', 'preview')"
       >
-        <i class="pi pi-clock text-[0.6rem]" />
+        <i class="pi pi-clock text-xs" />
         <span>{{ previewTransactionsCount }}</span>
       </button>
 
-      <!-- Global filter separator -->
-      <div class="w-px h-4 bg-[var(--border-color)] mx-0.5 shrink-0" />
+      <!-- Separator -->
+      <div class="w-px h-5 bg-[var(--border-color)] mx-0.5 shrink-0" />
 
-      <!-- Global: all month -->
+      <!-- Global filters -->
       <button
-        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
+        class="w-9 h-9 flex items-center justify-center rounded-lg text-xs font-bold transition-all shrink-0 border"
         :class="globalFilter === 'all'
           ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
@@ -99,12 +100,10 @@ const emit = defineEmits<{
         aria-label="Tout le mois"
         @click="emit('update:globalFilter', globalFilter === 'all' ? 'none' : 'all')"
       >
-        <i class="text-[0.6rem]" :class="isGlobalFilterLoading && globalFilter === 'all' ? 'pi pi-spin pi-spinner' : 'pi pi-globe'" />
+        <i :class="isGlobalFilterLoading && globalFilter === 'all' ? 'pi pi-spin pi-spinner' : 'pi pi-globe'" />
       </button>
-
-      <!-- Global: previews month -->
       <button
-        class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold transition-all whitespace-nowrap shrink-0 border"
+        class="w-9 h-9 flex items-center justify-center rounded-lg text-xs font-bold transition-all shrink-0 border"
         :class="globalFilter === 'preview'
           ? 'border-amber-500 text-amber-600 bg-amber-500/8'
           : 'border-[var(--card-border)] text-[var(--text-secondary)]'"
@@ -112,23 +111,23 @@ const emit = defineEmits<{
         aria-label="Prévisionnelles du mois"
         @click="emit('update:globalFilter', globalFilter === 'preview' ? 'none' : 'preview')"
       >
-        <i class="text-[0.6rem]" :class="isGlobalFilterLoading && globalFilter === 'preview' ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'" />
+        <i :class="isGlobalFilterLoading && globalFilter === 'preview' ? 'pi pi-spin pi-spinner' : 'pi pi-calendar'" />
       </button>
 
-      <!-- Tag filters (when options available) -->
+      <!-- Tag filters -->
       <template v-if="props.tagFilterOptions && props.tagFilterOptions.length > 1">
-        <div class="w-px h-4 bg-[var(--border-color)] mx-0.5 shrink-0" />
+        <div class="w-px h-5 bg-[var(--border-color)] mx-0.5 shrink-0" />
         <Select
           :model-value="selectedTagFilter"
           :options="tagFilterOptions"
           option-label="label"
           option-value="value"
           size="small"
-          class="!w-[80px] shrink-0"
+          class="!w-[90px] shrink-0"
           @update:model-value="(val: string) => emit('update:selectedTagFilter', val)"
         >
           <template #value="{ value: val }">
-            <span class="text-[0.65rem] font-semibold truncate block" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+            <span class="text-xs font-semibold truncate block" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
               {{ val ? (tagFilterOptions?.find(o => o.value === val)?.label ?? val) : 'Tag' }}
             </span>
           </template>
@@ -144,11 +143,11 @@ const emit = defineEmits<{
           option-label="label"
           option-value="value"
           size="small"
-          class="!w-[80px] shrink-0"
+          class="!w-[90px] shrink-0"
           @update:model-value="(val: string) => emit('update:selectedSubTagFilter', val)"
         >
           <template #value="{ value: val }">
-            <span class="text-[0.65rem] font-semibold truncate block" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
+            <span class="text-xs font-semibold truncate block" :class="val ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'">
               {{ val ? (subTagFilterOptions?.find(o => o.value === val)?.label ?? val) : 'S-tag' }}
             </span>
           </template>
