@@ -38,13 +38,19 @@ const emit = defineEmits<{
 
         <!-- Title + inline balances -->
         <div class="flex-1 min-w-0">
-          <h1 class="text-sm font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 leading-tight truncate">
+          <h1 class="text-lg font-extrabold bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-transparent bg-clip-text m-0 leading-tight truncate">
             {{ displayLabel }}
           </h1>
-          <div class="flex items-center gap-2 mt-1">
-            <span class="text-sm font-extrabold tabular-nums text-[var(--primary)] whitespace-nowrap">{{ realSold.toFixed(2) }}&nbsp;€</span>
-            <span class="text-[var(--text-muted)] text-xs">·</span>
-            <span class="text-sm font-extrabold tabular-nums text-[#FF5A08] whitespace-nowrap">{{ previewSold.toFixed(2) }}&nbsp;€</span>
+          <div class="flex items-center gap-3 mt-1.5">
+            <div class="flex flex-col gap-0">
+              <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Réel</span>
+              <span class="text-base font-extrabold tabular-nums text-[var(--primary)] whitespace-nowrap leading-tight">{{ realSold.toFixed(2) }}&nbsp;€</span>
+            </div>
+            <span class="text-[var(--text-muted)] text-xs self-end mb-0.5">·</span>
+            <div class="flex flex-col gap-0">
+              <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Prévis.</span>
+              <span class="text-base font-extrabold tabular-nums text-[#FF5A08] whitespace-nowrap leading-tight">{{ previewSold.toFixed(2) }}&nbsp;€</span>
+            </div>
           </div>
         </div>
 
