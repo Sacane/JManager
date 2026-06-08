@@ -645,6 +645,34 @@ function checkMobile() {
   isSidebarMode.value = !isMobile.value && (window.innerHeight < 768 || isSmallDesktop.value)
 }
 
+const FR_MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+
+function toDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function dayGroupLabel(dateKey: string): string {
+  const now = new Date()
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (dateKey === toDateKey(now)) return "Aujourd'hui"
+  if (dateKey === toDateKey(yesterday)) return 'Hier'
+  const [, month, day] = dateKey.split('-').map(Number)
+  return `${day} ${FR_MONTHS[(month - 1)]}`
+}
+
+const transactionsByDay = computed(() => {
+  const map = new Map<string, DisplayTransaction[]>()
+  for (const t of filteredTransactions.value) {
+    const key = toDateKey(new Date(t.date))
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(t)
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([key, transactions]) => ({ dateKey: key, label: dayGroupLabel(key), transactions }))
+})
+
 const bookletTransactionColumns = computed<AppTableColumn[]>(() => [
   { selectionMode: 'multiple', style: { width: '3rem' } },
   { field: 'date', header: 'Date', sortable: true, style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date' },
@@ -1067,73 +1095,84 @@ onUnmounted(() => {
           <Button class="btn-primary" icon="pi pi-plus" label="Créer" @click="openCreationDialog" />
         </div>
 
-        <!-- Compact transaction rows -->
-        <div v-else class="bg-[var(--card-bg)] rounded-xl overflow-hidden border border-[var(--card-border)] shadow-sm">
-          <div
-            v-for="(transaction, tIndex) in filteredTransactions"
-            :key="transaction.selectionKey || transaction.id || `t-${tIndex}`"
-            class="flex items-start gap-2 py-1.5 px-3 border-b border-[var(--border-color)] last:border-b-0 transition-colors active:bg-[var(--card-hover-bg)]"
-            :class="isSelected(transaction)
-              ? 'bg-[var(--primary)]/5'
-              : transaction.isPreview ? 'bg-amber-500/5' : ''"
-            @click="toggleSelection(transaction)"
-          >
-            <!-- Checkbox -->
-            <Checkbox
-              :model-value="isSelected(transaction)"
-              :binary="true"
-              class="shrink-0 mt-1"
-              @click.stop="toggleSelection(transaction)"
-            />
-
-            <!-- Day -->
-            <span class="text-[0.65rem] font-bold text-[var(--text-tertiary)] w-5 text-center shrink-0 mt-1 tabular-nums leading-4">
-              {{ new Date(transaction.date).getDate() }}
-            </span>
-
-            <!-- Label + tag -->
-            <div class="flex-1 min-w-0 py-0.5">
-              <div class="flex items-center gap-1 leading-4">
-                <span class="text-xs font-semibold text-[var(--text-primary)] truncate">{{ transaction.label }}</span>
-                <i v-if="transaction.isPreview" class="pi pi-clock text-amber-500 text-[0.5rem] shrink-0" />
-              </div>
-              <span
-                class="inline-flex items-center mt-0.5 px-1.5 py-0 rounded text-[0.6rem] font-semibold leading-4"
-                :style="getTagStyle(getParentTag(transaction.tagDTO).colorDTO)"
-              >{{ getParentTag(transaction.tagDTO).label }}</span>
-            </div>
-
-            <!-- Amount + actions -->
-            <div class="shrink-0 flex flex-col items-end gap-0.5 py-0.5">
-              <span
-                class="text-xs font-extrabold tabular-nums leading-4"
-                :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'"
-              >
-                {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}€
+        <!-- Banking-style grouped by day -->
+        <template v-else>
+          <template v-for="group in transactionsByDay" :key="group.dateKey">
+            <!-- Day header -->
+            <div class="px-1 pt-4 pb-1.5 first:pt-1">
+              <span class="text-xs font-semibold text-[var(--text-tertiary)] tracking-wide">
+                {{ group.label }}
               </span>
-              <div class="flex items-center gap-0.5">
-                <button
-                  v-if="transaction.id"
-                  class="w-5 h-5 flex items-center justify-center text-[#A30053] rounded hover:bg-[#A30053]/10 transition-colors disabled:opacity-40"
-                  :disabled="isAnyActionLoading"
-                  aria-label="Modifier"
-                  @click.stop="onEditTransaction({ data: transaction })"
-                >
-                  <i class="pi pi-pencil text-[0.55rem]" />
-                </button>
-                <button
-                  v-if="transaction.isPreview"
-                  class="w-5 h-5 flex items-center justify-center text-emerald-600 rounded hover:bg-emerald-600/10 transition-colors disabled:opacity-40"
-                  :disabled="isAnyActionLoading"
-                  aria-label="Valider"
-                  @click.stop="onConfirmPreview(transaction)"
-                >
-                  <i class="pi pi-check text-[0.55rem]" :class="isConfirmPreviewLoading ? 'pi-spin' : ''" />
-                </button>
-              </div>
             </div>
-          </div>
-        </div>
+
+            <!-- Transactions card for this day -->
+            <div class="bg-[var(--card-bg)] rounded-xl overflow-hidden border border-[var(--card-border)] shadow-sm">
+              <template
+                v-for="(transaction, tIndex) in group.transactions"
+                :key="transaction.selectionKey || transaction.id || `t-${tIndex}`"
+              >
+                <div v-if="tIndex > 0" class="h-px mx-3 bg-black/10 dark:bg-white/20" />
+              <div
+                class="flex items-center gap-3 py-3 px-3 transition-colors active:bg-[var(--card-hover-bg)]"
+                :class="isSelected(transaction) ? 'bg-[var(--primary)]/5' : transaction.isPreview ? 'bg-amber-500/5' : ''"
+                @click="toggleSelection(transaction)"
+              >
+                <!-- Checkbox -->
+                <Checkbox
+                  :model-value="isSelected(transaction)"
+                  :binary="true"
+                  class="shrink-0"
+                  @click.stop="toggleSelection(transaction)"
+                />
+
+                <!-- Label + tag -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-sm font-semibold text-[var(--text-primary)] truncate">{{ transaction.label }}</span>
+                    <i v-if="transaction.isPreview" class="pi pi-clock text-amber-500 text-xs shrink-0" />
+                  </div>
+                  <div class="mt-0.5">
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                      :style="getTagStyle(getParentTag(transaction.tagDTO).colorDTO)"
+                    >{{ getParentTag(transaction.tagDTO).label }}</span>
+                  </div>
+                </div>
+
+                <!-- Amount + actions -->
+                <div class="shrink-0 flex flex-col items-end gap-1.5">
+                  <span
+                    class="text-base font-semibold tabular-nums"
+                    :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'"
+                  >
+                    {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}&nbsp;€
+                  </span>
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      v-if="transaction.id"
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#A30053]/10 border border-[#A30053]/20 text-[#A30053] hover:bg-[#A30053]/20 active:scale-95 transition-all disabled:opacity-40"
+                      :disabled="isAnyActionLoading"
+                      aria-label="Modifier"
+                      @click.stop="onEditTransaction({ data: transaction })"
+                    >
+                      <i class="pi pi-pencil text-sm" />
+                    </button>
+                    <button
+                      v-if="transaction.isPreview"
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all disabled:opacity-40"
+                      :disabled="isAnyActionLoading"
+                      aria-label="Valider"
+                      @click.stop="onConfirmPreview(transaction)"
+                    >
+                      <i class="pi pi-check text-sm" :class="isConfirmPreviewLoading ? 'pi-spin' : ''" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              </template>
+            </div>
+          </template>
+        </template>
       </div>
 
       <TransactionCreationDialog
