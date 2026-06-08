@@ -1147,24 +1147,24 @@ onUnmounted(() => {
                   >
                     {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}&nbsp;€
                   </span>
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-1.5">
                     <button
                       v-if="transaction.id"
-                      class="w-8 h-8 flex items-center justify-center text-[#A30053] rounded-lg hover:bg-[#A30053]/10 transition-colors disabled:opacity-40"
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#A30053]/10 border border-[#A30053]/20 text-[#A30053] hover:bg-[#A30053]/20 active:scale-95 transition-all disabled:opacity-40"
                       :disabled="isAnyActionLoading"
                       aria-label="Modifier"
                       @click.stop="onEditTransaction({ data: transaction })"
                     >
-                      <i class="pi pi-pencil text-xs" />
+                      <i class="pi pi-pencil text-sm" />
                     </button>
                     <button
                       v-if="transaction.isPreview"
-                      class="w-8 h-8 flex items-center justify-center text-emerald-600 rounded-lg hover:bg-emerald-600/10 transition-colors disabled:opacity-40"
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all disabled:opacity-40"
                       :disabled="isAnyActionLoading"
                       aria-label="Valider"
                       @click.stop="onConfirmPreview(transaction)"
                     >
-                      <i class="pi pi-check text-xs" :class="isConfirmPreviewLoading ? 'pi-spin' : ''" />
+                      <i class="pi pi-check text-sm" :class="isConfirmPreviewLoading ? 'pi-spin' : ''" />
                     </button>
                   </div>
                 </div>
