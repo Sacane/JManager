@@ -1111,7 +1111,7 @@ onUnmounted(() => {
                 v-for="(transaction, tIndex) in group.transactions"
                 :key="transaction.selectionKey || transaction.id || `t-${tIndex}`"
               >
-                <div v-if="tIndex > 0" class="h-px mx-3" style="background: rgba(255,255,255,0.25)" />
+                <div v-if="tIndex > 0" class="h-px mx-3 bg-black/10 dark:bg-white/20" />
               <div
                 class="flex items-center gap-3 py-3 px-3 transition-colors active:bg-[var(--card-hover-bg)]"
                 :class="isSelected(transaction) ? 'bg-[var(--primary)]/5' : transaction.isPreview ? 'bg-amber-500/5' : ''"
