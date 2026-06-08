@@ -25,7 +25,6 @@ const ButtonStub = {
 
 const baseProps = {
   isMobile: false,
-  transactionFilter: 'all' as const,
   globalFilter: 'none' as const,
   transactionsCount: 5,
   previewTransactionsCount: 2,
@@ -49,41 +48,6 @@ const globalStubs = {
 }
 
 describe('components/booklet/BookletFilterActionBar', () => {
-  describe('desktop — local filter buttons', () => {
-    it('renders three local filter buttons', () => {
-      const wrapper = mount(BookletFilterActionBar, {
-        props: baseProps,
-        global: { stubs: globalStubs },
-      })
-      const buttons = wrapper.findAll('button')
-      const labels = buttons.map(b => b.text())
-      expect(labels.some(t => t.includes('Tout'))).toBe(true)
-      expect(labels.some(t => t.includes('Confirmées'))).toBe(true)
-      expect(labels.some(t => t.includes('Prévisionnelles'))).toBe(true)
-    })
-
-    it('emits update:transactionFilter all when Tout is clicked', async () => {
-      const wrapper = mount(BookletFilterActionBar, {
-        props: { ...baseProps, transactionFilter: 'preview' },
-        global: { stubs: globalStubs },
-      })
-      const toutButton = wrapper.findAll('button').find(b => b.text().includes('Tout ('))
-      await toutButton!.trigger('click')
-      expect(wrapper.emitted('update:transactionFilter')).toBeTruthy()
-      expect(wrapper.emitted('update:transactionFilter')![0]).toEqual(['all'])
-    })
-
-    it('emits update:transactionFilter preview when Prévisionnelles is clicked', async () => {
-      const wrapper = mount(BookletFilterActionBar, {
-        props: baseProps,
-        global: { stubs: globalStubs },
-      })
-      const prevButton = wrapper.findAll('button').find(b => b.text().includes('Prévisionnelles'))
-      await prevButton!.trigger('click')
-      expect(wrapper.emitted('update:transactionFilter')![0]).toEqual(['preview'])
-    })
-  })
-
   describe('desktop — global filter buttons', () => {
     it('renders global filter buttons "Tout le mois" and "Prév. du mois"', () => {
       const wrapper = mount(BookletFilterActionBar, {
@@ -142,17 +106,6 @@ describe('components/booklet/BookletFilterActionBar', () => {
       })
       const toutLeMois = wrapper.findAll('button').find(b => b.text().includes('Tout le mois'))
       expect(toutLeMois!.attributes('disabled')).toBeDefined()
-    })
-  })
-
-  describe('desktop — local filter active state in global mode', () => {
-    it('local Tout button does not appear active when globalFilter is not none', () => {
-      const wrapper = mount(BookletFilterActionBar, {
-        props: { ...baseProps, transactionFilter: 'all', globalFilter: 'all' },
-        global: { stubs: globalStubs },
-      })
-      const toutBtn = wrapper.findAll('button').find(b => b.text().startsWith('Tout ('))
-      expect(toutBtn!.classes()).not.toContain('border-[var(--primary)]')
     })
   })
 

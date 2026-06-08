@@ -40,7 +40,6 @@ const isSmallDesktop = ref(false)
 const isSidebarMode = ref(false)
 const csvImportDialogRef = ref<any>(null)
 const isMobileMenuOpen = ref(false)
-const transactionFilter = ref<'all' | 'preview' | 'confirmed'>('all')
 const globalFilter = ref<'none' | 'all' | 'preview'>('none')
 const allTransactions = ref<DisplayTransaction[]>([])
 const selectedTagFilter = ref<string>('')
@@ -50,7 +49,7 @@ const newDateForPreview = ref<Date | null>(null)
 const transactionToConfirm = ref<DisplayTransaction | null>(null)
 const hasRegenerableTransactions = ref(false)
 
-const MOBILE_PAGE_SIZE = 200
+const MOBILE_LAZY_PAGE_SIZE = 20
 
 const PAGE_SIZE_KEY_BOOKLET = 'jmanager.pagination.bookletTransactions.pageSize'
 const pageSizeOptions = [5, 10, 20, 30, 50]
@@ -58,6 +57,12 @@ const pageSize = useLocalStorage(PAGE_SIZE_KEY_BOOKLET, 10)
 const currentPage = ref(0)
 const totalElements = ref(0)
 const totalPages = ref(1)
+
+const mobileCurrentPage = ref(0)
+const mobileHasMore = ref(false)
+const isMobileLoadingMore = ref(false)
+const loadMoreSentinelRef = ref<HTMLElement | null>(null)
+let mobileObserver: IntersectionObserver | null = null
 
 const bookletData = reactive({
   id: '',
@@ -198,12 +203,6 @@ const filteredTransactions = computed(() => {
 
   if (globalFilter.value === 'preview') {
     result = result.filter(t => t.isPreview)
-  } else {
-    if (transactionFilter.value === 'preview') {
-      result = result.filter(t => t.isPreview)
-    } else if (transactionFilter.value === 'confirmed') {
-      result = result.filter(t => !t.isPreview)
-    }
   }
 
   if (selectedParentTagFilter.value !== '') {
@@ -278,7 +277,7 @@ async function loadBookletData() {
 
       const [balances, transactionsRes] = await Promise.all([
         findBalancesByIdMonthAndYear(bookletId, month, bookletData.year),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_PAGE_SIZE : pageSize.value),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value),
       ])
 
       bookletData.label = balances.label
@@ -296,6 +295,11 @@ async function loadBookletData() {
       hasRegenerableTransactions.value = transactionsRes.hasRegenerableTransactions
       totalElements.value = transactionsRes.totalElements
       totalPages.value = transactionsRes.totalPages
+
+      if (isMobile.value) {
+        mobileCurrentPage.value = 0
+        mobileHasMore.value = transactionsRes.totalPages > 1
+      }
     } catch (err) {
       toast.errorAxios(err as AxiosError)
       console.error(err)
@@ -323,6 +327,49 @@ async function loadGlobalTransactions() {
     }
   }, loadGlobalScope)
 }
+
+async function loadMoreMobileTransactions() {
+  if (!mobileHasMore.value || isMobileLoadingMore.value) return
+  isMobileLoadingMore.value = true
+  try {
+    const bookletId = (route.params as any)?.id as string
+    const month = numberFromMonth(bookletData.month) as number
+    const nextPage = mobileCurrentPage.value + 1
+    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, nextPage, MOBILE_LAZY_PAGE_SIZE)
+    const newTransactions = res.transactions
+      .map((t, i) => asDisplayableTransaction(t, actualTransactions.value.length + i))
+    actualTransactions.value = [...actualTransactions.value, ...newTransactions]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    mobileCurrentPage.value = nextPage
+    mobileHasMore.value = nextPage + 1 < res.totalPages
+  } catch (err) {
+    toast.errorAxios(err as AxiosError)
+  } finally {
+    isMobileLoadingMore.value = false
+  }
+}
+
+function setupMobileObserver() {
+  if (!loadMoreSentinelRef.value) return
+  mobileObserver?.disconnect()
+  mobileObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting && mobileHasMore.value && !isMobileLoadingMore.value) {
+        loadMoreMobileTransactions()
+      }
+    },
+    { rootMargin: '200px', threshold: 0 },
+  )
+  mobileObserver.observe(loadMoreSentinelRef.value)
+}
+
+watch(loadMoreSentinelRef, (el) => {
+  if (el) setupMobileObserver()
+  else {
+    mobileObserver?.disconnect()
+    mobileObserver = null
+  }
+})
 
 async function onGlobalFilterChange(newFilter: 'none' | 'all' | 'preview') {
   if (newFilter === 'none') {
@@ -743,6 +790,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  mobileObserver?.disconnect()
 })
 </script>
 
@@ -771,7 +819,6 @@ onUnmounted(() => {
       <BookletFilterActionBar
         :is-mobile="isMobile"
         :hide-action-buttons="isSidebarMode"
-        :transaction-filter="transactionFilter"
         :global-filter="globalFilter"
         :transactions-count="transactionsCount"
         :preview-transactions-count="previewTransactionsCount"
@@ -789,7 +836,6 @@ onUnmounted(() => {
         :sub-tag-filter-options="subTagFilterOptions.map(o => ({ label: o.label, value: o.value }))"
         :selected-tag-filter="selectedTagFilter"
         :selected-sub-tag-filter="selectedSubTagFilter"
-        @update:transaction-filter="transactionFilter = $event"
         @update:global-filter="onGlobalFilterChange($event)"
         @update:selected-tag-filter="selectedTagFilter = $event"
         @update:selected-sub-tag-filter="selectedSubTagFilter = $event"
@@ -1021,37 +1067,6 @@ onUnmounted(() => {
           />
           <div class="w-full h-px bg-[var(--card-border)] my-1" />
           <button
-            v-tooltip.right="{ value: `Tout (${transactionsCount})`, pt: { text: { style: 'white-space: nowrap' } } }"
-            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
-            :class="transactionFilter === 'all' && globalFilter === 'none'
-              ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
-              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
-            @click="transactionFilter = 'all'"
-          >
-            <i class="pi pi-list" />
-          </button>
-          <button
-            v-tooltip.right="{ value: `Confirmées (${transactionsCount - previewTransactionsCount})`, pt: { text: { style: 'white-space: nowrap' } } }"
-            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
-            :class="transactionFilter === 'confirmed' && globalFilter === 'none'
-              ? 'border-emerald-500 text-emerald-600 bg-emerald-500/8'
-              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-emerald-500 hover:text-emerald-600'"
-            @click="transactionFilter = 'confirmed'"
-          >
-            <i class="pi pi-check-circle" />
-          </button>
-          <button
-            v-tooltip.right="`Prévisionnelles (${previewTransactionsCount})`"
-            class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
-            :class="transactionFilter === 'preview' && globalFilter === 'none'
-              ? 'border-amber-500 text-amber-600 bg-amber-500/8'
-              : 'border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500 hover:text-amber-600'"
-            @click="transactionFilter = 'preview'"
-          >
-            <i class="pi pi-clock" />
-          </button>
-          <div class="w-full h-px bg-[var(--card-border)] my-1" />
-          <button
             v-tooltip.right="{ value: 'Tout le mois', pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
             :class="globalFilter === 'all'
@@ -1077,12 +1092,6 @@ onUnmounted(() => {
       </div>
 
       <div v-else class="flex flex-col pb-20">
-        <!-- Warning: too many transactions even with large page size -->
-        <div v-if="totalPages > 1" class="flex items-center gap-2 px-3 py-2 mb-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <i class="pi pi-info-circle text-amber-600 text-xs shrink-0" />
-          <span class="text-xs font-medium text-amber-700 dark:text-amber-400">Volume élevé — utilisez les filtres pour affiner les résultats</span>
-        </div>
-
         <!-- Empty state -->
         <div v-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
           <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
@@ -1090,7 +1099,7 @@ onUnmounted(() => {
             Aucune transaction
           </h3>
           <p class="text-[var(--text-secondary)] mb-4">
-            {{ transactionFilter === 'preview' ? 'Aucune transaction prévisionnelle' : transactionFilter === 'confirmed' ? 'Aucune transaction confirmée' : 'Commencez par créer votre première transaction' }}
+            Commencez par créer votre première transaction
           </p>
           <Button class="btn-primary" icon="pi pi-plus" label="Créer" @click="openCreationDialog" />
         </div>
@@ -1173,6 +1182,18 @@ onUnmounted(() => {
             </div>
           </template>
         </template>
+
+        <!-- Lazy scroll sentinel (mobile only, paginated view) -->
+        <div
+          v-if="globalFilter === 'none'"
+          ref="loadMoreSentinelRef"
+          class="h-12 flex items-center justify-center"
+        >
+          <div v-if="isMobileLoadingMore" class="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+            <i class="pi pi-spin pi-spinner" />
+            <span>Chargement...</span>
+          </div>
+        </div>
       </div>
 
       <TransactionCreationDialog
