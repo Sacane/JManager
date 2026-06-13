@@ -34,7 +34,7 @@ class CorsConfig: WebMvcConfigurer {
             .exposedHeaders("*")
             .allowedMethods("*")
             .allowedHeaders("*")
-            .allowedOrigins("http://localhost:3000")
+            .allowedOrigins("http://localhost:3000", "http://localhost:8060")
             .allowCredentials(true)
     }
 }
