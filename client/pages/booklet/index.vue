@@ -1,7 +1,8 @@
 ﻿<script setup lang="ts">
+import type { AxiosError } from 'axios'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
-import authMiddleware from '~/middleware/auth'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import authMiddleware from '~/middleware/auth'
 import useBooklet from '../../composables/useBooklet'
 
 definePageMeta({
@@ -11,6 +12,7 @@ definePageMeta({
 
 const confirm = useConfirm()
 const router = useRouter()
+const jToast = useJToast()
 const { isScopeLoading, withLoading } = useLoading()
 
 const { fetch, deleteBooklet, createBooklet } = useBooklet()
@@ -41,9 +43,13 @@ onMounted(async () => {
 
 async function loadBooklets() {
   await withLoading(async () => {
-    const bookletArray = await fetch()
-    format(bookletArray)
-    isBookletsFilled.value = bookletArray.length > 0
+    try {
+      const bookletArray = await fetch()
+      format(bookletArray)
+      isBookletsFilled.value = bookletArray.length > 0
+    } catch (err) {
+      jToast.errorAxios(err as AxiosError, 'Impossible de charger les livrets')
+    }
   }, loadBookletsScope)
 }
 
@@ -62,8 +68,13 @@ function onCardClick(bookletId: string) {
 
 async function applyDelete(bookletId: string) {
   await withLoading(async () => {
-    await deleteBooklet(bookletId)
-    await loadBooklets()
+    try {
+      await deleteBooklet(bookletId)
+      jToast.success('Le livret a bien été supprimé')
+      await loadBooklets()
+    } catch (err) {
+      jToast.errorAxios(err as AxiosError, 'Impossible de supprimer le livret')
+    }
   }, deleteBookletScope)
 }
 
@@ -85,7 +96,10 @@ function handleBookletCreation(booklet: { label: string, digit: number }) {
   withLoading(async () => {
     try {
       await createBooklet(booklet.label, booklet.digit, '€')
+      jToast.success('Le livret a bien été créé')
       await loadBooklets()
+    } catch (err) {
+      jToast.errorAxios(err as AxiosError, 'Impossible de créer le livret')
     } finally {
       isAddBookletDialogOpen.value = false
     }
@@ -151,8 +165,18 @@ function formatAmount(amount: string) {
       />
     </div>
 
+    <div v-if="isLoadingBooklets" class="loading-container">
+      <ProgressSpinner
+        style="width: 48px; height: 48px"
+        stroke-width="4"
+      />
+      <p class="loading-text">
+        Chargement des livrets...
+      </p>
+    </div>
+
     <!-- Empty State -->
-    <div v-if="!isBookletsFilled" class="empty-state">
+    <div v-else-if="!isBookletsFilled" class="empty-state">
       <div class="empty-illustration">
         <i class="pi pi-wallet" />
       </div>
@@ -171,16 +195,6 @@ function formatAmount(amount: string) {
         :disabled="isAnyBookletActionLoading"
         @click="openBookletDialog"
       />
-    </div>
-
-    <div v-if="isLoadingBooklets" class="loading-container">
-      <ProgressSpinner
-        style="width: 48px; height: 48px"
-        stroke-width="4"
-      />
-      <p class="loading-text">
-        Chargement des livrets...
-      </p>
     </div>
 
     <!-- Booklets Grid -->

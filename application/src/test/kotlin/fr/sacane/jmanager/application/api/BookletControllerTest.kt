@@ -97,6 +97,38 @@ class BookletControllerTest(
         }
 
         @Test
+        fun `Should create a booklet starting at zero then send 200`() {
+            val body = BookletBookingRequest("empty booklet", 0.toDouble(), "€")
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/booklet")
+            } Then {
+                statusCode(200)
+                body("label", equalTo("empty booklet"), "amount", equalTo("0.00"), "currency", equalTo("€"))
+            }
+        }
+
+        @Test
+        fun `Should create a booklet starting at a negative amount then send 200`() {
+            val body = BookletBookingRequest("overdrawn booklet", (-250.75), "€")
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                body(objectMapper.writeValueAsString(body))
+            } When {
+                post("/api/booklet")
+            } Then {
+                statusCode(200)
+                body("label", equalTo("overdrawn booklet"), "amount", equalTo("-250.75"), "currency", equalTo("€"))
+            }
+        }
+
+        @Test
         fun `Should send 400 with requestId and userId on bad currency request`() {
             val body = BookletBookingRequest("test", 1000.toDouble(), "ERR")
             Given {

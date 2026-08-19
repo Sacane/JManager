@@ -2,6 +2,12 @@
 
 ## [En cours]
 
+- **Livrets — montant initial libre, état vide et retours d'erreur**
+  - **Application**: suppression de `@field:Positive` sur `BookletBookingRequest.amount`. La création d'un livret à 0 ou à un montant négatif n'était bloquée que par cette annotation — aucune règle métier du domaine ne l'exigeait. 2 tests REST ajoutés (`BookletControllerTest` : création à `0.00` et à `-250.75` → 200).
+  - **Client — page livrets**: la grille des livrets était rendue en `v-else` du seul spinner de chargement. Quand la liste était vide, l'état vide *et* la carte « Ajouter un livret » s'affichaient ensemble ; pendant le chargement, le spinner *et* l'état vide coexistaient. Remplacé par une chaîne exclusive `v-if` / `v-else-if` / `v-else` (chargement → état vide → grille).
+  - **Client — retours utilisateur**: `pages/booklet/index.vue` n'avait aucune gestion d'erreur — les rejets remontaient de `withLoading` (non `await`é) en unhandled rejection, sans aucun toast. Ajout de `useJToast` sur le chargement, la création et la suppression (`errorAxios` + `success`). 6 nouveaux tests de page.
+  - **Backlog**: `docs/backlog/booklet-amount-as-double.md` (montant monétaire en `Double` dans le DTO) et `docs/backlog/booklet-booking-dialog-untyped-props.md` (props non déclarées + perte de saisie quand la création échoue).
+
 ## 2026-06-02
 
 - **Contexte de diagnostic dans les réponses d'erreur (requestId / userId / bookletId)**
