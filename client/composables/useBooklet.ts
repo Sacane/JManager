@@ -49,6 +49,12 @@ export interface BookletDateRangeQuery {
   endDate?: string
 }
 
+/**
+ * Order applied by the backend to every transaction of the period, before pagination.
+ * Omitting it keeps the legacy order: confirmed transactions first, then previsional ones.
+ */
+export type TransactionSortDirection = 'ASCENDING' | 'DESCENDING'
+
 export default function useBooklet() {
   const { get, post, deleteQuery } = useQuery()
   const BookletFormatted = ref<BookletFormatted[]>([])
@@ -107,6 +113,7 @@ export default function useBooklet() {
     dateRange: BookletDateRangeQuery = {},
     page: number = 0,
     size: number = 10,
+    sortDirection?: TransactionSortDirection,
   ): Promise<BookletTransactionsDTO> {
     return get(`booklet/${bookletId}/transactions`, {
       month,
@@ -114,6 +121,7 @@ export default function useBooklet() {
       ...dateRange,
       page,
       size,
+      ...(sortDirection ? { sortDirection } : {}),
     })
   }
 

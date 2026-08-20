@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.TransactionSortDirection
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
@@ -38,6 +39,7 @@ data class LoadTransactionsForBookletForAMonthQuery(
     val endDate: LocalDate? = null,
     val pageNumber: Int = 0,
     val pageSize: Int = 10,
+    val sortDirection: TransactionSortDirection? = null,
 ) : Query<BookletLoadingResult>, MdcContextProvider {
     override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
 }
@@ -60,6 +62,7 @@ class LoadTransactionsForBookletForAMonthService(
 
     companion object {
         private val log = LoggerFactory.getLogger(LoadTransactionsForBookletForAMonthService::class.java)
+        private val BY_DATE_THEN_LAST_MODIFIED = compareBy<Transaction> { it.date }.thenBy { it.lastModified }
     }
 
     override fun handle(query: LoadTransactionsForBookletForAMonthQuery): Result<BookletLoadingResult> {
@@ -225,7 +228,7 @@ class LoadTransactionsForBookletForAMonthService(
             }
 
             val combinedPrevisionalTransactions = (transactions.first + virtualTransactionsForTargetPeriod)
-                .sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
+                .sortedWith(BY_DATE_THEN_LAST_MODIFIED)
 
             val previsionalRangeStart = if (hasExplicitDateRange) {
                 resolvedRangeStart
@@ -253,7 +256,10 @@ class LoadTransactionsForBookletForAMonthService(
                     tracker.excludedMonths.contains(targetYearMonth)
                 }
 
-            val allDisplayTransactions = transactions.second + combinedPrevisionalTransactions
+            val allDisplayTransactions = sortForDisplay(
+                transactions.second + combinedPrevisionalTransactions,
+                query.sortDirection
+            )
             val page = paginator.paginate(pageNumber, pageSize) { allDisplayTransactions }
             val pagedCurrentTransactions = page.content.filter { !it.isPreview }
             val pagedPrevisionalTransactions = page.content.filter { it.isPreview }
@@ -270,6 +276,7 @@ class LoadTransactionsForBookletForAMonthService(
                 pageSize = page.pageSize,
                 totalElements = page.totalElements,
                 totalPages = page.totalPages,
+                orderedTransactions = page.content,
             )
 
             val totalMs = Duration.ofNanos(System.nanoTime() - totalStartNs).toMillis()
@@ -283,6 +290,17 @@ class LoadTransactionsForBookletForAMonthService(
             )
 
             return@executeInTransaction success(bookletLoadingResult)
+        }
+    }
+
+    private fun sortForDisplay(
+        transactions: List<Transaction>,
+        sortDirection: TransactionSortDirection?
+    ): List<Transaction> {
+        return when (sortDirection) {
+            null -> transactions
+            TransactionSortDirection.ASCENDING -> transactions.sortedWith(BY_DATE_THEN_LAST_MODIFIED)
+            TransactionSortDirection.DESCENDING -> transactions.sortedWith(BY_DATE_THEN_LAST_MODIFIED.reversed())
         }
     }
 }

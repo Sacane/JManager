@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.TransactionSortDirection
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -113,7 +114,7 @@ class BookletController (
         val report = result.map { res ->
             BookletReport(
                 label = res.label,
-                transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() },
+                transactions = res.orderedTransactions.map { it.toDTO() },
                 realSold = res.realSold.value.toString(),
                 previewSold = res.previsionalSold.value.toString()
             )
@@ -155,6 +156,7 @@ class BookletController (
         @RequestParam("endDate", required = false) endDate: LocalDate?,
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "10") size: Int,
+        @RequestParam(required = false) sortDirection: TransactionSortDirection?,
     ): ResponseEntity<BookletTransactionsResponse> {
         validateDateRange(startDate, endDate)
         LOGGER.info("Requesting transactions for booklet $bookletID")
@@ -169,11 +171,12 @@ class BookletController (
                     endDate = endDate,
                     pageNumber = page,
                     pageSize = size,
+                    sortDirection = sortDirection,
                 )
             )
             .map { res ->
                 BookletTransactionsResponse(
-                    transactions = (res.currentTransactions + res.previsionalTransactions).map { it.toDTO() },
+                    transactions = res.orderedTransactions.map { it.toDTO() },
                     hasRegenerableTransactions = res.hasRegenerableTransactions,
                     pageNumber = res.pageNumber,
                     pageSize = res.pageSize,

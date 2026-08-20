@@ -610,6 +610,130 @@ class BookletControllerTest(
     }
 
     @Nested
+    inner class TransactionsSortDirectionTest {
+
+        private fun initBookletWithThreeTransactions(): Booklet {
+            val booklet = Booklet(
+                id = null,
+                amount = Amount.fromString("1000.00"),
+                label = "Sorted Booklet",
+                owner = user,
+            )
+            bookletStateAdapter.init(listOf(booklet))
+            val firstDayOfMonth = LocalDate.now().withDayOfMonth(1)
+            transactionStateTestAdapter.init(
+                listOf(BookletTransaction(
+                    user!!.id,
+                    booklet.label,
+                    transactions = listOf(
+                        Transaction(
+                            id = null, label = "Oldest", amount = Amount.fromString("10.00"),
+                            date = firstDayOfMonth, isPreview = false, isIncome = true,
+                        ),
+                        Transaction(
+                            id = null, label = "Middle", amount = Amount.fromString("20.00"),
+                            date = firstDayOfMonth.plusDays(1), isPreview = true, isIncome = true,
+                        ),
+                        Transaction(
+                            id = null, label = "Newest", amount = Amount.fromString("30.00"),
+                            date = firstDayOfMonth.plusDays(2), isPreview = false, isIncome = true,
+                        ),
+                    ),
+                    token = token
+                ))
+            )
+            return bookletStateAdapter.get().first()
+        }
+
+        @Test
+        fun `GET transactions with sortDirection DESCENDING should return transactions from newest to oldest`() {
+            val savedBooklet = initBookletWithThreeTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortDirection", "DESCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.size()", equalTo(3))
+                body("transactions[0].label", equalTo("Newest"))
+                body("transactions[1].label", equalTo("Middle"))
+                body("transactions[2].label", equalTo("Oldest"))
+            }
+        }
+
+        @Test
+        fun `GET transactions with sortDirection ASCENDING should return transactions from oldest to newest`() {
+            val savedBooklet = initBookletWithThreeTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortDirection", "ASCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.size()", equalTo(3))
+                body("transactions[0].label", equalTo("Oldest"))
+                body("transactions[1].label", equalTo("Middle"))
+                body("transactions[2].label", equalTo("Newest"))
+            }
+        }
+
+        @Test
+        fun `GET transactions with an unknown sortDirection should return 400`() {
+            val savedBooklet = initBookletWithThreeTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortDirection", "INVALID")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `GET transactions without sortDirection should keep confirmed transactions before previsional ones`() {
+            val savedBooklet = initBookletWithThreeTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.size()", equalTo(3))
+                body("transactions[0].label", equalTo("Oldest"))
+                body("transactions[1].label", equalTo("Newest"))
+                body("transactions[2].label", equalTo("Middle"))
+            }
+        }
+    }
+
+    @Nested
     inner class RegenerateDeletedPrevisionalTransactionsTest {
 
         @Autowired

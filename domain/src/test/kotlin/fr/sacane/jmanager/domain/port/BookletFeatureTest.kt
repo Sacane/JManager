@@ -11,6 +11,7 @@ import fr.sacane.jmanager.domain.fixture.BookletFixture
 import fr.sacane.jmanager.domain.fixture.UserFixture
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
+import fr.sacane.jmanager.domain.models.transaction.TransactionSortDirection
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
@@ -1135,6 +1136,107 @@ class BookletFeatureTest {
             ))
             // realSold = booklet.amount (stored balance) â€” unaffected by pagination
             page0Result.assertTrue { realSold == page1Result.mapNotNullOrFailure()!!.realSold }
+        }
+    }
+
+    @Nested
+    inner class LoadTransactionsWithDateSortTest {
+
+        private fun initBookletWithFifteenDailyTransactions(): Pair<UUID, UserId> {
+            val bookletId = UUID.randomUUID()
+            val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Sorted Booklet", amount = 1000.toAmount())
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            val transactions = (1..15).map { day ->
+                Transaction(id = UUID.randomUUID(), label = "Transaction $day",
+                    date = LocalDate.of(2025, 1, day), amount = 100.toAmount(),
+                    isIncome = true, isPreview = false)
+            }
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions.toMutableList())
+            )
+            factory.regularTransactionState.init(emptyList())
+            return bookletId to ctx.userId
+        }
+
+        @Test
+        fun `should sort all transactions of the period by descending date before paginating`() {
+            val (bookletId, userId) = initBookletWithFifteenDailyTransactions()
+            val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
+                userId, bookletId, java.time.Month.JANUARY, 2025,
+                startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                pageNumber = 0, pageSize = 10,
+                sortDirection = TransactionSortDirection.DESCENDING
+            ))
+            result.assertTrue { currentTransactions.map { it.date.dayOfMonth } == (15 downTo 6).toList() }
+        }
+
+        @Test
+        fun `should return the oldest transactions of the whole period on the last descending page`() {
+            val (bookletId, userId) = initBookletWithFifteenDailyTransactions()
+            val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
+                userId, bookletId, java.time.Month.JANUARY, 2025,
+                startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                pageNumber = 1, pageSize = 10,
+                sortDirection = TransactionSortDirection.DESCENDING
+            ))
+            result.assertTrue { currentTransactions.map { it.date.dayOfMonth } == (5 downTo 1).toList() }
+        }
+
+        @Test
+        fun `should sort all transactions of the period by ascending date before paginating`() {
+            val (bookletId, userId) = initBookletWithFifteenDailyTransactions()
+            val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
+                userId, bookletId, java.time.Month.JANUARY, 2025,
+                startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                pageNumber = 1, pageSize = 10,
+                sortDirection = TransactionSortDirection.ASCENDING
+            ))
+            result.assertTrue { currentTransactions.map { it.date.dayOfMonth } == (11..15).toList() }
+        }
+
+        @Test
+        fun `should interleave previsional and confirmed transactions by date when a sort direction is requested`() {
+            val bookletId = UUID.randomUUID()
+            val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Mixed Booklet", amount = 1000.toAmount())
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            val confirmed = Transaction(id = UUID.randomUUID(), label = "Confirmed",
+                date = LocalDate.of(2025, 1, 20), amount = 100.toAmount(), isIncome = true, isPreview = false)
+            val preview = Transaction(id = UUID.randomUUID(), label = "Preview",
+                date = LocalDate.of(2025, 1, 10), amount = 100.toAmount(), isIncome = true, isPreview = true)
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(confirmed, preview))
+            )
+            factory.regularTransactionState.init(emptyList())
+            val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
+                ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
+                startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                pageNumber = 0, pageSize = 1,
+                sortDirection = TransactionSortDirection.ASCENDING
+            ))
+            result.assertTrue { previsionalTransactions.size == 1 && currentTransactions.isEmpty() }
+            result.assertTrue { previsionalTransactions.single().date == LocalDate.of(2025, 1, 10) }
+        }
+
+        @Test
+        fun `should keep the confirmed then previsional display order when no sort direction is requested`() {
+            val bookletId = UUID.randomUUID()
+            val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Unsorted Booklet", amount = 1000.toAmount())
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            val confirmed = Transaction(id = UUID.randomUUID(), label = "Confirmed",
+                date = LocalDate.of(2025, 1, 20), amount = 100.toAmount(), isIncome = true, isPreview = false)
+            val preview = Transaction(id = UUID.randomUUID(), label = "Preview",
+                date = LocalDate.of(2025, 1, 10), amount = 100.toAmount(), isIncome = true, isPreview = true)
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(confirmed, preview))
+            )
+            factory.regularTransactionState.init(emptyList())
+            val result = loadTransactionsForBookletForAMonthService.handle(LoadTransactionsForBookletForAMonthQuery(
+                ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
+                startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                pageNumber = 0, pageSize = 1
+            ))
+            result.assertTrue { currentTransactions.size == 1 && previsionalTransactions.isEmpty() }
+            result.assertTrue { currentTransactions.single().date == LocalDate.of(2025, 1, 20) }
         }
     }
 

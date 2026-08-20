@@ -152,7 +152,7 @@ class TransactionController(
 
         return response.map {
             TransactionListResponse(
-                transactions = (it.currentTransactions + it.previsionalTransactions).map { transaction -> transaction.toDTO() },
+                transactions = it.orderedTransactions.map { transaction -> transaction.toDTO() },
                 amount = it.realSold.value.toString(),
                 previewAmount = it.previsionalSold.value.toString(),
                 pageNumber = it.pageNumber,

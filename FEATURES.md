@@ -303,6 +303,22 @@ And the response includes pagination metadata (pageNumber, pageSize, totalElemen
 And the balances (realSold, previsionalSold) are computed on all transactions for the period
 ```
 
+### Scenario: Retrieve transactions ordered by date across all pages
+```gherkin
+Given an authenticated user with transactions spread across several pages for a given month on booklet "Current"
+When the user retrieves transactions with a sortDirection of ASCENDING or DESCENDING, and a given pageNumber and pageSize
+Then the system orders all matching transactions of the period by date according to the requested direction before paginating
+And confirmed and previsional transactions are interleaved by date in that global order
+And the returned page reflects the requested page of that globally ordered list, not just a local reordering of the page itself
+```
+
+### Scenario: Retrieve transactions without an explicit sort direction
+```gherkin
+Given an authenticated user with confirmed and previsional transactions for a given month on booklet "Current"
+When the user retrieves transactions without specifying a sortDirection
+Then the system returns confirmed transactions first, followed by previsional ones, before paginating
+```
+
 ### Scenario: Edit an existing transaction
 ```gherkin
 Given an authenticated user who owns a booklet containing a transaction
