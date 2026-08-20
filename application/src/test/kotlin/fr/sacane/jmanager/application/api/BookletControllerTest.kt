@@ -701,6 +701,7 @@ class BookletControllerTest(
                 header("Content-Type", "application/json")
                 queryParam("month", 1)
                 queryParam("year", 2024)
+                body("""{"regularTransactionIds":["unknown"]}""")
             } When {
                 post("/api/booklet/00000000-0000-0000-0000-000000000000/transactions/regenerate")
             } Then {
@@ -714,6 +715,7 @@ class BookletControllerTest(
             val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Test", owner = user)
             bookletStateAdapter.init(listOf(booklet))
             val savedBooklet = bookletStateAdapter.get().first()
+            val regularTxId = RegularTransactionId(java.util.UUID.randomUUID().toString())
 
             regularTransactionStateAdapter.init(
                 listOf(
@@ -721,7 +723,7 @@ class BookletControllerTest(
                         userId = user!!.id,
                         bookletID = savedBooklet.id!!.toString(),
                         regularTransaction = RegularTransaction(
-                            id = RegularTransactionId(java.util.UUID.randomUUID().toString()),
+                            id = regularTxId,
                             label = "Loyer",
                             amount = Amount.fromString("800.00"),
                             isIncome = false,
@@ -739,6 +741,7 @@ class BookletControllerTest(
                 header("Content-Type", "application/json")
                 queryParam("month", currentDate.monthValue)
                 queryParam("year", currentDate.year)
+                body("""{"regularTransactionIds":["${regularTxId.value}"]}""")
             } When {
                 post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
             } Then {
@@ -791,6 +794,7 @@ class BookletControllerTest(
                 header("Content-Type", "application/json")
                 queryParam("month", futureDate.monthValue)
                 queryParam("year", futureDate.year)
+                body("""{"regularTransactionIds":["${regularTxId.value}"]}""")
             } When {
                 post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
             } Then {
@@ -811,12 +815,224 @@ class BookletControllerTest(
                 header("Content-Type", "application/json")
                 queryParam("month", 1)
                 queryParam("year", 2024)
+                body("""{"regularTransactionIds":["unknown"]}""")
             } When {
                 post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
             } Then {
                 statusCode(200)
                 body("type", equalTo("NONE"))
                 body("transactions", org.hamcrest.Matchers.hasSize<Any>(0))
+            }
+        }
+
+        private fun anExcludedRent(
+            bookletId: java.util.UUID,
+            excludedMonth: YearMonth,
+            dayOfMonth: Int = 5
+        ): RegularTransactionId {
+            regularTransactionStateAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = bookletId.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = RegularTransactionId(java.util.UUID.randomUUID().toString()),
+                            label = "Loyer",
+                            amount = Amount.fromString("800.00"),
+                            isIncome = false,
+                            startDate = LocalDate.of(2024, 1, 1),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            recurrenceRule = RecurrenceRule.Monthly(dayOfMonth)
+                        )
+                    )
+                )
+            )
+            // The persistence adapter assigns its own identifier on save — the tracker must reference
+            // the persisted one, not the one supplied to init().
+            val persistedId = regularTransactionStateAdapter.get().first().id
+            regularTrackerStateRepository.init(
+                listOf(
+                    RegularTransactionTracker(
+                        regularTransactionId = persistedId,
+                        bookletId = bookletId,
+                        lastGeneratedDate = excludedMonth.atDay(1),
+                        numberOfGeneratedTransaction = 1,
+                        excludedMonths = setOf(excludedMonth)
+                    )
+                )
+            )
+            return persistedId
+        }
+
+        @Test
+        fun `GET regenerable should return the excluded occurrences with their label amount and date`() {
+            val currentMonth = YearMonth.now()
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regenerable List", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+            val regularTxId = anExcludedRent(savedBooklet.id!!, currentMonth)
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentMonth.monthValue)
+                queryParam("year", currentMonth.year)
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions/regenerable")
+            } Then {
+                statusCode(200)
+                body("$", org.hamcrest.Matchers.hasSize<Any>(1))
+                body("[0].regularTransactionId", equalTo(regularTxId.value))
+                body("[0].label", equalTo("Loyer"))
+                body("[0].isIncome", equalTo(false))
+                body("[0].date", equalTo(currentMonth.atDay(5).toString()))
+            }
+        }
+
+        @Test
+        fun `GET regenerable should return an empty list when nothing is excluded`() {
+            val currentMonth = YearMonth.now()
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regenerable Empty", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentMonth.monthValue)
+                queryParam("year", currentMonth.year)
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions/regenerable")
+            } Then {
+                statusCode(200)
+                body("$", org.hamcrest.Matchers.hasSize<Any>(0))
+            }
+        }
+
+        @Test
+        fun `GET regenerable on a non-existing booklet should return 404`() {
+            val currentMonth = YearMonth.now()
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentMonth.monthValue)
+                queryParam("year", currentMonth.year)
+            } When {
+                get("/api/booklet/00000000-0000-0000-0000-000000000000/transactions/regenerable")
+            } Then {
+                statusCode(404)
+            }
+        }
+
+        @Test
+        fun `POST regenerate with an empty selection should return 400`() {
+            val currentMonth = YearMonth.now()
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Empty Selection", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentMonth.monthValue)
+                queryParam("year", currentMonth.year)
+                body("{\"regularTransactionIds\":[]}")
+            } When {
+                post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `POST regenerate with an over-long identifier should return 400`() {
+            val currentMonth = YearMonth.now()
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Long Id", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentMonth.monthValue)
+                queryParam("year", currentMonth.year)
+                body("{\"regularTransactionIds\":[\"${"x".repeat(101)}\"]}")
+            } When {
+                post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
+            } Then {
+                statusCode(400)
+            }
+        }
+
+        @Test
+        fun `POST regenerate should restore only the selected regular transaction`() {
+            val currentMonth = YearMonth.now()
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Regen Selective", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val savedBooklet = bookletStateAdapter.get().first()
+            regularTransactionStateAdapter.init(
+                listOf(
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = savedBooklet.id!!.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = RegularTransactionId(java.util.UUID.randomUUID().toString()),
+                            label = "Loyer", amount = Amount.fromString("800.00"), isIncome = false,
+                            startDate = LocalDate.of(2024, 1, 1),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            recurrenceRule = RecurrenceRule.Monthly(5)
+                        )
+                    ),
+                    BookletRegularTransactionInput(
+                        userId = user!!.id,
+                        bookletID = savedBooklet.id!!.toString(),
+                        regularTransaction = RegularTransaction(
+                            id = RegularTransactionId(java.util.UUID.randomUUID().toString()),
+                            label = "Salaire", amount = Amount.fromString("2500.00"), isIncome = true,
+                            startDate = LocalDate.of(2024, 1, 1),
+                            frequencyProperty = FrequencyProperty.Forever(),
+                            recurrenceRule = RecurrenceRule.Monthly(28)
+                        )
+                    )
+                )
+            )
+            val persisted = regularTransactionStateAdapter.get()
+            val rentId = persisted.first { it.label == "Loyer" }.id
+            val salaryId = persisted.first { it.label == "Salaire" }.id
+            regularTrackerStateRepository.init(
+                listOf(
+                    RegularTransactionTracker(
+                        regularTransactionId = rentId, bookletId = savedBooklet.id!!,
+                        lastGeneratedDate = currentMonth.atDay(1), numberOfGeneratedTransaction = 1,
+                        excludedMonths = setOf(currentMonth)
+                    ),
+                    RegularTransactionTracker(
+                        regularTransactionId = salaryId, bookletId = savedBooklet.id!!,
+                        lastGeneratedDate = currentMonth.atDay(1), numberOfGeneratedTransaction = 1,
+                        excludedMonths = setOf(currentMonth)
+                    )
+                )
+            )
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentMonth.monthValue)
+                queryParam("year", currentMonth.year)
+                body("{\"regularTransactionIds\":[\"${rentId.value}\"]}")
+            } When {
+                post("/api/booklet/${savedBooklet.id}/transactions/regenerate")
+            } Then {
+                statusCode(200)
+                body("type", equalTo("PREVISIONAL"))
+                body("transactions", org.hamcrest.Matchers.hasSize<Any>(1))
+                body("transactions[0].label", equalTo("Loyer"))
             }
         }
     }

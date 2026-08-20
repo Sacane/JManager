@@ -5,7 +5,9 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.usecase.RegularTransactionGenerator
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
@@ -24,6 +26,16 @@ internal fun userOwnsBooklet(bookletRepository: BookletRepository, userId: UserI
     val userBooklets = bookletRepository.findBookletsForUser(userId)
     return userBooklets.any { it.id == bookletId }
 }
+
+/**
+ * Tells whether the given month is currently excluded for a regular transaction in a booklet,
+ * i.e. whether the user deleted that month's occurrences and could restore them.
+ */
+internal fun RegularTransactionTrackerRepository.excludesMonth(
+    regularTransactionId: RegularTransactionId,
+    bookletId: UUID,
+    yearMonth: YearMonth
+): Boolean = findTracker(regularTransactionId, bookletId)?.excludedMonths?.contains(yearMonth) == true
 
 internal fun monthDateBounds(start: YearMonth, end: YearMonth): Pair<LocalDate, LocalDate> {
     val from = minOf(start, end).atDay(1)

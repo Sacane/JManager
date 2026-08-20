@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
 import type { AppTableColumn } from '~/components/AppTable.vue'
+import type { RegenerableTransactionDTO } from '~/composables/useBooklet'
 import { useConfirm } from 'primevue/useconfirm'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
@@ -10,7 +11,7 @@ definePageMeta({
   middleware: ['auth'],
 })
 
-const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear, findByIdMonthAndYear, regenerateDeletedPrevisionalTransactions } = useBooklet()
+const { findBalancesByIdMonthAndYear, findTransactionsByIdMonthAndYear, findByIdMonthAndYear, findRegenerableTransactions, regenerateDeletedPrevisionalTransactions } = useBooklet()
 const route = useRoute()
 const toast = useJToast()
 const confirm = useConfirm()
@@ -48,6 +49,8 @@ const newAmountForPreview = ref<number | null>(null)
 const newDateForPreview = ref<Date | null>(null)
 const transactionToConfirm = ref<DisplayTransaction | null>(null)
 const hasRegenerableTransactions = ref(false)
+const isRegenerateDialogVisible = ref(false)
+const regenerableTransactions = ref<RegenerableTransactionDTO[]>([])
 
 const MOBILE_LAZY_PAGE_SIZE = 20
 
@@ -178,6 +181,7 @@ const deleteTransactionScope = LOADING_SCOPES.bookletDetails.deleteTransaction
 const confirmPreviewScope = LOADING_SCOPES.bookletDetails.confirmPreview
 const exportCsvScope = LOADING_SCOPES.bookletDetails.exportCsv
 const regenerateScope = LOADING_SCOPES.bookletDetails.regenerate
+const loadRegenerableScope = LOADING_SCOPES.bookletDetails.loadRegenerable
 const isBookletLoading = computed(() => isScopeLoading(loadBookletScope))
 const isGlobalFilterLoading = computed(() => isScopeLoading(loadGlobalScope))
 const isBookTransactionLoading = computed(() => isScopeLoading(bookTransactionScope))
@@ -187,6 +191,7 @@ const isDeleteTransactionLoading = computed(() => isScopeLoading(deleteTransacti
 const isConfirmPreviewLoading = computed(() => isScopeLoading(confirmPreviewScope))
 const isExportCsvLoading = computed(() => isScopeLoading(exportCsvScope))
 const isRegenerateLoading = computed(() => isScopeLoading(regenerateScope))
+const isLoadRegenerableLoading = computed(() => isScopeLoading(loadRegenerableScope))
 const isAnyActionLoading = computed(() =>
   isBookletLoading.value
   || isBookTransactionLoading.value
@@ -640,11 +645,32 @@ function onConfirmPreview(transaction: DisplayTransaction) {
 }
 
 async function regenerate() {
+  isRegenerateDialogVisible.value = true
+  regenerableTransactions.value = []
   await withLoading(async () => {
     try {
       const bookletId = (route.params as any)?.id as string
       const month = numberFromMonth(bookletData.month) as number
-      const response = await regenerateDeletedPrevisionalTransactions(bookletId, month, bookletData.year)
+      regenerableTransactions.value = await findRegenerableTransactions(bookletId, month, bookletData.year) ?? []
+    } catch (err) {
+      isRegenerateDialogVisible.value = false
+      toast.errorAxios(err as AxiosError)
+    }
+  }, loadRegenerableScope)
+}
+
+async function confirmRegeneration(regularTransactionIds: string[]) {
+  await withLoading(async () => {
+    try {
+      const bookletId = (route.params as any)?.id as string
+      const month = numberFromMonth(bookletData.month) as number
+      const response = await regenerateDeletedPrevisionalTransactions(
+        bookletId,
+        month,
+        bookletData.year,
+        regularTransactionIds,
+      )
+      isRegenerateDialogVisible.value = false
       exitGlobalMode()
       await loadBookletData()
       if (response.type === 'PREVISIONAL') {
@@ -653,6 +679,7 @@ async function regenerate() {
         toast.success('Transactions virtuelles restaurées avec succès')
       }
     } catch (err) {
+      // The dialog stays open so the user keeps their selection and can retry.
       toast.errorAxios(err as AxiosError)
     }
   }, regenerateScope)
@@ -1227,6 +1254,15 @@ onUnmounted(() => {
         @update:new-amount="newAmountForPreview = $event"
         @update:new-date="newDateForPreview = $event"
         @confirm="confirmPreview"
+      />
+
+      <BookletRegenerateTransactionsDialog
+        :visible="isRegenerateDialogVisible"
+        :candidates="regenerableTransactions"
+        :loading="isRegenerateLoading"
+        :loading-candidates="isLoadRegenerableLoading"
+        @update:visible="isRegenerateDialogVisible = $event"
+        @confirm="confirmRegeneration"
       />
 
       <CsvImportDialog

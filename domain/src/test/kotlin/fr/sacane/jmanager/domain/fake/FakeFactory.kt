@@ -113,6 +113,10 @@ class FakeFactory {
         inMemoryRegularTransactionRepository, manager, transactionQueryRepository,
         bookletBalanceQueryRepository, inMemoryRegularTransactionGenerator
     )
+    val findRegenerableTransactionsService = FindRegenerableTransactionsService(
+        bookletRepository, inMemoryRegularTransactionRepository, inMemoryTrackerRepository,
+        inMemoryRegularTransactionGenerator
+    )
     val regenerateDeletedPrevisionalTransactionsService = RegenerateDeletedPrevisionalTransactionsService(
         bookletRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator,
         manager, inMemoryTrackerRepository, transactionQueryRepository

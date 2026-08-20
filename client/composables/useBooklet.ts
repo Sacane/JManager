@@ -27,6 +27,23 @@ export interface RegenerateTransactionsResponseDTO {
   type: RegenerationType
 }
 
+/**
+ * A deleted occurrence the user could restore.
+ *
+ * Several entries can share the same `regularTransactionId` when the recurrence produces more than
+ * one occurrence in the month (weekly, daily). The backend tracks exclusion per regular transaction
+ * and month, never per occurrence, so restoring any one of them restores the whole group.
+ */
+export interface RegenerableTransactionDTO {
+  regularTransactionId: string
+  label: string
+  value: string
+  currency: string
+  isIncome: boolean
+  date: string
+  tagDTO: TagDTO | null
+}
+
 export interface BookletDateRangeQuery {
   startDate?: string
   endDate?: string
@@ -100,12 +117,24 @@ export default function useBooklet() {
     })
   }
 
+  async function findRegenerableTransactions(
+    bookletId: string,
+    month: number,
+    year: number,
+  ): Promise<RegenerableTransactionDTO[]> {
+    return get(`booklet/${bookletId}/transactions/regenerable`, { month, year })
+  }
+
   async function regenerateDeletedPrevisionalTransactions(
     bookletId: string,
     month: number,
     year: number,
+    regularTransactionIds: string[],
   ): Promise<RegenerateTransactionsResponseDTO> {
-    return post(`booklet/${bookletId}/transactions/regenerate?month=${month}&year=${year}`, undefined)
+    return post(
+      `booklet/${bookletId}/transactions/regenerate?month=${month}&year=${year}`,
+      { regularTransactionIds },
+    )
   }
 
   return {
@@ -117,6 +146,7 @@ export default function useBooklet() {
     findByIdMonthAndYear,
     findBalancesByIdMonthAndYear,
     findTransactionsByIdMonthAndYear,
+    findRegenerableTransactions,
     regenerateDeletedPrevisionalTransactions,
   }
 }

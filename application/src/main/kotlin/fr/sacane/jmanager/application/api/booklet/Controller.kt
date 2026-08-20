@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.asCurrency
 import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.application.api.InvalidRequestException
@@ -15,10 +16,15 @@ import fr.sacane.jmanager.application.api.currentUser
 import fr.sacane.jmanager.application.api.toDTO
 import fr.sacane.jmanager.application.api.toHttpResponse
 import fr.sacane.jmanager.application.api.transaction.TransactionResult
+import fr.sacane.jmanager.application.api.tag.TagDTO
 import fr.sacane.jmanager.application.bus.CommandBus
 import fr.sacane.jmanager.application.bus.QueryBus
+import fr.sacane.jmanager.application.configuration.BigDecimalSerializer
+import fr.sacane.jmanager.application.configuration.LocalDateSerializer
 import kotlinx.serialization.Serializable
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotEmpty
+import java.math.BigDecimal
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -37,6 +43,7 @@ class BookletController (
 ) {
     companion object {
         private val LOGGER: Logger = Logger.getLogger("BookletController")
+        private const val MAX_REGULAR_TRANSACTION_ID_LENGTH = 100
     }
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -177,13 +184,35 @@ class BookletController (
             .toHttpResponse()
     }
 
+    @GetMapping("{bookletID}/transactions/regenerable")
+    fun findRegenerableTransactions(
+        @PathVariable("bookletID") bookletID: String,
+        @RequestParam("month") month: Int,
+        @RequestParam("year") year: Int,
+    ): ResponseEntity<List<RegenerableTransactionDTO>> {
+        LOGGER.info("Requesting regenerable transactions for booklet $bookletID, month=$month, year=$year")
+        return queryBus
+            .dispatch(
+                FindRegenerableTransactionsQuery(
+                    userId = UserId(currentUser.id),
+                    bookletId = bookletID.toUUID(),
+                    month = Month.of(month),
+                    year = year
+                )
+            )
+            .map { candidates -> candidates.map { it.toDTO() } }
+            .toHttpResponse()
+    }
+
     @PostMapping("{bookletID}/transactions/regenerate")
     fun regenerateDeletedPrevisionalTransactions(
         @PathVariable("bookletID") bookletID: String,
         @RequestParam("month") month: Int,
         @RequestParam("year") year: Int,
+        @Valid @RequestBody request: RegenerateTransactionsRequest,
     ): ResponseEntity<RegenerateTransactionsResponse> {
         LOGGER.info("Regenerating deleted previsional transactions for booklet $bookletID, month=$month, year=$year")
+        validateSelectedIdentifiers(request.regularTransactionIds)
         val targetYearMonth = YearMonth.of(year, Month.of(month))
         val currentYearMonth = YearMonth.now()
         val type = when {
@@ -197,7 +226,8 @@ class BookletController (
                     userId = UserId(currentUser.id),
                     bookletId = bookletID.toUUID(),
                     month = Month.of(month),
-                    year = year
+                    year = year,
+                    regularTransactionIds = request.regularTransactionIds.map { RegularTransactionId(it) }
                 )
             )
             .map { transactions ->
@@ -207,6 +237,15 @@ class BookletController (
                 )
             }
             .toHttpResponse()
+    }
+
+    private fun validateSelectedIdentifiers(regularTransactionIds: List<String>) {
+        if (regularTransactionIds.any { it.length > MAX_REGULAR_TRANSACTION_ID_LENGTH }) {
+            throw InvalidRequestException(
+                ResultState.BAD_REQUEST.code,
+                "A regular transaction identifier must not exceed $MAX_REGULAR_TRANSACTION_ID_LENGTH characters"
+            )
+        }
     }
 
     private fun validateDateRange(startDate: LocalDate?, endDate: LocalDate?) {
@@ -253,6 +292,32 @@ data class BookletTransactionsResponse(
 
 @Serializable
 enum class RegenerationType { PREVISIONAL, VIRTUAL, NONE }
+
+/**
+ * @property regularTransactionIds Identifiers of the regular transactions the user chose to restore.
+ *           Each element is bounded to [MAX_REGULAR_TRANSACTION_ID_LENGTH] characters — the nearest
+ *           reference constraint for an identifier, comfortably above the 36 characters of the UUID
+ *           form actually issued. The bound is enforced in the controller rather than with a
+ *           container-element `@Size`, which Hibernate Validator does not pick up here.
+ */
+@Serializable
+data class RegenerateTransactionsRequest(
+    @field:NotEmpty
+    val regularTransactionIds: List<String>
+)
+
+@Serializable
+data class RegenerableTransactionDTO(
+    val regularTransactionId: String,
+    val label: String,
+    @Serializable(with = BigDecimalSerializer::class)
+    val value: BigDecimal,
+    val currency: String = "€",
+    val isIncome: Boolean,
+    @Serializable(with = LocalDateSerializer::class)
+    val date: LocalDate,
+    val tagDTO: TagDTO? = null,
+)
 
 @Serializable
 data class RegenerateTransactionsResponse(

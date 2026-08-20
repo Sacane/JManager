@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.TestScenario
 import fr.sacane.jmanager.domain.fake.UserRegularTransaction
 import fr.sacane.jmanager.domain.fixture.BookletFixture
+import fr.sacane.jmanager.domain.fixture.UserFixture
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
@@ -1171,7 +1172,7 @@ class BookletFeatureTest {
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, futureDate.year, futureDate.month)
             factory.fakeTransactionRepository().init(emptyList())
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
-                userId = ctx.userId, bookletId = bookletId, month = futureDate.month, year = futureDate.year
+                userId = ctx.userId, bookletId = bookletId, month = futureDate.month, year = futureDate.year, regularTransactionIds = listOf(regularTx.id)
             ))
             result.assertTrue { this.isNotEmpty() }
             result.assertTrue { this.any { it.label == "Loyer" } }
@@ -1189,7 +1190,7 @@ class BookletFeatureTest {
             val pastYearMonth = YearMonth.of(2024, java.time.Month.MARCH)
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, pastYearMonth.year, pastYearMonth.month)
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
-                userId = ctx.userId, bookletId = bookletId, month = pastYearMonth.month, year = pastYearMonth.year
+                userId = ctx.userId, bookletId = bookletId, month = pastYearMonth.month, year = pastYearMonth.year, regularTransactionIds = listOf(regularTx.id)
             ))
             result.assertTrue { this.isEmpty() }
             val tracker = factory.trackerRepository().findTracker(regularTx.id, bookletId)
@@ -1203,7 +1204,7 @@ class BookletFeatureTest {
             factory.regularTransactionState.init(emptyList())
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
                 userId = ctx.userId, bookletId = UUID.randomUUID(),
-                month = java.time.Month.JANUARY, year = 2024
+                month = java.time.Month.JANUARY, year = 2024, regularTransactionIds = listOf(RegularTransactionId("unknown"))
             ))
             result.assertFailure(ResultState.BOOKLET_NOT_FOUND)
         }
@@ -1218,7 +1219,7 @@ class BookletFeatureTest {
             factory.fakeTransactionRepository().init(emptyList())
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, currentDate.year, currentDate.month)
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
-                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year
+                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year, regularTransactionIds = listOf(regularTx.id)
             ))
             result.assertTrue { this.isNotEmpty() }
             result.assertTrue { this.any { it.label == "Loyer" && it.isPreview } }
@@ -1245,7 +1246,7 @@ class BookletFeatureTest {
             // Month is excluded (user deleted the preview before confirming)
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, currentDate.year, currentDate.month)
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
-                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year
+                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year, regularTransactionIds = listOf(regularTx.id)
             ))
             // No new transaction should be generated because a confirmed one already exists
             result.assertTrue { this.isEmpty() }
@@ -1267,7 +1268,7 @@ class BookletFeatureTest {
                 IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(existingPreview))
             )
             val result = regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
-                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year
+                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year, regularTransactionIds = listOf(regularTx.id)
             ))
             result.assertTrue { this.isEmpty() }
         }
@@ -1286,7 +1287,7 @@ class BookletFeatureTest {
             factory.trackerRepository().markMonthAsExcluded(regularTx.id, bookletId, nextMonthDate.year, nextMonthDate.month)
             // Only regenerate current month
             regenerateDeletedPrevisionalTransactionsService.handle(RegenerateDeletedPrevisionalTransactionsCommand(
-                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year
+                userId = ctx.userId, bookletId = bookletId, month = currentDate.month, year = currentDate.year, regularTransactionIds = listOf(regularTx.id)
             )).assertSuccess()
             val tracker = factory.trackerRepository().findTracker(regularTx.id, bookletId)
             assertFalse(
@@ -1297,6 +1298,176 @@ class BookletFeatureTest {
                 tracker?.excludedMonths?.contains(YearMonth.from(nextMonthDate)) == true,
                 "Next month should still be excluded"
             )
+        }
+
+        private fun buildTwoRegularTransactions(
+            userId: UserId,
+            bookletId: UUID,
+            suffix: String
+        ): Pair<RegularTransaction, RegularTransaction> {
+            val rent = RegularTransaction(
+                label = "Loyer", amount = 900.toAmount(), isIncome = false,
+                id = RegularTransactionId("${userId.value}-$suffix-rent"),
+                startDate = LocalDate.of(2024, 1, 1),
+                frequencyProperty = FrequencyProperty.Forever(),
+                recurrenceRule = RecurrenceRule.Monthly(1)
+            )
+            val salary = RegularTransaction(
+                label = "Salaire", amount = 2500.toAmount(), isIncome = true,
+                id = RegularTransactionId("${userId.value}-$suffix-salary"),
+                startDate = LocalDate.of(2024, 1, 1),
+                frequencyProperty = FrequencyProperty.Forever(),
+                recurrenceRule = RecurrenceRule.Monthly(28)
+            )
+            factory.regularTransactionState.init(
+                listOf(
+                    UserRegularTransaction(userId = userId, transaction = rent, bookletIds = listOf(bookletId)),
+                    UserRegularTransaction(userId = userId, transaction = salary, bookletIds = listOf(bookletId))
+                )
+            )
+            factory.fakeTransactionRepository().init(emptyList())
+            return rent to salary
+        }
+
+        private fun isExcluded(regularTransactionId: RegularTransactionId, bookletId: UUID, yearMonth: YearMonth) =
+            factory.trackerRepository().findTracker(regularTransactionId, bookletId)
+                ?.excludedMonths?.contains(yearMonth) == true
+
+        @Test
+        fun `regenerate should restore only the selected regular transactions and leave the others excluded`() {
+            val currentDate = LocalDate.now()
+            val currentYearMonth = YearMonth.from(currentDate)
+            val ctx = scenario.withUser().withBooklet(BookletFixture.aBooklet(label = "Selective Booklet", amount = 1000.toAmount()))
+            val bookletId = ctx.booklet.id!!
+            val (rent, salary) = buildTwoRegularTransactions(ctx.userId, bookletId, "selective")
+            factory.trackerRepository().markMonthAsExcluded(rent.id, bookletId, currentDate.year, currentDate.month)
+            factory.trackerRepository().markMonthAsExcluded(salary.id, bookletId, currentDate.year, currentDate.month)
+
+            val result = regenerateDeletedPrevisionalTransactionsService.handle(
+                RegenerateDeletedPrevisionalTransactionsCommand(
+                    userId = ctx.userId, bookletId = bookletId,
+                    month = currentDate.month, year = currentDate.year,
+                    regularTransactionIds = listOf(rent.id)
+                )
+            )
+
+            result.assertTrue { isNotEmpty() }
+            result.assertTrue { all { transaction -> transaction.label == "Loyer" } }
+            assertFalse(isExcluded(rent.id, bookletId, currentYearMonth), "Selected regular transaction must be restored")
+            assertTrue(isExcluded(salary.id, bookletId, currentYearMonth), "Unselected regular transaction must remain excluded")
+        }
+
+        @Test
+        fun `regenerate for a future month should return only the selected virtual transactions`() {
+            val futureDate = LocalDate.now().plusMonths(2)
+            val futureYearMonth = YearMonth.from(futureDate)
+            val ctx = scenario.withUser().withBooklet(BookletFixture.aBooklet(label = "Selective Future", amount = 1000.toAmount()))
+            val bookletId = ctx.booklet.id!!
+            val (rent, salary) = buildTwoRegularTransactions(ctx.userId, bookletId, "selective-future")
+            factory.trackerRepository().markMonthAsExcluded(rent.id, bookletId, futureDate.year, futureDate.month)
+            factory.trackerRepository().markMonthAsExcluded(salary.id, bookletId, futureDate.year, futureDate.month)
+
+            val result = regenerateDeletedPrevisionalTransactionsService.handle(
+                RegenerateDeletedPrevisionalTransactionsCommand(
+                    userId = ctx.userId, bookletId = bookletId,
+                    month = futureDate.month, year = futureDate.year,
+                    regularTransactionIds = listOf(salary.id)
+                )
+            )
+
+            result.assertTrue { isNotEmpty() }
+            result.assertTrue { all { transaction -> transaction.label == "Salaire" } }
+            assertFalse(isExcluded(salary.id, bookletId, futureYearMonth), "Selected regular transaction must be restored")
+            assertTrue(isExcluded(rent.id, bookletId, futureYearMonth), "Unselected regular transaction must remain excluded")
+        }
+
+        @Test
+        fun `regenerate with every excluded identifier should restore them all`() {
+            val currentDate = LocalDate.now()
+            val currentYearMonth = YearMonth.from(currentDate)
+            val ctx = scenario.withUser().withBooklet(BookletFixture.aBooklet(label = "Select All Booklet", amount = 1000.toAmount()))
+            val bookletId = ctx.booklet.id!!
+            val (rent, salary) = buildTwoRegularTransactions(ctx.userId, bookletId, "select-all")
+            factory.trackerRepository().markMonthAsExcluded(rent.id, bookletId, currentDate.year, currentDate.month)
+            factory.trackerRepository().markMonthAsExcluded(salary.id, bookletId, currentDate.year, currentDate.month)
+
+            val result = regenerateDeletedPrevisionalTransactionsService.handle(
+                RegenerateDeletedPrevisionalTransactionsCommand(
+                    userId = ctx.userId, bookletId = bookletId,
+                    month = currentDate.month, year = currentDate.year,
+                    regularTransactionIds = listOf(rent.id, salary.id)
+                )
+            )
+
+            result.assertTrue { any { transaction -> transaction.label == "Loyer" } }
+            result.assertTrue { any { transaction -> transaction.label == "Salaire" } }
+            assertFalse(isExcluded(rent.id, bookletId, currentYearMonth))
+            assertFalse(isExcluded(salary.id, bookletId, currentYearMonth))
+        }
+
+        @Test
+        fun `regenerate should ignore a selected identifier that is not excluded for that month`() {
+            val currentDate = LocalDate.now()
+            val currentYearMonth = YearMonth.from(currentDate)
+            val ctx = scenario.withUser().withBooklet(BookletFixture.aBooklet(label = "Not Excluded Booklet", amount = 1000.toAmount()))
+            val bookletId = ctx.booklet.id!!
+            val (rent, salary) = buildTwoRegularTransactions(ctx.userId, bookletId, "not-excluded")
+            factory.trackerRepository().markMonthAsExcluded(rent.id, bookletId, currentDate.year, currentDate.month)
+
+            val result = regenerateDeletedPrevisionalTransactionsService.handle(
+                RegenerateDeletedPrevisionalTransactionsCommand(
+                    userId = ctx.userId, bookletId = bookletId,
+                    month = currentDate.month, year = currentDate.year,
+                    regularTransactionIds = listOf(salary.id)
+                )
+            )
+
+            result.assertTrue { isEmpty() }
+            assertTrue(isExcluded(rent.id, bookletId, currentYearMonth), "Unselected regular transaction must remain excluded")
+        }
+
+        @Test
+        fun `regenerate on a booklet belonging to another user should be rejected`() {
+            val currentDate = LocalDate.now()
+            val owner = scenario.withUser().withBooklet(BookletFixture.aBooklet(label = "Foreign Regen Booklet", amount = 1000.toAmount()))
+            val bookletId = owner.booklet.id!!
+            val (rent, _) = buildTwoRegularTransactions(owner.userId, bookletId, "foreign")
+            factory.trackerRepository().markMonthAsExcluded(rent.id, bookletId, currentDate.year, currentDate.month)
+            val intruder = scenario.withUser(
+                UserFixture.aUserWithPassword(user = UserFixture.aUser(username = "intruder", email = "intruder@jmanager.fr"))
+            )
+
+            val result = regenerateDeletedPrevisionalTransactionsService.handle(
+                RegenerateDeletedPrevisionalTransactionsCommand(
+                    userId = intruder.userId, bookletId = bookletId,
+                    month = currentDate.month, year = currentDate.year,
+                    regularTransactionIds = listOf(rent.id)
+                )
+            )
+
+            result.assertFailure(ResultState.BOOKLET_NOT_FOUND)
+            assertTrue(
+                isExcluded(rent.id, bookletId, YearMonth.from(currentDate)),
+                "A foreign user must not be able to restore someone else's transactions"
+            )
+        }
+
+        @Test
+        fun `regenerate with an empty selection should be rejected`() {
+            val currentDate = LocalDate.now()
+            val ctx = scenario.withUser().withBooklet(BookletFixture.aBooklet(label = "Empty Selection Booklet", amount = 1000.toAmount()))
+            val bookletId = ctx.booklet.id!!
+            buildTwoRegularTransactions(ctx.userId, bookletId, "empty-selection")
+
+            val result = regenerateDeletedPrevisionalTransactionsService.handle(
+                RegenerateDeletedPrevisionalTransactionsCommand(
+                    userId = ctx.userId, bookletId = bookletId,
+                    month = currentDate.month, year = currentDate.year,
+                    regularTransactionIds = emptyList()
+                )
+            )
+
+            result.assertFailure(ResultState.TRANSACTION_ENTRY_ERROR)
         }
     }
 }

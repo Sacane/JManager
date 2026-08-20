@@ -67,6 +67,25 @@ interface RegularTransactionGenerator {
     ): List<Transaction>
 
     /**
+     * Calculates every occurrence produced by the given regular transactions within the target month,
+     * deliberately ignoring the months marked as excluded in the trackers.
+     *
+     * Unlike [calculateVirtualTransactions], excluded months are **not** filtered out: this is what
+     * allows a caller to show the user what a deleted occurrence looked like before deciding whether
+     * to restore it. Nothing is persisted and no tracker is read or written.
+     *
+     * @param regularTransactions The regular transactions to compute occurrences for.
+     * @param targetMonth The month to compute occurrences for.
+     * @param targetYear The year to compute occurrences for.
+     * @return The occurrences falling inside the target month.
+     */
+    fun calculateOccurrencesIgnoringExclusions(
+        regularTransactions: List<RegularTransaction>,
+        targetMonth: Month,
+        targetYear: Int
+    ): List<Transaction>
+
+    /**
      * Regenerates missing previsional transactions for a specific month by detecting gaps
      * and creating the missing transactions.
      *
@@ -254,6 +273,40 @@ class RegularTransactionGeneratorService(
         }
 
         return virtualTransactions
+    }
+
+    override fun calculateOccurrencesIgnoringExclusions(
+        regularTransactions: List<RegularTransaction>,
+        targetMonth: Month,
+        targetYear: Int
+    ): List<Transaction> {
+        val monthStart = LocalDate.of(targetYear, targetMonth, 1)
+        val monthEnd = YearMonth.of(targetYear, targetMonth).atEndOfMonth()
+
+        return regularTransactions.flatMap { regularTransaction ->
+            if (regularTransaction.startDate.isAfter(monthEnd)) {
+                return@flatMap emptyList()
+            }
+            val effectiveStartDate = maxOf(regularTransaction.startDate, monthStart)
+            when (val frequency = regularTransaction.frequencyProperty) {
+                is FrequencyProperty.Forever -> generateVirtualTransactionsBetween(
+                    regularTransaction,
+                    effectiveStartDate,
+                    monthEnd
+                )
+                is FrequencyProperty.UntilDate -> generateVirtualTransactionsBetween(
+                    regularTransaction,
+                    effectiveStartDate,
+                    minOf(frequency.date, monthEnd)
+                )
+                is FrequencyProperty.SpecificRepetitionTimes -> generateVirtualTransactionsBetween(
+                    regularTransaction,
+                    effectiveStartDate,
+                    monthEnd,
+                    maxCount = frequency.number
+                )
+            }
+        }
     }
 
     override fun regenerateMissingPrevisionalTransactions(

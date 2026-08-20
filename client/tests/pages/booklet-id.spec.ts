@@ -1397,3 +1397,174 @@ describe('pages/booklet/[id] global filter', () => {
     expect(vm.selectedTransactions).toHaveLength(0)
   })
 })
+
+describe('pages/booklet/[id] selective regeneration', () => {
+  const findRegenerableTransactionsMock = vi.fn()
+  const regenerateMock = vi.fn()
+  let successMock: ReturnType<typeof vi.fn>
+  let errorAxiosMock: ReturnType<typeof vi.fn>
+
+  const aCandidate = {
+    regularTransactionId: 'rt-1',
+    label: 'Loyer',
+    value: '800.00',
+    currency: '€',
+    isIncome: false,
+    date: '2026-03-05',
+    tagDTO: null,
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+    successMock = vi.fn()
+    errorAxiosMock = vi.fn()
+    findTransactionsByIdMonthAndYearMock.mockResolvedValue({
+      transactions: [],
+      hasRegenerableTransactions: true,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 1,
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function mountForRegeneration() {
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useRoute', () => ({ params: { id: 'booklet-1' } }))
+    vi.stubGlobal('useJToast', () => ({
+      success: successMock,
+      errorAxios: errorAxiosMock,
+      warn: vi.fn(),
+    }))
+    vi.stubGlobal('useLoading', () => ({
+      isScopeLoading: () => false,
+      withLoading: async <T>(action: () => Promise<T>) => action(),
+    }))
+    vi.stubGlobal('useBooklet', () => ({
+      findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
+      findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
+      findByIdMonthAndYear: findByIdMonthAndYearMock,
+      findRegenerableTransactions: findRegenerableTransactionsMock,
+      regenerateDeletedPrevisionalTransactions: regenerateMock,
+    }))
+    vi.stubGlobal('useTag', () => ({
+      getAllTags: vi.fn().mockResolvedValue([defaultTag]),
+      getDefaultTag: vi.fn().mockResolvedValue(defaultTag),
+    }))
+    vi.stubGlobal('useDate', () => ({
+      months: ['JANUARY', 'FEBRUARY', 'MARCH'],
+      englishMonth: (v: string) => v,
+      translate: (v: string) => v,
+      monthFromNumber: (n: number) => ['JANUARY', 'FEBRUARY', 'MARCH'][n - 1] || 'JANUARY',
+      numberFromMonth: (m: string) => ({ JANUARY: 1, FEBRUARY: 2, MARCH: 3 }[m] ?? 1),
+    }))
+    vi.stubGlobal('navigateTo', vi.fn())
+
+    return shallowMount(BookletDetailsPage, {
+      global: {
+        stubs: {
+          ConfirmDialog: true,
+          ProgressSpinner: { template: '<div class="spinner" />' },
+          DataTable: { template: '<div><slot /><slot name="empty" /></div>' },
+          Column: { template: '<div><slot :data="{}" /></div>' },
+          TransactionCreationDialog: true,
+          Dialog: { template: '<div><slot /></div>' },
+          CsvImportDialog: true,
+          BookletRegenerateTransactionsDialog: true,
+          Select: true,
+          DatePicker: true,
+          Tag: true,
+          Checkbox: true,
+          Paginator: true,
+          Button: true,
+        },
+      },
+    })
+  }
+
+  it('opens the dialog and loads the deleted occurrences', async () => {
+    findRegenerableTransactionsMock.mockResolvedValue([aCandidate])
+    const wrapper = mountForRegeneration()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.regenerate()
+    await flushPromises()
+
+    expect(findRegenerableTransactionsMock).toHaveBeenCalledWith('booklet-1', 3, 2026)
+    expect(vm.isRegenerateDialogVisible).toBe(true)
+    expect(vm.regenerableTransactions).toEqual([aCandidate])
+    expect(regenerateMock).not.toHaveBeenCalled()
+  })
+
+  it('closes the dialog and reports the error when loading the candidates fails', async () => {
+    findRegenerableTransactionsMock.mockRejectedValue(new Error('boom'))
+    const wrapper = mountForRegeneration()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.regenerate()
+    await flushPromises()
+
+    expect(vm.isRegenerateDialogVisible).toBe(false)
+    expect(errorAxiosMock).toHaveBeenCalled()
+  })
+
+  it('restores only the confirmed selection then closes and refreshes', async () => {
+    findRegenerableTransactionsMock.mockResolvedValue([aCandidate])
+    regenerateMock.mockResolvedValue({ transactions: [], type: 'PREVISIONAL' })
+    const wrapper = mountForRegeneration()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.regenerate()
+    await flushPromises()
+    await vm.confirmRegeneration(['rt-1'])
+    await flushPromises()
+
+    expect(regenerateMock).toHaveBeenCalledWith('booklet-1', 3, 2026, ['rt-1'])
+    expect(vm.isRegenerateDialogVisible).toBe(false)
+    expect(successMock).toHaveBeenCalledWith('Transactions prévisionnelles régénérées avec succès')
+  })
+
+  it('reports the virtual restoration wording for a future month', async () => {
+    findRegenerableTransactionsMock.mockResolvedValue([aCandidate])
+    regenerateMock.mockResolvedValue({ transactions: [], type: 'VIRTUAL' })
+    const wrapper = mountForRegeneration()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.confirmRegeneration(['rt-1'])
+    await flushPromises()
+
+    expect(successMock).toHaveBeenCalledWith('Transactions virtuelles restaurées avec succès')
+  })
+
+  it('keeps the dialog open when the regeneration fails', async () => {
+    findRegenerableTransactionsMock.mockResolvedValue([aCandidate])
+    regenerateMock.mockRejectedValue(new Error('boom'))
+    const wrapper = mountForRegeneration()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    await vm.regenerate()
+    await flushPromises()
+    await vm.confirmRegeneration(['rt-1'])
+    await flushPromises()
+
+    expect(vm.isRegenerateDialogVisible).toBe(true)
+    expect(errorAxiosMock).toHaveBeenCalled()
+    expect(successMock).not.toHaveBeenCalled()
+  })
+})

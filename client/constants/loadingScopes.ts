@@ -24,6 +24,7 @@ export const LOADING_SCOPES = {
     confirmPreview: 'booklet.confirmPreview',
     exportCsv: 'booklet.exportCsv',
     regenerate: 'booklet.regenerate',
+    loadRegenerable: 'booklet.loadRegenerable',
   },
   tag: {
     load: 'tag.load',

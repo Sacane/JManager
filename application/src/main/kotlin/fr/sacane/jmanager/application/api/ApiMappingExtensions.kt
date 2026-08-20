@@ -1,12 +1,14 @@
 package fr.sacane.jmanager.application.api
 
 import fr.sacane.jmanager.domain.models.*
+import fr.sacane.jmanager.domain.models.transaction.regular.RegenerableTransaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.utils.ErrorCatalog
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.application.api.booklet.BookletDTO
+import fr.sacane.jmanager.application.api.booklet.RegenerableTransactionDTO
 import fr.sacane.jmanager.application.api.session.UserDTO
 import fr.sacane.jmanager.application.api.tag.ColorDTO
 import fr.sacane.jmanager.application.api.tag.TagDTO
@@ -45,6 +47,16 @@ internal fun TransactionResult.toModel(): Transaction {
 internal fun Transaction.toDTO(): TransactionResult {
     return TransactionResult(id?.toString(), label, amount.value, amount.currency.symbol, isIncome, date, tagDTO = tag?.toDTO(), isPreview, regularTransactionId = regularTransactionId?.value)
 }
+
+internal fun RegenerableTransaction.toDTO(): RegenerableTransactionDTO = RegenerableTransactionDTO(
+    regularTransactionId = regularTransactionId.value,
+    label = label,
+    value = amount.value,
+    currency = amount.currency.symbol,
+    isIncome = isIncome,
+    date = date,
+    tagDTO = tag?.toDTO()
+)
 
 
 internal fun User.toDTO(): UserDTO = UserDTO(

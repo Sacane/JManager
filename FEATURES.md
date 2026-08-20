@@ -242,19 +242,28 @@ When the user loads balances for booklet ID, month March, year 2025
 Then the system returns BookletBalances with current and forecasted balance information
 ```
 
+### Scenario: List regenerable candidates before regenerating
+```gherkin
+Given an authenticated user who previously deleted provisional or virtual transactions for a month
+When the user requests the list of regenerable transactions for that month and year
+Then the system returns one candidate per excluded regular transaction, with its label, amount, isIncome, tag and projected date within the month
+And no tracker is modified by this preview
+```
+
 ### Scenario: Regenerate deleted provisional transactions for the current month
 ```gherkin
 Given an authenticated user who previously deleted provisional transactions for the current month
-When the user requests regeneration of deleted provisional transactions for the current month and year
-Then the system un-marks the month as excluded in the tracker
-And recreates the previsional transactions (isPreview = true, persisted) without duplicating existing ones
+When the user requests regeneration of selected deleted provisional transactions for the current month and year
+Then the system un-marks the selected regular transactions as excluded in the tracker
+And recreates the corresponding previsional transactions (isPreview = true, persisted) without duplicating existing ones
+And regular transactions not selected remain excluded
 ```
 
 ### Scenario: Regenerate deleted virtual transactions for a future month
 ```gherkin
 Given an authenticated user who previously deleted virtual transactions for a future month
-When the user requests regeneration of deleted transactions for that future month and year
-Then the system un-marks the month as excluded in the tracker
+When the user requests regeneration of selected deleted transactions for that future month and year
+Then the system un-marks the selected regular transactions as excluded in the tracker
 And returns the corresponding virtual transactions (computed on-the-fly, not persisted)
 And no previsional transaction is created in the database
 ```
@@ -266,6 +275,8 @@ When the user requests regeneration of deleted transactions for that past month 
 Then the system returns an empty list
 And the tracker is not modified
 ```
+
+> **Selection granularity**: exclusion is tracked per `(regularTransactionId, month)`, not per individual occurrence. For `Weekly`/`Daily` regular transactions with several occurrences in the same month, restoring one candidate restores the whole excluded month for that regular transaction.
 
 > **Golden rule**: a regular transaction can only generate **previsional transactions** (persisted) when the targeted month is the **current month**. For future months, only **virtual transactions** (computed, not persisted) are produced. Regeneration for past months has no effect.
 
