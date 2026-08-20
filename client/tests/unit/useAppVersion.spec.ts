@@ -1,6 +1,6 @@
+import axios from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import axios from 'axios'
 import useAppVersion from '../../composables/useAppVersion'
 
 vi.mock('axios')

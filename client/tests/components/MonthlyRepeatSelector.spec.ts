@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import MonthlyRepeatSelector from '../../components/frequency-part/MonthlyRepeatSelector.vue'
 
 function normalizeText(value: string) {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return value.normalize('NFD').replace(/[\u0300-\u036F]/g, '')
 }
 
 const ToggleSwitchStub = {

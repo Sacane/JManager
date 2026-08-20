@@ -40,22 +40,23 @@ async function copyDiagnostic(msg: ToastMessage) {
   try {
     await navigator.clipboard.writeText(text)
     copyStates[requestId] = 'copied'
-  }
-  catch {
+  } catch {
     copyStates[requestId] = 'error'
   }
-  setTimeout(() => { delete copyStates[requestId] }, 2000)
+  setTimeout(() => {
+    delete copyStates[requestId]
+  }, 2000)
 }
 </script>
 
 <template>
   <Toast>
     <template #message="{ message: rawMsg }">
-      <template v-for="msg in [(rawMsg as ToastMessage)]" :key="0">
+      <template v-for="(msg, index) in [(rawMsg as ToastMessage)]" :key="index">
         <div class="flex items-start gap-2.5 flex-1 min-w-0 py-0.5">
           <i
             v-if="msg.severity && severityIcon[msg.severity]"
-            :class="[severityIcon[msg.severity], severityColor[msg.severity], 'text-lg mt-0.5 shrink-0']"
+            class="text-lg mt-0.5 shrink-0" :class="[severityIcon[msg.severity], severityColor[msg.severity]]"
           />
           <div class="flex flex-col gap-1 flex-1 min-w-0">
             <span class="font-semibold text-sm leading-snug">{{ msg.summary }}</span>

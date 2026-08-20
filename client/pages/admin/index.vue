@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import type { AppTableColumn } from '~/components/AppTable.vue'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { FeatureKey } from '~/constants/featureKeys'
-import { FEATURE_KEY_LABELS } from '~/constants/featureKeys'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import useAdmin from '~/composables/useAdmin'
-import useAuth from '~/composables/useAuth'
+import { FEATURE_KEY_LABELS } from '~/constants/featureKeys'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import adminMiddleware from '~/middleware/admin'
 import authMiddleware from '~/middleware/auth'
@@ -17,7 +16,7 @@ definePageMeta({
 // ── User management ──────────────────────────────────────────────────────────
 
 const { users, totalUsers, totalPages, currentPage, isLoading, fetchUsers, createUser } = useAdmin()
-const { isScopeLoading, withLoading } = useLoading()
+const { isScopeLoading } = useLoading()
 const toastr = useJToast()
 
 const newUser = ref({
@@ -46,9 +45,9 @@ async function submitCreateUser() {
     return
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
   if (!emailRegex.test(newUser.value.email)) {
-    toastr.error("L'adresse email n'est pas valide")
+    toastr.error('L\'adresse email n\'est pas valide')
     return
   }
 

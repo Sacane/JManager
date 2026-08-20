@@ -71,7 +71,7 @@ function displayableType(type: FrequencyPropertyType): string {
       <label for="untilDate" class="block mb-2 font-medium">Date de fin</label>
       <DatePicker
         id="untilDate"
-        v-model="props.modelValue.untilDate"
+        :model-value="props.modelValue.untilDate"
         date-format="dd/mm/yy"
         :show-icon="true"
         :min-date="new Date()"
@@ -85,7 +85,7 @@ function displayableType(type: FrequencyPropertyType): string {
       <label for="times" class="block mb-2 font-medium">Nombre de répétitions</label>
       <InputNumber
         id="times"
-        v-model="props.modelValue.times"
+        :model-value="props.modelValue.times"
         :min="1"
         :step="1"
         show-buttons

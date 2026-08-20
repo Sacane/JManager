@@ -1,6 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
-import { computed, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
+import { computed, ref } from 'vue'
 import VerifyEmailPage from '../../pages/verify-email.vue'
 
 function flushPromises() {

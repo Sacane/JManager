@@ -4,7 +4,6 @@ definePageMeta({ layout: 'legal' })
 
 <template>
   <article class="flex flex-col gap-10">
-
     <!-- En-tête -->
     <header class="flex flex-col gap-3 pb-6 border-b border-[var(--card-border)]">
       <div class="flex items-center gap-2">
@@ -287,7 +286,6 @@ definePageMeta({ layout: 'legal' })
         </a>
       </p>
     </section>
-
   </article>
 </template>
 

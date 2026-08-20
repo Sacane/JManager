@@ -49,7 +49,7 @@ function openDialog() {
 function closeDialog() {
   isVisible.value = false
   emit('visible', false)
-  setTimeout(() => resetDialog(), 300)
+  setTimeout(resetDialog, 300)
 }
 
 function resetDialog() {
@@ -181,7 +181,7 @@ async function importFile() {
     } else if (importResult.value) {
       toast.success(`${importResult.value.successCount} transactions importées avec succès !`)
       emit('importSuccess', importResult.value)
-      setTimeout(() => closeDialog(), 2000)
+      setTimeout(closeDialog, 2000)
     }
   } catch (error) {
     console.error('Erreur lors de l\'importation:', error)

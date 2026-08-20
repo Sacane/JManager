@@ -208,96 +208,96 @@ onMounted(() => {
       </section>
     </div>
 
-      <section class="settings-card" data-test="change-password-section">
-        <h2>Changer le mot de passe</h2>
-        <p class="settings-help">
-          Modifiez votre mot de passe de connexion.
-        </p>
+    <section class="settings-card" data-test="change-password-section">
+      <h2>Changer le mot de passe</h2>
+      <p class="settings-help">
+        Modifiez votre mot de passe de connexion.
+      </p>
 
-        <div class="change-password-form">
-          <div class="change-password-field">
-            <label for="current-password" class="settings-label">Mot de passe actuel</label>
-            <input
-              id="current-password"
-              v-model="currentPassword"
-              type="password"
-              class="settings-input"
-              placeholder="Mot de passe actuel"
-              maxlength="100"
-              data-test="current-password-input"
-            >
-          </div>
-
-          <div class="change-password-field">
-            <label for="new-password-settings" class="settings-label">Nouveau mot de passe</label>
-            <input
-              id="new-password-settings"
-              v-model="newPasswordChange"
-              type="password"
-              class="settings-input"
-              placeholder="Nouveau mot de passe"
-              maxlength="100"
-              data-test="new-password-input"
-            >
-          </div>
-
-          <div class="change-password-field">
-            <label for="confirm-password-settings" class="settings-label">Confirmer le mot de passe</label>
-            <input
-              id="confirm-password-settings"
-              v-model="confirmPasswordChange"
-              type="password"
-              class="settings-input"
-              placeholder="Confirmer le mot de passe"
-              maxlength="100"
-              data-test="confirm-password-input"
-            >
-            <p v-if="confirmPasswordError" class="change-password-error" data-test="confirm-password-error">
-              {{ confirmPasswordError }}
-            </p>
-          </div>
-
-          <button
-            class="save-btn"
-            data-test="change-password-btn"
-            :disabled="isChangingPassword"
-            @click="changePassword"
+      <div class="change-password-form">
+        <div class="change-password-field">
+          <label for="current-password" class="settings-label">Mot de passe actuel</label>
+          <input
+            id="current-password"
+            v-model="currentPassword"
+            type="password"
+            class="settings-input"
+            placeholder="Mot de passe actuel"
+            maxlength="100"
+            data-test="current-password-input"
           >
-            {{ isChangingPassword ? 'Modification...' : 'Changer le mot de passe' }}
-          </button>
-        </div>
-      </section>
-
-      <section v-if="!emailVerified" class="settings-card email-verification-card" data-test="email-verification-section">
-        <div class="email-verification-header">
-          <div class="email-verification-icon">
-            <i class="pi pi-exclamation-triangle" aria-hidden="true" />
-          </div>
-          <div>
-            <h2>Vérification de l'e-mail</h2>
-            <p class="settings-help">
-              Votre adresse e-mail n'est pas encore vérifiée.
-            </p>
-          </div>
         </div>
 
-        <div v-if="userEmail" class="email-verification-address" data-test="email-display">
-          <span class="settings-label">Adresse e-mail</span>
-          <span class="email-value">{{ userEmail }}</span>
+        <div class="change-password-field">
+          <label for="new-password-settings" class="settings-label">Nouveau mot de passe</label>
+          <input
+            id="new-password-settings"
+            v-model="newPasswordChange"
+            type="password"
+            class="settings-input"
+            placeholder="Nouveau mot de passe"
+            maxlength="100"
+            data-test="new-password-input"
+          >
+        </div>
+
+        <div class="change-password-field">
+          <label for="confirm-password-settings" class="settings-label">Confirmer le mot de passe</label>
+          <input
+            id="confirm-password-settings"
+            v-model="confirmPasswordChange"
+            type="password"
+            class="settings-input"
+            placeholder="Confirmer le mot de passe"
+            maxlength="100"
+            data-test="confirm-password-input"
+          >
+          <p v-if="confirmPasswordError" class="change-password-error" data-test="confirm-password-error">
+            {{ confirmPasswordError }}
+          </p>
         </div>
 
         <button
-          class="verify-btn"
-          data-test="resend-verification-btn"
-          :disabled="isResending || isResendOnCooldown"
-          @click="handleResend"
+          class="save-btn"
+          data-test="change-password-btn"
+          :disabled="isChangingPassword"
+          @click="changePassword"
         >
-          <i class="pi pi-envelope" aria-hidden="true" />
-          <span v-if="isResending">Envoi en cours…</span>
-          <span v-else-if="isResendOnCooldown">Renvoyer dans {{ resendCooldown }}s</span>
-          <span v-else>Vérifier mon e-mail</span>
+          {{ isChangingPassword ? 'Modification...' : 'Changer le mot de passe' }}
         </button>
-      </section>
+      </div>
+    </section>
+
+    <section v-if="!emailVerified" class="settings-card email-verification-card" data-test="email-verification-section">
+      <div class="email-verification-header">
+        <div class="email-verification-icon">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true" />
+        </div>
+        <div>
+          <h2>Vérification de l'e-mail</h2>
+          <p class="settings-help">
+            Votre adresse e-mail n'est pas encore vérifiée.
+          </p>
+        </div>
+      </div>
+
+      <div v-if="userEmail" class="email-verification-address" data-test="email-display">
+        <span class="settings-label">Adresse e-mail</span>
+        <span class="email-value">{{ userEmail }}</span>
+      </div>
+
+      <button
+        class="verify-btn"
+        data-test="resend-verification-btn"
+        :disabled="isResending || isResendOnCooldown"
+        @click="handleResend"
+      >
+        <i class="pi pi-envelope" aria-hidden="true" />
+        <span v-if="isResending">Envoi en cours…</span>
+        <span v-else-if="isResendOnCooldown">Renvoyer dans {{ resendCooldown }}s</span>
+        <span v-else>Vérifier mon e-mail</span>
+      </button>
+    </section>
 
     <div class="actions">
       <button class="save-btn" data-test="save-settings-btn" :disabled="isSaving" @click="saveUserSettings">

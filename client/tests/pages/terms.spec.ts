@@ -11,7 +11,7 @@ describe('pages/terms', () => {
 
   it('renders the main heading', () => {
     const wrapper = mountPage()
-    expect(wrapper.find('h1').text()).toContain("Conditions Générales d'Utilisation")
+    expect(wrapper.find('h1').text()).toContain('Conditions Générales d\'Utilisation')
   })
 
   it('displays the editor identity section', () => {

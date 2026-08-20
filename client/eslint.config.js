@@ -18,6 +18,7 @@ export default antfu({
   react: false,
   ignores,
 }, {
+  files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,vue}'],
   rules: {
     'curly': ['error', 'multi-line'],
     'brace-style': 'off',

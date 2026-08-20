@@ -369,8 +369,9 @@ function setupMobileObserver() {
 }
 
 watch(loadMoreSentinelRef, (el) => {
-  if (el) setupMobileObserver()
-  else {
+  if (el) {
+    setupMobileObserver()
+  } else {
     mobileObserver?.disconnect()
     mobileObserver = null
   }
@@ -729,7 +730,7 @@ function dayGroupLabel(dateKey: string): string {
   const now = new Date()
   const yesterday = new Date(now)
   yesterday.setDate(now.getDate() - 1)
-  if (dateKey === toDateKey(now)) return "Aujourd'hui"
+  if (dateKey === toDateKey(now)) return 'Aujourd\'hui'
   if (dateKey === toDateKey(yesterday)) return 'Hier'
   const [, month, day] = dateKey.split('-').map(Number)
   return `${day} ${FR_MONTHS[(month - 1)]}`
@@ -1148,63 +1149,63 @@ onUnmounted(() => {
                 :key="transaction.selectionKey || transaction.id || `t-${tIndex}`"
               >
                 <div v-if="tIndex > 0" class="h-px mx-3 bg-black/10 dark:bg-white/20" />
-              <div
-                class="flex items-center gap-3 py-3 px-3 transition-colors active:bg-[var(--card-hover-bg)]"
-                :class="isSelected(transaction) ? 'bg-[var(--primary)]/5' : transaction.isPreview ? 'bg-amber-500/5' : ''"
-                @click="toggleSelection(transaction)"
-              >
-                <!-- Checkbox -->
-                <Checkbox
-                  :model-value="isSelected(transaction)"
-                  :binary="true"
-                  class="shrink-0"
-                  @click.stop="toggleSelection(transaction)"
-                />
+                <div
+                  class="flex items-center gap-3 py-3 px-3 transition-colors active:bg-[var(--card-hover-bg)]"
+                  :class="isSelected(transaction) ? 'bg-[var(--primary)]/5' : transaction.isPreview ? 'bg-amber-500/5' : ''"
+                  @click="toggleSelection(transaction)"
+                >
+                  <!-- Checkbox -->
+                  <Checkbox
+                    :model-value="isSelected(transaction)"
+                    :binary="true"
+                    class="shrink-0"
+                    @click.stop="toggleSelection(transaction)"
+                  />
 
-                <!-- Label + tag -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-sm font-semibold text-[var(--text-primary)] truncate">{{ transaction.label }}</span>
-                    <i v-if="transaction.isPreview" class="pi pi-clock text-amber-500 text-xs shrink-0" />
+                  <!-- Label + tag -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-sm font-semibold text-[var(--text-primary)] truncate">{{ transaction.label }}</span>
+                      <i v-if="transaction.isPreview" class="pi pi-clock text-amber-500 text-xs shrink-0" />
+                    </div>
+                    <div class="mt-0.5">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                        :style="getTagStyle(getParentTag(transaction.tagDTO).colorDTO)"
+                      >{{ getParentTag(transaction.tagDTO).label }}</span>
+                    </div>
                   </div>
-                  <div class="mt-0.5">
+
+                  <!-- Amount + actions -->
+                  <div class="shrink-0 flex flex-col items-end gap-1.5">
                     <span
-                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-                      :style="getTagStyle(getParentTag(transaction.tagDTO).colorDTO)"
-                    >{{ getParentTag(transaction.tagDTO).label }}</span>
+                      class="text-base font-semibold tabular-nums"
+                      :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'"
+                    >
+                      {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}&nbsp;€
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        v-if="transaction.id"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#A30053]/10 border border-[#A30053]/20 text-[#A30053] hover:bg-[#A30053]/20 active:scale-95 transition-all disabled:opacity-40"
+                        :disabled="isAnyActionLoading"
+                        aria-label="Modifier"
+                        @click.stop="onEditTransaction({ data: transaction })"
+                      >
+                        <i class="pi pi-pencil text-sm" />
+                      </button>
+                      <button
+                        v-if="transaction.isPreview"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all disabled:opacity-40"
+                        :disabled="isAnyActionLoading"
+                        aria-label="Valider"
+                        @click.stop="onConfirmPreview(transaction)"
+                      >
+                        <i class="pi pi-check text-sm" :class="isConfirmPreviewLoading ? 'pi-spin' : ''" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <!-- Amount + actions -->
-                <div class="shrink-0 flex flex-col items-end gap-1.5">
-                  <span
-                    class="text-base font-semibold tabular-nums"
-                    :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'"
-                  >
-                    {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}&nbsp;€
-                  </span>
-                  <div class="flex items-center gap-1.5">
-                    <button
-                      v-if="transaction.id"
-                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#A30053]/10 border border-[#A30053]/20 text-[#A30053] hover:bg-[#A30053]/20 active:scale-95 transition-all disabled:opacity-40"
-                      :disabled="isAnyActionLoading"
-                      aria-label="Modifier"
-                      @click.stop="onEditTransaction({ data: transaction })"
-                    >
-                      <i class="pi pi-pencil text-sm" />
-                    </button>
-                    <button
-                      v-if="transaction.isPreview"
-                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all disabled:opacity-40"
-                      :disabled="isAnyActionLoading"
-                      aria-label="Valider"
-                      @click.stop="onConfirmPreview(transaction)"
-                    >
-                      <i class="pi pi-check text-sm" :class="isConfirmPreviewLoading ? 'pi-spin' : ''" />
-                    </button>
-                  </div>
-                </div>
-              </div>
               </template>
             </div>
           </template>

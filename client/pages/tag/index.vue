@@ -130,8 +130,7 @@ function toggleSelectTag(tag: TagDisplayItem): void {
   const idx = selectedIds.value.indexOf(tag.id)
   if (idx !== -1) {
     selectedIds.value.splice(idx, 1)
-  }
-  else {
+  } else {
     selectedIds.value.push(tag.id)
   }
 }
@@ -139,8 +138,7 @@ function toggleSelectTag(tag: TagDisplayItem): void {
 function toggleSelectAll(): void {
   if (isAllSelected.value) {
     selectedIds.value = []
-  }
-  else {
+  } else {
     selectedIds.value = visibleSelectableItems.value.map(t => t.id)
   }
 }
@@ -333,10 +331,10 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
 
         <div v-if="visibleSelectableItems.length > 0" class="selection-controls">
           <Checkbox
+            v-tooltip.top="isAllSelected ? 'Désélectionner tout' : 'Tout sélectionner'"
             :binary="true"
             :model-value="isAllSelected"
             :indeterminate="isIndeterminate"
-            v-tooltip.top="isAllSelected ? 'Désélectionner tout' : 'Tout sélectionner'"
             aria-label="Tout sélectionner"
             @update:model-value="() => toggleSelectAll()"
           />

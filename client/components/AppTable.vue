@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  'row-dblclick': [event: { data: T, index?: number, originalEvent?: Event }]
+  'rowDblclick': [event: { data: T, index?: number, originalEvent?: Event }]
   'update:selection': [value: T[]]
 }>()
 
@@ -59,7 +59,7 @@ const visibleColumns = computed(() =>
     :scroll-height="scrollable ? scrollHeight : undefined"
     :loading="loading"
     class="app-table"
-    @row-dblclick="(event: any) => emit('row-dblclick', event)"
+    @row-dblclick="(event: any) => emit('rowDblclick', event)"
   >
     <template #empty>
       <slot name="empty" />

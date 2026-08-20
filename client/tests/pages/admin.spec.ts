@@ -197,7 +197,7 @@ describe('pages/admin/index', () => {
 
     await wrapper.find('form').trigger('submit')
 
-    expect(toastrErrorMock).toHaveBeenCalledWith("L'adresse email n'est pas valide")
+    expect(toastrErrorMock).toHaveBeenCalledWith('L\'adresse email n\'est pas valide')
     expect(createUserMock).not.toHaveBeenCalled()
   })
 

@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import type { AxiosError } from 'axios'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'

@@ -11,10 +11,10 @@ defineProps<Props>()
 
 const emit = defineEmits<{
   'update:modelValue': [val: boolean]
-  'import-csv': []
-  'export-csv': []
-  'new-transaction': []
-  'new-preview': []
+  'importCsv': []
+  'exportCsv': []
+  'newTransaction': []
+  'newPreview': []
   'regenerate': []
 }>()
 </script>
@@ -63,10 +63,10 @@ const emit = defineEmits<{
           </p>
           <div class="flex flex-col gap-2 mb-4">
             <button
-              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50"
-              :class="'bg-[var(--primary)]/5 border-[var(--primary)]/20 hover:border-[var(--primary)]/40'"
+              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50 bg-[var(--primary)]/5 border-[var(--primary)]/20 hover:border-[var(--primary)]/40"
+
               :disabled="isAnyActionLoading"
-              @click="emit('new-transaction'); emit('update:modelValue', false)"
+              @click="emit('newTransaction'); emit('update:modelValue', false)"
             >
               <div class="w-8 h-8 rounded-full bg-[var(--primary)]/15 flex items-center justify-center shrink-0">
                 <i class="pi pi-plus text-[var(--primary)] text-sm" />
@@ -77,7 +77,7 @@ const emit = defineEmits<{
             <button
               class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50 bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40"
               :disabled="isAnyActionLoading"
-              @click="emit('new-preview'); emit('update:modelValue', false)"
+              @click="emit('newPreview'); emit('update:modelValue', false)"
             >
               <div class="w-8 h-8 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
                 <i class="pi pi-clock text-amber-600 text-sm" />
@@ -108,7 +108,7 @@ const emit = defineEmits<{
           <div class="flex flex-col gap-2">
             <button
               class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] bg-cyan-500/5 border-cyan-500/20 hover:border-cyan-500/40"
-              @click="emit('import-csv'); emit('update:modelValue', false)"
+              @click="emit('importCsv'); emit('update:modelValue', false)"
             >
               <div class="w-8 h-8 rounded-full bg-cyan-500/15 flex items-center justify-center shrink-0">
                 <i class="pi pi-file-import text-cyan-600 text-sm" />
@@ -118,7 +118,7 @@ const emit = defineEmits<{
 
             <button
               class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40"
-              @click="emit('export-csv'); emit('update:modelValue', false)"
+              @click="emit('exportCsv'); emit('update:modelValue', false)"
             >
               <div class="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
                 <i class="pi pi-file-export text-emerald-600 text-sm" />

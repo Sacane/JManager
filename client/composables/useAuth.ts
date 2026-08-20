@@ -106,7 +106,7 @@ export default function useAuth() {
         })
         applyAuthenticatedUser(response.data.token)
         return true
-      } catch (e: any) {
+      } catch {
         clearAuthState()
         if (redirectOnFailure) {
           navigateTo('/login')
@@ -139,7 +139,7 @@ export default function useAuth() {
     }
   }
 
-  function handleError(error: Error) {
+  function _handleError(error: Error) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<any, any>
       const httpStatus = axiosError.response?.status

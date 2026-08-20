@@ -8,6 +8,11 @@ plugins {
 group = "fr.sacane.jmanager"
 node {
   version.set("22.19.0")
+  // Keep in sync with the "packageManager" field in client/package.json —
+  // this plugin resolves its own pnpm independently of corepack, defaulting
+  // to "latest" if left unpinned, which would silently drift from what
+  // corepack/CI install.
+  pnpmVersion.set("11.22.0")
   distBaseUrl.set("https://nodejs.org/dist")
   download.set(true)
   nodeProjectDir.set(file("${rootProject.projectDir}/client"))

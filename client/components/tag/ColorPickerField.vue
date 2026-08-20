@@ -1,9 +1,9 @@
 <script setup lang="ts">
-const model = defineModel<string>({ required: true })
-
 defineProps<{
   inputId?: string
 }>()
+
+const model = defineModel<string>({ required: true })
 </script>
 
 <template>

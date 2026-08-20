@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
-import useDate from '../../composables/useDate'
 import MonthPicker from '../../components/monthPicker.vue'
+import useDate from '../../composables/useDate'
 
 describe('components/monthPicker', () => {
   it('renders all months from useDate composable', () => {

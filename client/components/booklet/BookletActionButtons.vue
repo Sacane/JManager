@@ -17,12 +17,12 @@ withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  'new-transaction': []
-  'new-preview': []
-  'import-csv': []
-  'export-csv': []
-  'regenerate': []
-  'delete': []
+  newTransaction: []
+  newPreview: []
+  importCsv: []
+  exportCsv: []
+  regenerate: []
+  delete: []
 }>()
 </script>
 
@@ -44,14 +44,14 @@ const emit = defineEmits<{
       class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#A30053] !from-[var(--primary)] !to-[var(--primary-2)] !text-white !border-0 shadow-[0_2px_8px_rgba(101,8,204,0.3)] hover:!brightness-110 transition-all"
       icon="pi pi-plus"
       :disabled="isAnyActionLoading"
-      @click="emit('new-transaction')"
+      @click="emit('newTransaction')"
     />
     <Button
       v-tooltip.bottom="'Transaction prévisionnelle'"
       class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#FFC108] !text-white !border-0 shadow-[0_2px_8px_rgba(255,193,8,0.3)] hover:!bg-[#d9a307] transition-all"
       icon="pi pi-clock"
       :disabled="isAnyActionLoading"
-      @click="emit('new-preview')"
+      @click="emit('newPreview')"
     />
     <Button
       v-if="hasRegenerableTransactions"
@@ -67,7 +67,7 @@ const emit = defineEmits<{
       class="!w-10 !h-10 !p-0 !flex !items-center !justify-center shrink-0 !bg-[#009CFE] !text-white !border-0 shadow-[0_2px_8px_rgba(0,156,254,0.3)] hover:!bg-[#006EA3] transition-all"
       icon="pi pi-file-import"
       :disabled="isAnyActionLoading"
-      @click="emit('import-csv')"
+      @click="emit('importCsv')"
     />
     <Button
       v-tooltip.bottom="'Exporter CSV'"
@@ -76,7 +76,7 @@ const emit = defineEmits<{
       icon="pi pi-file-export"
       :loading="isExportCsvLoading"
       :disabled="isAnyActionLoading"
-      @click="emit('export-csv')"
+      @click="emit('exportCsv')"
     />
 
     <template v-if="hasSelection">

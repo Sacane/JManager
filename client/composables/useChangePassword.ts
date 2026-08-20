@@ -50,8 +50,7 @@ export default function useChangePassword() {
         })
         clearFields()
         toast.success('Mot de passe modifié avec succès')
-      }
-      catch (error) {
+      } catch (error) {
         if (axios.isAxiosError(error)) {
           const status = error.response?.status
           if (status === 401) {

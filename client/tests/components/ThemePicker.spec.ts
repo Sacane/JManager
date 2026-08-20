@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
-import { computed } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
+import { computed } from 'vue'
 import ThemePicker from '../../components/ThemePicker.vue'
 
 function stubDark(prefValue: string) {
