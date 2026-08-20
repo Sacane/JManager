@@ -1,6 +1,17 @@
 minimumReleaseAgeExclude:
   - happy-dom@20.11.6
   - sass@1.103.0
+# Deep transitive deps of nuxt itself (semver via @babel/core, tinyclip via
+# listhen/@nuxt/cli) flagged by pnpm's supply-chain trust-downgrade check.
+# Verified 2026-08-20: semver@6.3.1 maintained by the historic npm-cli team,
+# tinyclip@0.1.13 published by recognized OSS maintainers under the
+# legitimate "tinylibs" org (same org as tinyglobby/tinyexec). No evidence
+# of an actual takeover — likely a maintainer-list/registry-metadata change
+# on old/young packages tripping the heuristic. Re-check if pnpm flags new
+# entries or if either package starts behaving unexpectedly.
+trustPolicyExclude:
+  - semver@6.3.1
+  - tinyclip@0.1.13
 shamefullyHoist: true
 shellEmulator: true
 
