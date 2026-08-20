@@ -2,6 +2,10 @@
 
 ## [En cours]
 
+- **Correction : bandeau "Invalid PrimeUI License" affiché sur l'application**
+  - **Client**: `primevue`, `@primevue/nuxt-module` et `primeicons` repassés de `^5.0.1`/`^5.0.1`/`^8.0.0` à `^4.5.4`/`^4.5.4`/`^7.0.0`. La v5 de PrimeVue introduit une vérification de licence obligatoire (paquet `@primeui/license-manager`) qui affiche un bandeau rouge fixe en bas à droite dès qu'aucune clé n'est configurée — ce qui était le cas depuis le dernier bump de dépendances (`5fcbb07d`). Aucune des alertes Dependabot corrigées par ce commit ne dépendait de PrimeVue ; le retour à la v4 les préserve intégralement.
+  - **Backlog**: `docs/backlog/pnpm-workspace-yaml-key-order-lint-error.md` — `pnpm lint` échoue sur un tri de clés YAML préexistant dans `client/pnpm-workspace.yaml`, sans rapport avec ce correctif.
+
 - **Correction : zoom/dézoom en boucle sur tablette au survol au stylet**
   - **Client**: la page détail d'un livret n'avait aucune balise `<meta name="viewport">` — sans elle, une tablette recalcule le facteur de zoom à chaque reflow du DOM. Le bouton "Tout le mois" de la barre latérale (mode tablette / petite hauteur) pointait son tooltip `v-tooltip.right` alors qu'il est collé au bord droit de l'écran, provoquant un reflow répété à chaque survol. Ajout de la balise viewport (`nuxt.config.ts`), passage du tooltip en `.left`, et ajout de `touch-action: manipulation` global sur les éléments cliquables (`reset.css`) pour désactiver la détection native de double-tap-zoom sur les appareils à stylet.
 

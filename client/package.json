@@ -17,13 +17,13 @@
     "taze": "taze major -I"
   },
   "dependencies": {
-    "@primevue/nuxt-module": "^5.0.1",
+    "@primevue/nuxt-module": "^4.5.4",
     "@primevue/themes": "^4.4.1",
     "chart.js": "^4.5.1",
     "date-fns": "^4.4.0",
     "jwt-decode": "^4.0.0",
-    "primeicons": "^8.0.0",
-    "primevue": "^5.0.1",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.5.4",
     "vue-chartjs": "^5.3.4"
   },
   "devDependencies": {
