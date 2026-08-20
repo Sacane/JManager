@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
 import type { AppTableColumn } from '~/components/AppTable.vue'
-import type { RegenerableTransactionDTO } from '~/composables/useBooklet'
+import type { RegenerableTransactionDTO, TransactionSortDirection } from '~/composables/useBooklet'
 import { useConfirm } from 'primevue/useconfirm'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
@@ -60,6 +60,7 @@ const pageSize = useLocalStorage(PAGE_SIZE_KEY_BOOKLET, 10)
 const currentPage = ref(0)
 const totalElements = ref(0)
 const totalPages = ref(1)
+const sortDirection = ref<TransactionSortDirection>('DESCENDING')
 
 const mobileCurrentPage = ref(0)
 const mobileHasMore = ref(false)
@@ -204,7 +205,8 @@ const isAnyActionLoading = computed(() =>
 )
 
 const filteredTransactions = computed(() => {
-  let result = globalFilter.value !== 'none' ? allTransactions.value : actualTransactions.value
+  const isGlobalMode = globalFilter.value !== 'none'
+  let result = isGlobalMode ? allTransactions.value : actualTransactions.value
 
   if (globalFilter.value === 'preview') {
     result = result.filter(t => t.isPreview)
@@ -223,7 +225,9 @@ const filteredTransactions = computed(() => {
   if (selectedSubTagFilter.value !== '') {
     result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedSubTagFilter.value)
   }
-  return result
+  // Global mode holds the whole period client-side, so it is ordered here.
+  // Paginated mode keeps the order the backend computed across every page.
+  return isGlobalMode ? [...result].sort((a, b) => compareByDate(a.date, b.date)) : result
 })
 
 function asDisplayableTransaction(transaction: TransactionResultDTO, index = 0): DisplayTransaction {
@@ -274,6 +278,17 @@ function resetTransaction() {
   })
 }
 
+function compareByDate(left: string | Date, right: string | Date): number {
+  const delta = new Date(left).getTime() - new Date(right).getTime()
+  return sortDirection.value === 'DESCENDING' ? -delta : delta
+}
+
+function toggleDateSort() {
+  sortDirection.value = sortDirection.value === 'DESCENDING' ? 'ASCENDING' : 'DESCENDING'
+  currentPage.value = 0
+  loadBookletData()
+}
+
 async function loadBookletData() {
   await withLoading(async () => {
     try {
@@ -282,7 +297,7 @@ async function loadBookletData() {
 
       const [balances, transactionsRes] = await Promise.all([
         findBalancesByIdMonthAndYear(bookletId, month, bookletData.year),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, sortDirection.value),
       ])
 
       bookletData.label = balances.label
@@ -290,9 +305,10 @@ async function loadBookletData() {
       bookletData.realSold = Number.parseFloat(balances.realSold)
       bookletData.previewSold = Number.parseFloat(balances.previewSold)
 
+      // The backend already ordered every transaction of the period before paginating:
+      // re-sorting here would only reorder the current page and hide the real order.
       const nextTransactions = transactionsRes.transactions
         .map((transaction, index) => asDisplayableTransaction(transaction, index))
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
       actualTransactions.value = nextTransactions
       const nextTransactionKeys = new Set(nextTransactions.map(transactionSelectionKey))
@@ -325,7 +341,6 @@ async function loadGlobalTransactions() {
       const report = await findByIdMonthAndYear(bookletId, month, bookletData.year)
       allTransactions.value = report.transactions
         .map((transaction, index) => asDisplayableTransaction(transaction, index))
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     } catch (err) {
       toast.errorAxios(err as AxiosError)
       globalFilter.value = 'none'
@@ -340,11 +355,10 @@ async function loadMoreMobileTransactions() {
     const bookletId = (route.params as any)?.id as string
     const month = numberFromMonth(bookletData.month) as number
     const nextPage = mobileCurrentPage.value + 1
-    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, nextPage, MOBILE_LAZY_PAGE_SIZE)
+    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, nextPage, MOBILE_LAZY_PAGE_SIZE, sortDirection.value)
     const newTransactions = res.transactions
       .map((t, i) => asDisplayableTransaction(t, actualTransactions.value.length + i))
     actualTransactions.value = [...actualTransactions.value, ...newTransactions]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     mobileCurrentPage.value = nextPage
     mobileHasMore.value = nextPage + 1 < res.totalPages
   } catch (err) {
@@ -437,11 +451,7 @@ function openPreviewCreationDialog() {
 async function bookTransaction(transaction: TransactionCreationDTO) {
   await withLoading(async () => {
     try {
-      const result = await saveTransaction(bookletData.label, transaction)
-
-      const newTransaction = asDisplayableTransaction(result)
-      actualTransactions.value.push(newTransaction)
-      actualTransactions.value.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      await saveTransaction(bookletData.label, transaction)
 
       exitGlobalMode()
       await loadBookletData()
@@ -744,13 +754,15 @@ const transactionsByDay = computed(() => {
     map.get(key)!.push(t)
   }
   return [...map.entries()]
-    .sort(([a], [b]) => b.localeCompare(a))
+    .sort(([a], [b]) => sortDirection.value === 'DESCENDING' ? b.localeCompare(a) : a.localeCompare(b))
     .map(([key, transactions]) => ({ dateKey: key, label: dayGroupLabel(key), transactions }))
 })
 
 const bookletTransactionColumns = computed<AppTableColumn[]>(() => [
   { selectionMode: 'multiple', style: { width: '3rem' } },
-  { field: 'date', header: 'Date', sortable: true, style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date' },
+  // Not `sortable`: PrimeVue would only reorder the rows of the loaded page.
+  // The header slot triggers a backend reload ordered across every page instead.
+  { field: 'date', header: 'Date', style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date', headerSlotName: 'dateSort' },
   {
     field: 'label',
     header: 'Libellé',
@@ -934,6 +946,20 @@ onUnmounted(() => {
             <template #body-income="{ data }">
               <span v-if="data.isIncome" class="font-extrabold text-[#009CFE]">{{ data.incomeRepresentation }}</span>
               <span v-else class="text-[#009CFE] font-semibold">-</span>
+            </template>
+
+            <template #header-dateSort>
+              <button
+                type="button"
+                class="date-sort-btn w-full inline-flex items-center justify-center gap-1 bg-transparent border-0 text-inherit cursor-pointer opacity-90 hover:opacity-100 transition-opacity duration-200"
+                :aria-label="sortDirection === 'DESCENDING' ? 'Trier par date croissante' : 'Trier par date décroissante'"
+                :aria-sort="sortDirection === 'DESCENDING' ? 'descending' : 'ascending'"
+                data-testid="date-sort-toggle"
+                @click.stop="toggleDateSort"
+              >
+                Date
+                <i :class="sortDirection === 'DESCENDING' ? 'pi pi-sort-amount-down' : 'pi pi-sort-amount-up-alt'" class="text-xs" />
+              </button>
             </template>
 
             <template #header-tagFilter>
@@ -1294,6 +1320,13 @@ onUnmounted(() => {
 <style scoped lang="scss">
 :global(body) {
   scrollbar-gutter: stable;
+}
+
+// Renders the sort trigger exactly like the surrounding column headers: a <button> does not
+// inherit the font set on the <th>, only its colour and letter-spacing.
+.date-sort-btn {
+  font: inherit;
+  white-space: nowrap;
 }
 
 :deep(.p-dropdown),

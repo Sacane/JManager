@@ -205,7 +205,109 @@ describe('pages/booklet/[id] loading states', () => {
       {},
       0,
       10,
+      'DESCENDING',
     )
+  })
+})
+
+describe('pages/booklet/[id] date sorting', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-29T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('requests the most recent transactions first by default', async () => {
+    mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {},
+      0,
+      10,
+      'DESCENDING',
+    )
+  })
+
+  it('reloads from the first page with the opposite direction when the date header is toggled', async () => {
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.currentPage = 3
+    await nextTick()
+
+    vm.toggleDateSort()
+    await flushPromises()
+    await flushPromises()
+
+    expect(vm.sortDirection).toBe('ASCENDING')
+    expect(vm.currentPage).toBe(0)
+    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenLastCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {},
+      0,
+      10,
+      'ASCENDING',
+    )
+  })
+
+  it('keeps the selected direction when navigating to another page', async () => {
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.toggleDateSort()
+    await flushPromises()
+    await flushPromises()
+
+    vm.onPageChange({ page: 2 })
+    await flushPromises()
+    await flushPromises()
+
+    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenLastCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {},
+      2,
+      10,
+      'ASCENDING',
+    )
+  })
+
+  it('preserves the order returned by the backend instead of re-sorting the loaded page', async () => {
+    findTransactionsByIdMonthAndYearMock.mockResolvedValueOnce({
+      transactions: [
+        createTransaction({ id: 'tx-1', label: 'Newest', date: '2026-03-20' }),
+        createTransaction({ id: 'tx-2', label: 'Middle', date: '2026-03-10', isPreview: true }),
+        createTransaction({ id: 'tx-3', label: 'Oldest', date: '2026-03-01' }),
+      ],
+      hasRegenerableTransactions: false,
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 25,
+      totalPages: 3,
+    })
+
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    expect(vm.filteredTransactions.map((t: any) => t.label)).toEqual(['Newest', 'Middle', 'Oldest'])
   })
 })
 

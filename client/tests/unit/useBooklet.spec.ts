@@ -45,6 +45,35 @@ describe('composables/useBooklet', () => {
     })
   })
 
+  describe('findTransactionsByIdMonthAndYear', () => {
+    it('forwards the requested sort direction to the transactions endpoint', async () => {
+      get.mockResolvedValue({ transactions: [] })
+
+      await useBooklet().findTransactionsByIdMonthAndYear('booklet-1', 8, 2026, {}, 1, 20, 'DESCENDING')
+
+      expect(get).toHaveBeenCalledWith('booklet/booklet-1/transactions', {
+        month: 8,
+        year: 2026,
+        page: 1,
+        size: 20,
+        sortDirection: 'DESCENDING',
+      })
+    })
+
+    it('omits the sort direction when none is requested', async () => {
+      get.mockResolvedValue({ transactions: [] })
+
+      await useBooklet().findTransactionsByIdMonthAndYear('booklet-1', 8, 2026)
+
+      expect(get).toHaveBeenCalledWith('booklet/booklet-1/transactions', {
+        month: 8,
+        year: 2026,
+        page: 0,
+        size: 10,
+      })
+    })
+  })
+
   describe('regenerateDeletedPrevisionalTransactions', () => {
     it('posts the selected identifiers in the request body', async () => {
       post.mockResolvedValue({ transactions: [], type: 'PREVISIONAL' })
