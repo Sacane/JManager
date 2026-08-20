@@ -50,7 +50,7 @@ describe('components/AppToast', () => {
   })
 
   it('renders correct icon class per severity', () => {
-    const cases: Array<{ severity: string; expectedClass: string }> = [
+    const cases: Array<{ severity: string, expectedClass: string }> = [
       { severity: 'success', expectedClass: 'pi-check-circle' },
       { severity: 'info', expectedClass: 'pi-info-circle' },
       { severity: 'warn', expectedClass: 'pi-exclamation-triangle' },

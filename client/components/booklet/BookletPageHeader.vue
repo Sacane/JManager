@@ -15,9 +15,9 @@ defineProps<Props>()
 
 const emit = defineEmits<{
   'update:selectedMonth': [val: string]
-  'month-change': []
+  'monthChange': []
   'update:dateYear': [val: Date]
-  'year-change': []
+  'yearChange': []
   'back': []
 }>()
 </script>
@@ -63,7 +63,7 @@ const emit = defineEmits<{
             class="!w-[86px]"
             size="small"
             @update:model-value="(val: string) => emit('update:selectedMonth', val)"
-            @change="emit('month-change')"
+            @change="emit('monthChange')"
           >
             <template #value="{ value: val }">
               <span class="text-xs font-bold truncate">{{ val ? val.slice(0, 4) : 'Mois' }}</span>
@@ -77,7 +77,7 @@ const emit = defineEmits<{
             placeholder="Année"
             :show-icon="false"
             @update:model-value="(val: Date) => emit('update:dateYear', val)"
-            @date-select="emit('year-change')"
+            @date-select="emit('yearChange')"
           />
         </div>
       </div>
@@ -123,7 +123,7 @@ const emit = defineEmits<{
             class="!w-[90px] sm:!w-[120px] border-1 rounded-lg bg-transparent"
             size="small"
             @update:model-value="(val: string) => emit('update:selectedMonth', val)"
-            @change="emit('month-change')"
+            @change="emit('monthChange')"
           />
           <DatePicker
             :model-value="dateYear"
@@ -133,7 +133,7 @@ const emit = defineEmits<{
             placeholder="Année"
             :show-icon="false"
             @update:model-value="(val: Date) => emit('update:dateYear', val)"
-            @date-select="emit('year-change')"
+            @date-select="emit('yearChange')"
           />
         </div>
       </div>

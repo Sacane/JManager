@@ -1,7 +1,7 @@
+import type { FeatureKey } from '../../constants/featureKeys'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import useFeatureFlags from '../../composables/useFeatureFlags'
-import type { FeatureKey } from '../../constants/featureKeys'
 
 // ---------------------------------------------------------------------------
 // Module-level mocks

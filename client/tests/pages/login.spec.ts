@@ -1,6 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import LoginPage from '../../pages/login.vue'
 
 // ---------------------------------------------------------------------------
@@ -33,6 +33,15 @@ const NuxtLinkStub = {
   template: '<a :href="to"><slot /></a>',
 }
 
+// ---------------------------------------------------------------------------
+// Composable mocks
+// ---------------------------------------------------------------------------
+const loginMock = vi.fn()
+const registerMock = vi.fn()
+const isEnabledMock = vi.fn(() => false)
+const toastSuccessMock = vi.fn()
+const toastErrorAxiosMock = vi.fn()
+
 // FeatureGate renders its default slot only when isEnabled returns true for the given key.
 // We wire it to the same isEnabledMock so flag tests work end-to-end through the component.
 const FeatureGateStub = {
@@ -44,15 +53,6 @@ const FeatureGateStub = {
   },
   template: '<slot v-if="enabled" /><slot v-else name="fallback" />',
 }
-
-// ---------------------------------------------------------------------------
-// Composable mocks
-// ---------------------------------------------------------------------------
-const loginMock = vi.fn()
-const registerMock = vi.fn()
-const isEnabledMock = vi.fn(() => false)
-const toastSuccessMock = vi.fn()
-const toastErrorAxiosMock = vi.fn()
 
 function mountPage() {
   return shallowMount(LoginPage, {

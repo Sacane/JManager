@@ -295,7 +295,7 @@ describe('pages/booklet/[id] selection behavior', () => {
     vm.toggleSelection(vm.filteredTransactions[0])
     vm.toggleSelection(vm.filteredTransactions[1])
 
-    expect(vm.selectedTransactionsAmountLabel).toBe('+2\u202f500,00 €')
+    expect(vm.selectedTransactionsAmountLabel).toBe('+2\u202F500,00 €')
   })
 
   it('selectedTransactionsAmountLabel shows zero when no transactions are selected', async () => {
@@ -1079,9 +1079,18 @@ describe('pages/booklet/[id] tagFilterOptions and subTagFilterOptions scoped to 
       global: {
         mocks: { useDate: () => ({ months: ['JANUARY', 'FEBRUARY', 'MARCH'] }) },
         stubs: {
-          ConfirmDialog: true, ProgressSpinner: true, AppTable: true,
-          TransactionCreationDialog: true, Dialog: true, CsvImportDialog: true,
-          Select: true, DatePicker: true, Tag: true, Checkbox: true, Paginator: true, Button: true,
+          ConfirmDialog: true,
+          ProgressSpinner: true,
+          AppTable: true,
+          TransactionCreationDialog: true,
+          Dialog: true,
+          CsvImportDialog: true,
+          Select: true,
+          DatePicker: true,
+          Tag: true,
+          Checkbox: true,
+          Paginator: true,
+          Button: true,
         },
       },
     })
@@ -1226,9 +1235,17 @@ describe('pages/booklet/[id] global filter', () => {
       global: {
         mocks: { useDate: () => ({ months: ['JANUARY', 'FEBRUARY', 'MARCH'] }) },
         stubs: {
-          ConfirmDialog: true, AppTable: true, TransactionCreationDialog: true,
-          Dialog: true, CsvImportDialog: true, Select: true, DatePicker: true,
-          Tag: true, Checkbox: true, Paginator: true, Button: true,
+          ConfirmDialog: true,
+          AppTable: true,
+          TransactionCreationDialog: true,
+          Dialog: true,
+          CsvImportDialog: true,
+          Select: true,
+          DatePicker: true,
+          Tag: true,
+          Checkbox: true,
+          Paginator: true,
+          Button: true,
         },
       },
     })

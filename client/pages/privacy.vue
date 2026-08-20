@@ -4,7 +4,6 @@ definePageMeta({ layout: 'legal' })
 
 <template>
   <article class="flex flex-col gap-10">
-
     <!-- En-tête -->
     <header class="flex flex-col gap-3 pb-6 border-b border-[var(--card-border)]">
       <div class="flex items-center gap-2">
@@ -52,31 +51,61 @@ definePageMeta({ layout: 'legal' })
         <table class="w-full text-sm border-collapse">
           <thead>
             <tr>
-              <th class="legal-th">Donnée</th>
-              <th class="legal-th">Finalité</th>
-              <th class="legal-th">Obligatoire</th>
+              <th class="legal-th">
+                Donnée
+              </th>
+              <th class="legal-th">
+                Finalité
+              </th>
+              <th class="legal-th">
+                Obligatoire
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="legal-td">Adresse e-mail</td>
-              <td class="legal-td">Identification du compte, notifications transactionnelles</td>
-              <td class="legal-td">Oui</td>
+              <td class="legal-td">
+                Adresse e-mail
+              </td>
+              <td class="legal-td">
+                Identification du compte, notifications transactionnelles
+              </td>
+              <td class="legal-td">
+                Oui
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Nom d'utilisateur</td>
-              <td class="legal-td">Authentification, affichage dans l'interface</td>
-              <td class="legal-td">Oui</td>
+              <td class="legal-td">
+                Nom d'utilisateur
+              </td>
+              <td class="legal-td">
+                Authentification, affichage dans l'interface
+              </td>
+              <td class="legal-td">
+                Oui
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Mot de passe</td>
-              <td class="legal-td">Authentification — stocké sous forme de condensat BCrypt, jamais en clair</td>
-              <td class="legal-td">Oui</td>
+              <td class="legal-td">
+                Mot de passe
+              </td>
+              <td class="legal-td">
+                Authentification — stocké sous forme de condensat BCrypt, jamais en clair
+              </td>
+              <td class="legal-td">
+                Oui
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Date de création du compte</td>
-              <td class="legal-td">Gestion administrative</td>
-              <td class="legal-td">Automatique</td>
+              <td class="legal-td">
+                Date de création du compte
+              </td>
+              <td class="legal-td">
+                Gestion administrative
+              </td>
+              <td class="legal-td">
+                Automatique
+              </td>
             </tr>
           </tbody>
         </table>
@@ -89,26 +118,46 @@ definePageMeta({ layout: 'legal' })
         <table class="w-full text-sm border-collapse">
           <thead>
             <tr>
-              <th class="legal-th">Donnée</th>
-              <th class="legal-th">Finalité</th>
+              <th class="legal-th">
+                Donnée
+              </th>
+              <th class="legal-th">
+                Finalité
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="legal-td">Libellés de livrets et soldes</td>
-              <td class="legal-td">Suivi budgétaire</td>
+              <td class="legal-td">
+                Libellés de livrets et soldes
+              </td>
+              <td class="legal-td">
+                Suivi budgétaire
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Libellés de transactions, montants, dates</td>
-              <td class="legal-td">Analyse des dépenses et revenus</td>
+              <td class="legal-td">
+                Libellés de transactions, montants, dates
+              </td>
+              <td class="legal-td">
+                Analyse des dépenses et revenus
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Transactions récurrentes (labels, montants, fréquences)</td>
-              <td class="legal-td">Projection financière</td>
+              <td class="legal-td">
+                Transactions récurrentes (labels, montants, fréquences)
+              </td>
+              <td class="legal-td">
+                Projection financière
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Étiquettes (tags) associées aux transactions</td>
-              <td class="legal-td">Catégorisation des dépenses</td>
+              <td class="legal-td">
+                Étiquettes (tags) associées aux transactions
+              </td>
+              <td class="legal-td">
+                Catégorisation des dépenses
+              </td>
             </tr>
           </tbody>
         </table>
@@ -149,26 +198,46 @@ definePageMeta({ layout: 'legal' })
         <table class="w-full text-sm border-collapse">
           <thead>
             <tr>
-              <th class="legal-th">Traitement</th>
-              <th class="legal-th">Base légale</th>
+              <th class="legal-th">
+                Traitement
+              </th>
+              <th class="legal-th">
+                Base légale
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="legal-td">Fourniture du service de gestion financière</td>
-              <td class="legal-td">Exécution du contrat (Art. 6.1.b)</td>
+              <td class="legal-td">
+                Fourniture du service de gestion financière
+              </td>
+              <td class="legal-td">
+                Exécution du contrat (Art. 6.1.b)
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Enregistrement du consentement RGPD</td>
-              <td class="legal-td">Consentement explicite (Art. 6.1.a)</td>
+              <td class="legal-td">
+                Enregistrement du consentement RGPD
+              </td>
+              <td class="legal-td">
+                Consentement explicite (Art. 6.1.a)
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Sécurité : limitation des tentatives de connexion</td>
-              <td class="legal-td">Intérêt légitime (Art. 6.1.f)</td>
+              <td class="legal-td">
+                Sécurité : limitation des tentatives de connexion
+              </td>
+              <td class="legal-td">
+                Intérêt légitime (Art. 6.1.f)
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Envoi d'e-mails transactionnels (bienvenue)</td>
-              <td class="legal-td">Exécution du contrat (Art. 6.1.b)</td>
+              <td class="legal-td">
+                Envoi d'e-mails transactionnels (bienvenue)
+              </td>
+              <td class="legal-td">
+                Exécution du contrat (Art. 6.1.b)
+              </td>
             </tr>
           </tbody>
         </table>
@@ -225,30 +294,54 @@ definePageMeta({ layout: 'legal' })
         <table class="w-full text-sm border-collapse">
           <thead>
             <tr>
-              <th class="legal-th">Données</th>
-              <th class="legal-th">Durée</th>
+              <th class="legal-th">
+                Données
+              </th>
+              <th class="legal-th">
+                Durée
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="legal-td">Comptes inactifs (jamais activés)</td>
-              <td class="legal-td">30 jours</td>
+              <td class="legal-td">
+                Comptes inactifs (jamais activés)
+              </td>
+              <td class="legal-td">
+                30 jours
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Données de compte et données financières après suppression</td>
-              <td class="legal-td">1 an (obligations légales)</td>
+              <td class="legal-td">
+                Données de compte et données financières après suppression
+              </td>
+              <td class="legal-td">
+                1 an (obligations légales)
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Logs d'audit contenant des données personnelles</td>
-              <td class="legal-td">90 jours glissants</td>
+              <td class="legal-td">
+                Logs d'audit contenant des données personnelles
+              </td>
+              <td class="legal-td">
+                90 jours glissants
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Tokens d'authentification et sessions</td>
-              <td class="legal-td">À expiration du token (24 h pour l'accès, 7 j pour le rafraîchissement)</td>
+              <td class="legal-td">
+                Tokens d'authentification et sessions
+              </td>
+              <td class="legal-td">
+                À expiration du token (24 h pour l'accès, 7 j pour le rafraîchissement)
+              </td>
             </tr>
             <tr>
-              <td class="legal-td">Données de consentement</td>
-              <td class="legal-td">Durée de la relation contractuelle + 5 ans</td>
+              <td class="legal-td">
+                Données de consentement
+              </td>
+              <td class="legal-td">
+                Durée de la relation contractuelle + 5 ans
+              </td>
             </tr>
           </tbody>
         </table>
@@ -268,37 +361,67 @@ definePageMeta({ layout: 'legal' })
         <table class="w-full text-sm border-collapse">
           <thead>
             <tr>
-              <th class="legal-th">Droit</th>
-              <th class="legal-th">Comment l'exercer</th>
+              <th class="legal-th">
+                Droit
+              </th>
+              <th class="legal-th">
+                Comment l'exercer
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="legal-td font-medium">Accès (Art. 15)</td>
-              <td class="legal-td">Contacter contact@jmanager.sacane.fr</td>
+              <td class="legal-td font-medium">
+                Accès (Art. 15)
+              </td>
+              <td class="legal-td">
+                Contacter contact@jmanager.sacane.fr
+              </td>
             </tr>
             <tr>
-              <td class="legal-td font-medium">Rectification (Art. 16)</td>
-              <td class="legal-td">Contacter contact@jmanager.sacane.fr</td>
+              <td class="legal-td font-medium">
+                Rectification (Art. 16)
+              </td>
+              <td class="legal-td">
+                Contacter contact@jmanager.sacane.fr
+              </td>
             </tr>
             <tr>
-              <td class="legal-td font-medium">Effacement (Art. 17 — droit à l'oubli)</td>
-              <td class="legal-td">Directement depuis l'application : <em>Paramètres → Supprimer mon compte</em></td>
+              <td class="legal-td font-medium">
+                Effacement (Art. 17 — droit à l'oubli)
+              </td>
+              <td class="legal-td">
+                Directement depuis l'application : <em>Paramètres → Supprimer mon compte</em>
+              </td>
             </tr>
             <tr>
-              <td class="legal-td font-medium">Portabilité (Art. 20)</td>
-              <td class="legal-td">En cours de développement — disponible prochainement</td>
+              <td class="legal-td font-medium">
+                Portabilité (Art. 20)
+              </td>
+              <td class="legal-td">
+                En cours de développement — disponible prochainement
+              </td>
             </tr>
             <tr>
-              <td class="legal-td font-medium">Opposition (Art. 21)</td>
-              <td class="legal-td">Contacter contact@jmanager.sacane.fr</td>
+              <td class="legal-td font-medium">
+                Opposition (Art. 21)
+              </td>
+              <td class="legal-td">
+                Contacter contact@jmanager.sacane.fr
+              </td>
             </tr>
             <tr>
-              <td class="legal-td font-medium">Retrait du consentement (Art. 7.3)</td>
-              <td class="legal-td">La suppression du compte vaut retrait. Sinon, contacter contact@jmanager.sacane.fr</td>
+              <td class="legal-td font-medium">
+                Retrait du consentement (Art. 7.3)
+              </td>
+              <td class="legal-td">
+                La suppression du compte vaut retrait. Sinon, contacter contact@jmanager.sacane.fr
+              </td>
             </tr>
             <tr>
-              <td class="legal-td font-medium">Réclamation auprès de la CNIL</td>
+              <td class="legal-td font-medium">
+                Réclamation auprès de la CNIL
+              </td>
               <td class="legal-td">
                 <a
                   href="https://www.cnil.fr"
@@ -354,24 +477,48 @@ definePageMeta({ layout: 'legal' })
         <table class="w-full text-sm border-collapse">
           <thead>
             <tr>
-              <th class="legal-th">Cookie</th>
-              <th class="legal-th">Type</th>
-              <th class="legal-th">Durée</th>
-              <th class="legal-th">Finalité</th>
+              <th class="legal-th">
+                Cookie
+              </th>
+              <th class="legal-th">
+                Type
+              </th>
+              <th class="legal-th">
+                Durée
+              </th>
+              <th class="legal-th">
+                Finalité
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="legal-td"><code>token</code></td>
-              <td class="legal-td">HttpOnly, Secure, SameSite=Strict</td>
-              <td class="legal-td">24 heures</td>
-              <td class="legal-td">Authentification (JWT d'accès)</td>
+              <td class="legal-td">
+                <code>token</code>
+              </td>
+              <td class="legal-td">
+                HttpOnly, Secure, SameSite=Strict
+              </td>
+              <td class="legal-td">
+                24 heures
+              </td>
+              <td class="legal-td">
+                Authentification (JWT d'accès)
+              </td>
             </tr>
             <tr>
-              <td class="legal-td"><code>refresh_token</code></td>
-              <td class="legal-td">HttpOnly, Secure, SameSite=Strict</td>
-              <td class="legal-td">7 jours</td>
-              <td class="legal-td">Renouvellement de session</td>
+              <td class="legal-td">
+                <code>refresh_token</code>
+              </td>
+              <td class="legal-td">
+                HttpOnly, Secure, SameSite=Strict
+              </td>
+              <td class="legal-td">
+                7 jours
+              </td>
+              <td class="legal-td">
+                Renouvellement de session
+              </td>
             </tr>
           </tbody>
         </table>
@@ -405,7 +552,6 @@ definePageMeta({ layout: 'legal' })
         </a>
       </p>
     </section>
-
   </article>
 </template>
 

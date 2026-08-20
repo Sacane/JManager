@@ -36,8 +36,7 @@ export default function useForceChangePassword() {
         })
         clearMustChangePassword()
         navigateTo('/')
-      }
-      catch {
+      } catch {
         toast.error('Une erreur est survenue. Veuillez réessayer.')
       }
     }, LOADING_SCOPES.password.forceChange)

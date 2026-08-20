@@ -1,23 +1,23 @@
-type ProblemDetailProperties = {
+interface ProblemDetailProperties {
   code?: number
   requestId?: string
   userId?: string
 }
 
-export type DiagnosticContext = {
+export interface DiagnosticContext {
   requestId?: string
   userId?: string
   code?: number
 }
 
-export type ApiProblemDetail = {
+export interface ApiProblemDetail {
   code?: number
   properties?: ProblemDetailProperties
   requestId?: string
   userId?: string
 }
 
-type ErrorMessage = {
+interface ErrorMessage {
   summary: string
   detail: string
 }

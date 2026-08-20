@@ -7,15 +7,14 @@ const props = defineProps<{
   selectedChildIds: string[]
 }>()
 
-const children = computed(() => props.group.children)
-const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useSubTagOrder(props.group.id, children)
-
 const emit = defineEmits<{
   (e: 'edit', tag: TagDisplayItem): void
   (e: 'delete', tag: TagDisplayItem): void
-  (e: 'toggle-select', tag: TagDisplayItem): void
-  (e: 'toggle-select-child', tag: TagDisplayItem): void
+  (e: 'toggleSelect', tag: TagDisplayItem): void
+  (e: 'toggleSelectChild', tag: TagDisplayItem): void
 }>()
+const children = computed(() => props.group.children)
+const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useSubTagOrder(props.group.id, children)
 </script>
 
 <template>
@@ -35,7 +34,7 @@ const emit = defineEmits<{
             :model-value="selected"
             class="tag-select-checkbox"
             aria-label="Sélectionner ce tag"
-            @update:model-value="() => emit('toggle-select', props.group)"
+            @update:model-value="() => emit('toggleSelect', props.group)"
           />
           <div class="tag-label-wrapper">
             <h3 class="tag-label">
@@ -91,7 +90,7 @@ const emit = defineEmits<{
               :model-value="selectedChildIds.includes(child.id)"
               class="sub-tag-checkbox"
               aria-label="Sélectionner ce sous-tag"
-              @update:model-value="() => emit('toggle-select-child', child)"
+              @update:model-value="() => emit('toggleSelectChild', child)"
             />
             <div class="color-circle-sm" :style="{ backgroundColor: child.color }" />
             <span class="sub-tag-label">{{ child.label }}</span>

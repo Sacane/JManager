@@ -14,6 +14,9 @@ const ColorPickerFieldStub = {
   template: '<input data-test="color-picker" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 }
 
+// Needed for setProps inside the factory
+let wrapper: any
+
 function mountDialog(props: Record<string, any>, modelValue = true) {
   vi.stubGlobal('definePageMeta', vi.fn())
   return mount(TagEditDialog, {
@@ -34,9 +37,6 @@ function mountDialog(props: Record<string, any>, modelValue = true) {
     },
   })
 }
-
-// Needed for setProps inside the factory
-let wrapper: any
 
 describe('components/dialog/TagEditDialog', () => {
   describe('when editing a top-level tag (no parentTag)', () => {

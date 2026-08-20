@@ -1,11 +1,11 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import BookletFilterActionBar from '../../components/booklet/BookletFilterActionBar.vue'
 
 const BookletActionButtonsStub = {
   name: 'BookletActionButtons',
   props: ['orientation', 'hasSelection', 'selectedCount', 'hasRegenerableTransactions', 'isAnyActionLoading', 'isDeleteLoading', 'isExportCsvLoading', 'isRegenerateLoading', 'selectedAmount', 'selectedAmountLabel'],
-  emits: ['new-transaction', 'new-preview', 'import-csv', 'export-csv', 'regenerate', 'delete'],
+  emits: ['newTransaction', 'newPreview', 'importCsv', 'exportCsv', 'regenerate', 'delete'],
   template: '<div class="action-buttons-stub" />',
 }
 

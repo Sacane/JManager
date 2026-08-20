@@ -39,10 +39,10 @@ const emit = defineEmits<{
   'update:globalFilter': [val: 'none' | 'all' | 'preview']
   'update:selectedTagFilter': [val: string]
   'update:selectedSubTagFilter': [val: string]
-  'new-transaction': []
-  'new-preview': []
-  'import-csv': []
-  'export-csv': []
+  'newTransaction': []
+  'newPreview': []
+  'importCsv': []
+  'exportCsv': []
   'regenerate': []
   'delete': []
 }>()
@@ -162,10 +162,10 @@ const emit = defineEmits<{
         :is-delete-loading="isDeleteLoading"
         :is-export-csv-loading="isExportCsvLoading"
         :is-regenerate-loading="isRegenerateLoading"
-        @new-transaction="emit('new-transaction')"
-        @new-preview="emit('new-preview')"
-        @import-csv="emit('import-csv')"
-        @export-csv="emit('export-csv')"
+        @new-transaction="emit('newTransaction')"
+        @new-preview="emit('newPreview')"
+        @import-csv="emit('importCsv')"
+        @export-csv="emit('exportCsv')"
         @regenerate="emit('regenerate')"
         @delete="emit('delete')"
       />

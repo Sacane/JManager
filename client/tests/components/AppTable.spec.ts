@@ -217,8 +217,8 @@ describe('components/AppTable', () => {
 
       await wrapper.findAll('[data-stub="row"]')[1].trigger('dblclick')
 
-      expect(wrapper.emitted('row-dblclick')).toBeTruthy()
-      expect((wrapper.emitted('row-dblclick')![0][0] as { data: unknown }).data).toEqual(sampleRows[1])
+      expect(wrapper.emitted('rowDblclick')).toBeTruthy()
+      expect((wrapper.emitted('rowDblclick')![0][0] as { data: unknown }).data).toEqual(sampleRows[1])
     })
   })
 

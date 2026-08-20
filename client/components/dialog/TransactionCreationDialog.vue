@@ -133,7 +133,9 @@ function handleTabKey(event: KeyboardEvent) {
         <label for="calendar" class="block mt-4 text-label">Date</label>
         <DatePicker id="calendar" v-model="transactionResult.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
       </div>
-      <p class="text-label mt-4">Tag</p>
+      <p class="text-label mt-4">
+        Tag
+      </p>
       <Select v-model="transactionResult.tagDTO" label="tag" :options="tags" option-label="label" placeholder="Associer un tag" class="w-full md:w-14rem">
         <template #option="slotTag">
           <Tag :value="slotTag.option.label" :style="getTagStyle(slotTag.option.colorDTO)" />
@@ -141,7 +143,7 @@ function handleTabKey(event: KeyboardEvent) {
       </Select>
       <div class="flex flex-row gap-5">
         <Button severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
-        <Button ref="validerButtonRef" :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full btn-primary text-white" @click="emitTransaction" />
+        <Button :label="buttonTitle ? buttonTitle : 'Créer'" class="mt-6 w-full btn-primary text-white" @click="emitTransaction" />
       </div>
     </div>
   </Dialog>

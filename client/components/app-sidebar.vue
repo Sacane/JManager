@@ -156,7 +156,6 @@ onUnmounted(() => {
               <i class="pi pi-shield" />
               <span>Administration</span>
             </NuxtLink>
-
           </div>
         </nav>
 
@@ -640,4 +639,3 @@ onUnmounted(() => {
   }
 }
 </style>
-

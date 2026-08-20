@@ -2,7 +2,7 @@
 import { reactive, watch } from 'vue'
 import ColorPickerField from '~/components/tag/ColorPickerField.vue'
 
-const props = defineProps<{
+defineProps<{
   parentTagOptions: TagDisplayItem[]
   loading: boolean
   disabled: boolean

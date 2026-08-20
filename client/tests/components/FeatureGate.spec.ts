@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ref, readonly } from 'vue'
+import { readonly, ref } from 'vue'
 import FeatureGate from '../../components/FeatureGate.vue'
 import { FEATURE_KEYS } from '../../constants/featureKeys'
 
