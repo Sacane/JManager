@@ -4,6 +4,17 @@ body {
   background-color: var(--bg-primary);
 }
 
+/* Stylus/touch devices deliver hover as a jittery stream of pointer events.
+   Without this, the browser's native double-tap-to-zoom gesture detector stays
+   active on clickable elements and can misfire into a zoom in/out loop when a
+   pen hovers rapidly over a button. `manipulation` disables that detector per
+   element without touching page-level pinch-zoom accessibility. */
+button,
+a,
+[role='button'] {
+  touch-action: manipulation;
+}
+
 .dark {
   color-scheme: dark;
 }

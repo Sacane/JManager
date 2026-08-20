@@ -1095,7 +1095,7 @@ onUnmounted(() => {
           />
           <div class="w-full h-px bg-[var(--card-border)] my-1" />
           <button
-            v-tooltip.right="{ value: 'Tout le mois', pt: { text: { style: 'white-space: nowrap' } } }"
+            v-tooltip.left="{ value: 'Tout le mois', pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
             :class="globalFilter === 'all'
               ? 'border-[var(--primary)] text-[var(--primary)] bg-[rgba(101,8,204,0.07)]'
@@ -1106,7 +1106,7 @@ onUnmounted(() => {
             <i :class="isGlobalFilterLoading && globalFilter === 'all' ? 'pi pi-spin pi-spinner' : 'pi pi-globe'" />
           </button>
           <button
-            v-tooltip.right="{ value: 'Prév. du mois', pt: { text: { style: 'white-space: nowrap' } } }"
+            v-tooltip.left="{ value: 'Prév. du mois', pt: { text: { style: 'white-space: nowrap' } } }"
             class="w-10 h-10 flex items-center justify-center rounded-lg text-sm transition-all border"
             :class="globalFilter === 'preview'
               ? 'border-amber-500 text-amber-600 bg-amber-500/8'

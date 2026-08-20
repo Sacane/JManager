@@ -28,6 +28,13 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'JManager',
+      meta: [
+        // Without this, tablet/mobile browsers fall back to a virtual desktop-width
+        // viewport and keep re-fitting the page on every reflow — visible as a
+        // zoom-in/zoom-out loop whenever a stylus/pen hover triggers a tooltip or
+        // other layout shift near the viewport edge.
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         // Note: Poppins is loaded via UnoCSS presetWebFonts — do NOT add a duplicate <link> here.
