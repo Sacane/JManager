@@ -14,6 +14,7 @@ import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.port.input.MdcContextProvider
 import fr.sacane.jmanager.domain.port.input.MdcKeys
+import fr.sacane.jmanager.domain.port.input.booklet.userOwnsBooklet
 import fr.sacane.jmanager.domain.utils.*
 import java.util.UUID
 import org.slf4j.LoggerFactory
@@ -45,6 +46,15 @@ class DeleteTransactionsByIdsService(
 
     override fun handle(command: DeleteTransactionsByIdsCommand): Result<TransactionDeletionResult> {
         return infraTransactionManager.executeInTransaction(transactionRepository) {
+            // A booklet owned by someone else is reported as missing rather than forbidden: telling the
+            // caller it exists would turn this endpoint into a booklet-enumeration oracle.
+            if (!userOwnsBooklet(bookletRepository, command.userId, command.bookletID)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Booklet ${command.bookletID} n'existe pas",
+                    "domain.transaction.delete.booklet_not_found"
+                )
+            }
             val booklet: Booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,

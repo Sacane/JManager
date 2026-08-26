@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.fake.IdUserBooklet
 import fr.sacane.jmanager.domain.fake.IdBookletByTransaction
 import fr.sacane.jmanager.domain.fake.TestScenario
 import fr.sacane.jmanager.domain.fixture.TransactionFixture
+import fr.sacane.jmanager.domain.fixture.UserFixture
 import fr.sacane.jmanager.domain.models.Amount
 import fr.sacane.jmanager.domain.models.Tag
 import fr.sacane.jmanager.domain.models.toAmount
@@ -47,6 +48,10 @@ class TransactionFeatureTest {
     private fun tx(label: String, amount: Long, isIncome: Boolean, date: LocalDate = LocalDate.now(), tag: Tag? = null, isPreview: Boolean = false): Transaction {
         return TransactionFixture.aTransaction(label = label, amount = Amount(amount), isIncome = isIncome, date = date, tag = tag ?: factory.fakeTagRepository().defaultTag(), isPreview = isPreview)
     }
+
+    private fun anIntruder() = scenario.withUser(
+        UserFixture.aUserWithPassword(user = UserFixture.aUser(username = "intruder", email = "intruder@jmanager.fr"))
+    )
 
     @Nested
     inner class SaveTransactionInBookletFeatureTest {
@@ -267,6 +272,25 @@ class TransactionFeatureTest {
         }
 
         @Test
+        fun `edit transaction from another user's booklet must return not found and leave it unchanged`() {
+            val owner = scenario.withUser().withBooklet()
+            val transaction = tx("test0", 100, true, "02/01/2024".toDate())
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(owner.userId, owner.booklet.id!!), mutableListOf(transaction)))
+            val intruder = anIntruder()
+
+            val result = act {
+                editTransactionUseCase.handle(
+                    EditTransactionCommand(intruder.userId, owner.booklet.id!!, transaction.copy(label = "hacked"))
+                )
+            }
+
+            then(result) { assertFailure(ResultState.NOT_FOUND) }
+            val actualTransaction = transactionState.getStates().find { it.id.userId == owner.userId && it.id.bookletId == owner.booklet.id }
+                ?.transactions?.find { it.id == transaction.id }
+            assertEquals("test0", actualTransaction?.label)
+        }
+
+        @Test
         fun `Giving a user with existing transaction, it should be retrieving it by its ID`() {
             val ctx = scenario.withUser().withBooklet()
             val toInsert = tx("test1", 100, true, "01/01/2024".toDate())
@@ -331,6 +355,25 @@ class TransactionFeatureTest {
             }
 
             then(result) { assertFailure(ResultState.BOOKLET_NOT_FOUND) }
+        }
+
+        @Test
+        fun `delete transactions from another user's booklet must return not found and change nothing`() {
+            val owner = scenario.withUser().withBooklet()
+            val transaction = tx("test0", 100, true, "02/01/2024".toDate())
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(owner.userId, owner.booklet.id!!), mutableListOf(transaction)))
+            val intruder = anIntruder()
+
+            val result = act {
+                deleteTransactionsByIdsUseCase.handle(
+                    DeleteTransactionsByIdsCommand(intruder.userId, owner.booklet.id!!, listOf(transaction.id!!))
+                )
+            }
+
+            then(result) { assertFailure(ResultState.BOOKLET_NOT_FOUND) }
+            val transactions = transactionState.getStates().find { it.id.userId == owner.userId && it.id.bookletId == owner.booklet.id }
+                ?.transactions
+            assertNotNull(transactions?.find { it.id == transaction.id })
         }
 
         @Test
@@ -403,6 +446,25 @@ class TransactionFeatureTest {
 
             val actualBooklet = bookletState.getStates().find { it.userId == ctx.userId }?.booklets?.find { it.id == ctx.booklet.id }
             assertEquals(newAmount, actualBooklet?.amount)
+        }
+
+        @Test
+        fun `confirm preview transaction from another user's booklet must return not found and leave it as preview`() {
+            val owner = scenario.withUser().withBooklet()
+            val transactionPreviewTest = tx("test#0", 100, true, "01/01/2024".toDate(), isPreview = true)
+            transactionState.initWith(IdBookletByTransaction(IdUserBooklet(owner.userId, owner.booklet.id!!), mutableListOf(transactionPreviewTest)))
+            val intruder = anIntruder()
+
+            val result = act {
+                confirmPreviewTransactionUseCase.handle(
+                    ConfirmPreviewTransactionCommand(intruder.userId, owner.booklet.id!!, transactionPreviewTest.id!!, null, null)
+                )
+            }
+
+            then(result) { assertFailure(ResultState.BOOKLET_NOT_FOUND) }
+            val actual = transactionState.getStates().find { it.id.userId == owner.userId && it.id.bookletId == owner.booklet.id }
+                ?.transactions?.find { it.id == transactionPreviewTest.id }
+            assertTrue(actual!!.isPreview)
         }
 
         @Test
@@ -521,6 +583,37 @@ class TransactionFeatureTest {
             }
 
             then(result) { assertFailure(ResultState.BOOKLET_NOT_FOUND) }
+        }
+
+        @Test
+        fun `shouldReturnBookletNotFound_whenBookletBelongsToAnotherUser`() {
+            val owner = scenario.withUser().withBooklet()
+            val intruder = anIntruder()
+            val regularTransactionId = fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId("regular-virtual-intruder")
+
+            val result = act {
+                confirmVirtualTransactionUseCase.handle(
+                    ConfirmVirtualTransactionCommand(
+                        userId = intruder.userId,
+                        bookletId = owner.booklet.id!!,
+                        regularTransactionId = regularTransactionId,
+                        sourceMonth = 5,
+                        sourceYear = 2026,
+                        label = "Salaire",
+                        amount = 3000.toAmount(),
+                        date = LocalDate.of(2026, 5, 15),
+                        isIncome = true
+                    )
+                )
+            }
+
+            then(result) { assertFailure(ResultState.BOOKLET_NOT_FOUND) }
+            val transactions = transactionState.getStates()
+                .find { it.id.userId == owner.userId && it.id.bookletId == owner.booklet.id }
+                ?.transactions
+            assertTrue(transactions.isNullOrEmpty())
+            val tracker = factory.trackerRepository().findTracker(regularTransactionId, owner.booklet.id!!)
+            assertNull(tracker)
         }
 
         @Test

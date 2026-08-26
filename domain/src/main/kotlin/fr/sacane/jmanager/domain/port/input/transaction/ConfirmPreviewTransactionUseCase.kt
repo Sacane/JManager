@@ -13,6 +13,7 @@ import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.port.input.MdcContextProvider
 import fr.sacane.jmanager.domain.port.input.MdcKeys
+import fr.sacane.jmanager.domain.port.input.booklet.userOwnsBooklet
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDate
 import java.util.UUID
@@ -48,6 +49,15 @@ class ConfirmPreviewTransactionService(
 
     override fun handle(command: ConfirmPreviewTransactionCommand): Result<TransactionResumeResult> {
         return infraTransactionManager.executeInTransaction(Unit) {
+            // A booklet owned by someone else is reported as missing rather than forbidden: telling the
+            // caller it exists would turn this endpoint into a booklet-enumeration oracle.
+            if (!userOwnsBooklet(bookletRepository, command.userId, command.bookletID)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Booklet ${command.bookletID} not found",
+                    "domain.transaction.confirm.booklet_not_found"
+                )
+            }
             val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,

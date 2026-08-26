@@ -13,6 +13,7 @@ import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.port.input.MdcContextProvider
 import fr.sacane.jmanager.domain.port.input.MdcKeys
+import fr.sacane.jmanager.domain.port.input.booklet.userOwnsBooklet
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDateTime
 import java.util.UUID
@@ -55,6 +56,14 @@ class EditTransactionService(
                     ResultState.TRANSACTION_ENTRY_ERROR,
                     "L'ID de la transaction est null",
                     "domain.transaction.edit.id_missing"
+                )
+            }
+            // A booklet owned by someone else is reported as missing rather than forbidden: telling the
+            // caller it exists would turn this endpoint into a booklet-enumeration oracle.
+            if (!userOwnsBooklet(bookletRepository, command.userId, command.bookletID)) {
+                return@executeInTransaction domainNotFound(
+                    "Le livret ${command.bookletID} n'existe pas",
+                    "domain.transaction.edit.booklet_not_found"
                 )
             }
             val registeredBooklet = bookletRepository.findBookletByIdWithTransactions(command.bookletID)

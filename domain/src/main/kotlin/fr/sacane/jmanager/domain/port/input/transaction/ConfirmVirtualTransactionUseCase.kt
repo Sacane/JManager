@@ -17,6 +17,7 @@ import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
 import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.port.input.booklet.userOwnsBooklet
 import fr.sacane.jmanager.domain.utils.*
 import java.time.LocalDate
 import java.util.UUID
@@ -51,6 +52,15 @@ class ConfirmVirtualTransactionService(
 
     override fun handle(command: ConfirmVirtualTransactionCommand): Result<TransactionResumeResult> {
         return infraTransactionManager.executeInTransaction(Any()) {
+            // A booklet owned by someone else is reported as missing rather than forbidden: telling the
+            // caller it exists would turn this endpoint into a booklet-enumeration oracle.
+            if (!userOwnsBooklet(bookletRepository, command.userId, command.bookletId)) {
+                return@executeInTransaction domainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Booklet ${command.bookletId} not found",
+                    "domain.virtual_transaction.confirm.booklet_not_found"
+                )
+            }
             val booklet = bookletRepository.findBookletByIdWithTransactions(command.bookletId)
                 ?: return@executeInTransaction domainFailure(
                     ResultState.BOOKLET_NOT_FOUND,
