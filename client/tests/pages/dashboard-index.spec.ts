@@ -1,5 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
 import DashboardPage from '../../pages/index.vue'
 
 vi.mock('@vueuse/core', () => ({
@@ -124,7 +125,21 @@ async function settleDashboard() {
   }
 }
 
-function mountDashboardPage() {
+// The default global `useLocalStorage` stub (tests/setup.ts) returns a brand-new ref on every
+// call, so it cannot model real persistence across a component unmount/remount. This fake keeps
+// one ref per storage key — like the real localStorage-backed composable would — so persistence
+// tests can simulate "leave the page and come back".
+function createPersistentLocalStorage() {
+  const store = new Map<string, ReturnType<typeof ref>>()
+  return (key: string, defaultValue: unknown) => {
+    if (!store.has(key)) {
+      store.set(key, ref(defaultValue))
+    }
+    return store.get(key)!
+  }
+}
+
+function mountDashboardPage(useLocalStorageImpl?: (key: string, defaultValue: unknown) => unknown) {
   vi.stubGlobal('definePageMeta', vi.fn())
   vi.stubGlobal('navigateTo', vi.fn())
   vi.stubGlobal('useBooklet', () => ({
@@ -140,6 +155,9 @@ function mountDashboardPage() {
   vi.stubGlobal('useJToast', () => ({ success: vi.fn(), error: vi.fn(), errorAxios: vi.fn() }))
   vi.stubGlobal('capitalizeFirst', (value: string) => value)
   vi.stubGlobal('rgbToHex', () => '#ffffff')
+  if (useLocalStorageImpl) {
+    vi.stubGlobal('useLocalStorage', useLocalStorageImpl)
+  }
 
   return shallowMount(DashboardPage, {
     global: {
@@ -854,5 +872,85 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     const opts = lineStub.props('options') as any
     expect(opts.scales.y.min).toBeUndefined()
     expect(opts.scales.y.max).toBeUndefined()
+  })
+})
+
+describe('pages/index selected booklet persistence', () => {
+  // Mirrors the storage key used by pages/index.vue for the selected booklet.
+  const SELECTED_BOOKLET_STORAGE_KEY = 'dashboard.selectedBookletId.v1'
+
+  const firstBooklet = {
+    id: '11111111-1111-4111-8111-111111111111',
+    amount: 1200,
+    label: 'Compte principal',
+    transactions: [],
+  }
+  const secondBooklet = {
+    id: '22222222-2222-4222-8222-222222222222',
+    amount: 500,
+    label: 'Compte secondaire',
+    transactions: [],
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+
+    fetchBookletsMock.mockResolvedValue([firstBooklet, secondBooklet])
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getUserSettingsMock.mockResolvedValue({ projectionWindowDays: 15, bookletCycles: [] })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('keeps the selected booklet after leaving the page and coming back', async () => {
+    const persistentLocalStorage = createPersistentLocalStorage()
+
+    const wrapper = mountDashboardPage(persistentLocalStorage)
+    await settleDashboard()
+
+    const select = wrapper.get('select')
+    await select.setValue(secondBooklet.id)
+    await settleDashboard()
+    expect((select.element as HTMLSelectElement).value).toBe(secondBooklet.id)
+
+    // Simulate navigating to another tab/page (unmount) and coming back (fresh mount).
+    wrapper.unmount()
+
+    const wrapperAfterReturn = mountDashboardPage(persistentLocalStorage)
+    await settleDashboard()
+
+    const selectAfterReturn = wrapperAfterReturn.get('select')
+    expect((selectAfterReturn.element as HTMLSelectElement).value).toBe(secondBooklet.id)
+    expect(wrapperAfterReturn.text()).toContain(secondBooklet.label)
+  })
+
+  it('falls back to the first booklet when the persisted selection no longer matches a booklet', async () => {
+    const persistentLocalStorage = createPersistentLocalStorage()
+    // Pre-seed the persisted value as if a previously selected booklet had since been deleted.
+    persistentLocalStorage(SELECTED_BOOKLET_STORAGE_KEY, 'deleted-booklet-id')
+
+    const wrapper = mountDashboardPage(persistentLocalStorage)
+    await settleDashboard()
+
+    const select = wrapper.get('select')
+    expect((select.element as HTMLSelectElement).value).toBe(firstBooklet.id)
+    expect(wrapper.text()).toContain(firstBooklet.label)
   })
 })

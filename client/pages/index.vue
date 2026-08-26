@@ -54,6 +54,9 @@ const { getSettings: getUserSettings } = useUserSettings()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
 const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByBooklet.v1'
+// Persists the selected booklet across navigation (e.g. leaving the dashboard for another
+// page/tab and coming back) so the user doesn't have to reselect it every time.
+const SELECTED_BOOKLET_STORAGE_KEY = 'dashboard.selectedBookletId.v1'
 
 // Refs
 const isBookletDialogOpen = ref(false)
@@ -70,7 +73,7 @@ const evolutionTrendStats = ref<TrendStatsDTO | null>(null)
 const dailyTrendStats = ref<DailyTrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
-const selectedBookletId = ref<string | number | null>(null)
+const selectedBookletId = useLocalStorage<string | number | null>(SELECTED_BOOKLET_STORAGE_KEY, null)
 const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
 const periodAnchorDate = ref(new Date())
 const hasInitializedDashboard = ref(false)
@@ -1113,9 +1116,12 @@ async function loadDashboardData() {
         )
       }
 
-      if (!selectedBookletId.value && orderedBooklets.value.length > 0) {
-        const firstBookletId = orderedBooklets.value[0]?.id
-        selectedBookletId.value = firstBookletId ?? null
+      // Keep the persisted selection only if it still points to an existing booklet
+      // (e.g. it wasn't deleted since the last visit); otherwise fall back to the first one.
+      const persistedSelectionIsValid = selectedBookletId.value != null
+        && orderedBooklets.value.some(booklet => booklet.id === selectedBookletId.value)
+      if (!persistedSelectionIsValid) {
+        selectedBookletId.value = orderedBooklets.value[0]?.id ?? null
       }
 
       await loadStatsData()
