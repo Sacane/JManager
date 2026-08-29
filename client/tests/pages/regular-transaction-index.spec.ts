@@ -478,3 +478,57 @@ describe('pages/regular-transaction/index – link/unlink button conditions', ()
     expect(unlinkButtons[1].attributes('disabled')).toBeDefined()
   })
 })
+
+describe('pages/regular-transaction/index – desktop layout', () => {
+  it('constrains the table so the pagination footer stays inside the viewport', async () => {
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useBooklet', () => ({ fetch: vi.fn().mockResolvedValue([]) }))
+    vi.stubGlobal('useRegularTransaction', () => ({
+      getRegularTransaction: vi.fn().mockResolvedValue({
+        content: [createRegularTransaction('rt-1')],
+        pageNumber: 0,
+        pageSize: 10,
+        totalElements: 1,
+        totalPages: 1,
+      }),
+      saveMonthlyTransaction: vi.fn(),
+      getRegularTransactionById: vi.fn(),
+      updateRegularTransaction: vi.fn(),
+      deleteRegularTransaction: vi.fn(),
+      deleteRegularTransactions: vi.fn(),
+      linkRegularTransactionToBooklet: vi.fn(),
+      unlinkRegularTransactionFromBooklet: vi.fn(),
+    }))
+    vi.stubGlobal('useJToast', () => ({ success: vi.fn(), errorAxios: vi.fn(), warn: vi.fn() }))
+    vi.stubGlobal('useConfirm', () => ({ require: vi.fn() }))
+
+    const AppTableSpy = defineComponent({
+      name: 'AppTable',
+      props: ['rows', 'columns', 'dataKey', 'selectable', 'scrollable', 'scrollHeight'],
+      template: '<div class="spy-table"><slot name="empty" /></div>',
+    })
+
+    const wrapper = shallowMount(RegularTransactionPage, {
+      global: {
+        stubs: {
+          AppTable: AppTableSpy,
+          Button: { props: ['label'], template: '<button>{{ label }}</button>' },
+          Tag: true,
+          Select: true,
+          ConfirmDialog: true,
+          Paginator: true,
+          RegularTransactionCreationDialog: { name: 'RegularTransactionCreationDialog', props: ['loading'], template: '<div />' },
+          RegularTransactionDialogCard: { name: 'RegularTransactionDialogCard', template: '<div />' },
+        },
+      },
+    })
+
+    await flushPromises()
+
+    // The DataTable must be a growing/shrinking flex child; otherwise it renders
+    // at full content height and pushes the paginator footer below the
+    // overflow-hidden container (only visible after zooming out).
+    const appTable = wrapper.findComponent(AppTableSpy)
+    expect(appTable.classes()).toEqual(expect.arrayContaining(['flex-1', 'min-h-0']))
+  })
+})
