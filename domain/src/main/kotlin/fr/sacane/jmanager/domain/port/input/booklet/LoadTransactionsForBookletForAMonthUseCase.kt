@@ -8,6 +8,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.TransactionSortDirection
+import fr.sacane.jmanager.domain.models.transaction.TransactionSortField
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionRepository
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
@@ -40,6 +41,7 @@ data class LoadTransactionsForBookletForAMonthQuery(
     val pageNumber: Int = 0,
     val pageSize: Int = 10,
     val sortDirection: TransactionSortDirection? = null,
+    val sortField: TransactionSortField? = null,
 ) : Query<BookletLoadingResult>, MdcContextProvider {
     override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
 }
@@ -63,6 +65,8 @@ class LoadTransactionsForBookletForAMonthService(
     companion object {
         private val log = LoggerFactory.getLogger(LoadTransactionsForBookletForAMonthService::class.java)
         private val BY_DATE_THEN_LAST_MODIFIED = compareBy<Transaction> { it.date }.thenBy { it.lastModified }
+        private val BY_LABEL_THEN_DATE = compareBy<Transaction> { it.label.lowercase() }.then(BY_DATE_THEN_LAST_MODIFIED)
+        private val BY_AMOUNT_THEN_DATE = compareBy<Transaction> { it.amount.value }.then(BY_DATE_THEN_LAST_MODIFIED)
     }
 
     override fun handle(query: LoadTransactionsForBookletForAMonthQuery): Result<BookletLoadingResult> {
@@ -258,6 +262,7 @@ class LoadTransactionsForBookletForAMonthService(
 
             val allDisplayTransactions = sortForDisplay(
                 transactions.second + combinedPrevisionalTransactions,
+                query.sortField,
                 query.sortDirection
             )
             val page = paginator.paginate(pageNumber, pageSize) { allDisplayTransactions }
@@ -295,12 +300,34 @@ class LoadTransactionsForBookletForAMonthService(
 
     private fun sortForDisplay(
         transactions: List<Transaction>,
+        sortField: TransactionSortField?,
         sortDirection: TransactionSortDirection?
     ): List<Transaction> {
-        return when (sortDirection) {
-            null -> transactions
-            TransactionSortDirection.ASCENDING -> transactions.sortedWith(BY_DATE_THEN_LAST_MODIFIED)
-            TransactionSortDirection.DESCENDING -> transactions.sortedWith(BY_DATE_THEN_LAST_MODIFIED.reversed())
+        if (sortDirection == null) return transactions
+        val ascending = sortDirection == TransactionSortDirection.ASCENDING
+        return when (sortField ?: TransactionSortField.DATE) {
+            TransactionSortField.DATE -> transactions.sortedWith(directed(BY_DATE_THEN_LAST_MODIFIED, ascending))
+            TransactionSortField.LABEL -> transactions.sortedWith(directed(BY_LABEL_THEN_DATE, ascending))
+            TransactionSortField.EXPENSE -> orderByKindThenAmount(transactions, primaryIsIncome = false, ascending)
+            TransactionSortField.INCOME -> orderByKindThenAmount(transactions, primaryIsIncome = true, ascending)
         }
+    }
+
+    private fun directed(comparator: Comparator<Transaction>, ascending: Boolean): Comparator<Transaction> =
+        if (ascending) comparator else comparator.reversed()
+
+    /**
+     * Orders the transactions of the requested kind by amount (following [ascending]) and appends
+     * the other kind — always in date order — at the end of the list, so an amount sort never
+     * interleaves expenses and incomes.
+     */
+    private fun orderByKindThenAmount(
+        transactions: List<Transaction>,
+        primaryIsIncome: Boolean,
+        ascending: Boolean
+    ): List<Transaction> {
+        val (primary, secondary) = transactions.partition { it.isIncome == primaryIsIncome }
+        return primary.sortedWith(directed(BY_AMOUNT_THEN_DATE, ascending)) +
+            secondary.sortedWith(BY_DATE_THEN_LAST_MODIFIED)
     }
 }

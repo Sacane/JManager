@@ -60,6 +60,21 @@ describe('composables/useBooklet', () => {
       })
     })
 
+    it('forwards the sort field alongside the direction', async () => {
+      get.mockResolvedValue({ transactions: [] })
+
+      await useBooklet().findTransactionsByIdMonthAndYear('booklet-1', 8, 2026, {}, 0, 10, 'ASCENDING', 'LABEL')
+
+      expect(get).toHaveBeenCalledWith('booklet/booklet-1/transactions', {
+        month: 8,
+        year: 2026,
+        page: 0,
+        size: 10,
+        sortDirection: 'ASCENDING',
+        sortField: 'LABEL',
+      })
+    })
+
     it('omits the sort direction when none is requested', async () => {
       get.mockResolvedValue({ transactions: [] })
 

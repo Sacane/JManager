@@ -55,6 +55,13 @@ export interface BookletDateRangeQuery {
  */
 export type TransactionSortDirection = 'ASCENDING' | 'DESCENDING'
 
+/**
+ * Field the backend orders the whole period by, before pagination. `EXPENSE` / `INCOME` order
+ * by amount within their own kind and push the other kind to the end of the list.
+ * Only meaningful together with a {@link TransactionSortDirection}; defaults to `DATE` server-side.
+ */
+export type TransactionSortField = 'DATE' | 'LABEL' | 'EXPENSE' | 'INCOME'
+
 export default function useBooklet() {
   const { get, post, deleteQuery } = useQuery()
   const BookletFormatted = ref<BookletFormatted[]>([])
@@ -114,6 +121,7 @@ export default function useBooklet() {
     page: number = 0,
     size: number = 10,
     sortDirection?: TransactionSortDirection,
+    sortField?: TransactionSortField,
   ): Promise<BookletTransactionsDTO> {
     return get(`booklet/${bookletId}/transactions`, {
       month,
@@ -122,6 +130,7 @@ export default function useBooklet() {
       page,
       size,
       ...(sortDirection ? { sortDirection } : {}),
+      ...(sortField ? { sortField } : {}),
     })
   }
 

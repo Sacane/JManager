@@ -25,18 +25,36 @@ const props = withDefaults(defineProps<{
   scrollable?: boolean
   scrollHeight?: string
   loading?: boolean
+  /** When true, DataTable delegates sorting to the parent: it never reorders rows itself, it only emits `sort`. */
+  lazy?: boolean
+  /** Controlled sort column (`field` of the sorted column). */
+  sortField?: string | null
+  /** Controlled sort direction: `1` ascending, `-1` descending. */
+  sortOrder?: number | null
 }>(), {
   selectable: false,
   rowClass: undefined,
   scrollable: false,
   scrollHeight: 'flex',
   loading: false,
+  lazy: false,
+  sortField: null,
+  sortOrder: null,
 })
 
 const emit = defineEmits<{
   'rowDblclick': [event: { data: T, index?: number, originalEvent?: Event }]
   'update:selection': [value: T[]]
+  'sort': [event: { sortField: string | null, sortOrder: number | null }]
+  'update:sortField': [value: string | null]
+  'update:sortOrder': [value: number | null]
 }>()
+
+function onSort(event: { sortField: string | null, sortOrder: number | null }) {
+  emit('update:sortField', event.sortField ?? null)
+  emit('update:sortOrder', event.sortOrder ?? null)
+  emit('sort', event)
+}
 
 const selection = defineModel<T[]>('selection', { default: () => [] })
 
@@ -58,8 +76,12 @@ const visibleColumns = computed(() =>
     :scrollable="scrollable"
     :scroll-height="scrollable ? scrollHeight : undefined"
     :loading="loading"
+    :lazy="lazy"
+    :sort-field="sortField ?? undefined"
+    :sort-order="sortOrder ?? undefined"
     class="app-table"
     @row-dblclick="(event: any) => emit('rowDblclick', event)"
+    @sort="onSort"
   >
     <template #empty>
       <slot name="empty" />

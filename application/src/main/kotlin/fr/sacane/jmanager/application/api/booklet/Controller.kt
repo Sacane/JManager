@@ -9,6 +9,7 @@ import fr.sacane.jmanager.domain.models.toAmount
 import fr.sacane.jmanager.domain.port.input.booklet.*
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.TransactionSortDirection
+import fr.sacane.jmanager.domain.models.transaction.TransactionSortField
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
@@ -157,6 +158,7 @@ class BookletController (
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "10") size: Int,
         @RequestParam(required = false) sortDirection: TransactionSortDirection?,
+        @RequestParam(required = false) sortField: TransactionSortField?,
     ): ResponseEntity<BookletTransactionsResponse> {
         validateDateRange(startDate, endDate)
         LOGGER.info("Requesting transactions for booklet $bookletID")
@@ -172,6 +174,7 @@ class BookletController (
                     pageNumber = page,
                     pageSize = size,
                     sortDirection = sortDirection,
+                    sortField = sortField,
                 )
             )
             .map { res ->
