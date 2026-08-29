@@ -6,6 +6,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.port.input.MdcContextProvider
@@ -30,38 +31,41 @@ interface EditBookletUseCase : CommandHandler<EditBookletCommand, Booklet> {
 
 @DomainService
 class EditBookletService(
-    private val bookletRepository: BookletRepository
+    private val bookletRepository: BookletRepository,
+    private val infraTransactionManager: UnitOfWorkTransactionProvider
 ) : EditBookletUseCase {
     override fun handle(command: EditBookletCommand): Result<Booklet> {
-        val userId = command.userId
-        val booklet = command.booklet
-        val bookletID = booklet.id ?: return bookletDomainFailure(
-            ResultState.BOOKLET_NOT_FOUND,
-            "Le livret ${booklet.label} est introuvable en base",
-            "domain.booklet.edit.id_missing"
-        )
-        if (!userOwnsBooklet(bookletRepository, userId, bookletID)) {
-            return bookletDomainFailure(
-                ResultState.FORBIDDEN,
-                "Vous n'avez pas accès à ce livret",
-                "domain.booklet.edit.forbidden"
-            )
-        }
-        val oldBooklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
-            ?: return bookletDomainFailure(
+        return infraTransactionManager.executeInTransaction(Unit) {
+            val userId = command.userId
+            val booklet = command.booklet
+            val bookletID = booklet.id ?: return@executeInTransaction bookletDomainFailure(
                 ResultState.BOOKLET_NOT_FOUND,
-                "Le livret ${booklet.id} est introuvable",
-                "domain.booklet.edit.not_found"
+                "Le livret ${booklet.label} est introuvable en base",
+                "domain.booklet.edit.id_missing"
             )
-        if(oldBooklet.id != booklet.id && oldBooklet.label == booklet.label){
-            return bookletDomainFailure(
-                ResultState.BOOKLET_LABEL_EXIST,
-                "Le libellé du livret existe déjà",
-                "domain.booklet.edit.label_already_exists"
-            )
+            if (!userOwnsBooklet(bookletRepository, userId, bookletID)) {
+                return@executeInTransaction bookletDomainFailure(
+                    ResultState.FORBIDDEN,
+                    "Vous n'avez pas accès à ce livret",
+                    "domain.booklet.edit.forbidden"
+                )
+            }
+            val oldBooklet = bookletRepository.findBookletByIdWithTransactions(bookletID)
+                ?: return@executeInTransaction bookletDomainFailure(
+                    ResultState.BOOKLET_NOT_FOUND,
+                    "Le livret ${booklet.id} est introuvable",
+                    "domain.booklet.edit.not_found"
+                )
+            if(oldBooklet.id != booklet.id && oldBooklet.label == booklet.label){
+                return@executeInTransaction bookletDomainFailure(
+                    ResultState.BOOKLET_LABEL_EXIST,
+                    "Le libellé du livret existe déjà",
+                    "domain.booklet.edit.label_already_exists"
+                )
+            }
+            oldBooklet.updateFrom(booklet)
+            val registered = bookletRepository.upsert(oldBooklet)
+            success(registered)
         }
-        oldBooklet.updateFrom(booklet)
-        val registered = bookletRepository.upsert(oldBooklet)
-        return success(registered)
     }
 }

@@ -71,6 +71,13 @@ class RegularTransactionOperator(
         return regularTransactionResourceJpaRepository.save(result)
     }
 
+    // Consistent with save()/link()/unlink() below: this method navigates existing.booklets
+    // (FetchType.LAZY) and does several writes that must commit atomically. It happened to be
+    // safe only because its one caller (RegularTransactionRepositoryDataJpaAdapter.updateRegularTransaction)
+    // is itself @Transactional — see
+    // docs/technical/jpa-transactions/2026-08-29-jpa-fetch-and-transaction-boundary-audit.md
+    // (finding E).
+    @Transactional
     fun update(
         existing: RegularTransactionEntity,
         regularTransaction: RegularTransaction,

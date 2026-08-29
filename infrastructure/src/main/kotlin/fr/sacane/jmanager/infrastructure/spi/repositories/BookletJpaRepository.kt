@@ -41,7 +41,16 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
     @Query("SELECT b FROM BookletResource b LEFT JOIN FETCH b.regularTransactions WHERE b.idBooklet = :id")
     fun findByIdWithRegularTransactions(id: UUID): BookletResource?
 
-    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions LEFT JOIN FETCH b.regularTransactions WHERE b.owner.idUser = :userId")
+    // Fetches ONLY b.transactions on purpose. Its single caller (StatsDomainHelper.withScopedBooklets,
+    // via BookletRepository.findBookletsForUser — the "Tous les comptes" stats view) never reads
+    // Booklet.regularTransactions. Combining a second LEFT JOIN FETCH b.regularTransactions here
+    // used to produce a cartesian product that duplicated `transactions` bag entries once per
+    // regular transaction linked to the booklet — silently inflating every stats aggregate built
+    // from booklet.transactions (category distribution, trends, previsional transactions). See
+    // docs/technical/jpa-transactions/2026-08-29-jpa-fetch-and-transaction-boundary-audit.md
+    // (finding A) and docs/bugs/preview-transaction-race-duplicate/REPORT.md for the same defect
+    // on a different call site.
+    @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions WHERE b.owner.idUser = :userId")
     fun findAllBookletsByUserId(userId: UUID): List<BookletResource>
 
     // No fetch join on purpose: this backs ownership checks that run ahead of every mutating

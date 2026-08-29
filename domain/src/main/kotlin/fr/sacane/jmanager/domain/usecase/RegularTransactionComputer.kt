@@ -137,18 +137,28 @@ class RegularTransactionGeneratorService(
                 return@forEach
             }
 
+            // Loaded once per regular transaction rather than once per candidate occurrence date:
+            // the generation loop below is always bounded to a single calendar month
+            // (calendarMonthStart..calendarMonthEnd), so every date it considers falls in
+            // targetYear/targetMonth — querying again on each iteration would always return the
+            // same rows. See docs/technical/jpa-transactions/2026-08-29-jpa-fetch-and-transaction-boundary-audit.md
+            // (finding B).
+            val existingMonthTransactions = transactionRepository.findTransactionsByBookletYearAndMonth(
+                bookletId, targetYear, targetMonth
+            ) ?: emptyList()
+
             val rawTransactions = when(val frequency = regularTransaction.frequencyProperty) {
                 is FrequencyProperty.Forever -> generateTransactionsBetween(
                     regularTransaction,
                     calendarMonthStart,
                     calendarMonthEnd,
-                    bookletId,
+                    existingMonthTransactions,
                 )
                 is FrequencyProperty.UntilDate -> generateTransactionsBetween(
                     regularTransaction,
                     calendarMonthStart,
                     calendarMonthEnd,
-                    bookletId,
+                    existingMonthTransactions,
                     untilDate = frequency.date
                 )
                 is FrequencyProperty.SpecificRepetitionTimes -> {
@@ -158,7 +168,7 @@ class RegularTransactionGeneratorService(
                         regularTransaction,
                         calendarMonthStart,
                         calendarMonthEnd,
-                        bookletId,
+                        existingMonthTransactions,
                         currentMaxNumber = CurrentMaxNumber(currentCount, frequency.number)
                     )
                 }
@@ -373,14 +383,16 @@ class RegularTransactionGeneratorService(
      * @param regularTransaction the regular transaction containing details for generating transactions
      * @param startDate the start date of the range within which transactions should be generated
      * @param endDate the end date of the range within which transactions should be generated
-     * @param bookletId the ID of the booklet associated with the transactions
+     * @param existingMonthTransactions transactions already persisted for this booklet in the
+     *        target month, loaded once by the caller — used to detect already-generated
+     *        occurrences without re-querying on every candidate date.
      * @return a list of generated transactions within the specified date range
      */
     private fun generateTransactionsBetween(
         regularTransaction: RegularTransaction,
         startDate: LocalDate,
         endDate: LocalDate,
-        bookletId: UUID,
+        existingMonthTransactions: List<Transaction>,
         untilDate: LocalDate? = null,
         currentMaxNumber: CurrentMaxNumber? = null
     ): List<Transaction> {
@@ -395,7 +407,7 @@ class RegularTransactionGeneratorService(
             regularTransaction,
             currentDate,
             effectiveEndDate,
-            bookletId,
+            existingMonthTransactions,
             currentMaxNumber
         )
     }
@@ -434,7 +446,7 @@ class RegularTransactionGeneratorService(
         regularTransaction: RegularTransaction,
         initialDate: LocalDate,
         effectiveEndDate: LocalDate,
-        bookletId: UUID,
+        existingMonthTransactions: List<Transaction>,
         currentMaxNumber: CurrentMaxNumber?
     ): List<Transaction> {
         val transactions = mutableListOf<Transaction>()
@@ -446,7 +458,7 @@ class RegularTransactionGeneratorService(
                 break
             }
 
-            if (shouldCreateTransaction(regularTransaction, currentDate, bookletId)) {
+            if (shouldCreateTransaction(regularTransaction, currentDate, existingMonthTransactions)) {
                 val transaction = createPrevisionalTransaction(regularTransaction, currentDate)
                 transactions.add(transaction)
                 transactionCount++
@@ -465,11 +477,11 @@ class RegularTransactionGeneratorService(
     private fun shouldCreateTransaction(
         regularTransaction: RegularTransaction,
         currentDate: LocalDate,
-        bookletId: UUID
+        existingMonthTransactions: List<Transaction>
     ): Boolean {
         // Check if a transaction already exists for this regular transaction at this date
         // This includes both preview and real transactions to avoid duplicates
-        val transactionExists = checkIfTransactionExists(regularTransaction, currentDate, bookletId)
+        val transactionExists = checkIfTransactionExists(regularTransaction, currentDate, existingMonthTransactions)
         if (transactionExists) {
             return false
         }
@@ -488,20 +500,13 @@ class RegularTransactionGeneratorService(
     private fun checkIfTransactionExists(
         regularTransaction: RegularTransaction,
         date: LocalDate,
-        bookletId: UUID
+        existingMonthTransactions: List<Transaction>
     ): Boolean {
         // Calculate the ACTUAL date that would be used for the transaction
         // This is important for Monthly/Yearly transactions where the day might be different
         val actualTransactionDate = calculateActualTransactionDate(regularTransaction, date)
 
-        val yearMonth = YearMonth.from(actualTransactionDate)
-        val monthTransactions = transactionRepository.findTransactionsByBookletYearAndMonth(
-            bookletId,
-            yearMonth.year,
-            yearMonth.month,
-        )
-
-        return monthTransactions?.firstOrNull { transaction ->
+        return existingMonthTransactions.firstOrNull { transaction ->
             isDuplicateTransaction(transaction, regularTransaction, actualTransactionDate)
         } != null
     }

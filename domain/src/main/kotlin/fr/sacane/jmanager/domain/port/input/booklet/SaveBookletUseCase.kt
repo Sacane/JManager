@@ -7,6 +7,7 @@ import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
+import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
@@ -26,37 +27,40 @@ interface SaveBookletUseCase : CommandHandler<SaveBookletCommand, Booklet> {
 @DomainService
 class SaveBookletService(
     private val userRepository: UserRepository,
-    private val bookletRepository: BookletRepository
+    private val bookletRepository: BookletRepository,
+    private val infraTransactionManager: UnitOfWorkTransactionProvider
 ) : SaveBookletUseCase {
     override fun handle(command: SaveBookletCommand): Result<Booklet> {
-        val userId = command.userId
-        val booklet = command.booklet
-        val user = userRepository.findUserByIdWithBooklets(userId)
-            ?: return bookletDomainFailure(
-                ResultState.USER_NOT_FOUND,
-                "L'utilisateur n'existe pas en base",
-                "domain.booklet.save.user_not_found"
-            )
-        if(user.hasBooklet(booklet.label)) {
-            return bookletDomainFailure(
-                ResultState.BOOKLET_LABEL_EXIST,
-                "Le profil contient déjà un compte avec le label ${booklet.label}",
-                "domain.booklet.save.label_already_exists"
-            )
+        return infraTransactionManager.executeInTransaction(Unit) {
+            val userId = command.userId
+            val booklet = command.booklet
+            val user = userRepository.findUserByIdWithBooklets(userId)
+                ?: return@executeInTransaction bookletDomainFailure(
+                    ResultState.USER_NOT_FOUND,
+                    "L'utilisateur n'existe pas en base",
+                    "domain.booklet.save.user_not_found"
+                )
+            if(user.hasBooklet(booklet.label)) {
+                return@executeInTransaction bookletDomainFailure(
+                    ResultState.BOOKLET_LABEL_EXIST,
+                    "Le profil contient déjà un compte avec le label ${booklet.label}",
+                    "domain.booklet.save.label_already_exists"
+                )
+            }
+            if (user.booklets.size >= 6) {
+                return@executeInTransaction bookletDomainFailure(
+                    ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
+                    "Le profil ne peut pas contenir plus de 6 comptes",
+                    "domain.booklet.save.maximum_size_reached"
+                )
+            }
+            val bookletSaved = bookletRepository.save(userId, booklet)
+                ?: return@executeInTransaction bookletDomainFailure(
+                    ResultState.INFRASTRUCTURE_ERROR,
+                    "Erreur lors de la sauvegarde du compte",
+                    "domain.booklet.save.infrastructure_error"
+                )
+            success(bookletSaved)
         }
-        if (user.booklets.size >= 6) {
-            return bookletDomainFailure(
-                ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
-                "Le profil ne peut pas contenir plus de 6 comptes",
-                "domain.booklet.save.maximum_size_reached"
-            )
-        }
-        val bookletSaved = bookletRepository.save(userId, booklet)
-            ?: return bookletDomainFailure(
-                ResultState.INFRASTRUCTURE_ERROR,
-                "Erreur lors de la sauvegarde du compte",
-                "domain.booklet.save.infrastructure_error"
-            )
-        return success(bookletSaved)
     }
 }

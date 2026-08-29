@@ -100,11 +100,11 @@ class FakeFactory {
     private val paginator = PaginatorImpl()
 
     val findBookletByIdService = FindBookletByIdService(bookletRepository)
-    val editBookletService = EditBookletService(bookletRepository)
+    val editBookletService = EditBookletService(bookletRepository, manager)
     val deleteBookletByIdService = DeleteBookletByIdService(bookletRepository, manager, inMemoryTrackerRepository)
     val findByLabelAndUserIdService = FindByLabelAndUserIdService(userRepository)
     val findAllRegisteredBookletsService = FindAllRegisteredBookletsService(userRepository)
-    val saveBookletService = SaveBookletService(userRepository, bookletRepository)
+    val saveBookletService = SaveBookletService(userRepository, bookletRepository, manager)
     val loadTransactionsForBookletForAMonthService = LoadTransactionsForBookletForAMonthService(
         bookletRepository, inMemoryRegularTransactionRepository, inMemoryRegularTransactionGenerator,
         manager, inMemoryTrackerRepository, transactionQueryRepository, paginator

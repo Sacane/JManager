@@ -113,12 +113,20 @@ internal fun saveTransactions(
             val savedTr = transactionRepository.save(bookletIdValue, result.transaction) ?: return@mapNotNull null
 
             bookletParam.addTransaction(savedTr)
-            bookletRepository.update(bookletParam)
             savedTr
         } catch (e: Exception) {
             logger.warning("Error persisting transaction: ${e.message}")
             null
         }
+    }
+
+    // Persist the booklet's updated balance once for the whole import, not once per row: each
+    // addTransaction() call above only mutates bookletParam in memory, and only the final,
+    // fully-accumulated amount needs to reach the database. See
+    // docs/technical/jpa-transactions/2026-08-29-jpa-fetch-and-transaction-boundary-audit.md
+    // (finding C).
+    if (savedTransactions.isNotEmpty()) {
+        bookletRepository.update(bookletParam)
     }
 
     return CsvImportResult(

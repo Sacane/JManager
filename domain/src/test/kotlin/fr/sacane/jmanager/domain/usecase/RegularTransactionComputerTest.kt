@@ -14,6 +14,10 @@ import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransactionId
 import fr.sacane.jmanager.domain.port.FeatureTest
 import fr.sacane.jmanager.domain.port.input.transaction.EditTransactionCommand
 import fr.sacane.jmanager.domain.port.output.repository.RegularTransactionTrackerRepository
+import fr.sacane.jmanager.domain.port.output.repository.TransactionRepository
+import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.Tag
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -21,6 +25,24 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.Month
+import java.util.UUID
+
+/**
+ * Delegates every call to [delegate] while counting how many times
+ * [findTransactionsByBookletYearAndMonth] is invoked — used to catch the N+1 documented in
+ * docs/technical/jpa-transactions/2026-08-29-jpa-fetch-and-transaction-boundary-audit.md
+ * (finding B): that query used to run once per candidate occurrence date inside
+ * RegularTransactionGeneratorService's generation loop, instead of once per regular transaction.
+ */
+private class CountingTransactionRepository(private val delegate: TransactionRepository) : TransactionRepository by delegate {
+    var findByBookletYearAndMonthCallCount: Int = 0
+        private set
+
+    override fun findTransactionsByBookletYearAndMonth(bookletId: UUID, year: Int, month: Month): List<Transaction>? {
+        findByBookletYearAndMonthCallCount++
+        return delegate.findTransactionsByBookletYearAndMonth(bookletId, year, month)
+    }
+}
 
 class RegularTransactionComputerTest : FeatureTest() {
 
@@ -1117,6 +1139,44 @@ class RegularTransactionComputerTest : FeatureTest() {
                     0,
                     secondGeneration.size,
                     "An existing preview for a regular transaction, even with a modified date, must prevent re-generation for the same month"
+                )
+            }
+        }
+    }
+
+    @Nested
+    inner class QueryEfficiency {
+
+        @Test
+        fun `should query findTransactionsByBookletYearAndMonth at most once per regular transaction, not once per candidate date`() {
+            launchWithUserId {
+                val dailyTransaction = RegularTransaction(
+                    label = "Café",
+                    amount = 3.toAmount(),
+                    isIncome = false,
+                    id = RegularTransactionId("${user.id.value}-coffee"),
+                    startDate = LocalDate.of(2024, 1, 1),
+                    frequencyProperty = FrequencyProperty.Forever(),
+                    recurrenceRule = RecurrenceRule.Daily
+                )
+
+                val countingRepository = CountingTransactionRepository(factory.transactionRepository())
+                val generator = RegularTransactionGeneratorService(countingRepository, factory.trackerRepository())
+
+                // January has 31 candidate days — a daily recurrence would previously trigger 31
+                // identical findTransactionsByBookletYearAndMonth calls (one per loop iteration).
+                val generated = generator.generateMissingPrevisionalTransactions(
+                    bookletId = booklet.id!!,
+                    regularTransactions = listOf(dailyTransaction),
+                    targetMonth = Month.JANUARY,
+                    targetYear = 2024
+                )
+
+                assertEquals(31, generated.size)
+                assertEquals(
+                    1,
+                    countingRepository.findByBookletYearAndMonthCallCount,
+                    "findTransactionsByBookletYearAndMonth must be queried once per regular transaction, not once per candidate date"
                 )
             }
         }
