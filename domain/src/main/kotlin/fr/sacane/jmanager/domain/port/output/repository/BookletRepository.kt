@@ -89,4 +89,18 @@ interface BookletRepository {
      * @return List of Booklet aggregates (may be empty)
      */
     fun findBookletsForUser(userId: UserId): List<Booklet>
+
+    /**
+     * Tells whether [bookletId] exists and is owned by [userId], without loading the booklet's
+     * transactions or regular transactions.
+     *
+     * Used for ownership checks (see [fr.sacane.jmanager.domain.port.input.booklet.userOwnsBooklet]).
+     * Implementations must resolve this cheaply — ownership checks run ahead of every mutating
+     * booklet/transaction use case, so they must not pull in unrelated aggregate data.
+     *
+     * @param userId Domain user identifier
+     * @param bookletId UUID of the booklet
+     * @return true if the booklet exists and belongs to the user, false otherwise
+     */
+    fun existsBookletForUser(userId: UserId, bookletId: UUID): Boolean
 }

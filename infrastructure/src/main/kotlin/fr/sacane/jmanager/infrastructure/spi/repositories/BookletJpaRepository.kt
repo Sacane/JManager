@@ -43,4 +43,13 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
 
     @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions LEFT JOIN FETCH b.regularTransactions WHERE b.owner.idUser = :userId")
     fun findAllBookletsByUserId(userId: UUID): List<BookletResource>
+
+    // No fetch join on purpose: this backs ownership checks that run ahead of every mutating
+    // booklet/transaction use case. Loading transactions/regularTransactions here (e.g. via
+    // findAllBookletsByUserId) is not just wasteful — LEFT JOIN FETCHing two collections on the
+    // same booklet produces a cartesian product that duplicates `transactions` bag entries, and a
+    // later findByIdWithTransactions call in the same Hibernate session would silently reuse that
+    // duplicated collection instead of re-fetching it, causing spurious "not found" failures.
+    @Query("SELECT COUNT(b) > 0 FROM BookletResource b WHERE b.idBooklet = :bookletId AND b.owner.idUser = :userId")
+    fun existsBookletForUser(bookletId: UUID, userId: UUID): Boolean
 }

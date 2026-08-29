@@ -23,8 +23,7 @@ internal fun <S> bookletDomainFailure(state: ResultState, detail: String, key: S
 }
 
 internal fun userOwnsBooklet(bookletRepository: BookletRepository, userId: UserId, bookletId: UUID): Boolean {
-    val userBooklets = bookletRepository.findBookletsForUser(userId)
-    return userBooklets.any { it.id == bookletId }
+    return bookletRepository.existsBookletForUser(userId, bookletId)
 }
 
 /**

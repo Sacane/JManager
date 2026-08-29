@@ -265,6 +265,10 @@ class InMemoryBookletRepository(
         return inMemoryDatabase.bookletsByOwner().find { it.userId == userId }?.booklets ?: emptyList()
     }
 
+    override fun existsBookletForUser(userId: UserId, bookletId: UUID): Boolean {
+        return findBookletsForUser(userId).any { it.id == bookletId }
+    }
+
     override fun getStates(): Collection<BookletsByOwner> {
         return inMemoryDatabase.bookletsByOwner()
     }

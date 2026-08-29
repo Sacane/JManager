@@ -81,4 +81,10 @@ class BookletJpaRepositoryAdapter(
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
         return userId.value?.let { id -> bookletRepository.findAllBookletsByUserId(id).map { it.toModel() } } ?: emptyList()
     }
+
+    @Transactional
+    override fun existsBookletForUser(userId: UserId, bookletId: UUID): Boolean {
+        val id = userId.value ?: return false
+        return bookletRepository.existsBookletForUser(bookletId, id)
+    }
 }

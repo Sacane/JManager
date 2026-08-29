@@ -82,6 +82,20 @@ class BookletJpaRepositoryAdapterTest(
     }
 
     @Test
+    fun `existsBookletForUser should return true when the booklet belongs to the user`() {
+        val booklet = Booklet(label = "acct-exists-owned", amount = Amount(10L), owner = user)
+        val saved = bookletJpaRepositoryAdapter.save(user!!.id, booklet)
+        val savedId = saved!!.id ?: throw AssertionError("booklet id is null")
+
+        assertThat(bookletJpaRepositoryAdapter.existsBookletForUser(user!!.id, savedId)).isTrue()
+    }
+
+    @Test
+    fun `existsBookletForUser should return false for a booklet id that does not exist`() {
+        assertThat(bookletJpaRepositoryAdapter.existsBookletForUser(user!!.id, java.util.UUID.randomUUID())).isFalse()
+    }
+
+    @Test
     fun `update should evict allBooklets cache so that findUserByIdWithBooklets returns fresh amount`() {
         // Arrange: save a booklet and warm up the allBooklets cache
         val booklet = Booklet(label = "acct-cache-evict", amount = Amount(100L), owner = user)
