@@ -408,6 +408,7 @@ async function handleUnlink() {
     <div v-if="!isMobile" class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden shadow-lg border border-[var(--card-border)]">
       <AppTable
         v-model:selection="selectedTransactions"
+        class="flex-1 min-h-0"
         :columns="regularTransactionColumns"
         :rows="filteredTransactions"
         data-key="id"
