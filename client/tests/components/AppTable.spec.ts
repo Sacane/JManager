@@ -1,15 +1,21 @@
 import type { AppTableColumn } from '../../components/AppTable.vue'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
 import AppTable from '../../components/AppTable.vue'
 
 // ── Stubs ─────────────────────────────────────────────────────────────────────
 
 const DataTableStub = {
   name: 'DataTable',
-  props: ['value', 'dataKey', 'rowClass', 'selectionMode', 'selection', 'metaKeySelection', 'scrollable', 'loading'],
-  emits: ['update:selection', 'row-dblclick'],
+  props: ['value', 'dataKey', 'rowClass', 'selectionMode', 'selection', 'metaKeySelection', 'scrollable', 'loading', 'lazy', 'sortField', 'sortOrder'],
+  emits: ['update:selection', 'row-dblclick', 'sort'],
   methods: {
+    emitSort(payload: { sortField: string, sortOrder: number }) {
+      // eslint-disable-next-line ts/ban-ts-comment
+      // @ts-expect-error
+      this.$emit('sort', payload)
+    },
     handleRowClick(row: Record<string, unknown>) {
       // @ts-expect-error – options-API `this` inside stub
       if (this.selectionMode !== 'multiple') return
@@ -30,7 +36,7 @@ const DataTableStub = {
     },
   },
   template: `
-    <div data-stub="datatable" :data-selection-mode="selectionMode">
+    <div data-stub="datatable" :data-selection-mode="selectionMode" :data-lazy="lazy" :data-sort-field="sortField" :data-sort-order="sortOrder">
       <slot />
       <template v-if="!value || value.length === 0">
         <slot name="empty" />
@@ -249,6 +255,43 @@ describe('components/AppTable', () => {
       })
 
       expect(wrapper.find('[data-test="custom-header"]').exists()).toBe(true)
+    })
+  })
+
+  describe('server-side sorting', () => {
+    it('passes lazy to DataTable', () => {
+      const wrapper = mount(AppTable, {
+        props: { columns: sampleColumns, rows: sampleRows, dataKey: 'name', lazy: true },
+        global: { stubs: globalStubs },
+      })
+
+      expect(wrapper.find('[data-stub="datatable"]').attributes('data-lazy')).toBe('true')
+    })
+
+    it('passes the controlled sortField and sortOrder to DataTable', () => {
+      const wrapper = mount(AppTable, {
+        props: { columns: sampleColumns, rows: sampleRows, dataKey: 'name', sortField: 'name', sortOrder: 1 },
+        global: { stubs: globalStubs },
+      })
+
+      const table = wrapper.find('[data-stub="datatable"]')
+      expect(table.attributes('data-sort-field')).toBe('name')
+      expect(table.attributes('data-sort-order')).toBe('1')
+    })
+
+    it('re-emits a DataTable sort as sort plus update:sortField / update:sortOrder', async () => {
+      const wrapper = mount(AppTable, {
+        props: { columns: sampleColumns, rows: sampleRows, dataKey: 'name', lazy: true },
+        global: { stubs: globalStubs },
+      })
+
+      ;(wrapper.findComponent(DataTableStub).vm as unknown as { emitSort: (p: { sortField: string, sortOrder: number }) => void })
+        .emitSort({ sortField: 'age', sortOrder: -1 })
+      await nextTick()
+
+      expect(wrapper.emitted('sort')![0][0]).toEqual({ sortField: 'age', sortOrder: -1 })
+      expect(wrapper.emitted('update:sortField')![0][0]).toBe('age')
+      expect(wrapper.emitted('update:sortOrder')![0][0]).toBe(-1)
     })
   })
 

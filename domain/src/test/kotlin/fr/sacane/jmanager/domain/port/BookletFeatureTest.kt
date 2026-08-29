@@ -12,6 +12,7 @@ import fr.sacane.jmanager.domain.fixture.UserFixture
 import fr.sacane.jmanager.domain.models.*
 import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.TransactionSortDirection
+import fr.sacane.jmanager.domain.models.transaction.TransactionSortField
 import fr.sacane.jmanager.domain.models.transaction.regular.FrequencyProperty
 import fr.sacane.jmanager.domain.models.transaction.regular.RecurrenceRule
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
@@ -1237,6 +1238,144 @@ class BookletFeatureTest {
             ))
             result.assertTrue { currentTransactions.size == 1 && previsionalTransactions.isEmpty() }
             result.assertTrue { currentTransactions.single().date == LocalDate.of(2025, 1, 20) }
+        }
+    }
+
+    @Nested
+    inner class LoadTransactionsWithFieldSortTest {
+
+        /**
+         * Four confirmed transactions of January 2025. Label order, amount order and date order
+         * are deliberately all different so a field sort can never be mistaken for the date sort:
+         * | label | kind    | amount | day |
+         * | zeta  | expense |  40    |  5  |
+         * | alpha | income  |  10    |  6  |
+         * | mike  | expense |   5    |  7  |
+         * | bravo | income  |  90    |  8  |
+         */
+        private fun initBookletWithMixedTransactions(): Pair<UUID, UserId> {
+            val bookletId = UUID.randomUUID()
+            val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Sortable Booklet", amount = 1000.toAmount())
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            val transactions = mutableListOf(
+                Transaction(id = UUID.randomUUID(), label = "zeta", date = LocalDate.of(2025, 1, 5), amount = 40.toAmount(), isIncome = false, isPreview = false),
+                Transaction(id = UUID.randomUUID(), label = "alpha", date = LocalDate.of(2025, 1, 6), amount = 10.toAmount(), isIncome = true, isPreview = false),
+                Transaction(id = UUID.randomUUID(), label = "mike", date = LocalDate.of(2025, 1, 7), amount = 5.toAmount(), isIncome = false, isPreview = false),
+                Transaction(id = UUID.randomUUID(), label = "bravo", date = LocalDate.of(2025, 1, 8), amount = 90.toAmount(), isIncome = true, isPreview = false),
+            )
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), transactions)
+            )
+            factory.regularTransactionState.init(emptyList())
+            return bookletId to ctx.userId
+        }
+
+        private fun loadSorted(
+            bookletId: UUID,
+            userId: UserId,
+            field: TransactionSortField,
+            direction: TransactionSortDirection,
+        ) = loadTransactionsForBookletForAMonthService.handle(
+            LoadTransactionsForBookletForAMonthQuery(
+                userId, bookletId, java.time.Month.JANUARY, 2025,
+                startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                pageNumber = 0, pageSize = 10,
+                sortDirection = direction, sortField = field,
+            )
+        )
+
+        @Test
+        fun `should order the whole period by ascending label ignoring case`() {
+            val (bookletId, userId) = initBookletWithMixedTransactions()
+            val result = loadSorted(bookletId, userId, TransactionSortField.LABEL, TransactionSortDirection.ASCENDING)
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("alpha", "bravo", "mike", "zeta") }
+        }
+
+        @Test
+        fun `should order the whole period by descending label ignoring case`() {
+            val (bookletId, userId) = initBookletWithMixedTransactions()
+            val result = loadSorted(bookletId, userId, TransactionSortField.LABEL, TransactionSortDirection.DESCENDING)
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("zeta", "mike", "bravo", "alpha") }
+        }
+
+        @Test
+        fun `should order expenses by ascending amount and push incomes to the end when sorting by expense`() {
+            val (bookletId, userId) = initBookletWithMixedTransactions()
+            val result = loadSorted(bookletId, userId, TransactionSortField.EXPENSE, TransactionSortDirection.ASCENDING)
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("mike", "zeta", "alpha", "bravo") }
+        }
+
+        @Test
+        fun `should keep incomes at the end regardless of direction when sorting by expense`() {
+            val (bookletId, userId) = initBookletWithMixedTransactions()
+            val result = loadSorted(bookletId, userId, TransactionSortField.EXPENSE, TransactionSortDirection.DESCENDING)
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("zeta", "mike", "alpha", "bravo") }
+        }
+
+        @Test
+        fun `should order incomes by ascending amount and push expenses to the end when sorting by income`() {
+            val (bookletId, userId) = initBookletWithMixedTransactions()
+            val result = loadSorted(bookletId, userId, TransactionSortField.INCOME, TransactionSortDirection.ASCENDING)
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("alpha", "bravo", "zeta", "mike") }
+        }
+
+        @Test
+        fun `should keep expenses at the end regardless of direction when sorting by income`() {
+            val (bookletId, userId) = initBookletWithMixedTransactions()
+            val result = loadSorted(bookletId, userId, TransactionSortField.INCOME, TransactionSortDirection.DESCENDING)
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("bravo", "alpha", "zeta", "mike") }
+        }
+
+        @Test
+        fun `should interleave confirmed and previsional transactions when sorting by label`() {
+            val bookletId = UUID.randomUUID()
+            val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "Interleave Booklet", amount = 1000.toAmount())
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            val confirmedAlpha = Transaction(id = UUID.randomUUID(), label = "Alpha", date = LocalDate.of(2025, 1, 20), amount = 100.toAmount(), isIncome = true, isPreview = false)
+            val previewBravo = Transaction(id = UUID.randomUUID(), label = "Bravo", date = LocalDate.of(2025, 1, 10), amount = 100.toAmount(), isIncome = true, isPreview = true)
+            val confirmedCharlie = Transaction(id = UUID.randomUUID(), label = "Charlie", date = LocalDate.of(2025, 1, 15), amount = 100.toAmount(), isIncome = true, isPreview = false)
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(confirmedAlpha, previewBravo, confirmedCharlie))
+            )
+            factory.regularTransactionState.init(emptyList())
+            val result = loadSorted(bookletId, ctx.userId, TransactionSortField.LABEL, TransactionSortDirection.ASCENDING)
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("Alpha", "Bravo", "Charlie") }
+        }
+
+        @Test
+        fun `should keep the confirmed then previsional display order when a field is given without a direction`() {
+            val bookletId = UUID.randomUUID()
+            val customBooklet = BookletFixture.aBooklet(id = bookletId, label = "No Direction Booklet", amount = 1000.toAmount())
+            val ctx = scenario.withUser().withBooklet(customBooklet)
+            val confirmed = Transaction(id = UUID.randomUUID(), label = "Zeta", date = LocalDate.of(2025, 1, 20), amount = 100.toAmount(), isIncome = true, isPreview = false)
+            val preview = Transaction(id = UUID.randomUUID(), label = "Alpha", date = LocalDate.of(2025, 1, 10), amount = 100.toAmount(), isIncome = true, isPreview = true)
+            factory.fakeTransactionRepository().initWith(
+                IdBookletByTransaction(IdUserBooklet(ctx.userId, bookletId), mutableListOf(confirmed, preview))
+            )
+            factory.regularTransactionState.init(emptyList())
+            val result = loadTransactionsForBookletForAMonthService.handle(
+                LoadTransactionsForBookletForAMonthQuery(
+                    ctx.userId, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                    pageNumber = 0, pageSize = 10,
+                    sortField = TransactionSortField.LABEL,
+                )
+            )
+            result.assertTrue { orderedTransactions.map { it.label } == listOf("Zeta", "Alpha") }
+        }
+
+        @Test
+        fun `should fall back to date ordering when a direction is given without a field`() {
+            val (bookletId, userId) = initBookletWithMixedTransactions()
+            val result = loadTransactionsForBookletForAMonthService.handle(
+                LoadTransactionsForBookletForAMonthQuery(
+                    userId, bookletId, java.time.Month.JANUARY, 2025,
+                    startingMonth = java.time.Month.JANUARY, startingYear = 2025,
+                    pageNumber = 0, pageSize = 10,
+                    sortDirection = TransactionSortDirection.ASCENDING,
+                )
+            )
+            result.assertTrue { orderedTransactions.map { it.date.dayOfMonth } == listOf(5, 6, 7, 8) }
         }
     }
 

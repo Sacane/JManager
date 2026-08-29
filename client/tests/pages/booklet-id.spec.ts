@@ -206,11 +206,12 @@ describe('pages/booklet/[id] loading states', () => {
       0,
       10,
       'DESCENDING',
+      'DATE',
     )
   })
 })
 
-describe('pages/booklet/[id] date sorting', () => {
+describe('pages/booklet/[id] sorting', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
@@ -234,6 +235,7 @@ describe('pages/booklet/[id] date sorting', () => {
       0,
       10,
       'DESCENDING',
+      'DATE',
     )
   })
 
@@ -246,11 +248,11 @@ describe('pages/booklet/[id] date sorting', () => {
     vm.currentPage = 3
     await nextTick()
 
-    vm.toggleDateSort()
+    vm.onSort({ sortField: 'date', sortOrder: 1 })
     await flushPromises()
     await flushPromises()
 
-    expect(vm.sortDirection).toBe('ASCENDING')
+    expect(vm.activeSort).toEqual({ field: 'DATE', direction: 'ASCENDING' })
     expect(vm.currentPage).toBe(0)
     expect(findTransactionsByIdMonthAndYearMock).toHaveBeenLastCalledWith(
       'booklet-1',
@@ -260,16 +262,78 @@ describe('pages/booklet/[id] date sorting', () => {
       0,
       10,
       'ASCENDING',
+      'DATE',
     )
   })
 
-  it('keeps the selected direction when navigating to another page', async () => {
+  it('reloads ordered by label when the label header is sorted', async () => {
     const { wrapper } = mountPage()
     await flushPromises()
     await flushPromises()
 
     const vm = wrapper.vm as any
-    vm.toggleDateSort()
+    vm.onSort({ sortField: 'label', sortOrder: 1 })
+    await flushPromises()
+    await flushPromises()
+
+    expect(vm.activeSort).toEqual({ field: 'LABEL', direction: 'ASCENDING' })
+    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenLastCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {},
+      0,
+      10,
+      'ASCENDING',
+      'LABEL',
+    )
+  })
+
+  it('replaces the active sort instead of merging when a second column is sorted', async () => {
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.onSort({ sortField: 'label', sortOrder: 1 })
+    await flushPromises()
+    vm.onSort({ sortField: 'expense', sortOrder: -1 })
+    await flushPromises()
+    await flushPromises()
+
+    expect(vm.activeSort).toEqual({ field: 'EXPENSE', direction: 'DESCENDING' })
+    expect(findTransactionsByIdMonthAndYearMock).toHaveBeenLastCalledWith(
+      'booklet-1',
+      3,
+      2026,
+      {},
+      0,
+      10,
+      'DESCENDING',
+      'EXPENSE',
+    )
+  })
+
+  it('exposes the active sort to the table as controlled PrimeVue sort props', async () => {
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.onSort({ sortField: 'income', sortOrder: 1 })
+    await flushPromises()
+
+    expect(vm.primeSortField).toBe('income')
+    expect(vm.primeSortOrder).toBe(1)
+  })
+
+  it('keeps the selected sort when navigating to another page', async () => {
+    const { wrapper } = mountPage()
+    await flushPromises()
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    vm.onSort({ sortField: 'label', sortOrder: 1 })
     await flushPromises()
     await flushPromises()
 
@@ -285,6 +349,7 @@ describe('pages/booklet/[id] date sorting', () => {
       2,
       10,
       'ASCENDING',
+      'LABEL',
     )
   })
 

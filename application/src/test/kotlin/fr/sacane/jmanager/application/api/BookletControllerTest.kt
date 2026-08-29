@@ -734,6 +734,154 @@ class BookletControllerTest(
     }
 
     @Nested
+    inner class TransactionsSortFieldTest {
+
+        /**
+         * Three confirmed transactions whose label, amount and date orders are all different:
+         * | label  | kind    | amount | day |
+         * | Rent   | expense |  800   |  1  |
+         * | Salary | income  | 2000   |  2  |
+         * | Coffee | expense |    5   |  3  |
+         */
+        private fun initBookletWithMixedKindTransactions(): Booklet {
+            val booklet = Booklet(
+                id = null,
+                amount = Amount.fromString("1000.00"),
+                label = "Field Sorted Booklet",
+                owner = user,
+            )
+            bookletStateAdapter.init(listOf(booklet))
+            val firstDayOfMonth = LocalDate.now().withDayOfMonth(1)
+            transactionStateTestAdapter.init(
+                listOf(BookletTransaction(
+                    user!!.id,
+                    booklet.label,
+                    transactions = listOf(
+                        Transaction(
+                            id = null, label = "Rent", amount = Amount.fromString("800.00"),
+                            date = firstDayOfMonth, isPreview = false, isIncome = false,
+                        ),
+                        Transaction(
+                            id = null, label = "Salary", amount = Amount.fromString("2000.00"),
+                            date = firstDayOfMonth.plusDays(1), isPreview = false, isIncome = true,
+                        ),
+                        Transaction(
+                            id = null, label = "Coffee", amount = Amount.fromString("5.00"),
+                            date = firstDayOfMonth.plusDays(2), isPreview = false, isIncome = false,
+                        ),
+                    ),
+                    token = token
+                ))
+            )
+            return bookletStateAdapter.get().first()
+        }
+
+        @Test
+        fun `GET transactions sorted by LABEL ascending should order transactions alphabetically`() {
+            val savedBooklet = initBookletWithMixedKindTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortField", "LABEL")
+                queryParam("sortDirection", "ASCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.label", equalTo(listOf("Coffee", "Rent", "Salary")))
+            }
+        }
+
+        @Test
+        fun `GET transactions sorted by EXPENSE ascending should order expenses by amount and push incomes last`() {
+            val savedBooklet = initBookletWithMixedKindTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortField", "EXPENSE")
+                queryParam("sortDirection", "ASCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.label", equalTo(listOf("Coffee", "Rent", "Salary")))
+            }
+        }
+
+        @Test
+        fun `GET transactions sorted by EXPENSE descending should keep incomes last`() {
+            val savedBooklet = initBookletWithMixedKindTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortField", "EXPENSE")
+                queryParam("sortDirection", "DESCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.label", equalTo(listOf("Rent", "Coffee", "Salary")))
+            }
+        }
+
+        @Test
+        fun `GET transactions sorted by INCOME ascending should order incomes first and push expenses last`() {
+            val savedBooklet = initBookletWithMixedKindTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortField", "INCOME")
+                queryParam("sortDirection", "ASCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.label", equalTo(listOf("Salary", "Rent", "Coffee")))
+            }
+        }
+
+        @Test
+        fun `GET transactions with an unknown sortField should return 400`() {
+            val savedBooklet = initBookletWithMixedKindTransactions()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                header("Content-Type", "application/json")
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortField", "PRICE")
+                queryParam("sortDirection", "ASCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(400)
+            }
+        }
+    }
+
+    @Nested
     inner class RegenerateDeletedPrevisionalTransactionsTest {
 
         @Autowired

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
 import type { AppTableColumn } from '~/components/AppTable.vue'
-import type { RegenerableTransactionDTO, TransactionSortDirection } from '~/composables/useBooklet'
+import type { RegenerableTransactionDTO, TransactionSortDirection, TransactionSortField } from '~/composables/useBooklet'
 import { useConfirm } from 'primevue/useconfirm'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
@@ -26,8 +26,6 @@ type DisplayTransaction = TransactionResultDTO & {
   selectionKey: string
   expensesRepresentation: string
   incomeRepresentation: string
-  expenseSortValue: number | null
-  incomeSortValue: number | null
 }
 
 const selectedTransactions = ref<DisplayTransaction[]>([])
@@ -60,7 +58,30 @@ const pageSize = useLocalStorage(PAGE_SIZE_KEY_BOOKLET, 10)
 const currentPage = ref(0)
 const totalElements = ref(0)
 const totalPages = ref(1)
-const sortDirection = ref<TransactionSortDirection>('DESCENDING')
+
+// One sort at a time — the last column the user clicks wins (no merge). The Date column and the
+// amount/label columns all go through the same backend reload; nothing is sorted client-side.
+const activeSort = ref<{ field: TransactionSortField, direction: TransactionSortDirection }>({
+  field: 'DATE',
+  direction: 'DESCENDING',
+})
+const sortDirection = computed<TransactionSortDirection>(() => activeSort.value.direction)
+
+const SORT_FIELD_BY_COLUMN: Record<string, TransactionSortField> = {
+  date: 'DATE',
+  label: 'LABEL',
+  expense: 'EXPENSE',
+  income: 'INCOME',
+}
+const COLUMN_BY_SORT_FIELD: Record<TransactionSortField, string> = {
+  DATE: 'date',
+  LABEL: 'label',
+  EXPENSE: 'expense',
+  INCOME: 'income',
+}
+// PrimeVue-shaped controlled sort state for the DataTable indicator.
+const primeSortField = computed(() => COLUMN_BY_SORT_FIELD[activeSort.value.field])
+const primeSortOrder = computed(() => (activeSort.value.direction === 'ASCENDING' ? 1 : -1))
 
 const mobileCurrentPage = ref(0)
 const mobileHasMore = ref(false)
@@ -227,7 +248,7 @@ const filteredTransactions = computed(() => {
   }
   // Global mode holds the whole period client-side, so it is ordered here.
   // Paginated mode keeps the order the backend computed across every page.
-  return isGlobalMode ? [...result].sort((a, b) => compareByDate(a.date, b.date)) : result
+  return isGlobalMode ? [...result].sort(compareBySort) : result
 })
 
 function asDisplayableTransaction(transaction: TransactionResultDTO, index = 0): DisplayTransaction {
@@ -250,8 +271,6 @@ function asDisplayableTransaction(transaction: TransactionResultDTO, index = 0):
     selectionKey,
     expensesRepresentation: !transaction.isIncome ? `${numericValue.toFixed(2)} €` : '-',
     incomeRepresentation: transaction.isIncome ? `${numericValue.toFixed(2)} €` : '-',
-    expenseSortValue: !transaction.isIncome ? numericValue : null,
-    incomeSortValue: transaction.isIncome ? numericValue : null,
     date: transaction.date,
     tagDTO,
   }
@@ -278,13 +297,41 @@ function resetTransaction() {
   })
 }
 
-function compareByDate(left: string | Date, right: string | Date): number {
-  const delta = new Date(left).getTime() - new Date(right).getTime()
-  return sortDirection.value === 'DESCENDING' ? -delta : delta
+/**
+ * Orders the whole in-memory set (global "all month" mode) the same way the backend orders a
+ * paginated period: EXPENSE/INCOME keep their kind first and push the other kind — always in
+ * ascending date order — to the end, regardless of direction.
+ */
+function compareBySort(a: DisplayTransaction, b: DisplayTransaction): number {
+  const direction = activeSort.value.direction === 'ASCENDING' ? 1 : -1
+  const byDateAsc = new Date(a.date).getTime() - new Date(b.date).getTime()
+
+  if (activeSort.value.field === 'LABEL') {
+    const byLabel = a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
+    return (byLabel !== 0 ? byLabel : byDateAsc) * direction
+  }
+
+  if (activeSort.value.field === 'EXPENSE' || activeSort.value.field === 'INCOME') {
+    const primaryIsIncome = activeSort.value.field === 'INCOME'
+    const aPrimary = a.isIncome === primaryIsIncome
+    const bPrimary = b.isIncome === primaryIsIncome
+    if (aPrimary !== bPrimary) return aPrimary ? -1 : 1
+    if (!aPrimary) return byDateAsc
+    const aValue = Number.parseFloat(String(a.value ?? 0))
+    const bValue = Number.parseFloat(String(b.value ?? 0))
+    return (aValue - bValue !== 0 ? aValue - bValue : byDateAsc) * direction
+  }
+
+  return byDateAsc * direction
 }
 
-function toggleDateSort() {
-  sortDirection.value = sortDirection.value === 'DESCENDING' ? 'ASCENDING' : 'DESCENDING'
+function onSort(event: { sortField: string | null, sortOrder: number | null }) {
+  const field = event.sortField ? SORT_FIELD_BY_COLUMN[event.sortField] : undefined
+  if (!field) return
+  activeSort.value = {
+    field,
+    direction: event.sortOrder === 1 ? 'ASCENDING' : 'DESCENDING',
+  }
   currentPage.value = 0
   loadBookletData()
 }
@@ -297,7 +344,7 @@ async function loadBookletData() {
 
       const [balances, transactionsRes] = await Promise.all([
         findBalancesByIdMonthAndYear(bookletId, month, bookletData.year),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, sortDirection.value),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, activeSort.value.direction, activeSort.value.field),
       ])
 
       bookletData.label = balances.label
@@ -355,7 +402,7 @@ async function loadMoreMobileTransactions() {
     const bookletId = (route.params as any)?.id as string
     const month = numberFromMonth(bookletData.month) as number
     const nextPage = mobileCurrentPage.value + 1
-    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, nextPage, MOBILE_LAZY_PAGE_SIZE, sortDirection.value)
+    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, nextPage, MOBILE_LAZY_PAGE_SIZE, activeSort.value.direction, activeSort.value.field)
     const newTransactions = res.transactions
       .map((t, i) => asDisplayableTransaction(t, actualTransactions.value.length + i))
     actualTransactions.value = [...actualTransactions.value, ...newTransactions]
@@ -760,9 +807,9 @@ const transactionsByDay = computed(() => {
 
 const bookletTransactionColumns = computed<AppTableColumn[]>(() => [
   { selectionMode: 'multiple', style: { width: '3rem' } },
-  // Not `sortable`: PrimeVue would only reorder the rows of the loaded page.
-  // The header slot triggers a backend reload ordered across every page instead.
-  { field: 'date', header: 'Date', style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date', headerSlotName: 'dateSort' },
+  // Every sortable column drives a backend reload (AppTable is `lazy`): PrimeVue never reorders
+  // the loaded page, so a single sort is active at a time and ordering spans every page.
+  { field: 'date', header: 'Date', sortable: true, style: { width: '90px', minWidth: '90px', maxWidth: '90px', textAlign: 'center' }, headerClass: 'col-header-center', slotName: 'date' },
   {
     field: 'label',
     header: 'Libellé',
@@ -773,8 +820,8 @@ const bookletTransactionColumns = computed<AppTableColumn[]>(() => [
     headerClass: 'col-header-center',
     slotName: 'label',
   },
-  { field: 'expenseSortValue', header: 'Dépenses', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'expenses', headerClass: 'col-header-center' },
-  { field: 'incomeSortValue', header: 'Recettes', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'income', headerClass: 'col-header-center' },
+  { field: 'expense', header: 'Dépenses', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'expenses', headerClass: 'col-header-center' },
+  { field: 'income', header: 'Recettes', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'income', headerClass: 'col-header-center' },
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px', textAlign: 'center' }, slotName: 'tag', headerSlotName: 'tagFilter' },
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag', headerSlotName: 'subTagFilter' },
   { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions', headerClass: 'col-header-center' },
@@ -899,8 +946,12 @@ onUnmounted(() => {
             selectable
             scrollable
             scroll-height="flex"
+            lazy
+            :sort-field="primeSortField"
+            :sort-order="primeSortOrder"
             :loading="isBookletLoading"
             @row-dblclick="onEditTransaction"
+            @sort="onSort"
           >
             <template #empty>
               <div class="text-center py-12">
@@ -946,20 +997,6 @@ onUnmounted(() => {
             <template #body-income="{ data }">
               <span v-if="data.isIncome" class="font-extrabold text-[#009CFE]">{{ data.incomeRepresentation }}</span>
               <span v-else class="text-[#009CFE] font-semibold">-</span>
-            </template>
-
-            <template #header-dateSort>
-              <button
-                type="button"
-                class="date-sort-btn w-full inline-flex items-center justify-center gap-1 bg-transparent border-0 text-inherit cursor-pointer opacity-90 hover:opacity-100 transition-opacity duration-200"
-                :aria-label="sortDirection === 'DESCENDING' ? 'Trier par date croissante' : 'Trier par date décroissante'"
-                :aria-sort="sortDirection === 'DESCENDING' ? 'descending' : 'ascending'"
-                data-testid="date-sort-toggle"
-                @click.stop="toggleDateSort"
-              >
-                Date
-                <i :class="sortDirection === 'DESCENDING' ? 'pi pi-sort-amount-down' : 'pi pi-sort-amount-up-alt'" class="text-xs" />
-              </button>
             </template>
 
             <template #header-tagFilter>
@@ -1320,13 +1357,6 @@ onUnmounted(() => {
 <style scoped lang="scss">
 :global(body) {
   scrollbar-gutter: stable;
-}
-
-// Renders the sort trigger exactly like the surrounding column headers: a <button> does not
-// inherit the font set on the <th>, only its colour and letter-spacing.
-.date-sort-btn {
-  font: inherit;
-  white-space: nowrap;
 }
 
 :deep(.p-dropdown),
