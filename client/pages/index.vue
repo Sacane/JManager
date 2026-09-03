@@ -24,7 +24,7 @@ import useStats from '~/composables/useStats'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
-import { resolveMonthlyCycleRangeForTargetMonth, resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
+import { countDaysInRange, resolveMonthlyCycleRangeForTargetMonth, resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, rgbToHex, toReadableTagTextColor } from '~/utils/util'
 
 ChartJS.register(
@@ -280,6 +280,13 @@ const monthlyExpenses = computed(() => {
     0,
   )
 })
+
+const currentPeriodDayCount = computed(() => countDaysInRange(currentDateRange.value))
+
+// The average must follow the selected period: a quarter and a year do not span 30 days.
+const dailyExpenseAverage = computed(() =>
+  currentPeriodDayCount.value > 0 ? monthlyExpenses.value / currentPeriodDayCount.value : 0,
+)
 
 const monthlyIncome = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
@@ -1354,8 +1361,8 @@ watch(selectedBookletId, () => {
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
               {{ monthlyExpenses.toFixed(2) }} €
             </p>
-            <p class="text-xs" style="color: var(--text-tertiary);">
-              Moy. journalière: {{ (monthlyExpenses / 30).toFixed(2) }} €
+            <p class="text-xs" style="color: var(--text-tertiary);" data-test="daily-expense-average">
+              Moy. journalière: {{ dailyExpenseAverage.toFixed(2) }} €
             </p>
           </div>
         </div>

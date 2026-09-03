@@ -954,3 +954,98 @@ describe('pages/index selected booklet persistence', () => {
     expect(wrapper.text()).toContain(firstBooklet.label)
   })
 })
+
+describe('pages/index daily expense average', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    // March 2026 has 31 days; the default cycle (start 1, no end) maps the month
+    // period to 2026-03-01 → 2026-03-31.
+    vi.setSystemTime(new Date('2026-03-10T12:00:00.000Z'))
+
+    fetchBookletsMock.mockResolvedValue([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        amount: 1200,
+        label: 'Compte principal',
+        transactions: [],
+      },
+    ])
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 15,
+      bookletCycles: [
+        {
+          bookletId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
+        },
+      ],
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('divides monthly expenses by the real number of days of the month period', async () => {
+    // 620 € over the 31 days of March 2026 → 20.00 € per day
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [{ year: 2026, month: 3, expenses: '620.00', income: '0.00' }] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('20.00')
+  })
+
+  it('divides by the quarter length when the quarter period is selected', async () => {
+    // Quarter = 2026-01-01 → 2026-03-31 = 90 days; 900 € → 10.00 € per day
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [{ year: 2026, month: 3, expenses: '900.00', income: '0.00' }] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const periodButtons = wrapper.findAll('.period-toggle-btn')
+    await periodButtons[1]!.trigger('click')
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('10.00')
+  })
+
+  it('divides by the year length when the year period is selected', async () => {
+    // Year = 2025-04-01 → 2026-03-31 = 365 days; 3650 € → 10.00 € per day
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [{ year: 2026, month: 3, expenses: '3650.00', income: '0.00' }] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const periodButtons = wrapper.findAll('.period-toggle-btn')
+    await periodButtons[2]!.trigger('click')
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('10.00')
+  })
+
+  it('shows a zero average when there is no expense on the period', async () => {
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('0.00')
+  })
+})
