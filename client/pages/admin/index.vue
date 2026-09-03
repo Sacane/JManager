@@ -129,7 +129,6 @@ const adminUserColumns: AppTableColumn[] = [
   { field: 'email', header: 'Email', slotName: 'email' },
   { field: 'roles', header: 'Rôle', sortable: true, slotName: 'roles' },
   { field: 'createdDate', header: 'Date de création', sortable: true, slotName: 'createdDate' },
-  { header: 'Actions', exportable: false, style: 'width: 80px', slotName: 'actions' },
 ]
 
 onMounted(() => {
@@ -367,17 +366,6 @@ function isKeyToggling(key: FeatureKey): boolean {
                             </div>
                           </div>
                         </div>
-
-                        <div class="user-mobile-actions">
-                          <Button
-                            class="user-action-btn"
-                            icon="pi pi-ellipsis-v"
-                            severity="secondary"
-                            text
-                            rounded
-                            aria-label="Actions"
-                          />
-                        </div>
                       </div>
                     </div>
                   </template>
@@ -445,16 +433,6 @@ function isKeyToggling(key: FeatureKey): boolean {
                       <i class="pi pi-calendar" />
                       <span>{{ formatDateTime(data.createdDate) }}</span>
                     </div>
-                  </template>
-
-                  <template #body-actions>
-                    <Button
-                      icon="pi pi-ellipsis-v"
-                      severity="secondary"
-                      text
-                      rounded
-                      aria-label="Actions"
-                    />
                   </template>
                 </AppTable>
 
@@ -1205,15 +1183,6 @@ function isKeyToggling(key: FeatureKey): boolean {
     justify-content: center;
     color: white;
     font-size: 1.05rem;
-  }
-
-  .user-action-btn {
-    min-width: 40px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.25rem;
   }
 
   .users-mobile-count {

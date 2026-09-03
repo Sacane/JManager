@@ -130,6 +130,45 @@ describe('pages/admin/index', () => {
     await nextTick()
   }
 
+  // --- Dead controls ---
+
+  it('does not declare an inert actions column in the desktop user table', () => {
+    const wrapper = mountPage()
+    const columns = (wrapper.vm as any).adminUserColumns as Array<{ header?: string, slotName?: string }>
+
+    expect(columns.some(column => column.header === 'Actions')).toBe(false)
+    expect(columns.some(column => column.slotName === 'actions')).toBe(false)
+  })
+
+  it('does not render an inert actions button in the mobile user list', async () => {
+    vi.mocked(useAdmin).mockReturnValue({
+      users: ref([
+        { id: 'user-1', username: 'johan', email: 'johan@example.com', roles: ['USER'], createdDate: '2026-03-01T10:00:00Z' },
+      ]) as any,
+      totalUsers: ref(1) as any,
+      totalPages: ref(1) as any,
+      currentPage: ref(0) as any,
+      pageSize: ref(10) as any,
+      isLoading: ref(false) as any,
+      fetchUsers: vi.fn(),
+      createUser: createUserMock,
+    } as any)
+
+    const originalWidth = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { value: 500, configurable: true, writable: true })
+
+    try {
+      const wrapper = mountPage()
+      await nextTick()
+
+      expect(wrapper.find('.users-mobile-list').exists()).toBe(true)
+      expect(wrapper.find('.user-mobile-actions').exists()).toBe(false)
+      expect(wrapper.find('.user-action-btn').exists()).toBe(false)
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true, writable: true })
+    }
+  })
+
   // --- Rendering ---
 
   it('renders both the user management form and the feature flags panel', () => {
