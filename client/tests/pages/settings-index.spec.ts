@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SettingsPage from '../../pages/settings/index.vue'
 
 const getSettingsMock = vi.fn().mockResolvedValue({
@@ -85,6 +85,27 @@ function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
 }
 
 describe('pages/settings/index', () => {
+  beforeEach(() => {
+    getSettingsMock.mockClear()
+    updateSettingsMock.mockClear()
+  })
+
+  it('spells the user-facing French labels correctly', async () => {
+    const wrapper = mountSettingsPage()
+
+    await flushPromises()
+    await flushPromises()
+
+    const text = wrapper.text()
+
+    expect(text).toContain('Paramètres utilisateur')
+    expect(text).toContain('Définis le nombre de jours')
+    expect(text).toContain('prévisions')
+    expect(text).toContain('Fenêtre de projection (7 à 60 jours)')
+    expect(text).toContain('Enregistrer les paramètres')
+    expect(text).not.toMatch(/Parametres|parametres|Definis|previsions|Fenetre/)
+  })
+
   it('renders settings sections and loads API data', async () => {
     const wrapper = mountSettingsPage()
 
@@ -92,7 +113,7 @@ describe('pages/settings/index', () => {
     await flushPromises()
 
     expect(getSettingsMock).toHaveBeenCalledTimes(1)
-    expect(wrapper.text()).toContain('Parametres utilisateur')
+    expect(wrapper.text()).toContain('Paramètres utilisateur')
     expect(wrapper.text()).toContain('Apparence')
     expect(wrapper.text()).toContain('Projection')
     expect(wrapper.text()).toContain('Cycle mensuel par compte')

@@ -62,7 +62,7 @@ async function loadUserSettings() {
   await withLoading(async () => {
     const settings = await getSettings()
     if (!settings) {
-      toast.error('Impossible de charger les parametres utilisateur')
+      toast.error('Impossible de charger les paramètres utilisateur')
       return
     }
 
@@ -91,7 +91,7 @@ async function saveUserSettings() {
 
     const updatedSettings = await updateSettings(payload)
     if (!updatedSettings) {
-      toast.error('Impossible de sauvegarder les parametres')
+      toast.error('Impossible de sauvegarder les paramètres')
       return
     }
 
@@ -105,7 +105,7 @@ async function saveUserSettings() {
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
 
-    toast.success('Parametres enregistres')
+    toast.success('Paramètres enregistrés')
   }, saveSettingsScope)
 }
 
@@ -126,12 +126,12 @@ onMounted(() => {
 <template>
   <div class="settings-page">
     <div class="settings-header">
-      <h1>Parametres utilisateur</h1>
+      <h1>Paramètres utilisateur</h1>
       <p>Configuration globale de la projection et des cycles mensuels par compte.</p>
     </div>
 
     <div v-if="isLoading" class="settings-loading">
-      Chargement des parametres...
+      Chargement des paramètres…
     </div>
 
     <div v-else class="settings-grid">
@@ -146,10 +146,10 @@ onMounted(() => {
       <section class="settings-card">
         <h2>Projection</h2>
         <p class="settings-help">
-          Definis le nombre de jours à venir, utilisé pour les previsions sur le dashboard.
+          Définis le nombre de jours à venir, utilisé pour les prévisions sur le dashboard.
         </p>
 
-        <label for="projection-window" class="settings-label">Fenetre de projection (7 a 60 jours)</label>
+        <label for="projection-window" class="settings-label">Fenêtre de projection (7 à 60 jours)</label>
         <input
           id="projection-window"
           v-model.number="projectionWindowDays"
@@ -301,7 +301,7 @@ onMounted(() => {
 
     <div class="actions">
       <button class="save-btn" data-test="save-settings-btn" :disabled="isSaving" @click="saveUserSettings">
-        {{ isSaving ? 'Enregistrement...' : 'Enregistrer les parametres' }}
+        {{ isSaving ? 'Enregistrement...' : 'Enregistrer les paramètres' }}
       </button>
     </div>
   </div>

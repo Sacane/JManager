@@ -142,3 +142,32 @@ describe('pages/booklet/index user feedback', () => {
     expect(errorAxiosToast).toHaveBeenCalled()
   })
 })
+
+describe('pages/booklet/index deletion confirmation wording', () => {
+  it('spells the deletion confirmation message correctly', async () => {
+    const requireMock = vi.fn()
+    vi.stubGlobal('definePageMeta', vi.fn())
+    vi.stubGlobal('useConfirm', () => ({ require: requireMock }))
+    vi.stubGlobal('useRouter', () => ({ push: vi.fn() }))
+    vi.stubGlobal('capitalizeFirst', (value: string) => value)
+    vi.stubGlobal('useJToast', () => ({ success: vi.fn(), error: vi.fn(), warn: vi.fn(), errorAxios: vi.fn() }))
+    vi.stubGlobal('useLoading', () => ({
+      isScopeLoading: () => false,
+      withLoading: async <T>(action: () => Promise<T>) => action(),
+    }))
+
+    const wrapper = shallowMount(BookletPage, {
+      global: { stubs: { ConfirmDialog: true, BookletBookingDialog: true, Button: true, ProgressSpinner: true } },
+    })
+    await flushPromises()
+
+    ;(wrapper.vm as any).openConfirmDeleteDialog('booklet-1', 'Livret A')
+
+    const message = requireMock.mock.calls[0]![0].message as string
+
+    expect(message).toContain('Cette action est irréversible')
+    expect(message).toContain('transactions enregistrées')
+    expect(message).not.toContain('Cette action et irréversible')
+    expect(message).not.toContain('transactions enregistrés ')
+  })
+})
