@@ -30,6 +30,7 @@ vi.stubGlobal('useRuntimeConfig', vi.fn(() => ({ public: { apiUrl: 'http://local
 vi.stubGlobal('definePageMeta', vi.fn())
 vi.stubGlobal('useRoute', vi.fn(() => ({ params: {}, query: {} })))
 vi.stubGlobal('useRouter', vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })))
+vi.stubGlobal('onBeforeRouteLeave', vi.fn())
 
 // PrimeVue composables
 vi.stubGlobal('useToast', vi.fn(() => ({ add: vi.fn() })))

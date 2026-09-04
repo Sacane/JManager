@@ -770,7 +770,7 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     const optsBefore = lineStub.props('options') as any
     expect(optsBefore.scales.y.max).toBeUndefined()
 
-    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await lineContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
     await wrapper.vm.$nextTick()
 
     const optsAfter = lineStub.props('options') as any
@@ -788,14 +788,14 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     const lineContainer = wrapper.find('[data-test="line-chart-container"]')
 
     // First, initialise scale with a forward scroll
-    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await lineContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
     await wrapper.vm.$nextTick()
 
     const lineStub = wrapper.findComponent({ name: 'Line' })
     const maxAfterZoomIn = (lineStub.props('options') as any).scales.y.max as number
 
     // Now scroll backward
-    await lineContainer.trigger('wheel', { deltaY: 100 })
+    await lineContainer.trigger('wheel', { deltaY: 100, ctrlKey: true })
     await wrapper.vm.$nextTick()
 
     const maxAfterZoomOut = (lineStub.props('options') as any).scales.y.max as number
@@ -808,7 +808,7 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     await settleDashboard()
 
     const lineContainer = wrapper.find('[data-test="line-chart-container"]')
-    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await lineContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
     await wrapper.vm.$nextTick()
 
     const barStub = wrapper.findComponent({ name: 'Bar' })
@@ -823,7 +823,7 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     await settleDashboard()
 
     const barContainer = wrapper.find('[data-test="bar-chart-container"]')
-    await barContainer.trigger('wheel', { deltaY: -100 })
+    await barContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
     await wrapper.vm.$nextTick()
 
     const lineStub = wrapper.findComponent({ name: 'Line' })
@@ -838,7 +838,7 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     await settleDashboard()
 
     const lineContainer = wrapper.find('[data-test="line-chart-container"]')
-    await lineContainer.trigger('wheel', { deltaY: -100 })
+    await lineContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
     await wrapper.vm.$nextTick()
 
     const lineStub = wrapper.findComponent({ name: 'Line' })
@@ -863,7 +863,7 @@ describe('pages/index chart wheel Y-axis zoom', () => {
 
     const lineContainer = wrapper.find('[data-test="line-chart-container"]')
     expect(async () => {
-      await lineContainer.trigger('wheel', { deltaY: -100 })
+      await lineContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
       await wrapper.vm.$nextTick()
     }).not.toThrow()
 
@@ -952,5 +952,224 @@ describe('pages/index selected booklet persistence', () => {
     const select = wrapper.get('select')
     expect((select.element as HTMLSelectElement).value).toBe(firstBooklet.id)
     expect(wrapper.text()).toContain(firstBooklet.label)
+  })
+})
+
+describe('pages/index daily expense average', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    // March 2026 has 31 days; the default cycle (start 1, no end) maps the month
+    // period to 2026-03-01 → 2026-03-31.
+    vi.setSystemTime(new Date('2026-03-10T12:00:00.000Z'))
+
+    fetchBookletsMock.mockResolvedValue([
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        amount: 1200,
+        label: 'Compte principal',
+        transactions: [],
+      },
+    ])
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 15,
+      bookletCycles: [
+        {
+          bookletId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
+        },
+      ],
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('divides monthly expenses by the real number of days of the month period', async () => {
+    // 620 € over the 31 days of March 2026 → 20.00 € per day
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [{ year: 2026, month: 3, expenses: '620.00', income: '0.00' }] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('20.00')
+  })
+
+  it('divides by the quarter length when the quarter period is selected', async () => {
+    // Quarter = 2026-01-01 → 2026-03-31 = 90 days; 900 € → 10.00 € per day
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [{ year: 2026, month: 3, expenses: '900.00', income: '0.00' }] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const periodButtons = wrapper.findAll('.period-toggle-btn')
+    await periodButtons[1]!.trigger('click')
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('10.00')
+  })
+
+  it('divides by the year length when the year period is selected', async () => {
+    // Year = 2025-04-01 → 2026-03-31 = 365 days; 3650 € → 10.00 € per day
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [{ year: 2026, month: 3, expenses: '3650.00', income: '0.00' }] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const periodButtons = wrapper.findAll('.period-toggle-btn')
+    await periodButtons[2]!.trigger('click')
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('10.00')
+  })
+
+  it('shows a zero average when there is no expense on the period', async () => {
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
+
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="daily-expense-average"]').text()).toContain('0.00')
+  })
+})
+
+describe('pages/index chart wheel does not hijack the page scroll', () => {
+  const trendStatsData = {
+    monthlyTrends: [{ month: 5, year: 2026, expenses: '1500', income: '2500' }],
+  }
+
+  const trendData = {
+    dailyTrends: [
+      { date: '2026-05-01', expenses: '1000', income: '2000', cumulativeBalance: '1000' },
+      { date: '2026-05-15', expenses: '500', income: '3000', cumulativeBalance: '2500' },
+    ],
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+
+    fetchBookletsMock.mockResolvedValue([
+      { id: '11111111-1111-4111-8111-111111111111', amount: 1200, label: 'Compte principal', transactions: [] },
+    ])
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getTrendStatsMock.mockResolvedValue(trendStatsData)
+    getDailyTrendStatsMock.mockResolvedValue(trendData)
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    getUserSettingsMock.mockResolvedValue({
+      projectionWindowDays: 15,
+      bookletCycles: [
+        {
+          bookletId: '11111111-1111-4111-8111-111111111111',
+          label: 'Compte principal',
+          monthlyPeriodStartDay: 1,
+          monthlyPeriodEndDay: null,
+        },
+      ],
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('leaves the chart scale untouched on a plain wheel scroll', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    await wrapper.find('[data-test="line-chart-container"]').trigger('wheel', { deltaY: -100 })
+    await wrapper.vm.$nextTick()
+
+    expect((lineStub.props('options') as any).scales.y.max).toBeUndefined()
+  })
+
+  it('does not prevent the default scroll on a plain wheel', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const event = new WheelEvent('wheel', { deltaY: -100, cancelable: true, bubbles: true })
+    wrapper.find('[data-test="line-chart-container"]').element.dispatchEvent(event)
+    await wrapper.vm.$nextTick()
+
+    expect(event.defaultPrevented).toBe(false)
+  })
+
+  it('prevents the default scroll when the zoom modifier is held', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const event = new WheelEvent('wheel', { deltaY: -100, cancelable: true, bubbles: true })
+    // happy-dom drops ctrlKey from the WheelEvent init dict, so set it on the instance.
+    Object.defineProperty(event, 'ctrlKey', { value: true })
+    wrapper.find('[data-test="line-chart-container"]').element.dispatchEvent(event)
+    await wrapper.vm.$nextTick()
+
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  it('zooms the chart when the wheel is used with the zoom modifier', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    await wrapper.find('[data-test="line-chart-container"]').trigger('wheel', { deltaY: -100, ctrlKey: true })
+    await wrapper.vm.$nextTick()
+
+    expect((lineStub.props('options') as any).scales.y.max).toBeDefined()
+  })
+
+  it('offers no reset control until a scale has been overridden', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(wrapper.find('[data-test="reset-line-chart-scale"]').exists()).toBe(false)
+  })
+
+  it('restores the automatic scale from the reset control', async () => {
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    const lineStub = wrapper.findComponent({ name: 'Line' })
+    await wrapper.find('[data-test="line-chart-container"]').trigger('wheel', { deltaY: -100, ctrlKey: true })
+    await wrapper.vm.$nextTick()
+
+    const reset = wrapper.find('[data-test="reset-line-chart-scale"]')
+    expect(reset.exists()).toBe(true)
+
+    await reset.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect((lineStub.props('options') as any).scales.y.max).toBeUndefined()
+    expect(wrapper.find('[data-test="reset-line-chart-scale"]').exists()).toBe(false)
   })
 })

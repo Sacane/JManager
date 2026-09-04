@@ -73,6 +73,22 @@ export function resolveMonthlyCycleRangeForTargetMonth(targetYear: number, targe
   return resolveMonthlyCycleRangeFromAnchor(anchorDate, cycleStartDay, cycleEndDay)
 }
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+
+/**
+ * Counts the days covered by a range, both boundaries included.
+ *
+ * The time of day is ignored, so a range is measured in whole calendar days and stays
+ * correct across daylight saving shifts. Returns 0 when the end precedes the start.
+ */
+export function countDaysInRange(range: MonthlyCycleRange): number {
+  const start = asLocalDate(range.start)
+  const end = asLocalDate(range.end)
+  const elapsedDays = Math.round((end.getTime() - start.getTime()) / MILLISECONDS_PER_DAY)
+
+  return elapsedDays < 0 ? 0 : elapsedDays + 1
+}
+
 export function toIsoLocalDate(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')

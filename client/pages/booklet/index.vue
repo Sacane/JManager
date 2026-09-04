@@ -80,7 +80,7 @@ async function applyDelete(bookletId: string) {
 
 function openConfirmDeleteDialog(id: string, bookletLabel: string) {
   confirm.require({
-    message: `Êtes-vous sûr de vouloir supprimer le livret "${bookletLabel}" ? \n Cette action et irréversible et supprimera définitivement toutes les transactions enregistrés dessus.`,
+    message: `Êtes-vous sûr de vouloir supprimer le livret "${bookletLabel}" ? \n Cette action est irréversible et supprimera définitivement toutes les transactions enregistrées dessus.`,
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: 'Supprimer',

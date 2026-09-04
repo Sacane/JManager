@@ -1,5 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import SettingsPage from '../../pages/settings/index.vue'
 
 const getSettingsMock = vi.fn().mockResolvedValue({
@@ -44,6 +45,8 @@ vi.mock('~/composables/useChangePassword', () => ({
   }),
 }))
 
+const confirmRequireMock = vi.fn()
+
 function flushPromises() {
   return new Promise(resolve => setTimeout(resolve, 0))
 }
@@ -51,6 +54,7 @@ function flushPromises() {
 function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
   vi.stubGlobal('definePageMeta', vi.fn())
   vi.stubGlobal('useJToast', () => ({ success: vi.fn(), error: vi.fn() }))
+  vi.stubGlobal('useConfirm', () => ({ require: confirmRequireMock }))
   vi.stubGlobal('useLoading', () => ({
     isScopeLoading: (scope: string) => activeScopes.includes(scope),
     withLoading: async <T>(action: () => Promise<T>) => action(),
@@ -84,7 +88,140 @@ function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
   return shallowMount(SettingsPage)
 }
 
+describe('pages/settings/index unsaved changes', () => {
+  let leaveGuard: (() => boolean) | null
+
+  beforeEach(() => {
+    getSettingsMock.mockClear()
+    updateSettingsMock.mockClear()
+    leaveGuard = null
+    confirmRequireMock.mockClear()
+    vi.stubGlobal('onBeforeRouteLeave', (guard: () => boolean) => {
+      leaveGuard = guard
+    })
+  })
+
+  it('names the scope of the settings save action', async () => {
+    const wrapper = mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="save-settings-btn"]').text()).toContain('la projection et les cycles')
+  })
+
+  it('shows nothing pending right after loading', async () => {
+    const wrapper = mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="unsaved-settings-badge"]').exists()).toBe(false)
+  })
+
+  it('flags pending changes once a setting is edited', async () => {
+    const wrapper = mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    ;(wrapper.vm as any).projectionWindowDays = 42
+    await nextTick()
+
+    expect(wrapper.find('[data-test="unsaved-settings-badge"]').exists()).toBe(true)
+  })
+
+  it('clears the pending flag once the settings are saved', async () => {
+    const wrapper = mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    ;(wrapper.vm as any).projectionWindowDays = 30
+    await nextTick()
+    expect(wrapper.find('[data-test="unsaved-settings-badge"]').exists()).toBe(true)
+
+    await (wrapper.vm as any).saveUserSettings()
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('[data-test="unsaved-settings-badge"]').exists()).toBe(false)
+  })
+
+  it('lets the user leave when nothing is pending', async () => {
+    mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    expect(leaveGuard).not.toBeNull()
+    expect(leaveGuard!()).toBe(true)
+  })
+
+  it('asks for confirmation before leaving with pending changes', async () => {
+    const wrapper = mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    ;(wrapper.vm as any).projectionWindowDays = 42
+    await nextTick()
+
+    const decision = leaveGuard!() as unknown as Promise<boolean>
+    expect(confirmRequireMock).toHaveBeenCalledTimes(1)
+
+    // Staying on the page must cancel the navigation.
+    confirmRequireMock.mock.calls[0]![0].reject()
+    await expect(decision).resolves.toBe(false)
+  })
+
+  it('lets the navigation through when the user accepts losing the changes', async () => {
+    const wrapper = mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    ;(wrapper.vm as any).projectionWindowDays = 42
+    await nextTick()
+
+    const decision = leaveGuard!() as unknown as Promise<boolean>
+    confirmRequireMock.mock.calls[0]![0].accept()
+    await expect(decision).resolves.toBe(true)
+  })
+
+  // The password form has its own scope and never touched the settings refs. This pins that
+  // behaviour so a future refactor cannot turn it into the silent data loss UX-06 feared.
+  it('keeps a pending settings edit when the password form is submitted', async () => {
+    const wrapper = mountSettingsPage()
+    await flushPromises()
+    await flushPromises()
+
+    ;(wrapper.vm as any).projectionWindowDays = 42
+    await nextTick()
+
+    await (wrapper.vm as any).changePassword()
+    await flushPromises()
+
+    expect((wrapper.vm as any).projectionWindowDays).toBe(42)
+    expect(wrapper.find('[data-test="unsaved-settings-badge"]').exists()).toBe(true)
+  })
+})
+
 describe('pages/settings/index', () => {
+  beforeEach(() => {
+    getSettingsMock.mockClear()
+    updateSettingsMock.mockClear()
+  })
+
+  it('spells the user-facing French labels correctly', async () => {
+    const wrapper = mountSettingsPage()
+
+    await flushPromises()
+    await flushPromises()
+
+    const text = wrapper.text()
+
+    expect(text).toContain('Paramètres utilisateur')
+    expect(text).toContain('Définis le nombre de jours')
+    expect(text).toContain('prévisions')
+    expect(text).toContain('Fenêtre de projection (7 à 60 jours)')
+    expect(text).toContain('Enregistrer la projection et les cycles')
+    expect(text).not.toMatch(/Parametres|parametres|Definis|previsions|Fenetre/)
+  })
+
   it('renders settings sections and loads API data', async () => {
     const wrapper = mountSettingsPage()
 
@@ -92,7 +229,7 @@ describe('pages/settings/index', () => {
     await flushPromises()
 
     expect(getSettingsMock).toHaveBeenCalledTimes(1)
-    expect(wrapper.text()).toContain('Parametres utilisateur')
+    expect(wrapper.text()).toContain('Paramètres utilisateur')
     expect(wrapper.text()).toContain('Apparence')
     expect(wrapper.text()).toContain('Projection')
     expect(wrapper.text()).toContain('Cycle mensuel par compte')

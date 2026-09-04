@@ -24,3 +24,12 @@ a,
 .dark ::selection {
   background: #444;
 }
+
+/* Keyboard focus must always be visible. Components may flatten the *mouse* focus styling
+   with `:focus:not(:focus-visible)`, but nothing may suppress this ring — several booklet
+   components used to drop it with `outline: none !important`, which made the whole filter
+   bar impossible to navigate with a keyboard (UX-10). */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

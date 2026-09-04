@@ -435,7 +435,6 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
 
   @media (max-width: 768px) {
     padding: 1rem;
-    margin-top: 4rem;
   }
 }
 

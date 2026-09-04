@@ -24,7 +24,7 @@ import useStats from '~/composables/useStats'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
-import { resolveMonthlyCycleRangeForTargetMonth, resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
+import { countDaysInRange, resolveMonthlyCycleRangeForTargetMonth, resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, rgbToHex, toReadableTagTextColor } from '~/utils/util'
 
 ChartJS.register(
@@ -271,7 +271,7 @@ const currentDateRangeLabel = computed(() =>
   `${format(currentDateRange.value.start, 'dd MMM', { locale: fr })} - ${format(currentDateRange.value.end, 'dd MMM yyyy', { locale: fr })}`,
 )
 
-const monthlyExpenses = computed(() => {
+const periodExpenses = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
     return 0
   }
@@ -281,7 +281,14 @@ const monthlyExpenses = computed(() => {
   )
 })
 
-const monthlyIncome = computed(() => {
+const currentPeriodDayCount = computed(() => countDaysInRange(currentDateRange.value))
+
+// The average must follow the selected period: a quarter and a year do not span 30 days.
+const dailyExpenseAverage = computed(() =>
+  currentPeriodDayCount.value > 0 ? periodExpenses.value / currentPeriodDayCount.value : 0,
+)
+
+const periodIncome = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
     return 0
   }
@@ -316,7 +323,7 @@ const expensesGrowth = computed(() => {
     return 0
   }
 
-  return ((monthlyExpenses.value - previousPeriodExpenses.value) / previousPeriodExpenses.value * 100)
+  return ((periodExpenses.value - previousPeriodExpenses.value) / previousPeriodExpenses.value * 100)
 })
 
 const incomeGrowth = computed(() => {
@@ -324,11 +331,11 @@ const incomeGrowth = computed(() => {
     return 0
   }
 
-  return ((monthlyIncome.value - previousPeriodIncome.value) / previousPeriodIncome.value * 100)
+  return ((periodIncome.value - previousPeriodIncome.value) / previousPeriodIncome.value * 100)
 })
 
 const balanceGrowth = computed(() => {
-  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const currentBalance = periodIncome.value - periodExpenses.value
   const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
 
   if (previousBalance === 0) {
@@ -339,11 +346,11 @@ const balanceGrowth = computed(() => {
 })
 
 const savingsRate = computed(() => {
-  if (monthlyIncome.value === 0 || monthlyExpenses.value > monthlyIncome.value) {
+  if (periodIncome.value === 0 || periodExpenses.value > periodIncome.value) {
     return 0
   }
 
-  return ((monthlyIncome.value - monthlyExpenses.value) / monthlyIncome.value * 100)
+  return ((periodIncome.value - periodExpenses.value) / periodIncome.value * 100)
 })
 
 const upcomingRegularPayments = computed(() =>
@@ -391,10 +398,10 @@ const projectedRemainingExpenses = computed(() =>
 )
 
 const projectedPeriodExpenses = computed(() =>
-  monthlyExpenses.value + projectedRemainingExpenses.value,
+  periodExpenses.value + projectedRemainingExpenses.value,
 )
 
-const budgetDelta = computed(() => selectedBudgetTarget.value - monthlyExpenses.value)
+const budgetDelta = computed(() => selectedBudgetTarget.value - periodExpenses.value)
 
 const projectedBudgetDelta = computed(() => selectedBudgetTarget.value - projectedPeriodExpenses.value)
 
@@ -403,7 +410,7 @@ const budgetConsumptionRate = computed(() => {
     return 0
   }
 
-  return (monthlyExpenses.value / selectedBudgetTarget.value) * 100
+  return (periodExpenses.value / selectedBudgetTarget.value) * 100
 })
 
 const projectionPeriodEnded = computed(() => isAfter(new Date(), currentDateRange.value.end))
@@ -423,12 +430,12 @@ const projectedEndPeriodBalance = computed(() =>
 const dashboardAlerts = computed(() => {
   const alerts: Array<{ key: string, level: 'danger' | 'warning' | 'info', title: string, detail: string }> = []
 
-  if (monthlyExpenses.value > monthlyIncome.value && monthlyIncome.value > 0) {
+  if (periodExpenses.value > periodIncome.value && periodIncome.value > 0) {
     alerts.push({
       key: 'overspending',
       level: 'danger',
       title: 'Dépenses supérieures aux revenus',
-      detail: `Le déficit de la période est de ${(monthlyExpenses.value - monthlyIncome.value).toFixed(2)} €`,
+      detail: `Le déficit de la période est de ${(periodExpenses.value - periodIncome.value).toFixed(2)} €`,
     })
   }
 
@@ -782,7 +789,7 @@ const topTagsInsights = computed(() => {
 })
 
 const monthlyComparisonData = computed(() => {
-  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const currentBalance = periodIncome.value - periodExpenses.value
   const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
 
   return {
@@ -790,7 +797,7 @@ const monthlyComparisonData = computed(() => {
     datasets: [
       {
         label: 'Période active',
-        data: [monthlyIncome.value, monthlyExpenses.value, currentBalance],
+        data: [periodIncome.value, periodExpenses.value, currentBalance],
         backgroundColor: '#6508CC',
         borderRadius: 8,
       },
@@ -990,12 +997,36 @@ function applyWheelToScale(
   yMax.value = center + clampedHalfRange
 }
 
+// The dashboard is several screens tall and the charts span its full width. Capturing a plain
+// wheel would trap the page scroll, so zooming requires the same modifier browsers use for
+// zoom, and the default scroll is only prevented when we actually handle the event (UX-08).
+function isZoomGesture(event: WheelEvent): boolean {
+  return event.ctrlKey || event.metaKey
+}
+
 function onLineChartWheel(event: WheelEvent): void {
+  if (!isZoomGesture(event)) return
+  event.preventDefault()
   applyWheelToScale(lineChartYMin, lineChartYMax, expensesTrendData.value, event.deltaY)
 }
 
 function onBarChartWheel(event: WheelEvent): void {
+  if (!isZoomGesture(event)) return
+  event.preventDefault()
   applyWheelToScale(barChartYMin, barChartYMax, monthlyComparisonData.value, event.deltaY)
+}
+
+const isLineChartScaled = computed(() => lineChartYMin.value !== null || lineChartYMax.value !== null)
+const isBarChartScaled = computed(() => barChartYMin.value !== null || barChartYMax.value !== null)
+
+function resetLineChartScale(): void {
+  lineChartYMin.value = null
+  lineChartYMax.value = null
+}
+
+function resetBarChartScale(): void {
+  barChartYMin.value = null
+  barChartYMax.value = null
 }
 
 if (typeof window !== 'undefined') {
@@ -1352,10 +1383,10 @@ watch(selectedBookletId, () => {
               Dépenses {{ periodMetricLabel }}
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ monthlyExpenses.toFixed(2) }} €
+              {{ periodExpenses.toFixed(2) }} €
             </p>
-            <p class="text-xs" style="color: var(--text-tertiary);">
-              Moy. journalière: {{ (monthlyExpenses / 30).toFixed(2) }} €
+            <p class="text-xs" style="color: var(--text-tertiary);" data-test="daily-expense-average">
+              Moy. journalière: {{ dailyExpenseAverage.toFixed(2) }} €
             </p>
           </div>
         </div>
@@ -1375,10 +1406,10 @@ watch(selectedBookletId, () => {
               Revenus {{ periodMetricLabel }}
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ monthlyIncome.toFixed(2) }} €
+              {{ periodIncome.toFixed(2) }} €
             </p>
             <p class="text-xs" style="color: var(--text-tertiary);">
-              Épargne: {{ (monthlyIncome - monthlyExpenses).toFixed(2) }} €
+              Épargne: {{ (periodIncome - periodExpenses).toFixed(2) }} €
             </p>
           </div>
         </div>
@@ -1410,16 +1441,27 @@ watch(selectedBookletId, () => {
       <!-- Charts Section -->
       <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
         <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
-          <div class="mb-5">
-            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
-              <i class="pi pi-chart-line text-purple-600" />
-              Évolution des finances
-            </h2>
-            <p class="text-sm" style="color: var(--text-secondary);">
-              Comparaison revenus vs dépenses sur la période sélectionnée
-            </p>
+          <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+                <i class="pi pi-chart-line text-purple-600" />
+                Évolution des finances
+              </h2>
+              <p class="text-sm" style="color: var(--text-secondary);">
+                Comparaison revenus vs dépenses sur la période sélectionnée
+              </p>
+            </div>
+            <button
+              v-if="isLineChartScaled"
+              class="chart-reset-btn"
+              data-test="reset-line-chart-scale"
+              @click="resetLineChartScale"
+            >
+              <i class="pi pi-refresh" />
+              Réinitialiser l'échelle
+            </button>
           </div>
-          <div class="chart-container h-75 relative" data-test="line-chart-container" @wheel.prevent="onLineChartWheel">
+          <div class="chart-container h-75 relative" data-test="line-chart-container" @wheel="onLineChartWheel">
             <Line :data="expensesTrendData" :options="lineChartOptionsComputed" />
           </div>
         </div>
@@ -1515,16 +1557,27 @@ watch(selectedBookletId, () => {
         </div>
 
         <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
-          <div class="mb-5">
-            <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
-              <i class="pi pi-chart-bar text-purple-600" />
-              Comparaison de période
-            </h2>
-            <p class="text-sm" style="color: var(--text-secondary);">
-              Période active vs période précédente
-            </p>
+          <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+                <i class="pi pi-chart-bar text-purple-600" />
+                Comparaison de période
+              </h2>
+              <p class="text-sm" style="color: var(--text-secondary);">
+                Période active vs période précédente
+              </p>
+            </div>
+            <button
+              v-if="isBarChartScaled"
+              class="chart-reset-btn"
+              data-test="reset-bar-chart-scale"
+              @click="resetBarChartScale"
+            >
+              <i class="pi pi-refresh" />
+              Réinitialiser l'échelle
+            </button>
           </div>
-          <div class="chart-container h-75 relative" data-test="bar-chart-container" @wheel.prevent="onBarChartWheel">
+          <div class="chart-container h-75 relative" data-test="bar-chart-container" @wheel="onBarChartWheel">
             <Bar :data="monthlyComparisonData" :options="barChartOptionsComputed" />
           </div>
         </div>
@@ -1814,7 +1867,7 @@ watch(selectedBookletId, () => {
                 Dépenses consommées
               </p>
               <p class="text-lg font-bold m-0 mt-1" style="color: var(--text-primary);">
-                {{ monthlyExpenses.toFixed(2) }} €
+                {{ periodExpenses.toFixed(2) }} €
               </p>
             </div>
             <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
@@ -1920,6 +1973,26 @@ watch(selectedBookletId, () => {
 }
 
 /* Chart container responsive heights */
+.chart-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-reset-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 .chart-container {
   position: relative;
   width: 100%;

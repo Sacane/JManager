@@ -1388,7 +1388,6 @@ onUnmounted(() => {
 :deep(.p-calendar.p-focus),
 :deep(.p-calendar:focus-within),
 :deep(.p-focus) {
-  outline: none !important;
   box-shadow: none !important;
   border-color: var(--card-border) !important;
 }

@@ -113,7 +113,7 @@ function handleTabKey(event: KeyboardEvent) {
         <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" maxlength="100" />
       </div>
       <div class="mt5 flex flex-col gap-3">
-        <label for="selectionType" class="text-label">Selectionner le type de transaction</label>
+        <label for="selectionType" class="text-label">Sélectionner le type de transaction</label>
         <div id="selectionType" class="w-full flex flex-row flex-gap5 mt5px">
           <div class="flex gap-1">
             <RadioButton v-model="transactionResult.isIncome" input-id="selection1" :value="false" />
