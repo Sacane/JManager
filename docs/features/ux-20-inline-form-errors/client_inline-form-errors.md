@@ -32,7 +32,18 @@ Scenario: 4. Server errors remain reported
   When the server rejects the submission
   Then the failure is still reported to the user
 
+Scenario: 5. A rejected password change says which rule failed
+  Given I submit a new password identical to my current one
+  When the server rejects it as unchanged
+  Then the reason is displayed next to the new password field
+  And not reported as a generic unexpected error
+
 **Notes**
 - Files: `components/dialog/TransactionCreationDialog.vue`, `components/dialog/RegularTransactionCreationDialog.vue`, `components/dialog/TagFormDialog.vue`, `pages/login.vue`, `pages/settings/index.vue`.
 - Toasts stay for server and network failures; field-level validation moves inline.
+- The backend already distinguishes four password-change failures — USER_NOT_FOUND,
+  USER_UNAUTHORIZED, PASSWORD_NOT_MATCH and PASSWORD_UNCHANGED — each with its own message
+  (`ChangePasswordService`). `useChangePassword` only maps 401 and 422, so "the new password must
+  differ from the old one" currently surfaces as "Une erreur est survenue. Veuillez réessayer."
+  Map the remaining states rather than inventing client-side wording.
 - Priority P1 - Effort M - Frontend only.
