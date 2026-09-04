@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
+import BookletDeleteDialog from '~/components/booklet/BookletDeleteDialog.vue'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import { MAX_BOOKLETS } from '~/constants/booklet'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
@@ -11,7 +12,6 @@ definePageMeta({
   middleware: [authMiddleware],
 })
 
-const confirm = useConfirm()
 const router = useRouter()
 const jToast = useJToast()
 const { isScopeLoading, withLoading } = useLoading()
@@ -34,6 +34,7 @@ const data = ref<Array<{
   label: string
   amount: string
   currency: string
+  transactionCount: number
 }>>([])
 
 const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useBookletOrder(data)
@@ -60,6 +61,9 @@ function format(booklets: Array<BookletDTO>) {
     label: booklet.label,
     amount: `${booklet.amount}`,
     currency: booklet.currency || '€',
+    // Only meaningful when positive: the list endpoint may return an empty snapshot for a
+    // booklet that does hold transactions, and the dialog never announces a count of zero.
+    transactionCount: booklet.transactions?.length ?? 0,
   }))
 }
 
@@ -79,16 +83,23 @@ async function applyDelete(bookletId: string) {
   }, deleteBookletScope)
 }
 
-function openConfirmDeleteDialog(id: string, bookletLabel: string) {
-  confirm.require({
-    message: `Êtes-vous sûr de vouloir supprimer le livret "${bookletLabel}" ? \n Cette action est irréversible et supprimera définitivement toutes les transactions enregistrées dessus.`,
-    header: 'Confirmation de suppression',
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Supprimer',
-    rejectLabel: 'Annuler',
-    acceptClass: 'p-button-danger',
-    accept: () => applyDelete(id),
-  })
+// Deleting a booklet destroys every transaction on it, and a single click used to be enough.
+// The dialog asks for the label to be retyped before the action becomes available (UX-17).
+const bookletPendingDeletion = ref<{ id: string, label: string, transactionCount: number } | null>(null)
+const isDeleteDialogVisible = ref(false)
+
+function openConfirmDeleteDialog(booklet: { id: string, label: string, transactionCount: number }) {
+  bookletPendingDeletion.value = booklet
+  isDeleteDialogVisible.value = true
+}
+
+async function confirmBookletDeletion() {
+  const booklet = bookletPendingDeletion.value
+  if (!booklet) return
+
+  await applyDelete(booklet.id)
+  isDeleteDialogVisible.value = false
+  bookletPendingDeletion.value = null
 }
 
 const isAddBookletDialogOpen = ref<boolean>(false)
@@ -133,7 +144,6 @@ function formatAmount(amount: string) {
 </script>
 
 <template>
-  <ConfirmDialog />
   <div class="page-shell max-w-[1600px]">
     <!-- Header Section -->
     <div class="page-header pb-8 border-b-2 border-[var(--border-color)]">
@@ -253,7 +263,7 @@ function formatAmount(amount: string) {
                   severity="danger"
                   :loading="isDeletingBooklet"
                   :disabled="isAnyBookletActionLoading"
-                  @click.stop="openConfirmDeleteDialog(booklet.id, booklet.label)"
+                  @click.stop="openConfirmDeleteDialog(booklet)"
                 />
               </div>
             </div>
@@ -300,6 +310,14 @@ function formatAmount(amount: string) {
       :visible="isAddBookletDialogOpen"
       @create-booklet="handleBookletCreation"
       @cancel="cancel"
+    />
+
+    <BookletDeleteDialog
+      v-model:visible="isDeleteDialogVisible"
+      :label="bookletPendingDeletion?.label ?? ''"
+      :transaction-count="bookletPendingDeletion?.transactionCount ?? 0"
+      :loading="isDeletingBooklet"
+      @confirm="confirmBookletDeletion"
     />
   </div>
 </template>
