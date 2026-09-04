@@ -252,7 +252,25 @@ Prérequis : un livret avec des transactions **réparties sur au moins deux mois
 | 8.8 | Lancer l'export CSV | ⚠️ Le message de confirmation annonce **la plage**, pas « pour mars 2026 » |
 | 8.9 | Choisir une plage **à cheval sur deux mois** | Les transactions des deux mois apparaissent, les soldes les intègrent |
 
-### 8b. Retour et validation
+### 8b. Le sélecteur de période
+
+Suite à ton retour, les **6 contrôles** de l'en-tête (select mois, picker année, 2 dates, 2 boutons)
+sont remplacés par **un seul bouton** ouvrant un panneau.
+
+| # | Action | Attendu |
+|---|---|---|
+| 8.b1 | Regarder l'en-tête | ⚠️ **Un seul contrôle de période**, affichant le mois actif. Plus de select ni de picker année |
+| 8.b2 | Cliquer dessus | Un panneau s'ouvre : navigation mois, « Mois en cours », raccourcis 30/90 jours, plage personnalisée |
+| 8.b3 | Utiliser les flèches < et > | Le mois change et la page se recharge |
+| 8.b4 | Reculer depuis janvier | On passe à décembre de l'année précédente |
+| 8.b5 | Cliquer « 30 derniers jours » | Une plage glissante s'applique, le bouton **change d'apparence** pour signaler la période temporaire |
+| 8.b6 | Avec cette plage active, utiliser les flèches de mois | ⚠️ La plage est **abandonnée** — la page ne montre jamais un mois qu'une plage contredit |
+| 8.b7 | Cliquer « Mois en cours » | Retour au mois courant, plage effacée |
+| 8.b8 | Fermer le panneau en cliquant à côté | Il se ferme sans rien appliquer |
+| 8.b9 | En mobile 375 px | Le bouton reste compact et le panneau tient dans l'écran |
+| 8.b10 | Comparer l'en-tête avec l'ancienne version | ⚠️ **C'est le point à juger** : dis-moi si c'est mieux, et si le clic supplémentaire pour changer de mois te gêne |
+
+### 8c. Retour et validation
 
 | # | Action | Attendu |
 |---|---|---|
@@ -260,9 +278,9 @@ Prérequis : un livret avec des transactions **réparties sur au moins deux mois
 | 8.11 | Saisir une date de fin **antérieure** à la date de début, appliquer | Un message d'erreur s'affiche, **rien n'est rechargé** |
 | 8.12 | Corriger la date de fin, appliquer | L'erreur disparaît, la plage s'applique |
 | 8.13 | Ne renseigner qu'une seule des deux dates, appliquer | Message demandant les deux bornes |
-| 8.14 | Changer de mois avec le sélecteur pendant qu'une plage est active | ⚠️ Vérifier le comportement et **signaler s'il est déroutant** — le mois et la plage sont deux navigations concurrentes |
+| 8.14 | ~~Changer de mois pendant qu'une plage est active~~ | ✅ **Résolu par le nouveau sélecteur** — voir 8.b6 |
 
-### 8c. La limite assumée
+### 8d. La limite assumée
 
 | # | Action | Attendu |
 |---|---|---|
@@ -270,7 +288,7 @@ Prérequis : un livret avec des transactions **réparties sur au moins deux mois
 | 8.16 | Appliquer une plage | ⚠️ Le bouton de régénération **disparaît** — c'est voulu : les endpoints de régénération ne connaissent que le mois, l'action porterait sur une autre période que celle affichée |
 | 8.17 | Revenir au mois | Le bouton réapparaît |
 
-### 8d. Mobile
+### 8e. Mobile
 
 | # | Action | Attendu |
 |---|---|---|
@@ -301,7 +319,7 @@ désactivé et le slot d'extension (**11 tests sur `PasswordField`**), la consta
 pluriel des emplacements restants, la présence et le rattachement `aria-describedby` de
 l'explication (**5 tests**), et tout le comportement de la fenêtre de suppression — bouton
 désactivé, tolérance casse/espaces, refus d'un nom différent, remise à zéro à la réouverture,
-absence de « 0 transaction » (**15 tests répartis entre `ConfirmByTypingDialog` et `BookletDeleteDialog`**), l'appel de suppression de compte et le maintien de la session en cas d'échec (**4 tests sur `useAuth`**), l'affichage de l'identité et le garde-fou de la fenêtre (**6 tests sur les Paramètres**), et la propagation de la plage aux trois endpoints, son effacement, le refus d'une plage invalide sans requête et la désactivation de la régénération (**9 tests**).
+absence de « 0 transaction » (**15 tests répartis entre `ConfirmByTypingDialog` et `BookletDeleteDialog`**), l'appel de suppression de compte et le maintien de la session en cas d'échec (**4 tests sur `useAuth`**), l'affichage de l'identité et le garde-fou de la fenêtre (**6 tests sur les Paramètres**), et la propagation de la plage aux trois endpoints, son effacement, le refus d'une plage invalide sans requête la désactivation de la régénération, la navigation de mois avec bascule d'année et les fenêtres glissantes (**15 tests**).
 
 Ce qu'elle **ne peut pas** couvrir, et qui justifie ce document : le comportement réel du
 gestionnaire de mots de passe du navigateur (1b), le rendu du pied de carte (3.6, 3.7), et surtout
