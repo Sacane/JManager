@@ -4,7 +4,7 @@
 > Branche : `fix/ux-lot-3-conformite`.
 > Ce document est **complété à chaque poussée**, pas à la fin du lot.
 
-**Avancement** — 7 items sur 9 livrés.
+**Avancement** — 8 items sur 9 livrés.
 
 | Item | Statut |
 |---|---|
@@ -15,7 +15,7 @@
 | UX-45 · limite de 6 livrets | ✅ à valider |
 | UX-43 · accueil dashboard vide | ⏳ |
 | UX-17 · confirmation forte de suppression | ✅ à valider |
-| UX-14 · filtre par plage de dates | ⏳ |
+| UX-14 · filtre par plage de dates | ✅ à valider |
 | UX-13 · Mon compte / RGPD | ✅ à valider |
 
 ---
@@ -231,15 +231,63 @@ d'un livret et celle d'un compte.
 
 ---
 
-## 8. Régressions à surveiller
+## 8. Plage de dates sur un livret — UX-14
+
+🔴 **Le parcours le plus important du lot** : la contrainte n'est pas « la liste se filtre », c'est
+que **tout chiffre affiché décrive la même période**. C'est ça qu'il faut vérifier.
+
+Prérequis : un livret avec des transactions **réparties sur au moins deux mois**.
+
+### 8a. La plage pilote toute la page
+
+| # | Action | Attendu |
+|---|---|---|
+| 8.1 | Ouvrir un livret | La barre « Période » indique le mois courant et « tout le mois » |
+| 8.2 | Noter les deux soldes de l'en-tête (Réel / Prévis.) et le nombre de transactions | — |
+| 8.3 | Choisir une plage **plus courte que le mois**, cliquer « Appliquer » | ⚠️ La liste se réduit **et les deux soldes changent**. Un solde figé sur le mois serait le défaut principal à signaler |
+| 8.4 | Vérifier le compteur de transactions de l'en-tête | Il correspond au nombre de lignes de la plage |
+| 8.5 | Vérifier la pagination en bas | Le nombre total de pages correspond à la plage, pas au mois |
+| 8.6 | Cliquer « Tout le mois » avec la plage active | ⚠️ Le libellé ne dit plus « du mois » mais **affiche la plage**, et les transactions listées sont celles de la plage |
+| 8.7 | Sélectionner des lignes | Le total sélectionné ne compte que des transactions de la plage |
+| 8.8 | Lancer l'export CSV | ⚠️ Le message de confirmation annonce **la plage**, pas « pour mars 2026 » |
+| 8.9 | Choisir une plage **à cheval sur deux mois** | Les transactions des deux mois apparaissent, les soldes les intègrent |
+
+### 8b. Retour et validation
+
+| # | Action | Attendu |
+|---|---|---|
+| 8.10 | Cliquer « Revenir au mois » | Tout revient à la vue mensuelle : soldes, liste, compteurs, libellés |
+| 8.11 | Saisir une date de fin **antérieure** à la date de début, appliquer | Un message d'erreur s'affiche, **rien n'est rechargé** |
+| 8.12 | Corriger la date de fin, appliquer | L'erreur disparaît, la plage s'applique |
+| 8.13 | Ne renseigner qu'une seule des deux dates, appliquer | Message demandant les deux bornes |
+| 8.14 | Changer de mois avec le sélecteur pendant qu'une plage est active | ⚠️ Vérifier le comportement et **signaler s'il est déroutant** — le mois et la plage sont deux navigations concurrentes |
+
+### 8c. La limite assumée
+
+| # | Action | Attendu |
+|---|---|---|
+| 8.15 | Sur un mois **sans** plage, avec des prévisionnelles supprimées | Le bouton de **régénération** est disponible |
+| 8.16 | Appliquer une plage | ⚠️ Le bouton de régénération **disparaît** — c'est voulu : les endpoints de régénération ne connaissent que le mois, l'action porterait sur une autre période que celle affichée |
+| 8.17 | Revenir au mois | Le bouton réapparaît |
+
+### 8d. Mobile
+
+| # | Action | Attendu |
+|---|---|---|
+| 8.18 | En 375 px, appliquer une plage | La barre de période passe à la ligne proprement |
+| 8.19 | Faire défiler pour charger plus de transactions | Le chargement paresseux reste dans la plage |
+
+---
+
+## 9. Régressions à surveiller
 
 | # | Vérification | Pourquoi |
 |---|---|---|
-| 8.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
-| 8.2 | Créer un compte de bout en bout | Idem |
-| 8.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
-| 8.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
-| 8.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
+| 9.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
+| 9.2 | Créer un compte de bout en bout | Idem |
+| 9.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
+| 9.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
+| 9.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
 
 ---
 
@@ -253,7 +301,7 @@ désactivé et le slot d'extension (**11 tests sur `PasswordField`**), la consta
 pluriel des emplacements restants, la présence et le rattachement `aria-describedby` de
 l'explication (**5 tests**), et tout le comportement de la fenêtre de suppression — bouton
 désactivé, tolérance casse/espaces, refus d'un nom différent, remise à zéro à la réouverture,
-absence de « 0 transaction » (**15 tests répartis entre `ConfirmByTypingDialog` et `BookletDeleteDialog`**), l'appel de suppression de compte et le maintien de la session en cas d'échec (**4 tests sur `useAuth`**), l'affichage de l'identité et le garde-fou de la fenêtre (**6 tests sur les Paramètres**).
+absence de « 0 transaction » (**15 tests répartis entre `ConfirmByTypingDialog` et `BookletDeleteDialog`**), l'appel de suppression de compte et le maintien de la session en cas d'échec (**4 tests sur `useAuth`**), l'affichage de l'identité et le garde-fou de la fenêtre (**6 tests sur les Paramètres**), et la propagation de la plage aux trois endpoints, son effacement, le refus d'une plage invalide sans requête et la désactivation de la régénération (**9 tests**).
 
 Ce qu'elle **ne peut pas** couvrir, et qui justifie ce document : le comportement réel du
 gestionnaire de mots de passe du navigateur (1b), le rendu du pied de carte (3.6, 3.7), et surtout
