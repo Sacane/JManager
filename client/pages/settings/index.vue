@@ -15,6 +15,7 @@ definePageMeta({
 const { getSettings, updateSettings } = useUserSettings()
 const { withLoading, isScopeLoading } = useLoading()
 const toast = useJToast()
+const confirm = useConfirm()
 
 async function handleResend() {
   await resendVerificationEmail(
@@ -31,6 +32,24 @@ const projectionWindowDays = ref(15)
 
 const isLoading = computed(() => isScopeLoading(loadSettingsScope))
 const isSaving = computed(() => isScopeLoading(saveSettingsScope))
+
+// Snapshot of what the server holds, so the page can tell the user what is still pending.
+// The save button sits far below the fields it covers, and the other sections of the page
+// save on their own — without this, an edit could be abandoned without any signal (UX-06).
+const savedSettingsSnapshot = ref('')
+
+const currentSettingsSnapshot = computed(() => JSON.stringify({
+  projectionWindowDays: projectionWindowDays.value,
+  bookletCycles: bookletCycles.value.map(cycle => ({
+    bookletId: cycle.bookletId,
+    monthlyPeriodStartDay: cycle.monthlyPeriodStartDay,
+    monthlyPeriodEndDay: cycle.monthlyPeriodEndDay,
+  })),
+}))
+
+const hasUnsavedSettings = computed(() =>
+  savedSettingsSnapshot.value !== '' && savedSettingsSnapshot.value !== currentSettingsSnapshot.value,
+)
 
 function normalizeProjectionWindowDays(value: number | undefined): number {
   if (value === undefined || Number.isNaN(value)) {
@@ -75,6 +94,8 @@ async function loadUserSettings() {
         monthlyPeriodEndDay: normalizeMonthlyPeriodEndDay(cycle.monthlyPeriodEndDay),
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
+
+    savedSettingsSnapshot.value = currentSettingsSnapshot.value
   }, loadSettingsScope)
 }
 
@@ -105,6 +126,7 @@ async function saveUserSettings() {
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
 
+    savedSettingsSnapshot.value = currentSettingsSnapshot.value
     toast.success('Paramètres enregistrés')
   }, saveSettingsScope)
 }
@@ -118,6 +140,28 @@ const {
   changePassword,
 } = useChangePassword()
 
+function confirmLeavingUnsavedSettings(): Promise<boolean> {
+  return new Promise((resolve) => {
+    confirm.require({
+      header: 'Modifications non enregistrées',
+      message: 'Vos modifications de projection et de cycles mensuels ne sont pas enregistrées. Quitter la page ?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Quitter sans enregistrer',
+      rejectLabel: 'Rester sur la page',
+      acceptClass: 'p-button-danger',
+      accept: () => resolve(true),
+      reject: () => resolve(false),
+      onHide: () => resolve(false),
+    })
+  })
+}
+
+onBeforeRouteLeave(() => {
+  if (!hasUnsavedSettings.value) return true
+
+  return confirmLeavingUnsavedSettings()
+})
+
 onMounted(() => {
   loadUserSettings()
 })
@@ -125,6 +169,7 @@ onMounted(() => {
 
 <template>
   <div class="settings-page">
+    <ConfirmDialog />
     <div class="settings-header">
       <h1>Paramètres utilisateur</h1>
       <p>Configuration globale de la projection et des cycles mensuels par compte.</p>
@@ -144,7 +189,12 @@ onMounted(() => {
       </section>
 
       <section class="settings-card">
-        <h2>Projection</h2>
+        <h2 class="settings-card-title">
+          Projection
+          <span v-if="hasUnsavedSettings" class="unsaved-badge" data-test="unsaved-settings-badge">
+            Non enregistré
+          </span>
+        </h2>
         <p class="settings-help">
           Définis le nombre de jours à venir, utilisé pour les prévisions sur le dashboard.
         </p>
@@ -300,8 +350,11 @@ onMounted(() => {
     </section>
 
     <div class="actions">
+      <span v-if="hasUnsavedSettings" class="actions-hint">
+        Projection et cycles mensuels non enregistrés
+      </span>
       <button class="save-btn" data-test="save-settings-btn" :disabled="isSaving" @click="saveUserSettings">
-        {{ isSaving ? 'Enregistrement...' : 'Enregistrer les paramètres' }}
+        {{ isSaving ? 'Enregistrement…' : 'Enregistrer la projection et les cycles' }}
       </button>
     </div>
   </div>
@@ -466,6 +519,33 @@ onMounted(() => {
 .actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.actions-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.settings-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.unsaved-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: var(--accent-orange);
+  background: rgba(255, 90, 8, 0.12);
+  border: 1px solid rgba(255, 90, 8, 0.35);
 }
 
 .save-btn {
