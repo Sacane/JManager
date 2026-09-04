@@ -84,6 +84,10 @@ const bookletMonthlyCycleById = ref<Record<string, { startDay: number, endDay: n
 const dashboardLoadingScope = LOADING_SCOPES.dashboard.initial
 const isLoading = computed(() => isScopeLoading(dashboardLoadingScope))
 
+// Guarded on the loaded state, not on the list alone: keying off booklets.length would flash the
+// onboarding screen on the first paint, before the fetch resolves (UX-43).
+const hasNoBooklet = computed(() => hasInitializedDashboard.value && booklets.value.length === 0)
+
 // Animation refs
 const overviewRef = ref(null)
 const chartsRef = ref(null)
@@ -1307,10 +1311,13 @@ watch(selectedBookletId, () => {
           <h1 class="page-heading mb-2">
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
-          <p class="page-subheading">
-            Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label || 'Tous les comptes' }}
+          <p v-if="!hasNoBooklet" class="page-subheading">
+            Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label }}
           </p>
-          <div class="flex items-center gap-2.5 mt-3 flex-wrap">
+          <p v-else class="page-subheading">
+            Bienvenue — il ne manque plus qu'un livret pour commencer.
+          </p>
+          <div v-if="!hasNoBooklet" class="flex items-center gap-2.5 mt-3 flex-wrap">
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
               Période: {{ currentDateRangeLabel }}
             </span>
@@ -1326,7 +1333,7 @@ watch(selectedBookletId, () => {
             </span>
           </div>
         </div>
-        <div class="flex items-center gap-3 flex-wrap">
+        <div v-if="!hasNoBooklet" class="flex items-center gap-3 flex-wrap">
           <select v-model="selectedBookletId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
             <option v-for="booklet in orderedBooklets" :key="booklet.id" :value="booklet.id">
               {{ booklet.label }}
@@ -1361,6 +1368,34 @@ watch(selectedBookletId, () => {
       <p style="color: var(--text-secondary);">
         Chargement de vos données...
       </p>
+    </div>
+
+    <!-- Onboarding: nothing to show yet, so the page asks for the one thing missing rather than
+         rendering four indicators at 0.00 EUR and three empty charts. -->
+    <div
+      v-else-if="hasNoBooklet"
+      class="stat-card flex flex-col items-center justify-center text-center gap-5 py-16 px-6 max-w-2xl mx-auto mt-8"
+      data-test="dashboard-onboarding"
+    >
+      <div class="w-20 h-20 rounded-full grid place-items-center bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white text-3xl">
+        <i class="pi pi-wallet" aria-hidden="true" />
+      </div>
+      <h2 class="heading-2 m-0">
+        Créez votre premier livret
+      </h2>
+      <p class="body-lg max-w-md m-0">
+        Un livret regroupe vos transactions et vos soldes. Dès que vous en aurez un,
+        ce tableau de bord affichera vos dépenses, vos revenus et vos prévisions.
+      </p>
+      <button
+        class="btn-primary"
+        type="button"
+        data-test="onboarding-create-booklet"
+        @click="isBookletDialogOpen = true"
+      >
+        <i class="pi pi-plus mr-2" aria-hidden="true" />
+        Créer mon premier livret
+      </button>
     </div>
 
     <!-- Main Content -->
