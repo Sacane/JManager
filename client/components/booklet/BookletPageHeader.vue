@@ -9,6 +9,11 @@ interface Props {
   selectedMonth: string
   monthOptions: string[]
   dateYear: Date
+  rangeStart: Date | null
+  rangeEnd: Date | null
+  hasCustomRange: boolean
+  dateRangeError: string | null
+  periodLabel: string
 }
 
 defineProps<Props>()
@@ -19,6 +24,10 @@ const emit = defineEmits<{
   'update:dateYear': [val: Date]
   'yearChange': []
   'back': []
+  'update:rangeStart': [val: Date | null]
+  'update:rangeEnd': [val: Date | null]
+  'applyRange': []
+  'clearRange': []
 }>()
 </script>
 
@@ -138,6 +147,59 @@ const emit = defineEmits<{
         </div>
       </div>
     </template>
+
+    <!-- The range drives the whole page, not just the list: balances, counts and the
+         whole-period report all query the same window (UX-14). -->
+    <div class="flex items-center gap-2 flex-wrap px-3 py-2 border-t border-[var(--card-border)]">
+      <span class="text-[0.7rem] font-semibold uppercase tracking-widest text-[var(--text-tertiary)]">Période</span>
+      <span class="text-xs font-semibold text-[var(--text-secondary)]" data-test="period-label">{{ periodLabel }}</span>
+
+      <span class="w-px h-5 bg-[var(--border-color)] mx-1" />
+
+      <DatePicker
+        :model-value="rangeStart"
+        date-format="dd/mm/yy"
+        placeholder="Début"
+        class="!w-[120px]"
+        size="small"
+        data-test="range-start"
+        @update:model-value="(val: Date) => emit('update:rangeStart', val)"
+      />
+      <span class="text-[var(--text-muted)] text-xs">→</span>
+      <DatePicker
+        :model-value="rangeEnd"
+        date-format="dd/mm/yy"
+        placeholder="Fin"
+        class="!w-[120px]"
+        size="small"
+        data-test="range-end"
+        @update:model-value="(val: Date) => emit('update:rangeEnd', val)"
+      />
+
+      <Button
+        label="Appliquer"
+        size="small"
+        text
+        data-test="apply-range"
+        @click="emit('applyRange')"
+      />
+      <Button
+        v-if="hasCustomRange"
+        label="Revenir au mois"
+        size="small"
+        text
+        severity="secondary"
+        data-test="clear-range"
+        @click="emit('clearRange')"
+      />
+
+      <span
+        v-if="dateRangeError"
+        class="text-xs font-semibold text-[var(--danger)] w-full"
+        role="alert"
+        data-test="range-error"
+      >{{ dateRangeError }}</span>
+    </div>
   </div>
 </template>
 

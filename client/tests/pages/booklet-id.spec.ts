@@ -193,10 +193,12 @@ describe('pages/booklet/[id] loading states', () => {
     await flushPromises()
     await flushPromises()
 
+    // The date range is now part of every period query; empty means the calendar month.
     expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
       'booklet-1',
       3,
       2026,
+      {},
     )
     expect(findTransactionsByIdMonthAndYearMock).toHaveBeenCalledWith(
       'booklet-1',
@@ -1439,7 +1441,7 @@ describe('pages/booklet/[id] global filter', () => {
     await flushPromises()
 
     expect(vm.globalFilter).toBe('all')
-    expect(findByIdMonthAndYearMock).toHaveBeenCalledWith('booklet-1', 3, 2026)
+    expect(findByIdMonthAndYearMock).toHaveBeenCalledWith('booklet-1', 3, 2026, {})
     expect(vm.allTransactions).toHaveLength(1)
     expect(vm.allTransactions[0].id).toBe('global-1')
   })

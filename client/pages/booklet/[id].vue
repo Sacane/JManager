@@ -4,6 +4,7 @@ import type { AppTableColumn } from '~/components/AppTable.vue'
 import type { RegenerableTransactionDTO, TransactionSortDirection, TransactionSortField } from '~/composables/useBooklet'
 import { useConfirm } from 'primevue/useconfirm'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import { toIsoLocalDate } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
 definePageMeta({
@@ -336,6 +337,58 @@ function onSort(event: { sortField: string | null, sortOrder: number | null }) {
   loadBookletData()
 }
 
+// A custom range replaces the month/year navigation for the whole page: balances, list, counts
+// and the whole-period report all query the same window, so no figure describes another period
+// than the one on screen (UX-14).
+const rangeStart = ref<Date | null>(null)
+const rangeEnd = ref<Date | null>(null)
+const dateRangeError = ref<string | null>(null)
+const appliedRange = ref<{ startDate: string, endDate: string } | null>(null)
+
+const hasCustomRange = computed(() => appliedRange.value !== null)
+const activeDateRange = computed(() => appliedRange.value ?? {})
+
+function formatDisplayDate(value: string): string {
+  const [year, month, day] = value.split('-')
+  return `${day}/${month}/${year}`
+}
+
+const periodLabel = computed(() => {
+  const range = appliedRange.value
+  if (!range) return `${displayMonth.value} ${bookletData.year} · tout le mois`
+  return `${formatDisplayDate(range.startDate)} → ${formatDisplayDate(range.endDate)}`
+})
+
+async function applyDateRange() {
+  if (!rangeStart.value || !rangeEnd.value) {
+    dateRangeError.value = 'Choisissez une date de début et une date de fin.'
+    return
+  }
+  if (rangeEnd.value < rangeStart.value) {
+    dateRangeError.value = 'La date de fin doit suivre la date de début.'
+    return
+  }
+
+  dateRangeError.value = null
+  appliedRange.value = {
+    startDate: toIsoLocalDate(rangeStart.value),
+    endDate: toIsoLocalDate(rangeEnd.value),
+  }
+  currentPage.value = 0
+  await loadBookletData()
+  if (globalFilter.value !== 'none') await loadGlobalTransactions()
+}
+
+async function clearDateRange() {
+  rangeStart.value = null
+  rangeEnd.value = null
+  dateRangeError.value = null
+  appliedRange.value = null
+  currentPage.value = 0
+  await loadBookletData()
+  if (globalFilter.value !== 'none') await loadGlobalTransactions()
+}
+
 async function loadBookletData() {
   await withLoading(async () => {
     try {
@@ -343,8 +396,8 @@ async function loadBookletData() {
       const month = numberFromMonth(bookletData.month) as number
 
       const [balances, transactionsRes] = await Promise.all([
-        findBalancesByIdMonthAndYear(bookletId, month, bookletData.year),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, activeSort.value.direction, activeSort.value.field),
+        findBalancesByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, activeSort.value.direction, activeSort.value.field),
       ])
 
       bookletData.label = balances.label
@@ -360,7 +413,10 @@ async function loadBookletData() {
       actualTransactions.value = nextTransactions
       const nextTransactionKeys = new Set(nextTransactions.map(transactionSelectionKey))
       selectedTransactions.value = selectedTransactions.value.filter(t => nextTransactionKeys.has(transactionSelectionKey(t)))
-      hasRegenerableTransactions.value = transactionsRes.hasRegenerableTransactions
+      // The regenerable endpoints only take a month and a year, so with a custom range the
+      // action would operate on a different period than the one displayed. Rather than let the
+      // two disagree, it is unavailable while a range is active.
+      hasRegenerableTransactions.value = hasCustomRange.value ? false : transactionsRes.hasRegenerableTransactions
       totalElements.value = transactionsRes.totalElements
       totalPages.value = transactionsRes.totalPages
 
@@ -385,7 +441,7 @@ async function loadGlobalTransactions() {
     try {
       const bookletId = (route.params as any)?.id as string
       const month = numberFromMonth(bookletData.month) as number
-      const report = await findByIdMonthAndYear(bookletId, month, bookletData.year)
+      const report = await findByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value)
       allTransactions.value = report.transactions
         .map((transaction, index) => asDisplayableTransaction(transaction, index))
     } catch (err) {
@@ -402,7 +458,7 @@ async function loadMoreMobileTransactions() {
     const bookletId = (route.params as any)?.id as string
     const month = numberFromMonth(bookletData.month) as number
     const nextPage = mobileCurrentPage.value + 1
-    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, {}, nextPage, MOBILE_LAZY_PAGE_SIZE, activeSort.value.direction, activeSort.value.field)
+    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, nextPage, MOBILE_LAZY_PAGE_SIZE, activeSort.value.direction, activeSort.value.field)
     const newTransactions = res.transactions
       .map((t, i) => asDisplayableTransaction(t, actualTransactions.value.length + i))
     actualTransactions.value = [...actualTransactions.value, ...newTransactions]
@@ -839,7 +895,7 @@ function openCsvExportDialog() {
   }
 
   confirm.require({
-    message: `Voulez-vous télécharger le fichier CSV contenant ${nonPreviewTransactions.length} transaction${nonPreviewTransactions.length > 1 ? 's' : ''} non prévisionnelle${nonPreviewTransactions.length > 1 ? 's' : ''} pour ${displayMonth.value} ${bookletData.year} ?`,
+    message: `Voulez-vous télécharger le fichier CSV contenant ${nonPreviewTransactions.length} transaction${nonPreviewTransactions.length > 1 ? 's' : ''} non prévisionnelle${nonPreviewTransactions.length > 1 ? 's' : ''} pour la période ${periodLabel.value} ?`,
     header: 'Exporter au format CSV',
     icon: 'pi pi-file-export',
     acceptLabel: 'Télécharger',
@@ -896,6 +952,15 @@ onUnmounted(() => {
         :selected-month="displayMonth"
         :month-options="monthOptions"
         :date-year="bookletData.dateYear"
+        :range-start="rangeStart"
+        :range-end="rangeEnd"
+        :has-custom-range="hasCustomRange"
+        :date-range-error="dateRangeError"
+        :period-label="periodLabel"
+        @update:range-start="rangeStart = $event"
+        @update:range-end="rangeEnd = $event"
+        @apply-range="applyDateRange"
+        @clear-range="clearDateRange"
         @update:selected-month="displayMonth = $event"
         @month-change="onMonthChange"
         @update:date-year="bookletData.dateYear = $event"
@@ -1127,7 +1192,7 @@ onUnmounted(() => {
           <div v-else class="shrink-0 flex items-center gap-2 px-3 py-2 border-t border-[var(--card-border)]">
             <i class="pi pi-globe text-[var(--primary)] text-xs" />
             <span class="text-xs font-medium text-[var(--text-secondary)]">
-              {{ globalFilter === 'preview' ? 'Toutes les transactions prévisionnelles du mois' : 'Toutes les transactions du mois' }}
+              {{ globalFilter === 'preview' ? `Toutes les transactions prévisionnelles — ${periodLabel}` : `Toutes les transactions — ${periodLabel}` }}
               — <button class="text-[var(--primary)] hover:underline" @click="onGlobalFilterChange('none')">Retour à la pagination</button>
             </span>
           </div>
