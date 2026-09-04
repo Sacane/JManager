@@ -4,7 +4,7 @@
 > Branche : `fix/ux-lot-3-conformite`.
 > Ce document est **complété à chaque poussée**, pas à la fin du lot.
 
-**Avancement** — 8 items sur 9 livrés.
+**Avancement** — ✅ **9 items sur 9 livrés — lot 3 terminé.**
 
 | Item | Statut |
 |---|---|
@@ -13,7 +13,7 @@
 | UX-49 · liens légaux sur la connexion | ✅ à valider |
 | UX-47 · champ mot de passe partagé | ✅ à valider |
 | UX-45 · limite de 6 livrets | ✅ à valider |
-| UX-43 · accueil dashboard vide | ⏳ |
+| UX-43 · accueil dashboard vide | ✅ à valider |
 | UX-17 · confirmation forte de suppression | ✅ à valider |
 | UX-14 · filtre par plage de dates | ✅ à valider |
 | UX-13 · Mon compte / RGPD | ✅ à valider |
@@ -297,15 +297,33 @@ sont remplacés par **un seul bouton** ouvrant un panneau.
 
 ---
 
-## 9. Régressions à surveiller
+## 9. Accueil du dashboard sans livret — UX-43
+
+Prérequis : un **compte neuf, sans aucun livret**. Si tu ne peux pas en créer un, supprime
+temporairement tes livrets sur un compte jetable — ou note le parcours comme non testé.
+
+| # | Action | Attendu |
+|---|---|---|
+| 9.1 | Se connecter avec un compte sans livret | ⚠️ Un écran d'accueil invite à créer un premier livret |
+| 9.2 | Regarder la page | ⚠️ **Aucune carte à 0,00 €, aucun graphique vide, aucun sélecteur de compte, aucun contrôle de période** |
+| 9.3 | Lire le sous-titre | Il souhaite la bienvenue — il n'annonce plus « Tous les comptes » ni une période |
+| 9.4 | Cliquer « Créer mon premier livret » | La fenêtre de création s'ouvre |
+| 9.5 | Créer le livret | Le tableau de bord complet apparaît : indicateurs, graphiques, contrôles de période |
+| 9.6 | Recharger la page pendant le chargement | ⚠️ On voit l'**indicateur de chargement**, jamais l'écran d'accueil qui clignote |
+| 9.7 | En mobile 375 px | L'écran d'accueil est centré et lisible |
+| 9.8 | En thème sombre | Idem |
+
+---
+
+## 10. Régressions à surveiller
 
 | # | Vérification | Pourquoi |
 |---|---|---|
-| 9.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
-| 9.2 | Créer un compte de bout en bout | Idem |
-| 9.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
-| 9.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
-| 9.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
+| 10.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
+| 10.2 | Créer un compte de bout en bout | Idem |
+| 10.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
+| 10.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
+| 10.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
 
 ---
 
@@ -319,7 +337,7 @@ désactivé et le slot d'extension (**11 tests sur `PasswordField`**), la consta
 pluriel des emplacements restants, la présence et le rattachement `aria-describedby` de
 l'explication (**5 tests**), et tout le comportement de la fenêtre de suppression — bouton
 désactivé, tolérance casse/espaces, refus d'un nom différent, remise à zéro à la réouverture,
-absence de « 0 transaction » (**15 tests répartis entre `ConfirmByTypingDialog` et `BookletDeleteDialog`**), l'appel de suppression de compte et le maintien de la session en cas d'échec (**4 tests sur `useAuth`**), l'affichage de l'identité et le garde-fou de la fenêtre (**6 tests sur les Paramètres**), et la propagation de la plage aux trois endpoints, son effacement, le refus d'une plage invalide sans requête la désactivation de la régénération, la navigation de mois avec bascule d'année et les fenêtres glissantes (**15 tests**).
+absence de « 0 transaction » (**15 tests répartis entre `ConfirmByTypingDialog` et `BookletDeleteDialog`**), l'appel de suppression de compte et le maintien de la session en cas d'échec (**4 tests sur `useAuth`**), l'affichage de l'identité et le garde-fou de la fenêtre (**6 tests sur les Paramètres**), et la propagation de la plage aux trois endpoints, son effacement, le refus d'une plage invalide sans requête la désactivation de la régénération, la navigation de mois avec bascule d'année et les fenêtres glissantes (**15 tests**), et les trois états du dashboard dont le fait que le tout premier rendu n'est jamais pris pour un état vide (**6 tests**).
 
 Ce qu'elle **ne peut pas** couvrir, et qui justifie ce document : le comportement réel du
 gestionnaire de mots de passe du navigateur (1b), le rendu du pied de carte (3.6, 3.7), et surtout
