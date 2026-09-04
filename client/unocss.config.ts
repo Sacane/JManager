@@ -42,6 +42,20 @@ export default defineConfig({
     ['card', 'rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm'],
     ['card-hover', 'card transition-all duration-200 hover:shadow-md hover:-translate-y-0.5'],
 
+    // --- Money ---
+    // Income/expense colouring goes through these, never through a raw palette class:
+    // the tokens carry a verified >= 4.5:1 contrast in both themes (see UX-11).
+    ['amount', 'font-semibold tabular-nums'],
+    ['amount-positive', 'amount text-[var(--income)]'],
+    ['amount-negative', 'amount text-[var(--expense)]'],
+    ['amount-neutral', 'amount text-[var(--text-tertiary)]'],
+
+    // --- Status ---
+    ['text-success', 'text-[var(--success)]'],
+    ['text-danger', 'text-[var(--danger)]'],
+    ['text-warning', 'text-[var(--warning)]'],
+    ['text-info', 'text-[var(--info)]'],
+
     // --- Surfaces ---
     ['surface-page', 'bg-[var(--bg-primary)]'],
     ['surface-section', 'bg-[var(--bg-secondary)]'],
