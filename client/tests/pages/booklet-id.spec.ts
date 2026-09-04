@@ -1549,7 +1549,9 @@ describe('pages/booklet/[id] global filter', () => {
     expect(findByIdMonthAndYearMock.mock.calls.length).toBe(callCount)
   })
 
-  it('onMonthChange exits global mode', async () => {
+  // Month navigation moved from a select to the period picker; the behaviour it guards — leaving
+  // the whole-period view when the period changes — is unchanged.
+  it('stepping to another month exits global mode', async () => {
     const wrapper = mountForGlobal([createTransaction({ id: 'g-1' })])
     await flushPromises()
     await flushPromises()
@@ -1559,7 +1561,7 @@ describe('pages/booklet/[id] global filter', () => {
     await flushPromises()
     expect(vm.globalFilter).toBe('all')
 
-    vm.onMonthChange()
+    await vm.goToNextMonth()
     await flushPromises()
 
     expect(vm.globalFilter).toBe('none')

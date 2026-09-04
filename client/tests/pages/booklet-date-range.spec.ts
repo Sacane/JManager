@@ -226,15 +226,124 @@ describe('pages/booklet/[id] date range', () => {
     await settle()
 
     const vm = wrapper.vm as any
-    expect(vm.periodLabel).toContain('mois')
+    // Without a range the trigger simply names the month.
+    expect(vm.periodLabel).toBe(vm.monthLabel)
 
     vm.rangeStart = new Date(2026, 2, 5)
     vm.rangeEnd = new Date(2026, 3, 4)
     await vm.applyDateRange()
     await settle()
 
-    expect(vm.periodLabel).not.toContain('mois')
+    expect(vm.periodLabel).not.toBe(vm.monthLabel)
     expect(vm.periodLabel).toContain('05/03/2026')
     expect(vm.periodLabel).toContain('04/04/2026')
+  })
+})
+
+describe('pages/booklet/[id] period navigation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetMocks()
+  })
+
+  it('steps to the previous month and reloads', async () => {
+    const wrapper = mountPage()
+    await settle()
+
+    const vm = wrapper.vm as any
+    vm.bookletData.month = 'MARCH'
+    vm.bookletData.year = 2026
+    const callsBefore = transactionsMock.mock.calls.length
+
+    await vm.goToPreviousMonth()
+    await settle()
+
+    expect(vm.bookletData.month).toBe('FEBRUARY')
+    expect(vm.bookletData.year).toBe(2026)
+    expect(transactionsMock.mock.calls.length).toBeGreaterThan(callsBefore)
+  })
+
+  it('rolls back to December of the previous year', async () => {
+    const wrapper = mountPage()
+    await settle()
+
+    const vm = wrapper.vm as any
+    vm.bookletData.month = 'JANUARY'
+    vm.bookletData.year = 2026
+
+    await vm.goToPreviousMonth()
+    await settle()
+
+    expect(vm.bookletData.year).toBe(2025)
+  })
+
+  it('steps to the next month', async () => {
+    const wrapper = mountPage()
+    await settle()
+
+    const vm = wrapper.vm as any
+    vm.bookletData.month = 'FEBRUARY'
+    vm.bookletData.year = 2026
+
+    await vm.goToNextMonth()
+    await settle()
+
+    expect(vm.bookletData.month).toBe('MARCH')
+  })
+
+  // Stepping through months while a range is active would show a month the range contradicts.
+  it('drops the custom range when stepping through months', async () => {
+    const wrapper = mountPage()
+    await settle()
+
+    const vm = wrapper.vm as any
+    vm.rangeStart = new Date(2026, 2, 5)
+    vm.rangeEnd = new Date(2026, 3, 4)
+    await vm.applyDateRange()
+    await settle()
+    expect(vm.hasCustomRange).toBe(true)
+
+    await vm.goToPreviousMonth()
+    await settle()
+
+    expect(vm.hasCustomRange).toBe(false)
+  })
+
+  it('applies a rolling window from a preset', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-31T12:00:00.000Z'))
+
+    const wrapper = mountPage()
+    await settle()
+
+    const vm = wrapper.vm as any
+    await vm.applyRollingWindow(30)
+    await settle()
+
+    expect(vm.hasCustomRange).toBe(true)
+    expect(lastRangeOf(transactionsMock, 3)).toEqual({ startDate: '2026-03-02', endDate: '2026-03-31' })
+
+    vi.useRealTimers()
+  })
+
+  it('returns to the current month from the preset', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-15T12:00:00.000Z'))
+
+    const wrapper = mountPage()
+    await settle()
+
+    const vm = wrapper.vm as any
+    await vm.applyRollingWindow(30)
+    await settle()
+
+    await vm.goToCurrentMonth()
+    await settle()
+
+    expect(vm.hasCustomRange).toBe(false)
+    expect(vm.bookletData.month).toBe('MARCH')
+    expect(vm.bookletData.year).toBe(2026)
+
+    vi.useRealTimers()
   })
 })

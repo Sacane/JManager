@@ -172,7 +172,6 @@ const subTagFilterOptions = computed(() => [
     .filter(t => !!t.parentId && transactionTagIds.value.has(t.tagId ?? ''))
     .map(t => ({ label: t.label, value: t.tagId ?? '', colorDTO: t.colorDTO })),
 ])
-const monthOptions = computed(() => useDate().months.map((m: string) => translate(m)))
 const previewTransactionsCount = computed(() => {
   const source = globalFilter.value !== 'none' ? allTransactions.value : actualTransactions.value
   return source.filter(t => t.isPreview).length
@@ -353,11 +352,64 @@ function formatDisplayDate(value: string): string {
   return `${day}/${month}/${year}`
 }
 
+const monthLabel = computed(() => `${displayMonth.value} ${bookletData.year}`)
+
 const periodLabel = computed(() => {
   const range = appliedRange.value
-  if (!range) return `${displayMonth.value} ${bookletData.year} · tout le mois`
+  if (!range) return monthLabel.value
   return `${formatDisplayDate(range.startDate)} → ${formatDisplayDate(range.endDate)}`
 })
+
+function reloadPeriod() {
+  exitGlobalMode()
+  currentPage.value = 0
+  return loadBookletData()
+}
+
+/** Steps the calendar month by `offset`, rolling the year over. Drops any custom range: showing
+ *  a month while a range contradicts it is exactly the mismatch this period control removes. */
+async function stepMonth(offset: number) {
+  const monthIndex = (numberFromMonth(bookletData.month) as number) - 1
+  const stepped = new Date(bookletData.year, monthIndex + offset, 1)
+
+  bookletData.month = monthFromNumber(stepped.getMonth() + 1) as string
+  bookletData.year = stepped.getFullYear()
+  bookletData.dateYear = stepped
+
+  resetRangeState()
+  await reloadPeriod()
+}
+
+const goToPreviousMonth = () => stepMonth(-1)
+const goToNextMonth = () => stepMonth(1)
+
+async function goToCurrentMonth() {
+  const today = new Date()
+  bookletData.month = monthFromNumber(today.getMonth() + 1) as string
+  bookletData.year = today.getFullYear()
+  bookletData.dateYear = today
+
+  resetRangeState()
+  await reloadPeriod()
+}
+
+/** Rolling window ending today, e.g. the last 30 days. */
+async function applyRollingWindow(days: number) {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - (days - 1))
+
+  rangeStart.value = start
+  rangeEnd.value = end
+  await applyDateRange()
+}
+
+function resetRangeState() {
+  rangeStart.value = null
+  rangeEnd.value = null
+  dateRangeError.value = null
+  appliedRange.value = null
+}
 
 async function applyDateRange() {
   if (!rangeStart.value || !rangeEnd.value) {
@@ -380,10 +432,7 @@ async function applyDateRange() {
 }
 
 async function clearDateRange() {
-  rangeStart.value = null
-  rangeEnd.value = null
-  dateRangeError.value = null
-  appliedRange.value = null
+  resetRangeState()
   currentPage.value = 0
   await loadBookletData()
   if (globalFilter.value !== 'none') await loadGlobalTransactions()
@@ -514,19 +563,6 @@ async function retrieveTags() {
   } catch (err) {
     toast.errorAxios(err as AxiosError)
   }
-}
-
-function onMonthChange() {
-  exitGlobalMode()
-  currentPage.value = 0
-  loadBookletData()
-}
-
-function onYearChange() {
-  exitGlobalMode()
-  currentPage.value = 0
-  bookletData.year = bookletData.dateYear.getFullYear()
-  loadBookletData()
 }
 
 function onPageChange(event: { page: number }) {
@@ -949,22 +985,20 @@ onUnmounted(() => {
         :real-sold="bookletData.realSold"
         :preview-sold="bookletData.previewSold"
         :is-mobile="isMobile"
-        :selected-month="displayMonth"
-        :month-options="monthOptions"
-        :date-year="bookletData.dateYear"
+        :period-label="periodLabel"
+        :month-label="monthLabel"
+        :has-custom-range="hasCustomRange"
         :range-start="rangeStart"
         :range-end="rangeEnd"
-        :has-custom-range="hasCustomRange"
         :date-range-error="dateRangeError"
-        :period-label="periodLabel"
         @update:range-start="rangeStart = $event"
         @update:range-end="rangeEnd = $event"
+        @previous-month="goToPreviousMonth"
+        @next-month="goToNextMonth"
+        @current-month="goToCurrentMonth"
+        @rolling-window="applyRollingWindow"
         @apply-range="applyDateRange"
         @clear-range="clearDateRange"
-        @update:selected-month="displayMonth = $event"
-        @month-change="onMonthChange"
-        @update:date-year="bookletData.dateYear = $event"
-        @year-change="onYearChange"
         @back="navigateTo('/booklet')"
       />
 
