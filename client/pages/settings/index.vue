@@ -426,8 +426,12 @@ onMounted(() => {
 }
 
 .cycle-select:focus {
-  outline: none;
   border-color: var(--primary);
+}
+
+/* Flatten the outline for pointer focus only; the keyboard ring from reset.css must stay. */
+.cycle-select:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .cycle-field-hint {

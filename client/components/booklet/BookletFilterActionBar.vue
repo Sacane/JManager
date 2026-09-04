@@ -224,7 +224,6 @@ const emit = defineEmits<{
   width: 1.2rem !important;
 }
 :deep(.p-select.p-focus) {
-  outline: none !important;
   box-shadow: none !important;
   border-color: var(--card-border) !important;
 }
