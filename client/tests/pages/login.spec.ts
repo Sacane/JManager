@@ -102,6 +102,100 @@ describe('pages/login', () => {
   })
 
   // -------------------------------------------------------------------------
+  describe('credential manager support', () => {
+    it('declares the autocomplete role of the login fields', () => {
+      const wrapper = mountPage()
+
+      expect(wrapper.find('#email').attributes('autocomplete')).toBe('email')
+      expect(wrapper.find('#password').attributes('autocomplete')).toBe('current-password')
+    })
+
+    it('declares the autocomplete role of the registration fields', async () => {
+      isEnabledMock.mockReturnValue(true)
+      const wrapper = mountPage()
+      await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
+
+      expect(wrapper.find('#reg-username').attributes('autocomplete')).toBe('username')
+      expect(wrapper.find('#reg-email').attributes('autocomplete')).toBe('email')
+      // Both password fields declare new-password: that is the documented pattern for a new
+      // credential and its confirmation.
+      expect(wrapper.find('#reg-password').attributes('autocomplete')).toBe('new-password')
+      expect(wrapper.find('#reg-confirm-password').attributes('autocomplete')).toBe('new-password')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  describe('switching mode keeps what was typed', () => {
+    it('carries the email over to the registration form', async () => {
+      isEnabledMock.mockReturnValue(true)
+      const wrapper = mountPage()
+
+      await wrapper.find('#email').setValue('johan@example.com')
+      await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
+
+      expect((wrapper.find('#reg-email').element as HTMLInputElement).value).toBe('johan@example.com')
+    })
+
+    it('carries the email back to the login form', async () => {
+      isEnabledMock.mockReturnValue(true)
+      const wrapper = mountPage()
+
+      await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
+      await wrapper.find('#reg-email').setValue('bob@example.com')
+      await wrapper.find('[data-testid="switch-to-login"]').trigger('click')
+
+      expect((wrapper.find('#email').element as HTMLInputElement).value).toBe('bob@example.com')
+    })
+
+    it('does not overwrite the target email with an empty one', async () => {
+      isEnabledMock.mockReturnValue(true)
+      const wrapper = mountPage()
+
+      await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
+      await wrapper.find('#reg-email').setValue('bob@example.com')
+      await wrapper.find('[data-testid="switch-to-login"]').trigger('click')
+      // The login email is now filled; switching back must not blank it out from an empty source.
+      await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
+
+      expect((wrapper.find('#reg-email').element as HTMLInputElement).value).toBe('bob@example.com')
+    })
+
+    // Copying a password between forms would surprise the user and confuse credential managers.
+    it('never carries a password across the switch', async () => {
+      isEnabledMock.mockReturnValue(true)
+      const wrapper = mountPage()
+
+      await wrapper.find('#password').setValue('secret-one')
+      await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
+
+      expect((wrapper.find('#reg-password').element as HTMLInputElement).value).toBe('')
+      expect((wrapper.find('#reg-confirm-password').element as HTMLInputElement).value).toBe('')
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  describe('legal documents', () => {
+    it('links the terms and the privacy policy in login mode', () => {
+      const wrapper = mountPage()
+      const targets = wrapper.findAll('a').map(link => link.attributes('href'))
+
+      expect(targets).toContain('/terms')
+      expect(targets).toContain('/privacy')
+    })
+
+    it('still links them in registration mode', async () => {
+      isEnabledMock.mockReturnValue(true)
+      const wrapper = mountPage()
+      await wrapper.find('[data-testid="switch-to-register"]').trigger('click')
+
+      const targets = wrapper.findAll('a').map(link => link.attributes('href'))
+
+      expect(targets).toContain('/terms')
+      expect(targets).toContain('/privacy')
+    })
+  })
+
+  // -------------------------------------------------------------------------
   describe('login mode (default)', () => {
     it('renders the email and password fields by default', () => {
       const wrapper = mountPage()
