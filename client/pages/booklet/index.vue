@@ -130,18 +130,18 @@ function formatAmount(amount: string) {
 
 <template>
   <ConfirmDialog />
-  <div class="booklets-page">
+  <div class="page-shell max-w-[1600px]">
     <!-- Header Section -->
-    <div class="page-header">
+    <div class="page-header pb-8 border-b-2 border-[var(--border-color)]">
       <div class="header-left">
         <div class="header-icon">
           <i class="pi pi-wallet" />
         </div>
         <div class="header-text">
-          <h1 class="page-title">
+          <h1 class="page-heading">
             Mes Livrets
           </h1>
-          <p class="page-subtitle">
+          <p class="page-subheading flex items-center gap-2">
             <span class="count-badge">{{ data.length }}/6</span>
             livrets actifs
           </p>
@@ -292,36 +292,7 @@ function formatAmount(amount: string) {
 </template>
 
 <style scoped lang="scss">
-.booklets-page {
-  min-height: 100vh;
-  padding: 2.5rem;
-  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
-  max-width: 1600px;
-  margin: 0 auto;
-
-  @media (max-width: 768px) {
-    padding: 1.5rem;
-  }
-}
-
 /* ===== HEADER ===== */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
-  border-bottom: 2px solid var(--border-color);
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-  }
-}
-
 .header-left {
   display: flex;
   align-items: center;
@@ -346,28 +317,6 @@ function formatAmount(amount: string) {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.page-title {
-  font-size: 2.25rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.02em;
-
-  @media (max-width: 768px) {
-    font-size: 1.75rem;
-  }
-}
-
-.page-subtitle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  margin: 0;
-  font-weight: 500;
 }
 
 .count-badge {

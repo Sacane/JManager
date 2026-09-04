@@ -1299,15 +1299,15 @@ watch(selectedBookletId, () => {
 </script>
 
 <template>
-  <div class="w-full min-h-screen p-5 relative" style="background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);">
+  <div class="page-shell w-full relative">
     <!-- Header Section -->
     <div>
       <div class="flex justify-between items-center flex-wrap gap-5">
         <div>
-          <h1 class="text-4xl font-extrabold mb-2" style="color: var(--text-primary);">
+          <h1 class="page-heading mb-2">
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
-          <p class="text-base" style="color: var(--text-secondary);">
+          <p class="page-subheading">
             Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label || 'Tous les comptes' }}
           </p>
           <div class="flex items-center gap-2.5 mt-3 flex-wrap">
@@ -1367,7 +1367,7 @@ watch(selectedBookletId, () => {
     <div v-else class="relative z-1 pb-10">
       <!-- KPI Cards -->
       <section ref="overviewRef" class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)]">
               <i class="pi pi-wallet" />
@@ -1390,7 +1390,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--expense)]">
               <i class="pi pi-arrow-down" />
@@ -1413,7 +1413,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--income)]">
               <i class="pi pi-arrow-up" />
@@ -1436,7 +1436,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--warning)]">
               <i class="pi pi-chart-line" />
@@ -1462,7 +1462,7 @@ watch(selectedBookletId, () => {
 
       <!-- Charts Section -->
       <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
-        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
+        <div class="stat-card col-span-full">
           <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
@@ -1488,7 +1488,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
+        <div class="stat-card col-span-full">
           <div class="flex flex-col gap-6">
             <div class="flex flex-col sm:flex-row gap-6">
               <div class="flex-1 flex flex-col" :class="secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2'">
@@ -1578,7 +1578,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
@@ -1607,7 +1607,7 @@ watch(selectedBookletId, () => {
 
       <!-- Quick Actions & Info Section -->
       <section class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 mb-8">
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
             <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-book text-purple-600" />
@@ -1666,7 +1666,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
             <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-calendar text-purple-600" />
@@ -1759,7 +1759,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
             <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-tags text-purple-600" />
@@ -1803,7 +1803,7 @@ watch(selectedBookletId, () => {
       </section>
 
       <section class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8">
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
               <i class="pi pi-bell text-orange-500" />
@@ -1829,7 +1829,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <h2 class="text-lg font-bold m-0 mb-4 flex items-center gap-2" style="color: var(--text-primary);">
             <i class="pi pi-bolt text-purple-600" />
             Actions rapides
@@ -1850,7 +1850,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex items-center justify-between mb-4 gap-3">
             <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
               <i class="pi pi-euro text-[var(--success)]" />
@@ -1917,7 +1917,7 @@ watch(selectedBookletId, () => {
       </section>
 
       <!-- Quick Stats Banner -->
-      <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 p-6 rounded-2xl shadow-lg mb-5" style="background-color: var(--card-bg);">
+      <section class="stat-card grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 mb-5">
         <div class="flex items-center gap-4">
           <i class="pi pi-calendar-plus text-4xl text-purple-600" />
           <div>
