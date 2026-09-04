@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
+import PasswordField from '../../components/PasswordField.vue'
 import SettingsPage from '../../pages/settings/index.vue'
 
 const getSettingsMock = vi.fn().mockResolvedValue({
@@ -85,7 +86,13 @@ function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
     resendVerificationEmail: vi.fn(),
   }))
 
-  return shallowMount(SettingsPage)
+  return shallowMount(SettingsPage, {
+    global: {
+      // Rendered for real: the password assertions target the actual input, not the stub.
+      stubs: { PasswordField: false },
+      components: { PasswordField },
+    },
+  })
 }
 
 describe('pages/settings/index unsaved changes', () => {

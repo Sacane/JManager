@@ -145,13 +145,11 @@ async function registerUser() {
               <i class="pi pi-lock mr-2" />
               Mot de passe
             </label>
-            <InputText
+            <PasswordField
               id="password"
               v-model="userAuth.password"
-              type="password"
-              class="w-full"
               placeholder="Entrez votre mot de passe"
-              maxlength="100"
+              :maxlength="100"
               autocomplete="current-password"
             />
           </div>
@@ -226,13 +224,11 @@ async function registerUser() {
               <i class="pi pi-lock mr-2" />
               Mot de passe
             </label>
-            <InputText
+            <PasswordField
               id="reg-password"
               v-model="userRegistered.password"
-              type="password"
-              class="w-full"
               placeholder="Choisissez un mot de passe"
-              maxlength="100"
+              :maxlength="100"
               autocomplete="new-password"
             />
           </div>
@@ -242,13 +238,11 @@ async function registerUser() {
               <i class="pi pi-lock mr-2" />
               Confirmer le mot de passe
             </label>
-            <InputText
+            <PasswordField
               id="reg-confirm-password"
               v-model="userRegistered.confirmPassword"
-              type="password"
-              class="w-full"
               placeholder="Répétez votre mot de passe"
-              maxlength="100"
+              :maxlength="100"
               autocomplete="new-password"
             />
           </div>

@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
+import PasswordField from '../../components/PasswordField.vue'
 import LoginPage from '../../pages/login.vue'
 
 // ---------------------------------------------------------------------------
@@ -63,7 +64,12 @@ function mountPage() {
         Checkbox: CheckboxStub,
         NuxtLink: NuxtLinkStub,
         FeatureGate: FeatureGateStub,
+        // Rendered for real rather than stubbed: the page relies on it carrying the id, the
+        // autocomplete hint and the model binding through to the actual input. shallowMount
+        // stubs every child by default, so it has to be opted back in explicitly.
+        PasswordField: false,
       },
+      components: { PasswordField },
     },
   })
 }

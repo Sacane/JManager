@@ -267,41 +267,41 @@ onMounted(() => {
       <div class="change-password-form">
         <div class="change-password-field">
           <label for="current-password" class="settings-label">Mot de passe actuel</label>
-          <input
+          <PasswordField
             id="current-password"
             v-model="currentPassword"
-            type="password"
-            class="settings-input"
+            input-class="settings-input"
             placeholder="Mot de passe actuel"
-            maxlength="100"
+            :maxlength="100"
+            autocomplete="current-password"
             data-test="current-password-input"
-          >
+          />
         </div>
 
         <div class="change-password-field">
           <label for="new-password-settings" class="settings-label">Nouveau mot de passe</label>
-          <input
+          <PasswordField
             id="new-password-settings"
             v-model="newPasswordChange"
-            type="password"
-            class="settings-input"
+            input-class="settings-input"
             placeholder="Nouveau mot de passe"
-            maxlength="100"
+            :maxlength="100"
+            autocomplete="new-password"
             data-test="new-password-input"
-          >
+          />
         </div>
 
         <div class="change-password-field">
           <label for="confirm-password-settings" class="settings-label">Confirmer le mot de passe</label>
-          <input
+          <PasswordField
             id="confirm-password-settings"
             v-model="confirmPasswordChange"
-            type="password"
-            class="settings-input"
+            input-class="settings-input"
             placeholder="Confirmer le mot de passe"
-            maxlength="100"
+            :maxlength="100"
+            autocomplete="new-password"
             data-test="confirm-password-input"
-          >
+          />
           <p v-if="confirmPasswordError" class="change-password-error" data-test="confirm-password-error">
             {{ confirmPasswordError }}
           </p>
@@ -421,7 +421,10 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.settings-input {
+/* `:deep` is needed for the password fields: their input is rendered by PasswordField, so the
+   scoped attribute never lands on it. */
+.settings-input,
+:deep(.settings-input) {
   width: 100%;
   border: 1px solid var(--border-color);
   border-radius: 0.7rem;

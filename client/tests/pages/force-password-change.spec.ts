@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
+import PasswordField from '../../components/PasswordField.vue'
 import ForcePasswordChangePage from '../../pages/force-password-change.vue'
 
 const InputTextStub = {
@@ -52,7 +53,10 @@ describe('pages/force-password-change', () => {
         stubs: {
           InputText: InputTextStub,
           Button: ButtonStub,
+          // Rendered for real: these assertions target the actual input, not the stub.
+          PasswordField: false,
         },
+        components: { PasswordField },
       },
     })
   }
