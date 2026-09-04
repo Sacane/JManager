@@ -4,7 +4,7 @@
 > Branche : `fix/ux-lot-3-conformite`.
 > Ce document est **complété à chaque poussée**, pas à la fin du lot.
 
-**Avancement** — 4 items sur 9 livrés.
+**Avancement** — 6 items sur 9 livrés.
 
 | Item | Statut |
 |---|---|
@@ -12,9 +12,9 @@
 | UX-48 · e-mail conservé à la bascule | ✅ à valider |
 | UX-49 · liens légaux sur la connexion | ✅ à valider |
 | UX-47 · champ mot de passe partagé | ✅ à valider |
-| UX-45 · limite de 6 livrets | ⏳ |
+| UX-45 · limite de 6 livrets | ✅ à valider |
 | UX-43 · accueil dashboard vide | ⏳ |
-| UX-17 · confirmation forte de suppression | ⏳ |
+| UX-17 · confirmation forte de suppression | ✅ à valider |
 | UX-14 · filtre par plage de dates | ⏳ |
 | UX-13 · Mon compte / RGPD | ⏳ |
 
@@ -30,7 +30,11 @@
 cd client && pnpm dev
 ```
 
-**Se déconnecter** avant de commencer : tous les cas ci-dessous se jouent sur la page de connexion.
+**Parcours 1 à 4** : se déconnecter avant de commencer, ils se jouent sur la page de connexion.
+
+**Parcours 5 et 6** : il faut un compte avec **au moins un livret contenant des transactions**, et
+pour le cas 5.4 un compte ayant atteint **les 6 livrets**. Si tu ne peux pas monter jusqu'à 6,
+note le cas comme non testé plutôt que de le déclarer OK.
 
 Pour le parcours 1, il faut **un gestionnaire de mots de passe actif** — celui du navigateur suffit
 (Chrome : `Paramètres → Saisie automatique → Mots de passe`, activer la proposition
@@ -144,15 +148,49 @@ Sur `/login`, champ « Mot de passe » :
 
 ---
 
-## 5. Régressions à surveiller
+## 5. Limite de livrets — UX-45
+
+| # | Action | Attendu |
+|---|---|---|
+| 5.1 | Ouvrir **Mes livrets** avec 4 livrets | Le badge indique `4/6` et la carte d'ajout annonce « 2 emplacements restants » |
+| 5.2 | Créer un livret de plus | Le badge passe à `5/6`, « 1 emplacement restant » (**au singulier**) |
+| 5.3 | Monter jusqu'à 6 livrets | ⚠️ Le bouton devient « Limite atteinte », **avec sous lui une phrase expliquant** le maximum et invitant à en supprimer un |
+| 5.4 | La carte pointillée « Ajouter un livret » | Elle **disparaît** à 6 livrets |
+| 5.5 | Supprimer un livret | Le bouton redevient actif, l'explication disparaît |
+| 5.6 | En mobile 375 px, à 6 livrets | L'explication passe à la ligne proprement, alignée à gauche |
+
+---
+
+## 6. Suppression d'un livret — UX-17
+
+⚠️ **Le parcours le plus sensible du lot** : il s'agit d'une destruction définitive.
+Faire ces essais sur un livret **dont tu te fiches**.
+
+| # | Action | Attendu |
+|---|---|---|
+| 6.1 | Cliquer la corbeille d'un livret nommé par ex. « Livret A » | Une fenêtre s'ouvre : « Supprimer ce livret ? » |
+| 6.2 | Lire le message | Il dit « Cette action **est** irréversible » — et, **si le livret a des transactions**, il en annonce le nombre |
+| 6.3 | ⚠️ Livret **sans** transaction | Il ne doit **jamais** afficher « 0 transaction », mais « toutes ses transactions » |
+| 6.4 | Sans rien saisir, regarder le bouton rouge | Il est **désactivé** |
+| 6.5 | Saisir un nom **différent** (« Livret B ») | Le bouton reste désactivé |
+| 6.6 | Saisir le nom exact | Le bouton devient actif |
+| 6.7 | Saisir le nom avec des espaces autour et en minuscules | ⚠️ Le bouton devient **quand même** actif — la casse et les espaces sont tolérés |
+| 6.8 | Annuler, puis rouvrir la fenêtre sur **un autre** livret | ⚠️ Le champ est **vide** — ce qui avait été tapé pour le précédent n'est pas conservé |
+| 6.9 | Confirmer réellement une suppression | Le livret disparaît, toast de succès, la liste se recharge |
+| 6.10 | Pendant la suppression | Le bouton passe en chargement, la fenêtre ne se ferme pas au clic extérieur |
+| 6.11 | En mobile 375 px | La fenêtre tient dans l'écran |
+
+---
+
+## 7. Régressions à surveiller
 
 | # | Vérification | Pourquoi |
 |---|---|---|
-| 5.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
-| 5.2 | Créer un compte de bout en bout | Idem |
-| 5.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
-| 5.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
-| 5.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
+| 7.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
+| 7.2 | Créer un compte de bout en bout | Idem |
+| 7.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
+| 7.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
+| 7.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
 
 ---
 
@@ -162,7 +200,11 @@ Les 6 valeurs d'`autocomplete`, le report de l'e-mail dans les deux sens, le non
 passe, le non-écrasement par un e-mail vide, la présence des deux liens légaux dans les deux modes
 (**21 tests sur `login.vue`**), la bascule du type de champ, le nom accessible du contrôle, le
 `type="button"`, la liaison de valeur, le relais de `id` / `autocomplete` / `maxlength`, l'état
-désactivé et le slot d'extension (**11 tests sur `PasswordField`**).
+désactivé et le slot d'extension (**11 tests sur `PasswordField`**), la constante de limite, le
+pluriel des emplacements restants, la présence et le rattachement `aria-describedby` de
+l'explication (**5 tests**), et tout le comportement de la fenêtre de suppression — bouton
+désactivé, tolérance casse/espaces, refus d'un nom différent, remise à zéro à la réouverture,
+absence de « 0 transaction » (**10 tests**).
 
 Ce qu'elle **ne peut pas** couvrir, et qui justifie ce document : le comportement réel du
 gestionnaire de mots de passe du navigateur (1b), le rendu du pied de carte (3.6, 3.7), et surtout
