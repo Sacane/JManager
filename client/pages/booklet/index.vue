@@ -643,7 +643,7 @@ function formatAmount(amount: string) {
   flex-shrink: 0;
 
   &:hover {
-    color: #ef4444 !important;
+    color: var(--danger) !important;
     background: rgba(239, 68, 68, 0.1) !important;
   }
 }
@@ -684,12 +684,15 @@ function formatAmount(amount: string) {
   line-height: 1;
   font-variant-numeric: tabular-nums;
 
+  /* Income/expense tokens are not used here: a balance sign reads as healthy or not,
+     not as money coming in or going out — see var(--income) / var(--expense) usage in
+     pages/booklet/[id].vue for the amount case. */
   &.positive {
-    color: #10b981;
+    color: var(--success);
   }
 
   &.negative {
-    color: #ef4444;
+    color: var(--danger);
   }
 }
 

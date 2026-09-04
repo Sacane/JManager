@@ -88,6 +88,15 @@
   --income:   #006EA3;  /* brand blue-dark — 5.59:1 */
   --expense:  #A30053;  /* brand magenta — 7.83:1 */
 
+  /* Soft surfaces for badges and alert panels. Alpha is applied here rather than through a
+     `/10` utility: the tokens above are plain hex, so UnoCSS cannot derive an alpha from them. */
+  --success-soft: rgba(4, 120, 87, 0.12);
+  --danger-soft:  rgba(191, 6, 56, 0.12);
+  --warning-soft: rgba(140, 106, 4, 0.12);
+  --info-soft:    rgba(0, 110, 163, 0.12);
+  --income-soft:  rgba(0, 110, 163, 0.12);
+  --expense-soft: rgba(163, 0, 83, 0.12);
+
   /* Shadows */
   --shadow-sm:      rgba(0, 0, 0, 0.05);
   --shadow-md:      rgba(0, 0, 0, 0.08);
@@ -130,6 +139,13 @@
 
   --income:   #009CFE;  /* brand blue — 5.01:1 */
   --expense:  #FF5E8A;  /* brand red, 35% tint — 5.03:1 */
+
+  --success-soft: rgba(52, 211, 153, 0.16);
+  --danger-soft:  rgba(255, 94, 138, 0.16);
+  --warning-soft: rgba(255, 193, 8, 0.16);
+  --info-soft:    rgba(0, 156, 254, 0.16);
+  --income-soft:  rgba(0, 156, 254, 0.16);
+  --expense-soft: rgba(255, 94, 138, 0.16);
 
   /* Shadows */
   --shadow-sm:      rgba(0, 0, 0, 0.3);

@@ -450,7 +450,7 @@ async function handleUnlink() {
         </template>
 
         <template #body-montant="{ data }">
-          <span class="font-extrabold text-1.1rem font-mono" :class="data.isIncome ? 'text-green-500 before:content-[\'+_\']' : 'text-red-500 before:content-[\'-_\']'">
+          <span class="font-extrabold text-1.1rem font-mono" :class="data.isIncome ? 'text-[var(--income)] before:content-[\'+_\']' : 'text-[var(--expense)] before:content-[\'-_\']'">
             {{ Math.abs(data.value).toFixed(2) }} €
           </span>
         </template>
@@ -599,7 +599,7 @@ async function handleUnlink() {
             <div class="flex flex-col gap-2.5 md:gap-3">
               <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
                 <i class="pi pi-euro text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
-                <span class="text-1.4rem font-extrabold font-mono md:text-1.6rem" :class="transaction.isIncome ? 'text-green-500' : 'text-red-500'">
+                <span class="text-1.4rem font-extrabold font-mono md:text-1.6rem" :class="transaction.isIncome ? 'text-[var(--income)]' : 'text-[var(--expense)]'">
                   {{ transaction.isIncome ? '+' : '-' }}{{ Math.abs(transaction.value).toFixed(2) }} €
                 </span>
               </div>

@@ -990,13 +990,13 @@ onUnmounted(() => {
             </template>
 
             <template #body-expenses="{ data }">
-              <span v-if="!data.isIncome" class="font-extrabold text-[#FF084B]">{{ data.expensesRepresentation }}</span>
+              <span v-if="!data.isIncome" class="font-extrabold text-[var(--expense)]">{{ data.expensesRepresentation }}</span>
               <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
             </template>
 
             <template #body-income="{ data }">
-              <span v-if="data.isIncome" class="font-extrabold text-[#009CFE]">{{ data.incomeRepresentation }}</span>
-              <span v-else class="text-[#009CFE] font-semibold">-</span>
+              <span v-if="data.isIncome" class="font-extrabold text-[var(--income)]">{{ data.incomeRepresentation }}</span>
+              <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
             </template>
 
             <template #header-tagFilter>
@@ -1243,7 +1243,7 @@ onUnmounted(() => {
                   <div class="shrink-0 flex flex-col items-end gap-1.5">
                     <span
                       class="text-base font-semibold tabular-nums"
-                      :class="transaction.isIncome ? 'text-[#009CFE]' : 'text-[#FF084B]'"
+                      :class="transaction.isIncome ? 'text-[var(--income)]' : 'text-[var(--expense)]'"
                     >
                       {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}&nbsp;€
                     </span>
@@ -1259,7 +1259,7 @@ onUnmounted(() => {
                       </button>
                       <button
                         v-if="transaction.isPreview"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 active:scale-95 transition-all disabled:opacity-40"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--success-soft)] border border-[var(--success)]/30 hover:brightness-110 text-[var(--success)] active:scale-95 transition-all disabled:opacity-40"
                         :disabled="isAnyActionLoading"
                         aria-label="Valider"
                         @click.stop="onConfirmPreview(transaction)"
