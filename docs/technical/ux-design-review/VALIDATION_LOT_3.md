@@ -4,7 +4,7 @@
 > Branche : `fix/ux-lot-3-conformite`.
 > Ce document est **complété à chaque poussée**, pas à la fin du lot.
 
-**Avancement** — 6 items sur 9 livrés.
+**Avancement** — 7 items sur 9 livrés.
 
 | Item | Statut |
 |---|---|
@@ -16,7 +16,7 @@
 | UX-43 · accueil dashboard vide | ⏳ |
 | UX-17 · confirmation forte de suppression | ✅ à valider |
 | UX-14 · filtre par plage de dates | ⏳ |
-| UX-13 · Mon compte / RGPD | ⏳ |
+| UX-13 · Mon compte / RGPD | ✅ à valider |
 
 ---
 
@@ -182,15 +182,64 @@ Faire ces essais sur un livret **dont tu te fiches**.
 
 ---
 
-## 7. Régressions à surveiller
+## 7. Mon compte et suppression RGPD — UX-13
+
+🔴 **Le parcours le plus destructeur de tout le chantier.** La suppression efface le compte, les
+livrets, les transactions et les tags. **Utiliser un compte jetable**, jamais le compte principal.
+
+### 7a. Affichage de l'identité
+
+| # | Action | Attendu |
+|---|---|---|
+| 7.1 | Ouvrir **Paramètres** | Une section **« Mon compte »** est présente, avant « Changer le mot de passe » |
+| 7.2 | Lire la section | Le **nom d'utilisateur** et l'**adresse e-mail** du compte connecté sont affichés |
+| 7.3 | Compte sans e-mail renseigné | La mention « Non renseignée » s'affiche à la place |
+
+### 7b. Le garde-fou
+
+| # | Action | Attendu |
+|---|---|---|
+| 7.4 | Repérer la zone rouge en bas de la section | Elle explique ce qui sera effacé et porte un bouton « Supprimer mon compte » |
+| 7.5 | Cliquer ce bouton | Une fenêtre s'ouvre — ⚠️ **rien n'est supprimé à ce stade** |
+| 7.6 | Lire le message | Il dit « irréversible » et énumère compte, livrets, transactions, tags |
+| 7.7 | Sans rien saisir | Le bouton rouge est **désactivé** |
+| 7.8 | Saisir un nom d'utilisateur **différent** | Il reste désactivé |
+| 7.9 | Saisir son propre nom d'utilisateur | Il devient actif |
+| 7.10 | Annuler | Rien n'est supprimé, la fenêtre se ferme |
+| 7.11 | Rouvrir la fenêtre | Le champ est vide |
+
+### 7c. La suppression réelle — sur un compte jetable
+
+| # | Action | Attendu |
+|---|---|---|
+| 7.12 | Confirmer la suppression | Le compte est supprimé, **déconnexion** et redirection vers `/login` |
+| 7.13 | Tenter de se reconnecter avec ces identifiants | La connexion échoue |
+| 7.14 | ⚠️ **Simuler un échec** — couper le backend, puis confirmer | Un message d'erreur s'affiche, la fenêtre **reste ouverte**, et vous êtes **toujours connecté** |
+| 7.15 | Après 7.14, naviguer dans l'application | La session fonctionne toujours normalement |
+
+> Le cas **7.14** est le plus important : un échec ne doit jamais ressembler à un succès. S'il ne
+> peut pas être reproduit, le noter comme non testé.
+
+### 7d. Non-régression du dialog partagé
+
+Le mécanisme « retaper pour confirmer » est désormais **le même composant** pour la suppression
+d'un livret et celle d'un compte.
+
+| # | Vérification |
+|---|---|
+| 7.16 | Refaire rapidement le parcours 6 (suppression d'un livret) — le comportement doit être inchangé |
+
+---
+
+## 8. Régressions à surveiller
 
 | # | Vérification | Pourquoi |
 |---|---|---|
-| 7.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
-| 7.2 | Créer un compte de bout en bout | Idem |
-| 7.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
-| 7.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
-| 7.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
+| 8.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
+| 8.2 | Créer un compte de bout en bout | Idem |
+| 8.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
+| 8.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
+| 8.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
 
 ---
 
@@ -204,7 +253,7 @@ désactivé et le slot d'extension (**11 tests sur `PasswordField`**), la consta
 pluriel des emplacements restants, la présence et le rattachement `aria-describedby` de
 l'explication (**5 tests**), et tout le comportement de la fenêtre de suppression — bouton
 désactivé, tolérance casse/espaces, refus d'un nom différent, remise à zéro à la réouverture,
-absence de « 0 transaction » (**10 tests**).
+absence de « 0 transaction » (**15 tests répartis entre `ConfirmByTypingDialog` et `BookletDeleteDialog`**), l'appel de suppression de compte et le maintien de la session en cas d'échec (**4 tests sur `useAuth`**), l'affichage de l'identité et le garde-fou de la fenêtre (**6 tests sur les Paramètres**).
 
 Ce qu'elle **ne peut pas** couvrir, et qui justifie ce document : le comportement réel du
 gestionnaire de mots de passe du navigateur (1b), le rendu du pied de carte (3.6, 3.7), et surtout
