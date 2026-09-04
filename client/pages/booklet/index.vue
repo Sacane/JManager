@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import { MAX_BOOKLETS } from '~/constants/booklet'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
 import useBooklet from '../../composables/useBooklet'
@@ -115,6 +116,9 @@ function openBookletDialog() {
   isAddBookletDialogOpen.value = true
 }
 
+const remainingSlots = computed(() => Math.max(0, MAX_BOOKLETS - data.value.length))
+const hasReachedLimit = computed(() => remainingSlots.value === 0)
+
 function amountClass(amount: string) {
   return Number.parseFloat(amount) >= 0 ? 'positive' : 'negative'
 }
@@ -142,13 +146,13 @@ function formatAmount(amount: string) {
             Mes Livrets
           </h1>
           <p class="page-subheading flex items-center gap-2">
-            <span class="count-badge">{{ data.length }}/6</span>
+            <span class="count-badge">{{ data.length }}/{{ MAX_BOOKLETS }}</span>
             livrets actifs
           </p>
         </div>
       </div>
       <Button
-        v-if="data.length < 6"
+        v-if="!hasReachedLimit"
         label="Nouveau livret"
         icon="pi pi-plus"
         class="add-button"
@@ -156,13 +160,22 @@ function formatAmount(amount: string) {
         :disabled="isAnyBookletActionLoading"
         @click="openBookletDialog"
       />
-      <Button
-        v-else
-        label="Limite atteinte"
-        icon="pi pi-lock"
-        class="add-button disabled-button"
-        disabled
-      />
+      <!-- The disabled button used to say "Limite atteinte" and nothing else: no reason given,
+           no way forward. The hint carries both, and is announced with the button (UX-45). -->
+      <div v-else class="limit-reached">
+        <Button
+          label="Limite atteinte"
+          icon="pi pi-lock"
+          class="add-button disabled-button"
+          data-test="booklet-limit-action"
+          aria-describedby="booklet-limit-hint"
+          disabled
+        />
+        <p id="booklet-limit-hint" class="limit-hint" data-test="booklet-limit-hint">
+          Vous avez atteint le maximum de {{ MAX_BOOKLETS }} livrets.
+          Supprimez-en un pour libérer un emplacement.
+        </p>
+      </div>
     </div>
 
     <div v-if="isLoadingBooklets" class="loading-container">
@@ -267,7 +280,7 @@ function formatAmount(amount: string) {
 
         <!-- Add New Card (if under limit) -->
         <div
-          v-if="data.length < 6"
+          v-if="!hasReachedLimit"
           class="booklet-card add-card"
           :class="{ 'disabled-card': isAnyBookletActionLoading }"
           @click="openBookletDialog"
@@ -277,7 +290,7 @@ function formatAmount(amount: string) {
               <i class="pi pi-plus" />
             </div>
             <span class="add-text">Ajouter un livret</span>
-            <span class="add-subtext">{{ 6 - data.length }} emplacement{{ 6 - data.length > 1 ? 's' : '' }} restant{{ 6 - data.length > 1 ? 's' : '' }}</span>
+            <span class="add-subtext">{{ remainingSlots }} emplacement{{ remainingSlots > 1 ? 's' : '' }} restant{{ remainingSlots > 1 ? 's' : '' }}</span>
           </div>
         </div>
       </div>
@@ -352,6 +365,32 @@ function formatAmount(amount: string) {
 
   @media (max-width: 768px) {
     width: 100%;
+  }
+}
+
+.limit-reached {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    align-items: stretch;
+  }
+}
+
+.limit-hint {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  text-align: right;
+
+  @media (max-width: 768px) {
+    text-align: left;
+    max-width: none;
   }
 }
 
