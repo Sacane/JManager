@@ -271,7 +271,7 @@ const currentDateRangeLabel = computed(() =>
   `${format(currentDateRange.value.start, 'dd MMM', { locale: fr })} - ${format(currentDateRange.value.end, 'dd MMM yyyy', { locale: fr })}`,
 )
 
-const monthlyExpenses = computed(() => {
+const periodExpenses = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
     return 0
   }
@@ -285,10 +285,10 @@ const currentPeriodDayCount = computed(() => countDaysInRange(currentDateRange.v
 
 // The average must follow the selected period: a quarter and a year do not span 30 days.
 const dailyExpenseAverage = computed(() =>
-  currentPeriodDayCount.value > 0 ? monthlyExpenses.value / currentPeriodDayCount.value : 0,
+  currentPeriodDayCount.value > 0 ? periodExpenses.value / currentPeriodDayCount.value : 0,
 )
 
-const monthlyIncome = computed(() => {
+const periodIncome = computed(() => {
   if (!trendStats.value?.monthlyTrends.length) {
     return 0
   }
@@ -323,7 +323,7 @@ const expensesGrowth = computed(() => {
     return 0
   }
 
-  return ((monthlyExpenses.value - previousPeriodExpenses.value) / previousPeriodExpenses.value * 100)
+  return ((periodExpenses.value - previousPeriodExpenses.value) / previousPeriodExpenses.value * 100)
 })
 
 const incomeGrowth = computed(() => {
@@ -331,11 +331,11 @@ const incomeGrowth = computed(() => {
     return 0
   }
 
-  return ((monthlyIncome.value - previousPeriodIncome.value) / previousPeriodIncome.value * 100)
+  return ((periodIncome.value - previousPeriodIncome.value) / previousPeriodIncome.value * 100)
 })
 
 const balanceGrowth = computed(() => {
-  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const currentBalance = periodIncome.value - periodExpenses.value
   const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
 
   if (previousBalance === 0) {
@@ -346,11 +346,11 @@ const balanceGrowth = computed(() => {
 })
 
 const savingsRate = computed(() => {
-  if (monthlyIncome.value === 0 || monthlyExpenses.value > monthlyIncome.value) {
+  if (periodIncome.value === 0 || periodExpenses.value > periodIncome.value) {
     return 0
   }
 
-  return ((monthlyIncome.value - monthlyExpenses.value) / monthlyIncome.value * 100)
+  return ((periodIncome.value - periodExpenses.value) / periodIncome.value * 100)
 })
 
 const upcomingRegularPayments = computed(() =>
@@ -398,10 +398,10 @@ const projectedRemainingExpenses = computed(() =>
 )
 
 const projectedPeriodExpenses = computed(() =>
-  monthlyExpenses.value + projectedRemainingExpenses.value,
+  periodExpenses.value + projectedRemainingExpenses.value,
 )
 
-const budgetDelta = computed(() => selectedBudgetTarget.value - monthlyExpenses.value)
+const budgetDelta = computed(() => selectedBudgetTarget.value - periodExpenses.value)
 
 const projectedBudgetDelta = computed(() => selectedBudgetTarget.value - projectedPeriodExpenses.value)
 
@@ -410,7 +410,7 @@ const budgetConsumptionRate = computed(() => {
     return 0
   }
 
-  return (monthlyExpenses.value / selectedBudgetTarget.value) * 100
+  return (periodExpenses.value / selectedBudgetTarget.value) * 100
 })
 
 const projectionPeriodEnded = computed(() => isAfter(new Date(), currentDateRange.value.end))
@@ -430,12 +430,12 @@ const projectedEndPeriodBalance = computed(() =>
 const dashboardAlerts = computed(() => {
   const alerts: Array<{ key: string, level: 'danger' | 'warning' | 'info', title: string, detail: string }> = []
 
-  if (monthlyExpenses.value > monthlyIncome.value && monthlyIncome.value > 0) {
+  if (periodExpenses.value > periodIncome.value && periodIncome.value > 0) {
     alerts.push({
       key: 'overspending',
       level: 'danger',
       title: 'Dépenses supérieures aux revenus',
-      detail: `Le déficit de la période est de ${(monthlyExpenses.value - monthlyIncome.value).toFixed(2)} €`,
+      detail: `Le déficit de la période est de ${(periodExpenses.value - periodIncome.value).toFixed(2)} €`,
     })
   }
 
@@ -789,7 +789,7 @@ const topTagsInsights = computed(() => {
 })
 
 const monthlyComparisonData = computed(() => {
-  const currentBalance = monthlyIncome.value - monthlyExpenses.value
+  const currentBalance = periodIncome.value - periodExpenses.value
   const previousBalance = previousPeriodIncome.value - previousPeriodExpenses.value
 
   return {
@@ -797,7 +797,7 @@ const monthlyComparisonData = computed(() => {
     datasets: [
       {
         label: 'Période active',
-        data: [monthlyIncome.value, monthlyExpenses.value, currentBalance],
+        data: [periodIncome.value, periodExpenses.value, currentBalance],
         backgroundColor: '#6508CC',
         borderRadius: 8,
       },
@@ -1359,7 +1359,7 @@ watch(selectedBookletId, () => {
               Dépenses {{ periodMetricLabel }}
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ monthlyExpenses.toFixed(2) }} €
+              {{ periodExpenses.toFixed(2) }} €
             </p>
             <p class="text-xs" style="color: var(--text-tertiary);" data-test="daily-expense-average">
               Moy. journalière: {{ dailyExpenseAverage.toFixed(2) }} €
@@ -1382,10 +1382,10 @@ watch(selectedBookletId, () => {
               Revenus {{ periodMetricLabel }}
             </h3>
             <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ monthlyIncome.toFixed(2) }} €
+              {{ periodIncome.toFixed(2) }} €
             </p>
             <p class="text-xs" style="color: var(--text-tertiary);">
-              Épargne: {{ (monthlyIncome - monthlyExpenses).toFixed(2) }} €
+              Épargne: {{ (periodIncome - periodExpenses).toFixed(2) }} €
             </p>
           </div>
         </div>
@@ -1821,7 +1821,7 @@ watch(selectedBookletId, () => {
                 Dépenses consommées
               </p>
               <p class="text-lg font-bold m-0 mt-1" style="color: var(--text-primary);">
-                {{ monthlyExpenses.toFixed(2) }} €
+                {{ periodExpenses.toFixed(2) }} €
               </p>
             </div>
             <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
