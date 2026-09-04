@@ -4,14 +4,14 @@
 > Branche : `fix/ux-lot-3-conformite`.
 > Ce document est **complété à chaque poussée**, pas à la fin du lot.
 
-**Avancement** — 3 items sur 9 livrés.
+**Avancement** — 4 items sur 9 livrés.
 
 | Item | Statut |
 |---|---|
 | UX-46 · autocomplete sur les formulaires d'auth | ✅ à valider |
 | UX-48 · e-mail conservé à la bascule | ✅ à valider |
 | UX-49 · liens légaux sur la connexion | ✅ à valider |
-| UX-47 · champ mot de passe partagé | 🚧 en cours |
+| UX-47 · champ mot de passe partagé | ✅ à valider |
 | UX-45 · limite de 6 livrets | ⏳ |
 | UX-43 · accueil dashboard vide | ⏳ |
 | UX-17 · confirmation forte de suppression | ⏳ |
@@ -103,23 +103,68 @@ Ouvrir `/login`, puis les DevTools → Elements.
 
 ---
 
-## 4. Régressions à surveiller
+## 4. Champ mot de passe partagé — UX-47
+
+Sept champs sur trois pages passent désormais par le même composant. **Chacun doit être vérifié**,
+parce que chaque page l'appelle avec des options différentes.
+
+### 4a. Le contrôle lui-même
+
+Sur `/login`, champ « Mot de passe » :
+
+| # | Action | Attendu |
+|---|---|---|
+| 4.1 | Saisir un mot de passe | Il s'affiche masqué (points) |
+| 4.2 | Cliquer l'icône œil à droite du champ | ⚠️ Le mot de passe devient **lisible en clair**, l'icône passe en œil barré |
+| 4.3 | Cliquer à nouveau | Il redevient masqué |
+| 4.4 | Saisir un mot de passe **très long** | Le texte ne passe **pas sous l'icône** |
+| 4.5 | Cliquer l'icône alors que le formulaire est rempli | ⚠️ Le formulaire **n'est pas soumis** — le bouton est un `type="button"` |
+| 4.6 | Survoler l'icône | Une infobulle indique l'action (« Afficher » / « Masquer ») |
+| 4.7 | Au clavier : `Tab` jusqu'à l'icône, `Entrée` | La bascule fonctionne, l'anneau de focus est visible |
+
+### 4b. Les sept champs, page par page
+
+| # | Écran | Champs à vérifier | Attendu |
+|---|---|---|---|
+| 4.8 | `/login` connexion | Mot de passe | Icône présente et fonctionnelle |
+| 4.9 | `/login` inscription | Mot de passe + Confirmation | Les deux ont leur icône, **indépendantes l'une de l'autre** |
+| 4.10 | Paramètres → Changer le mot de passe | Actuel, Nouveau, Confirmer | Les trois ont leur icône |
+| 4.11 | Écran de changement forcé | Nouveau, Confirmer | Les deux ont leur icône |
+
+### 4c. Ce qui ne doit pas avoir régressé
 
 | # | Vérification | Pourquoi |
 |---|---|---|
-| 4.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
-| 4.2 | Créer un compte de bout en bout | Idem |
-| 4.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
-| 4.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
-| 4.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
+| 4.12 | ⚠️ Dans les **Paramètres**, comparer visuellement les 3 champs mot de passe avec le champ « Fenêtre de projection » juste au-dessus | Les mots de passe sont maintenant rendus par le composant ; leur style scoped a dû être étendu avec `:deep()`. **S'ils ne se ressemblent plus, c'est un défaut à signaler** |
+| 4.13 | Refaire le parcours 1a (autocomplete) sur les 4 champs de mot de passe | Les valeurs doivent avoir survécu à l'encapsulation |
+| 4.14 | Changer réellement son mot de passe depuis les Paramètres | La liaison de valeur passe par le composant |
+| 4.15 | Se connecter réellement | Idem |
+| 4.16 | Sur l'écran de changement forcé, saisir deux mots de passe différents | Le message d'erreur s'affiche toujours |
+| 4.17 | Mobile 375 px, sur les 4 écrans | L'icône reste dans le champ, rien ne déborde |
+
+---
+
+## 5. Régressions à surveiller
+
+| # | Vérification | Pourquoi |
+|---|---|---|
+| 5.1 | Se connecter normalement | `login.vue` a été modifié en profondeur |
+| 5.2 | Créer un compte de bout en bout | Idem |
+| 5.3 | Vérifier que les cases CGU / Confidentialité bloquent toujours l'inscription tant qu'elles ne sont pas cochées | Les liens légaux ont été ajoutés à côté |
+| 5.4 | Saisir des identifiants faux | Le message « Identifiants incorrects » s'affiche toujours |
+| 5.5 | Vérifier que le lien « S'inscrire » **disparaît** quand le flag est désactivé | Le `FeatureGate` n'a pas été touché, mais la zone alentour si |
 
 ---
 
 ## Ce que la suite automatisée couvre déjà
 
 Les 6 valeurs d'`autocomplete`, le report de l'e-mail dans les deux sens, le non-report des mots de
-passe, le non-écrasement par un e-mail vide, et la présence des deux liens légaux dans les deux
-modes. **21 tests sur `login.vue`.**
+passe, le non-écrasement par un e-mail vide, la présence des deux liens légaux dans les deux modes
+(**21 tests sur `login.vue`**), la bascule du type de champ, le nom accessible du contrôle, le
+`type="button"`, la liaison de valeur, le relais de `id` / `autocomplete` / `maxlength`, l'état
+désactivé et le slot d'extension (**11 tests sur `PasswordField`**).
 
 Ce qu'elle **ne peut pas** couvrir, et qui justifie ce document : le comportement réel du
-gestionnaire de mots de passe du navigateur (parcours 1b), et le rendu du pied de carte.
+gestionnaire de mots de passe du navigateur (1b), le rendu du pied de carte (3.6, 3.7), et surtout
+**l'apparence des champs mot de passe des Paramètres** (4.12) — leur style scoped a dû être étendu
+avec `:deep()` pour atteindre l'input rendu par le composant enfant, ce qu'aucun test ne vérifie.
