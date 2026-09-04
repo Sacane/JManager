@@ -99,6 +99,7 @@ vi.stubGlobal('useAuth', vi.fn(() => ({
   isAuthenticated: ref(false),
   login: vi.fn(),
   logout: vi.fn(),
+  deleteAccount: vi.fn(),
   register: vi.fn(),
   isAdmin: ref(false),
   tryRefresh: vi.fn(),

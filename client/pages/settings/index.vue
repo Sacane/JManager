@@ -4,6 +4,7 @@ import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
 
+const { user, deleteAccount } = useAuth()
 const { emailVerified, userEmail } = useConsent()
 const { resendVerificationEmail, isResending, isResendOnCooldown, resendCooldown } = useEmailVerification()
 
@@ -156,6 +157,28 @@ function confirmLeavingUnsavedSettings(): Promise<boolean> {
   })
 }
 
+// GDPR right to erasure. The privacy policy and the consent screen both promise this can be
+// exercised from the settings; until now nothing here did (UX-13).
+const isDeleteAccountDialogVisible = ref(false)
+const isDeletingAccount = ref(false)
+const accountUsername = computed(() => user.value?.username ?? '')
+const accountEmail = computed(() => user.value?.email ?? userEmail.value ?? '')
+
+async function confirmAccountDeletion() {
+  isDeletingAccount.value = true
+  try {
+    const deleted = await deleteAccount()
+    if (deleted) {
+      isDeleteAccountDialogVisible.value = false
+      return
+    }
+    // The session is still valid, so the dialog stays open on the pending confirmation.
+    toast.error('Impossible de supprimer le compte. Veuillez réessayer.')
+  } finally {
+    isDeletingAccount.value = false
+  }
+}
+
 onBeforeRouteLeave(() => {
   if (!hasUnsavedSettings.value) return true
 
@@ -258,6 +281,52 @@ onMounted(() => {
       </section>
     </div>
 
+    <section class="settings-card" data-test="account-section">
+      <h2>Mon compte</h2>
+      <p class="settings-help">
+        Les informations rattachées à votre compte, et la suppression définitive de celui-ci.
+      </p>
+
+      <dl class="account-identity">
+        <div class="account-field">
+          <dt class="settings-label">
+            Nom d'utilisateur
+          </dt>
+          <dd class="account-value">
+            {{ accountUsername }}
+          </dd>
+        </div>
+        <div class="account-field">
+          <dt class="settings-label">
+            Adresse e-mail
+          </dt>
+          <dd class="account-value">
+            {{ accountEmail || 'Non renseignée' }}
+          </dd>
+        </div>
+      </dl>
+
+      <div class="danger-zone">
+        <div class="danger-zone-text">
+          <p class="danger-zone-title">
+            Supprimer mon compte
+          </p>
+          <p class="danger-zone-help">
+            Votre compte, vos livrets, vos transactions et vos tags personnels seront
+            définitivement effacés. Cette action est irréversible.
+          </p>
+        </div>
+        <button
+          class="danger-btn"
+          type="button"
+          data-test="open-delete-account"
+          @click="isDeleteAccountDialogVisible = true"
+        >
+          Supprimer mon compte
+        </button>
+      </div>
+    </section>
+
     <section class="settings-card" data-test="change-password-section">
       <h2>Changer le mot de passe</h2>
       <p class="settings-help">
@@ -348,6 +417,18 @@ onMounted(() => {
         <span v-else>Vérifier mon e-mail</span>
       </button>
     </section>
+
+    <ConfirmByTypingDialog
+      v-model:visible="isDeleteAccountDialogVisible"
+      header="Supprimer définitivement mon compte ?"
+      :confirmation-word="accountUsername"
+      confirm-label="Supprimer mon compte"
+      :loading="isDeletingAccount"
+      @confirm="confirmAccountDeletion"
+    >
+      Cette action est <strong>irréversible</strong>. Votre compte, vos livrets, toutes vos
+      transactions et vos tags personnels seront définitivement effacés.
+    </ConfirmByTypingDialog>
 
     <div class="actions">
       <span v-if="hasUnsavedSettings" class="actions-hint">
@@ -517,6 +598,69 @@ onMounted(() => {
   border: 1px dashed var(--border-color);
   border-radius: 0.7rem;
   padding: 0.8rem;
+}
+
+.account-identity {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.7rem;
+  background-color: var(--bg-tertiary);
+}
+
+.account-value {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--danger);
+  border-radius: 0.8rem;
+  background-color: var(--danger-soft);
+}
+
+.danger-zone-title {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.danger-zone-help {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  max-width: 34rem;
+}
+
+.danger-btn {
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.danger-btn:hover {
+  filter: brightness(1.1);
 }
 
 .actions {

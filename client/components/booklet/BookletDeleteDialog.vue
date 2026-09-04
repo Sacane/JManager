@@ -22,88 +22,27 @@ const emit = defineEmits<{
   'confirm': []
 }>()
 
-const typedLabel = ref('')
-
-function normalize(value: string): string {
-  return value.trim().toLocaleLowerCase('fr-FR')
-}
-
-const matchesLabel = computed(() => normalize(typedLabel.value) === normalize(props.label))
 const knowsTransactionCount = computed(() => props.transactionCount > 0)
-
-// Reopening the dialog must not inherit what was typed for a previous booklet.
-watch(() => props.visible, (isVisible) => {
-  if (isVisible) typedLabel.value = ''
-})
-
-function cancel(): void {
-  emit('update:visible', false)
-}
-
-function confirm(): void {
-  if (!matchesLabel.value || props.loading) return
-  emit('confirm')
-}
 </script>
 
 <template>
-  <Dialog
+  <ConfirmByTypingDialog
     :visible="props.visible"
-    modal
     header="Supprimer ce livret ?"
-    :style="{ width: '30rem' }"
-    :breakpoints="{ '575px': '90vw' }"
-    :draggable="false"
-    :closable="!props.loading"
+    :confirmation-word="props.label"
+    confirm-label="Supprimer définitivement"
+    :loading="props.loading"
     @update:visible="emit('update:visible', $event)"
+    @confirm="emit('confirm')"
   >
-    <div class="flex flex-col gap-4 py-2">
-      <p class="m-0 body-base">
-        <template v-if="knowsTransactionCount">
-          Cette action est <strong>irréversible</strong> et supprimera définitivement
-          <strong>{{ props.transactionCount }} transaction{{ props.transactionCount > 1 ? 's' : '' }}</strong>
-          enregistrée{{ props.transactionCount > 1 ? 's' : '' }} sur ce livret.
-        </template>
-        <template v-else>
-          Cette action est <strong>irréversible</strong> et supprimera définitivement
-          <strong>toutes ses transactions</strong> enregistrées.
-        </template>
-      </p>
-
-      <div class="flex flex-col gap-2">
-        <label for="confirm-booklet-label" class="text-label">
-          Saisissez <strong>{{ props.label }}</strong> pour confirmer
-        </label>
-        <InputText
-          id="confirm-booklet-label"
-          v-model="typedLabel"
-          data-test="confirm-label-input"
-          autocomplete="off"
-          :disabled="props.loading"
-          maxlength="100"
-        />
-      </div>
-    </div>
-
-    <template #footer>
-      <Button
-        label="Annuler"
-        icon="pi pi-times"
-        severity="secondary"
-        outlined
-        data-test="cancel-delete-booklet"
-        :disabled="props.loading"
-        @click="cancel"
-      />
-      <Button
-        label="Supprimer définitivement"
-        icon="pi pi-trash"
-        severity="danger"
-        data-test="confirm-delete-booklet"
-        :disabled="!matchesLabel"
-        :loading="props.loading"
-        @click="confirm"
-      />
+    <template v-if="knowsTransactionCount">
+      Cette action est <strong>irréversible</strong> et supprimera définitivement
+      <strong>{{ props.transactionCount }} transaction{{ props.transactionCount > 1 ? 's' : '' }}</strong>
+      enregistrée{{ props.transactionCount > 1 ? 's' : '' }} sur ce livret.
     </template>
-  </Dialog>
+    <template v-else>
+      Cette action est <strong>irréversible</strong> et supprimera définitivement
+      <strong>toutes ses transactions</strong> enregistrées.
+    </template>
+  </ConfirmByTypingDialog>
 </template>
