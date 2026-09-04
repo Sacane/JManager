@@ -12,9 +12,20 @@ function blocksFor(selector: RegExp): string[] {
   return [...css.matchAll(selector)].map(match => match[1] ?? '')
 }
 
-function readToken(block: string, name: string): string | null {
+/**
+ * Reads a token, following a `var(--other)` alias within the same theme block. The money
+ * tokens alias the status ones so the two cannot drift apart, and the contrast checks below
+ * must still see a real colour.
+ */
+function readToken(block: string, name: string, depth = 0): string | null {
   const match = block.match(new RegExp(`--${name}:\\s*([^;]+);`))
-  return match ? match[1]!.trim() : null
+  if (!match) return null
+
+  const value = match[1]!.trim()
+  const alias = value.match(/^var\(--([\w-]+)\)$/)
+  if (alias && depth < 5) return readToken(block, alias[1]!, depth + 1)
+
+  return value
 }
 
 // The brand palette comes first, the semantic aliases second — the tokens live in the latter.
@@ -33,6 +44,14 @@ describe('design tokens — semantic colours', () => {
   it('resolves both theme blocks', () => {
     expect(light).toContain('--primary:')
     expect(dark).toContain('--bg-primary:')
+  })
+
+  // Aliasing rather than duplicating is what makes switching the money convention a one-line
+  // change instead of a sweep across the screens.
+  it.each(['income', 'expense'])('aliases --%s on a status colour rather than duplicating it', (token) => {
+    for (const { block } of THEMES) {
+      expect(block).toMatch(new RegExp(`--${token}:\\s*var\\(--\\w+\\);`))
+    }
   })
 
   it('resolves the card backgrounds the contrast checks assume', () => {

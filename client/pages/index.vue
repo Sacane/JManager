@@ -296,10 +296,10 @@ function cssColor(name: string, fallback: string): string {
 const chartPalette = computed(() => {
   void activeColorScheme.value
   return {
-    income: cssColor('--income', '#006EA3'),
-    incomeSoft: cssColor('--income-soft', 'rgba(0, 110, 163, 0.12)'),
-    expense: cssColor('--expense', '#A30053'),
-    expenseSoft: cssColor('--expense-soft', 'rgba(163, 0, 83, 0.12)'),
+    income: cssColor('--income', '#047857'),
+    incomeSoft: cssColor('--income-soft', 'rgba(4, 120, 87, 0.12)'),
+    expense: cssColor('--expense', '#BF0638'),
+    expenseSoft: cssColor('--expense-soft', 'rgba(191, 6, 56, 0.12)'),
   }
 })
 
