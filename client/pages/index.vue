@@ -281,6 +281,28 @@ const periodExpenses = computed(() => {
   )
 })
 
+// Chart.js needs resolved colour values, so the money tokens cannot be handed to it as
+// `var(--income)`. Reading them from the document keeps the datasets on the same colour code
+// as the rest of the UI, and depending on the active scheme re-resolves them when the theme
+// changes — until now the chart colours were hardcoded and identical in both themes.
+const { value: activeColorScheme } = useDark()
+
+function cssColor(name: string, fallback: string): string {
+  if (typeof window === 'undefined') return fallback
+  const resolved = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return resolved || fallback
+}
+
+const chartPalette = computed(() => {
+  void activeColorScheme.value
+  return {
+    income: cssColor('--income', '#047857'),
+    incomeSoft: cssColor('--income-soft', 'rgba(4, 120, 87, 0.12)'),
+    expense: cssColor('--expense', '#BF0638'),
+    expenseSoft: cssColor('--expense-soft', 'rgba(191, 6, 56, 0.12)'),
+  }
+})
+
 const currentPeriodDayCount = computed(() => countDaysInRange(currentDateRange.value))
 
 // The average must follow the selected period: a quarter and a year do not span 30 days.
@@ -490,16 +512,16 @@ const expensesTrendData = computed(() => {
         {
           label: 'Dépenses',
           data: trends.map(t => Number.parseFloat(t.expenses)),
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderColor: chartPalette.value.expense,
+          backgroundColor: chartPalette.value.expenseSoft,
           tension: 0.4,
           fill: true,
         },
         {
           label: 'Revenus',
           data: trends.map(t => Number.parseFloat(t.income)),
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderColor: chartPalette.value.income,
+          backgroundColor: chartPalette.value.incomeSoft,
           tension: 0.4,
           fill: true,
         },
@@ -539,16 +561,16 @@ const expensesTrendData = computed(() => {
       {
         label: 'Dépenses',
         data: sortedTrends.map(trend => Number.parseFloat(trend.expenses)),
-        borderColor: '#ef4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderColor: chartPalette.value.expense,
+        backgroundColor: chartPalette.value.expenseSoft,
         tension: 0.4,
         fill: true,
       },
       {
         label: 'Revenus',
         data: sortedTrends.map(trend => Number.parseFloat(trend.income)),
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: chartPalette.value.income,
+        backgroundColor: chartPalette.value.incomeSoft,
         tension: 0.4,
         fill: true,
       },
@@ -1277,15 +1299,15 @@ watch(selectedBookletId, () => {
 </script>
 
 <template>
-  <div class="w-full min-h-screen p-5 relative" style="background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);">
+  <div class="page-shell w-full relative">
     <!-- Header Section -->
     <div>
       <div class="flex justify-between items-center flex-wrap gap-5">
         <div>
-          <h1 class="text-4xl font-extrabold mb-2" style="color: var(--text-primary);">
+          <h1 class="page-heading mb-2">
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
-          <p class="text-base" style="color: var(--text-secondary);">
+          <p class="page-subheading">
             Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label || 'Tous les comptes' }}
           </p>
           <div class="flex items-center gap-2.5 mt-3 flex-wrap">
@@ -1295,10 +1317,10 @@ watch(selectedBookletId, () => {
             <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
               À venir {{ projectionWindowLabel }}: {{ totalPrevisionalTransactions }} transaction(s)
             </span>
-            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
               Solde prévisionnel court terme: {{ totalUpcomingNet.toFixed(2) }} €
             </span>
-            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedBookletBalance ? 'text-green-500' : 'text-red-500'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
+            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedBookletBalance ? 'text-[var(--success)]' : 'text-[var(--danger)]'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
               Projection fin de période:
               {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
             </span>
@@ -1345,12 +1367,12 @@ watch(selectedBookletId, () => {
     <div v-else class="relative z-1 pb-10">
       <!-- KPI Cards -->
       <section ref="overviewRef" class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)]">
               <i class="pi pi-wallet" />
             </div>
-            <span v-if="balanceGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="balanceGrowth > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
+            <span v-if="balanceGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="balanceGrowth > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
               <i :class="balanceGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(balanceGrowth).toFixed(1) }}%
             </span>
@@ -1368,12 +1390,12 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-red-500 to-red-600">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--expense)]">
               <i class="pi pi-arrow-down" />
             </div>
-            <span v-if="expensesGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="expensesGrowth > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'">
+            <span v-if="expensesGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="expensesGrowth > 0 ? 'bg-[var(--danger-soft)] text-[var(--danger)]' : 'bg-[var(--success-soft)] text-[var(--success)]'">
               <i :class="expensesGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(expensesGrowth).toFixed(1) }}%
             </span>
@@ -1391,12 +1413,12 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-green-500 to-green-600">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--income)]">
               <i class="pi pi-arrow-up" />
             </div>
-            <span v-if="incomeGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="incomeGrowth > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
+            <span v-if="incomeGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="incomeGrowth > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
               <i :class="incomeGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(incomeGrowth).toFixed(1) }}%
             </span>
@@ -1414,12 +1436,12 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-yellow-400 to-yellow-500">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--warning)]">
               <i class="pi pi-chart-line" />
             </div>
-            <span v-if="savingsRate !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="savingsRate > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'">
+            <span v-if="savingsRate !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="savingsRate > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
               <i :class="savingsRate > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
               {{ Math.abs(savingsRate).toFixed(1) }}%
             </span>
@@ -1440,7 +1462,7 @@ watch(selectedBookletId, () => {
 
       <!-- Charts Section -->
       <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
-        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
+        <div class="stat-card col-span-full">
           <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
@@ -1466,7 +1488,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg col-span-full" style="background-color: var(--card-bg);">
+        <div class="stat-card col-span-full">
           <div class="flex flex-col gap-6">
             <div class="flex flex-col sm:flex-row gap-6">
               <div class="flex-1 flex flex-col" :class="secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2'">
@@ -1546,7 +1568,7 @@ watch(selectedBookletId, () => {
                         </p>
                       </div>
                     </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')">
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-[var(--danger-soft)] text-[var(--danger)]' : 'bg-[var(--success-soft)] text-[var(--success)]')">
                       {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
                     </span>
                   </div>
@@ -1556,7 +1578,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
@@ -1585,7 +1607,7 @@ watch(selectedBookletId, () => {
 
       <!-- Quick Actions & Info Section -->
       <section class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 mb-8">
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
             <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-book text-purple-600" />
@@ -1644,7 +1666,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
             <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-calendar text-purple-600" />
@@ -1680,7 +1702,7 @@ watch(selectedBookletId, () => {
                 </div>
                 <div v-else class="flex flex-col gap-2">
                   <div v-for="payment in upcomingRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
-                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
                       <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
                     </div>
                     <div class="flex-1">
@@ -1691,7 +1713,7 @@ watch(selectedBookletId, () => {
                         {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Régulière</span>
                       </p>
                     </div>
-                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
+                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-[var(--expense)]' : 'text-[var(--income)]'">
                       {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
                     </p>
                   </div>
@@ -1712,7 +1734,7 @@ watch(selectedBookletId, () => {
                 </div>
                 <div v-else class="flex flex-col gap-2">
                   <div v-for="payment in upcomingNonRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
-                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-gradient-to-br from-red-500 to-red-600' : 'bg-gradient-to-br from-green-500 to-green-600'">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
                       <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
                     </div>
                     <div class="flex-1">
@@ -1723,7 +1745,7 @@ watch(selectedBookletId, () => {
                         {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Non régulière</span>
                       </p>
                     </div>
-                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-red-500' : 'text-green-500'">
+                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-[var(--expense)]' : 'text-[var(--income)]'">
                       {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
                     </p>
                   </div>
@@ -1737,7 +1759,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
             <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
               <i class="pi pi-tags text-purple-600" />
@@ -1772,7 +1794,7 @@ watch(selectedBookletId, () => {
                 <i class="pi pi-tag" />
                 {{ tag.label }}
               </div>
-              <button v-if="tags.length > 6" class="px-4 py-2 bg-yellow-400/10 border-2 border-yellow-400 rounded-full text-yellow-600 text-xs font-semibold cursor-pointer transition-all hover:bg-yellow-400/20 hover:-translate-y-0.5" @click="navigateTo('/tag')">
+              <button v-if="tags.length > 6" class="px-4 py-2 bg-[var(--warning-soft)] border-2 border-[var(--warning)] rounded-full text-[var(--warning)] text-xs font-semibold cursor-pointer transition-all hover:brightness-95 hover:-translate-y-0.5" @click="navigateTo('/tag')">
                 +{{ tags.length - 6 }} autres
               </button>
             </div>
@@ -1781,7 +1803,7 @@ watch(selectedBookletId, () => {
       </section>
 
       <section class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8">
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
               <i class="pi pi-bell text-orange-500" />
@@ -1796,7 +1818,7 @@ watch(selectedBookletId, () => {
             Aucun signal particulier sur cette période
           </div>
           <div v-else class="flex flex-col gap-3">
-            <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-red-500/8 border-red-500/25' : (alert.level === 'warning' ? 'bg-yellow-500/10 border-yellow-500/25' : 'bg-blue-500/8 border-blue-500/25')">
+            <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-[var(--danger-soft)] border-[var(--danger)]/30' : (alert.level === 'warning' ? 'bg-[var(--warning-soft)] border-[var(--warning)]/30' : 'bg-[var(--info-soft)] border-[var(--info)]/30')">
               <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
                 {{ alert.title }}
               </p>
@@ -1807,7 +1829,7 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <h2 class="text-lg font-bold m-0 mb-4 flex items-center gap-2" style="color: var(--text-primary);">
             <i class="pi pi-bolt text-purple-600" />
             Actions rapides
@@ -1828,13 +1850,13 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="rounded-2xl p-6 shadow-lg" style="background-color: var(--card-bg);">
+        <div class="stat-card">
           <div class="flex items-center justify-between mb-4 gap-3">
             <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
-              <i class="pi pi-euro text-green-500" />
+              <i class="pi pi-euro text-[var(--success)]" />
               Budget du compte
             </h2>
-            <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="!isBudgetConfigured ? 'bg-gray-500/10 text-gray-500' : (projectedBudgetDelta >= 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500')">
+            <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="!isBudgetConfigured ? 'bg-gray-500/10 text-gray-500' : (projectedBudgetDelta >= 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]')">
               {{ !isBudgetConfigured ? 'Non configuré' : (projectedBudgetDelta >= 0 ? 'Dans le budget' : 'Dépassement') }}
             </span>
           </div>
@@ -1874,7 +1896,7 @@ watch(selectedBookletId, () => {
               <p class="text-xs m-0" style="color: var(--text-secondary);">
                 Reste budget
               </p>
-              <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+              <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
                 {{ isBudgetConfigured ? `${budgetDelta.toFixed(2)} €` : 'N/A' }}
               </p>
             </div>
@@ -1882,7 +1904,7 @@ watch(selectedBookletId, () => {
               <p class="text-xs m-0" style="color: var(--text-secondary);">
                 Projection budget
               </p>
-              <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-green-500' : 'text-red-500'">
+              <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
                 {{ isBudgetConfigured ? `${projectedBudgetDelta.toFixed(2)} €` : 'N/A' }}
               </p>
             </div>
@@ -1895,7 +1917,7 @@ watch(selectedBookletId, () => {
       </section>
 
       <!-- Quick Stats Banner -->
-      <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 p-6 rounded-2xl shadow-lg mb-5" style="background-color: var(--card-bg);">
+      <section class="stat-card grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 mb-5">
         <div class="flex items-center gap-4">
           <i class="pi pi-calendar-plus text-4xl text-purple-600" />
           <div>

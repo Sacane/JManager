@@ -38,9 +38,34 @@ export default defineConfig({
     ['btn-outline-primary', 'btn border-[var(--primary)] text-[var(--primary)] bg-transparent hover:bg-[rgba(101,8,204,0.07)]'],
     ['icon-btn', 'inline-flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer select-none opacity-70 hover:opacity-100 hover:text-[var(--primary)] dark:hover:text-[var(--primary-lighter)] transition-all duration-200'],
 
+    // --- Page shell ---
+    // Four pages used to declare their own frame and header, which drifted into four page-title
+    // sizes and three padding scales. Anything page-level goes through these (UX-30).
+    // `page-heading` deliberately sits above `heading-1`: a page has one title, larger than the
+    // section headings inside it.
+    ['page-shell', 'min-h-screen mx-auto p-4 md:p-8 bg-gradient-to-br from-[var(--bg-gradient-from)] to-[var(--bg-gradient-to)]'],
+    ['page-header', 'flex items-start justify-between gap-4 flex-wrap mb-8'],
+    ['page-heading', 'text-3xl md:text-4xl font-extrabold leading-tight tracking-tight text-[var(--text-primary)] m-0'],
+    ['page-subheading', 'text-base font-normal leading-relaxed text-[var(--text-secondary)] m-0'],
+
     // --- Cards ---
     ['card', 'rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm'],
+    ['stat-card', 'card p-6'],
     ['card-hover', 'card transition-all duration-200 hover:shadow-md hover:-translate-y-0.5'],
+
+    // --- Money ---
+    // Income/expense colouring goes through these, never through a raw palette class:
+    // the tokens carry a verified >= 4.5:1 contrast in both themes (see UX-11).
+    ['amount', 'font-semibold tabular-nums'],
+    ['amount-positive', 'amount text-[var(--income)]'],
+    ['amount-negative', 'amount text-[var(--expense)]'],
+    ['amount-neutral', 'amount text-[var(--text-tertiary)]'],
+
+    // --- Status ---
+    ['text-success', 'text-[var(--success)]'],
+    ['text-danger', 'text-[var(--danger)]'],
+    ['text-warning', 'text-[var(--warning)]'],
+    ['text-info', 'text-[var(--info)]'],
 
     // --- Surfaces ---
     ['surface-page', 'bg-[var(--bg-primary)]'],

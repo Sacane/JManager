@@ -23,6 +23,23 @@ describe('layouts/centercard', () => {
     expect(wrapper.find('.page-body').text()).toBe('Contenu')
   })
 
+  // w-100 is a fixed 25rem with no upper bound, so on a 375px phone the card was wider than the
+  // screen and the four onboarding screens scrolled sideways — see UX-33.
+  it('caps the card width against the viewport', () => {
+    const wrapper = mountLayout()
+    const card = wrapper.find('.page-body').element.parentElement!
+
+    expect(card.className).toMatch(/max-w-\[calc\(100vw-2rem\)\]/)
+  })
+
+  it('keeps the responsive widths for wider screens', () => {
+    const wrapper = mountLayout()
+    const card = wrapper.find('.page-body').element.parentElement!
+
+    expect(card.className).toContain('sm:w-125')
+    expect(card.className).toContain('lg:w-170')
+  })
+
   it('offers a way back by default', () => {
     const wrapper = mountLayout()
 

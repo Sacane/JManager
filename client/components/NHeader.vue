@@ -1,23 +1,21 @@
 <script lang="ts" setup>
 const { isDark, toggle } = useDark()
-const { t } = useCustomI18n()
+
+const themeToggleLabel = computed(() =>
+  isDark.value ? 'Passer au thème clair' : 'Passer au thème sombre',
+)
 </script>
 
 <template>
-  <header class="p-5 w-full flex-center flex-row justify-between absolute">
-    <p class="text-8 font-text">
-      <ClientOnly>
-        {{ isDark ? t('theme.dark') : t('theme.light') }}
-        <template #fallback>
-          ...
-        </template>
-      </ClientOnly>
-    </p>
-    <div class="flex flex-row gap-2">
-      <LocaleSwitch />
-      <button class="icon-btn text-5" @click="toggle()">
-        <div i="tabler-sun dark:tabler-moon" />
-      </button>
-    </div>
+  <header class="p-5 w-full flex items-center flex-row justify-end gap-2 absolute">
+    <LocaleSwitch />
+    <button
+      class="icon-btn text-5"
+      type="button"
+      :aria-label="themeToggleLabel"
+      @click="toggle()"
+    >
+      <div i="tabler-sun dark:tabler-moon" />
+    </button>
   </header>
 </template>

@@ -183,17 +183,17 @@ function isKeyToggling(key: FeatureKey): boolean {
 </script>
 
 <template>
-  <div class="admin-page">
+  <div class="page-shell max-w-[1400px]">
     <div class="page-header">
       <div class="header-content">
         <div class="header-icon">
           <i class="pi pi-shield" />
         </div>
         <div>
-          <h1 class="page-title">
+          <h1 class="page-heading">
             Console d'administration
           </h1>
-          <p class="page-subtitle">
+          <p class="page-subheading">
             Gestion des comptes utilisateurs et des fonctionnalités
           </p>
         </div>
@@ -520,53 +520,6 @@ function isKeyToggling(key: FeatureKey): boolean {
 </template>
 
 <style scoped lang="scss">
-.admin-page {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: 100vh;
-  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
-}
-
-.page-header {
-  margin-bottom: 2rem;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-
-  .header-content {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-  }
-
-  .header-icon {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2rem;
-    box-shadow: 0 8px 24px var(--shadow-purple);
-  }
-
-  .page-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-primary);
-  }
-
-  .page-subtitle {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    margin: 0.5rem 0 0 0;
-  }
-}
-
 // ── Tabs shell ───────────────────────────────────────────────────────────────
 
 .admin-tabs-wrapper {
@@ -1027,10 +980,6 @@ function isKeyToggling(key: FeatureKey): boolean {
 }
 
 @media (max-width: 768px) {
-  .admin-page {
-    padding: 1rem;
-  }
-
   .page-header {
     margin-bottom: 1.5rem;
 
@@ -1044,14 +993,6 @@ function isKeyToggling(key: FeatureKey): boolean {
       width: 48px;
       height: 48px;
       font-size: 1.5rem;
-    }
-
-    .page-title {
-      font-size: 1.75rem;
-    }
-
-    .page-subtitle {
-      font-size: 0.95rem;
     }
   }
 

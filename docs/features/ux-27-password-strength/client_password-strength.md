@@ -39,6 +39,10 @@ Scenario: 5. A weak password blocks submission
 
 **Notes**
 - Files: `pages/login.vue`, `pages/settings/index.vue`, `pages/force-password-change.vue`, plus a shared password field component.
-- The rules must mirror the backend policy; align with the admin console hint, which currently states a weaker minimum of 6 characters.
+- The rules must mirror the backend policy; align with the admin console hint, which currently
+  states a weaker minimum of 6 characters.
+- One backend rule is currently invisible to the user: `ChangePasswordService` rejects a new
+  password identical to the current one (PASSWORD_UNCHANGED). It must appear in the displayed
+  rules, not only in the error returned after submitting.
 - Combine with UX-21 for the reset screen.
 - Priority P1 - Effort M - Frontend only.

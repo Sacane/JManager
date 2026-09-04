@@ -67,6 +67,36 @@
   --border-color:  #e2e8f0;
   --border-light:  #f1f5f9;
 
+  /* ================================================================
+     Semantic status colours.
+     Every value is verified at >= 4.5:1 against its own theme's --card-bg
+     (WCAG AA for normal text) by tests/unit/design-tokens.spec.ts. The raw brand
+     colours do not reach that on white — --color-brand-red is 3.90:1 — so these are
+     shades and tints of the brand palette rather than the brand values themselves.
+     --success is the one functional colour outside the brand palette: the identity
+     holds no green, and green-for-success is too strong a convention to drop.
+     ================================================================ */
+
+  --success:  #047857;  /* 5.48:1 */
+  --danger:   #BF0638;  /* brand red, 25% shade — 6.37:1 */
+  --warning:  #8C6A04;  /* brand amber, 45% shade — 5.03:1 */
+  --info:     #006EA3;  /* brand blue-dark — 5.59:1 */
+
+  /* Money direction follows the finance convention: income green, expense red. Aliased on the
+     status colours rather than duplicated, so the two can never drift apart — and so switching
+     the convention later is a one-line change here instead of a sweep across the screens. */
+  --income:   var(--success);
+  --expense:  var(--danger);
+
+  /* Soft surfaces for badges and alert panels. Alpha is applied here rather than through a
+     `/10` utility: the tokens above are plain hex, so UnoCSS cannot derive an alpha from them. */
+  --success-soft: rgba(4, 120, 87, 0.12);
+  --danger-soft:  rgba(191, 6, 56, 0.12);
+  --warning-soft: rgba(140, 106, 4, 0.12);
+  --info-soft:    rgba(0, 110, 163, 0.12);
+  --income-soft:  var(--success-soft);
+  --expense-soft: var(--danger-soft);
+
   /* Shadows */
   --shadow-sm:      rgba(0, 0, 0, 0.05);
   --shadow-md:      rgba(0, 0, 0, 0.08);
@@ -96,6 +126,23 @@
   /* Borders */
   --border-color:  #334155;
   --border-light:  #475569;
+
+  /* Semantic status colours — verified at >= 4.5:1 against --card-bg #1e293b. */
+
+  --success:  #34d399;  /* 7.61:1 */
+  --danger:   #FF5E8A;  /* brand red, 35% tint — 5.03:1 */
+  --warning:  #FFC108;  /* brand amber — 8.97:1 */
+  --info:     #009CFE;  /* brand blue — 5.01:1 */
+
+  --income:   var(--success);
+  --expense:  var(--danger);
+
+  --success-soft: rgba(52, 211, 153, 0.16);
+  --danger-soft:  rgba(255, 94, 138, 0.16);
+  --warning-soft: rgba(255, 193, 8, 0.16);
+  --info-soft:    rgba(0, 156, 254, 0.16);
+  --income-soft:  var(--success-soft);
+  --expense-soft: var(--danger-soft);
 
   /* Shadows */
   --shadow-sm:      rgba(0, 0, 0, 0.3);

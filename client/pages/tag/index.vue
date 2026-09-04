@@ -296,13 +296,13 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
 
 <template>
   <ConfirmDialog />
-  <div class="tag-page">
+  <div class="page-shell max-w-[1400px]">
     <div class="page-header">
       <div class="header-content">
-        <h1 class="page-title">
+        <h1 class="page-heading">
           Mes Tags
         </h1>
-        <p class="page-subtitle">
+        <p class="page-subheading">
           Organisez vos transactions avec des catégories personnalisées
         </p>
       </div>
@@ -426,22 +426,6 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
 </template>
 
 <style lang="scss" scoped>
-.tag-page {
-  min-height: 100vh;
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-to) 100%);
-
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-}
-
-.page-header {
-  margin-bottom: 2rem;
-}
-
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -463,21 +447,6 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
 
 .header-content {
   margin-bottom: 1.5rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  color: var(--text-primary);
-  letter-spacing: -0.025em;
-}
-
-.page-subtitle {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  margin: 0;
-  font-weight: 400;
 }
 
 .toolbar {
@@ -570,9 +539,9 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  background: linear-gradient(90deg, rgba(99,102,241,1) 0%, rgba(79,70,229,1) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
   color: white;
-  box-shadow: 0 6px 14px rgba(79,70,229,0.18), 0 2px 6px rgba(16,24,40,0.06);
+  box-shadow: 0 6px 14px var(--shadow-purple), 0 2px 6px var(--shadow-sm);
   border: 1px solid rgba(255,255,255,0.06);
   transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
   min-height: 44px;
@@ -583,7 +552,7 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(79,70,229,0.22), 0 4px 10px rgba(16,24,40,0.09);
+    box-shadow: 0 10px 24px var(--shadow-purple), 0 4px 10px var(--shadow-md);
   }
 
   &:active {

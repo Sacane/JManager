@@ -28,6 +28,7 @@ Trois éléments du rapport changent de priorité une fois le backend inspecté 
 | Pas de section « Mon compte » / RGPD | `DELETE /api/user/me` **existe déjà** et n'est appelé par aucun écran | La suppression de compte est un chantier **frontend seul** → gain rapide et conformité |
 | Filtrage par plage de dates | `GET /booklet/{id}/transactions` accepte déjà `startDate` / `endDate` | Le filtre par période est **frontend seul**, pas besoin de toucher au backend |
 | Recherche textuelle | Aucun paramètre `label` / `search` sur l'endpoint | Recherche = full-stack `L` |
+| Changement de mot de passe | **Entièrement implémenté** sur les 4 couches et testé. Le domain distingue 4 échecs (`USER_NOT_FOUND`, `USER_UNAUTHORIZED`, `PASSWORD_NOT_MATCH`, `PASSWORD_UNCHANGED`) | Le client n'en mappe que 2 → rattaché à `UX-20`, et la règle « différent de l'ancien » à `UX-27`. Aucun travail backend |
 | Budget côté serveur | `UserSettingsDTO` = `projectionWindowDays` + `bookletCycles` uniquement | Migration du budget = full-stack `L` |
 
 ---

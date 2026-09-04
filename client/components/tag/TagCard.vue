@@ -160,8 +160,8 @@ const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDr
   border: 1px solid var(--card-border);
 
   &.tag-card-selected {
-    border-color: var(--p-primary-color, #6366f1);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), 0 1px 3px var(--shadow-sm);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--shadow-purple), 0 1px 3px var(--shadow-sm);
   }
 
   &:hover {
@@ -327,8 +327,8 @@ const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDr
   }
 
   &.drag-over {
-    box-shadow: 0 -2px 0 0 var(--p-primary-color, #6366f1);
-    background: color-mix(in srgb, var(--p-primary-color, #6366f1) 6%, var(--bg-tertiary));
+    box-shadow: 0 -2px 0 0 var(--primary);
+    background: color-mix(in srgb, var(--primary) 6%, var(--bg-tertiary));
   }
 }
 
@@ -358,7 +358,7 @@ const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDr
 
   &:hover {
     color: var(--primary, var(--p-primary-color));
-    background: color-mix(in srgb, var(--p-primary-color, #6366f1) 10%, transparent);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
   }
 
   i {
@@ -393,8 +393,8 @@ const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDr
 }
 
 .sub-tag-chip-selected {
-  background: color-mix(in srgb, var(--p-primary-color, #6366f1) 8%, var(--bg-tertiary));
-  outline: 1px solid rgba(99, 102, 241, 0.3);
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-tertiary));
+  outline: 1px solid var(--primary);
   outline-offset: -1px;
 }
 
