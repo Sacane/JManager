@@ -1,3 +1,12 @@
+<script setup lang="ts">
+const route = useRoute()
+
+// Screens that gate access to the application — consent, forced password change — opt out by
+// declaring `allowBack: false`. Showing a way out there invites an escape the middleware
+// immediately undoes, which the user experiences as a redirect loop.
+const allowBack = computed(() => route.meta?.allowBack !== false)
+</script>
+
 <template>
   <div class="h-screen">
     <NHeader />
@@ -7,8 +16,8 @@
       </div>
     </div>
   </div>
-  <div class="absolute bottom-10 right-10">
-    <NuxtLinkLocale to="/" class="icon-btn text-4xl">
+  <div v-if="allowBack" class="absolute bottom-10 right-10">
+    <NuxtLinkLocale to="/" class="icon-btn text-4xl" aria-label="Retour à l'application">
       <div i="tabler-arrow-left" />
     </NuxtLinkLocale>
   </div>

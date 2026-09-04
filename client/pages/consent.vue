@@ -2,6 +2,8 @@
 definePageMeta({
   layout: 'centercard',
   middleware: ['auth'],
+  // Consent gates access to the application: no way out until it is given.
+  allowBack: false,
 })
 
 const {

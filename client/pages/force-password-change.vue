@@ -4,6 +4,8 @@ import authMiddleware from '~/middleware/auth'
 definePageMeta({
   layout: 'centercard',
   middleware: [authMiddleware],
+  // The new password is mandatory: no way out until it is set.
+  allowBack: false,
 })
 
 const {
