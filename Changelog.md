@@ -2,6 +2,44 @@
 
 ## [En cours]
 
+- **UI/UX workstream — lot 3: GDPR compliance, destructive actions and booklet period** (PR #225, 9 items, frontend only)
+  - **Context**: third batch of the review recorded in `docs/technical/ux-design-review/UX_DESIGN_REVIEW.md`. Every endpoint it needed already existed.
+  - **UX-13 — a compliance gap, not a feature**: the privacy policy advertises the right to erasure and the consent screen states it can be exercised "at any time from your settings" — which was false. `DELETE /api/user/me` existed and was called by no screen. New "Mon compte" section in `pages/settings/index.vue` and `useAuth.deleteAccount()`, which **returns whether the call went through**: on failure the session stays intact and the dialog stays open, because a failed deletion must never look like a success. **Data export (portability) is not implemented** — no backend endpoint exists.
+  - **UX-14 — date range on a booklet**: the requirement became that no figure may describe a period other than the one on screen. Balances, transaction list, counts, pagination totals, whole-period report, mobile lazy loading and the CSV export message all query and describe the same window. **Deliberate limitation**: `GET /transactions/regenerable` and `POST /transactions/regenerate` accept `month` and `year` only, unlike `/transactions`, `/balances` and `/report` — with a custom range the action would operate on a different period than the display, so it is hidden while a range is active rather than silently disagreeing. **Backlog**: `docs/backlog/regenerable-transactions-date-range.md`.
+  - **UX-14 — header redesign after review**: the first delivery added a range bar to the booklet header, which crowded it. The root cause was not the new bar but six controls for one notion (month select, year picker, range bar). They collapse into `components/booklet/BookletPeriodPicker.vue` — one trigger button and one panel carrying month stepping, rolling-window shortcuts and the custom range. Trade-off: changing month now costs one extra click.
+  - **UX-17 — booklet deletion requires retyping the label**. The dialog **never announces a transaction count it does not know**: a guard drives the sentence rather than printing "0 transaction" when the count is simply unavailable.
+  - **UX-43** — an onboarding state replaces the dashboard when no booklet exists. Guarded on the loaded state, not on the list length alone, which would flash the onboarding screen on the first paint.
+  - **UX-45** — the 6-booklet limit explains itself instead of stopping at a disabled button (`constants/booklet.ts`).
+  - **UX-46 / UX-48 / UX-49** — `autocomplete` on the five auth fields that declared none; switching between sign in and sign up carries the email over, and only the email; terms and privacy policy reachable from the login page in both modes.
+  - **UX-47** — one shared `components/PasswordField.vue` with a reveal control, replacing seven independent inputs. It gives UX-27 a single place to add the rules and strength indicator later.
+  - **Refactor**: the retype-to-confirm pattern reached its second use (booklet + account), so it moved into a generic `components/ConfirmByTypingDialog.vue`.
+  - **Tests**: 59 files, 581 tests green. Wrapping the password inputs in a component silently weakened three existing specs — `shallowMount` stubs every child, so their assertions on `maxlength` and `data-test` were reading the attributes of the stub rather than of a real input; the component is now opted back in explicitly.
+  - **Manual validation**: `docs/technical/ux-design-review/VALIDATION_LOT_3.md` — 10 walkthroughs, happy-dom having no layout engine.
+
+- **UI/UX workstream — lot 2: visual foundation** (PR #224, 6 items, frontend only)
+  - **UX-11 — verified semantic colour tokens**: `--success` / `--danger` / `--warning` / `--info` and the money pair `--income` / `--expense` in `assets/css/variables.css`, one value per theme. **No brand colour reaches the WCAG 2.1 ratio of 4.5:1 on white**, so the tokens are shades and tints rather than the raw palette. `utils/contrast.ts` implements relative luminance and contrast ratio, and an automated test parses the CSS to enforce the ratios — the rule is checked, not asserted in a comment.
+  - **UX-12 — one colour code for money**: income and expense were blue on some screens and green on others. Two semantic axes were separated first (money direction vs good/bad status), then collapsed onto the green/red convention **by `var()` aliasing** (`--income: var(--success)`) rather than by rewriting the call sites — which is why the convention change requested after the first delivery was a two-line edit.
+  - **UX-29** — tag screens put back on the brand palette (hardcoded indigo removed).
+  - **UX-30** — `page-shell` / `page-header` / `page-heading` / `stat-card` shortcuts added to `unocss.config.ts`, with the page headers migrated onto them.
+  - **UX-32** — the redundant "Clair / Sombre" label removed from `NHeader`.
+  - **UX-33** — the centered card is bounded to the viewport width, fixing the overflow below 400 px.
+  - **Manual validation**: `docs/technical/ux-design-review/VALIDATION_LOTS_1_2.md`.
+
+- **UI/UX workstream — lot 1: sanitisation** (PR #223, 10 items, frontend only)
+  - **UX-01** — the mobile hamburger covered the content of 6 pages; the offset now lives in `layouts/sidebar-layout.vue` instead of being re-added page by page.
+  - **UX-02** — a real 404 page: layout, French copy, a way back.
+  - **UX-03 — a wrong figure, not a cosmetic one**: the dashboard daily average divided by 30 whatever the selected period. `countDaysInRange` in `utils/monthlyCycleRange.ts` computes the real length, and `monthlyExpenses` / `monthlyIncome` were renamed `periodExpenses` / `periodIncome` — the old names were what made the bug plausible in the first place.
+  - **UX-04** — the admin "Actions" control had no handler on either desktop or mobile; removed rather than left lying.
+  - **UX-05** — the escape arrow is gone from `/consent` and `/force-password-change`, which are blocking screens by design (driven by route meta, not by the layout guessing).
+  - **UX-06 — a false claim in the review, corrected rather than implemented**: the report asserted that "Changer le mot de passe" discards pending settings. Reading `useChangePassword.ts` proved it false — it only touches its own three refs. The report, the issue and the Trello card were corrected, and the scenario became a **regression test** instead of a fix. What was genuinely wrong was the ambiguity of two "Enregistrer" buttons: the save scope is now explicit, and leaving with unsaved changes is guarded by `onBeforeRouteLeave`.
+  - **UX-07** — 7 user-visible French accent mistakes.
+  - **UX-08** — the dashboard charts hijacked the page scroll; zoom is now reserved for an explicit gesture, with a way to reset the scale.
+  - **UX-09** — 5 dead files removed, one of which no longer compiled.
+  - **UX-10** — `outline: none !important` was applied in 4 files with nothing put back; a visible keyboard focus indicator is restored.
+
+- **UI/UX review and prioritised backlog** (PR #222)
+  - Page-by-page review (`docs/technical/ux-design-review/UX_DESIGN_REVIEW.md`), 63 items ranked P0 to P3 and sequenced into 7 lots (`UX_BACKLOG.md`), one issue folder per item with layer-agnostic Gherkin scenarios, and one Trello card per issue. Every priority was grounded in an actual reading of the backend rather than assumed, which changed the nature of 4 items.
+
 - **Audit + correctifs — frontières transactionnelles et fetch JPA** (suite du correctif `userOwnsBooklet`)
   - **Contexte** : audit demandé après le correctif sur `userOwnsBooklet` (produit cartésien Hibernate), pour vérifier si le même type de problème existait ailleurs dans `infrastructure/`. Rapport complet : `docs/technical/jpa-transactions/2026-08-29-jpa-fetch-and-transaction-boundary-audit.md`.
   - **A (haute, domain+infra) — stats "Tous les comptes" faussées silencieusement** : `BookletJpaRepository.findAllBookletsByUserId` (le même produit cartésien que le bug déjà corrigé, `LEFT JOIN FETCH b.transactions LEFT JOIN FETCH b.regularTransactions`) restait utilisée par `StatsDomainHelper.withScopedBooklets` quand aucun livret n'est sélectionné — alimentant `GetCategoryDistributionUseCase`, `GetTrendStatsUseCase`, `GetDailyTrendStatsUseCase`, `GetPrevisionalTransactionsUseCase`. Chaque transaction d'un livret ayant N transactions récurrentes liées était comptée N fois dans les agrégats, sans aucune erreur visible. Confirmé par test Testcontainers (transaction dupliquée ×3 pour 3 transactions récurrentes) avant correctif. Fix : le `LEFT JOIN FETCH b.regularTransactions` est retiré — rien en aval ne lit `Booklet.regularTransactions` sur ce chemin.

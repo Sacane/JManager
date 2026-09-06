@@ -231,6 +231,8 @@ Supprimer `components/monthPicker.vue`, `components/TitleCard.vue`, `components/
 Board **Développement** → liste **« À faire ! »**, étiquette **UI/UX** (verte).
 Les issues suivent la convention `docs/features/{feature}/{module}_{titre}.md` et passent toutes le validateur du skill `create-issue`.
 
+> **Lots 1 à 3 livrés et mergés** (PR #223, #224, #225) — les 25 dossiers d'issue correspondants ont été supprimés de `docs/features/`, conformément à la règle « Documentation Cleanup » de `CLAUDE.md`. Leurs lignes restent dans le tableau pour la traçabilité : le détail de ce qui a été livré est dans `Changelog.md`, la carte Trello reste la référence historique. Les 12 dossiers encore présents sont ceux qui restent à implémenter : UX-15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27.
+
 | ID | Modules | Dossier d'issue (`docs/features/`) | Carte |
 |---|---|---|---|
 | UX-01 | client | `ux-01-mobile-sidebar-offset/` | https://trello.com/c/6PsNzdjR |
@@ -283,3 +285,17 @@ Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni ca
 ## 9. Suivi
 
 Ce backlog est le document de référence du chantier. À chaque item livré : cocher ici, déplacer la carte Trello, mettre à jour `Changelog.md` **uniquement quand un lot est complet** (conformément à `CLAUDE.md`), et supprimer les fiches devenues caduques.
+
+### État au 6 septembre 2026
+
+| Lot | Contenu | État |
+|---|---|---|
+| Lot 1 — Assainissement | UX-01 → UX-10 | ✅ mergé (PR #223) |
+| Lot 2 — Socle visuel | UX-11, 12, 29, 30, 32, 33 | ✅ mergé (PR #224) |
+| Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
+| Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 25, 26, 41, 50 | ⬜ à faire — prochain sur le chemin critique |
+| Lot 5 — Refonte dashboard | UX-18, 28, 44 | ⬜ à faire (dépendance lot 2 satisfaite) |
+| Lot 6 — Chantiers full-stack | UX-21, 22, 23 | ⬜ à faire — premier travail backend du chantier |
+| Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
+
+**25 items livrés sur 63.** La validation manuelle des lots 1 à 3 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison.
