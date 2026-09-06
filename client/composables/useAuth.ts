@@ -91,6 +91,26 @@ export default function useAuth() {
     }
   }
 
+  /**
+   * Permanently deletes the account and everything attached to it (GDPR right to erasure).
+   *
+   * Returns whether the deletion went through: a failure must not look like a success, so the
+   * session is left untouched and the caller decides what to tell the user.
+   */
+  async function deleteAccount(): Promise<boolean> {
+    try {
+      await axios.delete(`${host}user/me`, { withCredentials: true })
+    } catch (e) {
+      console.warn(e)
+      return false
+    }
+
+    clearAuthState()
+    isSessionInitialized.value = true
+    navigateTo('/login')
+    return true
+  }
+
   async function tryRefresh(options: RefreshOptions = {}): Promise<boolean> {
     const { redirectOnFailure = true } = options
 
@@ -160,5 +180,5 @@ export default function useAuth() {
     throw error
   }
 
-  return { user: readonly(user), isAuthenticated: readonly(isAuthenticated), login, logout, register, isAdmin, tryRefresh, initializeSession }
+  return { user: readonly(user), isAuthenticated: readonly(isAuthenticated), login, logout, deleteAccount, register, isAdmin, tryRefresh, initializeSession }
 }

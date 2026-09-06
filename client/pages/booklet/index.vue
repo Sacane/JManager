@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
+import BookletDeleteDialog from '~/components/booklet/BookletDeleteDialog.vue'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import { MAX_BOOKLETS } from '~/constants/booklet'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
 import useBooklet from '../../composables/useBooklet'
@@ -10,7 +12,6 @@ definePageMeta({
   middleware: [authMiddleware],
 })
 
-const confirm = useConfirm()
 const router = useRouter()
 const jToast = useJToast()
 const { isScopeLoading, withLoading } = useLoading()
@@ -33,6 +34,7 @@ const data = ref<Array<{
   label: string
   amount: string
   currency: string
+  transactionCount: number
 }>>([])
 
 const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useBookletOrder(data)
@@ -59,6 +61,9 @@ function format(booklets: Array<BookletDTO>) {
     label: booklet.label,
     amount: `${booklet.amount}`,
     currency: booklet.currency || '€',
+    // Only meaningful when positive: the list endpoint may return an empty snapshot for a
+    // booklet that does hold transactions, and the dialog never announces a count of zero.
+    transactionCount: booklet.transactions?.length ?? 0,
   }))
 }
 
@@ -78,16 +83,23 @@ async function applyDelete(bookletId: string) {
   }, deleteBookletScope)
 }
 
-function openConfirmDeleteDialog(id: string, bookletLabel: string) {
-  confirm.require({
-    message: `Êtes-vous sûr de vouloir supprimer le livret "${bookletLabel}" ? \n Cette action est irréversible et supprimera définitivement toutes les transactions enregistrées dessus.`,
-    header: 'Confirmation de suppression',
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Supprimer',
-    rejectLabel: 'Annuler',
-    acceptClass: 'p-button-danger',
-    accept: () => applyDelete(id),
-  })
+// Deleting a booklet destroys every transaction on it, and a single click used to be enough.
+// The dialog asks for the label to be retyped before the action becomes available (UX-17).
+const bookletPendingDeletion = ref<{ id: string, label: string, transactionCount: number } | null>(null)
+const isDeleteDialogVisible = ref(false)
+
+function openConfirmDeleteDialog(booklet: { id: string, label: string, transactionCount: number }) {
+  bookletPendingDeletion.value = booklet
+  isDeleteDialogVisible.value = true
+}
+
+async function confirmBookletDeletion() {
+  const booklet = bookletPendingDeletion.value
+  if (!booklet) return
+
+  await applyDelete(booklet.id)
+  isDeleteDialogVisible.value = false
+  bookletPendingDeletion.value = null
 }
 
 const isAddBookletDialogOpen = ref<boolean>(false)
@@ -115,6 +127,9 @@ function openBookletDialog() {
   isAddBookletDialogOpen.value = true
 }
 
+const remainingSlots = computed(() => Math.max(0, MAX_BOOKLETS - data.value.length))
+const hasReachedLimit = computed(() => remainingSlots.value === 0)
+
 function amountClass(amount: string) {
   return Number.parseFloat(amount) >= 0 ? 'positive' : 'negative'
 }
@@ -129,7 +144,6 @@ function formatAmount(amount: string) {
 </script>
 
 <template>
-  <ConfirmDialog />
   <div class="page-shell max-w-[1600px]">
     <!-- Header Section -->
     <div class="page-header pb-8 border-b-2 border-[var(--border-color)]">
@@ -142,13 +156,13 @@ function formatAmount(amount: string) {
             Mes Livrets
           </h1>
           <p class="page-subheading flex items-center gap-2">
-            <span class="count-badge">{{ data.length }}/6</span>
+            <span class="count-badge">{{ data.length }}/{{ MAX_BOOKLETS }}</span>
             livrets actifs
           </p>
         </div>
       </div>
       <Button
-        v-if="data.length < 6"
+        v-if="!hasReachedLimit"
         label="Nouveau livret"
         icon="pi pi-plus"
         class="add-button"
@@ -156,13 +170,22 @@ function formatAmount(amount: string) {
         :disabled="isAnyBookletActionLoading"
         @click="openBookletDialog"
       />
-      <Button
-        v-else
-        label="Limite atteinte"
-        icon="pi pi-lock"
-        class="add-button disabled-button"
-        disabled
-      />
+      <!-- The disabled button used to say "Limite atteinte" and nothing else: no reason given,
+           no way forward. The hint carries both, and is announced with the button (UX-45). -->
+      <div v-else class="limit-reached">
+        <Button
+          label="Limite atteinte"
+          icon="pi pi-lock"
+          class="add-button disabled-button"
+          data-test="booklet-limit-action"
+          aria-describedby="booklet-limit-hint"
+          disabled
+        />
+        <p id="booklet-limit-hint" class="limit-hint" data-test="booklet-limit-hint">
+          Vous avez atteint le maximum de {{ MAX_BOOKLETS }} livrets.
+          Supprimez-en un pour libérer un emplacement.
+        </p>
+      </div>
     </div>
 
     <div v-if="isLoadingBooklets" class="loading-container">
@@ -240,7 +263,7 @@ function formatAmount(amount: string) {
                   severity="danger"
                   :loading="isDeletingBooklet"
                   :disabled="isAnyBookletActionLoading"
-                  @click.stop="openConfirmDeleteDialog(booklet.id, booklet.label)"
+                  @click.stop="openConfirmDeleteDialog(booklet)"
                 />
               </div>
             </div>
@@ -267,7 +290,7 @@ function formatAmount(amount: string) {
 
         <!-- Add New Card (if under limit) -->
         <div
-          v-if="data.length < 6"
+          v-if="!hasReachedLimit"
           class="booklet-card add-card"
           :class="{ 'disabled-card': isAnyBookletActionLoading }"
           @click="openBookletDialog"
@@ -277,7 +300,7 @@ function formatAmount(amount: string) {
               <i class="pi pi-plus" />
             </div>
             <span class="add-text">Ajouter un livret</span>
-            <span class="add-subtext">{{ 6 - data.length }} emplacement{{ 6 - data.length > 1 ? 's' : '' }} restant{{ 6 - data.length > 1 ? 's' : '' }}</span>
+            <span class="add-subtext">{{ remainingSlots }} emplacement{{ remainingSlots > 1 ? 's' : '' }} restant{{ remainingSlots > 1 ? 's' : '' }}</span>
           </div>
         </div>
       </div>
@@ -287,6 +310,14 @@ function formatAmount(amount: string) {
       :visible="isAddBookletDialogOpen"
       @create-booklet="handleBookletCreation"
       @cancel="cancel"
+    />
+
+    <BookletDeleteDialog
+      v-model:visible="isDeleteDialogVisible"
+      :label="bookletPendingDeletion?.label ?? ''"
+      :transaction-count="bookletPendingDeletion?.transactionCount ?? 0"
+      :loading="isDeletingBooklet"
+      @confirm="confirmBookletDeletion"
     />
   </div>
 </template>
@@ -352,6 +383,32 @@ function formatAmount(amount: string) {
 
   @media (max-width: 768px) {
     width: 100%;
+  }
+}
+
+.limit-reached {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    align-items: stretch;
+  }
+}
+
+.limit-hint {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  text-align: right;
+
+  @media (max-width: 768px) {
+    text-align: left;
+    max-width: none;
   }
 }
 

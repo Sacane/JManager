@@ -34,13 +34,12 @@ const {
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-1">
         <label for="new-password" class="text-label">Nouveau mot de passe</label>
-        <InputText
+        <PasswordField
           id="new-password"
           v-model="newPassword"
-          type="password"
-          class="w-full"
           placeholder="Nouveau mot de passe"
-          maxlength="100"
+          :maxlength="100"
+          autocomplete="new-password"
           aria-label="Nouveau mot de passe"
           data-test="new-password-input"
         />
@@ -48,13 +47,12 @@ const {
 
       <div class="flex flex-col gap-1">
         <label for="confirm-password" class="text-label">Confirmer le mot de passe</label>
-        <InputText
+        <PasswordField
           id="confirm-password"
           v-model="confirmPassword"
-          type="password"
-          class="w-full"
           placeholder="Confirmer le mot de passe"
-          maxlength="100"
+          :maxlength="100"
+          autocomplete="new-password"
           aria-label="Confirmer le mot de passe"
           data-test="confirm-password-input"
         />

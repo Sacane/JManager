@@ -39,6 +39,16 @@ const subtitle = computed(() =>
 )
 
 function switchMode(target: Mode) {
+  // Carry the email over so the user does not retype it after realising they are on the wrong
+  // form. Only the email: copying a password across forms would surprise the user and confuse
+  // credential managers (UX-48).
+  if (target === 'register' && userAuth.email) {
+    userRegistered.email = userAuth.email
+  }
+  if (target === 'login' && userRegistered.email) {
+    userAuth.email = userRegistered.email
+  }
+
   mode.value = target
   hasFailedLogin.value = false
   hasFailedRegister.value = false
@@ -135,13 +145,12 @@ async function registerUser() {
               <i class="pi pi-lock mr-2" />
               Mot de passe
             </label>
-            <InputText
+            <PasswordField
               id="password"
               v-model="userAuth.password"
-              type="password"
-              class="w-full"
               placeholder="Entrez votre mot de passe"
-              maxlength="100"
+              :maxlength="100"
+              autocomplete="current-password"
             />
           </div>
 
@@ -190,6 +199,7 @@ async function registerUser() {
               class="w-full"
               placeholder="Choisissez un nom d'utilisateur"
               maxlength="100"
+              autocomplete="username"
             />
           </div>
 
@@ -205,6 +215,7 @@ async function registerUser() {
               class="w-full"
               placeholder="votre@email.com"
               maxlength="255"
+              autocomplete="email"
             />
           </div>
 
@@ -213,13 +224,12 @@ async function registerUser() {
               <i class="pi pi-lock mr-2" />
               Mot de passe
             </label>
-            <InputText
+            <PasswordField
               id="reg-password"
               v-model="userRegistered.password"
-              type="password"
-              class="w-full"
               placeholder="Choisissez un mot de passe"
-              maxlength="100"
+              :maxlength="100"
+              autocomplete="new-password"
             />
           </div>
 
@@ -228,13 +238,12 @@ async function registerUser() {
               <i class="pi pi-lock mr-2" />
               Confirmer le mot de passe
             </label>
-            <InputText
+            <PasswordField
               id="reg-confirm-password"
               v-model="userRegistered.confirmPassword"
-              type="password"
-              class="w-full"
               placeholder="Répétez votre mot de passe"
-              maxlength="100"
+              :maxlength="100"
+              autocomplete="new-password"
             />
           </div>
 
@@ -291,6 +300,19 @@ async function registerUser() {
             </button>
           </div>
         </form>
+
+        <!-- The terms were only linked from the registration checkboxes, hidden while the sign in
+             form is displayed, and the sidebar carrying them only renders for authenticated
+             users — so an anonymous visitor had no way to read them (UX-49). -->
+        <nav class="legal-links" aria-label="Documents légaux">
+          <NuxtLink to="/terms" class="legal-link">
+            Conditions Générales d'Utilisation
+          </NuxtLink>
+          <span class="legal-sep" aria-hidden="true">·</span>
+          <NuxtLink to="/privacy" class="legal-link">
+            Politique de Confidentialité
+          </NuxtLink>
+        </nav>
       </div>
     </div>
   </div>
@@ -547,6 +569,35 @@ async function registerUser() {
 .mode-toggle-text {
   font-size: 0.875rem;
   color: #64748b;
+}
+
+.legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.legal-link {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.legal-link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.legal-sep {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  user-select: none;
 }
 
 .toggle-link {

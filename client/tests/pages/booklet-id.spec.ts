@@ -193,10 +193,12 @@ describe('pages/booklet/[id] loading states', () => {
     await flushPromises()
     await flushPromises()
 
+    // The date range is now part of every period query; empty means the calendar month.
     expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledWith(
       'booklet-1',
       3,
       2026,
+      {},
     )
     expect(findTransactionsByIdMonthAndYearMock).toHaveBeenCalledWith(
       'booklet-1',
@@ -1439,7 +1441,7 @@ describe('pages/booklet/[id] global filter', () => {
     await flushPromises()
 
     expect(vm.globalFilter).toBe('all')
-    expect(findByIdMonthAndYearMock).toHaveBeenCalledWith('booklet-1', 3, 2026)
+    expect(findByIdMonthAndYearMock).toHaveBeenCalledWith('booklet-1', 3, 2026, {})
     expect(vm.allTransactions).toHaveLength(1)
     expect(vm.allTransactions[0].id).toBe('global-1')
   })
@@ -1547,7 +1549,9 @@ describe('pages/booklet/[id] global filter', () => {
     expect(findByIdMonthAndYearMock.mock.calls.length).toBe(callCount)
   })
 
-  it('onMonthChange exits global mode', async () => {
+  // Month navigation moved from a select to the period picker; the behaviour it guards — leaving
+  // the whole-period view when the period changes — is unchanged.
+  it('stepping to another month exits global mode', async () => {
     const wrapper = mountForGlobal([createTransaction({ id: 'g-1' })])
     await flushPromises()
     await flushPromises()
@@ -1557,7 +1561,7 @@ describe('pages/booklet/[id] global filter', () => {
     await flushPromises()
     expect(vm.globalFilter).toBe('all')
 
-    vm.onMonthChange()
+    await vm.goToNextMonth()
     await flushPromises()
 
     expect(vm.globalFilter).toBe('none')
