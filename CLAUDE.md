@@ -44,6 +44,30 @@ Always start replies with the appropriate marker + space (default: 🍀). Stack 
 
 ---
 
+## Language (NON-NEGOTIABLE)
+
+**Everything written into this repository is written in English**, whatever the language the request was made in.
+
+| Artefact | Language |
+|---|---|
+| Identifiers — packages, classes, functions, variables, CSS classes, `data-test` | English |
+| Comments, KDoc, JSDoc | English |
+| Test names, Gherkin scenarios, fixtures | English |
+| Commit messages | English |
+| Pull request / MR titles and descriptions | English |
+| Feature issues (`docs/features/`), backlog entries (`docs/backlog/`) | English |
+| Reports, technical docs, `Changelog.md`, `FEATURES.md` | English |
+| Branch names | English |
+
+**Two deliberate exceptions — do not "fix" these into English:**
+
+1. **User-facing copy stays French.** Labels, buttons, placeholders, toasts, `aria-label`, validation messages and i18n values under `client/` are the product itself, in the product's language. Translating them is a functional regression.
+2. **The conversation follows the developer.** Chat replies are not a repository artefact — answer in the language you are addressed in.
+
+Rule of thumb: **if it is committed, it is English — unless an end user reads it on screen.**
+
+---
+
 ## Architecture
 
 This project follows **Hexagonal Architecture** (Ports & Adapters).
@@ -148,7 +172,7 @@ Key rules:
 - Document only **public methods** and **port/interface contracts**.
 - Do not document method internals.
 - Private functions documented only when strictly necessary.
-- All documentation in **English**.
+- Written in English, like every other artefact — see [Language](#language-non-negotiable).
 
 ---
 

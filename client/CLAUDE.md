@@ -53,6 +53,11 @@ client/
 
 ## Non-Negotiable Rules
 
+### Language
+- Code, comments, test names, commit messages and PR descriptions: **English** (see the Language section of the root `CLAUDE.md`).
+- **Everything the user reads on screen: French.** Labels, buttons, placeholders, toasts, `aria-label`, validation messages, i18n values.
+- Both rules apply to the same file: an English `data-test` next to a French label is correct, not an inconsistency to clean up.
+
 ### Design system
 - Use existing UnoCSS shortcuts from `unocss.config.ts` before writing custom classes.
 - If the same pattern appears in two places and no shortcut exists, add one to `unocss.config.ts`.
