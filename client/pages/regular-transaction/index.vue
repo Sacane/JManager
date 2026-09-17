@@ -2,6 +2,7 @@
 import type { AppTableColumn } from '~/components/AppTable.vue'
 import useDate from '~/composables/useDate'
 import authMiddleware from '~/middleware/auth'
+import { nextOccurrenceOnOrAfter, occurrencesInMonth } from '~/utils/recurrence'
 import { getTagStyle } from '~/utils/util'
 
 definePageMeta({
@@ -279,6 +280,44 @@ function checkMobile() {
 const transactionsCount = computed(() => transactions.value.length)
 const selectedTransactionsCount = computed(() => selectedTransactions.value.length)
 
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+function nextOccurrenceOf(transaction: RegularTransactionDTO): Date | null {
+  return nextOccurrenceOnOrAfter(transaction, new Date())
+}
+
+function nextOccurrenceLabel(transaction: RegularTransactionDTO): string {
+  const occurrence = nextOccurrenceOf(transaction)
+  return occurrence ? dateFormatter.format(occurrence) : ''
+}
+
+function isRecurrenceOver(transaction: RegularTransactionDTO): boolean {
+  return nextOccurrenceOf(transaction) === null
+}
+
+/**
+ * What the listed entries actually commit the user to this month.
+ *
+ * Occurrences are counted, never normalised: a weekly charge commits four or five times in a
+ * month, and turning it into a fractional monthly equivalent would put an invented figure on
+ * screen. Only the loaded page is summed — the totals describe what is listed.
+ */
+const monthlyCommitment = computed(() => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+
+  return transactions.value.reduce(
+    (totals, transaction) => {
+      const amount = occurrencesInMonth(transaction, year, month).length * Math.abs(transaction.value)
+      if (transaction.isIncome) totals.income += amount
+      else totals.expenses += amount
+      return totals
+    },
+    { income: 0, expenses: 0 },
+  )
+})
+
 const regularTransactionColumns = computed<AppTableColumn[]>(() => {
   return [
     { selectionMode: 'multiple', headerStyle: 'width: 3rem' },
@@ -287,6 +326,7 @@ const regularTransactionColumns = computed<AppTableColumn[]>(() => {
     { field: 'value', header: 'Montant', sortable: true, style: { minWidth: '150px' }, slotName: 'montant' },
     { style: { width: '180px', minWidth: '180px', maxWidth: '180px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
     { field: 'regularity', header: 'Fréquence', sortable: true, style: { minWidth: '130px' }, slotName: 'regularity' },
+    { header: 'Prochaine', style: { minWidth: '140px' }, slotName: 'nextOccurrence' },
     {
       header: 'Actions',
       style: { minWidth: '160px' },
@@ -392,6 +432,22 @@ async function handleUnlink() {
             <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--text-secondary)]">
               <i class="pi pi-sync text-[var(--primary)] text-sm" />
               {{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}
+            </span>
+            <span
+              v-tooltip.bottom="'Somme des échéances qui tombent réellement ce mois-ci, pour les transactions affichées'"
+              data-test="rt-monthly-expenses"
+              class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--expense)]"
+            >
+              <i class="pi pi-arrow-down text-sm" aria-hidden="true" />
+              {{ monthlyCommitment.expenses.toFixed(2) }}&nbsp;€ ce mois-ci
+            </span>
+            <span
+              v-if="monthlyCommitment.income > 0"
+              data-test="rt-monthly-income"
+              class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--income)]"
+            >
+              <i class="pi pi-arrow-up text-sm" aria-hidden="true" />
+              {{ monthlyCommitment.income.toFixed(2) }}&nbsp;€ ce mois-ci
             </span>
           </div>
         </div>
@@ -521,6 +577,20 @@ async function handleUnlink() {
           </div>
         </template>
 
+        <template #body-nextOccurrence="{ data }">
+          <span
+            v-if="isRecurrenceOver(data)"
+            data-test="rt-ended"
+            class="inline-flex items-center gap-1 text-xs font-semibold text-[var(--text-tertiary)]"
+          >
+            <i class="pi pi-flag-fill text-[0.65rem]" aria-hidden="true" />
+            Terminée
+          </span>
+          <span v-else data-test="rt-next-occurrence" class="text-sm font-semibold tabular-nums text-[var(--text-primary)]">
+            {{ nextOccurrenceLabel(data) }}
+          </span>
+        </template>
+
         <template #body-actions="{ data }">
           <div class="flex items-center gap-2">
             <Button
@@ -645,7 +715,8 @@ async function handleUnlink() {
 
               <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
                 <i class="pi pi-calendar text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
-                <span>{{ transaction.startDate }}</span>
+                <span v-if="isRecurrenceOver(transaction)" data-test="rt-ended-mobile" class="font-semibold text-[var(--text-tertiary)]">Terminée</span>
+                <span v-else data-test="rt-next-occurrence-mobile">Prochaine&nbsp;: <strong class="tabular-nums">{{ nextOccurrenceLabel(transaction) }}</strong></span>
               </div>
             </div>
 
