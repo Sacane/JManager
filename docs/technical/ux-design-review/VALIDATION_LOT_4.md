@@ -6,8 +6,8 @@ These walkthroughs cover what the suite cannot.
 
 Mark each step ✅ or ❌. A ❌ is worth reporting with the viewport width and the theme in use.
 
-**Delivered so far:** UX-15, UX-16.
-**Still to come in this lot:** UX-19, UX-20, UX-24, UX-25, UX-26, UX-41, UX-50.
+**Delivered so far:** UX-15, UX-16, UX-19, UX-24.
+**Still to come in this lot:** UX-20, UX-25, UX-26, UX-41, UX-50.
 
 ---
 
@@ -92,12 +92,85 @@ the controls were already there. These steps confirm nothing regressed.
 
 ---
 
+## 6. Next occurrence on every entry (UX-19)
+
+Desktop, regular transactions page.
+
+| # | Step | Expected |
+|---|---|---|
+| 6.1 | Look at the new **Prochaine** column | Each entry shows a date in dd/mm/yyyy |
+| 6.2 | Check a monthly entry started on the 15th | The date is the 15th of this month if still ahead, otherwise of next month |
+| 6.3 | Check a weekly entry | The date is within the next seven days |
+| 6.4 | Create an entry with an end date already passed, reload | The row shows "Terminée" with a flag, no date |
+| 6.5 | Create an entry limited to 2 repetitions, both past | Same: "Terminée" |
+| 6.6 | Create a monthly entry starting the **31st**, look at it in February | The next occurrence is the 28th (or 29th), not the 1st of March |
+| 6.7 | On mobile, look at a card | The calendar line reads "Prochaine : dd/mm/yyyy", or "Terminée" |
+
+⚠️ **6.6 is the case worth creating data for.** Day clamping is where a date calculation usually
+goes wrong, and it is the rule most likely to disagree with the backend.
+
+---
+
+## 7. Monthly commitment (UX-19)
+
+| # | Step | Expected |
+|---|---|---|
+| 7.1 | Look at the page header | A red total "… € ce mois-ci" next to the transaction count |
+| 7.2 | If you have recurring income | A green total appears as well; with none, only the red one shows |
+| 7.3 | Hover the red total | A tooltip explains it covers the entries listed |
+| 7.4 | Check the arithmetic on a small account | It equals the sum of the occurrences falling in the **current calendar month** |
+| 7.5 | With a weekly 10 € charge in a 5-occurrence month | It contributes 50 €, not 43.33 € |
+| 7.6 | Add an ended recurrence | The total does not change |
+
+⚠️ **7.5 is a deliberate design decision.** The commitment counts occurrences that actually fall in
+the month rather than normalising every entry into a monthly equivalent. If you would rather see a
+smoothed "average per month", say so — it is a different figure and it would be an estimate.
+
+❗️ **7.4 has a known limitation.** The totals cover the entries **on the loaded page**. With
+pagination at 10 rows and more than 10 recurring entries, the figure describes the page, not the
+account. The tooltip says so. Tell me if you want it to cover everything — that needs either
+loading all entries or a backend total.
+
+---
+
+## 8. Linked booklets (UX-24)
+
+| # | Step | Expected |
+|---|---|---|
+| 8.1 | Look at the new **Livrets** column | The names of the linked booklets, as chips |
+| 8.2 | Find an entry linked to nothing | It reads "Aucun livret lié", it is not blank |
+| 8.3 | Link a booklet from the row action | The chip appears without reloading the page |
+| 8.4 | Unlink it | The chip disappears and the row falls back to "Aucun livret lié" |
+| 8.5 | On an entry already linked to **every** booklet, hover the link button | A title explains it is already linked to all your booklets |
+| 8.6 | On an entry linked to nothing, hover the unlink button | A title explains it is linked to no booklet |
+| 8.7 | On mobile, look at a card | A wallet line lists the booklets or says "Aucun livret lié" |
+| 8.8 | On mobile, long press the disabled Lier button | The same explanation is reachable |
+
+---
+
+## 9. The whole table, after four items (UX-15, 19, 24)
+
+This page gained two columns and two row buttons in this batch.
+
+| # | Step | Expected |
+|---|---|---|
+| 9.1 | Open the page on a 1280 px window | The table fits without a horizontal scrollbar, or scrolls cleanly if it does not |
+| 9.2 | Look at the frozen Actions column | It does not overlap the Livrets column |
+| 9.3 | Narrow the window to about 900 px | The layout degrades readably rather than breaking |
+| 9.4 | Switch to dark theme | Chips, "Terminée" and the commitment totals stay legible |
+
+⚠️ **This section is the most likely place to find a problem.** The suite proves the values are
+right; it cannot prove nine columns fit on a screen.
+
+---
+
 ## Priority cases
 
-If time is short, do these four:
+If time is short, do these five:
 
-- **1.4** — four controls in a column sized for two. The most likely visual break.
-- **2.2** — same question on a 375 px card.
-- **3.1** — the deliberate behaviour change. Your judgement decides whether it stays.
-- **3.4** — the bulk delete appearing on mobile is the point of UX-15 scenario 4; it was
-  unreachable before UX-16 landed.
+- **9.1 / 9.2** — nine columns and four row buttons. The most likely visual break in this batch.
+- **2.2** — the same crowding question on a 375 px card.
+- **3.1** — tapping a card now selects instead of opening. Your judgement decides whether it stays.
+- **6.6** — the 31st clamped to February. Where date maths usually breaks.
+- **7.5** — the commitment counts real occurrences instead of a smoothed average. A design decision
+  to confirm or reject.
