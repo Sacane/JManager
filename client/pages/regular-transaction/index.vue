@@ -113,8 +113,15 @@ async function openEditDialog(transactionId: string) {
   }
 }
 
-function handleRowDoubleClick(event: { data?: RegularTransactionDTO }) {
+/** Desktop shortcut. The row actions are the discoverable path; this only mirrors them. */
+function openEditDialogFromRow(event: { data?: RegularTransactionDTO }) {
   openEditDialog(event.data?.id ?? '')
+}
+
+function toggleSelection(transaction: RegularTransactionDTO) {
+  const index = selectedTransactions.value.findIndex(t => t.id === transaction.id)
+  if (index === -1) selectedTransactions.value.push(transaction)
+  else selectedTransactions.value.splice(index, 1)
 }
 
 async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
@@ -421,7 +428,7 @@ async function handleUnlink() {
         selectable
         scrollable
         scroll-height="flex"
-        @row-dblclick="handleRowDoubleClick"
+        @row-dblclick="openEditDialogFromRow"
       >
         <template #empty>
           <div class="flex flex-col items-center justify-center p-15 text-center md:p-10">
@@ -605,7 +612,8 @@ async function handleUnlink() {
           class="rounded-4 p-4 shadow-md border-2 border-transparent transition-all duration-300 cursor-pointer relative overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-[var(--primary)] before:to-[var(--primary-2)] before:transition-width before:duration-300 hover:border-[var(--primary)] hover:bg-gradient-to-br hover:from-[rgba(101,8,204,0.05)] hover:to-[rgba(101,8,204,0.05)] hover:shadow-lg hover:shadow-[rgba(101,8,204,0.2)] hover:before:w-1.5 active:scale-98 md:p-4.5 md:rounded-4.5 md:shadow-lg md:before:w-1.25 dark:hover:from-[rgba(101,8,204,0.12)] dark:hover:to-[rgba(101,8,204,0.12)]"
           style="background-color: var(--card-bg); box-shadow: 0 4px 12px var(--shadow-purple); border-color: var(--card-border);"
           :class="{ 'border-[var(--primary)] bg-gradient-to-br from-[rgba(101,8,204,0.05)] to-[rgba(101,8,204,0.05)] shadow-lg shadow-[rgba(101,8,204,0.2)] before:w-1.5 md:shadow-xl md:shadow-[rgba(101,8,204,0.25)] dark:from-[rgba(101,8,204,0.15)] dark:to-[rgba(101,8,204,0.15)]': isSelected(transaction) }"
-          @click="handleRowDoubleClick({ data: transaction })"
+          data-test="rt-card"
+          @click="toggleSelection(transaction)"
         >
           <div class="flex justify-between items-center mb-3 pb-3 md:mb-3.5 md:pb-3.5" style="border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center gap-3">
