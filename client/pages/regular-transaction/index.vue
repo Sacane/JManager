@@ -94,9 +94,7 @@ const isEditDialogVisible = ref(false)
 const selectedTransaction = ref<RegularTransactionDTO | null>(null)
 const loadingTransaction = ref(false)
 
-async function handleRowDoubleClick(event: any) {
-  const transactionId = event.data.id
-
+async function openEditDialog(transactionId: string) {
   if (!transactionId) {
     console.error('ID de transaction manquant')
     return
@@ -113,6 +111,10 @@ async function handleRowDoubleClick(event: any) {
   } finally {
     loadingTransaction.value = false
   }
+}
+
+function handleRowDoubleClick(event: { data?: RegularTransactionDTO }) {
+  openEditDialog(event.data?.id ?? '')
 }
 
 async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
@@ -152,10 +154,13 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
 
 function handleDelete(transactionId: string) {
   const transaction = transactions.value.find(t => t.id === transactionId)
+  // Naming the target is what turns a confirmation into an actual check: the action is now
+  // reachable from a row, so the dialog must say which row it is about.
+  const target = transaction?.label ? `« ${transaction.label} »` : 'cette transaction régulière'
   const bookletCount = transaction?.bookletIds?.length ?? 0
   const deletionMessage = bookletCount > 0
-    ? `Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.\n\nCette transaction est liée à ${bookletCount} livret(s). Les liens avec ces livrets seront également supprimés.`
-    : 'Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.'
+    ? `Êtes-vous sûr de vouloir supprimer ${target} ? Cette action est irréversible.\n\nCette transaction est liée à ${bookletCount} livret(s). Les liens avec ces livrets seront également supprimés.`
+    : `Êtes-vous sûr de vouloir supprimer ${target} ? Cette action est irréversible.`
 
   confirm.require({
     message: deletionMessage,
@@ -395,8 +400,9 @@ async function handleUnlink() {
         @click="openCreationRegularTransactionDialog"
       />
       <Button
-        v-if="!isMobile"
+        v-if="!isMobile || selectedTransactionsCount > 0"
         class="border-none font-semibold transition-all duration-300 md:w-auto md:text-3.5 md:px-4 md:py-2.5"
+        data-test="rt-bulk-delete"
         icon="pi pi-trash"
         severity="danger"
         :disabled="selectedTransactionsCount === 0"
@@ -511,6 +517,26 @@ async function handleUnlink() {
         <template #body-actions="{ data }">
           <div class="flex items-center gap-2">
             <Button
+              v-tooltip.top="'Modifier'"
+              data-test="rt-edit"
+              icon="pi pi-pencil"
+              size="small"
+              severity="secondary"
+              outlined
+              aria-label="Modifier la transaction régulière"
+              @click.stop="openEditDialog(data.id)"
+            />
+            <Button
+              v-tooltip.top="'Supprimer'"
+              data-test="rt-delete"
+              icon="pi pi-trash"
+              size="small"
+              severity="danger"
+              outlined
+              aria-label="Supprimer la transaction régulière"
+              @click.stop="handleDelete(data.id)"
+            />
+            <Button
               v-tooltip.top="'Lier à un livret'"
               data-test="btn-link"
               icon="pi pi-link"
@@ -623,7 +649,25 @@ async function handleUnlink() {
               />
             </div>
 
-            <div class="flex gap-2 pt-2" style="border-top: 1px solid var(--border-color);">
+            <div class="flex gap-2 pt-2 flex-wrap" style="border-top: 1px solid var(--border-color);">
+              <Button
+                data-test="rt-edit-mobile"
+                icon="pi pi-pencil"
+                size="small"
+                severity="secondary"
+                outlined
+                label="Modifier"
+                @click.stop="openEditDialog(transaction.id)"
+              />
+              <Button
+                data-test="rt-delete-mobile"
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                outlined
+                label="Supprimer"
+                @click.stop="handleDelete(transaction.id)"
+              />
               <Button
                 icon="pi pi-link"
                 size="small"
