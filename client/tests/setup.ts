@@ -1,6 +1,7 @@
 import { config } from '@vue/test-utils'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, readonly, ref, watch, watchEffect } from 'vue'
+import FieldError from '../components/FieldError.vue'
 
 // Prevent happy-dom from throwing when it tries to load image resources via the filesystem.
 // In tests the document base URL is file://, so /favicon.ico resolves to an unresolvable
@@ -185,6 +186,17 @@ vi.stubGlobal('useChangePassword', vi.fn(() => ({
 
 config.global.stubs = {
   Transition: false,
+}
+
+/**
+ * Auto-imported app components that carry assertable content.
+ *
+ * Without this, a spec asserting `[data-test="error-label"]` passes against an unresolved element:
+ * the attribute falls through, the element exists, and the message it is supposed to display never
+ * renders. Registering them here mirrors Nuxt's auto-import so that trap cannot recur.
+ */
+config.global.components = {
+  FieldError,
 }
 
 beforeEach(() => {
