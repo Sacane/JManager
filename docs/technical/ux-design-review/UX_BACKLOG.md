@@ -74,7 +74,7 @@ Ce qui coûte tous les jours à l'utilisateur sans être « cassé ».
 | **UX-22** | Recherche textuelle des transactions | Feature | Critique | L | FS | — |
 | **UX-23** | Migrer la cible de budget de `localStorage` vers le serveur | Fix | Fort | L | FS | — |
 | **UX-24** | Livrets liés affichés sur la ligne d'une régulière | Feature | Moyen | S | FE | — |
-| **UX-25** | Solde courant (running balance) par ligne de transaction | Feature | Fort | M | FE | — |
+| **UX-25** | Solde courant (running balance) par ligne de transaction | Feature | Fort | L | **FS** | — |
 | **UX-26** | Skeletons de chargement à la place des spinners plein écran | Dette | Moyen | M | FE | — |
 | **UX-27** | Règles + indicateur de force du mot de passe (3 écrans) | Feature | Fort | M | FE | — |
 
@@ -150,13 +150,13 @@ Lot 3 — Conformité & gains vite acquis   ~3 j   UX-13, UX-14, UX-17, UX-43, U
         (DELETE /api/user/me, startDate/endDate).
         Sortie : écart RGPD comblé, filtre par période, parcours d'auth propre.
 
-Lot 4 — Pages métier             ~6 j   UX-15, UX-16, UX-19, UX-20, UX-24, UX-25, UX-26, UX-41, UX-50
+Lot 4 — Pages métier             ~6 j   UX-15, UX-16, UX-19, UX-20, UX-24, UX-26, UX-41, UX-50
         Sortie : régulières et livret détail réellement utilisables.
 
 Lot 5 — Refonte dashboard        ~3 j   UX-18, UX-28, UX-44
         Dépend du lot 2.
 
-Lot 6 — Chantiers full-stack     ~8 j   UX-21, UX-22, UX-23
+Lot 6 — Chantiers full-stack    ~10 j   UX-21, UX-22, UX-23, UX-25
         Chacun est un sujet à part entière (TDD par couche).
         À lancer en parallèle des lots 4/5 si plusieurs personnes.
 
@@ -286,16 +286,18 @@ Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni ca
 
 Ce backlog est le document de référence du chantier. À chaque item livré : cocher ici, déplacer la carte Trello, mettre à jour `Changelog.md` **uniquement quand un lot est complet** (conformément à `CLAUDE.md`), et supprimer les fiches devenues caduques.
 
-### État au 6 septembre 2026
+### État au 18 septembre 2026
 
 | Lot | Contenu | État |
 |---|---|---|
 | Lot 1 — Assainissement | UX-01 → UX-10 | ✅ mergé (PR #223) |
 | Lot 2 — Socle visuel | UX-11, 12, 29, 30, 32, 33 | ✅ mergé (PR #224) |
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
-| Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 25, 26, 41, 50 | ⬜ à faire — prochain sur le chemin critique |
+| Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | 🟨 en cours — UX-15, 16, 19, 24 livrés |
 | Lot 5 — Refonte dashboard | UX-18, 28, 44 | ⬜ à faire (dépendance lot 2 satisfaite) |
-| Lot 6 — Chantiers full-stack | UX-21, 22, 23 | ⬜ à faire — premier travail backend du chantier |
+| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25** | ⬜ à faire — premier travail backend du chantier |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
+
+> ⚠️ **UX-25 a été reclassé en full-stack le 18/09/2026**, avant écriture de code : l'endpoint `/balances` n'expose aucun solde d'ouverture de période, contrairement à ce qu'affirmait son issue. Il quitte le lot 4 pour le lot 6. Le registre de tout ce qui reste full-stack est dans [`FULLSTACK_PENDING.md`](./FULLSTACK_PENDING.md) — **rien n'y est encore spécifié**.
 
 **25 items livrés sur 63.** La validation manuelle des lots 1 à 3 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison.
