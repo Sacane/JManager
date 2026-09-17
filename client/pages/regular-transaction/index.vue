@@ -327,6 +327,7 @@ const regularTransactionColumns = computed<AppTableColumn[]>(() => {
     { style: { width: '180px', minWidth: '180px', maxWidth: '180px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
     { field: 'regularity', header: 'Fréquence', sortable: true, style: { minWidth: '130px' }, slotName: 'regularity' },
     { header: 'Prochaine', style: { minWidth: '140px' }, slotName: 'nextOccurrence' },
+    { header: 'Livrets', style: { minWidth: '180px' }, slotName: 'booklets' },
     {
       header: 'Actions',
       style: { minWidth: '160px' },
@@ -359,6 +360,23 @@ function getUnlinkedBookletsFor(transaction: RegularTransactionDTO) {
 function getLinkedActiveBookletsFor(transaction: RegularTransactionDTO) {
   const ids = new Set(transaction.bookletIds ?? [])
   return booklets.value.filter(b => b.id !== undefined && ids.has(String(b.id)))
+}
+
+/**
+ * Why the link action is unavailable, or an empty string while it is available.
+ *
+ * A disabled control that says nothing is indistinguishable from a broken one, and the tooltip
+ * that used to carry this only existed on desktop.
+ */
+function linkUnavailableReason(transaction: RegularTransactionDTO): string {
+  if (booklets.value.length === 0) return 'Aucun livret à lier : créez-en un d\'abord'
+  if (getUnlinkedBookletsFor(transaction).length === 0) return 'Cette transaction est déjà liée à tous vos livrets'
+  return ''
+}
+
+function unlinkUnavailableReason(transaction: RegularTransactionDTO): string {
+  if (getLinkedActiveBookletsFor(transaction).length === 0) return 'Cette transaction n\'est liée à aucun livret'
+  return ''
 }
 
 function openLinkDialog(transaction: RegularTransactionDTO) {
@@ -591,6 +609,21 @@ async function handleUnlink() {
           </span>
         </template>
 
+        <template #body-booklets="{ data }">
+          <div v-if="getLinkedActiveBookletsFor(data).length > 0" data-test="rt-linked-booklets" class="flex flex-wrap gap-1">
+            <span
+              v-for="booklet in getLinkedActiveBookletsFor(data)"
+              :key="booklet.id"
+              class="inline-flex items-center rounded-md border border-[var(--card-border)] bg-[var(--bg-tertiary)] px-2 py-0.5 text-xs font-semibold text-[var(--text-secondary)]"
+            >
+              {{ booklet.label }}
+            </span>
+          </div>
+          <span v-else data-test="rt-no-booklet" class="text-xs font-semibold text-[var(--text-tertiary)]">
+            Aucun livret lié
+          </span>
+        </template>
+
         <template #body-actions="{ data }">
           <div class="flex items-center gap-2">
             <Button
@@ -613,26 +646,32 @@ async function handleUnlink() {
               aria-label="Supprimer la transaction régulière"
               @click.stop="handleDelete(data.id)"
             />
-            <Button
-              v-tooltip.top="'Lier à un livret'"
-              data-test="btn-link"
-              icon="pi pi-link"
-              size="small"
-              severity="secondary"
-              outlined
-              :disabled="getUnlinkedBookletsFor(data).length === 0"
-              @click.stop="openLinkDialog(data)"
-            />
-            <Button
-              v-tooltip.top="'Délier d\'un livret'"
-              data-test="btn-unlink"
-              icon="pi pi-minus-circle"
-              size="small"
-              severity="warning"
-              outlined
-              :disabled="getLinkedActiveBookletsFor(data).length === 0"
-              @click.stop="openUnlinkDialog(data)"
-            />
+            <!-- The title sits on the wrapper: a disabled button receives no pointer event, so a
+                 tooltip bound to it never fires — which is how the reason stayed invisible. -->
+            <span data-test="rt-link-wrapper" :title="linkUnavailableReason(data) || 'Lier à un livret'">
+              <Button
+                data-test="btn-link"
+                icon="pi pi-link"
+                size="small"
+                severity="secondary"
+                outlined
+                :disabled="getUnlinkedBookletsFor(data).length === 0"
+                :aria-label="linkUnavailableReason(data) || 'Lier à un livret'"
+                @click.stop="openLinkDialog(data)"
+              />
+            </span>
+            <span data-test="rt-unlink-wrapper" :title="unlinkUnavailableReason(data) || 'Délier d\'un livret'">
+              <Button
+                data-test="btn-unlink"
+                icon="pi pi-minus-circle"
+                size="small"
+                severity="warning"
+                outlined
+                :disabled="getLinkedActiveBookletsFor(data).length === 0"
+                :aria-label="unlinkUnavailableReason(data) || 'Délier d\'un livret'"
+                @click.stop="openUnlinkDialog(data)"
+              />
+            </span>
           </div>
         </template>
       </AppTable>
@@ -720,6 +759,20 @@ async function handleUnlink() {
               </div>
             </div>
 
+            <div class="flex items-start gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
+              <i class="pi pi-wallet text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
+              <div v-if="getLinkedActiveBookletsFor(transaction).length > 0" data-test="rt-linked-booklets-mobile" class="flex flex-wrap gap-1">
+                <span
+                  v-for="booklet in getLinkedActiveBookletsFor(transaction)"
+                  :key="booklet.id"
+                  class="inline-flex items-center rounded-md border border-[var(--card-border)] bg-[var(--bg-tertiary)] px-2 py-0.5 text-xs font-semibold"
+                >
+                  {{ booklet.label }}
+                </span>
+              </div>
+              <span v-else data-test="rt-no-booklet-mobile" class="text-sm font-semibold text-[var(--text-tertiary)]">Aucun livret lié</span>
+            </div>
+
             <div class="flex justify-start pt-2 md:pt-2.5" style="border-top: 1px solid var(--border-color);">
               <Tag
                 :value="transaction.tagDTO.label"
@@ -747,15 +800,18 @@ async function handleUnlink() {
                 label="Supprimer"
                 @click.stop="handleDelete(transaction.id)"
               />
-              <Button
-                icon="pi pi-link"
-                size="small"
-                severity="secondary"
-                outlined
-                label="Lier"
-                :disabled="getUnlinkedBookletsFor(transaction).length === 0"
-                @click.stop="openLinkDialog(transaction)"
-              />
+              <span data-test="rt-link-wrapper-mobile" :title="linkUnavailableReason(transaction) || 'Lier à un livret'">
+                <Button
+                  icon="pi pi-link"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  label="Lier"
+                  :disabled="getUnlinkedBookletsFor(transaction).length === 0"
+                  :aria-label="linkUnavailableReason(transaction) || 'Lier à un livret'"
+                  @click.stop="openLinkDialog(transaction)"
+                />
+              </span>
               <Button
                 v-if="getLinkedActiveBookletsFor(transaction).length > 0"
                 icon="pi pi-minus-circle"
