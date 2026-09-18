@@ -64,6 +64,13 @@ the same conversation as the items above.
 | `/transactions/regenerable` and `/transactions/regenerate` accept `month` and `year` only, unlike `/transactions`, `/balances` and `/report` | Regeneration is hidden while a custom date range is active (UX-14), rather than silently operating on a different period | `docs/backlog/regenerable-transactions-date-range.md` |
 | Recurrence date math now exists in TypeScript and in the Kotlin domain, with nothing keeping them in step | Nothing is wrong today; the risk is drift, and the symptom would be a wrong next-occurrence date beside a correct list (UX-19) | `docs/backlog/recurrence-math-duplicated-client-side.md` |
 | No GDPR data export (portability) endpoint | "Mon compte" offers deletion but not export, while the privacy policy advertises both (UX-13) | this file — no backlog entry, nothing is broken, the feature is simply absent |
+| Registration collapses "username taken" and "email taken" into one generic `domain.user.register.invalid` ("Une erreur est survenue") — `RegisterUserService` returns it whenever `userRepository.register` yields null | The user is told registration failed without learning what to change (UX-20) | this file — see the note below |
+
+**Note on the registration failure.** Distinguishing the two cases is a product decision, not only a
+backend change. Telling a visitor that an **email** is already registered is a user enumeration
+vector; many products accept that at sign-up, others answer the same way in both cases and send a
+mail to the address instead. The **username** case carries no such risk and can safely be named.
+Decide before specifying.
 
 Note that fixing the recurrence duplication and delivering UX-25 option 1 overlap: both want
 date-aware computation exposed from the domain. `docs/backlog/extract-recurrence-occurrence-calculator.md`

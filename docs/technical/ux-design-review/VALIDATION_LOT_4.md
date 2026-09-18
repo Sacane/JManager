@@ -6,8 +6,10 @@ These walkthroughs cover what the suite cannot.
 
 Mark each step ✅ or ❌. A ❌ is worth reporting with the viewport width and the theme in use.
 
-**Delivered so far:** UX-15, UX-16, UX-19, UX-24.
-**Still to come in this lot:** UX-20, UX-25, UX-26, UX-41, UX-50.
+**Delivered so far:** UX-15, UX-16, UX-19, UX-20, UX-24.
+**Still to come in this lot:** UX-26, UX-41, UX-50.
+**Moved out of this lot:** UX-25 — reclassified full-stack before any code was written. See
+`FULLSTACK_PENDING.md`.
 
 ---
 
@@ -164,9 +166,111 @@ right; it cannot prove nine columns fit on a screen.
 
 ---
 
+## 10. Form errors next to the field — transaction dialog (UX-20)
+
+Open a booklet, click **Créer une transaction**.
+
+| # | Step | Expected |
+|---|---|---|
+| 10.1 | Leave everything empty, click Créer | A red message under **Libellé** and another under **Montant**. No toast |
+| 10.2 | Type a label only, click Créer | Only the amount message remains; the label one is gone |
+| 10.3 | Enter an amount of 0 | "Le montant doit être supérieur à 0" under Montant |
+| 10.4 | Enter a valid amount | The amount message disappears **without** clicking Créer again |
+| 10.5 | Fill both, click Créer | The transaction is created, no message anywhere |
+| 10.6 | Check the invalid fields | They carry PrimeVue's red invalid border |
+
+⚠️ **10.1 is the case that was wrong before.** With a valid amount and an empty label, the old
+toast said "Veuillez saisir un montant supérieur à 0" — the wrong field. Confirm the label is named.
+
+---
+
+## 11. Form errors — regular transaction dialog (UX-20)
+
+Regular transactions page, **Créer une transaction régulière**.
+
+| # | Step | Expected |
+|---|---|---|
+| 11.1 | Leave everything empty | The **Créer** button is clickable — it used to be greyed out |
+| 11.2 | Click it | Three messages: under Libellé, Montant, and the booklet selector |
+| 11.3 | Type a label, click Créer | The label message is gone, the other two remain |
+| 11.4 | Pick a booklet | The booklet message disappears immediately |
+| 11.5 | Fill everything, click Créer | The entry is created |
+
+⚠️ **11.2 used to do nothing at all.** With an empty label the dialog returned without a word — the
+click had no visible effect. This is the most important case in the section.
+
+---
+
+## 12. Form errors — tag creation (UX-20)
+
+Tags page, **Nouveau tag**.
+
+| # | Step | Expected |
+|---|---|---|
+| 12.1 | Leave the label empty | The **Créer le tag** button is clickable |
+| 12.2 | Click it | "Indiquez un libellé" under the label field |
+| 12.3 | Switch to **Sous-tag**, type a label, click create | "Choisissez le tag parent de ce sous-tag" under the parent selector |
+| 12.4 | Pick a parent | The message disappears |
+| 12.5 | Close the dialog with an error showing, reopen it | The form is blank and no error is shown |
+
+---
+
+## 13. Form errors — password change (UX-20)
+
+Settings page, **Changer le mot de passe**. This section needs a real backend.
+
+| # | Step | Expected |
+|---|---|---|
+| 13.1 | Submit with all three fields empty | One message under **each** field, not one line under the confirmation |
+| 13.2 | Enter a **wrong** current password, matching new ones | "Le mot de passe actuel est incorrect" under **Mot de passe actuel**. No toast |
+| 13.3 | Enter the right current password and the **same** password as new | "Le nouveau mot de passe doit être différent de l'ancien" under **Nouveau mot de passe** |
+| 13.4 | Enter mismatched new and confirmation | "Les mots de passe ne correspondent pas" under **Confirmer**, before any request |
+| 13.5 | Do a valid change | Success toast, all three fields cleared, no message left |
+| 13.6 | Cut the backend, submit a valid form | A generic error toast — not a field message |
+
+⚠️ **13.2 and 13.3 are the cases that were broken, and differently.** A wrong current password came
+back as 403, which the client did not handle: it showed "Une erreur est survenue". An unchanged
+password came back as 400, also unhandled. And the one status the client did map, 401, it announced
+as a wrong current password when it actually means the confirmation differs. Verify both land on the
+right field.
+
+---
+
+## 14. Form errors — registration (UX-20)
+
+Log out, open the login page, switch to **Créer un compte**.
+
+| # | Step | Expected |
+|---|---|---|
+| 14.1 | Fill everything with mismatched passwords, submit | "Les mots de passe ne correspondent pas" under the **confirmation** field |
+| 14.2 | Look at the bottom of the form | No duplicate of that message in the red block above the button |
+| 14.3 | Fix the confirmation | The message disappears as you type |
+| 14.4 | Register with a username that already exists | The red block above the button reports the failure — at form level |
+| 14.5 | Switch to **Se connecter** and back | No stale message |
+
+❗️ **14.4 stays form-level on purpose.** The backend reports "username taken" and "email taken" as
+one undistinguished error, so there is no field to point at. Recorded in `FULLSTACK_PENDING.md`.
+
+---
+
+## 15. Sign in — deliberately unchanged (UX-20)
+
+| # | Step | Expected |
+|---|---|---|
+| 15.1 | Sign in with an existing email and a wrong password | One generic message for the form |
+| 15.2 | Sign in with an email that has no account | **The same** generic message |
+
+⚠️ **15.1 and 15.2 must be indistinguishable.** Pointing at the wrong field would tell anyone
+whether an account exists for an email. If the two ever differ, that is a security regression, not
+a UX improvement.
+
+---
+
 ## Priority cases
 
-If time is short, do these five:
+If time is short, do these eight:
+
+**Regular transactions page (UX-15, 16, 19, 24)**
 
 - **9.1 / 9.2** — nine columns and four row buttons. The most likely visual break in this batch.
 - **2.2** — the same crowding question on a 375 px card.
@@ -174,3 +278,10 @@ If time is short, do these five:
 - **6.6** — the 31st clamped to February. Where date maths usually breaks.
 - **7.5** — the commitment counts real occurrences instead of a smoothed average. A design decision
   to confirm or reject.
+
+**Form errors (UX-20)**
+
+- **11.2** — the regular transaction dialog used to do nothing at all on an empty label.
+- **13.2 / 13.3** — the two password failures that surfaced as "Une erreur est survenue". Needs a
+  real backend.
+- **15.1 / 15.2** — sign-in must answer identically for a wrong password and an unknown email.
