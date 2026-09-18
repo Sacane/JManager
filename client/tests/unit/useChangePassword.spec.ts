@@ -37,19 +37,23 @@ describe('composables/useChangePassword', () => {
     expect(axios.patch).not.toHaveBeenCalled()
   })
 
-  it('shows error when fields are empty', async () => {
-    const { changePassword, confirmPasswordError } = useChangePassword()
+  // UX-20 replaced the single `confirmPasswordError` with one message per field: a form that puts
+  // "tous les champs sont requis" under the confirmation does not say which one is missing.
+  it('reports every empty field on the field itself', async () => {
+    const { changePassword, fieldErrors } = useChangePassword()
     await changePassword()
-    expect(confirmPasswordError.value).toBe('Tous les champs sont requis')
+    expect(fieldErrors.currentPassword).toBe('Indiquez votre mot de passe actuel')
+    expect(fieldErrors.newPassword).toBe('Indiquez un nouveau mot de passe')
+    expect(fieldErrors.confirmPassword).toBe('Confirmez le nouveau mot de passe')
   })
 
   it('shows error when new and confirm passwords do not match', async () => {
-    const { currentPassword, newPassword, confirmPassword, changePassword, confirmPasswordError } = useChangePassword()
+    const { currentPassword, newPassword, confirmPassword, changePassword, fieldErrors } = useChangePassword()
     currentPassword.value = 'old'
     newPassword.value = 'new1'
     confirmPassword.value = 'new2'
     await changePassword()
-    expect(confirmPasswordError.value).toBe('Les mots de passe ne correspondent pas')
+    expect(fieldErrors.confirmPassword).toBe('Les mots de passe ne correspondent pas')
     expect(axios.patch).not.toHaveBeenCalled()
   })
 
@@ -78,8 +82,14 @@ describe('composables/useChangePassword', () => {
     expect(confirmPassword.value).toBe('')
   })
 
-  it('shows "incorrect current password" toast on 401', async () => {
-    const axiosError = { response: { status: 401 }, isAxiosError: true }
+  // These two used to pin a mapping that did not match the backend. A wrong current password is
+  // USER_UNAUTHORIZED, mapped to 403 — never 401, which is the confirmation not matching. And no
+  // domain state produces 422 at all, so that branch was unreachable. UX-20 replaced the status
+  // based mapping with one keyed on errorKey; the per-field outcomes are covered in
+  // useChangePassword-field-errors.spec.ts. What remains asserted here is that a status carrying
+  // no known error key still reaches the user.
+  it('falls back to the generic toast when a failure carries no known error key', async () => {
+    const axiosError = { response: { status: 401, data: {} }, isAxiosError: true }
     vi.mocked(axios.patch).mockRejectedValue(axiosError)
     vi.mocked(axios.isAxiosError).mockReturnValue(true)
 
@@ -88,11 +98,11 @@ describe('composables/useChangePassword', () => {
     newPassword.value = 'newpass'
     confirmPassword.value = 'newpass'
     await changePassword()
-    expect(toastErrorMock).toHaveBeenCalledWith('Mot de passe actuel incorrect')
+    expect(toastErrorMock).toHaveBeenCalledWith('Une erreur est survenue. Veuillez réessayer.')
   })
 
-  it('shows validation error toast on 422', async () => {
-    const axiosError = { response: { status: 422 }, isAxiosError: true }
+  it('falls back to the generic toast on an unmapped error key', async () => {
+    const axiosError = { response: { status: 400, data: { errorKey: 'domain.user.something.else' } }, isAxiosError: true }
     vi.mocked(axios.patch).mockRejectedValue(axiosError)
     vi.mocked(axios.isAxiosError).mockReturnValue(true)
 
@@ -101,7 +111,7 @@ describe('composables/useChangePassword', () => {
     newPassword.value = 'newpass'
     confirmPassword.value = 'newpass'
     await changePassword()
-    expect(toastErrorMock).toHaveBeenCalledWith('Le nouveau mot de passe est invalide')
+    expect(toastErrorMock).toHaveBeenCalledWith('Une erreur est survenue. Veuillez réessayer.')
   })
 
   it('shows generic error toast on unexpected error', async () => {

@@ -136,7 +136,7 @@ const {
   currentPassword,
   newPassword: newPasswordChange,
   confirmPassword: confirmPasswordChange,
-  confirmPasswordError,
+  fieldErrors: passwordFieldErrors,
   isSubmitting: isChangingPassword,
   changePassword,
 } = useChangePassword()
@@ -345,6 +345,7 @@ onMounted(() => {
             autocomplete="current-password"
             data-test="current-password-input"
           />
+          <FieldError data-test="current-password-error" :message="passwordFieldErrors.currentPassword" />
         </div>
 
         <div class="change-password-field">
@@ -358,6 +359,7 @@ onMounted(() => {
             autocomplete="new-password"
             data-test="new-password-input"
           />
+          <FieldError data-test="new-password-error" :message="passwordFieldErrors.newPassword" />
         </div>
 
         <div class="change-password-field">
@@ -371,9 +373,7 @@ onMounted(() => {
             autocomplete="new-password"
             data-test="confirm-password-input"
           />
-          <p v-if="confirmPasswordError" class="change-password-error" data-test="confirm-password-error">
-            {{ confirmPasswordError }}
-          </p>
+          <FieldError data-test="confirm-password-error" :message="passwordFieldErrors.confirmPassword" />
         </div>
 
         <button

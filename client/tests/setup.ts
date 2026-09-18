@@ -179,7 +179,7 @@ vi.stubGlobal('useChangePassword', vi.fn(() => ({
   currentPassword: ref(''),
   newPassword: ref(''),
   confirmPassword: ref(''),
-  confirmPasswordError: ref(null),
+  fieldErrors: { currentPassword: null, newPassword: null, confirmPassword: null },
   isSubmitting: ref(false),
   changePassword: vi.fn(),
 })))
