@@ -62,13 +62,46 @@ onMounted(() => {
   })
 })
 
+const fieldErrors = reactive<{ label: string | null, amount: string | null, booklets: string | null }>({
+  label: null,
+  amount: null,
+  booklets: null,
+})
+
+function labelErrorFor(value: string): string | null {
+  return value.trim() === '' ? 'Indiquez un libellé' : null
+}
+
+function amountErrorFor(value: number | undefined | null): string | null {
+  if (value === undefined || value === null) return 'Indiquez un montant'
+  if (value <= 0) return 'Le montant doit être supérieur à 0'
+  return null
+}
+
+function bookletsErrorFor(selected: OnlyBookletInfo[]): string | null {
+  return selected.length === 0 ? 'Choisissez au moins un livret' : null
+}
+
+watch(() => regularTrForm.label, (label) => {
+  if (fieldErrors.label) fieldErrors.label = labelErrorFor(label)
+})
+
+watch(() => regularTrForm.amount, (amount) => {
+  if (fieldErrors.amount) fieldErrors.amount = amountErrorFor(amount)
+})
+
+watch(() => regularTrForm.selectedBooklets, (selected) => {
+  if (fieldErrors.booklets) fieldErrors.booklets = bookletsErrorFor(selected)
+})
+
 function emitTransaction() {
-  if (regularTrForm.amount === undefined || regularTrForm.amount <= 0 || regularTrForm.label === '') {
-    return
-  }
-  if (regularTrForm.selectedBooklets.length === 0) {
-    return
-  }
+  fieldErrors.label = labelErrorFor(regularTrForm.label)
+  fieldErrors.amount = amountErrorFor(regularTrForm.amount)
+  fieldErrors.booklets = bookletsErrorFor(regularTrForm.selectedBooklets)
+
+  // These guards used to return without a word: a click on "Créer" with an empty label did nothing
+  // at all, which is indistinguishable from a broken button.
+  if (fieldErrors.label || fieldErrors.amount || fieldErrors.booklets) return
   const frequency = strToFrequency(regularTrForm.frequency)
   if (frequency === 'MONTHLY') {
     const formattedStartDate = formattedDateString(regularTrForm.date)
@@ -151,7 +184,8 @@ function handleTabKey(event: KeyboardEvent) {
     <div v-else class="h-full mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-sm font-medium text-gray-700">Libellé</label>
-        <InputText id="label" v-model="regularTrForm.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" maxlength="100" />
+        <InputText id="label" v-model="regularTrForm.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" maxlength="100" :invalid="!!fieldErrors.label" aria-describedby="rt-label-error" />
+        <FieldError id="rt-label-error" data-test="error-rt-label" :message="fieldErrors.label" />
       </div>
       <div class="mt5 flex flex-col gap-3">
         <label for="selectionType">Sélectionner le type de transaction</label>
@@ -168,8 +202,9 @@ function handleTabKey(event: KeyboardEvent) {
       </div>
       <label for="labelAmount" class="block mt-4 text-sm font-medium text-gray-700">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber ref="inputNumberRef" v-model="regularTrForm.amount" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="(value: number) => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
+        <InputNumber ref="inputNumberRef" v-model="regularTrForm.amount" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :invalid="!!fieldErrors.amount" aria-describedby="rt-amount-error" :formatter="(value: number) => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
       </div>
+      <FieldError id="rt-amount-error" data-test="error-rt-amount" :message="fieldErrors.amount" />
       <div class="flex flex-col gap-3 w-50%">
         <label for="calendar" class="block mt-4 text-sm font-medium text-gray-700">Date</label>
         <DatePicker id="calendar" v-model="regularTrForm.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />
@@ -205,6 +240,7 @@ function handleTabKey(event: KeyboardEvent) {
             </div>
           </template>
         </MultiSelect>
+        <FieldError data-test="error-rt-booklets" :message="fieldErrors.booklets" />
         <small class="text-gray-500">La transaction sera appliquée aux livrets sélectionnés</small>
       </div>
       <div v-if="regularTrForm.frequency === frequencyToString('MONTHLY')" class="flex flex-col gap-3">
@@ -219,7 +255,7 @@ function handleTabKey(event: KeyboardEvent) {
       </div>
       <div class="flex flex-row gap-5">
         <Button data-test="cancel-btn" severity="secondary" label="Annuler" class="mt-6 w-full text-white" @click="closeDialog" />
-        <Button data-test="create-btn" label="Créer" class="mt-6 w-full btn-primary text-white" :disabled="regularTrForm.selectedBooklets.length === 0" @click="emitTransaction" />
+        <Button data-test="create-btn" label="Créer" class="mt-6 w-full btn-primary text-white" @click="emitTransaction" />
       </div>
     </div>
   </Dialog>
