@@ -231,7 +231,7 @@ Supprimer `components/monthPicker.vue`, `components/TitleCard.vue`, `components/
 Board **Développement** → liste **« À faire ! »**, étiquette **UI/UX** (verte).
 Les issues suivent la convention `docs/features/{feature}/{module}_{titre}.md` et passent toutes le validateur du skill `create-issue`.
 
-> **Lots 1 à 3 livrés et mergés** (PR #223, #224, #225) — les 25 dossiers d'issue correspondants ont été supprimés de `docs/features/`, conformément à la règle « Documentation Cleanup » de `CLAUDE.md`. Leurs lignes restent dans le tableau pour la traçabilité : le détail de ce qui a été livré est dans `Changelog.md`, la carte Trello reste la référence historique. Les 12 dossiers encore présents sont ceux qui restent à implémenter : UX-15, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27.
+> **Lots 1 à 4 livrés et mergés** (PR #223, #224, #225, #226) — les 33 dossiers d'issue correspondants ont été supprimés de `docs/features/`, conformément à la règle « Documentation Cleanup » de `CLAUDE.md`. Leurs lignes restent dans le tableau pour la traçabilité : le détail de ce qui a été livré est dans `Changelog.md`, la carte Trello reste la référence historique. Les 6 dossiers encore présents sont ceux qui restent à implémenter : UX-18, 21, 22, 23, 25, 27.
 
 | ID | Modules | Dossier d'issue (`docs/features/`) | Carte |
 |---|---|---|---|
@@ -295,11 +295,13 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 | Lot 1 — Assainissement | UX-01 → UX-10 | ✅ mergé (PR #223) |
 | Lot 2 — Socle visuel | UX-11, 12, 29, 30, 32, 33 | ✅ mergé (PR #224) |
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
-| Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | ✅ livré — branche `fix/ux-lot-4-pages-metier`, PR à ouvrir |
+| Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | ✅ mergé (PR #226) |
 | Lot 5 — Refonte dashboard | UX-18, 28, 44 | ⬜ à faire (dépendance lot 2 satisfaite) |
 | Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25** | ⬜ à faire — premier travail backend du chantier |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
 
 > ⚠️ **UX-25 a été reclassé en full-stack le 18/09/2026**, avant écriture de code : l'endpoint `/balances` n'expose aucun solde d'ouverture de période, contrairement à ce qu'affirmait son issue. Il quitte le lot 4 pour le lot 6. Le registre de tout ce qui reste full-stack est dans [`FULLSTACK_PENDING.md`](./FULLSTACK_PENDING.md) — **rien n'y est encore spécifié**.
 
-**25 items livrés sur 63.** La validation manuelle des lots 1 à 3 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison.
+> ❗️ **UX-27 n'est planifié dans aucun lot.** Item P1 (règles et indicateur de force du mot de passe), avec son issue et sa carte, absent du séquencement depuis la première version de ce document — un oubli, pas un choix. Il est frontend seul et s'appuie sur le composant `PasswordField` livré par UX-47. Son lot reste à décider.
+
+**33 items livrés sur 63.** La validation manuelle des lots 1 à 4 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`, `VALIDATION_LOT_4.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison.
