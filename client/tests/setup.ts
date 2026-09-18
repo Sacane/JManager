@@ -2,6 +2,7 @@ import { config } from '@vue/test-utils'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, readonly, ref, watch, watchEffect } from 'vue'
 import FieldError from '../components/FieldError.vue'
+import PageSkeleton from '../components/PageSkeleton.vue'
 
 // Prevent happy-dom from throwing when it tries to load image resources via the filesystem.
 // In tests the document base URL is file://, so /favicon.ico resolves to an unresolvable
@@ -184,19 +185,26 @@ vi.stubGlobal('useChangePassword', vi.fn(() => ({
   changePassword: vi.fn(),
 })))
 
-config.global.stubs = {
-  Transition: false,
-}
-
 /**
  * Auto-imported app components that carry assertable content.
  *
  * Without this, a spec asserting `[data-test="error-label"]` passes against an unresolved element:
  * the attribute falls through, the element exists, and the message it is supposed to display never
- * renders. Registering them here mirrors Nuxt's auto-import so that trap cannot recur.
+ * renders. Registering them mirrors Nuxt's auto-import.
+ *
+ * Registering is not enough under shallowMount, which stubs every child component — globally
+ * registered ones included. Listing them as `false` in the global stubs keeps them rendered for real
+ * in every spec, so no page spec has to remember to opt them back in.
  */
 config.global.components = {
   FieldError,
+  PageSkeleton,
+}
+
+config.global.stubs = {
+  Transition: false,
+  FieldError: false,
+  PageSkeleton: false,
 }
 
 beforeEach(() => {

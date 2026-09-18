@@ -130,6 +130,17 @@ describe('pages/index onboarding state', () => {
     expect(wrapper.text()).toContain('Chargement')
   })
 
+  // UX-26: the dashboard used to stay empty behind a spinner, then reveal about fifteen blocks at once.
+  it('shows the shape of the dashboard while loading, not a spinner', async () => {
+    const wrapper = mountDashboard(['dashboard.initial'])
+    await settle()
+
+    const skeleton = wrapper.find('[data-test="page-skeleton"]')
+    expect(skeleton.exists()).toBe(true)
+    expect(skeleton.findAll('[data-test="skeleton-kpi"]').length).toBeGreaterThan(0)
+    expect(wrapper.find('.pi-spinner').exists()).toBe(false)
+  })
+
   it('does not treat the very first render as empty', async () => {
     const wrapper = mountDashboard()
 

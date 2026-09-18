@@ -1362,13 +1362,9 @@ watch(selectedBookletId, () => {
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-4 min-h-60vh">
-      <i class="pi pi-spin pi-spinner text-5xl text-purple-600" />
-      <p style="color: var(--text-secondary);">
-        Chargement de vos données...
-      </p>
-    </div>
+    <!-- Loading State: the shape of the dashboard, so the content settles in place rather than
+         appearing as fifteen blocks at once behind a spinner (UX-26). -->
+    <PageSkeleton v-if="isLoading" variant="dashboard" label="Chargement de vos données…" />
 
     <!-- Onboarding: nothing to show yet, so the page asks for the one thing missing rather than
          rendering four indicators at 0.00 EUR and three empty charts. -->
