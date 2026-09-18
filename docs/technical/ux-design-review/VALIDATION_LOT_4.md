@@ -6,8 +6,7 @@ These walkthroughs cover what the suite cannot.
 
 Mark each step ✅ or ❌. A ❌ is worth reporting with the viewport width and the theme in use.
 
-**Delivered so far:** UX-15, UX-16, UX-19, UX-20, UX-24, UX-26, UX-41.
-**Still to come in this lot:** UX-50.
+**Delivered:** UX-15, UX-16, UX-19, UX-20, UX-24, UX-26, UX-41, UX-50 — the whole lot.
 **Moved out of this lot:** UX-25 — reclassified full-stack before any code was written. See
 `FULLSTACK_PENDING.md`.
 
@@ -361,9 +360,37 @@ reads.
 
 ---
 
+## 21. Dashboard quick actions (UX-50)
+
+Dashboard, with at least one booklet and the account selector on a known booklet — say "Livret A".
+
+| # | Step | Expected |
+|---|---|---|
+| 21.1 | Look at the "Actions rapides" block | Three actions: add a transaction, import a CSV statement, create a regular transaction. "Voir mes comptes", "Ajuster les régulières" and "Revoir mes tags" are gone |
+| 21.2 | Read the first two | Each says "sur Livret A" under its label |
+| 21.3 | Switch the account selector to another booklet | Both now name that booklet |
+| 21.4 | Click **Ajouter une transaction** | The creation dialog opens on the dashboard, titled with the booklet name |
+| 21.5 | Record an expense of 10 € | Success toast naming the booklet; the dialog closes |
+| 21.6 | Watch the indicators while it saves | They stay on screen and update — **the page is not replaced by placeholders** |
+| 21.7 | Open the booklet from the sidebar | The expense is there, on the booklet the action named |
+| 21.8 | Cut the backend, try again | An error toast; **the dialog stays open with what you typed** |
+| 21.9 | Click **Importer un relevé CSV**, import a file | The import dialog works as on the booklet page; the dashboard refreshes after |
+| 21.10 | Click **Créer une transaction régulière**, create one | It is created; the dashboard refreshes |
+| 21.11 | At 375 px | The three actions stack, and the booklet name wraps rather than overflowing |
+
+⚠️ **21.6 is the case that matters most.** The dashboard reloads under the same scope as its first
+load, and would have wiped itself for the full-page skeleton on every quick action. The skeleton is
+now reserved for the first load — confirm nothing flashes.
+
+**21.7 closes the loop.** The API identifies a booklet by its label rather than its id. That is safe
+here: `SaveBookletUseCase` and `EditBookletUseCase` both reject a label already taken, so labels are
+unique per user and the entry cannot land on another booklet.
+
+---
+
 ## Priority cases
 
-If time is short, do these twelve:
+If time is short, do these fourteen:
 
 **Regular transactions page (UX-15, 16, 19, 24)**
 
@@ -390,3 +417,8 @@ If time is short, do these twelve:
 
 - **20.2** — a long account name is no longer cut off. The cause your card most likely came from.
 - **20.9** — the saved cycle is the period the dashboard actually uses.
+
+**Quick actions (UX-50)**
+
+- **21.6** — a quick action refreshes the dashboard without wiping it for placeholders.
+- **21.8** — a failed save keeps the dialog open with what was typed.
