@@ -58,6 +58,16 @@ describe('pages/tag/index loading states', () => {
     expect(wrapper.text()).toContain('Chargement des tags...')
   })
 
+  // UX-26: tags are cards, so the placeholder is cards rather than a centred spinner.
+  it('shows card placeholders instead of a spinner while loading', () => {
+    const { wrapper } = mountTagPage(['tag.load'])
+
+    const skeleton = wrapper.find('[data-test="page-skeleton"]')
+    expect(skeleton.exists()).toBe(true)
+    expect(skeleton.findAll('[data-test="skeleton-card"]').length).toBeGreaterThan(0)
+    expect(wrapper.find('.spinner').exists()).toBe(false)
+  })
+
   it('disables create action when an add action is running', () => {
     const { wrapper } = mountTagPage(['tag.add'])
 

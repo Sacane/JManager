@@ -188,15 +188,7 @@ function formatAmount(amount: string) {
       </div>
     </div>
 
-    <div v-if="isLoadingBooklets" class="loading-container">
-      <ProgressSpinner
-        style="width: 48px; height: 48px"
-        stroke-width="4"
-      />
-      <p class="loading-text">
-        Chargement des livrets...
-      </p>
-    </div>
+    <PageSkeleton v-if="isLoadingBooklets" variant="cards" :count="3" label="Chargement des livrets..." />
 
     <!-- Empty State -->
     <div v-else-if="!isBookletsFilled" class="empty-state">
@@ -484,25 +476,6 @@ function formatAmount(amount: string) {
 /* ===== BOOKLETS GRID ===== */
 .booklets-container {
   width: 100%;
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1.5rem 1rem;
-  margin-bottom: 1rem;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-}
-
-.loading-text {
-  margin: 0;
-  color: var(--text-secondary);
-  font-weight: 500;
 }
 
 .booklets-grid {

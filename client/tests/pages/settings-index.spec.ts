@@ -95,6 +95,25 @@ function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
   })
 }
 
+// UX-26: the settings page showed a bare line of text while loading, the fourth loading treatment
+// in the application. It now draws the form it is about to show.
+describe('pages/settings/index loading', () => {
+  it('draws the shape of the form while the settings load', () => {
+    const wrapper = mountSettingsPage(['settings.load'])
+
+    const skeleton = wrapper.find('[data-test="page-skeleton"]')
+    expect(skeleton.exists()).toBe(true)
+    expect(skeleton.findAll('[data-test="skeleton-field"]').length).toBeGreaterThan(0)
+    expect(skeleton.text()).toContain('Chargement des paramètres')
+  })
+
+  it('shows the form once the settings are loaded', () => {
+    const wrapper = mountSettingsPage()
+
+    expect(wrapper.find('[data-test="page-skeleton"]').exists()).toBe(false)
+  })
+})
+
 describe('pages/settings/index unsaved changes', () => {
   let leaveGuard: (() => boolean) | null
 

@@ -74,15 +74,26 @@ async function submitCreateUser() {
   )
 }
 
+/**
+ * Until the first answer, an empty list means "not known yet": the table used to show
+ * "Aucun utilisateur trouvé" while loading, although an admin page always lists at least its own
+ * admin. Later page changes happen over rows already on screen and keep their spinner.
+ */
+const hasLoadedUsersOnce = ref(false)
+
 async function loadUsers(page: number = 0) {
-  await fetchUsers(
-    page,
-    10,
-    undefined,
-    (error) => {
-      toastr.errorAxios(error)
-    },
-  )
+  try {
+    await fetchUsers(
+      page,
+      10,
+      undefined,
+      (error) => {
+        toastr.errorAxios(error)
+      },
+    )
+  } finally {
+    hasLoadedUsersOnce.value = true
+  }
 }
 
 function onPageChange(event: any) {
@@ -321,15 +332,7 @@ function isKeyToggling(key: FeatureKey): boolean {
 
                 <!-- Mobile list view: shown only on small screens -->
                 <div v-if="isMobileWidth" class="users-mobile-list">
-                  <div v-if="isLoading" class="loading-container">
-                    <ProgressSpinner
-                      style="width: 50px; height: 50px"
-                      stroke-width="4"
-                    />
-                    <p class="loading-text">
-                      Chargement des utilisateurs...
-                    </p>
-                  </div>
+                  <PageSkeleton v-if="isLoading" variant="list" :count="5" label="Chargement des utilisateurs..." />
                   <template v-else>
                     <div class="users-mobile-count">
                       {{ users.length }} utilisateur(s)
@@ -380,7 +383,8 @@ function isKeyToggling(key: FeatureKey): boolean {
                   class="users-datatable"
                 >
                   <template #empty>
-                    <div class="empty-state">
+                    <PageSkeleton v-if="!hasLoadedUsersOnce" variant="list" :count="5" label="Chargement des utilisateurs..." />
+                    <div v-else class="empty-state">
                       <i class="pi pi-users empty-icon" />
                       <p class="empty-text">
                         Aucun utilisateur trouvé
@@ -391,8 +395,9 @@ function isKeyToggling(key: FeatureKey): boolean {
                     </div>
                   </template>
 
+                  <!-- Page changes only: the first load is drawn by the skeleton in the empty slot. -->
                   <template #loading>
-                    <div class="loading-container">
+                    <div v-if="hasLoadedUsersOnce" class="loading-container">
                       <ProgressSpinner
                         style="width: 50px; height: 50px"
                         stroke-width="4"
@@ -468,12 +473,7 @@ function isKeyToggling(key: FeatureKey): boolean {
                 />
               </div>
 
-              <div v-if="isFetching && flagsWithMeta.length === 0" class="loading-container">
-                <ProgressSpinner style="width: 48px; height: 48px" stroke-width="4" />
-                <p class="loading-text">
-                  Chargement des flags...
-                </p>
-              </div>
+              <PageSkeleton v-if="isFetching && flagsWithMeta.length === 0" variant="list" :count="4" label="Chargement des flags..." />
 
               <div v-else-if="flagsWithMeta.length === 0" class="empty-state">
                 <i class="pi pi-inbox empty-icon" />

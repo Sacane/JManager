@@ -198,8 +198,8 @@ onMounted(() => {
       <p>Configuration globale de la projection et des cycles mensuels par compte.</p>
     </div>
 
-    <div v-if="isLoading" class="settings-loading">
-      Chargement des paramètres…
+    <div v-if="isLoading" class="settings-card">
+      <PageSkeleton variant="form" :count="4" label="Chargement des paramètres…" />
     </div>
 
     <div v-else class="settings-grid">
@@ -459,13 +459,6 @@ onMounted(() => {
 
 .settings-header p {
   margin: 0.4rem 0 0;
-  color: var(--text-secondary);
-}
-
-.settings-loading {
-  border-radius: 0.8rem;
-  padding: 1rem;
-  background-color: var(--card-bg);
   color: var(--text-secondary);
 }
 

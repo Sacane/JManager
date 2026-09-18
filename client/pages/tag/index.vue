@@ -368,15 +368,7 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
     </div>
 
     <div class="tags-container">
-      <div v-if="isLoadingTags" class="loading-container">
-        <ProgressSpinner
-          style="width: 48px; height: 48px"
-          stroke-width="4"
-        />
-        <p class="loading-text">
-          Chargement des tags...
-        </p>
-      </div>
+      <PageSkeleton v-if="isLoadingTags" variant="cards" :count="6" label="Chargement des tags..." />
 
       <TransitionGroup name="tag-list" tag="div" class="tags-grid">
         <TagCard
@@ -426,25 +418,6 @@ function onEditSubmit(payload: { id: string, label: string, colorHex: string, pa
 </template>
 
 <style lang="scss" scoped>
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1.25rem 1rem;
-  margin-bottom: 1rem;
-  border-radius: 14px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-}
-
-.loading-text {
-  margin: 0;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
 .header-content {
   margin-bottom: 1.5rem;
 }
