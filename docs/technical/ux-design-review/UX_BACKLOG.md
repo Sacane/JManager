@@ -293,7 +293,7 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 | Lot 1 — Assainissement | UX-01 → UX-10 | ✅ mergé (PR #223) |
 | Lot 2 — Socle visuel | UX-11, 12, 29, 30, 32, 33 | ✅ mergé (PR #224) |
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
-| Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | 🟨 en cours — UX-15, 16, 19, 20, 24 livrés · reste UX-26, 41, 50 |
+| Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | 🟨 en cours — UX-15, 16, 19, 20, 24, 26 livrés · reste UX-41, 50 |
 | Lot 5 — Refonte dashboard | UX-18, 28, 44 | ⬜ à faire (dépendance lot 2 satisfaite) |
 | Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25** | ⬜ à faire — premier travail backend du chantier |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |

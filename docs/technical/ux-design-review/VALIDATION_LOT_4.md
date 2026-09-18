@@ -6,8 +6,8 @@ These walkthroughs cover what the suite cannot.
 
 Mark each step ✅ or ❌. A ❌ is worth reporting with the viewport width and the theme in use.
 
-**Delivered so far:** UX-15, UX-16, UX-19, UX-20, UX-24.
-**Still to come in this lot:** UX-26, UX-41, UX-50.
+**Delivered so far:** UX-15, UX-16, UX-19, UX-20, UX-24, UX-26.
+**Still to come in this lot:** UX-41, UX-50.
 **Moved out of this lot:** UX-25 — reclassified full-stack before any code was written. See
 `FULLSTACK_PENDING.md`.
 
@@ -266,9 +266,74 @@ a UX improvement.
 
 ---
 
+## 16. Loading skeletons (UX-26)
+
+**How to see a skeleton at all.** A local backend answers too fast to notice. In the browser dev
+tools, open the Network tab and set throttling to **Slow 3G** (or "Slow 4G"), then reload each page.
+
+| # | Page | Expected while loading |
+|---|---|---|
+| 16.1 | **Dashboard** | Four indicator blocks, then a wide chart block and a narrow one — not a centred spinner |
+| 16.2 | **Booklets** | Three card-shaped placeholders |
+| 16.3 | **Tags** | Six card-shaped placeholders |
+| 16.4 | **Booklet detail**, desktop | Rows of placeholders inside the table |
+| 16.5 | **Booklet detail**, mobile | Rows of placeholders inside a card |
+| 16.6 | **Admin → users**, desktop and mobile | Rows of placeholders |
+| 16.7 | **Admin → feature flags** | Rows of placeholders |
+| 16.8 | **Settings** | A card with four label-and-field placeholders |
+
+---
+
+## 17. The false empty states are gone (UX-26)
+
+**This is the part of UX-26 that fixed wrong information, not just looks.** Keep throttling on.
+
+| # | Step | Expected |
+|---|---|---|
+| 17.1 | Open a booklet **that has transactions**, on desktop, and watch the first second | Placeholders, then the rows. **"Commencez par créer votre première transaction" never appears** |
+| 17.2 | Same on **mobile** | Same. It used to show "Aucune transaction" immediately, with no loading indicator at all |
+| 17.3 | Open **Admin → users** | "Aucun utilisateur trouvé" never flashes — you are an admin, the list is never empty |
+| 17.4 | Open a booklet that is **genuinely empty** | Placeholders, then the empty message — it still appears when it is true |
+| 17.5 | Cut the backend, open a booklet | The placeholders do **not** stay up forever; the page settles |
+
+⚠️ **17.2 is the case to check first.** On a phone, every booklet used to open by announcing itself
+empty.
+
+---
+
+## 18. Reloads keep their spinner, on purpose (UX-26)
+
+A skeleton is for content not yet on screen. Over content already shown, empty shapes would be a
+step backwards.
+
+| # | Step | Expected |
+|---|---|---|
+| 18.1 | On a booklet with rows, change page or sort a column | The rows stay visible under a spinner overlay — they are **not** replaced by placeholders |
+| 18.2 | On Admin → users, change page | Same |
+| 18.3 | Create a transaction and watch the dialog | "Enregistrement en cours" keeps its spinner — saving is an action, not loading |
+| 18.4 | On a booklet, toggle the global "all" filter | The button's spinner icon is unchanged |
+
+---
+
+## 19. Skeletons — the things only an eye can check (UX-26)
+
+| # | Step | Expected |
+|---|---|---|
+| 19.1 | Watch the dashboard load | Blocks settle **in place** — the charts appear where their placeholders were, the page does not jump |
+| 19.2 | Switch to dark theme, reload with throttling | Placeholders are visible but quiet against the dark cards, not glaring |
+| 19.3 | Turn on "reduce motion" in the OS, reload | Placeholders are static — no shimmer |
+| 19.4 | With a screen reader (NVDA / VoiceOver), reload a page | It announces "Chargement…", not silence |
+| 19.5 | At 375 px, reload the dashboard | The two chart placeholders stack instead of squeezing side by side |
+
+⚠️ **19.1 is scenario 4 of the issue — "no layout shift" — and the one the tests cannot prove.** The
+dashboard placeholder mirrors the layout from memory of the page. If a block lands noticeably
+elsewhere, tell me which; the placeholder's proportions are easy to adjust.
+
+---
+
 ## Priority cases
 
-If time is short, do these eight:
+If time is short, do these ten:
 
 **Regular transactions page (UX-15, 16, 19, 24)**
 
@@ -285,3 +350,8 @@ If time is short, do these eight:
 - **13.2 / 13.3** — the two password failures that surfaced as "Une erreur est survenue". Needs a
   real backend.
 - **15.1 / 15.2** — sign-in must answer identically for a wrong password and an unknown email.
+
+**Loading (UX-26)**
+
+- **17.2** — a booklet on a phone must no longer open by announcing itself empty.
+- **19.1** — the dashboard settles in place. The one UX-26 scenario the tests cannot prove.
