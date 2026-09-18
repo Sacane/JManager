@@ -3,6 +3,8 @@ import useChangePassword from '~/composables/useChangePassword'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
+import { resolveMonthlyCycleRangeForTargetMonth } from '~/utils/monthlyCycleRange'
+import { capitalizeFirst } from '~/utils/util'
 
 const { user, deleteAccount } = useAuth()
 const { emailVerified, userEmail } = useConsent()
@@ -77,6 +79,34 @@ function normalizeMonthlyPeriodEndDay(value: number | null | undefined): number 
 function monthlyDayOptions() {
   return Array.from({ length: 31 }, (_, index) => index + 1)
 }
+
+/**
+ * Period each account's cycle covers for the current month, as the dashboard computes it.
+ *
+ * Reuses the dashboard's own function rather than re-deriving the rule: the page used to describe
+ * the rule in words, and got it wrong for start days 1 to 15 — a month's period is the cycle that
+ * contains its 15th, so a start on the 10th covers the 10th to the 9th of the next month.
+ * Showing the dates makes the rule impossible to misread.
+ */
+const previewDate = new Date()
+const previewMonthLabel = capitalizeFirst(
+  new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(previewDate),
+)
+const previewDateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+const cyclePreviews = computed(() => new Map(bookletCycles.value.map((cycle) => {
+  const endDay = cycle.monthlyPeriodEndDay === null ? null : Number(cycle.monthlyPeriodEndDay)
+  const range = resolveMonthlyCycleRangeForTargetMonth(
+    previewDate.getFullYear(),
+    previewDate.getMonth() + 1,
+    Number(cycle.monthlyPeriodStartDay),
+    endDay,
+  )
+  return [cycle.bookletId, {
+    start: previewDateFormatter.format(range.start),
+    end: previewDateFormatter.format(range.end),
+  }]
+})))
 
 async function loadUserSettings() {
   await withLoading(async () => {
@@ -238,7 +268,7 @@ onMounted(() => {
       <section class="settings-card">
         <h2>Cycle mensuel par compte</h2>
         <p class="settings-help">
-          Configure le jour de début de période pour chaque compte. Le début s'applique au mois précédent du mois affiché. La fin peut être personnalisée ; sans valeur, elle est calculée automatiquement (jour de début du cycle suivant - 1).
+          Pour chaque compte, choisissez le jour où commence sa période mensuelle. La période d'un mois est celle qui contient le 15 de ce mois. Sans jour de fin, elle s'arrête la veille du début suivant. L'aperçu de chaque compte donne les dates exactes du mois en cours.
         </p>
 
         <div v-if="bookletCycles.length === 0" class="empty-state">
@@ -246,12 +276,22 @@ onMounted(() => {
         </div>
 
         <div v-else class="booklet-cycle-list">
-          <div v-for="cycle in bookletCycles" :key="cycle.bookletId" class="booklet-cycle-item">
-            <div class="booklet-cycle-info">
-              <p class="booklet-cycle-label" :title="cycle.label">
-                {{ cycle.label }}
-              </p>
-            </div>
+          <!-- A fieldset per account: its legend names the controls it contains, so no setting can
+               be read against the wrong account, visually or by a screen reader (UX-41). -->
+          <fieldset v-for="cycle in bookletCycles" :key="cycle.bookletId" data-test="cycle-group" class="booklet-cycle-item">
+            <legend class="booklet-cycle-label">
+              {{ cycle.label }}
+            </legend>
+
+            <p class="cycle-preview" :data-test="`cycle-preview-${cycle.bookletId}`">
+              <i class="pi pi-calendar" aria-hidden="true" />
+              <span>
+                {{ previewMonthLabel }} : du
+                <strong class="tabular-nums">{{ cyclePreviews.get(cycle.bookletId)?.start }}</strong>
+                au
+                <strong class="tabular-nums">{{ cyclePreviews.get(cycle.bookletId)?.end }}</strong>
+              </span>
+            </p>
 
             <div class="booklet-cycle-controls">
               <div class="cycle-field">
@@ -261,7 +301,6 @@ onMounted(() => {
                     {{ day }}
                   </option>
                 </select>
-                <span class="cycle-field-hint">Démarre le mois précédent</span>
               </div>
 
               <div class="cycle-field">
@@ -276,7 +315,7 @@ onMounted(() => {
                 </select>
               </div>
             </div>
-          </div>
+          </fieldset>
         </div>
       </section>
     </div>
@@ -513,15 +552,37 @@ onMounted(() => {
   gap: 0.75rem;
 }
 
+/* A fieldset per account (UX-41). Browsers give fieldsets a margin and a min-width: auto that
+   stops them shrinking below their content; both are reset so it behaves like the div it replaces. */
 .booklet-cycle-item {
   display: grid;
   grid-template-columns: 1fr minmax(240px, 360px);
-  gap: 0.75rem;
-  align-items: start;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  margin: 0;
+  min-width: 0;
   padding: 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 0.8rem;
   background-color: var(--bg-tertiary);
+}
+
+.cycle-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+
+  i {
+    color: var(--primary);
+    font-size: 0.8rem;
+  }
+
+  strong {
+    color: var(--text-primary);
+  }
 }
 
 .booklet-cycle-controls {
@@ -564,26 +625,19 @@ onMounted(() => {
   outline: none;
 }
 
-.cycle-field-hint {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
+/* The account name wraps instead of being cut off: truncated with an ellipsis, two accounts sharing
+   a prefix were indistinguishable — the confusion the "cycle mensuel du compte" card reported.
+   A legend sits on the fieldset border by default; floating it makes it an ordinary block that
+   spans the top row of the grid. */
 .booklet-cycle-label {
+  float: left;
+  grid-column: 1 / -1;
+  width: 100%;
   margin: 0;
+  padding: 0;
   color: var(--text-primary);
   font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.booklet-cycle-info {
-  min-width: 0;
-  display: flex;
-  align-items: center;
+  overflow-wrap: anywhere;
 }
 
 .empty-state {
