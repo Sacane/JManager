@@ -6,8 +6,8 @@ These walkthroughs cover what the suite cannot.
 
 Mark each step ✅ or ❌. A ❌ is worth reporting with the viewport width and the theme in use.
 
-**Delivered so far:** UX-15, UX-16, UX-19, UX-20, UX-24, UX-26.
-**Still to come in this lot:** UX-41, UX-50.
+**Delivered so far:** UX-15, UX-16, UX-19, UX-20, UX-24, UX-26, UX-41.
+**Still to come in this lot:** UX-50.
 **Moved out of this lot:** UX-25 — reclassified full-stack before any code was written. See
 `FULLSTACK_PENDING.md`.
 
@@ -331,9 +331,39 @@ elsewhere, tell me which; the placeholder's proportions are easy to adjust.
 
 ---
 
+## 20. Monthly cycle per account (UX-41, merged with your card "cycle mensuel du compte")
+
+Settings page, section **Cycle mensuel par compte**. Two accounts or more make it worth checking.
+
+| # | Step | Expected |
+|---|---|---|
+| 20.1 | Look at the section | Each account is a framed block, its name as a heading, its preview and its two selectors inside the frame |
+| 20.2 | Give an account a long name (or use one) | The name wraps onto several lines — **no "…"** |
+| 20.3 | Look under each name | A line "Septembre 2026 : du jj/mm/aaaa au jj/mm/aaaa" |
+| 20.4 | Set a start day of **25**, no end | 25/08 → 24/09 |
+| 20.5 | Change it to **10** | The preview becomes 10/09 → 09/10 **immediately**, before saving |
+| 20.6 | Set an end day of **20** with a start of 25 | 25/08 → 20/09 |
+| 20.7 | Change one account | Only that account's preview moves |
+| 20.8 | Read the help text above | It no longer says the start "s'applique au mois précédent du mois affiché" |
+| 20.9 | Save, open the dashboard on that account | The period the dashboard uses is the one the preview announced |
+
+⚠️ **20.5 is the case that the old help text got wrong.** A start on the 10th covers the 10th of
+the month to the 9th of the next one — not the previous month. The rule is unchanged; it is now
+shown instead of described. If 20.5 feels wrong to you as a product rule, that is a separate
+decision: changing it would move the figures on the dashboard for every account set to 1–15.
+
+⚠️ **20.9 closes the loop.** The preview uses the dashboard's own function, and a test checks all
+31 start days against it — but only a real session proves the saved value is the one the dashboard
+reads.
+
+❓ **Your card said you could not tell which cycle belonged to which account.** Tell me whether
+20.1–20.2 fix what you saw. If the confusion came from something else, I would rather know.
+
+---
+
 ## Priority cases
 
-If time is short, do these ten:
+If time is short, do these twelve:
 
 **Regular transactions page (UX-15, 16, 19, 24)**
 
@@ -355,3 +385,8 @@ If time is short, do these ten:
 
 - **17.2** — a booklet on a phone must no longer open by announcing itself empty.
 - **19.1** — the dashboard settles in place. The one UX-26 scenario the tests cannot prove.
+
+**Monthly cycle (UX-41)**
+
+- **20.2** — a long account name is no longer cut off. The cause your card most likely came from.
+- **20.9** — the saved cycle is the period the dashboard actually uses.
