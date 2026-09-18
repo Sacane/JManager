@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref } from 'vue'
+import FieldError from '../../components/FieldError.vue'
 import PasswordField from '../../components/PasswordField.vue'
 import LoginPage from '../../pages/login.vue'
 
@@ -68,8 +69,10 @@ function mountPage() {
         // autocomplete hint and the model binding through to the actual input. shallowMount
         // stubs every child by default, so it has to be opted back in explicitly.
         PasswordField: false,
+        // Same reason: the password mismatch is reported through it (UX-20).
+        FieldError: false,
       },
-      components: { PasswordField },
+      components: { PasswordField, FieldError },
     },
   })
 }
@@ -334,7 +337,9 @@ describe('pages/login', () => {
       await wrapper.find('form').trigger('submit')
 
       expect(registerMock).not.toHaveBeenCalled()
-      expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+      // Since UX-20 the mismatch sits under the confirmation field rather than in the form-level
+      // block; asserting its text keeps this from passing on an empty alert.
+      expect(wrapper.find('[data-test="error-register-confirm"]').text()).toMatch(/correspondent pas/i)
     })
 
     it('switches back to login mode after successful registration', async () => {

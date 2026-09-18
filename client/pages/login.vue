@@ -25,6 +25,20 @@ const hasFailedRegister = ref(false)
 const registerError = ref('')
 const isRegistering = ref(false)
 
+/**
+ * Only the password mismatch is attributable to a field. The server failure the user actually
+ * hits — a username or email already taken — comes back as one undistinguished generic error, so
+ * it stays reported for the whole form. The sign-in failure also stays form-level on purpose:
+ * naming the wrong field would tell anyone whether an account exists for an email.
+ */
+const confirmPasswordError = ref<string | null>(null)
+
+watch(() => userRegistered.confirmPassword, () => {
+  if (confirmPasswordError.value && userRegistered.password === userRegistered.confirmPassword) {
+    confirmPasswordError.value = null
+  }
+})
+
 const canRegister = computed(() =>
   userRegistered.username.length > 0
   && userRegistered.email.length > 0
@@ -53,6 +67,7 @@ function switchMode(target: Mode) {
   hasFailedLogin.value = false
   hasFailedRegister.value = false
   registerError.value = ''
+  confirmPasswordError.value = null
 }
 
 async function log() {
@@ -69,10 +84,10 @@ async function log() {
 async function registerUser() {
   if (isRegistering.value) return
   if (userRegistered.password !== userRegistered.confirmPassword) {
-    hasFailedRegister.value = true
-    registerError.value = 'Les mots de passe ne correspondent pas'
+    confirmPasswordError.value = 'Les mots de passe ne correspondent pas'
     return
   }
+  confirmPasswordError.value = null
   isRegistering.value = true
   hasFailedRegister.value = false
   await register(
@@ -245,6 +260,7 @@ async function registerUser() {
               :maxlength="100"
               autocomplete="new-password"
             />
+            <FieldError data-test="error-register-confirm" :message="confirmPasswordError" />
           </div>
 
           <div class="form-group consent-group">
@@ -272,7 +288,7 @@ async function registerUser() {
             </div>
           </div>
 
-          <div v-if="hasFailedRegister" class="error-message" role="alert">
+          <div v-if="hasFailedRegister" class="error-message" role="alert" data-test="register-form-error">
             <i class="pi pi-exclamation-circle mr-2" />
             {{ registerError }}
           </div>
