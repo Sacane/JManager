@@ -21,18 +21,42 @@ const form = reactive({
   parentId: '' as string,
 })
 
+const fieldErrors = reactive<{ tagLabel: string | null, parentId: string | null }>({ tagLabel: null, parentId: null })
+
+function labelErrorFor(label: string): string | null {
+  return label.trim() === '' ? 'Indiquez un libellé' : null
+}
+
+function parentErrorFor(isSubTag: boolean, parentId: string): string | null {
+  return isSubTag && !parentId ? 'Choisissez le tag parent de ce sous-tag' : null
+}
+
 function reset() {
   form.tagLabel = ''
   form.hex = '#6366f1'
   form.isSubTag = false
   form.parentId = ''
+  fieldErrors.tagLabel = null
+  fieldErrors.parentId = null
 }
 
 watch(visible, (val) => {
   if (!val) reset()
 })
 
+watch(() => form.tagLabel, (label) => {
+  if (fieldErrors.tagLabel) fieldErrors.tagLabel = labelErrorFor(label)
+})
+
+watch(() => [form.isSubTag, form.parentId] as const, ([isSubTag, parentId]) => {
+  if (fieldErrors.parentId) fieldErrors.parentId = parentErrorFor(isSubTag, parentId)
+})
+
 function submit() {
+  fieldErrors.tagLabel = labelErrorFor(form.tagLabel)
+  fieldErrors.parentId = parentErrorFor(form.isSubTag, form.parentId)
+
+  if (fieldErrors.tagLabel || fieldErrors.parentId) return
   emit('submit', { ...form })
 }
 </script>
@@ -84,6 +108,7 @@ function submit() {
             </div>
           </template>
         </Select>
+        <FieldError data-test="error-tag-parent" :message="fieldErrors.parentId" />
       </div>
 
       <div class="form-field">
@@ -98,7 +123,10 @@ function submit() {
           class="w-full"
           autocomplete="off"
           maxlength="50"
+          :invalid="!!fieldErrors.tagLabel"
+          aria-describedby="tag-label-error"
         />
+        <FieldError id="tag-label-error" data-test="error-tag-label" :message="fieldErrors.tagLabel" />
       </div>
 
       <div class="form-field">
@@ -117,7 +145,7 @@ function submit() {
         icon="pi pi-check"
         class="w-full mt-4"
         :loading="loading"
-        :disabled="!form.tagLabel || (form.isSubTag && !form.parentId) || disabled"
+        :disabled="disabled"
         @click="submit"
       />
     </div>
