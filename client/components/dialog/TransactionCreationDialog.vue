@@ -48,13 +48,34 @@ onMounted(() => {
   })
 })
 
-const jToast = useJToast()
+const fieldErrors = reactive<{ label: string | null, value: string | null }>({ label: null, value: null })
+
+function labelErrorFor(value: string): string | null {
+  return value.trim() === '' ? 'Indiquez un libellé' : null
+}
+
+function valueErrorFor(value: number | null): string | null {
+  if (value === null) return 'Indiquez un montant'
+  if (value <= 0) return 'Le montant doit être supérieur à 0'
+  return null
+}
+
+// Clearing on change rather than on the next submit: an error the user has already fixed is noise.
+watch(() => transactionResult.value.label, (label) => {
+  if (fieldErrors.label) fieldErrors.label = labelErrorFor(label)
+})
+
+watch(() => transactionResult.value.value, (value) => {
+  if (fieldErrors.value) fieldErrors.value = valueErrorFor(value)
+})
 
 function emitTransaction() {
-  if (transactionResult.value.value === null || (transactionResult.value.value <= 0) || transactionResult.value.label === '') {
-    jToast.warn('Veuillez saisir un montant supérieur à 0')
-    return
-  }
+  fieldErrors.label = labelErrorFor(transactionResult.value.label)
+  fieldErrors.value = valueErrorFor(transactionResult.value.value)
+
+  // Each failure names its own field. The previous single guard announced a wrong amount even when
+  // the amount was fine and the label was missing.
+  if (fieldErrors.label || fieldErrors.value) return
   const transaction: TransactionCreationDTO = {
     id: transactionResult.value.id,
     label: transactionResult.value.label,
@@ -110,7 +131,8 @@ function handleTabKey(event: KeyboardEvent) {
     <div v-else class="h-full mt-6">
       <div class="flex flex-col gap-3">
         <label for="label" class="block text-label">Libellé</label>
-        <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" maxlength="100" />
+        <InputText id="label" v-model="transactionResult.label" type="text" autocomplete="off" placeholder="ex: achat meuble leboncoin" maxlength="100" :invalid="!!fieldErrors.label" aria-describedby="label-error" />
+        <FieldError id="label-error" data-test="error-label" :message="fieldErrors.label" />
       </div>
       <div class="mt5 flex flex-col gap-3">
         <label for="selectionType" class="text-label">Sélectionner le type de transaction</label>
@@ -127,8 +149,9 @@ function handleTabKey(event: KeyboardEvent) {
       </div>
       <label for="labelAmount" class="block mt-4 text-label">Montant</label>
       <div id="labelAmount" class="flex-row">
-        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :formatter="(value: number) => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
+        <InputNumber ref="inputNumberRef" v-model="transactionResult.value" aria-placeholder="" placeholder="0,00" class="w-full inputNumber" :max-fraction-digits="2" :min-fraction-digits="2" :invalid="!!fieldErrors.value" aria-describedby="value-error" :formatter="(value: number) => value ? value.toFixed(2) : ''" @keydown="handleTabKey" />
       </div>
+      <FieldError id="value-error" data-test="error-value" :message="fieldErrors.value" />
       <div class="flex flex-col gap-3 w-50%">
         <label for="calendar" class="block mt-4 text-label">Date</label>
         <DatePicker id="calendar" v-model="transactionResult.date" panel-class="min-w-min w-12rem" :first-day-of-week="1" placeholder="Date" date-format="dd-mm-yy" />

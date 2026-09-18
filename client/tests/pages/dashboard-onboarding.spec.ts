@@ -122,12 +122,29 @@ describe('pages/index onboarding state', () => {
   })
 
   // Guarding on booklets.length alone would flash the onboarding screen on the first paint.
+  //
+  // The fetch is kept pending: pinning the loading scope while letting the load finish modelled a
+  // state the app cannot reach — initialised and still loading at once. Since UX-50 the skeleton is
+  // reserved for the first load, and that inconsistent state no longer shows it.
   it('shows the loading state rather than the onboarding one while loading', async () => {
+    fetchBookletsMock.mockImplementation(() => new Promise(() => {}))
     const wrapper = mountDashboard(['dashboard.initial'])
     await settle()
 
     expect(onboarding(wrapper).exists()).toBe(false)
     expect(wrapper.text()).toContain('Chargement')
+  })
+
+  // UX-26: the dashboard used to stay empty behind a spinner, then reveal about fifteen blocks at once.
+  it('shows the shape of the dashboard while loading, not a spinner', async () => {
+    fetchBookletsMock.mockImplementation(() => new Promise(() => {}))
+    const wrapper = mountDashboard(['dashboard.initial'])
+    await settle()
+
+    const skeleton = wrapper.find('[data-test="page-skeleton"]')
+    expect(skeleton.exists()).toBe(true)
+    expect(skeleton.findAll('[data-test="skeleton-kpi"]').length).toBeGreaterThan(0)
+    expect(wrapper.find('.pi-spinner').exists()).toBe(false)
   })
 
   it('does not treat the very first render as empty', async () => {

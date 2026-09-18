@@ -2,6 +2,7 @@
 import type { AppTableColumn } from '~/components/AppTable.vue'
 import useDate from '~/composables/useDate'
 import authMiddleware from '~/middleware/auth'
+import { nextOccurrenceOnOrAfter, occurrencesInMonth } from '~/utils/recurrence'
 import { getTagStyle } from '~/utils/util'
 
 definePageMeta({
@@ -94,9 +95,7 @@ const isEditDialogVisible = ref(false)
 const selectedTransaction = ref<RegularTransactionDTO | null>(null)
 const loadingTransaction = ref(false)
 
-async function handleRowDoubleClick(event: any) {
-  const transactionId = event.data.id
-
+async function openEditDialog(transactionId: string) {
   if (!transactionId) {
     console.error('ID de transaction manquant')
     return
@@ -113,6 +112,17 @@ async function handleRowDoubleClick(event: any) {
   } finally {
     loadingTransaction.value = false
   }
+}
+
+/** Desktop shortcut. The row actions are the discoverable path; this only mirrors them. */
+function openEditDialogFromRow(event: { data?: RegularTransactionDTO }) {
+  openEditDialog(event.data?.id ?? '')
+}
+
+function toggleSelection(transaction: RegularTransactionDTO) {
+  const index = selectedTransactions.value.findIndex(t => t.id === transaction.id)
+  if (index === -1) selectedTransactions.value.push(transaction)
+  else selectedTransactions.value.splice(index, 1)
 }
 
 async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
@@ -152,10 +162,13 @@ async function handleEditSave(updatedTransaction: RegularTransactionDTO) {
 
 function handleDelete(transactionId: string) {
   const transaction = transactions.value.find(t => t.id === transactionId)
+  // Naming the target is what turns a confirmation into an actual check: the action is now
+  // reachable from a row, so the dialog must say which row it is about.
+  const target = transaction?.label ? `« ${transaction.label} »` : 'cette transaction régulière'
   const bookletCount = transaction?.bookletIds?.length ?? 0
   const deletionMessage = bookletCount > 0
-    ? `Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.\n\nCette transaction est liée à ${bookletCount} livret(s). Les liens avec ces livrets seront également supprimés.`
-    : 'Êtes-vous sûr de vouloir supprimer cette transaction régulière ? Cette action est irréversible.'
+    ? `Êtes-vous sûr de vouloir supprimer ${target} ? Cette action est irréversible.\n\nCette transaction est liée à ${bookletCount} livret(s). Les liens avec ces livrets seront également supprimés.`
+    : `Êtes-vous sûr de vouloir supprimer ${target} ? Cette action est irréversible.`
 
   confirm.require({
     message: deletionMessage,
@@ -267,6 +280,44 @@ function checkMobile() {
 const transactionsCount = computed(() => transactions.value.length)
 const selectedTransactionsCount = computed(() => selectedTransactions.value.length)
 
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+function nextOccurrenceOf(transaction: RegularTransactionDTO): Date | null {
+  return nextOccurrenceOnOrAfter(transaction, new Date())
+}
+
+function nextOccurrenceLabel(transaction: RegularTransactionDTO): string {
+  const occurrence = nextOccurrenceOf(transaction)
+  return occurrence ? dateFormatter.format(occurrence) : ''
+}
+
+function isRecurrenceOver(transaction: RegularTransactionDTO): boolean {
+  return nextOccurrenceOf(transaction) === null
+}
+
+/**
+ * What the listed entries actually commit the user to this month.
+ *
+ * Occurrences are counted, never normalised: a weekly charge commits four or five times in a
+ * month, and turning it into a fractional monthly equivalent would put an invented figure on
+ * screen. Only the loaded page is summed — the totals describe what is listed.
+ */
+const monthlyCommitment = computed(() => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+
+  return transactions.value.reduce(
+    (totals, transaction) => {
+      const amount = occurrencesInMonth(transaction, year, month).length * Math.abs(transaction.value)
+      if (transaction.isIncome) totals.income += amount
+      else totals.expenses += amount
+      return totals
+    },
+    { income: 0, expenses: 0 },
+  )
+})
+
 const regularTransactionColumns = computed<AppTableColumn[]>(() => {
   return [
     { selectionMode: 'multiple', headerStyle: 'width: 3rem' },
@@ -275,6 +326,8 @@ const regularTransactionColumns = computed<AppTableColumn[]>(() => {
     { field: 'value', header: 'Montant', sortable: true, style: { minWidth: '150px' }, slotName: 'montant' },
     { style: { width: '180px', minWidth: '180px', maxWidth: '180px' }, slotName: 'tag', headerSlotName: 'tagFilter' },
     { field: 'regularity', header: 'Fréquence', sortable: true, style: { minWidth: '130px' }, slotName: 'regularity' },
+    { header: 'Prochaine', style: { minWidth: '140px' }, slotName: 'nextOccurrence' },
+    { header: 'Livrets', style: { minWidth: '180px' }, slotName: 'booklets' },
     {
       header: 'Actions',
       style: { minWidth: '160px' },
@@ -307,6 +360,23 @@ function getUnlinkedBookletsFor(transaction: RegularTransactionDTO) {
 function getLinkedActiveBookletsFor(transaction: RegularTransactionDTO) {
   const ids = new Set(transaction.bookletIds ?? [])
   return booklets.value.filter(b => b.id !== undefined && ids.has(String(b.id)))
+}
+
+/**
+ * Why the link action is unavailable, or an empty string while it is available.
+ *
+ * A disabled control that says nothing is indistinguishable from a broken one, and the tooltip
+ * that used to carry this only existed on desktop.
+ */
+function linkUnavailableReason(transaction: RegularTransactionDTO): string {
+  if (booklets.value.length === 0) return 'Aucun livret à lier : créez-en un d\'abord'
+  if (getUnlinkedBookletsFor(transaction).length === 0) return 'Cette transaction est déjà liée à tous vos livrets'
+  return ''
+}
+
+function unlinkUnavailableReason(transaction: RegularTransactionDTO): string {
+  if (getLinkedActiveBookletsFor(transaction).length === 0) return 'Cette transaction n\'est liée à aucun livret'
+  return ''
 }
 
 function openLinkDialog(transaction: RegularTransactionDTO) {
@@ -381,6 +451,22 @@ async function handleUnlink() {
               <i class="pi pi-sync text-[var(--primary)] text-sm" />
               {{ transactionsCount }} transaction{{ transactionsCount > 1 ? 's' : '' }}
             </span>
+            <span
+              v-tooltip.bottom="'Somme des échéances qui tombent réellement ce mois-ci, pour les transactions affichées'"
+              data-test="rt-monthly-expenses"
+              class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--expense)]"
+            >
+              <i class="pi pi-arrow-down text-sm" aria-hidden="true" />
+              {{ monthlyCommitment.expenses.toFixed(2) }}&nbsp;€ ce mois-ci
+            </span>
+            <span
+              v-if="monthlyCommitment.income > 0"
+              data-test="rt-monthly-income"
+              class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--income)]"
+            >
+              <i class="pi pi-arrow-up text-sm" aria-hidden="true" />
+              {{ monthlyCommitment.income.toFixed(2) }}&nbsp;€ ce mois-ci
+            </span>
           </div>
         </div>
       </div>
@@ -395,8 +481,9 @@ async function handleUnlink() {
         @click="openCreationRegularTransactionDialog"
       />
       <Button
-        v-if="!isMobile"
+        v-if="!isMobile || selectedTransactionsCount > 0"
         class="border-none font-semibold transition-all duration-300 md:w-auto md:text-3.5 md:px-4 md:py-2.5"
+        data-test="rt-bulk-delete"
         icon="pi pi-trash"
         severity="danger"
         :disabled="selectedTransactionsCount === 0"
@@ -415,7 +502,7 @@ async function handleUnlink() {
         selectable
         scrollable
         scroll-height="flex"
-        @row-dblclick="handleRowDoubleClick"
+        @row-dblclick="openEditDialogFromRow"
       >
         <template #empty>
           <div class="flex flex-col items-center justify-center p-15 text-center md:p-10">
@@ -508,28 +595,83 @@ async function handleUnlink() {
           </div>
         </template>
 
+        <template #body-nextOccurrence="{ data }">
+          <span
+            v-if="isRecurrenceOver(data)"
+            data-test="rt-ended"
+            class="inline-flex items-center gap-1 text-xs font-semibold text-[var(--text-tertiary)]"
+          >
+            <i class="pi pi-flag-fill text-[0.65rem]" aria-hidden="true" />
+            Terminée
+          </span>
+          <span v-else data-test="rt-next-occurrence" class="text-sm font-semibold tabular-nums text-[var(--text-primary)]">
+            {{ nextOccurrenceLabel(data) }}
+          </span>
+        </template>
+
+        <template #body-booklets="{ data }">
+          <div v-if="getLinkedActiveBookletsFor(data).length > 0" data-test="rt-linked-booklets" class="flex flex-wrap gap-1">
+            <span
+              v-for="booklet in getLinkedActiveBookletsFor(data)"
+              :key="booklet.id"
+              class="inline-flex items-center rounded-md border border-[var(--card-border)] bg-[var(--bg-tertiary)] px-2 py-0.5 text-xs font-semibold text-[var(--text-secondary)]"
+            >
+              {{ booklet.label }}
+            </span>
+          </div>
+          <span v-else data-test="rt-no-booklet" class="text-xs font-semibold text-[var(--text-tertiary)]">
+            Aucun livret lié
+          </span>
+        </template>
+
         <template #body-actions="{ data }">
           <div class="flex items-center gap-2">
             <Button
-              v-tooltip.top="'Lier à un livret'"
-              data-test="btn-link"
-              icon="pi pi-link"
+              v-tooltip.top="'Modifier'"
+              data-test="rt-edit"
+              icon="pi pi-pencil"
               size="small"
               severity="secondary"
               outlined
-              :disabled="getUnlinkedBookletsFor(data).length === 0"
-              @click.stop="openLinkDialog(data)"
+              aria-label="Modifier la transaction régulière"
+              @click.stop="openEditDialog(data.id)"
             />
             <Button
-              v-tooltip.top="'Délier d\'un livret'"
-              data-test="btn-unlink"
-              icon="pi pi-minus-circle"
+              v-tooltip.top="'Supprimer'"
+              data-test="rt-delete"
+              icon="pi pi-trash"
               size="small"
-              severity="warning"
+              severity="danger"
               outlined
-              :disabled="getLinkedActiveBookletsFor(data).length === 0"
-              @click.stop="openUnlinkDialog(data)"
+              aria-label="Supprimer la transaction régulière"
+              @click.stop="handleDelete(data.id)"
             />
+            <!-- The title sits on the wrapper: a disabled button receives no pointer event, so a
+                 tooltip bound to it never fires — which is how the reason stayed invisible. -->
+            <span data-test="rt-link-wrapper" :title="linkUnavailableReason(data) || 'Lier à un livret'">
+              <Button
+                data-test="btn-link"
+                icon="pi pi-link"
+                size="small"
+                severity="secondary"
+                outlined
+                :disabled="getUnlinkedBookletsFor(data).length === 0"
+                :aria-label="linkUnavailableReason(data) || 'Lier à un livret'"
+                @click.stop="openLinkDialog(data)"
+              />
+            </span>
+            <span data-test="rt-unlink-wrapper" :title="unlinkUnavailableReason(data) || 'Délier d\'un livret'">
+              <Button
+                data-test="btn-unlink"
+                icon="pi pi-minus-circle"
+                size="small"
+                severity="warning"
+                outlined
+                :disabled="getLinkedActiveBookletsFor(data).length === 0"
+                :aria-label="unlinkUnavailableReason(data) || 'Délier d\'un livret'"
+                @click.stop="openUnlinkDialog(data)"
+              />
+            </span>
           </div>
         </template>
       </AppTable>
@@ -579,7 +721,8 @@ async function handleUnlink() {
           class="rounded-4 p-4 shadow-md border-2 border-transparent transition-all duration-300 cursor-pointer relative overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-gradient-to-b before:from-[var(--primary)] before:to-[var(--primary-2)] before:transition-width before:duration-300 hover:border-[var(--primary)] hover:bg-gradient-to-br hover:from-[rgba(101,8,204,0.05)] hover:to-[rgba(101,8,204,0.05)] hover:shadow-lg hover:shadow-[rgba(101,8,204,0.2)] hover:before:w-1.5 active:scale-98 md:p-4.5 md:rounded-4.5 md:shadow-lg md:before:w-1.25 dark:hover:from-[rgba(101,8,204,0.12)] dark:hover:to-[rgba(101,8,204,0.12)]"
           style="background-color: var(--card-bg); box-shadow: 0 4px 12px var(--shadow-purple); border-color: var(--card-border);"
           :class="{ 'border-[var(--primary)] bg-gradient-to-br from-[rgba(101,8,204,0.05)] to-[rgba(101,8,204,0.05)] shadow-lg shadow-[rgba(101,8,204,0.2)] before:w-1.5 md:shadow-xl md:shadow-[rgba(101,8,204,0.25)] dark:from-[rgba(101,8,204,0.15)] dark:to-[rgba(101,8,204,0.15)]': isSelected(transaction) }"
-          @click="handleRowDoubleClick({ data: transaction })"
+          data-test="rt-card"
+          @click="toggleSelection(transaction)"
         >
           <div class="flex justify-between items-center mb-3 pb-3 md:mb-3.5 md:pb-3.5" style="border-bottom: 1px solid var(--border-color);">
             <div class="flex items-center gap-3">
@@ -611,8 +754,23 @@ async function handleUnlink() {
 
               <div class="flex items-center gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
                 <i class="pi pi-calendar text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
-                <span>{{ transaction.startDate }}</span>
+                <span v-if="isRecurrenceOver(transaction)" data-test="rt-ended-mobile" class="font-semibold text-[var(--text-tertiary)]">Terminée</span>
+                <span v-else data-test="rt-next-occurrence-mobile">Prochaine&nbsp;: <strong class="tabular-nums">{{ nextOccurrenceLabel(transaction) }}</strong></span>
               </div>
+            </div>
+
+            <div class="flex items-start gap-2.5 text-0.95rem md:text-1rem md:gap-3" style="color: var(--text-secondary);">
+              <i class="pi pi-wallet text-1rem text-[var(--primary)] w-5 text-center md:text-1.1rem md:w-5.5" />
+              <div v-if="getLinkedActiveBookletsFor(transaction).length > 0" data-test="rt-linked-booklets-mobile" class="flex flex-wrap gap-1">
+                <span
+                  v-for="booklet in getLinkedActiveBookletsFor(transaction)"
+                  :key="booklet.id"
+                  class="inline-flex items-center rounded-md border border-[var(--card-border)] bg-[var(--bg-tertiary)] px-2 py-0.5 text-xs font-semibold"
+                >
+                  {{ booklet.label }}
+                </span>
+              </div>
+              <span v-else data-test="rt-no-booklet-mobile" class="text-sm font-semibold text-[var(--text-tertiary)]">Aucun livret lié</span>
             </div>
 
             <div class="flex justify-start pt-2 md:pt-2.5" style="border-top: 1px solid var(--border-color);">
@@ -623,16 +781,37 @@ async function handleUnlink() {
               />
             </div>
 
-            <div class="flex gap-2 pt-2" style="border-top: 1px solid var(--border-color);">
+            <div class="flex gap-2 pt-2 flex-wrap" style="border-top: 1px solid var(--border-color);">
               <Button
-                icon="pi pi-link"
+                data-test="rt-edit-mobile"
+                icon="pi pi-pencil"
                 size="small"
                 severity="secondary"
                 outlined
-                label="Lier"
-                :disabled="getUnlinkedBookletsFor(transaction).length === 0"
-                @click.stop="openLinkDialog(transaction)"
+                label="Modifier"
+                @click.stop="openEditDialog(transaction.id)"
               />
+              <Button
+                data-test="rt-delete-mobile"
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                outlined
+                label="Supprimer"
+                @click.stop="handleDelete(transaction.id)"
+              />
+              <span data-test="rt-link-wrapper-mobile" :title="linkUnavailableReason(transaction) || 'Lier à un livret'">
+                <Button
+                  icon="pi pi-link"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  label="Lier"
+                  :disabled="getUnlinkedBookletsFor(transaction).length === 0"
+                  :aria-label="linkUnavailableReason(transaction) || 'Lier à un livret'"
+                  @click.stop="openLinkDialog(transaction)"
+                />
+              </span>
               <Button
                 v-if="getLinkedActiveBookletsFor(transaction).length > 0"
                 icon="pi pi-minus-circle"

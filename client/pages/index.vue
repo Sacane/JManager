@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AxiosError } from 'axios'
 import type { Ref } from 'vue'
 import { useIntersectionObserver } from '@vueuse/core'
 import {
@@ -47,7 +48,8 @@ definePageMeta({
 
 const { user } = useAuth()
 const { createBooklet, fetch: fetchBooklets } = useBooklet()
-const { getRegularTransaction } = useRegularTransaction()
+const { getRegularTransaction, saveMonthlyTransaction } = useRegularTransaction()
+const { saveTransaction } = useTransaction()
 const { getAllTags } = useTag()
 const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions, getDailyTrendStats } = useStats()
 const { getSettings: getUserSettings } = useUserSettings()
@@ -1190,6 +1192,80 @@ async function loadDashboardData() {
   }, dashboardLoadingScope)
 }
 
+// ── Quick actions (UX-50) ─────────────────────────────────────────────────────
+// The block used to hold three links to pages the sidebar already offers. It now opens the dialogs
+// for what the dashboard lacked, on the booklet it shows, and reloads the figures after a success
+// — a recorded expense that left every indicator unchanged would be the page lying.
+
+const isQuickTransactionVisible = ref(false)
+const isQuickTransactionSaving = ref(false)
+const isQuickRegularVisible = ref(false)
+const isQuickRegularSaving = ref(false)
+const csvImportDialogRef = ref<{ openDialog: () => void } | null>(null)
+
+function emptyQuickTransaction(): TransactionCreationDTO {
+  return {
+    id: null,
+    label: '',
+    value: null,
+    isIncome: false,
+    date: new Date(),
+    tagDTO: { tagId: undefined, label: '', colorDTO: { red: 0, green: 0, blue: 0 }, isDefault: false },
+    isPreview: false,
+  }
+}
+
+const quickTransactionDraft = ref<TransactionCreationDTO>(emptyQuickTransaction())
+
+function openQuickTransaction() {
+  quickTransactionDraft.value = emptyQuickTransaction()
+  isQuickTransactionVisible.value = true
+}
+
+async function recordQuickTransaction(transaction: TransactionCreationDTO) {
+  const booklet = selectedBooklet.value
+  if (!booklet) return
+
+  isQuickTransactionSaving.value = true
+  try {
+    await saveTransaction(booklet.label, transaction)
+    isQuickTransactionVisible.value = false
+    toast.success(`Transaction enregistrée sur ${booklet.label}`)
+    await loadDashboardData()
+  } catch (error) {
+    // The dialog stays open: closing it would throw away what the user typed.
+    toast.errorAxios(error as AxiosError)
+  } finally {
+    isQuickTransactionSaving.value = false
+  }
+}
+
+function openQuickImport() {
+  csvImportDialogRef.value?.openDialog()
+}
+
+async function onQuickImportSuccess() {
+  await loadDashboardData()
+}
+
+function openQuickRegular() {
+  isQuickRegularVisible.value = true
+}
+
+async function recordQuickRegular(entry: MonthlyTransactionCreationRequest) {
+  isQuickRegularSaving.value = true
+  try {
+    await saveMonthlyTransaction(entry)
+    isQuickRegularVisible.value = false
+    toast.success('Transaction régulière créée')
+    await loadDashboardData()
+  } catch (error) {
+    toast.errorAxios(error as AxiosError)
+  } finally {
+    isQuickRegularSaving.value = false
+  }
+}
+
 async function loadStatsData() {
   const startDate = format(currentDateRange.value.start, 'yyyy-MM-dd')
   const endDate = format(currentDateRange.value.end, 'yyyy-MM-dd')
@@ -1362,13 +1438,11 @@ watch(selectedBookletId, () => {
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-4 min-h-60vh">
-      <i class="pi pi-spin pi-spinner text-5xl text-purple-600" />
-      <p style="color: var(--text-secondary);">
-        Chargement de vos données...
-      </p>
-    </div>
+    <!-- Loading State: the shape of the dashboard, so the content settles in place rather than
+         appearing as fifteen blocks at once behind a spinner (UX-26). -->
+    <!-- First load only. A later reload (after a quick action) runs under the same scope and must
+         keep the dashboard on screen rather than wipe it for placeholders. -->
+    <PageSkeleton v-if="isLoading && !hasInitializedDashboard" variant="dashboard" label="Chargement de vos données…" />
 
     <!-- Onboarding: nothing to show yet, so the page asks for the one thing missing rather than
          rendering four indicators at 0.00 EUR and three empty charts. -->
@@ -1869,18 +1943,26 @@ watch(selectedBookletId, () => {
             <i class="pi pi-bolt text-purple-600" />
             Actions rapides
           </h2>
+          <!-- Actions, not links: the sidebar already reaches every page. The two acting on a single
+               booklet name it, so the user knows where the entry lands (UX-50). -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button class="quick-action-btn" @click="navigateTo('/booklet')">
-              <i class="pi pi-wallet" />
-              Voir mes comptes
+            <button type="button" class="quick-action-btn" data-test="quick-add-transaction" @click="openQuickTransaction">
+              <i class="pi pi-plus-circle" aria-hidden="true" />
+              <span>
+                Ajouter une transaction
+                <span class="quick-action-target">sur {{ selectedBooklet?.label }}</span>
+              </span>
             </button>
-            <button class="quick-action-btn" @click="navigateTo('/regular-transaction')">
-              <i class="pi pi-calendar" />
-              Ajuster les régulières
+            <button type="button" class="quick-action-btn" data-test="quick-import-csv" @click="openQuickImport">
+              <i class="pi pi-upload" aria-hidden="true" />
+              <span>
+                Importer un relevé CSV
+                <span class="quick-action-target">sur {{ selectedBooklet?.label }}</span>
+              </span>
             </button>
-            <button class="quick-action-btn" @click="navigateTo('/tag')">
-              <i class="pi pi-tags" />
-              Revoir mes tags
+            <button type="button" class="quick-action-btn" data-test="quick-add-regular" @click="openQuickRegular">
+              <i class="pi pi-sync" aria-hidden="true" />
+              <span>Créer une transaction régulière</span>
             </button>
           </div>
         </div>
@@ -2007,6 +2089,33 @@ watch(selectedBookletId, () => {
     @create-booklet="handleBookletCreation"
     @cancel="cancel"
   />
+
+  <!-- Quick action dialogs (UX-50): the same components the booklet and regular transaction pages
+       use, so an entry made here behaves exactly as one made there. -->
+  <TransactionCreationDialog
+    :visible="isQuickTransactionVisible"
+    :loading="isQuickTransactionSaving"
+    :digit-placeholder="null"
+    :transaction-placeholder="quickTransactionDraft"
+    :title="isQuickTransactionVisible ? `Nouvelle transaction — ${selectedBooklet?.label ?? ''}` : ''"
+    @cancel-creation="isQuickTransactionVisible = false"
+    @create-transaction="recordQuickTransaction"
+  />
+
+  <CsvImportDialog
+    v-if="selectedBooklet"
+    ref="csvImportDialogRef"
+    :booklet-id="String(selectedBooklet.id)"
+    @import-success="onQuickImportSuccess"
+  />
+
+  <RegularTransactionCreationDialog
+    :visible="isQuickRegularVisible"
+    :booklets="booklets"
+    :loading="isQuickRegularSaving"
+    @cancel-creation="isQuickRegularVisible = false"
+    @create-transaction="recordQuickRegular"
+  />
 </template>
 
 <style scoped>
@@ -2102,7 +2211,18 @@ watch(selectedBookletId, () => {
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
+  text-align: left;
+  cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* The booklet an action lands on, under its label: the account must never be implicit (UX-50). */
+.quick-action-target {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
 .quick-action-btn:hover {

@@ -62,6 +62,16 @@ describe('pages/booklet/index loading states', () => {
     expect(wrapper.text()).toContain('Chargement des livrets...')
   })
 
+  // UX-26: booklets are cards, so the placeholder is cards rather than a centred spinner.
+  it('shows card placeholders instead of a spinner while loading', () => {
+    const { wrapper } = mountBookletPage(['booklet.index.load'])
+
+    const skeleton = wrapper.find('[data-test="page-skeleton"]')
+    expect(skeleton.exists()).toBe(true)
+    expect(skeleton.findAll('[data-test="skeleton-card"]').length).toBeGreaterThan(0)
+    expect(wrapper.find('.spinner').exists()).toBe(false)
+  })
+
   it('shows add button in loading state when account creation scope is active', () => {
     const { wrapper } = mountBookletPage(['booklet.index.create'])
 

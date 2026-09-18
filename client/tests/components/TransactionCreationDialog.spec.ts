@@ -53,7 +53,9 @@ describe('components/dialog/TransactionCreationDialog', () => {
     expect(wrapper.findAll('[data-test="btn"]').length).toBe(0)
   })
 
-  it('shows warning and does not emit createTransaction when transaction is invalid', async () => {
+  // UX-20 moved field validation inline: the toast used to announce a wrong amount even when the
+  // amount was fine and the label was the problem. The submission guard itself is unchanged.
+  it('reports each invalid field inline and does not emit createTransaction', async () => {
     const warn = vi.fn()
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue([]),
@@ -82,7 +84,11 @@ describe('components/dialog/TransactionCreationDialog', () => {
 
     await wrapper.findAll('[data-test="btn"]')[1]?.trigger('click')
 
-    expect(warn).toHaveBeenCalledWith('Veuillez saisir un montant supérieur à 0')
+    // Asserting the text, not just the selector: an unresolved component would still carry the
+    // data-test attribute through and make an exists() check pass without rendering anything.
+    expect(wrapper.find('[data-test="error-label"]').text()).toMatch(/libellé/i)
+    expect(wrapper.find('[data-test="error-value"]').text()).toMatch(/montant/i)
+    expect(warn).not.toHaveBeenCalled()
     expect(wrapper.emitted('createTransaction')).toBeUndefined()
   })
 

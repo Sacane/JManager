@@ -16,7 +16,7 @@ vi.mock('~/composables/useChangePassword', () => ({
     currentPassword: ref(''),
     newPassword: ref(''),
     confirmPassword: ref(''),
-    confirmPasswordError: ref(null),
+    fieldErrors: { currentPassword: null, newPassword: null, confirmPassword: null },
     isSubmitting: ref(false),
     changePassword: vi.fn(),
   }),

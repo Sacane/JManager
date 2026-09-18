@@ -1,5 +1,16 @@
 # Client Module — Show the running balance on the transaction list
 
+> **CORRECTION — this issue cannot be delivered as written (frontend-only).**
+> The context below claims the opening balance of the period is available through the balances
+> endpoint. Reading the domain shows it is not: `realSold` is the booklet's persisted amount over
+> every confirmed transaction ever, date-blind, and unaffected by `month`, `year`, `startDate` or
+> `endDate`. No date-scoped balance exists in the response.
+> A running balance therefore cannot be derived client side for a past month or a paginated view.
+> Full analysis and the two possible backend shapes:
+> `docs/backlog/booklet-balances-endpoint-has-no-opening-balance.md`.
+> **This item is full-stack, not frontend-only.** Its effort and lot assignment in `UX_BACKLOG.md`
+> need revising before it is picked up again.
+
 **Context**
 The booklet detail table shows the date, label, expense, income and tags of each transaction but
 never the resulting balance, which is standard in a bank statement. The opening balance of the period

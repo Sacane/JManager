@@ -205,6 +205,17 @@ const exportCsvScope = LOADING_SCOPES.bookletDetails.exportCsv
 const regenerateScope = LOADING_SCOPES.bookletDetails.regenerate
 const loadRegenerableScope = LOADING_SCOPES.bookletDetails.loadRegenerable
 const isBookletLoading = computed(() => isScopeLoading(loadBookletScope))
+
+/**
+ * Whether the first load has answered, successfully or not.
+ *
+ * Until it has, an empty list means "not known yet", not "no transaction": the page used to show
+ * "Commencez par créer votre première transaction" for every booklet while loading it — through
+ * the spinner on desktop, and with no indicator at all on mobile. Later reloads happen over
+ * content already on screen and keep their spinner.
+ */
+const hasLoadedOnce = ref(false)
+const isFirstLoadPending = computed(() => !hasLoadedOnce.value)
 const isGlobalFilterLoading = computed(() => isScopeLoading(loadGlobalScope))
 const isBookTransactionLoading = computed(() => isScopeLoading(bookTransactionScope))
 const isEditTransactionLoading = computed(() => isScopeLoading(editTransactionScope))
@@ -476,6 +487,9 @@ async function loadBookletData() {
     } catch (err) {
       toast.errorAxios(err as AxiosError)
       console.error(err)
+    } finally {
+      // Set on failure too: a first load that failed must not leave the skeleton up forever.
+      hasLoadedOnce.value = true
     }
   }, loadBookletScope)
 }
@@ -1053,7 +1067,8 @@ onUnmounted(() => {
             @sort="onSort"
           >
             <template #empty>
-              <div class="text-center py-12">
+              <PageSkeleton v-if="isFirstLoadPending" variant="list" :count="8" label="Chargement des transactions…" />
+              <div v-else class="text-center py-12">
                 <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
                 <h3 class="text-xl font-bold text-[var(--text-primary)] mt-4 mb-2">
                   Aucune transaction
@@ -1065,8 +1080,9 @@ onUnmounted(() => {
               </div>
             </template>
 
+            <!-- Reloads only: the first load is drawn by the skeleton in the empty slot. -->
             <template #loading>
-              <div class="flex items-center justify-center gap-2 py-8 text-[var(--text-secondary)]">
+              <div v-if="!isFirstLoadPending" class="flex items-center justify-center gap-2 py-8 text-[var(--text-secondary)]">
                 <i class="pi pi-spin pi-spinner" />
                 <span>Chargement des transactions...</span>
               </div>
@@ -1283,7 +1299,13 @@ onUnmounted(() => {
 
       <div v-else class="flex flex-col pb-20">
         <!-- Empty state -->
-        <div v-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
+        <!-- Without this, a phone rendered "Aucune transaction" immediately on every booklet it
+             opened, with no loading indicator at all (UX-26). -->
+        <div v-if="isFirstLoadPending" class="bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)] p-3">
+          <PageSkeleton variant="list" :count="6" label="Chargement des transactions…" />
+        </div>
+
+        <div v-else-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
           <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
           <h3 class="text-lg font-bold text-[var(--text-primary)] mt-4 mb-2">
             Aucune transaction
