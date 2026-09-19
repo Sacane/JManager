@@ -76,6 +76,18 @@ const dailyTrendStats = ref<DailyTrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const selectedBookletId = useLocalStorage<string | number | null>(SELECTED_BOOKLET_STORAGE_KEY, null)
+
+/**
+ * Sentinel stored in place of a booklet id when every booklet is aggregated (UX-44).
+ *
+ * The stats endpoints aggregate every booklet when no id is sent. Cycles are per booklet, so this
+ * mode has no cycle of its own and uses the calendar month — a decision taken on 19/09/2026.
+ * The per-booklet budget and the quick actions needing one target booklet are hidden in it.
+ */
+const ALL_BOOKLETS = 'all'
+const isAllBooklets = computed(() => selectedBookletId.value === ALL_BOOKLETS)
+// With a single booklet, "every booklet" is that booklet under a different period: nothing to offer.
+const hasSeveralBooklets = computed(() => booklets.value.length > 1)
 const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
 const periodAnchorDate = ref(new Date())
 const hasInitializedDashboard = ref(false)
@@ -131,7 +143,9 @@ const selectedBooklet = computed(() =>
 )
 
 const scopedBookletId = computed(() => {
-  if (selectedBookletId.value === null) {
+  // No id is what makes the stats endpoints aggregate every booklet. Stated rather than left to the
+  // UUID check below, which would reject the sentinel only by accident.
+  if (selectedBookletId.value === null || isAllBooklets.value) {
     return undefined
   }
 
@@ -147,8 +161,10 @@ const selectedBookletBalance = computed(() => {
   return Number.parseFloat(selectedBooklet.value.amount.toString())
 })
 
+// A start on the 1st with no custom end is the calendar month, which the aggregated mode uses on
+// purpose: it has no cycle of its own. Stated rather than obtained by the cycle lookup missing.
 const selectedMonthlyPeriodStartDay = computed(() => {
-  if (!selectedBookletId.value) {
+  if (!selectedBookletId.value || isAllBooklets.value) {
     return 1
   }
 
@@ -161,7 +177,7 @@ const selectedMonthlyPeriodStartDay = computed(() => {
 })
 
 const selectedMonthlyPeriodEndDay = computed(() => {
-  if (!selectedBookletId.value) {
+  if (!selectedBookletId.value || isAllBooklets.value) {
     return null
   }
 
@@ -1177,8 +1193,11 @@ async function loadDashboardData() {
 
       // Keep the persisted selection only if it still points to an existing booklet
       // (e.g. it wasn't deleted since the last visit); otherwise fall back to the first one.
-      const persistedSelectionIsValid = selectedBookletId.value != null
-        && orderedBooklets.value.some(booklet => booklet.id === selectedBookletId.value)
+      // The aggregated mode stays valid while there is more than one booklet to aggregate.
+      const persistedSelectionIsValid = selectedBookletId.value != null && (
+        (isAllBooklets.value && hasSeveralBooklets.value)
+        || orderedBooklets.value.some(booklet => booklet.id === selectedBookletId.value)
+      )
       if (!persistedSelectionIsValid) {
         selectedBookletId.value = orderedBooklets.value[0]?.id ?? null
       }
@@ -1387,8 +1406,8 @@ watch(selectedBookletId, () => {
           <h1 class="page-heading mb-2">
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
-          <p v-if="!hasNoBooklet" class="page-subheading">
-            Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label }}
+          <p v-if="!hasNoBooklet" class="page-subheading" data-test="dashboard-scope">
+            Vue {{ selectedPeriodLabel }} • {{ isAllBooklets ? 'Tous les comptes' : selectedBooklet?.label }}
           </p>
           <p v-else class="page-subheading">
             Bienvenue — il ne manque plus qu'un livret pour commencer.
@@ -1410,7 +1429,10 @@ watch(selectedBookletId, () => {
           </div>
         </div>
         <div v-if="!hasNoBooklet" class="flex items-center gap-3 flex-wrap">
-          <select v-model="selectedBookletId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
+          <select v-model="selectedBookletId" data-test="account-selector" aria-label="Compte affiché" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
+            <option v-if="hasSeveralBooklets" :value="ALL_BOOKLETS">
+              Tous les comptes
+            </option>
             <option v-for="booklet in orderedBooklets" :key="booklet.id" :value="booklet.id">
               {{ booklet.label }}
             </option>
@@ -1494,7 +1516,7 @@ watch(selectedBookletId, () => {
               {{ selectedBookletBalance.toFixed(2) }} €
             </p>
             <p class="text-xs" style="color: var(--text-tertiary);">
-              {{ selectedBooklet?.label || 'Compte sélectionné' }}
+              {{ isAllBooklets ? 'Tous les comptes' : (selectedBooklet?.label || 'Compte sélectionné') }}
             </p>
           </div>
         </div>
@@ -1946,14 +1968,15 @@ watch(selectedBookletId, () => {
           <!-- Actions, not links: the sidebar already reaches every page. The two acting on a single
                booklet name it, so the user knows where the entry lands (UX-50). -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button type="button" class="quick-action-btn" data-test="quick-add-transaction" @click="openQuickTransaction">
+            <!-- These two need one target booklet: hidden when every booklet is aggregated (UX-44). -->
+            <button v-if="!isAllBooklets" type="button" class="quick-action-btn" data-test="quick-add-transaction" @click="openQuickTransaction">
               <i class="pi pi-plus-circle" aria-hidden="true" />
               <span>
                 Ajouter une transaction
                 <span class="quick-action-target">sur {{ selectedBooklet?.label }}</span>
               </span>
             </button>
-            <button type="button" class="quick-action-btn" data-test="quick-import-csv" @click="openQuickImport">
+            <button v-if="!isAllBooklets" type="button" class="quick-action-btn" data-test="quick-import-csv" @click="openQuickImport">
               <i class="pi pi-upload" aria-hidden="true" />
               <span>
                 Importer un relevé CSV
@@ -1967,7 +1990,8 @@ watch(selectedBookletId, () => {
           </div>
         </div>
 
-        <div class="stat-card">
+        <!-- Stored per booklet: "all accounts" has no budget of its own (UX-44). -->
+        <div v-if="!isAllBooklets" class="stat-card" data-test="account-budget">
           <div class="flex items-center justify-between mb-4 gap-3">
             <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
               <i class="pi pi-euro text-[var(--success)]" />
