@@ -179,6 +179,36 @@ describe('pages/index structure', () => {
     expect(wrapper.find('[data-test="bar-chart-container"]').exists()).toBe(false)
   })
 
+  // A screen reader announces "tab", and a user who hears it expects the arrow keys to move
+  // between tabs, with only the active one in the Tab order.
+  it('moves between tabs with the arrow keys, keeping one tab stop', async () => {
+    const wrapper = mountDashboard()
+    await settle()
+
+    const overview = wrapper.find('[data-test="tab-overview"]')
+    const analysis = wrapper.find('[data-test="tab-analysis"]')
+    expect(overview.attributes('tabindex')).toBe('0')
+    expect(analysis.attributes('tabindex')).toBe('-1')
+
+    await overview.trigger('keydown', { key: 'ArrowRight' })
+
+    expect(wrapper.find('[data-test="tab-analysis"]').attributes('aria-selected')).toBe('true')
+    expect(wrapper.find('[data-test="tab-analysis"]').attributes('tabindex')).toBe('0')
+
+    await wrapper.find('[data-test="tab-analysis"]').trigger('keydown', { key: 'ArrowLeft' })
+
+    expect(wrapper.find('[data-test="tab-overview"]').attributes('aria-selected')).toBe('true')
+  })
+
+  it('ties each tab to the panel it controls', async () => {
+    const wrapper = mountDashboard()
+    await settle()
+
+    const controlled = wrapper.find('[data-test="tab-overview"]').attributes('aria-controls')
+    expect(controlled).toBeTruthy()
+    expect(wrapper.find(`#${controlled}`).exists()).toBe(true)
+  })
+
   it('moves the period comparison to the analysis tab', async () => {
     const wrapper = mountDashboard()
     await settle()

@@ -17,7 +17,7 @@ import {
 } from 'chart.js'
 import { addDays, addMonths, endOfMonth, format, isAfter, startOfMonth, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { onBeforeUnmount } from 'vue'
+import { nextTick, onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
@@ -109,7 +109,24 @@ const overviewRef = ref(null)
 const chartsRef = ref(null)
 
 /** Overview in three zones, or the secondary analysis (UX-18). */
-const activeDashboardTab = ref<'overview' | 'analysis'>('overview')
+type DashboardTab = 'overview' | 'analysis'
+const DASHBOARD_TABS: DashboardTab[] = ['overview', 'analysis']
+const activeDashboardTab = ref<DashboardTab>('overview')
+const dashboardTabRefs = ref<Record<DashboardTab, HTMLButtonElement | null>>({ overview: null, analysis: null })
+
+/**
+ * Arrow keys move between tabs, as the tab role promises a screen reader user: only the active tab
+ * sits in the Tab order, and focus follows the selection.
+ */
+function onDashboardTabKeydown(event: KeyboardEvent) {
+  if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+  event.preventDefault()
+  const step = event.key === 'ArrowRight' ? 1 : -1
+  const index = DASHBOARD_TABS.indexOf(activeDashboardTab.value)
+  const next = DASHBOARD_TABS[(index + step + DASHBOARD_TABS.length) % DASHBOARD_TABS.length]
+  activeDashboardTab.value = next
+  nextTick(() => dashboardTabRefs.value[next]?.focus())
+}
 const isOverviewVisible = ref(false)
 const isChartsVisible = ref(false)
 
@@ -1521,31 +1538,46 @@ watch(selectedBookletId, () => {
            secondary analysis lives one click away instead of lengthening the page. -->
       <div role="tablist" aria-label="Vues du tableau de bord" class="dashboard-tabs" data-test="dashboard-tabs">
         <button
+          id="dashboard-tab-overview"
+          :ref="(element) => { dashboardTabRefs.overview = element as HTMLButtonElement | null }"
           type="button"
           role="tab"
           class="dashboard-tab"
           data-test="tab-overview"
+          aria-controls="dashboard-panel-overview"
           :aria-selected="activeDashboardTab === 'overview'"
+          :tabindex="activeDashboardTab === 'overview' ? 0 : -1"
           :class="{ 'is-active': activeDashboardTab === 'overview' }"
           @click="activeDashboardTab = 'overview'"
+          @keydown="onDashboardTabKeydown"
         >
           Vue d'ensemble
         </button>
         <button
+          id="dashboard-tab-analysis"
+          :ref="(element) => { dashboardTabRefs.analysis = element as HTMLButtonElement | null }"
           type="button"
           role="tab"
           class="dashboard-tab"
           data-test="tab-analysis"
+          aria-controls="dashboard-panel-analysis"
           :aria-selected="activeDashboardTab === 'analysis'"
+          :tabindex="activeDashboardTab === 'analysis' ? 0 : -1"
           :class="{ 'is-active': activeDashboardTab === 'analysis' }"
           @click="activeDashboardTab = 'analysis'"
+          @keydown="onDashboardTabKeydown"
         >
           Analyse
         </button>
       </div>
 
-      <template v-if="activeDashboardTab === 'overview'">
-        <section ref="overviewRef" role="tabpanel" data-test="zone-situation" class="dashboard-zone opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
+      <div
+        v-if="activeDashboardTab === 'overview'"
+        id="dashboard-panel-overview"
+        role="tabpanel"
+        aria-labelledby="dashboard-tab-overview"
+      >
+        <section ref="overviewRef" data-test="zone-situation" class="dashboard-zone opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
           <h2 class="zone-title">
             Où j'en suis
           </h2>
@@ -1974,9 +2006,16 @@ watch(selectedBookletId, () => {
             </div>
           </div>
         </section>
-      </template>
+      </div>
 
-      <section v-else role="tabpanel" data-test="zone-analysis" class="dashboard-zone">
+      <section
+        v-else
+        id="dashboard-panel-analysis"
+        role="tabpanel"
+        aria-labelledby="dashboard-tab-analysis"
+        data-test="zone-analysis"
+        class="dashboard-zone"
+      >
         <h2 class="zone-title">
           Analyse
         </h2>
