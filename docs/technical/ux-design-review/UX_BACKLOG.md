@@ -264,6 +264,7 @@ Les issues suivent la convention `docs/features/{feature}/{module}_{titre}.md` e
 | UX-27 | client | `ux-27-password-strength/` | https://trello.com/c/BEtdi2SP |
 | UX-41 | client | `ux-41-monthly-cycle-preview/` | https://trello.com/c/b10ayHGe — carte existante « cycle mensuel du compte », fusionnée |
 | UX-50 | client | `ux-50-dashboard-quick-actions/` | https://trello.com/c/OCXLj9yv |
+| UX-44 | client | `ux-44-all-accounts-mode/` | https://trello.com/c/5O2cYsoP |
 
 ### Structure d'un dossier d'issue
 
