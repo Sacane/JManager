@@ -69,8 +69,13 @@ Scenario: 5. Nothing else about the page changes
 
 **Notes**
 - Files: `pages/index.vue`, `unocss.config.ts`.
-- New shortcuts: `block-title`, `kpi-label`, `kpi-value`, `kpi-hint`, `panel-sunken`. They are named
+- New shortcuts: `block-title`, `kpi-label`, `kpi-value`, `kpi-hint`, `panel-sunken`, plus
+  `text-label-strong` and `text-note`, found during the refactor pass — the strong line that opens
+  a panel or an alert appears four times, and the small secondary line eleven times. They are named
   by role, not by page, so the other pages can adopt them when their turn comes.
+- Shortcuts are generated in the `shortcuts` layer, ahead of the utilities layer, so a `text-[…]`
+  utility still overrides a shortcut's colour. That is what lets the projection figure use
+  `kpi-value` while colouring itself green or red.
 - Values that appear once keep a utility with an arbitrary value — `text-[var(--text-muted)]` —
   rather than a shortcut nothing else would use.
 - Priority P2 - Effort S - Frontend only. Last item of lot 5.

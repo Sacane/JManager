@@ -1436,7 +1436,7 @@ watch(selectedBookletId, () => {
           </p>
         </div>
         <div v-if="!hasNoBooklet" class="flex items-center gap-3 flex-wrap">
-          <select v-model="selectedBookletId" data-test="account-selector" aria-label="Compte affiché" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
+          <select v-model="selectedBookletId" data-test="account-selector" aria-label="Compte affiché" class="px-3 py-2 rounded-lg border border-solid border-[var(--border-color)] bg-[var(--card-bg)] text-sm font-semibold text-[var(--text-primary)]">
             <option v-if="hasSeveralBooklets" :value="ALL_BOOKLETS">
               Tous les comptes
             </option>
@@ -1505,7 +1505,7 @@ watch(selectedBookletId, () => {
     <div v-else class="relative z-1 pb-10">
       <!-- Available from both views: these act, they do not describe (UX-50). -->
       <div class="stat-card">
-        <h3 class="text-lg font-bold m-0 mb-4 flex items-center gap-2" style="color: var(--text-primary);">
+        <h3 class="block-title m-0 mb-4">
           <i class="pi pi-bolt text-purple-600" />
           Actions rapides
         </h3>
@@ -1593,13 +1593,13 @@ watch(selectedBookletId, () => {
                 </span>
               </div>
               <div>
-                <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+                <h3 class="kpi-label">
                   Solde du compte
                 </h3>
-                <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+                <p class="kpi-value">
                   {{ selectedBookletBalance.toFixed(2) }} €
                 </p>
-                <p class="text-xs" style="color: var(--text-tertiary);">
+                <p class="kpi-hint">
                   {{ isAllBooklets ? 'Tous les comptes' : (selectedBooklet?.label || 'Compte sélectionné') }}
                 </p>
               </div>
@@ -1615,13 +1615,13 @@ watch(selectedBookletId, () => {
                 </span>
               </div>
               <div>
-                <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+                <h3 class="kpi-label">
                   Dépenses {{ periodMetricLabel }}
                 </h3>
-                <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+                <p class="kpi-value">
                   {{ periodExpenses.toFixed(2) }} €
                 </p>
-                <p class="text-xs" style="color: var(--text-tertiary);" data-test="daily-expense-average">
+                <p class="kpi-hint" data-test="daily-expense-average">
                   Moy. journalière: {{ dailyExpenseAverage.toFixed(2) }} €
                 </p>
               </div>
@@ -1637,13 +1637,13 @@ watch(selectedBookletId, () => {
                 </span>
               </div>
               <div>
-                <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+                <h3 class="kpi-label">
                   Revenus {{ periodMetricLabel }}
                 </h3>
-                <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+                <p class="kpi-value">
                   {{ periodIncome.toFixed(2) }} €
                 </p>
-                <p class="text-xs" style="color: var(--text-tertiary);">
+                <p class="kpi-hint">
                   Épargne: {{ (periodIncome - periodExpenses).toFixed(2) }} €
                 </p>
               </div>
@@ -1659,13 +1659,13 @@ watch(selectedBookletId, () => {
                 </span>
               </div>
               <div>
-                <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+                <h3 class="kpi-label">
                   Taux d'épargne
                 </h3>
-                <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
+                <p class="kpi-value">
                   {{ savingsRate.toFixed(1) }}%
                 </p>
-                <p class="text-xs" style="color: var(--text-tertiary);">
+                <p class="kpi-hint">
                   de vos revenus {{ periodMetricLabel }}
                 </p>
               </div>
@@ -1677,13 +1677,13 @@ watch(selectedBookletId, () => {
                 </div>
               </div>
               <div>
-                <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
+                <h3 class="kpi-label">
                   Projection fin de période
                 </h3>
-                <p class="text-3xl font-extrabold mb-2" :class="projectionPeriodEnded ? 'text-[var(--text-primary)]' : (projectedEndPeriodBalance >= selectedBookletBalance ? 'text-[var(--success)]' : 'text-[var(--danger)]')">
+                <p class="kpi-value" :class="projectionPeriodEnded ? 'text-[var(--text-primary)]' : (projectedEndPeriodBalance >= selectedBookletBalance ? 'text-[var(--success)]' : 'text-[var(--danger)]')">
                   {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
                 </p>
-                <p class="text-xs" style="color: var(--text-tertiary);">
+                <p class="kpi-hint">
                   Solde attendu en fin de période, échéances comprises
                 </p>
               </div>
@@ -1693,11 +1693,11 @@ watch(selectedBookletId, () => {
             <div class="stat-card xl:col-span-2">
               <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
                 <div>
-                  <h3 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+                  <h3 class="block-title mb-1.5">
                     <i class="pi pi-chart-line text-purple-600" />
                     Évolution des finances
                   </h3>
-                  <p class="text-sm" style="color: var(--text-secondary);">
+                  <p class="text-sm text-[var(--text-secondary)]">
                     Comparaison revenus vs dépenses sur la période sélectionnée
                   </p>
                 </div>
@@ -1718,7 +1718,7 @@ watch(selectedBookletId, () => {
             <!-- Stored per booklet: "all accounts" has no budget of its own (UX-44). -->
             <div v-if="!isAllBooklets" class="stat-card" data-test="account-budget">
               <div class="flex items-center justify-between mb-4 gap-3">
-                <h3 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+                <h3 class="block-title m-0">
                   <i class="pi pi-euro text-[var(--success)]" />
                   Budget du compte
                 </h3>
@@ -1729,7 +1729,7 @@ watch(selectedBookletId, () => {
 
               <div class="flex items-end gap-2 mb-4">
                 <div class="flex-1">
-                  <label for="budget-target" class="text-xs font-semibold block mb-1" style="color: var(--text-secondary);">
+                  <label for="budget-target" class="text-note font-semibold block mb-1">
                     Cible {{ selectedPeriod === 'month' ? 'mensuelle' : 'périodique' }} (€)
                   </label>
                   <input
@@ -1750,24 +1750,24 @@ watch(selectedBookletId, () => {
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-                  <p class="text-xs m-0" style="color: var(--text-secondary);">
+                <div class="panel-sunken">
+                  <p class="text-note m-0">
                     Dépenses consommées
                   </p>
-                  <p class="text-lg font-bold m-0 mt-1" style="color: var(--text-primary);">
+                  <p class="text-lg font-bold m-0 mt-1 text-[var(--text-primary)]">
                     {{ periodExpenses.toFixed(2) }} €
                   </p>
                 </div>
-                <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-                  <p class="text-xs m-0" style="color: var(--text-secondary);">
+                <div class="panel-sunken">
+                  <p class="text-note m-0">
                     Reste budget
                   </p>
                   <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
                     {{ isBudgetConfigured ? `${budgetDelta.toFixed(2)} €` : 'N/A' }}
                   </p>
                 </div>
-                <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-                  <p class="text-xs m-0" style="color: var(--text-secondary);">
+                <div class="panel-sunken">
+                  <p class="text-note m-0">
                     Projection budget
                   </p>
                   <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
@@ -1776,7 +1776,7 @@ watch(selectedBookletId, () => {
                 </div>
               </div>
 
-              <p class="text-xs m-0 mt-3" style="color: var(--text-secondary);">
+              <p class="text-note m-0 mt-3">
                 {{ isBudgetConfigured ? `Consommation: ${budgetConsumptionRate.toFixed(1)}% du budget` : 'Définis une cible pour activer les alertes budget.' }}
               </p>
             </div>
@@ -1789,8 +1789,8 @@ watch(selectedBookletId, () => {
           </h2>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6">
             <div class="stat-card" data-test="upcoming-list">
-              <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
-                <h3 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
+              <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-b-solid border-[var(--border-color)]">
+                <h3 class="block-title m-0">
                   <i class="pi pi-calendar text-purple-600" />
                   Prochaines transactions
                 </h3>
@@ -1805,8 +1805,8 @@ watch(selectedBookletId, () => {
               </p>
               <div class="max-h-87.5 overflow-y-auto">
                 <div v-if="upcomingRegularPayments.length === 0 && upcomingNonRegularPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
-                  <i class="pi pi-calendar-times text-5xl" style="color: var(--text-muted);" />
-                  <p class="m-0" style="color: var(--text-secondary);">
+                  <i class="pi pi-calendar-times text-5xl text-[var(--text-muted)]" />
+                  <p class="m-0 text-[var(--text-secondary)]">
                     Aucune transaction prévue
                   </p>
                   <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
@@ -1814,28 +1814,28 @@ watch(selectedBookletId, () => {
                   </button>
                 </div>
                 <div v-else class="flex flex-col gap-4">
-                  <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+                  <div class="panel-sunken">
                     <div class="flex justify-between items-center mb-2">
-                      <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                      <p class="text-label-strong m-0">
                         Régulières
                       </p>
-                      <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
+                      <p class="text-note font-semibold m-0">
                         Total: {{ totalRegularUpcoming.toFixed(2) }} €
                       </p>
                     </div>
-                    <div v-if="upcomingRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
+                    <div v-if="upcomingRegularPayments.length === 0" class="text-note">
                       Aucune régulière à venir
                     </div>
                     <div v-else class="flex flex-col gap-2">
-                      <div v-for="payment in upcomingRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
+                      <div v-for="payment in upcomingRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl bg-[var(--card-bg)]">
                         <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
                           <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
                         </div>
                         <div class="flex-1">
-                          <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
+                          <p class="font-semibold m-0 mb-1 text-sm text-[var(--text-primary)]">
                             {{ payment.label }}
                           </p>
-                          <p class="text-xs m-0" style="color: var(--text-secondary);">
+                          <p class="text-note m-0">
                             {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Régulière</span>
                           </p>
                         </div>
@@ -1846,28 +1846,28 @@ watch(selectedBookletId, () => {
                     </div>
                   </div>
 
-                  <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
+                  <div class="panel-sunken">
                     <div class="flex justify-between items-center mb-2">
-                      <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                      <p class="text-label-strong m-0">
                         Non régulières
                       </p>
-                      <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
+                      <p class="text-note font-semibold m-0">
                         Total: {{ totalNonRegularUpcoming.toFixed(2) }} €
                       </p>
                     </div>
-                    <div v-if="upcomingNonRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
+                    <div v-if="upcomingNonRegularPayments.length === 0" class="text-note">
                       Aucune non régulière à venir
                     </div>
                     <div v-else class="flex flex-col gap-2">
-                      <div v-for="payment in upcomingNonRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
+                      <div v-for="payment in upcomingNonRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl bg-[var(--card-bg)]">
                         <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
                           <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
                         </div>
                         <div class="flex-1">
-                          <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
+                          <p class="font-semibold m-0 mb-1 text-sm text-[var(--text-primary)]">
                             {{ payment.label }}
                           </p>
-                          <p class="text-xs m-0" style="color: var(--text-secondary);">
+                          <p class="text-note m-0">
                             {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Non régulière</span>
                           </p>
                         </div>
@@ -1878,7 +1878,7 @@ watch(selectedBookletId, () => {
                     </div>
                   </div>
 
-                  <p class="text-xs m-0" style="color: var(--text-tertiary);">
+                  <p class="text-xs m-0 text-[var(--text-tertiary)]">
                     {{ totalPrevisionalTransactions }} transaction(s) sur la fenêtre de {{ projectionWindowLabel }}
                   </p>
                 </div>
@@ -1886,24 +1886,24 @@ watch(selectedBookletId, () => {
             </div>
             <div class="stat-card" data-test="period-alerts">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
+                <h3 class="block-title m-0">
                   <i class="pi pi-bell text-orange-500" />
                   Alertes de la période
                 </h3>
-                <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
+                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
                   {{ dashboardAlerts.length }} active(s)
                 </span>
               </div>
 
-              <div v-if="dashboardAlerts.length === 0" class="text-sm" style="color: var(--text-secondary);">
+              <div v-if="dashboardAlerts.length === 0" class="text-sm text-[var(--text-secondary)]">
                 Aucun signal particulier sur cette période
               </div>
               <div v-else class="flex flex-col gap-3">
                 <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-[var(--danger-soft)] border-[var(--danger)]/30' : (alert.level === 'warning' ? 'bg-[var(--warning-soft)] border-[var(--warning)]/30' : 'bg-[var(--info-soft)] border-[var(--info)]/30')">
-                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                  <p class="text-label-strong m-0">
                     {{ alert.title }}
                   </p>
-                  <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                  <p class="text-note m-0 mt-1">
                     {{ alert.detail }}
                   </p>
                 </div>
@@ -1921,11 +1921,11 @@ watch(selectedBookletId, () => {
               <div class="flex flex-col sm:flex-row gap-6">
                 <div class="flex-1 flex flex-col" :class="secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2'">
                   <div class="mb-5">
-                    <h3 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+                    <h3 class="block-title mb-1.5">
                       <i class="pi pi-chart-pie text-purple-600" />
                       Dépenses par catégorie
                     </h3>
-                    <p class="text-sm" style="color: var(--text-secondary);">
+                    <p class="text-sm text-[var(--text-secondary)]">
                       {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
                     </p>
                   </div>
@@ -1937,9 +1937,8 @@ watch(selectedBookletId, () => {
                       data-test="doughnut-center-label"
                     >
                       <span
-                        class="font-bold"
+                        class="font-bold text-[var(--text-primary)]"
                         :class="isSmallScreen ? 'text-sm' : 'text-base'"
-                        style="color: var(--text-primary);"
                       >
                         {{ doughnutCenterLabel }}
                       </span>
@@ -1951,11 +1950,11 @@ watch(selectedBookletId, () => {
                 <Transition name="fade">
                   <div v-if="secondaryChartData" class="flex-1 flex flex-col sm:w-1/3" data-test="secondary-doughnut">
                     <div class="mb-5">
-                      <h3 class="text-lg font-semibold mb-1 flex items-center gap-2" style="color: var(--text-primary);">
+                      <h3 class="block-title mb-1">
                         <i class="pi pi-sitemap text-purple-500" />
                         {{ selectedParentCategory?.tagLabel }}
                       </h3>
-                      <p class="text-xs" style="color: var(--text-secondary);">
+                      <p class="text-note">
                         Détail des sous-tags • {{ Number.parseFloat(selectedParentCategory?.totalAmount ?? '0').toFixed(2) }} €
                       </p>
                     </div>
@@ -1967,18 +1966,18 @@ watch(selectedBookletId, () => {
 
                 <div class="flex-1 flex flex-col" :class="[secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2', isSmallScreen ? 'mt-2' : '']">
                   <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
+                    <h3 class="text-label-strong m-0">
                       Top tags de la période
                     </h3>
-                    <span class="text-xs" style="color: var(--text-secondary);">
+                    <span class="text-note">
                       Variation vs période précédente
                     </span>
                   </div>
-                  <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
+                  <div v-if="topTagsInsights.length === 0" class="text-sm text-[var(--text-secondary)]">
                     Aucun tag de dépense sur cette période
                   </div>
                   <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
-                    <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
+                    <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="panel-sunken flex items-center justify-between">
                       <div class="flex items-center gap-2.5 min-w-0">
                         <span
                           class="w-3 h-3 rounded-full flex-shrink-0"
@@ -1991,7 +1990,7 @@ watch(selectedBookletId, () => {
                           >
                             {{ tag.tagLabel }}
                           </p>
-                          <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
+                          <p class="text-note m-0 mt-1">
                             {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
                           </p>
                         </div>
@@ -2022,11 +2021,11 @@ watch(selectedBookletId, () => {
         <div class="stat-card">
           <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <h3 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+              <h3 class="block-title mb-1.5">
                 <i class="pi pi-chart-bar text-purple-600" />
                 Comparaison de période
               </h3>
-              <p class="text-sm" style="color: var(--text-secondary);">
+              <p class="text-sm text-[var(--text-secondary)]">
                 Période active vs période précédente
               </p>
             </div>
