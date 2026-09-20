@@ -17,7 +17,7 @@ import {
 } from 'chart.js'
 import { addDays, addMonths, endOfMonth, format, isAfter, startOfMonth, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { onBeforeUnmount } from 'vue'
+import { nextTick, onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
@@ -26,7 +26,7 @@ import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import authMiddleware from '~/middleware/auth'
 import { countDaysInRange, resolveMonthlyCycleRangeForTargetMonth, resolveMonthlyCycleRangeFromAnchor } from '~/utils/monthlyCycleRange'
-import { capitalizeFirst, rgbToHex, toReadableTagTextColor } from '~/utils/util'
+import { capitalizeFirst, toReadableTagTextColor } from '~/utils/util'
 
 ChartJS.register(
   CategoryScale,
@@ -64,7 +64,9 @@ const SELECTED_BOOKLET_STORAGE_KEY = 'dashboard.selectedBookletId.v1'
 const isBookletDialogOpen = ref(false)
 const booklets = ref<BookletDTO[]>([])
 
-const { orderedItems: orderedBooklets, draggedIndex: dashboardDraggedIndex, dragOverIndex: dashboardDragOverIndex, onDragStart: onBookletDragStart, onDragOver: onBookletDragOver, onDrop: onBookletDrop, onDragEnd: onBookletDragEnd } = useBookletOrder(booklets)
+// Only the order is used here: the drag and drop lived in the "Mes livrets" block, removed by UX-18
+// since the booklets page already offers it.
+const { orderedItems: orderedBooklets } = useBookletOrder(booklets)
 const regularTransactions = ref<RegularTransactionDTO[]>([])
 const tags = ref<TagDTO[]>([])
 const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
@@ -76,6 +78,18 @@ const dailyTrendStats = ref<DailyTrendStatsDTO | null>(null)
 const previsionalTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const periodProjectionTransactions = ref<PrevisionalTransactionsDTO | null>(null)
 const selectedBookletId = useLocalStorage<string | number | null>(SELECTED_BOOKLET_STORAGE_KEY, null)
+
+/**
+ * Sentinel stored in place of a booklet id when every booklet is aggregated (UX-44).
+ *
+ * The stats endpoints aggregate every booklet when no id is sent. Cycles are per booklet, so this
+ * mode has no cycle of its own and uses the calendar month — a decision taken on 19/09/2026.
+ * The per-booklet budget and the quick actions needing one target booklet are hidden in it.
+ */
+const ALL_BOOKLETS = 'all'
+const isAllBooklets = computed(() => selectedBookletId.value === ALL_BOOKLETS)
+// With a single booklet, "every booklet" is that booklet under a different period: nothing to offer.
+const hasSeveralBooklets = computed(() => booklets.value.length > 1)
 const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
 const periodAnchorDate = ref(new Date())
 const hasInitializedDashboard = ref(false)
@@ -93,6 +107,26 @@ const hasNoBooklet = computed(() => hasInitializedDashboard.value && booklets.va
 // Animation refs
 const overviewRef = ref(null)
 const chartsRef = ref(null)
+
+/** Overview in three zones, or the secondary analysis (UX-18). */
+type DashboardTab = 'overview' | 'analysis'
+const DASHBOARD_TABS: DashboardTab[] = ['overview', 'analysis']
+const activeDashboardTab = ref<DashboardTab>('overview')
+const dashboardTabRefs = ref<Record<DashboardTab, HTMLButtonElement | null>>({ overview: null, analysis: null })
+
+/**
+ * Arrow keys move between tabs, as the tab role promises a screen reader user: only the active tab
+ * sits in the Tab order, and focus follows the selection.
+ */
+function onDashboardTabKeydown(event: KeyboardEvent) {
+  if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+  event.preventDefault()
+  const step = event.key === 'ArrowRight' ? 1 : -1
+  const index = DASHBOARD_TABS.indexOf(activeDashboardTab.value)
+  const next = DASHBOARD_TABS[(index + step + DASHBOARD_TABS.length) % DASHBOARD_TABS.length]
+  activeDashboardTab.value = next
+  nextTick(() => dashboardTabRefs.value[next]?.focus())
+}
 const isOverviewVisible = ref(false)
 const isChartsVisible = ref(false)
 
@@ -131,7 +165,9 @@ const selectedBooklet = computed(() =>
 )
 
 const scopedBookletId = computed(() => {
-  if (selectedBookletId.value === null) {
+  // No id is what makes the stats endpoints aggregate every booklet. Stated rather than left to the
+  // UUID check below, which would reject the sentinel only by accident.
+  if (selectedBookletId.value === null || isAllBooklets.value) {
     return undefined
   }
 
@@ -147,8 +183,10 @@ const selectedBookletBalance = computed(() => {
   return Number.parseFloat(selectedBooklet.value.amount.toString())
 })
 
+// A start on the 1st with no custom end is the calendar month, which the aggregated mode uses on
+// purpose: it has no cycle of its own. Stated rather than obtained by the cycle lookup missing.
 const selectedMonthlyPeriodStartDay = computed(() => {
-  if (!selectedBookletId.value) {
+  if (!selectedBookletId.value || isAllBooklets.value) {
     return 1
   }
 
@@ -161,7 +199,7 @@ const selectedMonthlyPeriodStartDay = computed(() => {
 })
 
 const selectedMonthlyPeriodEndDay = computed(() => {
-  if (!selectedBookletId.value) {
+  if (!selectedBookletId.value || isAllBooklets.value) {
     return null
   }
 
@@ -1177,8 +1215,11 @@ async function loadDashboardData() {
 
       // Keep the persisted selection only if it still points to an existing booklet
       // (e.g. it wasn't deleted since the last visit); otherwise fall back to the first one.
-      const persistedSelectionIsValid = selectedBookletId.value != null
-        && orderedBooklets.value.some(booklet => booklet.id === selectedBookletId.value)
+      // The aggregated mode stays valid while there is more than one booklet to aggregate.
+      const persistedSelectionIsValid = selectedBookletId.value != null && (
+        (isAllBooklets.value && hasSeveralBooklets.value)
+        || orderedBooklets.value.some(booklet => booklet.id === selectedBookletId.value)
+      )
       if (!persistedSelectionIsValid) {
         selectedBookletId.value = orderedBooklets.value[0]?.id ?? null
       }
@@ -1387,30 +1428,18 @@ watch(selectedBookletId, () => {
           <h1 class="page-heading mb-2">
             Bonjour, {{ capitalizeFirst(user?.username) }} 👋
           </h1>
-          <p v-if="!hasNoBooklet" class="page-subheading">
-            Vue {{ selectedPeriodLabel }} • {{ selectedBooklet?.label }}
+          <p v-if="!hasNoBooklet" class="page-subheading" data-test="dashboard-scope">
+            Vue {{ selectedPeriodLabel }} ({{ currentDateRangeLabel }}) • {{ isAllBooklets ? 'Tous les comptes' : selectedBooklet?.label }}
           </p>
           <p v-else class="page-subheading">
             Bienvenue — il ne manque plus qu'un livret pour commencer.
           </p>
-          <div v-if="!hasNoBooklet" class="flex items-center gap-2.5 mt-3 flex-wrap">
-            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
-              Période: {{ currentDateRangeLabel }}
-            </span>
-            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--border-color);">
-              À venir {{ projectionWindowLabel }}: {{ totalPrevisionalTransactions }} transaction(s)
-            </span>
-            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="totalUpcomingNet >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
-              Solde prévisionnel court terme: {{ totalUpcomingNet.toFixed(2) }} €
-            </span>
-            <span class="px-3 py-1.5 rounded-full text-xs font-semibold" :class="projectedEndPeriodBalance >= selectedBookletBalance ? 'text-[var(--success)]' : 'text-[var(--danger)]'" style="background-color: var(--card-bg); border: 1px solid var(--border-color);">
-              Projection fin de période:
-              {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
-            </span>
-          </div>
         </div>
         <div v-if="!hasNoBooklet" class="flex items-center gap-3 flex-wrap">
-          <select v-model="selectedBookletId" class="px-3 py-2 rounded-lg border text-sm font-semibold" style="background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-primary);">
+          <select v-model="selectedBookletId" data-test="account-selector" aria-label="Compte affiché" class="px-3 py-2 rounded-lg border border-solid border-[var(--border-color)] bg-[var(--card-bg)] text-sm font-semibold text-[var(--text-primary)]">
+            <option v-if="hasSeveralBooklets" :value="ALL_BOOKLETS">
+              Tous les comptes
+            </option>
             <option v-for="booklet in orderedBooklets" :key="booklet.id" :value="booklet.id">
               {{ booklet.label }}
             </option>
@@ -1474,227 +1503,529 @@ watch(selectedBookletId, () => {
 
     <!-- Main Content -->
     <div v-else class="relative z-1 pb-10">
-      <!-- KPI Cards -->
-      <section ref="overviewRef" class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)]">
-              <i class="pi pi-wallet" />
-            </div>
-            <span v-if="balanceGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="balanceGrowth > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
-              <i :class="balanceGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
-              {{ Math.abs(balanceGrowth).toFixed(1) }}%
+      <!-- Available from both views: these act, they do not describe (UX-50). -->
+      <div class="stat-card">
+        <h3 class="block-title m-0 mb-4">
+          <i class="pi pi-bolt text-purple-600" />
+          Actions rapides
+        </h3>
+        <!-- Actions, not links: the sidebar already reaches every page. The two acting on a single
+             booklet name it, so the user knows where the entry lands (UX-50). -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- These two need one target booklet: hidden when every booklet is aggregated (UX-44). -->
+          <button v-if="!isAllBooklets" type="button" class="quick-action-btn" data-test="quick-add-transaction" @click="openQuickTransaction">
+            <i class="pi pi-plus-circle" aria-hidden="true" />
+            <span>
+              Ajouter une transaction
+              <span class="quick-action-target">sur {{ selectedBooklet?.label }}</span>
             </span>
-          </div>
-          <div>
-            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
-              Solde du compte
-            </h3>
-            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ selectedBookletBalance.toFixed(2) }} €
-            </p>
-            <p class="text-xs" style="color: var(--text-tertiary);">
-              {{ selectedBooklet?.label || 'Compte sélectionné' }}
-            </p>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--expense)]">
-              <i class="pi pi-arrow-down" />
-            </div>
-            <span v-if="expensesGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="expensesGrowth > 0 ? 'bg-[var(--danger-soft)] text-[var(--danger)]' : 'bg-[var(--success-soft)] text-[var(--success)]'">
-              <i :class="expensesGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
-              {{ Math.abs(expensesGrowth).toFixed(1) }}%
+          </button>
+          <button v-if="!isAllBooklets" type="button" class="quick-action-btn" data-test="quick-import-csv" @click="openQuickImport">
+            <i class="pi pi-upload" aria-hidden="true" />
+            <span>
+              Importer un relevé CSV
+              <span class="quick-action-target">sur {{ selectedBooklet?.label }}</span>
             </span>
-          </div>
-          <div>
-            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
-              Dépenses {{ periodMetricLabel }}
-            </h3>
-            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ periodExpenses.toFixed(2) }} €
-            </p>
-            <p class="text-xs" style="color: var(--text-tertiary);" data-test="daily-expense-average">
-              Moy. journalière: {{ dailyExpenseAverage.toFixed(2) }} €
-            </p>
-          </div>
+          </button>
+          <button type="button" class="quick-action-btn" data-test="quick-add-regular" @click="openQuickRegular">
+            <i class="pi pi-sync" aria-hidden="true" />
+            <span>Créer une transaction régulière</span>
+          </button>
         </div>
+      </div>
 
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--income)]">
-              <i class="pi pi-arrow-up" />
+      <!-- Overview and analysis (UX-18): the overview answers "where do I stand" in three zones;
+           secondary analysis lives one click away instead of lengthening the page. -->
+      <div role="tablist" aria-label="Vues du tableau de bord" class="dashboard-tabs" data-test="dashboard-tabs">
+        <button
+          id="dashboard-tab-overview"
+          :ref="(element) => { dashboardTabRefs.overview = element as HTMLButtonElement | null }"
+          type="button"
+          role="tab"
+          class="dashboard-tab"
+          data-test="tab-overview"
+          aria-controls="dashboard-panel-overview"
+          :aria-selected="activeDashboardTab === 'overview'"
+          :tabindex="activeDashboardTab === 'overview' ? 0 : -1"
+          :class="{ 'is-active': activeDashboardTab === 'overview' }"
+          @click="activeDashboardTab = 'overview'"
+          @keydown="onDashboardTabKeydown"
+        >
+          Vue d'ensemble
+        </button>
+        <button
+          id="dashboard-tab-analysis"
+          :ref="(element) => { dashboardTabRefs.analysis = element as HTMLButtonElement | null }"
+          type="button"
+          role="tab"
+          class="dashboard-tab"
+          data-test="tab-analysis"
+          aria-controls="dashboard-panel-analysis"
+          :aria-selected="activeDashboardTab === 'analysis'"
+          :tabindex="activeDashboardTab === 'analysis' ? 0 : -1"
+          :class="{ 'is-active': activeDashboardTab === 'analysis' }"
+          @click="activeDashboardTab = 'analysis'"
+          @keydown="onDashboardTabKeydown"
+        >
+          Analyse
+        </button>
+      </div>
+
+      <div
+        v-if="activeDashboardTab === 'overview'"
+        id="dashboard-panel-overview"
+        role="tabpanel"
+        aria-labelledby="dashboard-tab-overview"
+      >
+        <section ref="overviewRef" data-test="zone-situation" class="dashboard-zone opacity-0 translate-y-5 transition-all duration-600" :class="{ 'opacity-100 translate-y-0': isOverviewVisible }">
+          <h2 class="zone-title">
+            Où j'en suis
+          </h2>
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6 mb-6">
+            <div class="stat-card" data-test="kpi-balance">
+              <div class="flex justify-between items-center mb-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)]">
+                  <i class="pi pi-wallet" />
+                </div>
+                <span v-if="balanceGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="balanceGrowth > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
+                  <i :class="balanceGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+                  {{ Math.abs(balanceGrowth).toFixed(1) }}%
+                </span>
+              </div>
+              <div>
+                <h3 class="kpi-label">
+                  Solde du compte
+                </h3>
+                <p class="kpi-value">
+                  {{ selectedBookletBalance.toFixed(2) }} €
+                </p>
+                <p class="kpi-hint">
+                  {{ isAllBooklets ? 'Tous les comptes' : (selectedBooklet?.label || 'Compte sélectionné') }}
+                </p>
+              </div>
             </div>
-            <span v-if="incomeGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="incomeGrowth > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
-              <i :class="incomeGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
-              {{ Math.abs(incomeGrowth).toFixed(1) }}%
-            </span>
-          </div>
-          <div>
-            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
-              Revenus {{ periodMetricLabel }}
-            </h3>
-            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ periodIncome.toFixed(2) }} €
-            </p>
-            <p class="text-xs" style="color: var(--text-tertiary);">
-              Épargne: {{ (periodIncome - periodExpenses).toFixed(2) }} €
-            </p>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--warning)]">
-              <i class="pi pi-chart-line" />
+            <div class="stat-card">
+              <div class="flex justify-between items-center mb-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--expense)]">
+                  <i class="pi pi-arrow-down" />
+                </div>
+                <span v-if="expensesGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="expensesGrowth > 0 ? 'bg-[var(--danger-soft)] text-[var(--danger)]' : 'bg-[var(--success-soft)] text-[var(--success)]'">
+                  <i :class="expensesGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+                  {{ Math.abs(expensesGrowth).toFixed(1) }}%
+                </span>
+              </div>
+              <div>
+                <h3 class="kpi-label">
+                  Dépenses {{ periodMetricLabel }}
+                </h3>
+                <p class="kpi-value">
+                  {{ periodExpenses.toFixed(2) }} €
+                </p>
+                <p class="kpi-hint" data-test="daily-expense-average">
+                  Moy. journalière: {{ dailyExpenseAverage.toFixed(2) }} €
+                </p>
+              </div>
             </div>
-            <span v-if="savingsRate !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="savingsRate > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
-              <i :class="savingsRate > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
-              {{ Math.abs(savingsRate).toFixed(1) }}%
-            </span>
-          </div>
-          <div>
-            <h3 class="text-sm mb-2 font-medium" style="color: var(--text-secondary);">
-              Taux d'épargne
-            </h3>
-            <p class="text-3xl font-extrabold mb-2" style="color: var(--text-primary);">
-              {{ savingsRate.toFixed(1) }}%
-            </p>
-            <p class="text-xs" style="color: var(--text-tertiary);">
-              Objectif: 30%
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Charts Section -->
-      <section ref="chartsRef" class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 mb-8 opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
-        <div class="stat-card col-span-full">
-          <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
-                <i class="pi pi-chart-line text-purple-600" />
-                Évolution des finances
-              </h2>
-              <p class="text-sm" style="color: var(--text-secondary);">
-                Comparaison revenus vs dépenses sur la période sélectionnée
-              </p>
+            <div class="stat-card">
+              <div class="flex justify-between items-center mb-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--income)]">
+                  <i class="pi pi-arrow-up" />
+                </div>
+                <span v-if="incomeGrowth !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="incomeGrowth > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
+                  <i :class="incomeGrowth > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+                  {{ Math.abs(incomeGrowth).toFixed(1) }}%
+                </span>
+              </div>
+              <div>
+                <h3 class="kpi-label">
+                  Revenus {{ periodMetricLabel }}
+                </h3>
+                <p class="kpi-value">
+                  {{ periodIncome.toFixed(2) }} €
+                </p>
+                <p class="kpi-hint">
+                  Épargne: {{ (periodIncome - periodExpenses).toFixed(2) }} €
+                </p>
+              </div>
             </div>
-            <button
-              v-if="isLineChartScaled"
-              class="chart-reset-btn"
-              data-test="reset-line-chart-scale"
-              @click="resetLineChartScale"
-            >
-              <i class="pi pi-refresh" />
-              Réinitialiser l'échelle
-            </button>
+            <div class="stat-card">
+              <div class="flex justify-between items-center mb-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--warning)]">
+                  <i class="pi pi-chart-line" />
+                </div>
+                <span v-if="savingsRate !== 0" class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold" :class="savingsRate > 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]'">
+                  <i :class="savingsRate > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'" />
+                  {{ Math.abs(savingsRate).toFixed(1) }}%
+                </span>
+              </div>
+              <div>
+                <h3 class="kpi-label">
+                  Taux d'épargne
+                </h3>
+                <p class="kpi-value">
+                  {{ savingsRate.toFixed(1) }}%
+                </p>
+                <p class="kpi-hint">
+                  de vos revenus {{ periodMetricLabel }}
+                </p>
+              </div>
+            </div>
+            <div class="stat-card" data-test="kpi-projection">
+              <div class="flex justify-between items-center mb-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl text-white bg-[var(--info)]">
+                  <i class="pi pi-flag" />
+                </div>
+              </div>
+              <div>
+                <h3 class="kpi-label">
+                  Projection fin de période
+                </h3>
+                <p class="kpi-value" :class="projectionPeriodEnded ? 'text-[var(--text-primary)]' : (projectedEndPeriodBalance >= selectedBookletBalance ? 'text-[var(--success)]' : 'text-[var(--danger)]')">
+                  {{ projectionPeriodEnded ? 'Période clôturée' : `${projectedEndPeriodBalance.toFixed(2)} €` }}
+                </p>
+                <p class="kpi-hint">
+                  Solde attendu en fin de période, échéances comprises
+                </p>
+              </div>
+            </div>
           </div>
-          <div class="chart-container h-75 relative" data-test="line-chart-container" @wheel="onLineChartWheel">
-            <Line :data="expensesTrendData" :options="lineChartOptionsComputed" />
-          </div>
-        </div>
-
-        <div class="stat-card col-span-full">
-          <div class="flex flex-col gap-6">
-            <div class="flex flex-col sm:flex-row gap-6">
-              <div class="flex-1 flex flex-col" :class="secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2'">
-                <div class="mb-5">
-                  <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
-                    <i class="pi pi-chart-pie text-purple-600" />
-                    Dépenses par catégorie
-                  </h2>
-                  <p class="text-sm" style="color: var(--text-secondary);">
-                    {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="stat-card xl:col-span-2">
+              <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 class="block-title mb-1.5">
+                    <i class="pi pi-chart-line text-purple-600" />
+                    Évolution des finances
+                  </h3>
+                  <p class="text-sm text-[var(--text-secondary)]">
+                    Comparaison revenus vs dépenses sur la période sélectionnée
                   </p>
                 </div>
-                <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-72' : 'min-h-70'" data-test="doughnut-container">
-                  <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
-                  <div
-                    v-if="doughnutCenterLabel"
-                    class="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    data-test="doughnut-center-label"
+                <button
+                  v-if="isLineChartScaled"
+                  class="chart-reset-btn"
+                  data-test="reset-line-chart-scale"
+                  @click="resetLineChartScale"
+                >
+                  <i class="pi pi-refresh" />
+                  Réinitialiser l'échelle
+                </button>
+              </div>
+              <div class="chart-container h-75 relative" data-test="line-chart-container" @wheel="onLineChartWheel">
+                <Line :data="expensesTrendData" :options="lineChartOptionsComputed" />
+              </div>
+            </div>
+            <!-- Stored per booklet: "all accounts" has no budget of its own (UX-44). -->
+            <div v-if="!isAllBooklets" class="stat-card" data-test="account-budget">
+              <div class="flex items-center justify-between mb-4 gap-3">
+                <h3 class="block-title m-0">
+                  <i class="pi pi-euro text-[var(--success)]" />
+                  Budget du compte
+                </h3>
+                <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="!isBudgetConfigured ? 'bg-gray-500/10 text-gray-500' : (projectedBudgetDelta >= 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]')">
+                  {{ !isBudgetConfigured ? 'Non configuré' : (projectedBudgetDelta >= 0 ? 'Dans le budget' : 'Dépassement') }}
+                </span>
+              </div>
+
+              <div class="flex items-end gap-2 mb-4">
+                <div class="flex-1">
+                  <label for="budget-target" class="text-note font-semibold block mb-1">
+                    Cible {{ selectedPeriod === 'month' ? 'mensuelle' : 'périodique' }} (€)
+                  </label>
+                  <input
+                    id="budget-target"
+                    v-model.number="budgetTargetInput"
+                    data-test="budget-target-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    class="budget-input"
+                    placeholder="Ex: 1200"
+                    @blur="saveBudgetTarget"
                   >
-                    <span
-                      class="font-bold"
-                      :class="isSmallScreen ? 'text-sm' : 'text-base'"
-                      style="color: var(--text-primary);"
-                    >
-                      {{ doughnutCenterLabel }}
-                    </span>
-                  </div>
+                </div>
+                <button class="budget-save-btn" data-test="budget-save-btn" @click="saveBudgetTarget">
+                  Enregistrer
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="panel-sunken">
+                  <p class="text-note m-0">
+                    Dépenses consommées
+                  </p>
+                  <p class="text-lg font-bold m-0 mt-1 text-[var(--text-primary)]">
+                    {{ periodExpenses.toFixed(2) }} €
+                  </p>
+                </div>
+                <div class="panel-sunken">
+                  <p class="text-note m-0">
+                    Reste budget
+                  </p>
+                  <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
+                    {{ isBudgetConfigured ? `${budgetDelta.toFixed(2)} €` : 'N/A' }}
+                  </p>
+                </div>
+                <div class="panel-sunken">
+                  <p class="text-note m-0">
+                    Projection budget
+                  </p>
+                  <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
+                    {{ isBudgetConfigured ? `${projectedBudgetDelta.toFixed(2)} €` : 'N/A' }}
+                  </p>
                 </div>
               </div>
 
-              <!-- Secondary doughnut chart for sub-tags breakdown -->
-              <Transition name="fade">
-                <div v-if="secondaryChartData" class="flex-1 flex flex-col sm:w-1/3" data-test="secondary-doughnut">
-                  <div class="mb-5">
-                    <h3 class="text-lg font-semibold mb-1 flex items-center gap-2" style="color: var(--text-primary);">
-                      <i class="pi pi-sitemap text-purple-500" />
-                      {{ selectedParentCategory?.tagLabel }}
-                    </h3>
-                    <p class="text-xs" style="color: var(--text-secondary);">
-                      Détail des sous-tags • {{ Number.parseFloat(selectedParentCategory?.totalAmount ?? '0').toFixed(2) }} €
-                    </p>
-                  </div>
-                  <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-60' : 'min-h-55'">
-                    <Doughnut :data="secondaryChartData" :options="secondaryDoughnutOptions" />
-                  </div>
-                </div>
-              </Transition>
+              <p class="text-note m-0 mt-3">
+                {{ isBudgetConfigured ? `Consommation: ${budgetConsumptionRate.toFixed(1)}% du budget` : 'Définis une cible pour activer les alertes budget.' }}
+              </p>
+            </div>
+          </div>
+        </section>
 
-              <div class="flex-1 flex flex-col" :class="[secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2', isSmallScreen ? 'mt-2' : '']">
-                <div class="flex justify-between items-center mb-3">
-                  <h3 class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                    Top tags de la période
-                  </h3>
-                  <span class="text-xs" style="color: var(--text-secondary);">
-                    Variation vs période précédente
-                  </span>
+        <section data-test="zone-upcoming" class="dashboard-zone">
+          <h2 class="zone-title">
+            Ce qui arrive
+          </h2>
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6">
+            <div class="stat-card" data-test="upcoming-list">
+              <div class="flex justify-between items-center mb-5 pb-4 border-b-2 border-b-solid border-[var(--border-color)]">
+                <h3 class="block-title m-0">
+                  <i class="pi pi-calendar text-purple-600" />
+                  Prochaines transactions
+                </h3>
+                <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
+                  <i class="pi pi-cog" />
+                  Gérer
+                </button>
+              </div>
+              <p class="upcoming-summary" data-test="upcoming-summary">
+                {{ totalPrevisionalTransactions }} transaction(s) sur les {{ projectionWindowLabel }} à venir · net
+                <strong :class="totalUpcomingNet >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">{{ totalUpcomingNet.toFixed(2) }} €</strong>
+              </p>
+              <div class="max-h-87.5 overflow-y-auto">
+                <div v-if="upcomingRegularPayments.length === 0 && upcomingNonRegularPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
+                  <i class="pi pi-calendar-times text-5xl text-[var(--text-muted)]" />
+                  <p class="m-0 text-[var(--text-secondary)]">
+                    Aucune transaction prévue
+                  </p>
+                  <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
+                    Configurer une mensualité
+                  </button>
                 </div>
-                <div v-if="topTagsInsights.length === 0" class="text-sm" style="color: var(--text-secondary);">
-                  Aucun tag de dépense sur cette période
-                </div>
-                <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
-                  <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="rounded-xl p-3 flex items-center justify-between" style="background-color: var(--bg-tertiary);">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                      <span
-                        class="w-3 h-3 rounded-full flex-shrink-0"
-                        :style="{ backgroundColor: `rgb(${tag.colorDTO.red}, ${tag.colorDTO.green}, ${tag.colorDTO.blue})` }"
-                      />
-                      <div class="min-w-0">
-                        <p
-                          class="text-sm font-semibold m-0 truncate"
-                          :style="{ color: toReadableTagTextColor(tag.colorDTO) }"
-                        >
-                          {{ tag.tagLabel }}
-                        </p>
-                        <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
-                          {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
+                <div v-else class="flex flex-col gap-4">
+                  <div class="panel-sunken">
+                    <div class="flex justify-between items-center mb-2">
+                      <p class="text-label-strong m-0">
+                        Régulières
+                      </p>
+                      <p class="text-note font-semibold m-0">
+                        Total: {{ totalRegularUpcoming.toFixed(2) }} €
+                      </p>
+                    </div>
+                    <div v-if="upcomingRegularPayments.length === 0" class="text-note">
+                      Aucune régulière à venir
+                    </div>
+                    <div v-else class="flex flex-col gap-2">
+                      <div v-for="payment in upcomingRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl bg-[var(--card-bg)]">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
+                          <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+                        </div>
+                        <div class="flex-1">
+                          <p class="font-semibold m-0 mb-1 text-sm text-[var(--text-primary)]">
+                            {{ payment.label }}
+                          </p>
+                          <p class="text-note m-0">
+                            {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Régulière</span>
+                          </p>
+                        </div>
+                        <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-[var(--expense)]' : 'text-[var(--income)]'">
+                          {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
                         </p>
                       </div>
                     </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-[var(--danger-soft)] text-[var(--danger)]' : 'bg-[var(--success-soft)] text-[var(--success)]')">
-                      {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+                  </div>
+
+                  <div class="panel-sunken">
+                    <div class="flex justify-between items-center mb-2">
+                      <p class="text-label-strong m-0">
+                        Non régulières
+                      </p>
+                      <p class="text-note font-semibold m-0">
+                        Total: {{ totalNonRegularUpcoming.toFixed(2) }} €
+                      </p>
+                    </div>
+                    <div v-if="upcomingNonRegularPayments.length === 0" class="text-note">
+                      Aucune non régulière à venir
+                    </div>
+                    <div v-else class="flex flex-col gap-2">
+                      <div v-for="payment in upcomingNonRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl bg-[var(--card-bg)]">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
+                          <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+                        </div>
+                        <div class="flex-1">
+                          <p class="font-semibold m-0 mb-1 text-sm text-[var(--text-primary)]">
+                            {{ payment.label }}
+                          </p>
+                          <p class="text-note m-0">
+                            {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Non régulière</span>
+                          </p>
+                        </div>
+                        <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-[var(--expense)]' : 'text-[var(--income)]'">
+                          {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p class="text-xs m-0 text-[var(--text-tertiary)]">
+                    {{ totalPrevisionalTransactions }} transaction(s) sur la fenêtre de {{ projectionWindowLabel }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="stat-card" data-test="period-alerts">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="block-title m-0">
+                  <i class="pi pi-bell text-orange-500" />
+                  Alertes de la période
+                </h3>
+                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+                  {{ dashboardAlerts.length }} active(s)
+                </span>
+              </div>
+
+              <div v-if="dashboardAlerts.length === 0" class="text-sm text-[var(--text-secondary)]">
+                Aucun signal particulier sur cette période
+              </div>
+              <div v-else class="flex flex-col gap-3">
+                <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-[var(--danger-soft)] border-[var(--danger)]/30' : (alert.level === 'warning' ? 'bg-[var(--warning-soft)] border-[var(--warning)]/30' : 'bg-[var(--info-soft)] border-[var(--info)]/30')">
+                  <p class="text-label-strong m-0">
+                    {{ alert.title }}
+                  </p>
+                  <p class="text-note m-0 mt-1">
+                    {{ alert.detail }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section ref="chartsRef" data-test="zone-breakdown" class="dashboard-zone opacity-0 translate-y-5 transition-all duration-600 delay-200" :class="{ 'opacity-100 translate-y-0': isChartsVisible }">
+          <h2 class="zone-title">
+            Où part l'argent
+          </h2>
+          <div class="stat-card col-span-full" data-test="category-breakdown">
+            <div class="flex flex-col gap-6">
+              <div class="flex flex-col sm:flex-row gap-6">
+                <div class="flex-1 flex flex-col" :class="secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2'">
+                  <div class="mb-5">
+                    <h3 class="block-title mb-1.5">
+                      <i class="pi pi-chart-pie text-purple-600" />
+                      Dépenses par catégorie
+                    </h3>
+                    <p class="text-sm text-[var(--text-secondary)]">
+                      {{ selectedPeriodLabel }} • Total: {{ categoryDistribution?.totalExpenses || '0.00' }} €
+                    </p>
+                  </div>
+                  <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-72' : 'min-h-70'" data-test="doughnut-container">
+                    <Doughnut :data="categoryExpensesData" :options="doughnutOptionsComputed" />
+                    <div
+                      v-if="doughnutCenterLabel"
+                      class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      data-test="doughnut-center-label"
+                    >
+                      <span
+                        class="font-bold text-[var(--text-primary)]"
+                        :class="isSmallScreen ? 'text-sm' : 'text-base'"
+                      >
+                        {{ doughnutCenterLabel }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Secondary doughnut chart for sub-tags breakdown -->
+                <Transition name="fade">
+                  <div v-if="secondaryChartData" class="flex-1 flex flex-col sm:w-1/3" data-test="secondary-doughnut">
+                    <div class="mb-5">
+                      <h3 class="block-title mb-1">
+                        <i class="pi pi-sitemap text-purple-500" />
+                        {{ selectedParentCategory?.tagLabel }}
+                      </h3>
+                      <p class="text-note">
+                        Détail des sous-tags • {{ Number.parseFloat(selectedParentCategory?.totalAmount ?? '0').toFixed(2) }} €
+                      </p>
+                    </div>
+                    <div class="doughnut-chart-container relative flex-1" :class="isSmallScreen ? 'h-60' : 'min-h-55'">
+                      <Doughnut :data="secondaryChartData" :options="secondaryDoughnutOptions" />
+                    </div>
+                  </div>
+                </Transition>
+
+                <div class="flex-1 flex flex-col" :class="[secondaryChartData ? 'sm:w-1/3' : 'sm:w-1/2', isSmallScreen ? 'mt-2' : '']">
+                  <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-label-strong m-0">
+                      Top tags de la période
+                    </h3>
+                    <span class="text-note">
+                      Variation vs période précédente
                     </span>
+                  </div>
+                  <div v-if="topTagsInsights.length === 0" class="text-sm text-[var(--text-secondary)]">
+                    Aucun tag de dépense sur cette période
+                  </div>
+                  <div v-else class="flex flex-col gap-2 overflow-y-auto flex-1">
+                    <div v-for="tag in topTagsInsights" :key="tag.tagLabel" class="panel-sunken flex items-center justify-between">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        <span
+                          class="w-3 h-3 rounded-full flex-shrink-0"
+                          :style="{ backgroundColor: `rgb(${tag.colorDTO.red}, ${tag.colorDTO.green}, ${tag.colorDTO.blue})` }"
+                        />
+                        <div class="min-w-0">
+                          <p
+                            class="text-sm font-semibold m-0 truncate"
+                            :style="{ color: toReadableTagTextColor(tag.colorDTO) }"
+                          >
+                            {{ tag.tagLabel }}
+                          </p>
+                          <p class="text-note m-0 mt-1">
+                            {{ tag.currentAmount.toFixed(2) }} € • {{ Number(tag.percentage).toFixed(1) }}%
+                          </p>
+                        </div>
+                      </div>
+                      <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="tag.variation === null ? 'bg-gray-500/10 text-gray-500' : (tag.variation > 0 ? 'bg-[var(--danger-soft)] text-[var(--danger)]' : 'bg-[var(--success-soft)] text-[var(--success)]')">
+                        {{ tag.variation === null ? 'Nouveau' : `${tag.variation > 0 ? '+' : ''}${tag.variation.toFixed(1)}%` }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
+      </div>
 
+      <section
+        v-else
+        id="dashboard-panel-analysis"
+        role="tabpanel"
+        aria-labelledby="dashboard-tab-analysis"
+        data-test="zone-analysis"
+        class="dashboard-zone"
+      >
+        <h2 class="zone-title">
+          Analyse
+        </h2>
         <div class="stat-card">
           <div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <h2 class="text-xl font-bold mb-1.5 flex items-center gap-2.5" style="color: var(--text-primary);">
+              <h3 class="block-title mb-1.5">
                 <i class="pi pi-chart-bar text-purple-600" />
                 Comparaison de période
-              </h2>
-              <p class="text-sm" style="color: var(--text-secondary);">
+              </h3>
+              <p class="text-sm text-[var(--text-secondary)]">
                 Période active vs période précédente
               </p>
             </div>
@@ -1710,373 +2041,6 @@ watch(selectedBookletId, () => {
           </div>
           <div class="chart-container h-75 relative" data-test="bar-chart-container" @wheel="onBarChartWheel">
             <Bar :data="monthlyComparisonData" :options="barChartOptionsComputed" />
-          </div>
-        </div>
-      </section>
-
-      <!-- Quick Actions & Info Section -->
-      <section class="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6 mb-8">
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
-            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
-              <i class="pi pi-book text-purple-600" />
-              Mes livrets
-            </h2>
-            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
-              <i class="pi pi-plus" />
-              Nouveau
-            </button>
-          </div>
-          <div class="max-h-87.5 overflow-y-auto">
-            <div v-if="booklets.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
-              <i class="pi pi-inbox text-5xl" style="color: var(--text-muted);" />
-              <p class="m-0" style="color: var(--text-secondary);">
-                Aucun livret créé
-              </p>
-              <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="isBookletDialogOpen = true">
-                Créer mon premier livret
-              </button>
-            </div>
-            <div v-else class="flex flex-col gap-3">
-              <div
-                v-for="(booklet, index) in orderedBooklets.slice(0, 4)"
-                :key="booklet.id"
-                class="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all"
-                :class="[
-                  dashboardDraggedIndex === index ? 'opacity-40 scale-97' : 'hover:translate-x-1.5',
-                  dashboardDragOverIndex === index && dashboardDraggedIndex !== index ? 'ring-2 ring-purple-500 ring-offset-1' : '',
-                ]"
-                style="background-color: var(--bg-tertiary);"
-                draggable="true"
-                @click="navigateTo(`/booklet/${booklet.id}`)"
-                @dragstart="onBookletDragStart($event, index)"
-                @dragover="onBookletDragOver($event, index)"
-                @drop="onBookletDrop($event, index)"
-                @dragend="onBookletDragEnd"
-              >
-                <div class="w-12 h-12 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] rounded-xl flex items-center justify-center text-white text-xl flex-shrink-0">
-                  <i class="pi pi-wallet" />
-                </div>
-                <div class="flex-1">
-                  <p class="font-semibold m-0 mb-1" style="color: var(--text-primary);">
-                    {{ booklet.label }}
-                  </p>
-                  <p class="text-sm m-0" style="color: var(--text-secondary);">
-                    {{ Number.parseFloat(booklet.amount.toString()).toFixed(2) }} €
-                  </p>
-                </div>
-                <i class="pi pi-bars mr-1 cursor-grab text-sm" style="color: var(--text-tertiary);" />
-                <i class="pi pi-chevron-right" style="color: var(--text-tertiary);" />
-              </div>
-              <button v-if="booklets.length > 4" class="w-full py-3 bg-transparent border-2 border-dashed rounded-lg font-semibold cursor-pointer transition-all hover:border-purple-600 hover:text-purple-600" style="border-color: var(--border-color); color: var(--text-secondary);" @click="navigateTo('/booklet')">
-                Voir tous les livrets ({{ booklets.length }})
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
-            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
-              <i class="pi pi-calendar text-purple-600" />
-              Prochaines transactions
-            </h2>
-            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
-              <i class="pi pi-cog" />
-              Gérer
-            </button>
-          </div>
-          <div class="max-h-87.5 overflow-y-auto">
-            <div v-if="upcomingRegularPayments.length === 0 && upcomingNonRegularPayments.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
-              <i class="pi pi-calendar-times text-5xl" style="color: var(--text-muted);" />
-              <p class="m-0" style="color: var(--text-secondary);">
-                Aucune transaction prévue
-              </p>
-              <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/regular-transaction')">
-                Configurer une mensualité
-              </button>
-            </div>
-            <div v-else class="flex flex-col gap-4">
-              <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-                <div class="flex justify-between items-center mb-2">
-                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                    Régulières
-                  </p>
-                  <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
-                    Total: {{ totalRegularUpcoming.toFixed(2) }} €
-                  </p>
-                </div>
-                <div v-if="upcomingRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
-                  Aucune régulière à venir
-                </div>
-                <div v-else class="flex flex-col gap-2">
-                  <div v-for="payment in upcomingRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
-                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
-                      <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
-                    </div>
-                    <div class="flex-1">
-                      <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
-                        {{ payment.label }}
-                      </p>
-                      <p class="text-xs m-0" style="color: var(--text-secondary);">
-                        {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Régulière</span>
-                      </p>
-                    </div>
-                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-[var(--expense)]' : 'text-[var(--income)]'">
-                      {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-                <div class="flex justify-between items-center mb-2">
-                  <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                    Non régulières
-                  </p>
-                  <p class="text-xs font-semibold m-0" style="color: var(--text-secondary);">
-                    Total: {{ totalNonRegularUpcoming.toFixed(2) }} €
-                  </p>
-                </div>
-                <div v-if="upcomingNonRegularPayments.length === 0" class="text-xs" style="color: var(--text-secondary);">
-                  Aucune non régulière à venir
-                </div>
-                <div v-else class="flex flex-col gap-2">
-                  <div v-for="payment in upcomingNonRegularPayments" :key="payment.id ?? `${payment.label}-${payment.date}`" class="flex items-center gap-4 p-3 rounded-xl" style="background-color: var(--card-bg);">
-                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg flex-shrink-0" :class="!payment.isIncome ? 'bg-[var(--expense)]' : 'bg-[var(--income)]'">
-                      <i :class="!payment.isIncome ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
-                    </div>
-                    <div class="flex-1">
-                      <p class="font-semibold m-0 mb-1 text-sm" style="color: var(--text-primary);">
-                        {{ payment.label }}
-                      </p>
-                      <p class="text-xs m-0" style="color: var(--text-secondary);">
-                        {{ new Date(payment.date).toLocaleDateString('fr-FR') }} • <span class="font-semibold">Non régulière</span>
-                      </p>
-                    </div>
-                    <p class="font-bold text-base m-0" :class="!payment.isIncome ? 'text-[var(--expense)]' : 'text-[var(--income)]'">
-                      {{ !payment.isIncome ? '-' : '+' }}{{ Number.parseFloat(payment.amount).toFixed(2) }} €
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <p class="text-xs m-0" style="color: var(--text-tertiary);">
-                {{ totalPrevisionalTransactions }} transaction(s) sur la fenêtre de {{ projectionWindowLabel }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-5 pb-4" style="border-bottom: 2px solid var(--border-color);">
-            <h2 class="text-lg font-bold flex items-center gap-2.5 m-0" style="color: var(--text-primary);">
-              <i class="pi pi-tags text-purple-600" />
-              Tags populaires
-            </h2>
-            <button class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
-              <i class="pi pi-plus" />
-              Nouveau
-            </button>
-          </div>
-          <div class="max-h-87.5 overflow-y-auto">
-            <div v-if="tags.length === 0" class="flex flex-col items-center justify-center py-10 px-5 text-center gap-4">
-              <i class="pi pi-tag text-5xl" style="color: var(--text-muted);" />
-              <p class="m-0" style="color: var(--text-secondary);">
-                Aucun tag créé
-              </p>
-              <button class="px-5 py-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-2)] text-white border-none rounded-lg font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-lg" @click="navigateTo('/tag')">
-                Créer un tag
-              </button>
-            </div>
-            <div v-else class="flex flex-wrap gap-2.5">
-              <div
-                v-for="tag in tags.slice(0, 6)"
-                :key="tag.tagId"
-                class="inline-flex items-center gap-1.5 px-4 py-2 border-2 rounded-full text-xs font-semibold cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
-                :style="{
-                  backgroundColor: `${rgbToHex(tag.colorDTO)}20`,
-                  borderColor: rgbToHex(tag.colorDTO),
-                  color: rgbToHex(tag.colorDTO),
-                }"
-              >
-                <i class="pi pi-tag" />
-                {{ tag.label }}
-              </div>
-              <button v-if="tags.length > 6" class="px-4 py-2 bg-[var(--warning-soft)] border-2 border-[var(--warning)] rounded-full text-[var(--warning)] text-xs font-semibold cursor-pointer transition-all hover:brightness-95 hover:-translate-y-0.5" @click="navigateTo('/tag')">
-                +{{ tags.length - 6 }} autres
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 mb-8">
-        <div class="stat-card">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
-              <i class="pi pi-bell text-orange-500" />
-              Alertes de la période
-            </h2>
-            <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
-              {{ dashboardAlerts.length }} active(s)
-            </span>
-          </div>
-
-          <div v-if="dashboardAlerts.length === 0" class="text-sm" style="color: var(--text-secondary);">
-            Aucun signal particulier sur cette période
-          </div>
-          <div v-else class="flex flex-col gap-3">
-            <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-[var(--danger-soft)] border-[var(--danger)]/30' : (alert.level === 'warning' ? 'bg-[var(--warning-soft)] border-[var(--warning)]/30' : 'bg-[var(--info-soft)] border-[var(--info)]/30')">
-              <p class="text-sm font-semibold m-0" style="color: var(--text-primary);">
-                {{ alert.title }}
-              </p>
-              <p class="text-xs m-0 mt-1" style="color: var(--text-secondary);">
-                {{ alert.detail }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <h2 class="text-lg font-bold m-0 mb-4 flex items-center gap-2" style="color: var(--text-primary);">
-            <i class="pi pi-bolt text-purple-600" />
-            Actions rapides
-          </h2>
-          <!-- Actions, not links: the sidebar already reaches every page. The two acting on a single
-               booklet name it, so the user knows where the entry lands (UX-50). -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button type="button" class="quick-action-btn" data-test="quick-add-transaction" @click="openQuickTransaction">
-              <i class="pi pi-plus-circle" aria-hidden="true" />
-              <span>
-                Ajouter une transaction
-                <span class="quick-action-target">sur {{ selectedBooklet?.label }}</span>
-              </span>
-            </button>
-            <button type="button" class="quick-action-btn" data-test="quick-import-csv" @click="openQuickImport">
-              <i class="pi pi-upload" aria-hidden="true" />
-              <span>
-                Importer un relevé CSV
-                <span class="quick-action-target">sur {{ selectedBooklet?.label }}</span>
-              </span>
-            </button>
-            <button type="button" class="quick-action-btn" data-test="quick-add-regular" @click="openQuickRegular">
-              <i class="pi pi-sync" aria-hidden="true" />
-              <span>Créer une transaction régulière</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="flex items-center justify-between mb-4 gap-3">
-            <h2 class="text-lg font-bold m-0 flex items-center gap-2" style="color: var(--text-primary);">
-              <i class="pi pi-euro text-[var(--success)]" />
-              Budget du compte
-            </h2>
-            <span class="text-xs font-semibold px-2 py-1 rounded-full" :class="!isBudgetConfigured ? 'bg-gray-500/10 text-gray-500' : (projectedBudgetDelta >= 0 ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--danger-soft)] text-[var(--danger)]')">
-              {{ !isBudgetConfigured ? 'Non configuré' : (projectedBudgetDelta >= 0 ? 'Dans le budget' : 'Dépassement') }}
-            </span>
-          </div>
-
-          <div class="flex items-end gap-2 mb-4">
-            <div class="flex-1">
-              <label for="budget-target" class="text-xs font-semibold block mb-1" style="color: var(--text-secondary);">
-                Cible {{ selectedPeriod === 'month' ? 'mensuelle' : 'périodique' }} (€)
-              </label>
-              <input
-                id="budget-target"
-                v-model.number="budgetTargetInput"
-                data-test="budget-target-input"
-                type="number"
-                min="0"
-                step="0.01"
-                class="budget-input"
-                placeholder="Ex: 1200"
-                @blur="saveBudgetTarget"
-              >
-            </div>
-            <button class="budget-save-btn" data-test="budget-save-btn" @click="saveBudgetTarget">
-              Enregistrer
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-              <p class="text-xs m-0" style="color: var(--text-secondary);">
-                Dépenses consommées
-              </p>
-              <p class="text-lg font-bold m-0 mt-1" style="color: var(--text-primary);">
-                {{ periodExpenses.toFixed(2) }} €
-              </p>
-            </div>
-            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-              <p class="text-xs m-0" style="color: var(--text-secondary);">
-                Reste budget
-              </p>
-              <p class="text-lg font-bold m-0 mt-1" :class="budgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
-                {{ isBudgetConfigured ? `${budgetDelta.toFixed(2)} €` : 'N/A' }}
-              </p>
-            </div>
-            <div class="rounded-xl p-3" style="background-color: var(--bg-tertiary);">
-              <p class="text-xs m-0" style="color: var(--text-secondary);">
-                Projection budget
-              </p>
-              <p class="text-lg font-bold m-0 mt-1" :class="projectedBudgetDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
-                {{ isBudgetConfigured ? `${projectedBudgetDelta.toFixed(2)} €` : 'N/A' }}
-              </p>
-            </div>
-          </div>
-
-          <p class="text-xs m-0 mt-3" style="color: var(--text-secondary);">
-            {{ isBudgetConfigured ? `Consommation: ${budgetConsumptionRate.toFixed(1)}% du budget` : 'Définis une cible pour activer les alertes budget.' }}
-          </p>
-        </div>
-      </section>
-
-      <!-- Quick Stats Banner -->
-      <section class="stat-card grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5 mb-5">
-        <div class="flex items-center gap-4">
-          <i class="pi pi-calendar-plus text-4xl text-purple-600" />
-          <div>
-            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
-              {{ regularTransactions.length }}
-            </p>
-            <p class="text-xs m-0" style="color: var(--text-secondary);">
-              Mensualités actives
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <i class="pi pi-tags text-4xl text-purple-600" />
-          <div>
-            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
-              {{ tags.length }}
-            </p>
-            <p class="text-xs m-0" style="color: var(--text-secondary);">
-              Tags créés
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <i class="pi pi-clock text-4xl text-purple-600" />
-          <div>
-            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
-              {{ totalPrevisionalTransactions }}
-            </p>
-            <p class="text-xs m-0" style="color: var(--text-secondary);">
-              Transactions prévisionnelles
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-4">
-          <i class="pi pi-chart-line text-4xl text-purple-600" />
-          <div>
-            <p class="text-2xl font-extrabold m-0 mb-1" style="color: var(--text-primary);">
-              {{ categoryDistribution?.categories.length || 0 }}
-            </p>
-            <p class="text-xs m-0" style="color: var(--text-secondary);">
-              Catégories actives
-            </p>
           </div>
         </div>
       </section>
@@ -2214,6 +2178,56 @@ watch(selectedBookletId, () => {
   text-align: left;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Overview / analysis switch (UX-18). */
+.dashboard-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0 0 1.5rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background-color: var(--bg-tertiary);
+}
+
+.dashboard-tab {
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dashboard-tab.is-active {
+  background-color: var(--card-bg);
+  color: var(--primary);
+  box-shadow: 0 1px 3px var(--shadow-color, rgba(0, 0, 0, 0.08));
+}
+
+/* A zone groups blocks answering one question; its title carries the reading order the fifteen
+   blocks of equal weight lacked. */
+.dashboard-zone {
+  margin-bottom: 2.5rem;
+}
+
+.zone-title {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.upcoming-summary {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 /* The booklet an action lands on, under its label: the account must never be implicit (UX-50). */

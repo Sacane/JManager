@@ -86,7 +86,7 @@ Ce qui coûte tous les jours à l'utilisateur sans être « cassé ».
 
 | ID | Sujet | Type | Impact | Effort | Portée |
 |---|---|---|---|---|---|
-| **UX-28** | Migrer le dashboard vers les shortcuts UnoCSS (12 styles inline dupliqués) | Dette | Moyen | L | FE |
+| **UX-28** | Migrer le dashboard vers les shortcuts UnoCSS (**64 styles inline statiques**, pas 12 — recompté le 20/09/2026 ; effort ramené de L à S) | Dette | Moyen | S | FE |
 | **UX-29** | Remettre la page Tags aux couleurs de la marque (retirer l'indigo `#6366f1`) | Dette | Moyen | XS | FE |
 | **UX-30** | Shortcuts `page-shell` / `page-header` / `stat-card` + migration des 4 en-têtes de page | Dette | Moyen | M | FE |
 | **UX-31** | Trancher sur i18n : activer (extraction des chaînes) ou retirer le module | Dette | Moyen | M ou XL | FE |
@@ -156,8 +156,9 @@ Lot 4 — Pages métier             ~6 j   UX-15, UX-16, UX-19, UX-20, UX-24, UX
 Lot 5 — Refonte dashboard        ~3 j   UX-18, UX-28, UX-44
         Dépend du lot 2.
 
-Lot 6 — Chantiers full-stack    ~10 j   UX-21, UX-22, UX-23, UX-25
+Lot 6 — Chantiers full-stack    ~10 j   UX-21, UX-22, UX-23, UX-25, UX-27
         Chacun est un sujet à part entière (TDD par couche).
+        UX-27 y est rattaché à UX-21 : mêmes écrans de mot de passe.
         À lancer en parallèle des lots 4/5 si plusieurs personnes.
 
 Lot 7 — Reste P2 + décision i18n
@@ -262,8 +263,10 @@ Les issues suivent la convention `docs/features/{feature}/{module}_{titre}.md` e
 | UX-25 | client | `ux-25-running-balance/` | https://trello.com/c/2hheQnJy |
 | UX-26 | client | `ux-26-loading-skeletons/` | https://trello.com/c/Xc9D1OuF |
 | UX-27 | client | `ux-27-password-strength/` | https://trello.com/c/BEtdi2SP |
+| UX-28 | client | `ux-28-dashboard-design-tokens/` | https://trello.com/c/pFfeWC2J |
 | UX-41 | client | `ux-41-monthly-cycle-preview/` | https://trello.com/c/b10ayHGe — carte existante « cycle mensuel du compte », fusionnée |
 | UX-50 | client | `ux-50-dashboard-quick-actions/` | https://trello.com/c/OCXLj9yv |
+| UX-44 | client | `ux-44-all-accounts-mode/` | https://trello.com/c/5O2cYsoP |
 
 ### Structure d'un dossier d'issue
 
@@ -280,7 +283,7 @@ Le Gherkin fonctionnel de `feature.md` est repris **à l'identique dans la descr
 
 Les scénarios sont rédigés en **anglais**, comme les issues (imposé par le skill `create-issue`) et comme la suite de tests, pour qu'ils soient transposables tels quels en cas de test.
 
-Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni carte : ils seront formalisés au moment de leur lot, pour ne pas figer des spécifications qui auront changé d'ici là.
+Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni carte à l'écriture de ce document : ils sont formalisés au moment de leur lot, pour ne pas figer des spécifications qui auront changé d'ici là. `UX-41`, `UX-44`, `UX-50` et `UX-28` l'ont été à ce titre, et figurent dans le tableau ci-dessus.
 
 ---
 
@@ -288,7 +291,7 @@ Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni ca
 
 Ce backlog est le document de référence du chantier. À chaque item livré : cocher ici, déplacer la carte Trello, mettre à jour `Changelog.md` **uniquement quand un lot est complet** (conformément à `CLAUDE.md`), et supprimer les fiches devenues caduques.
 
-### État au 18 septembre 2026
+### État au 20 septembre 2026
 
 | Lot | Contenu | État |
 |---|---|---|
@@ -296,12 +299,14 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 | Lot 2 — Socle visuel | UX-11, 12, 29, 30, 32, 33 | ✅ mergé (PR #224) |
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
 | Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | ✅ mergé (PR #226) |
-| Lot 5 — Refonte dashboard | UX-18, 28, 44 | ⬜ à faire (dépendance lot 2 satisfaite) |
-| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25** | ⬜ à faire — premier travail backend du chantier |
+| Lot 5 — Refonte dashboard | UX-18, 28, 44 | ✅ mergé (PR #228) |
+| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25**, **27** | ⬜ à faire — premier travail backend du chantier |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
 
 > ⚠️ **UX-25 a été reclassé en full-stack le 18/09/2026**, avant écriture de code : l'endpoint `/balances` n'expose aucun solde d'ouverture de période, contrairement à ce qu'affirmait son issue. Il quitte le lot 4 pour le lot 6. Le registre de tout ce qui reste full-stack est dans [`FULLSTACK_PENDING.md`](./FULLSTACK_PENDING.md) — **rien n'y est encore spécifié**.
 
-> ❗️ **UX-27 n'est planifié dans aucun lot.** Item P1 (règles et indicateur de force du mot de passe), avec son issue et sa carte, absent du séquencement depuis la première version de ce document — un oubli, pas un choix. Il est frontend seul et s'appuie sur le composant `PasswordField` livré par UX-47. Son lot reste à décider.
+> **UX-27 rejoint le lot 6, avec UX-21** (décision du 20/09/2026). Item P1 (règles et indicateur de force du mot de passe), il était absent du séquencement depuis la première version de ce document — un oubli, pas un choix. Il est frontend seul et s'appuie sur le composant `PasswordField` livré par UX-47, mais il porte sur les mêmes écrans que la réinitialisation de mot de passe (UX-21) : les livrer ensemble évite de reprendre deux fois la page de création de mot de passe.
 
-**33 items livrés sur 63.** La validation manuelle des lots 1 à 4 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`, `VALIDATION_LOT_4.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison.
+**36 items livrés sur 63.** La validation manuelle des lots 1 à 5 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`, `VALIDATION_LOT_4.md`, `VALIDATION_LOT_5.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison. Seul `UX-41` a été validé de vive voix le 20/09/2026, mais sa carte reste en « Test » : le débordement corrigé le même jour porte sur cet écran et n'est pas encore relu.
+
+> **Il ne reste aucun item frontend seul planifié avant le lot 7.** Le lot 6 ouvre le premier travail backend du chantier — quatre sujets full-stack (`UX-21`, `UX-22`, `UX-23`, `UX-25`) et un frontend rattaché (`UX-27`), chacun à découper par couche en TDD. `FULLSTACK_PENDING.md` en est le registre, et **rien n'y est encore spécifié**.

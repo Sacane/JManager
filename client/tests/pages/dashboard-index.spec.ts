@@ -811,6 +811,9 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     await lineContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
     await wrapper.vm.$nextTick()
 
+    // Since UX-18 the bar chart lives in the analysis tab: open it, as a user would.
+    await wrapper.find('[data-test="tab-analysis"]').trigger('click')
+
     const barStub = wrapper.findComponent({ name: 'Bar' })
     const barOpts = barStub.props('options') as any
     // Bar chart scales should remain auto (no custom min/max injected)
@@ -822,9 +825,15 @@ describe('pages/index chart wheel Y-axis zoom', () => {
     const wrapper = mountDashboardPage()
     await settleDashboard()
 
+    // Since UX-18 the bar chart lives in the analysis tab and the line chart in the overview.
+    await wrapper.find('[data-test="tab-analysis"]').trigger('click')
     const barContainer = wrapper.find('[data-test="bar-chart-container"]')
+    // The zoom is genuinely applied to the bar chart, or the check on the line proves nothing.
+    expect(barContainer.exists()).toBe(true)
     await barContainer.trigger('wheel', { deltaY: -100, ctrlKey: true })
     await wrapper.vm.$nextTick()
+
+    await wrapper.find('[data-test="tab-overview"]').trigger('click')
 
     const lineStub = wrapper.findComponent({ name: 'Line' })
     const lineOpts = lineStub.props('options') as any

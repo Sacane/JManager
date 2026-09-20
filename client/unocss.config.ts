@@ -25,6 +25,9 @@ export default defineConfig({
     ['body-base', 'text-sm font-normal leading-relaxed text-[var(--text-secondary)]'],
     ['body-sm', 'text-xs font-normal leading-normal text-[var(--text-tertiary)]'],
     ['text-label', 'text-sm font-medium text-[var(--text-primary)]'],
+    // Same size as `text-label`, one weight up: the strong line that opens a panel, an alert or a
+    // sub-block. The dashboard wrote it four times (UX-28).
+    ['text-label-strong', 'text-sm font-semibold text-[var(--text-primary)]'],
     ['text-caption', 'text-xs font-medium tracking-wider uppercase text-[var(--text-tertiary)]'],
     ['text-muted', 'text-xs font-normal text-[var(--text-muted)]'],
 
@@ -52,6 +55,20 @@ export default defineConfig({
     ['card', 'rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-sm'],
     ['stat-card', 'card p-6'],
     ['card-hover', 'card transition-all duration-200 hover:shadow-md hover:-translate-y-0.5'],
+
+    // --- Blocks and figures ---
+    // One name per role. The dashboard wrote each of these four to eight times, and wrote their
+    // colours in `style` attributes: an inline style beats every class, so no variant and no fix
+    // applied to a token could reach those blocks (UX-28). Margins stay at the call site — a block
+    // title is the same title whatever spacing the block around it needs.
+    ['block-title', 'flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]'],
+    ['kpi-label', 'text-sm font-medium mb-2 text-[var(--text-secondary)]'],
+    ['kpi-value', 'text-3xl font-extrabold mb-2 text-[var(--text-primary)]'],
+    ['kpi-hint', 'text-xs text-[var(--text-tertiary)]'],
+    ['panel-sunken', 'rounded-xl p-3 bg-[var(--bg-tertiary)]'],
+    // The small secondary line under a value, a date, a count: eleven of them on the dashboard
+    // alone. `kpi-hint` is its quieter sibling, reserved for the hint under a stat card figure.
+    ['text-note', 'text-xs text-[var(--text-secondary)]'],
 
     // --- Money ---
     // Income/expense colouring goes through these, never through a raw palette class:
