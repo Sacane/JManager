@@ -6,8 +6,7 @@ This lot is almost entirely about those things.
 
 Mark each step ✅ or ❌. A ❌ is worth reporting with the viewport width and the theme in use.
 
-**Delivered so far:** UX-44, UX-18.
-**Still to come in this lot:** UX-28.
+**Delivered:** UX-44, UX-18, UX-28 — the lot is complete.
 
 ---
 
@@ -99,7 +98,32 @@ symptom that fix removed; report it if you see one.
 
 ---
 
-## 6. Monthly cycle card, overflow fix (UX-41 follow-up)
+## 6. Dashboard on the design system (UX-28)
+
+Nothing here should be noticeable except one thing, so this walkthrough is mostly about confirming
+that **nothing changed**. The dashboard's colours moved out of 64 inline `style` attributes and into
+the design system; the values themselves are the same tokens as before.
+
+| # | Step | Expected |
+|---|---|---|
+| 6.1 | Read the whole dashboard, light theme | Every figure, label, hint and panel has the colour it had yesterday — no grey text turned black, no panel lost its background |
+| 6.2 | Switch to the dark theme | Same, in dark. Nothing keeps a light-theme colour |
+| 6.3 | Look at the block titles | They are all the same size and weight. **Three of them are slightly smaller than before** — "Évolution des finances", "Dépenses par catégorie" and the comparison title in the Analyse tab |
+| 6.4 | Look at the end-of-period projection figure | Still green or red according to the projection, and the same size as the four figures beside it |
+| 6.5 | Look at the account selector, top right | Its border and background are unchanged |
+| 6.6 | Look at the "Prochaines transactions" header | Its bottom rule is still a 2px line |
+| 6.7 | Look at "Top tags de la période" | Each tag keeps its own colour — the dot and the tag name |
+
+⚠️ **6.3 is the only intended change.** Eight titles were written five different ways for one role;
+they are unified on the form five of them already used. If you would rather have the larger size
+everywhere, say so — it is one value in `unocss.config.ts`.
+
+❗️ **6.7 is the one worth a real look.** The tag colours are the only styles on this page still set
+from JavaScript. If a tag chip shows the wrong colour, or none, that is this change.
+
+---
+
+## 7. Monthly cycle card, overflow fix (UX-41 follow-up)
 
 Reported from the settings page on 20 September 2026: the **Fin** select was cut off by the right
 edge of its card. The cycle box asked for a 240px minimum for the two selects plus the width of the
@@ -110,11 +134,11 @@ Open **Paramètres**, with at least one account.
 
 | # | Step | Expected |
 |---|---|---|
-| 6.1 | Look at the "Cycle mensuel par compte" card | Nothing is clipped: both selects are fully inside the rounded box, which is fully inside the card |
-| 6.2 | Widen and narrow the window slowly | The Début/Fin pair drops below the date line when there is no room beside it, and comes back up when there is — never overlapping, never cut |
-| 6.3 | Open the **Fin** select | The options open over the page, not clipped by the card |
-| 6.4 | An account with a long name | The name wraps on its own line above the dates; the selects stay put |
-| 6.5 | At 375 px | The card, the dates and both selects fit without a horizontal scrollbar |
+| 7.1 | Look at the "Cycle mensuel par compte" card | Nothing is clipped: both selects are fully inside the rounded box, which is fully inside the card |
+| 7.2 | Widen and narrow the window slowly | The Début/Fin pair drops below the date line when there is no room beside it, and comes back up when there is — never overlapping, never cut |
+| 7.3 | Open the **Fin** select | The options open over the page, not clipped by the card |
+| 7.4 | An account with a long name | The name wraps on its own line above the dates; the selects stay put |
+| 7.5 | At 375 px | The card, the dates and both selects fit without a horizontal scrollbar |
 
 ⚠️ **The suite cannot see this one.** happy-dom has no layout engine, so no test can fail on an
 overflow. The fix was measured on a standalone reproduction of the card at the reported width:
@@ -131,4 +155,5 @@ If time is short, do these six:
 - **3.2** — the upcoming figures appear once, under their own list.
 - **5.3 / 5.4** — the aggregated balance and the calendar month.
 - **5.6** — aggregated figures cover every booklet, without being inflated.
-- **6.1** — nothing clipped in the monthly cycle card.
+- **6.3** — the block titles, the one intended visual change.
+- **7.1** — nothing clipped in the monthly cycle card.
