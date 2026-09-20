@@ -553,10 +553,13 @@ onMounted(() => {
 }
 
 /* A fieldset per account (UX-41). Browsers give fieldsets a margin and a min-width: auto that
-   stops them shrinking below their content; both are reset so it behaves like the div it replaces. */
+   stops them shrinking below their content; both are reset so it behaves like the div it replaces.
+   Wrapping rather than two fixed columns: this card shares a `repeat(auto-fit, minmax(320px, 1fr))`
+   grid, so it can be barely 300px wide. A 240px minimum for the controls plus the min-content width
+   of the preview did not fit there, and the "Fin" select was cut off by the card. */
 .booklet-cycle-item {
-  display: grid;
-  grid-template-columns: 1fr minmax(240px, 360px);
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem 0.75rem;
   align-items: center;
   margin: 0;
@@ -571,6 +574,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  flex: 1 1 12rem;
+  min-width: 0;
   margin: 0;
   font-size: 0.85rem;
   color: var(--text-secondary);
@@ -585,11 +590,14 @@ onMounted(() => {
   }
 }
 
+/* Below its 15rem basis the pair drops under the preview rather than squeezing the two selects. */
 .booklet-cycle-controls {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
   align-items: start;
+  flex: 1 1 15rem;
+  min-width: 0;
 }
 
 .cycle-field {
@@ -627,11 +635,10 @@ onMounted(() => {
 
 /* The account name wraps instead of being cut off: truncated with an ellipsis, two accounts sharing
    a prefix were indistinguishable — the confusion the "cycle mensuel du compte" card reported.
-   A legend sits on the fieldset border by default; floating it makes it an ordinary block that
-   spans the top row of the grid. */
+   A legend sits on the fieldset border by default; a legend whose computed float is not `none` is
+   no longer a rendered legend, so it becomes an ordinary box — here a full-width flex item. */
 .booklet-cycle-label {
   float: left;
-  grid-column: 1 / -1;
   width: 100%;
   margin: 0;
   padding: 0;

@@ -99,6 +99,29 @@ symptom that fix removed; report it if you see one.
 
 ---
 
+## 6. Monthly cycle card, overflow fix (UX-41 follow-up)
+
+Reported from the settings page on 20 September 2026: the **Fin** select was cut off by the right
+edge of its card. The cycle box asked for a 240px minimum for the two selects plus the width of the
+longest date beside them — about 18px more than the card offers when the settings grid shows three
+columns.
+
+Open **Paramètres**, with at least one account.
+
+| # | Step | Expected |
+|---|---|---|
+| 6.1 | Look at the "Cycle mensuel par compte" card | Nothing is clipped: both selects are fully inside the rounded box, which is fully inside the card |
+| 6.2 | Widen and narrow the window slowly | The Début/Fin pair drops below the date line when there is no room beside it, and comes back up when there is — never overlapping, never cut |
+| 6.3 | Open the **Fin** select | The options open over the page, not clipped by the card |
+| 6.4 | An account with a long name | The name wraps on its own line above the dates; the selects stay put |
+| 6.5 | At 375 px | The card, the dates and both selects fit without a horizontal scrollbar |
+
+⚠️ **The suite cannot see this one.** happy-dom has no layout engine, so no test can fail on an
+overflow. The fix was measured on a standalone reproduction of the card at the reported width:
+18px of overflow before, 0 after. Your eyes are the only check on the real page.
+
+---
+
 ## Priority cases
 
 If time is short, do these six:
@@ -108,3 +131,4 @@ If time is short, do these six:
 - **3.2** — the upcoming figures appear once, under their own list.
 - **5.3 / 5.4** — the aggregated balance and the calendar month.
 - **5.6** — aggregated figures cover every booklet, without being inflated.
+- **6.1** — nothing clipped in the monthly cycle card.
