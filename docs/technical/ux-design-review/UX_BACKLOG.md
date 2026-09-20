@@ -156,8 +156,9 @@ Lot 4 — Pages métier             ~6 j   UX-15, UX-16, UX-19, UX-20, UX-24, UX
 Lot 5 — Refonte dashboard        ~3 j   UX-18, UX-28, UX-44
         Dépend du lot 2.
 
-Lot 6 — Chantiers full-stack    ~10 j   UX-21, UX-22, UX-23, UX-25
+Lot 6 — Chantiers full-stack    ~10 j   UX-21, UX-22, UX-23, UX-25, UX-27
         Chacun est un sujet à part entière (TDD par couche).
+        UX-27 y est rattaché à UX-21 : mêmes écrans de mot de passe.
         À lancer en parallèle des lots 4/5 si plusieurs personnes.
 
 Lot 7 — Reste P2 + décision i18n
@@ -298,11 +299,11 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
 | Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | ✅ mergé (PR #226) |
 | Lot 5 — Refonte dashboard | UX-18, 28, 44 | ⬜ à faire (dépendance lot 2 satisfaite) |
-| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25** | ⬜ à faire — premier travail backend du chantier |
+| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25**, **27** | ⬜ à faire — premier travail backend du chantier |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
 
 > ⚠️ **UX-25 a été reclassé en full-stack le 18/09/2026**, avant écriture de code : l'endpoint `/balances` n'expose aucun solde d'ouverture de période, contrairement à ce qu'affirmait son issue. Il quitte le lot 4 pour le lot 6. Le registre de tout ce qui reste full-stack est dans [`FULLSTACK_PENDING.md`](./FULLSTACK_PENDING.md) — **rien n'y est encore spécifié**.
 
-> ❗️ **UX-27 n'est planifié dans aucun lot.** Item P1 (règles et indicateur de force du mot de passe), avec son issue et sa carte, absent du séquencement depuis la première version de ce document — un oubli, pas un choix. Il est frontend seul et s'appuie sur le composant `PasswordField` livré par UX-47. Son lot reste à décider.
+> **UX-27 rejoint le lot 6, avec UX-21** (décision du 20/09/2026). Item P1 (règles et indicateur de force du mot de passe), il était absent du séquencement depuis la première version de ce document — un oubli, pas un choix. Il est frontend seul et s'appuie sur le composant `PasswordField` livré par UX-47, mais il porte sur les mêmes écrans que la réinitialisation de mot de passe (UX-21) : les livrer ensemble évite de reprendre deux fois la page de création de mot de passe.
 
 **33 items livrés sur 63.** La validation manuelle des lots 1 à 4 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`, `VALIDATION_LOT_4.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison.
