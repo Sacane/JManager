@@ -86,7 +86,7 @@ Ce qui coûte tous les jours à l'utilisateur sans être « cassé ».
 
 | ID | Sujet | Type | Impact | Effort | Portée |
 |---|---|---|---|---|---|
-| **UX-28** | Migrer le dashboard vers les shortcuts UnoCSS (12 styles inline dupliqués) | Dette | Moyen | L | FE |
+| **UX-28** | Migrer le dashboard vers les shortcuts UnoCSS (**64 styles inline statiques**, pas 12 — recompté le 20/09/2026 ; effort ramené de L à S) | Dette | Moyen | S | FE |
 | **UX-29** | Remettre la page Tags aux couleurs de la marque (retirer l'indigo `#6366f1`) | Dette | Moyen | XS | FE |
 | **UX-30** | Shortcuts `page-shell` / `page-header` / `stat-card` + migration des 4 en-têtes de page | Dette | Moyen | M | FE |
 | **UX-31** | Trancher sur i18n : activer (extraction des chaînes) ou retirer le module | Dette | Moyen | M ou XL | FE |
@@ -263,6 +263,7 @@ Les issues suivent la convention `docs/features/{feature}/{module}_{titre}.md` e
 | UX-25 | client | `ux-25-running-balance/` | https://trello.com/c/2hheQnJy |
 | UX-26 | client | `ux-26-loading-skeletons/` | https://trello.com/c/Xc9D1OuF |
 | UX-27 | client | `ux-27-password-strength/` | https://trello.com/c/BEtdi2SP |
+| UX-28 | client | `ux-28-dashboard-design-tokens/` | https://trello.com/c/pFfeWC2J |
 | UX-41 | client | `ux-41-monthly-cycle-preview/` | https://trello.com/c/b10ayHGe — carte existante « cycle mensuel du compte », fusionnée |
 | UX-50 | client | `ux-50-dashboard-quick-actions/` | https://trello.com/c/OCXLj9yv |
 | UX-44 | client | `ux-44-all-accounts-mode/` | https://trello.com/c/5O2cYsoP |
@@ -282,7 +283,7 @@ Le Gherkin fonctionnel de `feature.md` est repris **à l'identique dans la descr
 
 Les scénarios sont rédigés en **anglais**, comme les issues (imposé par le skill `create-issue`) et comme la suite de tests, pour qu'ils soient transposables tels quels en cas de test.
 
-Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni carte : ils seront formalisés au moment de leur lot, pour ne pas figer des spécifications qui auront changé d'ici là.
+Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni carte à l'écriture de ce document : ils sont formalisés au moment de leur lot, pour ne pas figer des spécifications qui auront changé d'ici là. `UX-41`, `UX-44`, `UX-50` et `UX-28` l'ont été à ce titre, et figurent dans le tableau ci-dessus.
 
 ---
 
