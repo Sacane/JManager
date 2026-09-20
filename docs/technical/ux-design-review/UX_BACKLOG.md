@@ -291,7 +291,7 @@ Les items **P2 et P3** (`UX-28` → `UX-63`) n'ont volontairement ni issue ni ca
 
 Ce backlog est le document de référence du chantier. À chaque item livré : cocher ici, déplacer la carte Trello, mettre à jour `Changelog.md` **uniquement quand un lot est complet** (conformément à `CLAUDE.md`), et supprimer les fiches devenues caduques.
 
-### État au 18 septembre 2026
+### État au 20 septembre 2026
 
 | Lot | Contenu | État |
 |---|---|---|
@@ -299,7 +299,7 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 | Lot 2 — Socle visuel | UX-11, 12, 29, 30, 32, 33 | ✅ mergé (PR #224) |
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
 | Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | ✅ mergé (PR #226) |
-| Lot 5 — Refonte dashboard | UX-18, 28, 44 | ⬜ à faire (dépendance lot 2 satisfaite) |
+| Lot 5 — Refonte dashboard | UX-18, 28, 44 | ✅ mergé (PR #228) |
 | Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25**, **27** | ⬜ à faire — premier travail backend du chantier |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
 
@@ -307,4 +307,6 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 
 > **UX-27 rejoint le lot 6, avec UX-21** (décision du 20/09/2026). Item P1 (règles et indicateur de force du mot de passe), il était absent du séquencement depuis la première version de ce document — un oubli, pas un choix. Il est frontend seul et s'appuie sur le composant `PasswordField` livré par UX-47, mais il porte sur les mêmes écrans que la réinitialisation de mot de passe (UX-21) : les livrer ensemble évite de reprendre deux fois la page de création de mot de passe.
 
-**33 items livrés sur 63.** La validation manuelle des lots 1 à 4 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`, `VALIDATION_LOT_4.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison.
+**36 items livrés sur 63.** La validation manuelle des lots 1 à 5 (`VALIDATION_LOTS_1_2.md`, `VALIDATION_LOT_3.md`, `VALIDATION_LOT_4.md`, `VALIDATION_LOT_5.md`) n'est pas encore confirmée — les cartes Trello sont en « Test » et non en « Terminé🎉 » pour cette raison. Seul `UX-41` a été validé de vive voix le 20/09/2026, mais sa carte reste en « Test » : le débordement corrigé le même jour porte sur cet écran et n'est pas encore relu.
+
+> **Il ne reste aucun item frontend seul planifié avant le lot 7.** Le lot 6 ouvre le premier travail backend du chantier — quatre sujets full-stack (`UX-21`, `UX-22`, `UX-23`, `UX-25`) et un frontend rattaché (`UX-27`), chacun à découper par couche en TDD. `FULLSTACK_PENDING.md` en est le registre, et **rien n'y est encore spécifié**.
