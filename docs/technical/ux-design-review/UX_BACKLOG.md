@@ -76,7 +76,7 @@ Ce qui coûte tous les jours à l'utilisateur sans être « cassé ».
 | **UX-24** | Livrets liés affichés sur la ligne d'une régulière | Feature | Moyen | S | FE | — |
 | **UX-25** | Solde courant (running balance) par ligne de transaction | Feature | Fort | L | **FS** | — |
 | **UX-26** | Skeletons de chargement à la place des spinners plein écran | Dette | Moyen | M | FE | — |
-| **UX-27** | Règles + indicateur de force du mot de passe (3 écrans) | Feature | Fort | M | FE | — |
+| **UX-27** | Règles + indicateur de force du mot de passe (4 écrans) — **reclassé full-stack le 21/09/2026** : aucune règle n'existe côté backend | Feature | Fort | L | **FS** | — |
 
 **Total P1 : ~14 jours**, dont 3 items full-stack (`UX-21`, `UX-22`, `UX-23`) qui représentent à eux seuls ~8 jours.
 
@@ -300,7 +300,7 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
 | Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | ✅ mergé (PR #226) |
 | Lot 5 — Refonte dashboard | UX-18, 28, 44 | ✅ mergé (PR #228) |
-| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25**, **27** | ⬜ à faire — premier travail backend du chantier |
+| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25**, **27** | 🟡 UX-21 et UX-27 spécifiés (21/09/2026) ; prérequis levé : routes SPA (PR #230) et clé du limiteur de connexion (PR #229) |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
 
 > ⚠️ **UX-25 a été reclassé en full-stack le 18/09/2026**, avant écriture de code : l'endpoint `/balances` n'expose aucun solde d'ouverture de période, contrairement à ce qu'affirmait son issue. Il quitte le lot 4 pour le lot 6. Le registre de tout ce qui reste full-stack est dans [`FULLSTACK_PENDING.md`](./FULLSTACK_PENDING.md) — **rien n'y est encore spécifié**.
