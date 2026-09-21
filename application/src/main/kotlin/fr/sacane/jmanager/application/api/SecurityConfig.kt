@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.application.api.session.JwtCookieAuthenticationFilter
+import fr.sacane.jmanager.application.api.spa.SpaRoutes
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -38,24 +39,9 @@ class SecurityConfig(
                 authorize("/_nuxt/**", permitAll)
                 authorize("/assets/**", permitAll)
                 authorize("/favicon.ico", permitAll)
-                authorize("/login", permitAll)
-                authorize("/dashboard", permitAll)
-                authorize("/dashboard/**", permitAll)
-                authorize("/booklet", permitAll)
-                authorize("/booklet/**", permitAll)
-                authorize("/admin", permitAll)
-                authorize("/admin/**", permitAll)
-                authorize("/tag", permitAll)
-                authorize("/tag/**", permitAll)
-                authorize("/user", permitAll)
-                authorize("/user/**", permitAll)
-                authorize("/regular-transaction", permitAll)
-                authorize("/regular-transaction/**", permitAll)
-                // Legal pages (public, no auth)
-                authorize("/privacy", permitAll)
-                authorize("/terms", permitAll)
-                authorize("/consent", permitAll)
-                authorize("/force-password-change", permitAll)
+                // Every page of the application: the shell holds no data, the API below is what is protected.
+                authorize(SpaRoutes.PAGE, permitAll)
+                authorize(SpaRoutes.NESTED_PAGE, permitAll)
                 // Actuator
                 authorize("/actuator/health", permitAll)
                 authorize("/actuator/info", permitAll)

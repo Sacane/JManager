@@ -32,9 +32,8 @@ class SpaConfiguration {
 @Controller
 class SpaController {
 
-    @GetMapping(value = ["/", "/dashboard", "/dashboard/**", "/booklet", "/booklet/**",
-                          "/login", "/admin", "/admin/**", "/tag", "/tag/**",
-                          "/user", "/user/**", "/regular-transaction", "/regular-transaction/**"])
+    /** Every page of the Nuxt application, known or not: the client owns its routes and its 404 screen. */
+    @GetMapping(value = ["/", SpaRoutes.PAGE, SpaRoutes.NESTED_PAGE])
     fun forward(): String {
         return "forward:/index.html"
     }
