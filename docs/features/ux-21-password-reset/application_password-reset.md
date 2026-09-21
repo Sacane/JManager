@@ -17,9 +17,10 @@ Read against the code on 21 September 2026:
   address (`proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for`), checked on the server on
   21 September 2026.
 - **Public routes** are listed in `SecurityConfig`, and page routes must also be listed in
-  `SpaController`. Pages outside that second list currently answer 401 when opened from a link — see
-  `docs/bugs/spa-pages-401-on-direct-load/`. **That bug must be fixed before this module ships**, or
-  the reset link fails exactly as the verification link does today.
+  `SpaController`. Pages outside that second list answered 401 when opened from a link — see
+  `docs/bugs/spa-pages-401-on-direct-load/`. **Fixed in PR #230**: a page is now any path that is not under
+  `api`, `actuator`, `error`, `_nuxt` or `assets`, so `/forgot-password` and `/reset-password` need no
+  route change here. Scenario 13 still pins it for these two pages.
 
 **Endpoints**
 

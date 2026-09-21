@@ -300,7 +300,7 @@ Ce backlog est le document de référence du chantier. À chaque item livré : c
 | Lot 3 — Conformité & gains vite acquis | UX-13, 14, 17, 43, 45 → 49 | ✅ mergé (PR #225) |
 | Lot 4 — Pages métier | UX-15, 16, 19, 20, 24, 26, 41, 50 | ✅ mergé (PR #226) |
 | Lot 5 — Refonte dashboard | UX-18, 28, 44 | ✅ mergé (PR #228) |
-| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25**, **27** | 🟡 UX-21 et UX-27 spécifiés (21/09/2026) ; prérequis : `docs/bugs/spa-pages-401-on-direct-load/` |
+| Lot 6 — Chantiers full-stack | UX-21, 22, 23, **25**, **27** | 🟡 UX-21 et UX-27 spécifiés (21/09/2026) ; prérequis levé : routes SPA (PR #230) et clé du limiteur de connexion (PR #229) |
 | Lot 7 | Reste P2 + décision i18n (UX-31) | ⬜ à faire |
 
 > ⚠️ **UX-25 a été reclassé en full-stack le 18/09/2026**, avant écriture de code : l'endpoint `/balances` n'expose aucun solde d'ouverture de période, contrairement à ce qu'affirmait son issue. Il quitte le lot 4 pour le lot 6. Le registre de tout ce qui reste full-stack est dans [`FULLSTACK_PENDING.md`](./FULLSTACK_PENDING.md) — **rien n'y est encore spécifié**.

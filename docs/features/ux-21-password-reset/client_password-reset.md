@@ -83,8 +83,8 @@ Scenario: 12. Success leads to sign-in
   data and a URL ends up in history and logs.
 - Scenario 5 matters because the page may be left open, bookmarked or shared from the address bar.
   Use `history.replaceState`; the token then lives only in the component.
-- Both pages are public: no `auth` middleware. Their server side depends on the SPA routing fix
-  (`docs/bugs/spa-pages-401-on-direct-load/`) — without it, "/reset-password" answers 401 when opened
-  from the email.
+- Both pages are public: no `auth` middleware. Their server side needs no route: the SPA routing fix
+  (PR #230, `docs/bugs/spa-pages-401-on-direct-load/`) serves any non-reserved path, which is what makes
+  "/reset-password" open from the email at all.
 - Every user-visible string in French; identifiers, `data-test` and tests in English.
 - Priority P1 · Effort XL (full stack) · Part 4 of 4.

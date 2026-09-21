@@ -18,9 +18,9 @@ Decisions taken with the product owner that day:
   normalised; a user registered as `Johan@…` who types `johan@…` would otherwise receive nothing and,
   because the answer is neutral, never learn why.
 - **Production runs behind a reverse proxy, and Spring serves the pages.** This makes the client IP a
-  configuration matter, and it makes UX-21 depend on the bug in
-  `docs/bugs/spa-pages-401-on-direct-load/` — without that fix, the reset link lands on a 401 exactly as
-  the email verification link does today.
+  configuration matter, and it made UX-21 depend on the bug in
+  `docs/bugs/spa-pages-401-on-direct-load/` — without that fix, the reset link would have landed on a 401
+  exactly as the email verification link did. Fixed in PR #230.
 
 **Acceptance Criteria**
 Feature: Recovering a forgotten password

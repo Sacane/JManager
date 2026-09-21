@@ -21,12 +21,13 @@ These were identified as full-stack in the original review and grouped into lot 
 | **UX-23** | Move the budget target off `localStorage` | The target is per user, not per browser. Needs persistence and an endpoint. | https://trello.com/c/tZEm5mo6 |
 
 
-### Prerequisite found while specifying UX-21
+### Prerequisite found while specifying UX-21 — fixed in PR #230
 
 `docs/bugs/spa-pages-401-on-direct-load/` — in production, every page missing from `SpaController`
-answers **401** when opened from a link, **the email verification page included**. The reset link would
-fail the same way, so this bug is fixed before UX-21's client part ships. It is a live defect on its
-own: email verification cannot be completed from the email today.
+answered **401** when opened from a link, **the email verification page included**. The reset link would
+have failed the same way. Fixed in PR #230 (pending merge) by a single definition of "a page" shared by the
+controller and the security rules: `/forgot-password` and `/reset-password` need no backend route change.
+The report lives with the fix.
 
 ---
 
