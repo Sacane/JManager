@@ -41,10 +41,10 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Changing password with correct current password must return success`() {
             val user = UserFixture.aUser()
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("currentPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("current-password")))
 
             val result = act {
-                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "currentPass", "newPass123", "newPass123"))
+                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "current-password", "new-password-123", "new-password-123"))
             }
 
             then(result) { assertSuccess() }
@@ -53,10 +53,10 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Changing password with wrong current password must return USER_UNAUTHORIZED`() {
             val user = UserFixture.aUser()
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("currentPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("current-password")))
 
             val result = act {
-                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "wrongPass", "newPass123", "newPass123"))
+                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "wrongPass", "new-password-123", "new-password-123"))
             }
 
             then(result) {
@@ -68,10 +68,10 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Changing password with mismatched new passwords must return PASSWORD_NOT_MATCH`() {
             val user = UserFixture.aUser()
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("currentPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("current-password")))
 
             val result = act {
-                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "currentPass", "newPass123", "differentPass"))
+                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "current-password", "new-password-123", "differentPass"))
             }
 
             then(result) {
@@ -83,10 +83,10 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Changing password with same password as current must return PASSWORD_UNCHANGED`() {
             val user = UserFixture.aUser()
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("currentPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("current-password")))
 
             val result = act {
-                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "currentPass", "currentPass", "currentPass"))
+                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "current-password", "current-password", "current-password"))
             }
 
             then(result) {
@@ -98,13 +98,13 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Changing password must persist the new hashed password`() {
             val user = UserFixture.aUser()
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("currentPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("current-password")))
 
-            act { changePasswordUseCase.handle(ChangePasswordCommand(user.id, "currentPass", "newPass123", "newPass123")) }
+            act { changePasswordUseCase.handle(ChangePasswordCommand(user.id, "current-password", "new-password-123", "new-password-123")) }
 
             val stored = userState.findByIdWithEncodedPassword(user.id)
             assertNotNull(stored)
-            assertTrue(DefaultHasher.verify("newPass123", stored!!.password))
+            assertTrue(DefaultHasher.verify("new-password-123", stored!!.password))
         }
 
         @Test
@@ -112,7 +112,7 @@ class PasswordChangeFeatureTest {
             val user = UserFixture.aUser()
 
             val result = act {
-                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "currentPass", "newPass123", "newPass123"))
+                changePasswordUseCase.handle(ChangePasswordCommand(user.id, "current-password", "new-password-123", "new-password-123"))
             }
 
             then(result) { assertFailure(ResultState.USER_NOT_FOUND) }
@@ -125,7 +125,7 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Admin-created user has mustChangePassword set to true`() {
             val result = act {
-                adminCreateUserUseCase.handle(AdminCreateUserCommand("newuser", "tempPass", "newuser@example.com"))
+                adminCreateUserUseCase.handle(AdminCreateUserCommand("newuser", "temporary-password", "newuser@example.com"))
             }
 
             then(result) { assertTrue { mustChangePassword } }
@@ -134,10 +134,10 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Force change password with matching passwords must return success`() {
             val user = UserFixture.aUser(mustChangePassword = true)
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("tempPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("temporary-password")))
 
             val result = act {
-                forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "newPass123", "newPass123"))
+                forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "new-password-123", "new-password-123"))
             }
 
             then(result) { assertSuccess() }
@@ -146,9 +146,9 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Force change password must clear the mustChangePassword flag`() {
             val user = UserFixture.aUser(mustChangePassword = true)
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("tempPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("temporary-password")))
 
-            act { forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "newPass123", "newPass123")) }
+            act { forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "new-password-123", "new-password-123")) }
 
             val updated = userState.findUserById(user.id)
             assertNotNull(updated)
@@ -158,22 +158,22 @@ class PasswordChangeFeatureTest {
         @Test
         fun `Force change password must persist the new hashed password`() {
             val user = UserFixture.aUser(mustChangePassword = true)
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("tempPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("temporary-password")))
 
-            act { forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "newPass123", "newPass123")) }
+            act { forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "new-password-123", "new-password-123")) }
 
             val stored = userState.findByIdWithEncodedPassword(user.id)
             assertNotNull(stored)
-            assertTrue(DefaultHasher.verify("newPass123", stored!!.password))
+            assertTrue(DefaultHasher.verify("new-password-123", stored!!.password))
         }
 
         @Test
         fun `Force change password with mismatched passwords must return PASSWORD_NOT_MATCH`() {
             val user = UserFixture.aUser(mustChangePassword = true)
-            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("tempPass")))
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("temporary-password")))
 
             val result = act {
-                forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "newPass123", "differentPass"))
+                forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "new-password-123", "differentPass"))
             }
 
             then(result) {
@@ -187,7 +187,7 @@ class PasswordChangeFeatureTest {
             val user = UserFixture.aUser()
 
             val result = act {
-                forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "newPass123", "newPass123"))
+                forceChangePasswordUseCase.handle(ForceChangePasswordCommand(user.id, "new-password-123", "new-password-123"))
             }
 
             then(result) { assertFailure(ResultState.USER_NOT_FOUND) }

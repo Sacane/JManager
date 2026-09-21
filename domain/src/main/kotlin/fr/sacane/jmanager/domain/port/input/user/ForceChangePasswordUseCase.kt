@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.PasswordPolicy
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
@@ -38,11 +39,13 @@ class ForceChangePasswordService(
             )
         }
 
-        userRepository.findUserById(command.userId)
+        val user = userRepository.findUserById(command.userId)
             ?: return failure(
                 ResultState.USER_NOT_FOUND,
                 DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.password.user_not_found", "L'utilisateur est introuvable"),
             )
+
+        PasswordPolicy.violationOf<Unit>(command.newPassword, user.email)?.let { return it }
 
         return userRepository.updatePassword(
             userId = command.userId,

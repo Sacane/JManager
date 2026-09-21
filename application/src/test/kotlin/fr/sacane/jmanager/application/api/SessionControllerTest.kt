@@ -64,7 +64,7 @@ class SessionControllerTest(
             Given {
                 port(port)
                 header("Content-Type", "application/json")
-                body(objectMapper.writeValueAsString(UserPasswordDTO(email = user!!.email!!, password = "test")))
+                body(objectMapper.writeValueAsString(UserPasswordDTO(email = user!!.email!!, password = TEST_USER_PASSWORD)))
             } When {
                 post("/api/user/auth")
             } Then {
@@ -82,8 +82,8 @@ class SessionControllerTest(
                 post("/api/user/auth")
             } Then {
                 statusCode(404)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", nullValue())
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", nullValue())
             }
         }
 
@@ -97,8 +97,8 @@ class SessionControllerTest(
                 post("/api/user/auth")
             } Then {
                 statusCode(403)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", nullValue())
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", nullValue())
             }
         }
 
@@ -112,8 +112,8 @@ class SessionControllerTest(
                 post("/api/user/auth")
             } Then {
                 statusCode(400)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", nullValue())
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", nullValue())
             }
         }
 
@@ -298,8 +298,8 @@ class SessionControllerTest(
                 put("/api/user/settings")
             } Then {
                 statusCode(400)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", equalTo(user!!.id.value.toString()))
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", equalTo(user!!.id.value.toString()))
             }
         }
 
@@ -371,8 +371,8 @@ class SessionControllerTest(
                 put("/api/user/settings")
             } Then {
                 statusCode(403)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", equalTo(user!!.id.value.toString()))
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", equalTo(user!!.id.value.toString()))
             }
         }
 
@@ -451,8 +451,8 @@ class SessionControllerTest(
         private val validPayload = """
             {
               "username": "newuser",
-              "password": "pass123",
-              "confirmPassword": "pass123",
+              "password": "new-user-password",
+              "confirmPassword": "new-user-password",
               "email": "newuser@example.com",
               "tosAccepted": true,
               "tosVersion": "1.0",
@@ -493,7 +493,7 @@ class SessionControllerTest(
             val mismatchPayload = """
                 {
                   "username": "newuser2",
-                  "password": "pass123",
+                  "password": "new-user-password",
                   "confirmPassword": "other456",
                   "email": "newuser2@example.com",
                   "tosAccepted": true,
@@ -519,7 +519,7 @@ class SessionControllerTest(
 
         @Test
         fun `PATCH password with correct current password must return 204`() {
-            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "newPass123", confirmPassword = "newPass123")
+            val body = ChangePasswordDTO(currentPassword = TEST_USER_PASSWORD, newPassword = "new-password-123", confirmPassword = "new-password-123")
 
             Given {
                 port(port)
@@ -535,7 +535,7 @@ class SessionControllerTest(
 
         @Test
         fun `PATCH password with wrong current password must return 403`() {
-            val body = ChangePasswordDTO(currentPassword = "wrongPass", newPassword = "newPass123", confirmPassword = "newPass123")
+            val body = ChangePasswordDTO(currentPassword = "wrongPass", newPassword = "new-password-123", confirmPassword = "new-password-123")
 
             Given {
                 port(port)
@@ -551,7 +551,7 @@ class SessionControllerTest(
 
         @Test
         fun `PATCH password with mismatched new passwords must return 401`() {
-            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "newPass123", confirmPassword = "different")
+            val body = ChangePasswordDTO(currentPassword = TEST_USER_PASSWORD, newPassword = "new-password-123", confirmPassword = "different")
 
             Given {
                 port(port)
@@ -567,7 +567,7 @@ class SessionControllerTest(
 
         @Test
         fun `PATCH password with same password as current must return 400`() {
-            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "test", confirmPassword = "test")
+            val body = ChangePasswordDTO(currentPassword = TEST_USER_PASSWORD, newPassword = TEST_USER_PASSWORD, confirmPassword = TEST_USER_PASSWORD)
 
             Given {
                 port(port)
@@ -583,7 +583,7 @@ class SessionControllerTest(
 
         @Test
         fun `PATCH password without authentication must return 401`() {
-            val body = ChangePasswordDTO(currentPassword = "test", newPassword = "newPass123", confirmPassword = "newPass123")
+            val body = ChangePasswordDTO(currentPassword = TEST_USER_PASSWORD, newPassword = "new-password-123", confirmPassword = "new-password-123")
 
             Given {
                 port(port)
@@ -609,7 +609,7 @@ class SessionControllerTest(
             loginUseCase.handle(LoginCommand(email = "force-user@example.com", userPassword = "tempPass"))
                 .onSuccess { forceToken = it.token }
 
-            val body = ForceChangePasswordDTO(newPassword = "newPass123", confirmPassword = "newPass123")
+            val body = ForceChangePasswordDTO(newPassword = "new-password-123", confirmPassword = "new-password-123")
 
             Given {
                 port(port)
@@ -625,7 +625,7 @@ class SessionControllerTest(
 
         @Test
         fun `POST password force with mismatched passwords must return 401`() {
-            val body = ForceChangePasswordDTO(newPassword = "newPass123", confirmPassword = "different")
+            val body = ForceChangePasswordDTO(newPassword = "new-password-123", confirmPassword = "different")
 
             Given {
                 port(port)
@@ -641,7 +641,7 @@ class SessionControllerTest(
 
         @Test
         fun `POST password force without authentication must return 401`() {
-            val body = ForceChangePasswordDTO(newPassword = "newPass123", confirmPassword = "newPass123")
+            val body = ForceChangePasswordDTO(newPassword = "new-password-123", confirmPassword = "new-password-123")
 
             Given {
                 port(port)
@@ -733,8 +733,8 @@ class SessionControllerTest(
                 post("/api/user/consent")
             } Then {
                 statusCode(401)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", nullValue())
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", nullValue())
             }
         }
 

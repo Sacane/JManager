@@ -33,12 +33,14 @@ class ProblemDetailHandler {
         detail: String?,
         code: Int,
         errorKey: String? = null,
+        reasons: List<String> = emptyList(),
     ): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatus(status)
         problemDetail.title = title
         problemDetail.detail = detail
         problemDetail.setProperty("code", code)
         problemDetail.setProperty("errorKey", errorKey ?: ErrorCatalog.keyForCode(code))
+        if (reasons.isNotEmpty()) problemDetail.setProperty("reasons", reasons)
         MDC.getCopyOfContextMap()?.forEach { (key, value) -> problemDetail.setProperty(key, value) }
         currentUserIdOrNull()?.let { problemDetail.setProperty("userId", it.toString()) }
         return ResponseEntity.status(status).body(problemDetail)
@@ -229,6 +231,7 @@ class ProblemDetailHandler {
             detail = ex.message,
             code = ex.errCode,
             errorKey = ex.errKey,
+            reasons = ex.reasons,
         )
     }
 

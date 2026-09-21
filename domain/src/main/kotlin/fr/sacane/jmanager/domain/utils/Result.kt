@@ -22,6 +22,7 @@ enum class ResultState (val code: Int){
     USER_UNAUTHORIZED(3002),
     PASSWORD_NOT_MATCH(3003),
     PASSWORD_UNCHANGED(3004),
+    PASSWORD_POLICY_VIOLATION(3005),
 
     FEATURE_DISABLED(4001),
 
@@ -37,10 +38,17 @@ enum class ResultState (val code: Int){
     fun isFailure(): Boolean = !isSuccess()
 }
 
+/**
+ * A business failure as the application layer reports it.
+ *
+ * @property reasons stable keys detailing the failure when there can be several at once — for instance
+ *   every password rule a new password breaks — so the client can show each one. Empty otherwise.
+ */
 data class DomainError(
     val code: Int,
     val key: String,
     val detail: String,
+    val reasons: List<String> = emptyList(),
 )
 
 class Result <S>(

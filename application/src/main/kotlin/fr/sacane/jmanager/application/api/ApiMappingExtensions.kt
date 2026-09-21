@@ -99,10 +99,12 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.BAD_REQUEST, ResultState.INFRASTRUCTURE_ERROR,
     ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
     ResultState.TAG_PARENT_IS_SUBTAG,
-    ResultState.PASSWORD_UNCHANGED -> throw InvalidRequestException(
+    ResultState.PASSWORD_UNCHANGED,
+    ResultState.PASSWORD_POLICY_VIOLATION -> throw InvalidRequestException(
         this.errorInfo?.code ?: this.status.code,
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,
+        this.errorInfo?.reasons.orEmpty(),
     )
     ResultState.TAG_LABEL_ALREADY_TAKEN, ResultState.FORBIDDEN, ResultState.USER_UNAUTHORIZED -> throw ForbiddenException(
         this.errorInfo?.code ?: this.status.code,
