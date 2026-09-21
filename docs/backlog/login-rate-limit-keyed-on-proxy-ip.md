@@ -35,3 +35,12 @@ strategy would read from the left and must not be used.
 If confirmed: five wrong passwords from anyone lock sign-in **for everyone** for 15 minutes, and the
 limit does nothing against a single attacker. UX-21 (application module) sets the strategy for its own
 limits, which repairs this as a side effect; this note exists in case UX-21 is delayed.
+
+**Also untested**: no test in `application/src/test` exercises the 429 path or `LoginRateLimiter` (checked
+on 21 September 2026 — the words "rate" and "429" appear in none of them). UX-21 generalises this class,
+so its refactor needs a characterisation test first.
+
+**Reading the logs**: `Rate limit exceeded for IP …` is a `WARNING` emitted only on the request that
+follows five recorded failures. Each failure logs at `INFO` (`Recorded failed login attempt for …`), and
+an unknown address logs nothing at `WARN` at all — `LoginService` warns only for a known account. Looking
+for a warning after one or two attempts finds nothing even when everything works.
