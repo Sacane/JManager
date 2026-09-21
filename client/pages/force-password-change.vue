@@ -12,6 +12,7 @@ const {
   newPassword,
   confirmPassword,
   passwordError,
+  newPasswordError,
   isSubmitting,
   submit,
 } = useForceChangePassword()
@@ -42,7 +43,10 @@ const {
           autocomplete="new-password"
           aria-label="Nouveau mot de passe"
           data-test="new-password-input"
-        />
+        >
+          <PasswordRules :password="newPassword" :show-errors="!!newPasswordError" />
+        </PasswordField>
+        <FieldError data-test="new-password-error" :message="newPasswordError" />
       </div>
 
       <div class="flex flex-col gap-1">

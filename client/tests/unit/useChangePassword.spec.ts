@@ -60,12 +60,12 @@ describe('composables/useChangePassword', () => {
   it('calls PATCH user/password with correct payload', async () => {
     const { currentPassword, newPassword, confirmPassword, changePassword } = useChangePassword()
     currentPassword.value = 'oldpass'
-    newPassword.value = 'newpass'
-    confirmPassword.value = 'newpass'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await changePassword()
     expect(axios.patch).toHaveBeenCalledWith(
       'http://localhost:8080/api/user/password',
-      { currentPassword: 'oldpass', newPassword: 'newpass', confirmPassword: 'newpass' },
+      { currentPassword: 'oldpass', newPassword: 'new-password-123', confirmPassword: 'new-password-123' },
       expect.objectContaining({ withCredentials: true }),
     )
   })
@@ -73,8 +73,8 @@ describe('composables/useChangePassword', () => {
   it('clears fields and shows success toast on success', async () => {
     const { currentPassword, newPassword, confirmPassword, changePassword } = useChangePassword()
     currentPassword.value = 'oldpass'
-    newPassword.value = 'newpass'
-    confirmPassword.value = 'newpass'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await changePassword()
     expect(toastSuccessMock).toHaveBeenCalledWith('Mot de passe modifié avec succès')
     expect(currentPassword.value).toBe('')
@@ -95,8 +95,8 @@ describe('composables/useChangePassword', () => {
 
     const { currentPassword, newPassword, confirmPassword, changePassword } = useChangePassword()
     currentPassword.value = 'wrong'
-    newPassword.value = 'newpass'
-    confirmPassword.value = 'newpass'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await changePassword()
     expect(toastErrorMock).toHaveBeenCalledWith('Une erreur est survenue. Veuillez réessayer.')
   })
@@ -108,8 +108,8 @@ describe('composables/useChangePassword', () => {
 
     const { currentPassword, newPassword, confirmPassword, changePassword } = useChangePassword()
     currentPassword.value = 'old'
-    newPassword.value = 'newpass'
-    confirmPassword.value = 'newpass'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await changePassword()
     expect(toastErrorMock).toHaveBeenCalledWith('Une erreur est survenue. Veuillez réessayer.')
   })
@@ -120,8 +120,8 @@ describe('composables/useChangePassword', () => {
 
     const { currentPassword, newPassword, confirmPassword, changePassword } = useChangePassword()
     currentPassword.value = 'old'
-    newPassword.value = 'newpass'
-    confirmPassword.value = 'newpass'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await changePassword()
     expect(toastErrorMock).toHaveBeenCalledWith('Une erreur est survenue. Veuillez réessayer.')
   })

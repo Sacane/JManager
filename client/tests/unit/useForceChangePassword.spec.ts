@@ -90,19 +90,19 @@ describe('composables/useForceChangePassword', () => {
 
   it('calls POST user/password/force with correct payload on valid submit', async () => {
     const { newPassword, confirmPassword, submit } = useForceChangePassword()
-    newPassword.value = 'newpass123'
-    confirmPassword.value = 'newpass123'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await submit()
     expect(postMock).toHaveBeenCalledWith('user/password/force', {
-      newPassword: 'newpass123',
-      confirmPassword: 'newpass123',
+      newPassword: 'new-password-123',
+      confirmPassword: 'new-password-123',
     })
   })
 
   it('calls clearMustChangePassword and navigates to / on success', async () => {
     const { newPassword, confirmPassword, submit } = useForceChangePassword()
-    newPassword.value = 'newpass123'
-    confirmPassword.value = 'newpass123'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await submit()
     expect(clearMustChangePasswordMock).toHaveBeenCalledTimes(1)
     expect(navigateToMock).toHaveBeenCalledWith('/')
@@ -111,10 +111,51 @@ describe('composables/useForceChangePassword', () => {
   it('shows error toast when API throws', async () => {
     postMock.mockRejectedValue(new Error('Server error'))
     const { newPassword, confirmPassword, submit } = useForceChangePassword()
-    newPassword.value = 'newpass123'
-    confirmPassword.value = 'newpass123'
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
     await submit()
     expect(toastErrorMock).toHaveBeenCalledWith('Une erreur est survenue. Veuillez réessayer.')
     expect(navigateToMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses a password shorter than the policy on the new password field, without calling the API', async () => {
+    const { newPassword, confirmPassword, submit, newPasswordError, passwordError } = useForceChangePassword()
+    newPassword.value = 'court'
+    confirmPassword.value = 'court'
+
+    await submit()
+
+    expect(newPasswordError.value).toBe('Le mot de passe doit contenir au moins 12 caractères.')
+    expect(passwordError.value).toBeNull()
+    expect(postMock).not.toHaveBeenCalled()
+  })
+
+  it('puts a refusal by the password policy on the new password field', async () => {
+    postMock.mockRejectedValue({
+      isAxiosError: true,
+      response: { status: 400, data: { errorKey: 'domain.user.password.policy_violation', reasons: ['equals_email'] } },
+    })
+    const { newPassword, confirmPassword, submit, newPasswordError } = useForceChangePassword()
+    newPassword.value = 'new-password-123'
+    confirmPassword.value = 'new-password-123'
+
+    await submit()
+
+    expect(newPasswordError.value).toBe('Le mot de passe doit être différent de votre adresse e-mail.')
+    expect(toastErrorMock).not.toHaveBeenCalled()
+    expect(navigateToMock).not.toHaveBeenCalled()
+  })
+
+  it('clears the new password error as soon as the password is edited', async () => {
+    const { newPassword, confirmPassword, submit, newPasswordError } = useForceChangePassword()
+    newPassword.value = 'court'
+    confirmPassword.value = 'court'
+    await submit()
+    expect(newPasswordError.value).not.toBeNull()
+
+    newPassword.value = 'court-mais-plus-long'
+    await Promise.resolve()
+
+    expect(newPasswordError.value).toBeNull()
   })
 })

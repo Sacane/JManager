@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { FEATURE_KEYS } from '~/constants/featureKeys'
+import { passwordRuleProblem, policyViolationMessage } from '~/utils/passwordPolicy'
 
 const { login, register } = useAuth()
 const toastr = useJToast()
@@ -26,12 +27,21 @@ const registerError = ref('')
 const isRegistering = ref(false)
 
 /**
- * Only the password mismatch is attributable to a field. The server failure the user actually
- * hits — a username or email already taken — comes back as one undistinguished generic error, so
- * it stays reported for the whole form. The sign-in failure also stays form-level on purpose:
- * naming the wrong field would tell anyone whether an account exists for an email.
+ * The password mismatch and the password rules are attributable to a field. The other server failure
+ * the user hits — a username or email already taken — comes back as one undistinguished generic
+ * error, so it stays reported for the whole form. The sign-in failure also stays form-level on
+ * purpose: naming the wrong field would tell anyone whether an account exists for an email.
  */
 const confirmPasswordError = ref<string | null>(null)
+const passwordError = ref<string | null>(null)
+// Once a submission was refused for the rules, the unmet ones are shown as errors, not as pending.
+const showPasswordRuleErrors = ref(false)
+
+const { policy: passwordPolicy } = usePasswordPolicy()
+
+watch(() => userRegistered.password, () => {
+  passwordError.value = null
+})
 
 watch(() => userRegistered.confirmPassword, () => {
   if (confirmPasswordError.value && userRegistered.password === userRegistered.confirmPassword) {
@@ -68,6 +78,8 @@ function switchMode(target: Mode) {
   hasFailedRegister.value = false
   registerError.value = ''
   confirmPasswordError.value = null
+  passwordError.value = null
+  showPasswordRuleErrors.value = false
 }
 
 async function log() {
@@ -88,6 +100,11 @@ async function registerUser() {
     return
   }
   confirmPasswordError.value = null
+  passwordError.value = passwordRuleProblem(userRegistered.password, userRegistered.email, passwordPolicy.value)
+  if (passwordError.value) {
+    showPasswordRuleErrors.value = true
+    return
+  }
   isRegistering.value = true
   hasFailedRegister.value = false
   await register(
@@ -106,10 +123,16 @@ async function registerUser() {
       isRegistering.value = false
     },
     (e) => {
+      isRegistering.value = false
+      const policyMessage = policyViolationMessage(e?.response?.data, passwordPolicy.value)
+      if (policyMessage) {
+        passwordError.value = policyMessage
+        showPasswordRuleErrors.value = true
+        return
+      }
       hasFailedRegister.value = true
       registerError.value = 'Une erreur est survenue lors de l\'inscription'
       toastr.errorAxios(e)
-      isRegistering.value = false
     },
   )
 }
@@ -245,7 +268,14 @@ async function registerUser() {
               placeholder="Choisissez un mot de passe"
               :maxlength="100"
               autocomplete="new-password"
-            />
+            >
+              <PasswordRules
+                :password="userRegistered.password"
+                :email="userRegistered.email"
+                :show-errors="showPasswordRuleErrors"
+              />
+            </PasswordField>
+            <FieldError data-test="error-register-password" :message="passwordError" />
           </div>
 
           <div class="form-group">

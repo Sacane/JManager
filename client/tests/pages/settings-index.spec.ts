@@ -2,6 +2,7 @@ import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import PasswordField from '../../components/PasswordField.vue'
+import PasswordRules from '../../components/PasswordRules.vue'
 import SettingsPage from '../../pages/settings/index.vue'
 
 const getSettingsMock = vi.fn().mockResolvedValue({
@@ -89,8 +90,8 @@ function mountSettingsPage(activeScopes: string[] = [], emailVerified = true) {
   return shallowMount(SettingsPage, {
     global: {
       // Rendered for real: the password assertions target the actual input, not the stub.
-      stubs: { PasswordField: false },
-      components: { PasswordField },
+      stubs: { PasswordField: false, PasswordRules: false },
+      components: { PasswordField, PasswordRules },
     },
   })
 }
@@ -329,5 +330,28 @@ describe('pages/settings/index', () => {
         },
       ],
     })
+  })
+})
+
+describe('pages/settings/index password rules', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('shows the password rules under the new password field only', async () => {
+    const wrapper = mountSettingsPage()
+    await nextTick()
+
+    const newPasswordField = wrapper.find('#new-password-settings').element.closest('.change-password-field')!
+    expect(newPasswordField.querySelector('[data-test="password-rules"]')).not.toBeNull()
+    expect(wrapper.findAll('[data-test="password-rules"]')).toHaveLength(1)
+  })
+
+  // On this screen only, the rule "different from the current password" can be checked while typing.
+  it('lists the address rule and the difference from the current password', async () => {
+    const wrapper = mountSettingsPage()
+    await nextTick()
+
+    expect(wrapper.find('[data-test="rule-too_short"]').text()).toContain('Au moins 12 caractères')
+    expect(wrapper.find('[data-test="rule-equals_email"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="rule-differs_from_current"]').exists()).toBe(true)
   })
 })
