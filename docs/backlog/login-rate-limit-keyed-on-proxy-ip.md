@@ -24,8 +24,11 @@ showing the proxy's address, or the same address for unrelated users, settles it
 ## Expected behaviour
 
 The limiter keys on the client's address, taken from the proxy's `X-Forwarded-For` through
-`server.forward-headers-strategy=native` — with the proxy **overwriting** that header, otherwise a
-client can forge it and escape the limit.
+`server.forward-headers-strategy=native`. The production nginx appends the client address
+(`$proxy_add_x_forwarded_for`), which is safe with `native`: Tomcat reads the header from the right and
+skips trusted proxies, so a forged value on the left is ignored — as long as nginx's address, as Spring
+sees it, is in a private range or in `server.tomcat.remoteip.internal-proxies`. The `framework`
+strategy would read from the left and must not be used.
 
 ## Impact
 

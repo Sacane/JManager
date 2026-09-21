@@ -13,7 +13,9 @@ Read against the code on 21 September 2026:
   `HttpServletRequest.remoteAddr`, counting failures. Production runs **behind a reverse proxy** and no
   `server.forward-headers-strategy` is set, so `remoteAddr` is most likely the proxy's address for every
   visitor — which would make the sign-in limit global. Not confirmed from here: the limiter logs the IP
-  it blocks, and one production log line settles it.
+  it blocks, and one production log line settles it. The proxy is nginx 1.21.6 and **appends** the client
+  address (`proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for`), checked on the server on
+  21 September 2026.
 - **Public routes** are listed in `SecurityConfig`, and page routes must also be listed in
   `SpaController`. Pages outside that second list currently answer 401 when opened from a link — see
   `docs/bugs/spa-pages-401-on-direct-load/`. **That bug must be fixed before this module ships**, or
@@ -109,9 +111,15 @@ Scenario: 13. The reset pages and endpoints are public
   stop anyone flooding a victim's mailbox; 7 and 8 stop enumeration and brute force from one client.
 - Generalise `LoginRateLimiter` into a keyed sliding-window limiter rather than writing a second one;
   sign-in keeps counting failures, the reset counts every request.
-- **Client IP behind the proxy**: set `server.forward-headers-strategy=native` and confirm the proxy
-  **overwrites** `X-Forwarded-For` rather than appending to it — otherwise a client can forge its own
-  address and escape every per-IP limit. This also repairs the sign-in limiter if it is global today.
+- **Client IP behind the proxy**: set `server.forward-headers-strategy=native`. nginx **appends** the
+  client address, so anything the client put in `X-Forwarded-For` stays on the left. Tomcat reads the
+  header from the right and skips trusted proxies, so the forged part is ignored — **provided nginx's
+  address, as Spring sees it, is a trusted proxy**. By default that means a private range (10/8,
+  172.16/12, 192.168/16, 127/8); a public address needs `server.tomcat.remoteip.internal-proxies`.
+  Never use the `framework` strategy here: it reads the header from the left and would honour the
+  forged value. The behaviour lives in the embedded server, so test it against a real one
+  (`RANDOM_PORT`), not MockMvc, which bypasses it. This also repairs the sign-in limiter if it is global
+  today.
 - `iat` has second precision. A token is refused when `iat < credentialsChangedAt` with the change time
   **truncated to the second**, so the cookies re-issued in scenario 12 — in the same second as the
   change — are accepted. The cost is a window of under one second in which an older token issued that
