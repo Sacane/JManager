@@ -12,8 +12,8 @@ Read against the code on 21 September 2026:
 - **Rate limiting** exists only for sign-in: `LoginRateLimiter`, in memory, keyed on
   `HttpServletRequest.remoteAddr`, counting failures. Production runs **behind a reverse proxy** and no
   `server.forward-headers-strategy` is set, so `remoteAddr` is most likely the proxy's address for every
-  visitor — which would make the sign-in limit global. Not confirmed from here: the limiter logs the IP
-  it blocks, and one production log line settles it. The proxy is nginx 1.21.6 and **appends** the client
+  visitor — which would make the sign-in limit global. **Confirmed on 21 September 2026**: the production log
+  shows the sign-in limiter keyed on a `172.x` address, the proxy's. The proxy is nginx 1.21.6 and **appends** the client
   address (`proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for`), checked on the server on
   21 September 2026.
 - **Public routes** are listed in `SecurityConfig`, and page routes must also be listed in

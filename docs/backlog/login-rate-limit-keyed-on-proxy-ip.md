@@ -8,7 +8,8 @@ product owner on 21 September 2026), and no property sets `server.forward-header
 Spring Boot detected a cloud platform and enabled it on its own, `remoteAddr` is the proxy's address
 for every visitor.
 
-**Not confirmed** — this is read from the configuration, not observed.
+**Confirmed on 21 September 2026** from the production log: `Recorded failed login attempt for …` shows an
+address starting with `172`, a private (Docker) range — the reverse proxy's. Every visitor shares one key.
 
 ## How to confirm
 
@@ -32,8 +33,10 @@ strategy would read from the left and must not be used.
 
 ## Impact
 
-If confirmed: five wrong passwords from anyone lock sign-in **for everyone** for 15 minutes, and the
-limit does nothing against a single attacker. UX-21 (application module) sets the strategy for its own
+Five wrong passwords from anyone lock sign-in **for everyone** for 15 minutes, so anyone can lock everyone
+out with five requests per 15 minutes. It is not a per-client limit at all. Fixing the key also removes the
+accidental global brake on guessing one account's password: once the key is the client address, an attacker
+who changes address is no longer limited, and no per-account limit exists. UX-21 (application module) sets the strategy for its own
 limits, which repairs this as a side effect; this note exists in case UX-21 is delayed.
 
 **Also untested**: no test in `application/src/test` exercises the 429 path or `LoginRateLimiter` (checked
