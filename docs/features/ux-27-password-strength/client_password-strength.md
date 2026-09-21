@@ -1,10 +1,15 @@
 # Client Module — Show password rules and strength
 
 **Context**
-Three screens ask for a new password without stating any rule or showing any strength feedback:
-registration on `pages/login.vue`, the settings password change and `force-password-change`. The user
-discovers the constraint through a generic server error after submitting. None of the three offers a
-show-password toggle either, which is the main cause of failed entry on mobile.
+Four screens ask for a new password without stating any rule or showing any strength feedback:
+registration on `pages/login.vue`, the settings password change, `force-password-change` and — with
+UX-21 — `reset-password`. The user discovers the constraint through a generic server error after
+submitting.
+
+Updated on 21 September 2026: the rules come from `GET /api/password-policy`
+(`application_password-policy.md`), never from constants in the client, and each unmet rule reported by
+the server lands on its own line. The reveal control asked for below already exists: UX-47 delivered
+`PasswordField` in lot 3, so scenario 4 is a regression check, not new work.
 
 **Acceptance Criteria**
 Feature: Password rules and strength feedback
@@ -38,11 +43,13 @@ Scenario: 5. A weak password blocks submission
   Then the submission is blocked and the unmet rules are highlighted
 
 **Notes**
-- Files: `pages/login.vue`, `pages/settings/index.vue`, `pages/force-password-change.vue`, plus a shared password field component.
-- The rules must mirror the backend policy; align with the admin console hint, which currently
-  states a weaker minimum of 6 characters.
+- Files: `pages/login.vue`, `pages/settings/index.vue`, `pages/force-password-change.vue`,
+  `pages/reset-password.vue` (UX-21), the admin creation form, and a shared rules component next to
+  `PasswordField`.
+- The rules are **read from the API**, not mirrored by hand. The admin console hint announcing a
+  6-character minimum is removed: nothing ever enforced it.
 - One backend rule is currently invisible to the user: `ChangePasswordService` rejects a new
   password identical to the current one (PASSWORD_UNCHANGED). It must appear in the displayed
   rules, not only in the error returned after submitting.
 - Combine with UX-21 for the reset screen.
-- Priority P1 - Effort M - Frontend only.
+- Priority P1 · Part 3 of 3 · UX-27 is full-stack since 21 September 2026 and ships with UX-21.

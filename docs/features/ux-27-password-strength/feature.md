@@ -1,7 +1,13 @@
 # UX-27 — Choosing a valid password on the first try
 
 **Context**
-Functional acceptance for UX-27, independent of any layer. Three screens ask for a password without stating any rule, and none offers a reveal control.
+Functional acceptance for UX-27, independent of any layer. Four screens ask for a password without
+stating any rule — and behind them, the server accepts a password of a single character.
+
+Rescoped on 21 September 2026 from frontend only to **full-stack**: rules shown by the client over an API
+that enforces none would be decoration. The policy now lives in the domain and applies to every way of
+setting a password; the client reads it from the API. UX-27 ships with UX-21, whose reset form uses it.
+The reveal control this issue first asked for was delivered by UX-47.
 
 **Acceptance Criteria**
 Feature: Choosing a valid password on the first try
@@ -23,6 +29,11 @@ Scenario: I can check what I typed
   Given I typed a password
   When I use the reveal control
   Then I can read it in clear text
+
+Scenario: The server refuses what the screen refuses
+  Given I send a password that does not satisfy the rules without going through the screen
+  When the server receives it
+  Then it is refused, whatever the screen it was meant for
 
 Scenario: A non compliant password is refused early
   Given I typed a password that does not satisfy the rules

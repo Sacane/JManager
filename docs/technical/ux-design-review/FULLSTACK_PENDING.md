@@ -4,9 +4,9 @@ Single register of everything in this workstream that **cannot be delivered fron
 entry still needs to be specified per layer (domain → infrastructure → application → client) before
 it is picked up, following the TDD order in `CLAUDE.md`.
 
-This file exists so that nothing here is lost between lots. **Nothing below is specified yet.**
+This file exists so that nothing here is lost between lots. **Specified so far: UX-21 and UX-27** (21 September 2026); everything else below is not.
 
-Last updated: 18 September 2026.
+Last updated: 21 September 2026.
 
 ---
 
@@ -16,9 +16,31 @@ These were identified as full-stack in the original review and grouped into lot 
 
 | ID | Subject | Why it needs the backend | Card |
 |---|---|---|---|
-| **UX-21** | "Mot de passe oublié" | No reset endpoint exists at all: no token issuance, no mail, no consumption. | https://trello.com/c/o5vUbR2j |
+| **UX-21** | "Mot de passe oublié" — ✅ **specified 21/09/2026** | No reset endpoint exists at all: no token issuance, no mail, no consumption. Specifying it also showed that a password change never ends older sessions; the fix is part of UX-21. | https://trello.com/c/o5vUbR2j |
 | **UX-22** | Textual search over transactions | Search must run where the rows are; the client only ever holds one page of one period. | https://trello.com/c/MnUxNqSz |
 | **UX-23** | Move the budget target off `localStorage` | The target is per user, not per browser. Needs persistence and an endpoint. | https://trello.com/c/tZEm5mo6 |
+
+
+### Prerequisite found while specifying UX-21
+
+`docs/bugs/spa-pages-401-on-direct-load/` — in production, every page missing from `SpaController`
+answers **401** when opened from a link, **the email verification page included**. The reset link would
+fail the same way, so this bug is fixed before UX-21's client part ships. It is a live defect on its
+own: email verification cannot be completed from the email today.
+
+---
+
+## 1 bis. Item reclassified while specifying UX-21
+
+| ID | Subject | Card |
+|---|---|---|
+| **UX-27** | Password rules and strength indicator — ✅ **specified 21/09/2026** | https://trello.com/c/BEtdi2SP |
+
+**Was planned as:** P1, effort M, **Frontend**, attached to lot 6 alongside UX-21.
+**Actually is:** full-stack. There is no password policy on the backend: every DTO accepting a password
+declares `@Size(min = 1, max = 100)` and no domain service checks length. Rules shown by the client
+would decorate an API that accepts a one-character password. Product decision of 21 September 2026:
+one domain policy for every way of setting a password. It ships with UX-21, whose reset form uses it.
 
 ---
 
