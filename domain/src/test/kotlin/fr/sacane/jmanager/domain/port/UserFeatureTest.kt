@@ -46,10 +46,13 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
+// Satisfies the password policy (12 characters minimum).
+private const val REGISTERED_PASSWORD = "registered-password"
+
 private fun registerCommand(
     username: String = "John",
-    password: String = "test",
-    confirmPassword: String = "test",
+    password: String = REGISTERED_PASSWORD,
+    confirmPassword: String = REGISTERED_PASSWORD,
     email: String = "john@example.com",
     withConsent: Boolean = true,
 ) = RegisterUserCommand(
@@ -288,8 +291,8 @@ class UserFeatureTest {
             val consentTime = LocalDateTime.of(2026, 1, 1, 10, 0)
             val command = RegisterUserCommand(
                 username = "John",
-                password = "test",
-                confirmPassword = "test",
+                password = REGISTERED_PASSWORD,
+                confirmPassword = REGISTERED_PASSWORD,
                 email = "john@example.com",
                 tosAcceptedAt = consentTime,
                 tosVersion = "1.0",
@@ -314,7 +317,7 @@ class UserFeatureTest {
 
         @Test
         fun `Admin-created user gets BETA_TESTER subscription plan`() {
-            val result = act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "beta@example.com")) }
+            val result = act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "temporary-password", "beta@example.com")) }
 
             then(result) {
                 assertSuccess()
@@ -324,7 +327,7 @@ class UserFeatureTest {
 
         @Test
         fun `Admin-created user receives beta-tester welcome email with verification link`() {
-            act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "beta@example.com")) }
+            act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "temporary-password", "beta@example.com")) }
 
             assertEquals(1, sentCombinedEmails.size)
             val sent = sentCombinedEmails.first()
@@ -336,7 +339,7 @@ class UserFeatureTest {
 
         @Test
         fun `Admin creation fails when email is blank`() {
-            val result = act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "")) }
+            val result = act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "temporary-password", "")) }
 
             then(result) {
                 assertFailure(ResultState.INVALID)
@@ -346,7 +349,7 @@ class UserFeatureTest {
 
         @Test
         fun `Admin creation welcome email is not sent when email is blank`() {
-            act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "pass", "")) }
+            act { adminCreateUserUseCase.handle(AdminCreateUserCommand("beta", "temporary-password", "")) }
 
             assertEquals(0, sentCombinedEmails.size)
         }
@@ -395,7 +398,7 @@ class UserFeatureTest {
         @Test
         fun `Get settings for a connected user must return defaults`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = REGISTERED_PASSWORD)).mapNotNullOrFailure()!!
 
             val result = act { getUserSettingsUseCase.handle(GetUserSettingsQuery(userToken.user.id)) }
 
@@ -405,7 +408,7 @@ class UserFeatureTest {
         @Test
         fun `Update settings must persist projection window`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = REGISTERED_PASSWORD)).mapNotNullOrFailure()!!
 
             val result = act {
                 updateUserSettingsUseCase.handle(
@@ -419,7 +422,7 @@ class UserFeatureTest {
         @Test
         fun `Update settings with projection outside range must fail`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = REGISTERED_PASSWORD)).mapNotNullOrFailure()!!
 
             val result = act {
                 updateUserSettingsUseCase.handle(
@@ -436,7 +439,7 @@ class UserFeatureTest {
         @Test
         fun `Update settings with non owned booklet must fail`() {
             registerUserUseCase.handle(registerCommand())
-            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = "test")).mapNotNullOrFailure()!!
+            val userToken = loginUseCase.handle(LoginCommand(email = "john@example.com", userPassword = REGISTERED_PASSWORD)).mapNotNullOrFailure()!!
 
             val result = act {
                 updateUserSettingsUseCase.handle(

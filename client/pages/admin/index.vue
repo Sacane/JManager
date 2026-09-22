@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { AppTableColumn } from '~/components/AppTable.vue'
 import type { FeatureKey } from '~/constants/featureKeys'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import useAdmin from '~/composables/useAdmin'
 import { FEATURE_KEY_LABELS } from '~/constants/featureKeys'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import adminMiddleware from '~/middleware/admin'
 import authMiddleware from '~/middleware/auth'
+import { passwordRuleProblem, policyViolationMessage } from '~/utils/passwordPolicy'
 
 definePageMeta({
   layout: 'sidebar-layout',
@@ -24,6 +25,14 @@ const newUser = ref({
   email: '',
   password: '',
   confirmPassword: '',
+})
+
+const { policy: passwordPolicy } = usePasswordPolicy()
+// The password rules, on the password field where the checklist is.
+const passwordError = ref<string | null>(null)
+
+watch(() => newUser.value.password, () => {
+  passwordError.value = null
 })
 
 const userCreationLoadingScope = LOADING_SCOPES.admin.createUser
@@ -56,10 +65,8 @@ async function submitCreateUser() {
     return
   }
 
-  if (newUser.value.password.length < 6) {
-    toastr.error('Le mot de passe doit contenir au moins 6 caractères')
-    return
-  }
+  passwordError.value = passwordRuleProblem(newUser.value.password, newUser.value.email, passwordPolicy.value)
+  if (passwordError.value) return
 
   await createUser(
     newUser.value,
@@ -69,6 +76,11 @@ async function submitCreateUser() {
       loadUsers()
     },
     (error) => {
+      const policyMessage = policyViolationMessage(error.response?.data, passwordPolicy.value)
+      if (policyMessage) {
+        passwordError.value = policyMessage
+        return
+      }
       toastr.errorAxios(error)
     },
   )
@@ -272,15 +284,21 @@ function isKeyToggling(key: FeatureKey): boolean {
                       <i class="pi pi-lock" />
                       Mot de passe
                     </label>
-                    <InputText
+                    <PasswordField
                       id="password"
                       v-model="newUser.password"
-                      type="password"
-                      class="w-full"
                       placeholder="Entrez le mot de passe"
+                      :maxlength="100"
+                      autocomplete="new-password"
                       :disabled="isCreating"
-                    />
-                    <small class="form-hint">Minimum 6 caractères</small>
+                    >
+                      <PasswordRules
+                        :password="newUser.password"
+                        :email="newUser.email"
+                        :show-errors="!!passwordError"
+                      />
+                    </PasswordField>
+                    <FieldError data-test="admin-password-error" :message="passwordError" />
                   </div>
 
                   <div class="form-group">
@@ -288,12 +306,12 @@ function isKeyToggling(key: FeatureKey): boolean {
                       <i class="pi pi-lock" />
                       Confirmer le mot de passe
                     </label>
-                    <InputText
+                    <PasswordField
                       id="confirmPassword"
                       v-model="newUser.confirmPassword"
-                      type="password"
-                      class="w-full"
                       placeholder="Confirmez le mot de passe"
+                      :maxlength="100"
+                      autocomplete="new-password"
                       :disabled="isCreating"
                     />
                   </div>

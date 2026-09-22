@@ -24,8 +24,8 @@ private fun registerCommand(
     email: String = "carol@example.com",
 ) = RegisterUserCommand(
     username = username,
-    password = "pass",
-    confirmPassword = "pass",
+    password = "registered-password",
+    confirmPassword = "registered-password",
     email = email,
     tosAcceptedAt = LocalDateTime.of(2026, 1, 1, 10, 0),
     tosVersion = "1.0",

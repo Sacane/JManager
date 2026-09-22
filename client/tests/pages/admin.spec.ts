@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
 import useAdmin from '~/composables/useAdmin'
 import useAuth from '~/composables/useAuth'
+import PasswordField from '../../components/PasswordField.vue'
 import AdminPage from '../../pages/admin/index.vue'
 
 // ---------------------------------------------------------------------------
@@ -111,7 +112,10 @@ describe('pages/admin/index', () => {
           Tab: TabStub,
           TabPanels: TabPanelsStub,
           TabPanel: TabPanelStub,
+          // Rendered for real: the password field carries the rules and its error.
+          PasswordField: false,
         },
+        components: { PasswordField },
       },
     })
   }
@@ -179,12 +183,19 @@ describe('pages/admin/index', () => {
 
   it('renders all four form fields including email', () => {
     const wrapper = mountPage()
-    const stubs = wrapper.findAllComponents(InputTextStub)
-    const ids = stubs.map(s => s.props('id'))
-    expect(ids).toContain('username')
-    expect(ids).toContain('email')
-    expect(ids).toContain('password')
-    expect(ids).toContain('confirmPassword')
+
+    for (const id of ['username', 'email', 'password', 'confirmPassword']) {
+      expect(wrapper.find(`input#${id}`).exists()).toBe(true)
+    }
+  })
+
+  // Password fields reveal on demand and state their length limit, like every other password field.
+  it('uses the shared password field for both password inputs', () => {
+    const wrapper = mountPage()
+
+    expect(wrapper.find('input#password').attributes('maxlength')).toBe('100')
+    expect(wrapper.find('input#confirmPassword').attributes('type')).toBe('password')
+    expect(wrapper.findAll('[data-test="toggle-password-visibility"]')).toHaveLength(2)
   })
 
   it('renders the feature flags empty state when no flags are configured', () => {
@@ -250,14 +261,54 @@ describe('pages/admin/index', () => {
     expect(createUserMock).not.toHaveBeenCalled()
   })
 
-  it('shows an error when the password is shorter than 6 characters', async () => {
+  // The page used to enforce its own 6-character minimum, which the server never checked.
+  it('refuses a password shorter than the published policy, on the password field', async () => {
     const wrapper = mountPage()
     await setFormValues(wrapper, { username: 'alice', email: 'alice@example.com', password: 'abc', confirmPassword: 'abc' })
 
     await wrapper.find('form').trigger('submit')
 
-    expect(toastrErrorMock).toHaveBeenCalledWith('Le mot de passe doit contenir au moins 6 caractères')
+    expect(wrapper.find('[data-test="admin-password-error"]').text()).toBe('Le mot de passe doit contenir au moins 12 caractères.')
+    expect(toastrErrorMock).not.toHaveBeenCalled()
     expect(createUserMock).not.toHaveBeenCalled()
+  })
+
+  it('no longer announces a 6-character minimum', () => {
+    const wrapper = mountPage()
+
+    expect(wrapper.text()).not.toContain('Minimum 6 caractères')
+    expect(wrapper.find('[data-test="rule-too_short"]').text()).toContain('Au moins 12 caractères')
+  })
+
+  it('lists the address rule once the address is typed', async () => {
+    const wrapper = mountPage()
+    expect(wrapper.find('[data-test="rule-equals_email"]').exists()).toBe(false)
+
+    await setFormValues(wrapper, { email: 'alice@example.com' })
+
+    expect(wrapper.find('[data-test="rule-equals_email"]').exists()).toBe(true)
+  })
+
+  it('reports a refusal by the password policy on the password field', async () => {
+    createUserMock.mockImplementation(async (_user: unknown, _onSuccess: () => void, onError: (e: unknown) => void) => {
+      onError({
+        isAxiosError: true,
+        response: { status: 400, data: { errorKey: 'domain.user.password.policy_violation', reasons: ['equals_email'] } },
+      })
+    })
+    const wrapper = mountPage()
+    await setFormValues(wrapper, {
+      username: 'alice',
+      email: 'alice@example.com',
+      password: 'password-1234',
+      confirmPassword: 'password-1234',
+    })
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="admin-password-error"]').text()).toBe('Le mot de passe doit être différent de votre adresse e-mail.')
+    expect(toastrErrorMock).not.toHaveBeenCalled()
   })
 
   // --- Successful submission ---
@@ -267,8 +318,8 @@ describe('pages/admin/index', () => {
     await setFormValues(wrapper, {
       username: 'alice',
       email: 'alice@example.com',
-      password: 'password123',
-      confirmPassword: 'password123',
+      password: 'password-1234',
+      confirmPassword: 'password-1234',
     })
 
     await wrapper.find('form').trigger('submit')
@@ -279,8 +330,8 @@ describe('pages/admin/index', () => {
       expect.objectContaining({
         username: 'alice',
         email: 'alice@example.com',
-        password: 'password123',
-        confirmPassword: 'password123',
+        password: 'password-1234',
+        confirmPassword: 'password-1234',
       }),
       expect.any(Function),
       expect.any(Function),

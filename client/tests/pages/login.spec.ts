@@ -302,8 +302,8 @@ describe('pages/login', () => {
 
       await wrapper.find('#reg-username').setValue('bob')
       await wrapper.find('#reg-email').setValue('bob@example.com')
-      await wrapper.find('#reg-password').setValue('pass123')
-      await wrapper.find('#reg-confirm-password').setValue('pass123')
+      await wrapper.find('#reg-password').setValue('secret-password-1')
+      await wrapper.find('#reg-confirm-password').setValue('secret-password-1')
       await wrapper.find('#tos-accepted').setValue(true)
       await wrapper.find('#privacy-accepted').setValue(true)
 
@@ -313,8 +313,8 @@ describe('pages/login', () => {
         expect.objectContaining({
           username: 'bob',
           email: 'bob@example.com',
-          password: 'pass123',
-          confirmPassword: 'pass123',
+          password: 'secret-password-1',
+          confirmPassword: 'secret-password-1',
           tosAccepted: true,
           privacyAccepted: true,
         }),
@@ -329,7 +329,7 @@ describe('pages/login', () => {
 
       await wrapper.find('#reg-username').setValue('bob')
       await wrapper.find('#reg-email').setValue('bob@example.com')
-      await wrapper.find('#reg-password').setValue('pass123')
+      await wrapper.find('#reg-password').setValue('secret-password-1')
       await wrapper.find('#reg-confirm-password').setValue('other456')
       await wrapper.find('#tos-accepted').setValue(true)
       await wrapper.find('#privacy-accepted').setValue(true)
@@ -351,8 +351,8 @@ describe('pages/login', () => {
 
       await wrapper.find('#reg-username').setValue('bob')
       await wrapper.find('#reg-email').setValue('bob@example.com')
-      await wrapper.find('#reg-password').setValue('pass123')
-      await wrapper.find('#reg-confirm-password').setValue('pass123')
+      await wrapper.find('#reg-password').setValue('secret-password-1')
+      await wrapper.find('#reg-confirm-password').setValue('secret-password-1')
       await wrapper.find('#tos-accepted').setValue(true)
       await wrapper.find('#privacy-accepted').setValue(true)
 

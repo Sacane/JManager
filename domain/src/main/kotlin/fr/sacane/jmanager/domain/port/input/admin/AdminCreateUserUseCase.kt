@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.input.admin
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.PasswordPolicy
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.input.Command
@@ -43,6 +44,7 @@ class AdminCreateUserService(
                 DomainError(ResultState.INVALID.code, "domain.user.admin.create.email_required", "L'email est obligatoire")
             )
         }
+        PasswordPolicy.violationOf<User>(command.password, command.email)?.let { return it }
         val hashedPassword = hasher.hash(command.password)
         val user = userRepository.register(
             username = command.username,

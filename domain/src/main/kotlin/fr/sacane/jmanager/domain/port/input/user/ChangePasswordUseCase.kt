@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.PasswordPolicy
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
@@ -51,6 +52,8 @@ class ChangePasswordService(
                 DomainError(ResultState.PASSWORD_NOT_MATCH.code, "domain.user.password.mismatch", "Les mots de passe ne correspondent pas"),
             )
         }
+
+        PasswordPolicy.violationOf<Unit>(command.newPassword, stored.user.email)?.let { return it }
 
         if (hasher.verify(command.newPassword, stored.password)) {
             return failure(

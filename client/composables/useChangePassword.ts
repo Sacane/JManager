@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import { passwordRuleProblem, policyViolationMessage } from '~/utils/passwordPolicy'
 
 export default function useChangePassword() {
   const config = useRuntimeConfig()
@@ -47,6 +48,7 @@ export default function useChangePassword() {
 
   const { withLoading, isScopeLoading } = useLoading()
   const toast = useJToast()
+  const { policy: passwordPolicy } = usePasswordPolicy()
 
   const isSubmitting = computed(() => isScopeLoading(LOADING_SCOPES.password.change))
 
@@ -65,6 +67,10 @@ export default function useChangePassword() {
       fieldErrors.confirmPassword = 'Les mots de passe ne correspondent pas'
       return false
     }
+
+    // The address rule is left to the server, which knows the address.
+    fieldErrors.newPassword = passwordRuleProblem(newPassword.value, null, passwordPolicy.value)
+    if (fieldErrors.newPassword) return false
 
     return true
   }
@@ -93,6 +99,11 @@ export default function useChangePassword() {
         toast.success('Mot de passe modifié avec succès')
       } catch (error) {
         if (axios.isAxiosError(error)) {
+          const policyMessage = policyViolationMessage(error.response?.data, passwordPolicy.value)
+          if (policyMessage) {
+            fieldErrors.newPassword = policyMessage
+            return
+          }
           const errorKey = (error.response?.data as { errorKey?: string } | undefined)?.errorKey
           const known = errorKey ? FIELD_BY_ERROR_KEY[errorKey] : undefined
           if (known) {
