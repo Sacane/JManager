@@ -7,14 +7,19 @@ import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.domain.toUUID
 import io.jsonwebtoken.Jwts
 import org.springframework.beans.factory.annotation.Value
+import java.time.Clock
+import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.logging.Logger
 import javax.crypto.spec.SecretKeySpec
 
 class JwtTokenGenerator(
     @Value("\${auth.secret}")
-    private val secret: String
+    private val secret: String,
+    private val clock: Clock = Clock.systemUTC(),
 ): TokenGenerator {
 
     companion object {
@@ -28,9 +33,12 @@ class JwtTokenGenerator(
         }
 
     override fun generateToken(userId: UserId, username: String, roles: Set<Role>): AccessToken {
-        val expirationDate = Date(System.currentTimeMillis() + 60 * 60 * 1000)
+        // JWT dates have second precision: truncate so the issue time read back equals the one returned.
+        val issuedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS)
+        val expirationDate = Date.from(issuedAt.plus(1, ChronoUnit.HOURS))
         var claim = Jwts.builder()
             .subject(userId.value.toString())
+            .issuedAt(Date.from(issuedAt))
             .expiration(expirationDate)
             .claim("username", username)
         for(role in roles) {
@@ -45,7 +53,8 @@ class JwtTokenGenerator(
                     userName = username,
                     tokenValue = tokenValue,
                     tokenExpirationDate = expirationDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
-                    roles = roles
+                    roles = roles,
+                    issuedAt = LocalDateTime.ofInstant(issuedAt, ZoneOffset.UTC),
                 )
             }
 
@@ -54,6 +63,7 @@ class JwtTokenGenerator(
     override fun readToken(token: String): AccessToken? {
         return try {
             val claims = Jwts.parser()
+                .clock { Date.from(clock.instant()) }
                 .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
@@ -72,7 +82,8 @@ class JwtTokenGenerator(
                 roles = buildSet {
                     if (roleUser) add(Role.USER)
                     if (roleAdmin) add(Role.ADMIN)
-                }
+                },
+                issuedAt = claims.issuedAt?.let { LocalDateTime.ofInstant(it.toInstant(), ZoneOffset.UTC) },
             )
         } catch (e: Exception) {
             LOGGER.warning("Error reading token: ${e.javaClass.simpleName}")

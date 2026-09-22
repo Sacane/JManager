@@ -39,6 +39,8 @@ class UserResource(
     var emailVerified: Boolean = false,
     @Column(name = "must_change_password", nullable = false)
     var mustChangePassword: Boolean = false,
+    @Column(name = "credentials_changed_at")
+    var credentialsChangedAt: LocalDateTime? = null,
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "user_role",

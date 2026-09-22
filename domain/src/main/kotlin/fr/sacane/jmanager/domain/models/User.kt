@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.domain.models
 
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 data class ConsentRecord(
@@ -40,6 +41,7 @@ class User(
     var consent: ConsentRecord? = null,
     var emailVerified: Boolean = false,
     var mustChangePassword: Boolean = false,
+    var credentialsChangedAt: LocalDateTime? = null,
 ) {
 
     init {
@@ -53,6 +55,18 @@ class User(
         token,
         refreshToken,
     )
+    /**
+     * Whether an access token issued at [issuedAt] still stands after the last credential change.
+     *
+     * Token issue times have second precision, so the change time is truncated to the second: the
+     * session re-issued by the change itself, in the same second, is accepted. A token with no issue
+     * time predates this rule and is refused once credentials have changed.
+     */
+    fun acceptsTokenIssuedAt(issuedAt: LocalDateTime?): Boolean {
+        val changedAt = credentialsChangedAt ?: return true
+        return issuedAt != null && !issuedAt.isBefore(changedAt.truncatedTo(ChronoUnit.SECONDS))
+    }
+
     fun hasBooklet(label: String): Boolean = booklets.any { label == it.label }
     override fun toString(): String = "username: $username"
 

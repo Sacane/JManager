@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestPropertySource
 import java.util.UUID
 
+private val CHANGED_AT: LocalDateTime = LocalDateTime.of(2026, 9, 22, 8, 30, 15, 123_456_000)
+
 @TestPropertySource(locations = ["classpath:application-test.properties"])
 @SpringBootTest
 class UserRepositoryJpaAdapterTest(
@@ -219,7 +221,7 @@ class UserRepositoryJpaAdapterTest(
         val registered = userRepositoryJpaAdapter.register("pwd-update-user", "old-pwd", emptySet())
         assertThat(registered).isNotNull
 
-        val result = userRepositoryJpaAdapter.updatePassword(registered!!.id, "new-pwd", clearMustChange = false)
+        val result = userRepositoryJpaAdapter.updatePassword(registered!!.id, "new-pwd", clearMustChange = false, changedAt = CHANGED_AT)
 
         assertThat(result.isSuccess()).isTrue()
         val stored = userRepositoryJpaAdapter.findByIdWithEncodedPassword(registered.id)
@@ -237,7 +239,7 @@ class UserRepositoryJpaAdapterTest(
         assertThat(registered).isNotNull
         assertThat(registered!!.mustChangePassword).isTrue()
 
-        userRepositoryJpaAdapter.updatePassword(registered.id, "new-pwd", clearMustChange = true)
+        userRepositoryJpaAdapter.updatePassword(registered.id, "new-pwd", clearMustChange = true, changedAt = CHANGED_AT)
 
         val refreshed = userRepositoryJpaAdapter.findUserById(registered.id)
         assertThat(refreshed!!.mustChangePassword).isFalse()
@@ -253,7 +255,7 @@ class UserRepositoryJpaAdapterTest(
         )
         assertThat(registered).isNotNull
 
-        userRepositoryJpaAdapter.updatePassword(registered!!.id, "new-pwd", clearMustChange = false)
+        userRepositoryJpaAdapter.updatePassword(registered!!.id, "new-pwd", clearMustChange = false, changedAt = CHANGED_AT)
 
         val refreshed = userRepositoryJpaAdapter.findUserById(registered.id)
         assertThat(refreshed!!.mustChangePassword).isTrue()
@@ -261,8 +263,20 @@ class UserRepositoryJpaAdapterTest(
 
     @Test
     fun `updatePassword on unknown user returns USER_NOT_FOUND`() {
-        val result = userRepositoryJpaAdapter.updatePassword(UserId(UUID.randomUUID()), "new-pwd", clearMustChange = false)
+        val result = userRepositoryJpaAdapter.updatePassword(UserId(UUID.randomUUID()), "new-pwd", clearMustChange = false, changedAt = CHANGED_AT)
 
         assertThat(result.isFailure()).isTrue()
+    }
+
+    @Test
+    fun `updatePassword records when the credentials changed`() {
+        val registered = userRepositoryJpaAdapter.register("changed-at-user", "old-pwd", emptySet())
+        assertThat(registered!!.credentialsChangedAt).isNull()
+
+        userRepositoryJpaAdapter.updatePassword(registered.id, "new-pwd", clearMustChange = false, changedAt = CHANGED_AT)
+
+        assertThat(userRepositoryJpaAdapter.findUserById(registered.id)!!.credentialsChangedAt).isEqualTo(CHANGED_AT)
+        assertThat(userRepositoryJpaAdapter.findByIdWithEncodedPassword(registered.id)!!.user.credentialsChangedAt)
+            .isEqualTo(CHANGED_AT)
     }
 }
