@@ -17,7 +17,9 @@ data class AccessToken(
     var tokenExpirationDate: LocalDateTime = now().plusHours(1),
     val refreshToken: UUID? = UUID.randomUUID(),
     var refreshTokenLifetime: LocalDateTime = now().plusDays(1),
-    val roles: Set<Role> = setOf(Role.USER)
+    val roles: Set<Role> = setOf(Role.USER),
+    /** When the token was issued, in UTC to the second; null for tokens issued before it was recorded. */
+    val issuedAt: LocalDateTime? = null,
 ){
     fun isExpired(): Boolean{
         return tokenExpirationDate.isBefore(now())

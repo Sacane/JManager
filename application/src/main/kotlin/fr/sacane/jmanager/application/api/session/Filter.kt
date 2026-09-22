@@ -37,15 +37,18 @@ class JwtCookieAuthenticationFilter(
 
             if (token != null) {
 
-                val user = userRepository.findUserById(token.userId)?.asAuthDetail(token.tokenValue, token.roles)
-                if (user == null) {
+                val owner = userRepository.findUserById(token.userId)
+                if (owner == null) {
                     LOGGER.warning("Authenticated token references a non-existent user")
-                    response.status = HttpServletResponse.SC_UNAUTHORIZED
-                    response.contentType = "application/json"
-                    response.writer.write("""{"code":1050,"message":"Unauthorized"}""")
-                    SecurityContextHolder.clearContext()
+                    unauthorized(response)
                     return
                 }
+                if (!owner.acceptsTokenIssuedAt(token.issuedAt)) {
+                    LOGGER.info("Access token issued before the last credential change")
+                    unauthorized(response)
+                    return
+                }
+                val user = owner.asAuthDetail(token.tokenValue, token.roles)
                 val authentication = UsernamePasswordAuthenticationToken(
                     user,
                     null,
@@ -59,10 +62,15 @@ class JwtCookieAuthenticationFilter(
         filterChain.doFilter(request, response)
     } catch (ex: Exception) {
             LOGGER.warning("Authentication filter error: ${ex.javaClass.simpleName}")
-            response.status = HttpServletResponse.SC_UNAUTHORIZED
-            response.contentType = "application/json"
-            response.writer.write("""{"code":1050,"message":"Unauthorized"}""")
-            SecurityContextHolder.clearContext()}
+            unauthorized(response)
+        }
+    }
+
+    private fun unauthorized(response: HttpServletResponse) {
+        response.status = HttpServletResponse.SC_UNAUTHORIZED
+        response.contentType = "application/json"
+        response.writer.write("""{"code":1050,"message":"Unauthorized"}""")
+        SecurityContextHolder.clearContext()
     }
 
     private fun extractToken(request: HttpServletRequest): String? {

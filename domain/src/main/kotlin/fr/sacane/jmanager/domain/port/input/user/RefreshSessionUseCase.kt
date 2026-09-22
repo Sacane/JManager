@@ -5,8 +5,8 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.output.SessionManager
-import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.usecase.SessionOpener
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.utils.Result
@@ -27,7 +27,7 @@ interface RefreshSessionUseCase : CommandHandler<RefreshSessionCommand, UserToke
 class RefreshSessionService(
     private val session: SessionManager,
     private val userRepository: UserRepository,
-    private val tokenGenerator: TokenGenerator
+    private val sessionOpener: SessionOpener,
 ) : RefreshSessionUseCase {
 
     override fun handle(command: RefreshSessionCommand): Result<UserToken> =
@@ -44,12 +44,7 @@ class RefreshSessionService(
                     DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.refresh.user_not_found", "L'utilisateur n'existe pas")
                 )
 
-            val accessToken = tokenGenerator.generateToken(user.id, user.username, user.roles)
             session.blacklistRefreshToken(command.refreshToken, refreshTokenExpiry)
-            session.addSession(userId, accessToken)
-            accessToken.refreshToken?.let {
-                session.saveRefreshToken(userId, it, accessToken.refreshTokenLifetime)
-            }
-            success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
+            success(sessionOpener.openFor(user, user.roles))
         }
 }
