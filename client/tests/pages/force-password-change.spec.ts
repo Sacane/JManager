@@ -1,7 +1,9 @@
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
+import FieldError from '../../components/FieldError.vue'
 import PasswordField from '../../components/PasswordField.vue'
+import PasswordRules from '../../components/PasswordRules.vue'
 import ForcePasswordChangePage from '../../pages/force-password-change.vue'
 
 const InputTextStub = {
@@ -24,11 +26,14 @@ const confirmPasswordRef = ref('')
 const passwordErrorRef = ref<string | null>(null)
 const isSubmittingRef = ref(false)
 
-function makeForceChangeMock(overrides: { isSubmitting?: boolean, passwordError?: string | null } = {}) {
+function makeForceChangeMock(
+  overrides: { isSubmitting?: boolean, passwordError?: string | null, newPasswordError?: string | null } = {},
+) {
   return {
     newPassword: newPasswordRef,
     confirmPassword: confirmPasswordRef,
     passwordError: ref(overrides.passwordError ?? null),
+    newPasswordError: ref(overrides.newPasswordError ?? null),
     isSubmitting: ref(overrides.isSubmitting ?? false),
     submit: submitMock,
   }
@@ -55,8 +60,10 @@ describe('pages/force-password-change', () => {
           Button: ButtonStub,
           // Rendered for real: these assertions target the actual input, not the stub.
           PasswordField: false,
+          PasswordRules: false,
+          FieldError: false,
         },
-        components: { PasswordField },
+        components: { PasswordField, PasswordRules, FieldError },
       },
     })
   }
@@ -115,5 +122,20 @@ describe('pages/force-password-change', () => {
     const wrapper = mountPage()
     expect(wrapper.find('[data-test="new-password-input"]').attributes('maxlength')).toBe('100')
     expect(wrapper.find('[data-test="confirm-password-input"]').attributes('maxlength')).toBe('100')
+  })
+
+  it('shows the password rules under the new password field', () => {
+    const wrapper = mountPage()
+
+    const newPasswordField = wrapper.find('[data-test="new-password-input"]').element.closest('.flex-col')!
+    expect(newPasswordField.querySelector('[data-test="password-rules"]')).not.toBeNull()
+    expect(wrapper.find('[data-test="rule-too_short"]').text()).toContain('Au moins 12 caractères')
+  })
+
+  it('shows a refusal by the rules under the new password field', () => {
+    const wrapper = mountPage({ newPasswordError: 'Le mot de passe doit contenir au moins 12 caractères.' })
+
+    expect(wrapper.find('[data-test="new-password-error"]').text()).toBe('Le mot de passe doit contenir au moins 12 caractères.')
+    expect(wrapper.find('[data-test="rule-too_short"]').classes()).toContain('password-rule--unmet')
   })
 })

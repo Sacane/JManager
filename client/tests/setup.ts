@@ -3,6 +3,7 @@ import { afterEach, beforeEach, vi } from 'vitest'
 import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, readonly, ref, watch, watchEffect } from 'vue'
 import FieldError from '../components/FieldError.vue'
 import PageSkeleton from '../components/PageSkeleton.vue'
+import PasswordRules from '../components/PasswordRules.vue'
 
 // Prevent happy-dom from throwing when it tries to load image resources via the filesystem.
 // In tests the document base URL is file://, so /favicon.ico resolves to an unresolvable
@@ -172,8 +173,15 @@ vi.stubGlobal('useForceChangePassword', vi.fn(() => ({
   newPassword: ref(''),
   confirmPassword: ref(''),
   passwordError: ref(null),
+  newPasswordError: ref(null),
   isSubmitting: ref(false),
   submit: vi.fn(),
+})))
+
+// The policy the API publishes, already loaded: specs see the checklist without a network call.
+vi.stubGlobal('usePasswordPolicy', vi.fn(() => ({
+  policy: ref({ minLength: 12, maxLength: 100, rules: ['too_short', 'too_long', 'equals_email'] }),
+  load: vi.fn().mockResolvedValue(undefined),
 })))
 
 vi.stubGlobal('useChangePassword', vi.fn(() => ({
@@ -199,12 +207,14 @@ vi.stubGlobal('useChangePassword', vi.fn(() => ({
 config.global.components = {
   FieldError,
   PageSkeleton,
+  PasswordRules,
 }
 
 config.global.stubs = {
   Transition: false,
   FieldError: false,
   PageSkeleton: false,
+  PasswordRules: false,
 }
 
 beforeEach(() => {

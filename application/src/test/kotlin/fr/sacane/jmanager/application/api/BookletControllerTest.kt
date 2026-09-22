@@ -91,8 +91,8 @@ class BookletControllerTest(
                 post("/api/booklet")
             } Then {
                 statusCode(400)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", equalTo(user!!.id.value.toString()))
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", equalTo(user!!.id.value.toString()))
             }
         }
 
@@ -140,8 +140,8 @@ class BookletControllerTest(
                 post("/api/booklet")
             } Then {
                 statusCode(400)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", equalTo(user!!.id.value.toString()))
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", equalTo(user!!.id.value.toString()))
             }
         }
     }
@@ -184,8 +184,8 @@ class BookletControllerTest(
                 delete("/api/booklet/231")
             } Then {
                 statusCode(404)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", equalTo(user!!.id.value.toString()))
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", equalTo(user!!.id.value.toString()))
             }
         }
         @Test

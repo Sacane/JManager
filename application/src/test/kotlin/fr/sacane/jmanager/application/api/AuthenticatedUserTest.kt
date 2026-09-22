@@ -21,6 +21,9 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
 
+/** Password of the user every authenticated test signs in as. Satisfies the password policy. */
+const val TEST_USER_PASSWORD = "test-user-password"
+
 abstract class AuthenticatedUserTest {
     lateinit var token: String
     lateinit var refreshToken: String
@@ -77,15 +80,15 @@ abstract class AuthenticatedUserTest {
         registerUserUseCase.handle(
             RegisterUserCommand(
                 username = "test",
-                password = "test",
-                confirmPassword = "test",
+                password = TEST_USER_PASSWORD,
+                confirmPassword = TEST_USER_PASSWORD,
                 email = "test@example.com",
                 tosAcceptedAt = now,
                 tosVersion = "1.0",
                 privacyAcceptedAt = now,
             )
         ).onSuccess { user = it }
-        loginUseCase.handle(LoginCommand(email = "test@example.com", userPassword = "test")).onSuccess {
+        loginUseCase.handle(LoginCommand(email = "test@example.com", userPassword = TEST_USER_PASSWORD)).onSuccess {
             token = it.token
             refreshToken = sessionManager.findSessionByToken(SessionToken(it.token))?.refreshToken?.toString()
                 ?: error("Refresh token should be initialized for authenticated test user")

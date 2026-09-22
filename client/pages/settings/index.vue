@@ -397,7 +397,14 @@ onMounted(() => {
             :maxlength="100"
             autocomplete="new-password"
             data-test="new-password-input"
-          />
+          >
+            <PasswordRules
+              :password="newPasswordChange"
+              :email="accountEmail"
+              :current-password="currentPassword"
+              :show-errors="!!passwordFieldErrors.newPassword"
+            />
+          </PasswordField>
           <FieldError data-test="new-password-error" :message="passwordFieldErrors.newPassword" />
         </div>
 

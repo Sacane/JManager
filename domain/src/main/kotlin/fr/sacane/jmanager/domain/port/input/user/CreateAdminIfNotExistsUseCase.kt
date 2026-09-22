@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.PasswordPolicy
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.port.output.Hasher
@@ -44,6 +45,11 @@ class CreateAdminIfNotExistsService(
                     DomainError(ResultState.PASSWORD_NOT_MATCH.code, "domain.user.admin.password_mismatch", "admin password does not match the existing one")
                 )
             else success(existingAdmin.user)
+        }
+        // Not refused: this password comes from the environment at start-up, and refusing it would stop the
+        // application from booting after a deployment.
+        if (PasswordPolicy.unmetRules(command.password, email = null).isNotEmpty()) {
+            LOGGER.warning("The bootstrap admin password does not satisfy the password policy; change it")
         }
         val adminUser = userRepository.register(command.username, hashedPassword, setOf(Role.USER, Role.ADMIN), emailVerified = true)
             ?: return failure(

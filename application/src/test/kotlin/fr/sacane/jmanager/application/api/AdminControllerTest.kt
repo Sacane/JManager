@@ -57,7 +57,7 @@ class AdminControllerTest(
     }
 
     private fun consentCommand(username: String, email: String) = RegisterUserCommand(
-        username = username, password = "test", confirmPassword = "test", email = email,
+        username = username, password = TEST_USER_PASSWORD, confirmPassword = TEST_USER_PASSWORD, email = email,
         tosAcceptedAt = LocalDateTime.now(), tosVersion = "1.0", privacyAcceptedAt = LocalDateTime.now(),
     )
 
@@ -67,8 +67,8 @@ class AdminControllerTest(
         private fun validRequest(
             username: String = "betauser",
             email: String = "beta@example.com",
-            password: String = "secret123",
-            confirmPassword: String = "secret123",
+            password: String = "secret-password-123",
+            confirmPassword: String = "secret-password-123",
         ) = AdminCreateUserRequest(username, password, confirmPassword, email)
 
         @Test

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, nextTick, ref } from 'vue'
 import FieldError from '../../components/FieldError.vue'
 import PasswordField from '../../components/PasswordField.vue'
+import PasswordRules from '../../components/PasswordRules.vue'
 import LoginPage from '../../pages/login.vue'
 
 const InputTextStub = {
@@ -56,20 +57,28 @@ function mountPage() {
         // shallowMount stubs every child, globally registered ones included. Without opting these
         // back in, the error element would exist with its data-test attribute and render nothing.
         PasswordField: false,
+        PasswordRules: false,
         FieldError: false,
       },
-      components: { PasswordField, FieldError },
+      components: { PasswordField, PasswordRules, FieldError },
     },
   })
 }
 
-async function fillRegistration(wrapper: ReturnType<typeof mountPage>, confirm: string) {
+// Satisfies the published policy (12 characters minimum).
+const COMPLIANT = 'secret-password-1'
+
+async function fillRegistration(
+  wrapper: ReturnType<typeof mountPage>,
+  confirm: string,
+  password: string = COMPLIANT,
+) {
   const vm = wrapper.vm as any
   vm.switchMode('register')
   await nextTick()
   vm.userRegistered.username = 'johan'
   vm.userRegistered.email = 'johan@example.com'
-  vm.userRegistered.password = 'secret-1'
+  vm.userRegistered.password = password
   vm.userRegistered.confirmPassword = confirm
   vm.userRegistered.tosAccepted = true
   vm.userRegistered.privacyAccepted = true
@@ -111,7 +120,7 @@ describe('pages/login registration errors', () => {
     await nextTick()
     expect(wrapper.find('[data-test="error-register-confirm"]').exists()).toBe(true)
 
-    ;(wrapper.vm as any).userRegistered.confirmPassword = 'secret-1'
+    ;(wrapper.vm as any).userRegistered.confirmPassword = COMPLIANT
     await nextTick()
 
     expect(wrapper.find('[data-test="error-register-confirm"]').exists()).toBe(false)
@@ -124,12 +133,65 @@ describe('pages/login registration errors', () => {
       onError(new Error('rejected'))
     })
     const wrapper = mountPage()
-    await fillRegistration(wrapper, 'secret-1')
+    await fillRegistration(wrapper, COMPLIANT)
 
     await (wrapper.vm as any).registerUser()
     await nextTick()
 
     expect(wrapper.find('[data-test="register-form-error"]').text()).toMatch(/inscription/i)
     expect(wrapper.find('[data-test="error-register-confirm"]').exists()).toBe(false)
+  })
+
+  it('shows the password rules under the password field', async () => {
+    const wrapper = mountPage()
+    await fillRegistration(wrapper, COMPLIANT)
+
+    const rules = wrapper.find('[data-test="password-rules"]')
+    expect(rules.text()).toContain('Au moins 12 caractères')
+    expect(rules.text()).toContain('Différent de votre adresse e-mail')
+  })
+
+  it('refuses a password that breaks the rules before sending anything', async () => {
+    const wrapper = mountPage()
+    await fillRegistration(wrapper, 'short-pass', 'short-pass')
+
+    await (wrapper.vm as any).registerUser()
+    await nextTick()
+
+    expect(registerMock).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-test="error-register-password"]').text()).toContain('au moins 12 caractères')
+    expect(wrapper.find('[data-test="rule-too_short"]').classes()).toContain('password-rule--unmet')
+  })
+
+  // The server decides: it can refuse what the checklist allowed, e.g. when the policy failed to load.
+  it('reports a refusal by the password policy on the password field', async () => {
+    registerMock.mockImplementation(async (_payload: unknown, _onSuccess: () => void, onError: (e: unknown) => void) => {
+      onError({
+        isAxiosError: true,
+        response: { status: 400, data: { errorKey: 'domain.user.password.policy_violation', reasons: ['equals_email'] } },
+      })
+    })
+    const wrapper = mountPage()
+    await fillRegistration(wrapper, COMPLIANT)
+
+    await (wrapper.vm as any).registerUser()
+    await nextTick()
+
+    expect(wrapper.find('[data-test="error-register-password"]').text())
+      .toBe('Le mot de passe doit être différent de votre adresse e-mail.')
+    expect(wrapper.find('[data-test="register-form-error"]').exists()).toBe(false)
+  })
+
+  it('clears the password error as soon as the password is edited', async () => {
+    const wrapper = mountPage()
+    await fillRegistration(wrapper, 'short-pass', 'short-pass')
+    await (wrapper.vm as any).registerUser()
+    await nextTick()
+    expect(wrapper.find('[data-test="error-register-password"]').exists()).toBe(true)
+
+    ;(wrapper.vm as any).userRegistered.password = 'short-pass-longer'
+    await nextTick()
+
+    expect(wrapper.find('[data-test="error-register-password"]').exists()).toBe(false)
   })
 })

@@ -36,8 +36,8 @@ function rejectWith(status: number, errorKey: string, detail: string) {
 
 function fill(composable: ReturnType<typeof useChangePassword>) {
   composable.currentPassword.value = 'ancien'
-  composable.newPassword.value = 'nouveau'
-  composable.confirmPassword.value = 'nouveau'
+  composable.newPassword.value = 'nouveau-mot-de-passe'
+  composable.confirmPassword.value = 'nouveau-mot-de-passe'
 }
 
 describe('composables/useChangePassword field level failures', () => {
@@ -147,13 +147,44 @@ describe('composables/useChangePassword field level failures', () => {
   it('reports a local mismatch on the confirmation field without calling the API', async () => {
     const composable = useChangePassword()
     composable.currentPassword.value = 'ancien'
-    composable.newPassword.value = 'nouveau'
+    composable.newPassword.value = 'nouveau-mot-de-passe'
     composable.confirmPassword.value = 'autre'
 
     await composable.changePassword()
 
     expect(composable.fieldErrors.confirmPassword).toMatch(/correspondent pas/i)
     expect(composable.fieldErrors.newPassword).toBeNull()
+    expect(axios.patch).not.toHaveBeenCalled()
+  })
+
+  // PASSWORD_POLICY_VIOLATION -> InvalidRequestException -> 400, with every unmet rule in `reasons`.
+  it('puts a refusal by the password policy on the new password field', async () => {
+    const composable = useChangePassword()
+    fill(composable)
+    vi.mocked(axios.isAxiosError).mockReturnValue(true)
+    vi.mocked(axios.patch).mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: { code: 3005, errorKey: 'domain.user.password.policy_violation', reasons: ['equals_email'] },
+      },
+    })
+
+    await composable.changePassword()
+
+    expect(composable.fieldErrors.newPassword).toBe('Le mot de passe doit être différent de votre adresse e-mail.')
+    expect(toastErrorMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses a new password shorter than the policy without calling the API', async () => {
+    const composable = useChangePassword()
+    composable.currentPassword.value = 'ancien-mot-de-passe'
+    composable.newPassword.value = 'court'
+    composable.confirmPassword.value = 'court'
+
+    await composable.changePassword()
+
+    expect(composable.fieldErrors.newPassword).toBe('Le mot de passe doit contenir au moins 12 caractères.')
     expect(axios.patch).not.toHaveBeenCalled()
   })
 })

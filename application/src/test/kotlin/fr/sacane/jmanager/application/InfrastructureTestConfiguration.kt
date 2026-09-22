@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.http.ProblemDetail
+import org.springframework.http.converter.json.ProblemDetailJacksonMixin
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -65,9 +67,12 @@ class Config {
         module.addDeserializer(Double::class.java, TestStringToDoubleDeserializer())
         module.addDeserializer(Double::class.javaObjectType, TestStringToDoubleDeserializer())
 
+        // Spring's own mapper flattens ProblemDetail properties (code, errorKey…) through this mixin; without
+        // it, error bodies in tests nest them under "properties" and no longer match what production sends.
         return ObjectMapper()
             .findAndRegisterModules()
             .registerModule(JavaTimeModule())
             .registerModule(module)
+            .addMixIn(ProblemDetail::class.java, ProblemDetailJacksonMixin::class.java)
     }
 }

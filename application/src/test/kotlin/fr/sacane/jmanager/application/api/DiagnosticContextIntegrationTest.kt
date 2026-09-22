@@ -55,9 +55,9 @@ class DiagnosticContextIntegrationTest(
                 get("/api/booklet/$bookletId")
             } Then {
                 statusCode(404)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.bookletId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", matchesPattern(UUID_PATTERN))
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("bookletId", matchesPattern(UUID_PATTERN))
+                body("userId", matchesPattern(UUID_PATTERN))
             }
         }
 
@@ -72,7 +72,7 @@ class DiagnosticContextIntegrationTest(
                 get("/api/booklet/$bookletId")
             } Then {
                 statusCode(404)
-                body("properties.bookletId", org.hamcrest.CoreMatchers.equalTo(bookletId))
+                body("bookletId", org.hamcrest.CoreMatchers.equalTo(bookletId))
             }
         }
 
@@ -85,7 +85,7 @@ class DiagnosticContextIntegrationTest(
                 get("/api/booklet/${UUID.randomUUID()}")
             } Then {
                 statusCode(404)
-                body("properties.userId", org.hamcrest.CoreMatchers.equalTo(user!!.id.value.toString()))
+                body("userId", org.hamcrest.CoreMatchers.equalTo(user!!.id.value.toString()))
             }
         }
 
@@ -99,8 +99,8 @@ class DiagnosticContextIntegrationTest(
                 post("/api/user/auth")
             } Then {
                 statusCode(404)
-                body("properties.requestId", matchesPattern(UUID_PATTERN))
-                body("properties.userId", nullValue())
+                body("requestId", matchesPattern(UUID_PATTERN))
+                body("userId", nullValue())
             }
         }
 
@@ -114,7 +114,7 @@ class DiagnosticContextIntegrationTest(
             } Then {
                 statusCode(404)
             } Extract {
-                path<String>("properties.requestId")
+                path<String>("requestId")
             }
 
             val secondId = Given {
@@ -125,7 +125,7 @@ class DiagnosticContextIntegrationTest(
             } Then {
                 statusCode(404)
             } Extract {
-                path<String>("properties.requestId")
+                path<String>("requestId")
             }
 
             assertNotEquals(firstId, secondId)
