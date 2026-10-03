@@ -160,7 +160,12 @@ class UserRepositoryJpaAdapter (
     }
 
     @Transactional
-    override fun updatePassword(userId: UserId, hashedPassword: String, clearMustChange: Boolean): Result<Unit> {
+    override fun updatePassword(
+        userId: UserId,
+        hashedPassword: String,
+        clearMustChange: Boolean,
+        changedAt: LocalDateTime,
+    ): Result<Unit> {
         val id = userId.value ?: return failure(
             ResultState.USER_NOT_FOUND,
             DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.password.user_not_found", "Identifiant utilisateur invalide")
@@ -172,6 +177,7 @@ class UserRepositoryJpaAdapter (
             )
         resource.password = hashedPassword
         if (clearMustChange) resource.mustChangePassword = false
+        resource.credentialsChangedAt = changedAt
         userPostgresRepository.save(resource)
         return success(Unit)
     }

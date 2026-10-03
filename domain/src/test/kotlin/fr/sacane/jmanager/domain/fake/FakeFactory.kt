@@ -28,6 +28,7 @@ import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
 import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
 import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
+import fr.sacane.jmanager.domain.usecase.SessionOpener
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -129,9 +130,10 @@ class FakeFactory {
     val excludeVirtualTransactionService = ExcludeVirtualTransactionService(bookletRepository, inMemoryTrackerRepository)
     val confirmPreviewTransactionService = ConfirmPreviewTransactionService(transactionRepository, bookletRepository, manager)
     val confirmVirtualTransactionService = ConfirmVirtualTransactionService(transactionRepository, bookletRepository, inMemoryTrackerRepository, manager)
-    val loginService = LoginService(userRepository, sessionManager, DefaultHasher, tokenGenerator)
+    private val sessionOpener = SessionOpener(sessionManager, tokenGenerator)
+    val loginService = LoginService(userRepository, DefaultHasher, sessionOpener)
     val logoutService = LogoutService(sessionManager)
-    val refreshSessionService = RefreshSessionService(sessionManager, userRepository, tokenGenerator)
+    val refreshSessionService = RefreshSessionService(sessionManager, userRepository, sessionOpener)
     val fakeNotificationPort = FakeNotificationPort()
     private val fakeSecureTokenGenerator = object : SecureTokenGenerator {
         override fun generate(): String = java.util.UUID.randomUUID().toString()
@@ -150,8 +152,8 @@ class FakeFactory {
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)
-    val changePasswordService = ChangePasswordService(userRepository, DefaultHasher)
-    val forceChangePasswordService = ForceChangePasswordService(userRepository, DefaultHasher)
+    val changePasswordService = ChangePasswordService(userRepository, DefaultHasher, sessionManager, sessionOpener, fixedClock)
+    val forceChangePasswordService = ForceChangePasswordService(userRepository, DefaultHasher, sessionManager, sessionOpener, fixedClock)
     val getUserEmailVerifiedService = GetUserEmailVerifiedService(userRepository)
     private val inMemoryFeatureFlagRepository = InMemoryFeatureFlagRepository()
     val isFeatureEnabledService = IsFeatureEnabledService(inMemoryFeatureFlagRepository)

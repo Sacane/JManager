@@ -5,9 +5,8 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.output.Hasher
-import fr.sacane.jmanager.domain.port.output.SessionManager
-import fr.sacane.jmanager.domain.port.output.TokenGenerator
 import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.usecase.SessionOpener
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
@@ -27,9 +26,8 @@ interface LoginUseCase : CommandHandler<LoginCommand, UserToken> {
 @DomainService
 class LoginService(
     private val userRepository: UserRepository,
-    private val session: SessionManager,
     private val hasher: Hasher,
-    private val tokenGenerator: TokenGenerator
+    private val sessionOpener: SessionOpener,
 ) : LoginUseCase {
 
     companion object {
@@ -42,14 +40,8 @@ class LoginService(
                 ResultState.NOT_FOUND,
                 DomainError(ResultState.NOT_FOUND.code, "domain.user.login.user_not_found", "Aucun compte associé à l'adresse ${command.email}")
             )
-        val user = userWithPassword.user
         if (hasher.verify(command.userPassword, userWithPassword.password)) {
-            val accessToken = tokenGenerator.generateToken(userWithPassword.user.id, userWithPassword.user.username, userWithPassword.roles)
-            session.addSession(user.id, accessToken)
-            accessToken.refreshToken?.let {
-                session.saveRefreshToken(user.id, it, accessToken.refreshTokenLifetime)
-            }
-            return success(user.withToken(accessToken.tokenValue, accessToken.refreshToken))
+            return success(sessionOpener.openFor(userWithPassword.user, userWithPassword.roles))
         }
         log.warn("Authentication failed: invalid credentials for an existing account")
         return failure(

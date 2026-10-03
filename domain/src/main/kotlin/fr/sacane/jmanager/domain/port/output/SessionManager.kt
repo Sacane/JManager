@@ -75,6 +75,13 @@ interface SessionManager{
     fun blacklistRefreshToken(refreshToken: UUID, expiresAt: LocalDateTime)
 
     /**
+     * Revoke every session and refresh token of a user, so none of them can mint a new access token.
+     *
+     * @param userId Domain user identifier.
+     */
+    fun revokeAll(userId: UserId)
+
+    /**
      * Purge expired tokens/sessions from the session store.
      * Implementations may run this periodically.
      */
@@ -161,6 +168,11 @@ class InMemorySessionManager(private val tokenGenerator: TokenGenerator) : Sessi
     override fun blacklistRefreshToken(refreshToken: UUID, expiresAt: LocalDateTime): Unit = synchronized(lock) {
         refreshTokenStore.remove(refreshToken)
         blacklistedRefreshTokens[refreshToken] = expiresAt
+    }
+
+    override fun revokeAll(userId: UserId): Unit = synchronized(lock) {
+        userSession.remove(userId.value)
+        refreshTokenStore.entries.removeIf { (_, refreshSession) -> refreshSession.userId == userId }
     }
 
     override fun purgeExpiredToken() = synchronized(lock) {

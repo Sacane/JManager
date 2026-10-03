@@ -162,7 +162,10 @@ class SessionController(
 
     @PatchMapping(path = ["/password"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun changePassword(@Valid @RequestBody dto: ChangePasswordDTO): ResponseEntity<Void> {
+    fun changePassword(
+        @Valid @RequestBody dto: ChangePasswordDTO,
+        httpResponse: HttpServletResponse,
+    ): ResponseEntity<Void> {
         commandBus.dispatch(
             ChangePasswordCommand(
                 userId = UserId(currentUser.id),
@@ -170,21 +173,30 @@ class SessionController(
                 newPassword = dto.newPassword,
                 confirmPassword = dto.confirmPassword,
             )
-        ).toHttpResponse()
+        ).map { renewSessionCookies(httpResponse, it) }.toHttpResponse()
         return ResponseEntity.noContent().build()
     }
 
     @PostMapping(path = ["/password/force"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun forceChangePassword(@Valid @RequestBody dto: ForceChangePasswordDTO): ResponseEntity<Void> {
+    fun forceChangePassword(
+        @Valid @RequestBody dto: ForceChangePasswordDTO,
+        httpResponse: HttpServletResponse,
+    ): ResponseEntity<Void> {
         commandBus.dispatch(
             ForceChangePasswordCommand(
                 userId = UserId(currentUser.id),
                 newPassword = dto.newPassword,
                 confirmPassword = dto.confirmPassword,
             )
-        ).toHttpResponse()
+        ).map { renewSessionCookies(httpResponse, it) }.toHttpResponse()
         return ResponseEntity.noContent().build()
+    }
+
+    // A password change revokes every session, this device's included: hand it the one opened by the change.
+    private fun renewSessionCookies(httpResponse: HttpServletResponse, session: UserToken) {
+        addAccessCookie(httpResponse, session.token)
+        addRefreshCookie(httpResponse, session.refreshToken)
     }
 
     @PostMapping(path = ["/auth/refresh/{userId}"])

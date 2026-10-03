@@ -150,14 +150,20 @@ interface UserRepository {
     fun findByIdWithEncodedPassword(userId: UserId): UserWithPassword?
 
     /**
-     * Persist a new hashed password for the user.
+     * Persist a new hashed password for the user, with the time it changed, in a single write.
      * When [clearMustChange] is true the mustChangePassword flag is also set to false,
      * marking the mandatory first-login change as fulfilled.
      *
      * @param userId domain UserId
      * @param hashedPassword BCrypt-hashed new password
      * @param clearMustChange whether to clear the mustChangePassword flag
+     * @param changedAt becomes the user's credentialsChangedAt: access tokens issued before it are refused
      * @return success or USER_NOT_FOUND if the user does not exist
      */
-    fun updatePassword(userId: UserId, hashedPassword: String, clearMustChange: Boolean): Result<Unit>
+    fun updatePassword(
+        userId: UserId,
+        hashedPassword: String,
+        clearMustChange: Boolean,
+        changedAt: LocalDateTime,
+    ): Result<Unit>
 }

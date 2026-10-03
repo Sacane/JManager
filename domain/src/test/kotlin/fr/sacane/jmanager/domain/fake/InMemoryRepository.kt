@@ -189,9 +189,15 @@ class InMemoryUserRepository (
         return inMemoryDatabase.users[userId]
     }
 
-    override fun updatePassword(userId: UserId, hashedPassword: String, clearMustChange: Boolean): Result<Unit> {
+    override fun updatePassword(
+        userId: UserId,
+        hashedPassword: String,
+        clearMustChange: Boolean,
+        changedAt: LocalDateTime,
+    ): Result<Unit> {
         val entry = inMemoryDatabase.users[userId] ?: return Result(ResultState.USER_NOT_FOUND)
         if (clearMustChange) entry.user.mustChangePassword = false
+        entry.user.credentialsChangedAt = changedAt
         inMemoryDatabase.users[userId] = UserWithPassword(entry.user, hashedPassword, entry.roles)
         return success(Unit)
     }

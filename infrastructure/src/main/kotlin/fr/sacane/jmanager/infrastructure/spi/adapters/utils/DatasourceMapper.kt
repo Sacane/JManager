@@ -149,6 +149,7 @@ fun UserResource.toModel()
     consent = toConsentRecord(),
     emailVerified = emailVerified,
     mustChangePassword = mustChangePassword,
+    credentialsChangedAt = credentialsChangedAt,
 )
 fun UserResource.toModelWithSimpleBooklets()
         : User = User(
@@ -178,6 +179,7 @@ fun UserResource.toModelWithPasswords() : UserWithPassword =
             subscriptionPlan = subscriptionPlan,
             emailVerified = emailVerified,
             mustChangePassword = mustChangePassword,
+            credentialsChangedAt = credentialsChangedAt,
         ),
         password,
         roles,

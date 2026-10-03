@@ -5,24 +5,30 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.PasswordPolicy
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.UserToken
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.port.output.Hasher
+import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.usecase.SessionOpener
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
+import java.time.Clock
+import java.time.LocalDateTime
 
+/** Changes the password of a signed-in user; succeeds with a fresh session for the device that asked. */
 data class ChangePasswordCommand(
     val userId: UserId,
     val currentPassword: String,
     val newPassword: String,
     val confirmPassword: String,
-) : Command<Unit>
+) : Command<UserToken>
 
 @Port(Side.APPLICATION)
-interface ChangePasswordUseCase : CommandHandler<ChangePasswordCommand, Unit> {
+interface ChangePasswordUseCase : CommandHandler<ChangePasswordCommand, UserToken> {
     override val commandClass get() = ChangePasswordCommand::class
 }
 
@@ -30,9 +36,12 @@ interface ChangePasswordUseCase : CommandHandler<ChangePasswordCommand, Unit> {
 class ChangePasswordService(
     private val userRepository: UserRepository,
     private val hasher: Hasher,
+    private val sessionManager: SessionManager,
+    private val sessionOpener: SessionOpener,
+    private val clock: Clock,
 ) : ChangePasswordUseCase {
 
-    override fun handle(command: ChangePasswordCommand): Result<Unit> {
+    override fun handle(command: ChangePasswordCommand): Result<UserToken> {
         val stored = userRepository.findByIdWithEncodedPassword(command.userId)
             ?: return failure(
                 ResultState.USER_NOT_FOUND,
@@ -53,7 +62,7 @@ class ChangePasswordService(
             )
         }
 
-        PasswordPolicy.violationOf<Unit>(command.newPassword, stored.user.email)?.let { return it }
+        PasswordPolicy.violationOf<UserToken>(command.newPassword, stored.user.email)?.let { return it }
 
         if (hasher.verify(command.newPassword, stored.password)) {
             return failure(
@@ -66,6 +75,10 @@ class ChangePasswordService(
             userId = command.userId,
             hashedPassword = hasher.hash(command.newPassword),
             clearMustChange = false,
-        )
+            changedAt = LocalDateTime.now(clock),
+        ).map {
+            sessionManager.revokeAll(command.userId)
+            sessionOpener.openFor(stored.user, stored.roles)
+        }
     }
 }
