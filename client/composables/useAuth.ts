@@ -60,14 +60,21 @@ export default function useAuth() {
     isAuthenticated.value = true
   }
 
+  // The consent and forced-change gates were answered for the account that is leaving.
+  function forgetAccountGates() {
+    useConsent().clearConsentCache()
+  }
+
   function clearAuthState() {
     user.value = null
     isAuthenticated.value = false
+    forgetAccountGates()
   }
 
   async function login(userAuth: UserAuth, onError: (e: AxiosError) => void = e => console.error(e)) {
     try {
       const response = await axios.post(`${host}user/auth`, userAuth, { withCredentials: true })
+      forgetAccountGates()
       applyAuthenticatedUser(response.data.token)
       isSessionInitialized.value = true
       navigateTo('/')
