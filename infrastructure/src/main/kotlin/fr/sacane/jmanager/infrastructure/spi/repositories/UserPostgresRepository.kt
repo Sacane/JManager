@@ -16,6 +16,10 @@ interface UserPostgresRepository: CrudRepository<UserResource, UUID> {
 
     fun findByEmail(email: String): UserResource?
 
+    // Addresses are stored as typed: no functional index needed at the current table size.
+    @Query("SELECT u FROM UserResource u WHERE u.isEnabled = true AND LOWER(u.email) = LOWER(:email)")
+    fun findAllEnabledByEmailIgnoreCase(email: String): List<UserResource>
+
     @Transactional
     fun deleteByUsername(username: String)
 

@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.models.UserWithPassword
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.infrastructure.api.AuthenticatedUserTest
 import java.time.LocalDateTime
+import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -278,5 +279,25 @@ class UserRepositoryJpaAdapterTest(
         assertThat(userRepositoryJpaAdapter.findUserById(registered.id)!!.credentialsChangedAt).isEqualTo(CHANGED_AT)
         assertThat(userRepositoryJpaAdapter.findByIdWithEncodedPassword(registered.id)!!.user.credentialsChangedAt)
             .isEqualTo(CHANGED_AT)
+    }
+
+    @Test
+    fun `findAllEnabledByEmailIgnoreCase returns enabled users whatever the case and never disabled ones`() {
+        userPostgresRepository.save(UserResource(username = "case-user", email = "Johan@Example.com"))
+        userPostgresRepository.save(UserResource(username = "old-user", email = "old@example.com", isEnabled = false))
+
+        assertThat(userRepositoryJpaAdapter.findAllEnabledByEmailIgnoreCase("johan@example.com").map { it.username })
+            .containsExactly("case-user")
+        assertThat(userRepositoryJpaAdapter.findAllEnabledByEmailIgnoreCase("OLD@example.com")).isEmpty()
+    }
+
+    // The domain refuses an ambiguous address: it must see every variant.
+    @Test
+    fun `findAllEnabledByEmailIgnoreCase returns every case variant of an address`() {
+        userPostgresRepository.save(UserResource(username = "upper-user", email = "Johan@Example.com"))
+        userPostgresRepository.save(UserResource(username = "lower-user", email = "johan@example.com"))
+
+        assertThat(userRepositoryJpaAdapter.findAllEnabledByEmailIgnoreCase("JOHAN@EXAMPLE.COM").map { it.username })
+            .containsExactlyInAnyOrder("upper-user", "lower-user")
     }
 }
