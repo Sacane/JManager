@@ -2,6 +2,7 @@ package fr.sacane.jmanager.domain.fake
 
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.port.output.NotificationPort
+import java.time.LocalDateTime
 
 class FakeNotificationPort : NotificationPort {
 
@@ -33,8 +34,24 @@ class FakeNotificationPort : NotificationPort {
         sentVerificationEmails.add(SentVerificationEmail(email, token))
     }
 
+    data class SentPasswordResetEmail(val email: String, val token: String)
+    data class SentPasswordChangedEmail(val email: String, val changedAt: LocalDateTime)
+
+    val sentPasswordResetEmails: MutableList<SentPasswordResetEmail> = mutableListOf()
+    val sentPasswordChangedEmails: MutableList<SentPasswordChangedEmail> = mutableListOf()
+
+    override fun sendPasswordResetEmail(email: String, rawToken: String) {
+        sentPasswordResetEmails.add(SentPasswordResetEmail(email, rawToken))
+    }
+
+    override fun sendPasswordChangedEmail(email: String, changedAt: LocalDateTime) {
+        sentPasswordChangedEmails.add(SentPasswordChangedEmail(email, changedAt))
+    }
+
     fun clear() {
         sentCombinedEmails.clear()
         sentVerificationEmails.clear()
+        sentPasswordResetEmails.clear()
+        sentPasswordChangedEmails.clear()
     }
 }

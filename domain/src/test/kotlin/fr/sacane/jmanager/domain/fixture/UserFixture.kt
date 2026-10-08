@@ -17,6 +17,7 @@ object UserFixture {
         emailVerified: Boolean = false,
         mustChangePassword: Boolean = false,
         credentialsChangedAt: LocalDateTime? = null,
+        isEnabled: Boolean = true,
     ) = User(
         id = id,
         username = username,
@@ -24,6 +25,7 @@ object UserFixture {
         emailVerified = emailVerified,
         mustChangePassword = mustChangePassword,
         credentialsChangedAt = credentialsChangedAt,
+        isEnabled = isEnabled,
     )
 
     fun aUserWithPassword(

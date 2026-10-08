@@ -32,7 +32,10 @@ enum class ResultState (val code: Int){
     BOOKLET_MAXIMUM_SIZE_REACHED(2004),
 
     EMAIL_VERIFICATION_TOKEN_EXPIRED(6001),
-    EMAIL_ALREADY_VERIFIED(6002);
+    EMAIL_ALREADY_VERIFIED(6002),
+
+    PASSWORD_RESET_TOKEN_INVALID(7001),
+    PASSWORD_RESET_TOKEN_EXPIRED(7002);
 
     fun isSuccess(): Boolean = this == OK
     fun isFailure(): Boolean = !isSuccess()

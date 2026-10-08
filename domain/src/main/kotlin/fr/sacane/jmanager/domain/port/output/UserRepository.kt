@@ -61,6 +61,12 @@ interface UserRepository {
     fun findByEmailWithEncodedPassword(email: String): UserWithPassword?
 
     /**
+     * Every enabled user whose address equals [email] regardless of case. Addresses are stored as
+     * typed, so several accounts may match: the caller decides what an ambiguity means.
+     */
+    fun findAllEnabledByEmailIgnoreCase(email: String): List<User>
+
+    /**
      * Create a user aggregate with encoded password information.
      *
      * @param user user aggregate with encoded password

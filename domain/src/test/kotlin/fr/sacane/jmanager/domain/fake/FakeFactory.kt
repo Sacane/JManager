@@ -28,7 +28,11 @@ import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
 import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
 import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
+import fr.sacane.jmanager.domain.usecase.PasswordResetTokenVerifier
 import fr.sacane.jmanager.domain.usecase.SessionOpener
+import fr.sacane.jmanager.domain.port.input.user.ConfirmPasswordResetService
+import fr.sacane.jmanager.domain.port.input.user.RequestPasswordResetService
+import fr.sacane.jmanager.domain.port.input.user.ValidatePasswordResetTokenService
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -143,6 +147,16 @@ class FakeFactory {
         inMemoryEmailVerificationTokenRepository, fakeSecureTokenGenerator, fixedClock
     )
     val verifyEmailService = VerifyEmailService(inMemoryEmailVerificationTokenRepository, userRepository, fixedClock)
+    private val inMemoryPasswordResetTokenRepository = InMemoryPasswordResetTokenRepository()
+    private val passwordResetTokenVerifier = PasswordResetTokenVerifier(inMemoryPasswordResetTokenRepository, fixedClock)
+    val requestPasswordResetService = RequestPasswordResetService(
+        userRepository, inMemoryPasswordResetTokenRepository, fakeSecureTokenGenerator, fakeNotificationPort, manager, fixedClock,
+    )
+    val validatePasswordResetTokenService = ValidatePasswordResetTokenService(passwordResetTokenVerifier)
+    val confirmPasswordResetService = ConfirmPasswordResetService(
+        passwordResetTokenVerifier, inMemoryPasswordResetTokenRepository, userRepository, DefaultHasher,
+        sessionManager, fakeNotificationPort, manager, fixedClock,
+    )
     val resendVerificationEmailService = ResendVerificationEmailService(userRepository, fakeNotificationPort, emailVerificationIssuer)
     val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort, emailVerificationIssuer)
     val adminCreateUserUseCase: AdminCreateUserUseCase = AdminCreateUserService(userRepository, DefaultHasher, fakeNotificationPort, emailVerificationIssuer)
@@ -201,9 +215,12 @@ class FakeFactory {
         fakeNotificationPort.clear()
         inMemoryFeatureFlagRepository.clear()
         inMemoryEmailVerificationTokenRepository.clear()
+        inMemoryPasswordResetTokenRepository.clear()
     }
 
     fun fakeUserRepository(): InMemoryUserRepository = userRepository
+
+    fun passwordResetTokenState(): InMemoryPasswordResetTokenRepository = inMemoryPasswordResetTokenRepository
 
     fun fakeEmailVerificationTokenRepository(): InMemoryEmailVerificationTokenRepository =
         inMemoryEmailVerificationTokenRepository

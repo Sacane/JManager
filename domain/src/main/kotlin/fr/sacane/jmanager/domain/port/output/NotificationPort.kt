@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.output
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
+import java.time.LocalDateTime
 
 @Port(Side.INFRASTRUCTURE)
 interface NotificationPort {
@@ -32,4 +33,20 @@ interface NotificationPort {
      * @param token the raw verification token to embed in the link
      */
     fun sendVerificationEmail(email: String, token: String)
+
+    /**
+     * Sends the link that lets the user choose a new password.
+     *
+     * @param email the destination address
+     * @param rawToken the raw reset token; the adapter builds the link, never logs it
+     */
+    fun sendPasswordResetEmail(email: String, rawToken: String)
+
+    /**
+     * Tells the user their password was just reset, and what to do if they did not ask for it.
+     *
+     * @param email the destination address
+     * @param changedAt when the password changed, in UTC
+     */
+    fun sendPasswordChangedEmail(email: String, changedAt: LocalDateTime)
 }
