@@ -43,6 +43,10 @@ class AdminControllerTest(
             password = hasher.hash("admin123"),
             roles = setOf(Role.USER, Role.ADMIN),
             email = "admin2@example.com",
+            // An admin who has accepted the terms: one who has not is held back like any other account.
+            tosAcceptedAt = LocalDateTime.of(2026, 1, 1, 10, 0),
+            tosVersion = "1.0",
+            privacyAcceptedAt = LocalDateTime.of(2026, 1, 1, 10, 0),
         )
         loginUseCase.handle(LoginCommand(email = "admin2@example.com", userPassword = "admin123"))
             .onSuccess { loginResult -> adminToken = loginResult.token }

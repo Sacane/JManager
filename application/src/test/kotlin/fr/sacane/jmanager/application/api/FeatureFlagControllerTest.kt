@@ -21,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.cache.CacheManager
 import org.springframework.test.context.TestPropertySource
+import java.time.LocalDateTime
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = ["classpath:application-test.properties"])
@@ -54,6 +55,10 @@ class FeatureFlagControllerTest(
             password = hasher.hash("admin123"),
             roles = setOf(Role.USER, Role.ADMIN),
             email = "admin-flag@example.com",
+            // An admin who has accepted the terms: one who has not is held back like any other account.
+            tosAcceptedAt = LocalDateTime.of(2026, 1, 1, 10, 0),
+            tosVersion = "1.0",
+            privacyAcceptedAt = LocalDateTime.of(2026, 1, 1, 10, 0),
         )
         loginUseCase.handle(LoginCommand(email = "admin-flag@example.com", userPassword = "admin123"))
             .onSuccess { adminToken = it.token }

@@ -67,6 +67,13 @@ class User(
         return issuedAt != null && !issuedAt.isBefore(changedAt.truncatedTo(ChronoUnit.SECONDS))
     }
 
+    /** The first step this account must still complete before using the application, if any. */
+    fun pendingStep(): PendingAccountStep? = when {
+        consent == null -> PendingAccountStep.CONSENT
+        mustChangePassword -> PendingAccountStep.PASSWORD_CHANGE
+        else -> null
+    }
+
     fun hasBooklet(label: String): Boolean = booklets.any { label == it.label }
     override fun toString(): String = "username: $username"
 

@@ -46,12 +46,7 @@ class SecurityConfig(
                 authorize("/actuator/health", permitAll)
                 authorize("/actuator/info", permitAll)
                 // Public API
-                authorize("/api/feature-flags", permitAll)
-                authorize("/api/user/create", permitAll)
-                authorize("/api/user/auth", permitAll)
-                authorize("/api/user/auth/refresh/**", permitAll)
-                authorize("/api/verify-email", permitAll)
-                authorize("/api/password-policy", permitAll)
+                PublicApi.PATHS.forEach { authorize(it, permitAll) }
                 // Protected API
                 authorize("/api/user/me", authenticated)
                 authorize("/api/admin/**", hasRole("ADMIN"))
