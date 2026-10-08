@@ -55,30 +55,30 @@ class LoginRateLimitTest(
 
     @Test
     fun `keys sign-in failures on the client address forwarded by the proxy`() {
-        repeat(MAX_FAILURES) { assertEquals(404, failedSignIn(forwardedFor = CLIENT_A)) }
+        repeat(MAX_FAILURES) { assertEquals(403, failedSignIn(forwardedFor = CLIENT_A)) }
 
         assertEquals(429, failedSignIn(forwardedFor = CLIENT_A))
-        assertEquals(404, failedSignIn(forwardedFor = CLIENT_B))
+        assertEquals(403, failedSignIn(forwardedFor = CLIENT_B))
     }
 
     @Test
     fun `ignores addresses a client prepends to the forwarded header`() {
         repeat(MAX_FAILURES) { attempt ->
-            assertEquals(404, failedSignIn(forwardedFor = "198.51.100.$attempt, $CLIENT_A"))
+            assertEquals(403, failedSignIn(forwardedFor = "198.51.100.$attempt, $CLIENT_A"))
         }
 
         assertEquals(429, failedSignIn(forwardedFor = "198.51.100.99, $CLIENT_A"))
-        assertEquals(404, failedSignIn(forwardedFor = "198.51.100.1, $CLIENT_B"))
+        assertEquals(403, failedSignIn(forwardedFor = "198.51.100.1, $CLIENT_B"))
     }
 
     @Test
     fun `keys sign-in failures on the connection address when no header is forwarded`() {
-        repeat(MAX_FAILURES) { assertEquals(404, failedSignIn()) }
+        repeat(MAX_FAILURES) { assertEquals(403, failedSignIn()) }
 
         assertEquals(429, failedSignIn())
     }
 
-    // An unknown address answers 404 and counts as a failure, without paying for a BCrypt check.
+    // An unknown address fails like a wrong password, and counts as a failure.
     private fun failedSignIn(forwardedFor: String? = null): Int {
         val response: Response = Given {
             port(port)

@@ -34,16 +34,21 @@ class LoginService(
         private val log = LoggerFactory.getLogger(LoginService::class.java)
     }
 
+    // Checked when the address is unknown, so that path costs a hash check too. Computed on first use:
+    // only the first unknown sign-in after start-up takes longer to answer.
+    private val decoyHash: String by lazy { hasher.hash("decoy-password-that-matches-nothing") }
+
+    /** An unknown address and a wrong password fail alike, in answer and in time. */
     override fun handle(command: LoginCommand): Result<UserToken> {
-        val userWithPassword = userRepository.findByEmailWithEncodedPassword(command.email)
-            ?: return failure(
-                ResultState.NOT_FOUND,
-                DomainError(ResultState.NOT_FOUND.code, "domain.user.login.user_not_found", "Aucun compte associé à l'adresse ${command.email}")
-            )
-        if (hasher.verify(command.userPassword, userWithPassword.password)) {
-            return success(sessionOpener.openFor(userWithPassword.user, userWithPassword.roles))
+        val account = userRepository.findByEmailWithEncodedPassword(command.email)
+        val passwordMatches = hasher.verify(command.userPassword, account?.password ?: decoyHash)
+        if (account != null && passwordMatches) {
+            return success(sessionOpener.openFor(account.user, account.roles))
         }
-        log.warn("Authentication failed: invalid credentials for an existing account")
+        log.warn(
+            if (account == null) "Authentication failed: no account for this address"
+            else "Authentication failed: invalid credentials for an existing account"
+        )
         return failure(
             ResultState.USER_UNAUTHORIZED,
             DomainError(ResultState.USER_UNAUTHORIZED.code, "domain.user.login.invalid_credentials", "L'adresse e-mail ou le mot de passe est incorrect")

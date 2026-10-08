@@ -1,5 +1,9 @@
 package fr.sacane.jmanager.domain.port
 
+import java.util.concurrent.atomic.AtomicInteger
+import fr.sacane.jmanager.domain.usecase.SessionOpener
+import fr.sacane.jmanager.domain.port.output.Hasher
+import fr.sacane.jmanager.domain.port.input.user.LoginService
 import fr.sacane.jmanager.domain.act
 import fr.sacane.jmanager.domain.assertFailure
 import fr.sacane.jmanager.domain.assertSuccess
@@ -116,11 +120,35 @@ class UserFeatureTest {
             }
         }
 
+        // The answer must not tell which addresses have an account.
         @Test
-        fun `Login with unknown email returns NOT_FOUND`() {
-            val result = act { loginUseCase.handle(LoginCommand(email = "ghost@example.com", userPassword = "test")) }
+        fun `Login with unknown email fails exactly like a wrong password`() {
+            val user = UserFixture.aUser(username = "John", email = "john.doe@gmail.com")
+            userState.initWith(UserFixture.aUserWithPassword(user = user, password = DefaultHasher.hash("test")))
 
-            then(result) { assertFailure(ResultState.NOT_FOUND) }
+            val unknown = act { loginUseCase.handle(LoginCommand(email = "ghost@example.com", userPassword = "test")) }
+            val wrongPassword = act { loginUseCase.handle(LoginCommand(email = "john.doe@gmail.com", userPassword = "wrong")) }
+
+            then(unknown) { assertFailure(ResultState.USER_UNAUTHORIZED) }
+            assertEquals(wrongPassword.errorInfo, unknown.errorInfo)
+            assertEquals(wrongPassword.message, unknown.message)
+        }
+
+        // Nor how long it took: skipping the slow hash check would give unknown addresses away.
+        @Test
+        fun `Login with unknown email still checks a password hash`() {
+            val verifications = AtomicInteger()
+            val countingHasher = object : Hasher by DefaultHasher {
+                override fun verify(password: String, hash: String): Boolean {
+                    verifications.incrementAndGet()
+                    return DefaultHasher.verify(password, hash)
+                }
+            }
+            val login = LoginService(userState, countingHasher, SessionOpener(factory.sessionManager(), factory.tokenGenerator))
+
+            login.handle(LoginCommand(email = "ghost@example.com", userPassword = "test"))
+
+            assertEquals(1, verifications.get())
         }
 
         @Test

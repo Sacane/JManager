@@ -98,7 +98,7 @@ class DiagnosticContextIntegrationTest(
             } When {
                 post("/api/user/auth")
             } Then {
-                statusCode(404)
+                statusCode(403)
                 body("requestId", matchesPattern(UUID_PATTERN))
                 body("userId", nullValue())
             }
