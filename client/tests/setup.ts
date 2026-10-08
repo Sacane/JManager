@@ -2,6 +2,7 @@ import { config } from '@vue/test-utils'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { computed, onBeforeUnmount, onMounted, onUnmounted, reactive, readonly, ref, watch, watchEffect } from 'vue'
 import FieldError from '../components/FieldError.vue'
+import NewPasswordFields from '../components/NewPasswordFields.vue'
 import PageSkeleton from '../components/PageSkeleton.vue'
 import PasswordRules from '../components/PasswordRules.vue'
 
@@ -184,6 +185,17 @@ vi.stubGlobal('usePasswordPolicy', vi.fn(() => ({
   load: vi.fn().mockResolvedValue(undefined),
 })))
 
+vi.stubGlobal('usePasswordReset', vi.fn(() => ({
+  isRequesting: ref(false),
+  isCheckingLink: ref(false),
+  isConfirming: ref(false),
+  requestReset: vi.fn().mockResolvedValue('sent'),
+  checkLink: vi.fn().mockResolvedValue('valid'),
+  confirmReset: vi.fn().mockResolvedValue({ kind: 'reset' }),
+  rememberEmail: vi.fn(),
+  takeRememberedEmail: vi.fn(() => ''),
+})))
+
 vi.stubGlobal('useChangePassword', vi.fn(() => ({
   currentPassword: ref(''),
   newPassword: ref(''),
@@ -206,6 +218,7 @@ vi.stubGlobal('useChangePassword', vi.fn(() => ({
  */
 config.global.components = {
   FieldError,
+  NewPasswordFields,
   PageSkeleton,
   PasswordRules,
 }
@@ -213,6 +226,7 @@ config.global.components = {
 config.global.stubs = {
   Transition: false,
   FieldError: false,
+  NewPasswordFields: false,
   PageSkeleton: false,
   PasswordRules: false,
 }

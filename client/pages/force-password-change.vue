@@ -32,39 +32,12 @@ const {
       </p>
     </div>
 
-    <div class="flex flex-col gap-4">
-      <div class="flex flex-col gap-1">
-        <label for="new-password" class="text-label">Nouveau mot de passe</label>
-        <PasswordField
-          id="new-password"
-          v-model="newPassword"
-          placeholder="Nouveau mot de passe"
-          :maxlength="100"
-          autocomplete="new-password"
-          aria-label="Nouveau mot de passe"
-          data-test="new-password-input"
-        >
-          <PasswordRules :password="newPassword" :show-errors="!!newPasswordError" />
-        </PasswordField>
-        <FieldError data-test="new-password-error" :message="newPasswordError" />
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <label for="confirm-password" class="text-label">Confirmer le mot de passe</label>
-        <PasswordField
-          id="confirm-password"
-          v-model="confirmPassword"
-          placeholder="Confirmer le mot de passe"
-          :maxlength="100"
-          autocomplete="new-password"
-          aria-label="Confirmer le mot de passe"
-          data-test="confirm-password-input"
-        />
-        <p v-if="passwordError" class="body-sm text-red-500 mt-1" data-test="password-error">
-          {{ passwordError }}
-        </p>
-      </div>
-    </div>
+    <NewPasswordFields
+      v-model:new-password="newPassword"
+      v-model:confirm-password="confirmPassword"
+      :new-password-error="newPasswordError"
+      :confirm-password-error="passwordError"
+    />
 
     <Button
       label="Changer mon mot de passe"

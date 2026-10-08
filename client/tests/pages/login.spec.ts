@@ -362,4 +362,24 @@ describe('pages/login', () => {
       expect(toastSuccessMock).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('forgotten password', () => {
+    it('offers a way to reset the password from the sign-in form', () => {
+      const wrapper = mountPage()
+
+      expect(wrapper.find('a[href="/forgot-password"]').text()).toBe('Mot de passe oublié ?')
+    })
+
+    // Through shared state, never the URL: an address is personal data.
+    it('carries the address typed so far to the reset request', async () => {
+      const rememberEmail = vi.fn()
+      vi.stubGlobal('usePasswordReset', vi.fn(() => ({ rememberEmail })))
+      const wrapper = mountPage()
+      ;(wrapper.vm as unknown as { userAuth: { email: string } }).userAuth.email = 'johan@example.com'
+
+      await wrapper.find('a[href="/forgot-password"]').trigger('click')
+
+      expect(rememberEmail).toHaveBeenCalledWith('johan@example.com')
+    })
+  })
 })

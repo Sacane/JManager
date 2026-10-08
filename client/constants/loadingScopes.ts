@@ -48,4 +48,9 @@ export const LOADING_SCOPES = {
     change: 'password.change',
     forceChange: 'password.forceChange',
   },
+  passwordReset: {
+    request: 'passwordReset.request',
+    check: 'passwordReset.check',
+    confirm: 'passwordReset.confirm',
+  },
 } as const
