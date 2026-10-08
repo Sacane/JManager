@@ -369,7 +369,6 @@ class ApiMappingExtensionsTest {
     fun `Result toHttpResponse should handle all UNAUTHORIZED variants`() {
         val unauthorizedStates = listOf(
             ResultState.USER_NOT_AUTHENTICATED,
-            ResultState.PASSWORD_NOT_MATCH
         )
 
         unauthorizedStates.forEach { state ->
@@ -377,6 +376,16 @@ class ApiMappingExtensionsTest {
             assertThrows<UnauthorizedRequestException> {
                 result.toHttpResponse()
             }
+        }
+    }
+
+    // A retyping mistake is a bad request: a 401 would make the client sign the user out.
+    @Test
+    fun `Result toHttpResponse should map PASSWORD_NOT_MATCH to a bad request`() {
+        val result = failure<String>(ResultState.PASSWORD_NOT_MATCH, "Les mots de passe ne correspondent pas")
+
+        assertThrows<InvalidRequestException> {
+            result.toHttpResponse()
         }
     }
 }

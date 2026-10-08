@@ -72,8 +72,9 @@ class SessionControllerTest(
             }
         }
 
+        // Same answer as a wrong password: the sign-in must not tell which addresses have an account.
         @Test
-        fun `Login with unknown email returns 404`() {
+        fun `Login with unknown email returns 403 with the invalid credentials key`() {
             Given {
                 port(port)
                 header("Content-Type", "application/json")
@@ -81,7 +82,8 @@ class SessionControllerTest(
             } When {
                 post("/api/user/auth")
             } Then {
-                statusCode(404)
+                statusCode(403)
+                body("errorKey", equalTo("domain.user.login.invalid_credentials"))
                 body("requestId", matchesPattern(UUID_PATTERN))
                 body("userId", nullValue())
             }
@@ -489,7 +491,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `POST create with mismatched passwords returns 401 regardless of flag`() {
+        fun `POST create with mismatched passwords returns 400 regardless of flag`() {
             val mismatchPayload = """
                 {
                   "username": "newuser2",
@@ -509,7 +511,8 @@ class SessionControllerTest(
             } When {
                 post("/api/user/create")
             } Then {
-                statusCode(401)
+                statusCode(400)
+                body("errorKey", equalTo("domain.user.register.password_mismatch"))
             }
         }
     }
@@ -550,7 +553,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `PATCH password with mismatched new passwords must return 401`() {
+        fun `PATCH password with mismatched new passwords must return 400`() {
             val body = ChangePasswordDTO(currentPassword = TEST_USER_PASSWORD, newPassword = "new-password-123", confirmPassword = "different")
 
             Given {
@@ -561,7 +564,8 @@ class SessionControllerTest(
             } When {
                 patch("/api/user/password")
             } Then {
-                statusCode(401)
+                statusCode(400)
+                body("errorKey", equalTo("domain.user.password.mismatch"))
             }
         }
 
@@ -624,7 +628,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `POST password force with mismatched passwords must return 401`() {
+        fun `POST password force with mismatched passwords must return 400`() {
             val body = ForceChangePasswordDTO(newPassword = "new-password-123", confirmPassword = "different")
 
             Given {
@@ -635,7 +639,8 @@ class SessionControllerTest(
             } When {
                 post("/api/user/password/force")
             } Then {
-                statusCode(401)
+                statusCode(400)
+                body("errorKey", equalTo("domain.user.password.mismatch"))
             }
         }
 
