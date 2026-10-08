@@ -489,7 +489,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `POST create with mismatched passwords returns 401 regardless of flag`() {
+        fun `POST create with mismatched passwords returns 400 regardless of flag`() {
             val mismatchPayload = """
                 {
                   "username": "newuser2",
@@ -509,7 +509,8 @@ class SessionControllerTest(
             } When {
                 post("/api/user/create")
             } Then {
-                statusCode(401)
+                statusCode(400)
+                body("errorKey", equalTo("domain.user.register.password_mismatch"))
             }
         }
     }
@@ -550,7 +551,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `PATCH password with mismatched new passwords must return 401`() {
+        fun `PATCH password with mismatched new passwords must return 400`() {
             val body = ChangePasswordDTO(currentPassword = TEST_USER_PASSWORD, newPassword = "new-password-123", confirmPassword = "different")
 
             Given {
@@ -561,7 +562,8 @@ class SessionControllerTest(
             } When {
                 patch("/api/user/password")
             } Then {
-                statusCode(401)
+                statusCode(400)
+                body("errorKey", equalTo("domain.user.password.mismatch"))
             }
         }
 
@@ -624,7 +626,7 @@ class SessionControllerTest(
         }
 
         @Test
-        fun `POST password force with mismatched passwords must return 401`() {
+        fun `POST password force with mismatched passwords must return 400`() {
             val body = ForceChangePasswordDTO(newPassword = "new-password-123", confirmPassword = "different")
 
             Given {
@@ -635,7 +637,8 @@ class SessionControllerTest(
             } When {
                 post("/api/user/password/force")
             } Then {
-                statusCode(401)
+                statusCode(400)
+                body("errorKey", equalTo("domain.user.password.mismatch"))
             }
         }
 
