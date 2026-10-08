@@ -72,8 +72,9 @@ class SessionControllerTest(
             }
         }
 
+        // Same answer as a wrong password: the sign-in must not tell which addresses have an account.
         @Test
-        fun `Login with unknown email returns 404`() {
+        fun `Login with unknown email returns 403 with the invalid credentials key`() {
             Given {
                 port(port)
                 header("Content-Type", "application/json")
@@ -81,7 +82,8 @@ class SessionControllerTest(
             } When {
                 post("/api/user/auth")
             } Then {
-                statusCode(404)
+                statusCode(403)
+                body("errorKey", equalTo("domain.user.login.invalid_credentials"))
                 body("requestId", matchesPattern(UUID_PATTERN))
                 body("userId", nullValue())
             }
