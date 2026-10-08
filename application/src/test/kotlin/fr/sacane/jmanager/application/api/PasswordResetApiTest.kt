@@ -91,6 +91,7 @@ class PasswordResetApiTest(
         val token = givenToken()
 
         confirm(token, confirmPassword = "something-else-entirely").then()
+            .statusCode(400)
             .body("errorKey", equalTo("domain.user.password.mismatch"))
         confirm(token, newPassword = "short", confirmPassword = "short").then()
             .statusCode(400)

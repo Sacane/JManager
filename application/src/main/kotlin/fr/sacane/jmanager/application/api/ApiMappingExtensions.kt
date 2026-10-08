@@ -100,6 +100,8 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
     ResultState.TAG_PARENT_IS_SUBTAG,
     ResultState.PASSWORD_UNCHANGED,
+    // A retyping mistake, not a lack of authentication: a 401 would sign the client out.
+    ResultState.PASSWORD_NOT_MATCH,
     ResultState.PASSWORD_RESET_TOKEN_INVALID,
     ResultState.PASSWORD_RESET_TOKEN_EXPIRED,
     ResultState.PASSWORD_POLICY_VIOLATION -> throw InvalidRequestException(
@@ -129,8 +131,7 @@ internal fun <T> Result<T>.toHttpResponse()
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,
     )
-    ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED,
-         ResultState.PASSWORD_NOT_MATCH -> throw UnauthorizedRequestException(
+    ResultState.UNAUTHORIZED, ResultState.USER_NOT_AUTHENTICATED -> throw UnauthorizedRequestException(
         this.errorInfo?.code ?: this.status.code,
         this.errorInfo?.detail ?: this.message,
         this.errorInfo?.key,
