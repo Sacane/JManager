@@ -9,5 +9,6 @@ object PublicApi {
         "/api/user/auth/refresh/**",
         "/api/verify-email",
         "/api/password-policy",
+        "/api/password-reset/**",
     )
 }

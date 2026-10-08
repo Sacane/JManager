@@ -100,6 +100,8 @@ internal fun <T> Result<T>.toHttpResponse()
     ResultState.BOOKLET_MAXIMUM_SIZE_REACHED,
     ResultState.TAG_PARENT_IS_SUBTAG,
     ResultState.PASSWORD_UNCHANGED,
+    ResultState.PASSWORD_RESET_TOKEN_INVALID,
+    ResultState.PASSWORD_RESET_TOKEN_EXPIRED,
     ResultState.PASSWORD_POLICY_VIOLATION -> throw InvalidRequestException(
         this.errorInfo?.code ?: this.status.code,
         this.errorInfo?.detail ?: this.message,

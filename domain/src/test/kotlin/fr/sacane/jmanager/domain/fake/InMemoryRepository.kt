@@ -136,6 +136,11 @@ class InMemoryUserRepository (
         return inMemoryDatabase.users.values.find { it.user.email == email }
     }
 
+    override fun findAllEnabledByEmailIgnoreCase(email: String): List<User> =
+        inMemoryDatabase.users.values
+            .map { it.user }
+            .filter { it.isEnabled && it.email.equals(email, ignoreCase = true) }
+
     override fun create(user: UserWithPassword): User? {
         if(inMemoryDatabase.users.put(user.user.id, UserWithPassword(user.user, user.password)) == null) return null
         return user.user

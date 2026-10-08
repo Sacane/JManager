@@ -24,6 +24,17 @@ internal object EmailTemplates {
         htmlBody = verificationEmailHtml(verificationLink),
     )
 
+    fun passwordReset(resetLink: String): EmailContent = EmailContent(
+        subject = "Réinitialisez votre mot de passe JManager",
+        htmlBody = passwordResetHtml(resetLink),
+    )
+
+    /** @param changedAt when the password changed, already worded for the reader (e.g. "8 octobre 2026 à 11:05") */
+    fun passwordChanged(changedAt: String, forgotPasswordLink: String): EmailContent = EmailContent(
+        subject = "Votre mot de passe JManager a été modifié",
+        htmlBody = passwordChangedHtml(changedAt, forgotPasswordLink),
+    )
+
     fun premiumUser(username: String, verificationLink: String): EmailContent = EmailContent(
         subject = "Bienvenue dans JManager Premium ✨",
         htmlBody = premiumHtml(username, verificationLink),
@@ -47,6 +58,39 @@ internal object EmailTemplates {
         """.trimIndent(),
         ctaLabel = "Vérifier mon adresse e-mail →",
         loginUrl = verificationLink,
+    )
+
+    private fun passwordResetHtml(resetLink: String): String = baseLayout(
+        badge = null,
+        body = """
+            <h2 style="margin:0 0 6px;color:#1a1a2e;font-size:22px;font-weight:700;">Réinitialisez votre mot de passe 🔑</h2>
+            <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">
+              Vous avez demandé à choisir un nouveau mot de passe pour votre compte JManager.
+              Ce lien est valable <strong>30 minutes</strong> et ne peut servir qu'une fois.
+            </p>
+            <p style="margin:0 0 28px;color:#4b5563;font-size:13px;line-height:1.6;">
+              Si vous n'avez rien demandé, vous pouvez ignorer cet e-mail : votre mot de passe reste inchangé.
+            </p>
+        """.trimIndent(),
+        ctaLabel = "Choisir un nouveau mot de passe →",
+        loginUrl = resetLink,
+    )
+
+    private fun passwordChangedHtml(changedAt: String, forgotPasswordLink: String): String = baseLayout(
+        badge = null,
+        body = """
+            <h2 style="margin:0 0 6px;color:#1a1a2e;font-size:22px;font-weight:700;">Votre mot de passe a été modifié</h2>
+            <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.6;">
+              Le mot de passe de votre compte JManager a été réinitialisé le <strong>$changedAt</strong> (heure de Paris).
+              Toutes vos sessions ouvertes ont été fermées.
+            </p>
+            <p style="margin:0 0 28px;color:#4b5563;font-size:13px;line-height:1.6;">
+              Si vous n'êtes pas à l'origine de ce changement, réinitialisez votre mot de passe sans attendre
+              avec le bouton ci-dessous, puis contactez-nous.
+            </p>
+        """.trimIndent(),
+        ctaLabel = "Réinitialiser mon mot de passe →",
+        loginUrl = forgotPasswordLink,
     )
 
     private fun betaTesterHtml(username: String, verificationLink: String): String = baseLayout(

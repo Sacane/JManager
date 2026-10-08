@@ -154,6 +154,10 @@ class UserRepositoryJpaAdapter (
         return success(Unit)
     }
 
+    @Transactional
+    override fun findAllEnabledByEmailIgnoreCase(email: String): List<User> =
+        userPostgresRepository.findAllEnabledByEmailIgnoreCase(email).map { it.toModel() }
+
     override fun findByIdWithEncodedPassword(userId: UserId): UserWithPassword? {
         val id = userId.value ?: return null
         return userPostgresRepository.findById(id).orElse(null)?.toModelWithPasswords()
