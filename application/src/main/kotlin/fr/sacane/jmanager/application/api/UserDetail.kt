@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.application.api
 
+import fr.sacane.jmanager.domain.models.PendingAccountStep
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.User
 import org.springframework.security.core.context.SecurityContextHolder
@@ -9,7 +10,9 @@ data class JmanagerUserAuthDetail(
     val id: UUID,
     val username: String,
     val role: Set<Role>,
-    val token: String
+    val token: String,
+    /** A step the account must complete before using the application, if any. */
+    val pendingStep: PendingAccountStep? = null,
 )
 
 fun User.asAuthDetail(token: String, role: Set<Role> = setOf(Role.USER)): JmanagerUserAuthDetail {
@@ -17,7 +20,8 @@ fun User.asAuthDetail(token: String, role: Set<Role> = setOf(Role.USER)): Jmanag
         id = this.id.value!!,
         username = this.username,
         role = role,
-        token = token
+        token = token,
+        pendingStep = pendingStep(),
     )
 }
 
