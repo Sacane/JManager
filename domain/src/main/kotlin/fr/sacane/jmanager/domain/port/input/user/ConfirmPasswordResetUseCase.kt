@@ -6,19 +6,16 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.port.input.Command
 import fr.sacane.jmanager.domain.port.input.CommandHandler
 import fr.sacane.jmanager.domain.models.PasswordPolicy
-import fr.sacane.jmanager.domain.port.output.Hasher
 import fr.sacane.jmanager.domain.port.output.NotificationPort
-import fr.sacane.jmanager.domain.port.output.SessionManager
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.port.output.repository.PasswordResetTokenRepository
 import fr.sacane.jmanager.domain.port.output.repository.UnitOfWorkTransactionProvider
+import fr.sacane.jmanager.domain.usecase.PasswordRenewal
 import fr.sacane.jmanager.domain.usecase.PasswordResetTokenVerifier
 import fr.sacane.jmanager.domain.utils.DomainError
 import fr.sacane.jmanager.domain.utils.Result
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.domain.utils.failure
-import java.time.Clock
-import java.time.LocalDateTime
 
 data class ConfirmPasswordResetCommand(
     val token: String,
@@ -36,18 +33,16 @@ interface ConfirmPasswordResetUseCase : CommandHandler<ConfirmPasswordResetComma
  * so first; a password the user must retype leaves the link usable.
  *
  * On success, in one transaction: the password, the cleared forced-change flag, the address marked
- * verified (the link proved it) and the token consumed. Every session is then revoked and the user told.
+ * verified (the link proved it) and the token consumed; every session is revoked. The user is then told.
  */
 @DomainService
 class ConfirmPasswordResetService(
     private val verifier: PasswordResetTokenVerifier,
     private val tokenRepository: PasswordResetTokenRepository,
     private val userRepository: UserRepository,
-    private val hasher: Hasher,
-    private val sessionManager: SessionManager,
+    private val passwordRenewal: PasswordRenewal,
     private val notificationPort: NotificationPort,
     private val transaction: UnitOfWorkTransactionProvider,
-    private val clock: Clock,
 ) : ConfirmPasswordResetUseCase {
 
     override fun handle(command: ConfirmPasswordResetCommand): Result<Unit> {
@@ -66,16 +61,14 @@ class ConfirmPasswordResetService(
 
         PasswordPolicy.violationOf<Unit>(command.newPassword, user.email)?.let { return it }
 
-        val changedAt = LocalDateTime.now(clock)
-        val saved = transaction.executeInTransaction(user) {
-            userRepository.updatePassword(it.id, hasher.hash(command.newPassword), clearMustChange = true, changedAt = changedAt)
+        val renewed = transaction.executeInTransaction(user) {
+            passwordRenewal.renew(it.id, command.newPassword, clearMustChange = true)
                 .onSuccess { _ ->
                     if (!it.emailVerified) userRepository.markEmailVerified(it.id)
                     tokenRepository.deleteByUserId(it.id)
                 }
         }
-        return saved.map {
-            sessionManager.revokeAll(user.id)
+        return renewed.map { changedAt ->
             user.email?.let { email -> notificationPort.sendPasswordChangedEmail(email, changedAt) }
         }
     }

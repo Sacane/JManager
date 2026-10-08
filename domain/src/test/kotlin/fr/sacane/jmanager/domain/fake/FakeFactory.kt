@@ -28,6 +28,7 @@ import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
 import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
 import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
+import fr.sacane.jmanager.domain.usecase.PasswordRenewal
 import fr.sacane.jmanager.domain.usecase.PasswordResetTokenVerifier
 import fr.sacane.jmanager.domain.usecase.SessionOpener
 import fr.sacane.jmanager.domain.port.input.user.ConfirmPasswordResetService
@@ -135,6 +136,7 @@ class FakeFactory {
     val confirmPreviewTransactionService = ConfirmPreviewTransactionService(transactionRepository, bookletRepository, manager)
     val confirmVirtualTransactionService = ConfirmVirtualTransactionService(transactionRepository, bookletRepository, inMemoryTrackerRepository, manager)
     private val sessionOpener = SessionOpener(sessionManager, tokenGenerator)
+    private val passwordRenewal = PasswordRenewal(userRepository, DefaultHasher, sessionManager, fixedClock)
     val loginService = LoginService(userRepository, DefaultHasher, sessionOpener)
     val logoutService = LogoutService(sessionManager)
     val refreshSessionService = RefreshSessionService(sessionManager, userRepository, sessionOpener)
@@ -154,8 +156,8 @@ class FakeFactory {
     )
     val validatePasswordResetTokenService = ValidatePasswordResetTokenService(passwordResetTokenVerifier)
     val confirmPasswordResetService = ConfirmPasswordResetService(
-        passwordResetTokenVerifier, inMemoryPasswordResetTokenRepository, userRepository, DefaultHasher,
-        sessionManager, fakeNotificationPort, manager, fixedClock,
+        passwordResetTokenVerifier, inMemoryPasswordResetTokenRepository, userRepository, passwordRenewal,
+        fakeNotificationPort, manager,
     )
     val resendVerificationEmailService = ResendVerificationEmailService(userRepository, fakeNotificationPort, emailVerificationIssuer)
     val registerUserService = RegisterUserService(userRepository, DefaultHasher, fakeNotificationPort, emailVerificationIssuer)
@@ -166,8 +168,8 @@ class FakeFactory {
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)
-    val changePasswordService = ChangePasswordService(userRepository, DefaultHasher, sessionManager, sessionOpener, fixedClock)
-    val forceChangePasswordService = ForceChangePasswordService(userRepository, DefaultHasher, sessionManager, sessionOpener, fixedClock)
+    val changePasswordService = ChangePasswordService(userRepository, DefaultHasher, passwordRenewal, sessionOpener)
+    val forceChangePasswordService = ForceChangePasswordService(userRepository, passwordRenewal, sessionOpener)
     val getUserEmailVerifiedService = GetUserEmailVerifiedService(userRepository)
     private val inMemoryFeatureFlagRepository = InMemoryFeatureFlagRepository()
     val isFeatureEnabledService = IsFeatureEnabledService(inMemoryFeatureFlagRepository)
