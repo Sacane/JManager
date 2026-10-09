@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
 import type { AppTableColumn } from '~/components/AppTable.vue'
+import type { ActiveFilter } from '~/components/booklet/ActiveFiltersBar.vue'
 import type { RegenerableTransactionDTO, TransactionSortDirection, TransactionSortField } from '~/composables/useBooklet'
 import { useConfirm } from 'primevue/useconfirm'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
+import { matchesLabel, normalizedSearch } from '~/utils/labelSearch'
 import { toIsoLocalDate } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
@@ -141,6 +143,46 @@ watch(selectedTagFilter, (val) => {
 watch(selectedSubTagFilter, (val) => {
   if (val) selectedTagFilter.value = ''
 })
+
+// --- Search (UX-22): the displayed period only, by label ---
+const SEARCH_DEBOUNCE_MS = 300
+/** What is typed. */
+const search = ref('')
+/** What is searched: the typed text once typing pauses, trimmed. */
+const appliedSearch = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(search, (typed) => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    appliedSearch.value = normalizedSearch(typed)
+  }, SEARCH_DEBOUNCE_MS)
+})
+// The server searches every page of the period, so the list restarts from its first page.
+// "Tout le mois" already holds the whole period and filters it below without asking again.
+watch(appliedSearch, async () => {
+  currentPage.value = 0
+  await loadBookletData()
+})
+
+const tagLabel = (tagId: string) => tags.value.find(t => t.tagId === tagId)?.label ?? tagId
+const activeFilters = computed<ActiveFilter[]>(() => [
+  ...(appliedSearch.value ? [{ key: 'search', label: `Recherche : « ${appliedSearch.value} »` }] : []),
+  ...(selectedTagFilter.value ? [{ key: 'tag', label: `Tag : ${tagLabel(selectedTagFilter.value)}` }] : []),
+  ...(selectedSubTagFilter.value ? [{ key: 'subTag', label: `Sous-tag : ${tagLabel(selectedSubTagFilter.value)}` }] : []),
+])
+const isFiltered = computed(() => activeFilters.value.length > 0)
+
+function removeFilter(key: string) {
+  if (key === 'search') search.value = ''
+  if (key === 'tag') selectedTagFilter.value = ''
+  if (key === 'subTag') selectedSubTagFilter.value = ''
+}
+
+function clearAllFilters() {
+  search.value = ''
+  selectedTagFilter.value = ''
+  selectedSubTagFilter.value = ''
+}
 const transactionTagIds = computed(() => {
   const ids = new Set<string>()
   for (const t of actualTransactions.value) {
@@ -242,6 +284,10 @@ const filteredTransactions = computed(() => {
 
   if (globalFilter.value === 'preview') {
     result = result.filter(t => t.isPreview)
+  }
+  // Paginated mode received the server's search result already.
+  if (isGlobalMode && appliedSearch.value) {
+    result = result.filter(t => matchesLabel(t.label, appliedSearch.value))
   }
 
   if (selectedParentTagFilter.value !== '') {
@@ -457,7 +503,7 @@ async function loadBookletData() {
 
       const [balances, transactionsRes] = await Promise.all([
         findBalancesByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, activeSort.value.direction, activeSort.value.field),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, activeSort.value.direction, activeSort.value.field, appliedSearch.value),
       ])
 
       bookletData.label = balances.label
@@ -521,7 +567,7 @@ async function loadMoreMobileTransactions() {
     const bookletId = (route.params as any)?.id as string
     const month = numberFromMonth(bookletData.month) as number
     const nextPage = mobileCurrentPage.value + 1
-    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, nextPage, MOBILE_LAZY_PAGE_SIZE, activeSort.value.direction, activeSort.value.field)
+    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, nextPage, MOBILE_LAZY_PAGE_SIZE, activeSort.value.direction, activeSort.value.field, appliedSearch.value)
     const newTransactions = res.transactions
       .map((t, i) => asDisplayableTransaction(t, actualTransactions.value.length + i))
     actualTransactions.value = [...actualTransactions.value, ...newTransactions]
@@ -982,6 +1028,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  if (searchTimer) clearTimeout(searchTimer)
   window.removeEventListener('resize', checkMobile)
   mobileObserver?.disconnect()
 })
@@ -1047,6 +1094,11 @@ onUnmounted(() => {
         @delete="confirmDeleteButton"
       />
 
+      <div class="flex flex-col gap-2 mb-2 md:(flex-row items-center gap-3)">
+        <TransactionSearchField v-model="search" class="md:max-w-80" />
+        <ActiveFiltersBar :filters="activeFilters" @remove="removeFilter" @clear-all="clearAllFilters" />
+      </div>
+
       <div v-if="!isMobile" class="flex-1 min-h-0 flex gap-3" :class="isSidebarMode ? 'flex-row' : 'flex-col'">
         <div class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
           <AppTable
@@ -1068,16 +1120,13 @@ onUnmounted(() => {
           >
             <template #empty>
               <PageSkeleton v-if="isFirstLoadPending" variant="list" :count="8" label="Chargement des transactions…" />
-              <div v-else class="text-center py-12">
-                <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
-                <h3 class="text-xl font-bold text-[var(--text-primary)] mt-4 mb-2">
-                  Aucune transaction
-                </h3>
-                <p class="text-[var(--text-secondary)] mb-4">
-                  Commencez par créer votre première transaction
-                </p>
-                <Button class="btn-primary" icon="pi pi-plus" label="Créer une transaction" @click="openCreationDialog" />
-              </div>
+              <BookletEmptyState
+                v-else
+                :filtered="isFiltered"
+                :search="appliedSearch"
+                @create="openCreationDialog"
+                @clear-filters="clearAllFilters"
+              />
             </template>
 
             <!-- Reloads only: the first load is drawn by the skeleton in the empty slot. -->
@@ -1305,15 +1354,14 @@ onUnmounted(() => {
           <PageSkeleton variant="list" :count="6" label="Chargement des transactions…" />
         </div>
 
-        <div v-else-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center p-10 text-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
-          <i class="pi pi-inbox text-4xl text-[var(--text-muted)]" />
-          <h3 class="text-lg font-bold text-[var(--text-primary)] mt-4 mb-2">
-            Aucune transaction
-          </h3>
-          <p class="text-[var(--text-secondary)] mb-4">
-            Commencez par créer votre première transaction
-          </p>
-          <Button class="btn-primary" icon="pi pi-plus" label="Créer" @click="openCreationDialog" />
+        <div v-else-if="filteredTransactions.length === 0" class="flex-1 flex flex-col items-center justify-center bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--card-border)]">
+          <BookletEmptyState
+            :filtered="isFiltered"
+            :search="appliedSearch"
+            create-label="Créer"
+            @create="openCreationDialog"
+            @clear-filters="clearAllFilters"
+          />
         </div>
 
         <!-- Banking-style grouped by day -->
