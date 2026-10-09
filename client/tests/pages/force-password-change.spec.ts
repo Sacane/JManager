@@ -110,12 +110,12 @@ describe('pages/force-password-change', () => {
 
   it('does not show password error when null', () => {
     const wrapper = mountPage({ passwordError: null })
-    expect(wrapper.find('[data-test="password-error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="confirm-password-error"]').exists()).toBe(false)
   })
 
   it('shows password error message when set', () => {
     const wrapper = mountPage({ passwordError: 'Les mots de passe ne correspondent pas' })
-    expect(wrapper.find('[data-test="password-error"]').text()).toContain('Les mots de passe ne correspondent pas')
+    expect(wrapper.find('[data-test="confirm-password-error"]').text()).toContain('Les mots de passe ne correspondent pas')
   })
 
   it('password inputs have maxlength of 100', () => {

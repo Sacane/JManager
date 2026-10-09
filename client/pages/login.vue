@@ -3,6 +3,7 @@ import { FEATURE_KEYS } from '~/constants/featureKeys'
 import { passwordRuleProblem, policyViolationMessage } from '~/utils/passwordPolicy'
 
 const { login, register } = useAuth()
+const { rememberEmail } = usePasswordReset()
 const toastr = useJToast()
 
 type Mode = 'login' | 'register'
@@ -190,6 +191,14 @@ async function registerUser() {
               :maxlength="100"
               autocomplete="current-password"
             />
+            <!-- The address typed so far follows, through shared state rather than the URL. -->
+            <NuxtLink
+              to="/forgot-password"
+              class="self-end body-sm text-[var(--primary)] hover:underline"
+              @click="rememberEmail(userAuth.email)"
+            >
+              Mot de passe oublié ?
+            </NuxtLink>
           </div>
 
           <div v-if="hasFailedLogin" class="error-message" role="alert">
