@@ -131,7 +131,8 @@ describe('pages/booklet/[id] search', () => {
     expect(transactionsMock.mock.calls.at(-1)?.[4]).toBe(0)
   })
 
-  it('shows the search as an active filter', async () => {
+  // The field already shows the search, with its own cross: a chip would repeat it.
+  it('does not repeat the search as a chip', async () => {
     const wrapper = mountPage()
     await settle()
 
@@ -139,7 +140,22 @@ describe('pages/booklet/[id] search', () => {
     await vi.advanceTimersByTimeAsync(300)
     await settle()
 
-    expect((wrapper.vm as any).activeFilters).toEqual([{ key: 'search', label: 'Recherche : « loyer »' }])
+    const vm = wrapper.vm as any
+    expect(vm.isFiltered).toBe(true)
+    expect(vm.filterChips).toEqual([])
+    expect(vm.canClearAllFilters).toBe(false)
+  })
+
+  it('offers to clear everything once two filters are active', async () => {
+    const wrapper = mountPage()
+    await settle()
+    const vm = wrapper.vm as any
+    await typeSearch(wrapper, 'loyer')
+    await vi.advanceTimersByTimeAsync(300)
+    vm.selectedTagFilter = 'tag-1'
+    await settle()
+
+    expect(vm.canClearAllFilters).toBe(true)
   })
 
   it('clears the search and the tag filters in one action', async () => {
@@ -157,7 +173,7 @@ describe('pages/booklet/[id] search', () => {
 
     expect(vm.search).toBe('')
     expect(vm.selectedTagFilter).toBe('')
-    expect(vm.activeFilters).toEqual([])
+    expect(vm.isFiltered).toBe(false)
     expect(lastSearch()).toBe('')
   })
 
@@ -200,6 +216,6 @@ describe('pages/booklet/[id] search', () => {
     vm.selectedTagFilter = 'tag-logement'
     await settle()
 
-    expect(vm.activeFilters).toEqual([{ key: 'tag', label: 'Tag : Logement' }])
+    expect(vm.filterChips).toEqual([{ key: 'tag', label: 'Tag : Logement' }])
   })
 })

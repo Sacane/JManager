@@ -17,7 +17,7 @@ function clear() {
       autocomplete="off"
       placeholder="Rechercher une transaction…"
       aria-label="Rechercher une transaction par son libellé"
-      class="w-full h-9 pl-9 pr-9 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--primary)]/20"
+      class="w-full h-9 pl-9 pr-9 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[rgba(var(--primary-rgb),0.2)]"
       data-test="transaction-search-input"
     >
     <button

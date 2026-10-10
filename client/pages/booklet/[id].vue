@@ -171,6 +171,10 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...(selectedSubTagFilter.value ? [{ key: 'subTag', label: `Sous-tag : ${tagLabel(selectedSubTagFilter.value)}` }] : []),
 ])
 const isFiltered = computed(() => activeFilters.value.length > 0)
+// The search shows in its own field, with its own cross: only the filters hidden once picked get a chip.
+const filterChips = computed(() => activeFilters.value.filter(filter => filter.key !== 'search'))
+// One filter already has its cross; clearing at once only saves a click when several are active.
+const canClearAllFilters = computed(() => activeFilters.value.length > 1)
 
 function removeFilter(key: string) {
   if (key === 'search') search.value = ''
@@ -1096,7 +1100,12 @@ onUnmounted(() => {
 
       <div class="flex flex-col gap-2 mb-2 md:(flex-row items-center gap-3)">
         <TransactionSearchField v-model="search" class="md:max-w-80" />
-        <ActiveFiltersBar :filters="activeFilters" @remove="removeFilter" @clear-all="clearAllFilters" />
+        <ActiveFiltersBar
+          :filters="filterChips"
+          :show-clear-all="canClearAllFilters"
+          @remove="removeFilter"
+          @clear-all="clearAllFilters"
+        />
       </div>
 
       <div v-if="!isMobile" class="flex-1 min-h-0 flex gap-3" :class="isSidebarMode ? 'flex-row' : 'flex-col'">
