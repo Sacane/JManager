@@ -63,12 +63,12 @@ const emit = defineEmits<{
           </p>
           <div class="flex flex-col gap-2 mb-4">
             <button
-              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50 bg-[var(--primary)]/5 border-[var(--primary)]/20 hover:border-[var(--primary)]/40"
+              class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-50 bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] border-[color-mix(in_srgb,var(--primary)_20%,transparent)] hover:border-[color-mix(in_srgb,var(--primary)_40%,transparent)]"
 
               :disabled="isAnyActionLoading"
               @click="emit('newTransaction'); emit('update:modelValue', false)"
             >
-              <div class="w-8 h-8 rounded-full bg-[var(--primary)]/15 flex items-center justify-center shrink-0">
+              <div class="w-8 h-8 rounded-full bg-[color-mix(in_srgb,var(--primary)_15%,transparent)] flex items-center justify-center shrink-0">
                 <i class="pi pi-plus text-[var(--primary)] text-sm" />
               </div>
               <span class="font-semibold text-sm text-[var(--text-primary)]">Nouvelle transaction</span>

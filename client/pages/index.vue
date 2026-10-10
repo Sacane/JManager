@@ -1899,7 +1899,7 @@ watch(selectedBookletId, () => {
                 Aucun signal particulier sur cette période
               </div>
               <div v-else class="flex flex-col gap-3">
-                <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-[var(--danger-soft)] border-[var(--danger)]/30' : (alert.level === 'warning' ? 'bg-[var(--warning-soft)] border-[var(--warning)]/30' : 'bg-[var(--info-soft)] border-[var(--info)]/30')">
+                <div v-for="alert in dashboardAlerts" :key="alert.key" class="rounded-xl p-3 border" :class="alert.level === 'danger' ? 'bg-[var(--danger-soft)] border-[color-mix(in_srgb,var(--danger)_30%,transparent)]' : (alert.level === 'warning' ? 'bg-[var(--warning-soft)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]' : 'bg-[var(--info-soft)] border-[color-mix(in_srgb,var(--info)_30%,transparent)]')">
                   <p class="text-label-strong m-0">
                     {{ alert.title }}
                   </p>
