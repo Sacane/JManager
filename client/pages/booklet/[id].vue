@@ -1335,7 +1335,7 @@ onUnmounted(() => {
                 <div v-if="tIndex > 0" class="h-px mx-3 bg-black/10 dark:bg-white/20" />
                 <div
                   class="flex items-center gap-3 py-3 px-3 transition-colors active:bg-[var(--card-hover-bg)]"
-                  :class="isSelected(transaction) ? 'bg-[var(--primary)]/5' : transaction.isPreview ? 'bg-amber-500/5' : ''"
+                  :class="isSelected(transaction) ? 'bg-[color-mix(in_srgb,var(--primary)_5%,transparent)]' : transaction.isPreview ? 'bg-amber-500/5' : ''"
                   @click="toggleSelection(transaction)"
                 >
                   <!-- Checkbox -->
@@ -1380,7 +1380,7 @@ onUnmounted(() => {
                       </button>
                       <button
                         v-if="transaction.isPreview"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--success-soft)] border border-[var(--success)]/30 hover:brightness-110 text-[var(--success)] active:scale-95 transition-all disabled:opacity-40"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--success-soft)] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] hover:brightness-110 text-[var(--success)] active:scale-95 transition-all disabled:opacity-40"
                         :disabled="isAnyActionLoading"
                         aria-label="Valider"
                         @click.stop="onConfirmPreview(transaction)"
