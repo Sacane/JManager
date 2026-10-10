@@ -1,3 +1,4 @@
+import { normalizedSearch } from '~/utils/labelSearch'
 import useQuery from './useQuery'
 
 export interface BookletFormatted {
@@ -122,7 +123,9 @@ export default function useBooklet() {
     size: number = 10,
     sortDirection?: TransactionSortDirection,
     sortField?: TransactionSortField,
+    search: string = '',
   ): Promise<BookletTransactionsDTO> {
+    const fragment = normalizedSearch(search)
     return get(`booklet/${bookletId}/transactions`, {
       month,
       year,
@@ -131,6 +134,7 @@ export default function useBooklet() {
       size,
       ...(sortDirection ? { sortDirection } : {}),
       ...(sortField ? { sortField } : {}),
+      ...(fragment ? { search: fragment } : {}),
     })
   }
 
