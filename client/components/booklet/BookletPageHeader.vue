@@ -36,7 +36,7 @@ const emit = defineEmits<{
     <template v-if="isMobile">
       <div class="flex items-start gap-2 px-3 py-2.5">
         <Button
-          class="text-[var(--accent-orange)] !w-8 !h-8 rounded-full grid place-items-center hover:bg-[var(--accent-orange)]/10 shrink-0 mt-0.5"
+          class="text-[var(--accent-orange)] !w-8 !h-8 rounded-full grid place-items-center hover:bg-[color-mix(in_srgb,var(--accent-orange)_10%,transparent)] shrink-0 mt-0.5"
           icon="pi pi-arrow-left"
           text
           rounded
@@ -87,7 +87,7 @@ const emit = defineEmits<{
       <div class="flex items-center justify-between gap-2 flex-wrap py-1 px-3">
         <div class="flex items-center gap-2 min-w-0">
           <Button
-            class="text-[var(--accent-orange)] !w-7 !h-7 rounded-full grid place-items-center hover:bg-[var(--accent-orange)]/10 shrink-0"
+            class="text-[var(--accent-orange)] !w-7 !h-7 rounded-full grid place-items-center hover:bg-[color-mix(in_srgb,var(--accent-orange)_10%,transparent)] shrink-0"
             icon="pi pi-arrow-left"
             text
             rounded
