@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
+import BookletEmptyState from '../../components/booklet/BookletEmptyState.vue'
 import BookletDetailsPage from '../../pages/booklet/[id].vue'
 
 vi.mock('primevue/useconfirm', () => ({ useConfirm: () => ({ require: vi.fn() }) }))
@@ -99,7 +100,10 @@ function mountPage(options: { viewportWidth?: number, transactions?: ReturnType<
         BookletRegenerateTransactionsDialog: true,
         TransactionCreationDialog: true,
         CsvImportDialog: true,
+        // Rendered for real: the empty message under test lives in it.
+        BookletEmptyState: false,
       },
+      components: { BookletEmptyState },
     },
   })
 

@@ -610,6 +610,89 @@ class BookletControllerTest(
     }
 
     @Nested
+    inner class TransactionsSearchTest {
+
+        private fun initBooklet(vararg labels: String): Booklet {
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Searched Booklet", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val firstDayOfMonth = LocalDate.now().withDayOfMonth(1)
+            transactionStateTestAdapter.init(
+                listOf(BookletTransaction(
+                    user!!.id,
+                    booklet.label,
+                    transactions = labels.mapIndexed { index, label ->
+                        Transaction(
+                            id = null, label = label, amount = Amount.fromString("10.00"),
+                            date = firstDayOfMonth.plusDays(index.toLong()), isPreview = false, isIncome = false,
+                        )
+                    },
+                    token = token
+                ))
+            )
+            return bookletStateAdapter.get().first()
+        }
+
+        @Test
+        fun `GET transactions with a search keeps the matching ones regardless of case and accents`() {
+            val savedBooklet = initBooklet("Péage A6", "Courses", "Peage retour")
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("search", "PEAGE")
+                queryParam("sortDirection", "ASCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.label", equalTo(listOf("Péage A6", "Peage retour")))
+                body("totalElements", equalTo(2))
+            }
+        }
+
+        @Test
+        fun `GET transactions with a blank search lists every transaction`() {
+            val savedBooklet = initBooklet("Péage A6", "Courses")
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("search", "  ")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("totalElements", equalTo(2))
+            }
+        }
+
+        // Same bound as a transaction label.
+        @Test
+        fun `GET transactions with a search longer than 100 characters is refused`() {
+            val savedBooklet = initBooklet("Courses")
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("search", "a".repeat(101))
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(400)
+            }
+        }
+    }
+
+    @Nested
     inner class TransactionsSortDirectionTest {
 
         private fun initBookletWithThreeTransactions(): Booklet {

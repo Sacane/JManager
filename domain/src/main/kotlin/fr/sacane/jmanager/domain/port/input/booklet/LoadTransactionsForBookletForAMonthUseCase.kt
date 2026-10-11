@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.Paginator
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
+import fr.sacane.jmanager.domain.models.LabelSearch
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -42,6 +43,8 @@ data class LoadTransactionsForBookletForAMonthQuery(
     val pageSize: Int = 10,
     val sortDirection: TransactionSortDirection? = null,
     val sortField: TransactionSortField? = null,
+    /** A fragment of label to look for in the period; blank or null lists every transaction. */
+    val search: String? = null,
 ) : Query<BookletLoadingResult>, MdcContextProvider {
     override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
 }
@@ -260,8 +263,10 @@ class LoadTransactionsForBookletForAMonthService(
                     tracker.excludedMonths.contains(targetYearMonth)
                 }
 
+            // Searched before paging, so every page of the period is searched; the balances above stay the period's.
+            val search = LabelSearch.of(query.search)
             val allDisplayTransactions = sortForDisplay(
-                transactions.second + combinedPrevisionalTransactions,
+                (transactions.second + combinedPrevisionalTransactions).filter { search.matches(it.label) },
                 query.sortField,
                 query.sortDirection
             )

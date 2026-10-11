@@ -209,6 +209,8 @@ describe('pages/booklet/[id] loading states', () => {
       10,
       'DESCENDING',
       'DATE',
+      // No search typed.
+      '',
     )
   })
 })
@@ -238,6 +240,8 @@ describe('pages/booklet/[id] sorting', () => {
       10,
       'DESCENDING',
       'DATE',
+      // No search typed.
+      '',
     )
   })
 
@@ -265,6 +269,8 @@ describe('pages/booklet/[id] sorting', () => {
       10,
       'ASCENDING',
       'DATE',
+      // No search typed.
+      '',
     )
   })
 
@@ -288,6 +294,8 @@ describe('pages/booklet/[id] sorting', () => {
       10,
       'ASCENDING',
       'LABEL',
+      // No search typed.
+      '',
     )
   })
 
@@ -313,6 +321,8 @@ describe('pages/booklet/[id] sorting', () => {
       10,
       'DESCENDING',
       'EXPENSE',
+      // No search typed.
+      '',
     )
   })
 
@@ -352,6 +362,8 @@ describe('pages/booklet/[id] sorting', () => {
       10,
       'ASCENDING',
       'LABEL',
+      // No search typed.
+      '',
     )
   })
 

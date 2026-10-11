@@ -75,6 +75,28 @@ describe('composables/useBooklet', () => {
       })
     })
 
+    it('forwards the search, trimmed', async () => {
+      get.mockResolvedValue({ transactions: [] })
+
+      await useBooklet().findTransactionsByIdMonthAndYear('booklet-1', 8, 2026, {}, 0, 10, undefined, undefined, '  loyer ')
+
+      expect(get).toHaveBeenCalledWith('booklet/booklet-1/transactions', {
+        month: 8,
+        year: 2026,
+        page: 0,
+        size: 10,
+        search: 'loyer',
+      })
+    })
+
+    it('omits a blank search', async () => {
+      get.mockResolvedValue({ transactions: [] })
+
+      await useBooklet().findTransactionsByIdMonthAndYear('booklet-1', 8, 2026, {}, 0, 10, undefined, undefined, '   ')
+
+      expect(get).toHaveBeenCalledWith('booklet/booklet-1/transactions', { month: 8, year: 2026, page: 0, size: 10 })
+    })
+
     it('omits the sort direction when none is requested', async () => {
       get.mockResolvedValue({ transactions: [] })
 
