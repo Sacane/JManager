@@ -41,4 +41,7 @@ interface TransactionQueryJpaRepository : Repository<TransactionResource, UUID> 
         @Param("from") from: LocalDate,
         @Param("to") to: LocalDate
     ): List<TransactionResource>
+
+    @Query("SELECT MIN(s.date) FROM TransactionResource s WHERE s.booklet.idBooklet IN :bookletIds")
+    fun findEarliestDate(@Param("bookletIds") bookletIds: Collection<UUID>): LocalDate?
 }

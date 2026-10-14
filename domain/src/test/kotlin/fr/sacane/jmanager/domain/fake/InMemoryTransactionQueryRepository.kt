@@ -21,5 +21,10 @@ class InMemoryTransactionQueryRepository(
             .filter { !it.date.isBefore(from) && !it.date.isAfter(to) }
             .sortedWith(compareBy<Transaction> { it.date }.thenBy { it.lastModified })
     }
+
+    override fun findEarliestTransactionDate(bookletIds: Collection<UUID>): LocalDate? =
+        bookletIds.mapNotNull { inMemoryDatabase.findBookletById(it) }
+            .flatMap { it.transactions }
+            .minOfOrNull { it.date }
 }
 

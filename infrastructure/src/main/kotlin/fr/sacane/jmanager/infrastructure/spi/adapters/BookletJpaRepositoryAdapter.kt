@@ -1,6 +1,7 @@
 package fr.sacane.jmanager.infrastructure.spi.adapters
 
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.BookletSummary
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.port.output.repository.BookletRepository
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.BookletMapper
@@ -81,6 +82,9 @@ class BookletJpaRepositoryAdapter(
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
         return userId.value?.let { id -> bookletRepository.findAllBookletsByUserId(id).map { it.toModel() } } ?: emptyList()
     }
+
+    override fun findBookletSummariesForUser(userId: UserId): List<BookletSummary> =
+        userId.value?.let { bookletRepository.findBookletSummariesByUserId(it) } ?: emptyList()
 
     @Transactional
     override fun existsBookletForUser(userId: UserId, bookletId: UUID): Boolean {

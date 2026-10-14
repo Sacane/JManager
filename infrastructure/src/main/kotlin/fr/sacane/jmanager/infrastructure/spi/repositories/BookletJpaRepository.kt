@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.infrastructure.spi.repositories
 
+import fr.sacane.jmanager.domain.models.BookletSummary
 import fr.sacane.jmanager.infrastructure.spi.entity.BookletResource
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -59,6 +60,10 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
     // same booklet produces a cartesian product that duplicates `transactions` bag entries, and a
     // later findByIdWithTransactions call in the same Hibernate session would silently reuse that
     // duplicated collection instead of re-fetching it, causing spurious "not found" failures.
+    // Ids and labels only: no collection is fetched, so nothing can be duplicated or loaded for nothing.
+    @Query("SELECT new fr.sacane.jmanager.domain.models.BookletSummary(b.idBooklet, b.label) FROM BookletResource b WHERE b.owner.idUser = :userId")
+    fun findBookletSummariesByUserId(userId: UUID): List<BookletSummary>
+
     @Query("SELECT COUNT(b) > 0 FROM BookletResource b WHERE b.idBooklet = :bookletId AND b.owner.idUser = :userId")
     fun existsBookletForUser(bookletId: UUID, userId: UUID): Boolean
 }
