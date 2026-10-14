@@ -5,6 +5,7 @@ import FieldError from '../components/FieldError.vue'
 import NewPasswordFields from '../components/NewPasswordFields.vue'
 import PageSkeleton from '../components/PageSkeleton.vue'
 import PasswordRules from '../components/PasswordRules.vue'
+import useDebouncedSearch from '../composables/useDebouncedSearch'
 
 // Prevent happy-dom from throwing when it tries to load image resources via the filesystem.
 // In tests the document base URL is file://, so /favicon.ico resolves to an unresolvable
@@ -183,6 +184,13 @@ vi.stubGlobal('useForceChangePassword', vi.fn(() => ({
 vi.stubGlobal('usePasswordPolicy', vi.fn(() => ({
   policy: ref({ minLength: 12, maxLength: 100, rules: ['too_short', 'too_long', 'equals_email'] }),
   load: vi.fn().mockResolvedValue(undefined),
+})))
+
+// Pure Vue, no Nuxt runtime: the real one, so pages that search debounce as in the app.
+vi.stubGlobal('useDebouncedSearch', useDebouncedSearch)
+
+vi.stubGlobal('useTransactionSearch', vi.fn(() => ({
+  searchTransactions: vi.fn().mockResolvedValue({ from: '', to: '', regulars: [], months: [], hasOlderTransactions: false }),
 })))
 
 vi.stubGlobal('usePasswordReset', vi.fn(() => ({

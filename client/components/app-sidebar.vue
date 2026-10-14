@@ -109,6 +109,16 @@ onUnmounted(() => {
             </NuxtLink>
 
             <NuxtLink
+              to="/search"
+              class="nav-item"
+              active-class="nav-item-active"
+              @click="closeOnNavigateIfMobile()"
+            >
+              <i class="pi pi-search" />
+              <span>Rechercher</span>
+            </NuxtLink>
+
+            <NuxtLink
               to="/tag"
               class="nav-item"
               active-class="nav-item-active"
