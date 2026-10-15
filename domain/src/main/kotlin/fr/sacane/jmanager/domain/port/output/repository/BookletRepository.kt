@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.port.output.repository
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.BookletSummary
 import fr.sacane.jmanager.domain.models.UserId
 import java.util.UUID
 
@@ -103,4 +104,7 @@ interface BookletRepository {
      * @return true if the booklet exists and belongs to the user, false otherwise
      */
     fun existsBookletForUser(userId: UserId, bookletId: UUID): Boolean
+
+    /** The id and label of every booklet of [userId], without loading their transactions. */
+    fun findBookletSummariesForUser(userId: UserId): List<BookletSummary>
 }

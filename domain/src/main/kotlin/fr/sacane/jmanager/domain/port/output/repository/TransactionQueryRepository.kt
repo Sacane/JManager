@@ -23,5 +23,8 @@ interface TransactionQueryRepository {
         from: LocalDate,
         to: LocalDate
     ): List<Transaction>
+
+    /** The date of the oldest transaction of [bookletIds], or null when they hold none. */
+    fun findEarliestTransactionDate(bookletIds: Collection<UUID>): LocalDate?
 }
 
