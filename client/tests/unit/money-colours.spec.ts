@@ -16,6 +16,7 @@ const MONEY_SCREENS = [
   'pages/booklet/[id].vue',
   'pages/booklet/index.vue',
   'pages/regular-transaction/index.vue',
+  'pages/search.vue',
 ]
 
 /** Palette classes that carry a money or status meaning and must go through a token. */

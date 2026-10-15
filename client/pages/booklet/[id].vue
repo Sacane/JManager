@@ -5,7 +5,7 @@ import type { ActiveFilter } from '~/components/booklet/ActiveFiltersBar.vue'
 import type { RegenerableTransactionDTO, TransactionSortDirection, TransactionSortField } from '~/composables/useBooklet'
 import { useConfirm } from 'primevue/useconfirm'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
-import { matchesLabel, normalizedSearch } from '~/utils/labelSearch'
+import { matchesLabel } from '~/utils/labelSearch'
 import { toIsoLocalDate } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
@@ -146,17 +146,8 @@ watch(selectedSubTagFilter, (val) => {
 
 // --- Search (UX-22): the displayed period only, by label ---
 const SEARCH_DEBOUNCE_MS = 300
-/** What is typed. */
-const search = ref('')
-/** What is searched: the typed text once typing pauses, trimmed. */
-const appliedSearch = ref('')
-let searchTimer: ReturnType<typeof setTimeout> | null = null
-watch(search, (typed) => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    appliedSearch.value = normalizedSearch(typed)
-  }, SEARCH_DEBOUNCE_MS)
-})
+/** What is typed, and what is searched: the typed text once typing pauses, trimmed. */
+const { search, appliedSearch } = useDebouncedSearch(SEARCH_DEBOUNCE_MS)
 // The server searches every page of the period, so the list restarts from its first page.
 // "Tout le mois" already holds the whole period and filters it below without asking again.
 watch(appliedSearch, async () => {
@@ -1022,8 +1013,24 @@ function onCsvImportSuccess(result: CsvImportResultDTO) {
   toast.success(`${result.successCount} transactions importées avec succès !`)
 }
 
+/**
+ * The month to open at: the one asked in the URL (?month=8&year=2026, as the global search links to)
+ * when it can be read, the current one otherwise.
+ */
+function requestedPeriod(): { month: number, year: number } {
+  const month = Number(route.query?.month)
+  const year = Number(route.query?.year)
+  if (Number.isInteger(month) && month >= 1 && month <= 12 && Number.isInteger(year) && year >= 1900) {
+    return { month, year }
+  }
+  const today = new Date()
+  return { month: today.getMonth() + 1, year: today.getFullYear() }
+}
+
 onMounted(async () => {
-  bookletData.month = monthFromNumber(new Date().getMonth() + 1) as string
+  const period = requestedPeriod()
+  bookletData.month = monthFromNumber(period.month) as string
+  bookletData.year = period.year
   checkMobile()
   await loadBookletData()
   await retrieveTags()
@@ -1032,7 +1039,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (searchTimer) clearTimeout(searchTimer)
   window.removeEventListener('resize', checkMobile)
   mobileObserver?.disconnect()
 })
