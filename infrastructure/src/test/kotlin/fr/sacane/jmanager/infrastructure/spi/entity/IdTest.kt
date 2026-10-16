@@ -150,9 +150,12 @@ class IdTest {
 
     @Test
     fun `when saving tracker with null id postgres generates id`() {
+        val owner = userRepo.save(UserResource("owner_tracker", "pwd", "owner_tracker@test.com"))
+        val booklet = bookletRepo.save(BookletResource(label = "acc tracker", owner = owner))
+
         val tracker = RegularTransactionTrackerEntity(
             regularTransactionId = "rt-id",
-            bookletId = UUID.randomUUID(),
+            bookletId = booklet.idBooklet!!,
             lastGeneratedDate = LocalDate.now(),
             numberOfGeneratedTransaction = 0,
             id = null
