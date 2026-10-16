@@ -25,5 +25,9 @@ data class RetentionPolicy(
 /**
  * Result returned by [fr.sacane.jmanager.domain.port.input.retention.PurgeExpiredDataUseCase]
  * after a retention run.
+ *
+ * @property deletedCount accounts erased during the run
+ * @property failedCount  accounts that were due for erasure but could not be deleted; they stay
+ *                        candidates and are retried on the next run
  */
-data class PurgeSummary(val deletedCount: Int)
+data class PurgeSummary(val deletedCount: Int, val failedCount: Int = 0)

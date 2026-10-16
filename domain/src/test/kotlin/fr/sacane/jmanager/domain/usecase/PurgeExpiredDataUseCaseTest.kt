@@ -11,6 +11,10 @@ import fr.sacane.jmanager.domain.models.retention.PurgeSummary
 import fr.sacane.jmanager.domain.models.retention.RetentionDays
 import fr.sacane.jmanager.domain.models.retention.RetentionPolicy
 import fr.sacane.jmanager.domain.port.input.retention.PurgeExpiredDataService
+import fr.sacane.jmanager.domain.port.output.UserRepository
+import fr.sacane.jmanager.domain.utils.Result
+import fr.sacane.jmanager.domain.utils.ResultState
+import fr.sacane.jmanager.domain.utils.failure
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
@@ -102,6 +106,23 @@ class PurgeExpiredDataUseCaseTest {
         val summary = service.purge(policy, now)
 
         assertEquals(PurgeSummary(deletedCount = 0), summary)
+    }
+
+    @Test
+    fun `a failed deletion is counted and does not stop the purge of the other accounts`() {
+        val undeletable = unconsentedUserCreatedAt(now.minusDays(40))
+        val deletable = unconsentedUserCreatedAt(now.minusDays(50))
+        db.initUsers(listOf(undeletable, deletable))
+        val failingRepository = object : UserRepository by userRepository {
+            override fun deleteById(userId: UserId): Result<Unit> =
+                if (userId == undeletable.user.id) failure(ResultState.INTERNAL_SERVER_ERROR, "Deletion failed")
+                else userRepository.deleteById(userId)
+        }
+
+        val summary = PurgeExpiredDataService(candidatePort, failingRepository).purge(policy, now)
+
+        assertEquals(PurgeSummary(deletedCount = 1, failedCount = 1), summary)
+        assertNull(db.users[deletable.user.id])
     }
 
     @Test
