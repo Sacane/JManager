@@ -21,6 +21,7 @@ import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModel
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithPasswords
 import fr.sacane.jmanager.infrastructure.spi.adapters.utils.toModelWithSimpleBooklets
 import fr.sacane.jmanager.infrastructure.spi.entity.UserResource
+import fr.sacane.jmanager.infrastructure.spi.repositories.RegularTransactionResourceJpaRepository
 import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.cache.annotation.CacheEvict
@@ -32,6 +33,7 @@ import java.util.logging.Logger
 @Adapter(Side.INFRASTRUCTURE)
 class UserRepositoryJpaAdapter (
     private val userPostgresRepository: UserPostgresRepository,
+    private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
 ) : UserRepository {
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
@@ -193,6 +195,8 @@ class UserRepositoryJpaAdapter (
             DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.delete.user_not_found", "Identifiant utilisateur invalide")
         )
         return if (userPostgresRepository.existsById(id)) {
+            // Through JPA, so each regular transaction takes its recurrence rule with it.
+            regularTransactionRepository.deleteAll(regularTransactionRepository.findAllByOwnerIdWithBooklets(id))
             userPostgresRepository.deleteById(id)
             success(Unit)
         } else {

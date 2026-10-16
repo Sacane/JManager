@@ -28,6 +28,12 @@ describe('pages/privacy', () => {
     expect(wrapper.text()).toContain('5 ans')
   })
 
+  it('promises immediate erasure of account and financial data on account deletion', () => {
+    const text = mountPage().text()
+    expect(text).toContain('Effacement immédiat et définitif')
+    expect(text).not.toContain('1 an (obligations légales)')
+  })
+
   it('mentions the GDPR legal bases', () => {
     const wrapper = mountPage()
     expect(wrapper.text()).toContain('Art. 6')
