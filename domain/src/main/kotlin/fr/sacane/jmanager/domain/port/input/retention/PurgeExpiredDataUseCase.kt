@@ -41,6 +41,6 @@ class PurgeExpiredDataService(
         val deletedCount = candidates.count { userId ->
             userRepository.deleteById(userId).isSuccess()
         }
-        return PurgeSummary(deletedCount)
+        return PurgeSummary(deletedCount = deletedCount, failedCount = candidates.size - deletedCount)
     }
 }

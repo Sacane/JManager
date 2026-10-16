@@ -25,7 +25,9 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.dao.DataAccessException
 import org.springframework.stereotype.Service
+import java.util.logging.Level
 import java.util.logging.Logger
 
 @Service
@@ -193,8 +195,16 @@ class UserRepositoryJpaAdapter (
             DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.delete.user_not_found", "Identifiant utilisateur invalide")
         )
         return if (userPostgresRepository.existsById(id)) {
-            userPostgresRepository.deleteById(id)
-            success(Unit)
+            try {
+                userPostgresRepository.deleteById(id)
+                success(Unit)
+            } catch (e: DataAccessException) {
+                LOGGER.log(Level.SEVERE, "Failed to delete user $id", e)
+                failure(
+                    ResultState.INTERNAL_SERVER_ERROR,
+                    DomainError(ResultState.INTERNAL_SERVER_ERROR.code, "domain.user.delete.failed", "La suppression du compte a échoué")
+                )
+            }
         } else {
             failure(
                 ResultState.USER_NOT_FOUND,
