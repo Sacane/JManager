@@ -313,10 +313,10 @@ definePageMeta({ layout: 'legal' })
             </tr>
             <tr>
               <td class="legal-td">
-                Données de compte et données financières après suppression
+                Données de compte et données financières
               </td>
               <td class="legal-td">
-                1 an (obligations légales)
+                Jusqu'à la suppression du compte. Effacement immédiat et définitif à la suppression.
               </td>
             </tr>
             <tr>
