@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.application.api.booklet
 
+import fr.sacane.jmanager.application.api.requireSearchWithinLabelLength
 import fr.sacane.jmanager.domain.hexadoc.Adapter
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
@@ -46,7 +47,6 @@ class BookletController (
     companion object {
         private val LOGGER: Logger = Logger.getLogger("BookletController")
         private const val MAX_REGULAR_TRANSACTION_ID_LENGTH = 100
-        private const val MAX_SEARCH_LENGTH = 100
     }
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -163,7 +163,7 @@ class BookletController (
         @RequestParam(required = false) search: String?,
     ): ResponseEntity<BookletTransactionsResponse> {
         validateDateRange(startDate, endDate)
-        validateSearch(search)
+        requireSearchWithinLabelLength(search)
         LOGGER.info("Requesting transactions for booklet $bookletID")
         return queryBus
             .dispatch(
@@ -254,16 +254,6 @@ class BookletController (
             throw InvalidRequestException(
                 ResultState.BAD_REQUEST.code,
                 "A regular transaction identifier must not exceed $MAX_REGULAR_TRANSACTION_ID_LENGTH characters"
-            )
-        }
-    }
-
-    // Same bound as a transaction label: a longer fragment can match nothing.
-    private fun validateSearch(search: String?) {
-        if (search != null && search.length > MAX_SEARCH_LENGTH) {
-            throw InvalidRequestException(
-                ResultState.BAD_REQUEST.code,
-                "La recherche ne peut pas dépasser $MAX_SEARCH_LENGTH caractères",
             )
         }
     }
