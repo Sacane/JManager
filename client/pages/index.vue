@@ -21,6 +21,7 @@ import { nextTick, onBeforeUnmount } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import useAuth from '@/composables/useAuth'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
+import useBudgetTargets from '~/composables/useBudgetTargets'
 import useStats from '~/composables/useStats'
 import useUserSettings from '~/composables/useUserSettings'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
@@ -55,7 +56,6 @@ const { getCategoryDistribution, getTrendStats, getPrevisionalTransactions, getD
 const { getSettings: getUserSettings } = useUserSettings()
 const { isScopeLoading, withLoading } = useLoading()
 const toast = useJToast()
-const BUDGET_STORAGE_KEY = 'dashboard.budgetTargetsByBooklet.v1'
 // Persists the selected booklet across navigation (e.g. leaving the dashboard for another
 // page/tab and coming back) so the user doesn't have to reselect it every time.
 const SELECTED_BOOKLET_STORAGE_KEY = 'dashboard.selectedBookletId.v1'
@@ -93,7 +93,9 @@ const hasSeveralBooklets = computed(() => booklets.value.length > 1)
 const selectedPeriod = ref<'month' | 'quarter' | 'year'>('month')
 const periodAnchorDate = ref(new Date())
 const hasInitializedDashboard = ref(false)
-const budgetTargetsByBooklet = ref<Record<string, number>>({})
+// Kept with the account (UX-23): the same target and alerts on every device.
+const budgetTargets = useBudgetTargets()
+const budgetTargetsByBooklet = budgetTargets.targets
 const budgetTargetInput = ref<number | undefined>(undefined)
 const projectionWindowDays = ref(15)
 const bookletMonthlyCycleById = ref<Record<string, { startDay: number, endDay: number | null }>>({})
@@ -1123,36 +1125,6 @@ function cancel() {
   isBookletDialogOpen.value = false
 }
 
-function loadBudgetTargets() {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(BUDGET_STORAGE_KEY)
-    if (!rawValue) {
-      budgetTargetsByBooklet.value = {}
-      return
-    }
-
-    const parsed = JSON.parse(rawValue)
-    if (parsed && typeof parsed === 'object') {
-      budgetTargetsByBooklet.value = parsed as Record<string, number>
-    }
-  } catch (error) {
-    console.error('Unable to load budget targets', error)
-    budgetTargetsByBooklet.value = {}
-  }
-}
-
-function persistBudgetTargets() {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  window.localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(budgetTargetsByBooklet.value))
-}
-
 function syncBudgetInputFromSelection() {
   if (!selectedBookletBudgetKey.value) {
     budgetTargetInput.value = undefined
@@ -1163,26 +1135,14 @@ function syncBudgetInputFromSelection() {
   budgetTargetInput.value = configuredBudget && configuredBudget > 0 ? configuredBudget : undefined
 }
 
-function saveBudgetTarget() {
+async function saveBudgetTarget() {
   if (!selectedBookletBudgetKey.value) {
     return
   }
 
-  const nextValue = Number(budgetTargetInput.value ?? 0)
-  if (Number.isNaN(nextValue) || nextValue <= 0) {
-    const { [selectedBookletBudgetKey.value]: _, ...remainingBudgets } = budgetTargetsByBooklet.value
-    budgetTargetsByBooklet.value = remainingBudgets
-    budgetTargetInput.value = undefined
-    persistBudgetTargets()
-    return
-  }
-
-  budgetTargetsByBooklet.value = {
-    ...budgetTargetsByBooklet.value,
-    [selectedBookletBudgetKey.value]: Number(nextValue.toFixed(2)),
-  }
-  budgetTargetInput.value = Number(nextValue.toFixed(2))
-  persistBudgetTargets()
+  // On failure the previous target stays, and the field shows it again.
+  await budgetTargets.save(selectedBookletBudgetKey.value, budgetTargetInput.value)
+  syncBudgetInputFromSelection()
 }
 
 async function loadDashboardData() {
@@ -1201,6 +1161,8 @@ async function loadDashboardData() {
       tags.value = Array.isArray(tagsData) ? tagsData : []
 
       if (settingsData) {
+        budgetTargets.loadFromSettings(settingsData)
+        await budgetTargets.migrateLegacyTargets(booklets.value.map(booklet => String(booklet.id)))
         projectionWindowDays.value = normalizeProjectionWindowDays(settingsData.projectionWindowDays)
         bookletMonthlyCycleById.value = Object.fromEntries(
           settingsData.bookletCycles.map((cycle: BookletMonthlyCycleDTO) => [
@@ -1223,6 +1185,8 @@ async function loadDashboardData() {
       if (!persistedSelectionIsValid) {
         selectedBookletId.value = orderedBooklets.value[0]?.id ?? null
       }
+      // The targets arrived with the settings: show the one of the selected booklet, changed or not.
+      syncBudgetInputFromSelection()
 
       await loadStatsData()
       hasInitializedDashboard.value = true
@@ -1396,7 +1360,6 @@ function shiftPeriod(direction: -1 | 1) {
 }
 
 onMounted(() => {
-  loadBudgetTargets()
   loadDashboardData()
 })
 
