@@ -1,5 +1,6 @@
 package fr.sacane.jmanager.domain.models
 
+import java.math.BigDecimal
 import java.util.UUID
 
 data class BookletMonthlyCycleSetting(
@@ -7,6 +8,8 @@ data class BookletMonthlyCycleSetting(
     val bookletLabel: String,
     val monthlyPeriodStartDay: Int,
     val monthlyPeriodEndDay: Int?,
+    /** The monthly budget the user aims at for this booklet; null when none is set. */
+    val budgetTarget: BigDecimal? = null,
 )
 
 data class BookletMonthlyCycleUpdate(

@@ -4,6 +4,7 @@ import fr.sacane.jmanager.domain.models.transaction.Transaction
 import fr.sacane.jmanager.domain.models.transaction.regular.RegularTransaction
 import java.time.LocalDate
 import java.time.Month
+import java.math.BigDecimal
 import java.util.UUID
 
 class Booklet(
@@ -16,6 +17,8 @@ class Booklet(
     val id: UUID? = null,
     var monthlyPeriodStartDay: Int = 1,
     var monthlyPeriodEndDay: Int? = null,
+    /** The monthly budget the user aims at for this booklet; null when none is set. */
+    var budgetTarget: BigDecimal? = null,
 ){
 
     init {

@@ -18,6 +18,7 @@ import fr.sacane.jmanager.domain.port.input.user.LogoutCommand
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentCommand
 import fr.sacane.jmanager.domain.port.input.user.RefreshSessionCommand
 import fr.sacane.jmanager.domain.port.input.user.RegisterUserCommand
+import fr.sacane.jmanager.domain.port.input.user.SetBudgetTargetCommand
 import fr.sacane.jmanager.domain.port.input.user.UpdateUserSettingsCommand
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.application.api.InvalidRequestException
@@ -287,6 +288,22 @@ class SessionController(
             .toHttpResponse()
     }
 
+    /** Sets the monthly budget target of one booklet (UX-23); zero removes it, a negative amount is refused. */
+    @PutMapping(path = ["/settings/budget-targets/{bookletId}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun setBudgetTarget(
+        @PathVariable bookletId: String,
+        @RequestBody dto: BudgetTargetDTO,
+    ): ResponseEntity<Void> {
+        commandBus.dispatch(SetBudgetTargetCommand(UserId(currentUser.id), parseBookletId(bookletId), dto.amount)).toHttpResponse()
+        return ResponseEntity.noContent().build()
+    }
+
+    @DeleteMapping(path = ["/settings/budget-targets/{bookletId}"])
+    fun removeBudgetTarget(@PathVariable bookletId: String): ResponseEntity<Void> {
+        commandBus.dispatch(SetBudgetTargetCommand(UserId(currentUser.id), parseBookletId(bookletId), null)).toHttpResponse()
+        return ResponseEntity.noContent().build()
+    }
+
     private fun parseBookletId(bookletId: String): UUID = try {
         UUID.fromString(bookletId)
     } catch (_: IllegalArgumentException) {
@@ -385,6 +402,7 @@ private fun UserSettings.toDTO(): UserSettingsDTO = UserSettingsDTO(
             label = cycle.bookletLabel,
             monthlyPeriodStartDay = cycle.monthlyPeriodStartDay,
             monthlyPeriodEndDay = cycle.monthlyPeriodEndDay,
+            budgetTarget = cycle.budgetTarget,
         )
     },
 )

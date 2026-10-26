@@ -1,5 +1,7 @@
 package fr.sacane.jmanager.application.api.session
 
+import fr.sacane.jmanager.application.configuration.BigDecimalSerializer
+import java.math.BigDecimal
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -71,6 +73,16 @@ data class BookletMonthlyCycleDTO(
     val label: String,
     val monthlyPeriodStartDay: Int,
     val monthlyPeriodEndDay: Int? = null,
+    /** The monthly budget aimed at for this booklet; absent or null when none is set. */
+    @Serializable(with = BigDecimalSerializer::class)
+    val budgetTarget: BigDecimal? = null,
+)
+
+/** A monthly budget target for one booklet; zero removes it. */
+@Serializable
+data class BudgetTargetDTO(
+    @Serializable(with = BigDecimalSerializer::class)
+    val amount: BigDecimal,
 )
 
 @Serializable

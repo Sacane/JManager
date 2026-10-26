@@ -36,6 +36,10 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
     @Query("UPDATE BookletResource b SET b.monthlyPeriodStartDay = :monthlyPeriodStartDay, b.monthlyPeriodEndDay = :monthlyPeriodEndDay WHERE b.idBooklet = :id")
     fun updateMonthlyPeriodStartDay(@Param("id") id: UUID, @Param("monthlyPeriodStartDay") monthlyPeriodStartDay: Int, @Param("monthlyPeriodEndDay") monthlyPeriodEndDay: Int?): Int
 
+    @Modifying
+    @Query("UPDATE BookletResource b SET b.budgetTarget = :budgetTarget WHERE b.idBooklet = :id")
+    fun updateBudgetTarget(@Param("id") id: UUID, @Param("budgetTarget") budgetTarget: BigDecimal?): Int
+
     @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions WHERE b.idBooklet = :id")
     fun findTransactionsById(id: UUID): BookletResource?
 
