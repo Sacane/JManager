@@ -28,6 +28,7 @@ import fr.sacane.jmanager.domain.port.input.user.HasUserConsentedService
 import fr.sacane.jmanager.domain.port.input.user.RecordConsentService
 import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
 import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
+import fr.sacane.jmanager.domain.port.input.transaction.SearchTransactionsService
 import fr.sacane.jmanager.domain.usecase.PasswordRenewal
 import fr.sacane.jmanager.domain.usecase.PasswordResetTokenVerifier
 import fr.sacane.jmanager.domain.usecase.SessionOpener
@@ -132,6 +133,7 @@ class FakeFactory {
     val editTransactionService = EditTransactionService(transactionRepository, bookletRepository, manager)
     val findTransactionByIdService = FindTransactionByIdService(transactionRepository)
     val deleteTransactionsByIdsService = DeleteTransactionsByIdsService(transactionRepository, bookletRepository, manager, inMemoryTrackerRepository)
+    val searchTransactionsService = SearchTransactionsService(bookletRepository, transactionQueryRepository, inMemoryTrackerRepository, fixedClock)
     val excludeVirtualTransactionService = ExcludeVirtualTransactionService(bookletRepository, inMemoryTrackerRepository)
     val confirmPreviewTransactionService = ConfirmPreviewTransactionService(transactionRepository, bookletRepository, manager)
     val confirmVirtualTransactionService = ConfirmVirtualTransactionService(transactionRepository, bookletRepository, inMemoryTrackerRepository, manager)

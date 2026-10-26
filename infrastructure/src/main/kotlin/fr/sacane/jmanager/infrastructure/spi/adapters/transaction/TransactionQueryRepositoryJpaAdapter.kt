@@ -21,5 +21,8 @@ class TransactionQueryRepositoryJpaAdapter(
         return jpaRepository.findByBookletIdAndDateBetween(bookletId, from, to)
             .map { it.toModel() }
     }
+
+    override fun findEarliestTransactionDate(bookletIds: Collection<UUID>): LocalDate? =
+        if (bookletIds.isEmpty()) null else jpaRepository.findEarliestDate(bookletIds)
 }
 

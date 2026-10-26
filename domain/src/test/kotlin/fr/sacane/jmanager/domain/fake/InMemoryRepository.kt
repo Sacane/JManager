@@ -3,6 +3,7 @@ package fr.sacane.jmanager.domain.fake
 import fr.sacane.jmanager.domain.InMemoryDatabase
 import fr.sacane.jmanager.domain.State
 import fr.sacane.jmanager.domain.models.Booklet
+import fr.sacane.jmanager.domain.models.BookletSummary
 import fr.sacane.jmanager.domain.models.Role
 import fr.sacane.jmanager.domain.models.SubscriptionPlan
 import fr.sacane.jmanager.domain.models.Tag
@@ -275,6 +276,9 @@ class InMemoryBookletRepository(
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
         return inMemoryDatabase.bookletsByOwner().find { it.userId == userId }?.booklets ?: emptyList()
     }
+
+    override fun findBookletSummariesForUser(userId: UserId): List<BookletSummary> =
+        findBookletsForUser(userId).map { BookletSummary(it.id!!, it.label) }
 
     override fun existsBookletForUser(userId: UserId, bookletId: UUID): Boolean {
         return findBookletsForUser(userId).any { it.id == bookletId }
