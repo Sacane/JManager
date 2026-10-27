@@ -226,6 +226,9 @@ class FakeFactory {
 
     fun fakeUserRepository(): InMemoryUserRepository = userRepository
 
+    /** The booklet as stored, with every transaction it holds. */
+    fun fakeBookletAt(bookletId: UUID): fr.sacane.jmanager.domain.models.Booklet = inMemoryDatabase.findBookletById(bookletId)!!
+
     fun passwordResetTokenState(): InMemoryPasswordResetTokenRepository = inMemoryPasswordResetTokenRepository
 
     fun fakeEmailVerificationTokenRepository(): InMemoryEmailVerificationTokenRepository =

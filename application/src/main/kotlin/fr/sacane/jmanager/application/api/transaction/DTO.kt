@@ -37,7 +37,10 @@ data class TransactionResult(
     @field:Valid
     val tagDTO: TagDTO? = null,
     val isPreview: Boolean,
-    val regularTransactionId: String? = null
+    val regularTransactionId: String? = null,
+    /** The balance this transaction leaves on its booklet (UX-25); null for a previsional one, or outside a booklet view. */
+    @Serializable(with = BigDecimalSerializer::class)
+    val balanceAfter: BigDecimal? = null,
 )
 
 @Serializable
