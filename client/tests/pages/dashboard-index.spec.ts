@@ -106,9 +106,14 @@ vi.mock('~/composables/useStats', () => ({
   }),
 }))
 
+const setBudgetTargetMock = vi.fn()
+const removeBudgetTargetMock = vi.fn()
+
 vi.mock('~/composables/useUserSettings', () => ({
   default: () => ({
     getSettings: getUserSettingsMock,
+    setBudgetTarget: setBudgetTargetMock,
+    removeBudgetTarget: removeBudgetTargetMock,
   }),
 }))
 
@@ -1180,5 +1185,86 @@ describe('pages/index chart wheel does not hijack the page scroll', () => {
 
     expect((lineStub.props('options') as any).scales.y.max).toBeUndefined()
     expect(wrapper.find('[data-test="reset-line-chart-scale"]').exists()).toBe(false)
+  })
+})
+
+// UX-23: the target lives on the account, so every device shows the same one.
+describe('pages/index budget target', () => {
+  const BOOKLET_ID = '11111111-1111-4111-8111-111111111111'
+  const LEGACY_KEY = 'dashboard.budgetTargetsByBooklet.v1'
+
+  function settingsWithTarget(budgetTarget: string | null) {
+    return {
+      projectionWindowDays: 15,
+      bookletCycles: [{ bookletId: BOOKLET_ID, label: 'Compte principal', monthlyPeriodStartDay: 1, monthlyPeriodEndDay: null, budgetTarget }],
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+    window.localStorage.clear()
+    fetchBookletsMock.mockResolvedValue([{ id: BOOKLET_ID, amount: 1200, label: 'Compte principal', transactions: [] }])
+    getCategoryDistributionMock.mockResolvedValue(categoryCurrent)
+    getTrendStatsMock.mockResolvedValue({ monthlyTrends: [] })
+    getPrevisionalTransactionsMock.mockResolvedValue({
+      transactions: [],
+      groupedByBooklet: {},
+      totalAmount: '0.00',
+      totalIncome: '0.00',
+      totalExpenses: '0.00',
+      regularTransactions: [],
+      nonRegularTransactions: [],
+      totalRegularAmount: '0.00',
+      totalNonRegularAmount: '0.00',
+      startDate: new Date(),
+      endDate: new Date(),
+    })
+    setBudgetTargetMock.mockResolvedValue(undefined)
+    removeBudgetTargetMock.mockResolvedValue(undefined)
+  })
+
+  it('shows the target stored on the account', async () => {
+    getUserSettingsMock.mockResolvedValue(settingsWithTarget('1500.00'))
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect((wrapper.vm as unknown as { budgetTargetInput: number }).budgetTargetInput).toBe(1500)
+  })
+
+  it('stores a new target on the account', async () => {
+    getUserSettingsMock.mockResolvedValue(settingsWithTarget(null))
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+    const vm = wrapper.vm as unknown as { budgetTargetInput: number | undefined, saveBudgetTarget: () => Promise<void> }
+
+    vm.budgetTargetInput = 900
+    await vm.saveBudgetTarget()
+
+    expect(setBudgetTargetMock).toHaveBeenCalledWith(BOOKLET_ID, 900)
+  })
+
+  it('shows the previous target again when saving fails', async () => {
+    getUserSettingsMock.mockResolvedValue(settingsWithTarget('1500.00'))
+    setBudgetTargetMock.mockRejectedValue(new Error('down'))
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+    const vm = wrapper.vm as unknown as { budgetTargetInput: number | undefined, saveBudgetTarget: () => Promise<void> }
+
+    vm.budgetTargetInput = 900
+    await vm.saveBudgetTarget()
+
+    expect(vm.budgetTargetInput).toBe(1500)
+  })
+
+  it('moves a target kept in this browser by a previous version to the account, once', async () => {
+    window.localStorage.setItem(LEGACY_KEY, JSON.stringify({ [BOOKLET_ID]: 700 }))
+    getUserSettingsMock.mockResolvedValue(settingsWithTarget(null))
+    const wrapper = mountDashboardPage()
+    await settleDashboard()
+
+    expect(setBudgetTargetMock).toHaveBeenCalledWith(BOOKLET_ID, 700)
+    expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull()
+    expect((wrapper.vm as unknown as { budgetTargetInput: number }).budgetTargetInput).toBe(700)
   })
 })

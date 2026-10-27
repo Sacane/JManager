@@ -212,6 +212,8 @@ declare global {
     label: string
     monthlyPeriodStartDay: number
     monthlyPeriodEndDay?: number | null
+    /** The monthly budget target of the booklet, as a two-decimal string; absent or null when none. */
+    budgetTarget?: string | null
   }
 
   interface UserSettingsUpdateDTO {
