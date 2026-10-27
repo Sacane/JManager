@@ -47,6 +47,7 @@ class GetUserSettingsService(
                 bookletLabel = booklet.label,
                 monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
                 monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
+                budgetTarget = booklet.budgetTarget,
             )
         }
     )

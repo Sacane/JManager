@@ -132,6 +132,13 @@ class InMemoryDatabase {
         bookletsByTransaction[bookletId!!] = booklet.transactions.toMutableList()
     }
 
+    /** Sets the budget target on the stored booklet, whoever owns it; false when it does not exist. */
+    fun setBudgetTarget(bookletId: UUID, budgetTarget: java.math.BigDecimal?): Boolean {
+        val stored = userByBooklet.values.flatten().find { it.id == bookletId } ?: return false
+        stored.budgetTarget = budgetTarget
+        return true
+    }
+
     fun findBookletById(bookletId: UUID): Booklet? {
 
         var targetBooklet: Booklet? = null
@@ -148,6 +155,7 @@ class InMemoryDatabase {
                     id = bookletId,
                     monthlyPeriodStartDay = found.monthlyPeriodStartDay,
                     monthlyPeriodEndDay = found.monthlyPeriodEndDay,
+                    budgetTarget = found.budgetTarget,
                 )
             }
         }
@@ -175,6 +183,7 @@ class InMemoryDatabase {
                     id = it.id,
                     monthlyPeriodStartDay = it.monthlyPeriodStartDay,
                     monthlyPeriodEndDay = it.monthlyPeriodEndDay,
+                    budgetTarget = it.budgetTarget,
                 )
             )
         }

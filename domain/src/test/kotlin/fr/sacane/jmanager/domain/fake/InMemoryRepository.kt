@@ -116,6 +116,8 @@ class InMemoryUserRepository (
     override fun findUserByIdWithBooklets(userId: UserId): User? {
         val user = inMemoryDatabase.users[userId]?.user ?: return null
         val booklets = inMemoryDatabase.bookletsByOwner().find { it.userId == userId }
+        // The stored user is reused across calls: start from no booklet, or each read adds them again.
+        user.booklets.clear()
         if(booklets != null) {
             for(booklet in booklets.booklets) {
                 user.addBooklet(booklet)
@@ -272,6 +274,9 @@ class InMemoryBookletRepository(
         upsert(booklet)
         return true
     }
+
+    override fun updateBudgetTarget(bookletId: UUID, budgetTarget: java.math.BigDecimal?): Boolean =
+        inMemoryDatabase.setBudgetTarget(bookletId, budgetTarget)
 
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
         return inMemoryDatabase.bookletsByOwner().find { it.userId == userId }?.booklets ?: emptyList()

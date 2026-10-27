@@ -11,6 +11,7 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Repository
+import java.math.BigDecimal
 import java.util.UUID
 
 @Repository
@@ -77,6 +78,11 @@ class BookletJpaRepositoryAdapter(
     override fun updateMonthlyPeriodStartDay(bookletId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int?): Boolean {
         return bookletRepository.updateMonthlyPeriodStartDay(bookletId, monthlyPeriodStartDay, monthlyPeriodEndDay) > 0
     }
+
+    @Transactional
+    @CacheEvict(cacheNames = ["allBooklets"], allEntries = true)
+    override fun updateBudgetTarget(bookletId: UUID, budgetTarget: BigDecimal?): Boolean =
+        bookletRepository.updateBudgetTarget(bookletId, budgetTarget) > 0
 
     @Transactional
     override fun findBookletsForUser(userId: UserId): List<Booklet> {

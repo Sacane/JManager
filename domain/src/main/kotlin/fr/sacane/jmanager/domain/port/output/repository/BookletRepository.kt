@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.BookletSummary
 import fr.sacane.jmanager.domain.models.UserId
+import java.math.BigDecimal
 import java.util.UUID
 
 @Port(Side.INFRASTRUCTURE)
@@ -82,6 +83,13 @@ interface BookletRepository {
      * @return true when one row was updated, false otherwise
      */
     fun updateMonthlyPeriodStartDay(bookletId: UUID, monthlyPeriodStartDay: Int, monthlyPeriodEndDay: Int? = null): Boolean
+
+    /**
+     * Records the monthly budget target of a booklet, or removes it when [budgetTarget] is null.
+     *
+     * @return true when one row was updated, false otherwise
+     */
+    fun updateBudgetTarget(bookletId: UUID, budgetTarget: BigDecimal?): Boolean
 
     /**
      * Retrieve all booklets owned by a user.
