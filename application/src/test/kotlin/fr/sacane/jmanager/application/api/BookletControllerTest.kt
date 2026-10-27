@@ -692,6 +692,46 @@ class BookletControllerTest(
         }
     }
 
+    // UX-25: each confirmed line carries the balance it leaves; amounts travel as strings.
+    @Nested
+    inner class RunningBalanceTest {
+
+        @Test
+        fun `GET transactions gives each confirmed transaction the balance it leaves`() {
+            val booklet = Booklet(id = null, amount = Amount.fromString("1000.00"), label = "Balance Booklet", owner = user)
+            bookletStateAdapter.init(listOf(booklet))
+            val firstDayOfMonth = LocalDate.now().withDayOfMonth(1)
+            transactionStateTestAdapter.init(
+                listOf(BookletTransaction(
+                    user!!.id,
+                    booklet.label,
+                    transactions = listOf(
+                        Transaction(id = null, label = "Salaire", amount = Amount.fromString("2000.00"), date = firstDayOfMonth, isPreview = false, isIncome = true),
+                        Transaction(id = null, label = "Loyer", amount = Amount.fromString("850.00"), date = firstDayOfMonth.plusDays(1), isPreview = true, isIncome = false),
+                        Transaction(id = null, label = "Courses", amount = Amount.fromString("60.00"), date = firstDayOfMonth.plusDays(2), isPreview = false, isIncome = false),
+                    ),
+                    token = token
+                ))
+            )
+            val savedBooklet = bookletStateAdapter.get().first()
+            val currentDate = LocalDate.now()
+
+            Given {
+                port(port)
+                cookie("token", token)
+                queryParam("month", currentDate.monthValue)
+                queryParam("year", currentDate.year)
+                queryParam("sortDirection", "ASCENDING")
+            } When {
+                get("/api/booklet/${savedBooklet.id}/transactions")
+            } Then {
+                statusCode(200)
+                body("transactions.label", equalTo(listOf("Salaire", "Loyer", "Courses")))
+                body("transactions.balanceAfter", equalTo(listOf("3000.00", null, "2940.00")))
+            }
+        }
+    }
+
     @Nested
     inner class TransactionsSortDirectionTest {
 

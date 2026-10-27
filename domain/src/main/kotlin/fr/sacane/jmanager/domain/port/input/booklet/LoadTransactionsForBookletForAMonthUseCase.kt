@@ -27,6 +27,7 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
+import fr.sacane.jmanager.domain.models.Amount
 import java.util.UUID
 import org.slf4j.LoggerFactory
 
@@ -202,6 +203,9 @@ class LoadTransactionsForBookletForAMonthService(
             val filterExcludedMs = Duration.ofNanos(System.nanoTime() - filterExcludedStartNs).toMillis()
 
             val transactions = filteredTransactions.partition { it.isPreview }
+            // What each confirmed transaction of the period leaves (UX-25), computed on the whole period so
+            // that paging, sorting or searching hides lines without changing any of their balances.
+            val balanceAfter = runningBalances(booklet.balanceAt(resolvedRangeStart), transactions.second)
 
             val virtualTransactionsForTargetPeriod = if (hasExplicitDateRange) {
                 if (resolvedRangeEnd.isBefore(today)) {
@@ -287,6 +291,7 @@ class LoadTransactionsForBookletForAMonthService(
                 totalElements = page.totalElements,
                 totalPages = page.totalPages,
                 orderedTransactions = page.content,
+                balanceAfter = balanceAfter,
             )
 
             val totalMs = Duration.ofNanos(System.nanoTime() - totalStartNs).toMillis()
@@ -301,6 +306,20 @@ class LoadTransactionsForBookletForAMonthService(
 
             return@executeInTransaction success(bookletLoadingResult)
         }
+    }
+
+    /**
+     * The balance left by each confirmed transaction, from [opening], in the order of a bank statement: by
+     * date, then by entry within a day. Previsional transactions move no balance and get none.
+     */
+    private fun runningBalances(opening: Amount, confirmed: List<Transaction>): Map<UUID, Amount> {
+        var balance = opening
+        val balances = LinkedHashMap<UUID, Amount>()
+        confirmed.sortedWith(BY_DATE_THEN_LAST_MODIFIED).forEach { transaction ->
+            balance = if (transaction.isIncome) balance + transaction.amount else balance - transaction.amount
+            transaction.id?.let { balances[it] = balance }
+        }
+        return balances
     }
 
     private fun sortForDisplay(
