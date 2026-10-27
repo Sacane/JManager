@@ -116,7 +116,7 @@ class BookletController (
         val report = result.map { res ->
             BookletReport(
                 label = res.label,
-                transactions = res.orderedTransactions.map { it.toDTO() },
+                transactions = res.orderedTransactions.map { it.toDTO().copy(balanceAfter = res.balanceAfter[it.id]?.value) },
                 realSold = res.realSold.value.toString(),
                 previewSold = res.previsionalSold.value.toString()
             )
@@ -183,7 +183,7 @@ class BookletController (
             )
             .map { res ->
                 BookletTransactionsResponse(
-                    transactions = res.orderedTransactions.map { it.toDTO() },
+                    transactions = res.orderedTransactions.map { it.toDTO().copy(balanceAfter = res.balanceAfter[it.id]?.value) },
                     hasRegenerableTransactions = res.hasRegenerableTransactions,
                     pageNumber = res.pageNumber,
                     pageSize = res.pageSize,
