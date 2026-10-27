@@ -38,6 +38,9 @@ class RetentionScheduler(
         )
         val summary = purgeExpiredDataUseCase.purge(policy, LocalDateTime.now())
         log.info("Retention purge completed: ${summary.deletedCount} account(s) deleted")
+        if (summary.failedCount > 0) {
+            log.error("Retention purge could not delete {} account(s); they will be retried on the next run", summary.failedCount)
+        }
 
         val expiredTokens = passwordResetTokenRepository.deleteExpired(LocalDateTime.now(clock))
         log.info("Expired password reset tokens purged: $expiredTokens")

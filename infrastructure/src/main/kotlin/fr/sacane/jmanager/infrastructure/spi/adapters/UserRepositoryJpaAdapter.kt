@@ -26,7 +26,12 @@ import fr.sacane.jmanager.infrastructure.spi.repositories.UserPostgresRepository
 import jakarta.transaction.Transactional
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.dao.DataAccessException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.TransactionException
+import org.springframework.transaction.support.TransactionOperations
+import java.util.UUID
+import java.util.logging.Level
 import java.util.logging.Logger
 
 @Service
@@ -34,6 +39,7 @@ import java.util.logging.Logger
 class UserRepositoryJpaAdapter (
     private val userPostgresRepository: UserPostgresRepository,
     private val regularTransactionRepository: RegularTransactionResourceJpaRepository,
+    private val transactions: TransactionOperations,
 ) : UserRepository {
     companion object{
         private val LOGGER = Logger.getLogger(Companion::class.java.toString())
@@ -188,22 +194,39 @@ class UserRepositoryJpaAdapter (
         return success(Unit)
     }
 
-    @Transactional
     override fun deleteById(userId: UserId): Result<Unit> {
         val id = userId.value ?: return failure(
             ResultState.USER_NOT_FOUND,
             DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.delete.user_not_found", "Identifiant utilisateur invalide")
         )
         return if (userPostgresRepository.existsById(id)) {
-            // Through JPA, so each regular transaction takes its recurrence rule with it.
-            regularTransactionRepository.deleteAll(regularTransactionRepository.findAllByOwnerIdWithBooklets(id))
-            userPostgresRepository.deleteById(id)
-            success(Unit)
+            try {
+                // The transaction commits inside the try: a constraint violation is raised at commit,
+                // and must become a failure here rather than abort the caller (the retention purge).
+                transactions.executeWithoutResult {
+                    // Through JPA, so each regular transaction takes its recurrence rule with it.
+                    regularTransactionRepository.deleteAll(regularTransactionRepository.findAllByOwnerIdWithBooklets(id))
+                    userPostgresRepository.deleteById(id)
+                }
+                success(Unit)
+            } catch (e: DataAccessException) {
+                deletionFailed(id, e)
+            } catch (e: TransactionException) {
+                deletionFailed(id, e)
+            }
         } else {
             failure(
                 ResultState.USER_NOT_FOUND,
                 DomainError(ResultState.USER_NOT_FOUND.code, "domain.user.delete.user_not_found", "Le compte à supprimer est introuvable")
             )
         }
+    }
+
+    private fun deletionFailed(id: UUID, cause: Exception): Result<Unit> {
+        LOGGER.log(Level.SEVERE, "Failed to delete user $id", cause)
+        return failure(
+            ResultState.INTERNAL_SERVER_ERROR,
+            DomainError(ResultState.INTERNAL_SERVER_ERROR.code, "domain.user.delete.failed", "La suppression du compte a échoué")
+        )
     }
 }
