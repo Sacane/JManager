@@ -6,6 +6,7 @@ import type { RegenerableTransactionDTO, TransactionSortDirection, TransactionSo
 import { useConfirm } from 'primevue/useconfirm'
 import { LOADING_SCOPES } from '~/constants/loadingScopes'
 import { matchesLabel } from '~/utils/labelSearch'
+import { formatBalance } from '~/utils/money'
 import { toIsoLocalDate } from '~/utils/monthlyCycleRange'
 import { capitalizeFirst, getTagStyle } from '~/utils/util'
 
@@ -69,6 +70,8 @@ const activeSort = ref<{ field: TransactionSortField, direction: TransactionSort
   direction: 'DESCENDING',
 })
 const sortDirection = computed<TransactionSortDirection>(() => activeSort.value.direction)
+// A running balance only reads right in date order (UX-25): any other order hides it.
+const showsRunningBalance = computed(() => activeSort.value.field === 'DATE')
 
 const SORT_FIELD_BY_COLUMN: Record<string, TransactionSortField> = {
   date: 'DATE',
@@ -969,6 +972,9 @@ const bookletTransactionColumns = computed<AppTableColumn[]>(() => [
   },
   { field: 'expense', header: 'Dépenses', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'expenses', headerClass: 'col-header-center' },
   { field: 'income', header: 'Recettes', sortable: true, style: { minWidth: '120px', textAlign: 'center' }, slotName: 'income', headerClass: 'col-header-center' },
+  ...(showsRunningBalance.value
+    ? [{ header: 'Solde', style: { minWidth: '120px', textAlign: 'center' }, slotName: 'balance', headerClass: 'col-header-center' }]
+    : []),
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px', textAlign: 'center' }, slotName: 'tag', headerSlotName: 'tagFilter' },
   { style: { width: '150px', minWidth: '150px', maxWidth: '150px' }, slotName: 'subTag', headerSlotName: 'subTagFilter' },
   { header: 'Actions', style: { width: '140px', textAlign: 'center' }, slotName: 'actions', headerClass: 'col-header-center' },
@@ -1114,6 +1120,11 @@ onUnmounted(() => {
         />
       </div>
 
+      <p v-if="!showsRunningBalance" class="text-xs text-[var(--text-secondary)] mb-2" data-test="running-balance-hidden">
+        <i class="pi pi-info-circle mr-1" aria-hidden="true" />
+        Le solde de chaque ligne ne s'affiche que lorsque la liste est triée par date.
+      </p>
+
       <div v-if="!isMobile" class="flex-1 min-h-0 flex gap-3" :class="isSidebarMode ? 'flex-row' : 'flex-col'">
         <div class="flex-1 min-h-0 flex flex-col bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--card-border)] shadow-lg">
           <AppTable
@@ -1176,6 +1187,19 @@ onUnmounted(() => {
             <template #body-income="{ data }">
               <span v-if="data.isIncome" class="font-extrabold text-[var(--income)]">{{ data.incomeRepresentation }}</span>
               <span v-else class="text-[var(--text-muted)] font-semibold">-</span>
+            </template>
+
+            <template #body-balance="{ data }">
+              <span
+                v-if="data.balanceAfter != null"
+                class="tabular-nums font-semibold"
+                :class="Number(data.balanceAfter) < 0 ? 'amount-negative' : 'text-[var(--text-primary)]'"
+              >{{ formatBalance(data.balanceAfter) }}</span>
+              <span
+                v-else
+                class="text-[var(--text-muted)] font-semibold"
+                title="Une transaction prévisionnelle ne modifie pas le solde réel"
+              >—</span>
             </template>
 
             <template #header-tagFilter>
@@ -1431,6 +1455,12 @@ onUnmounted(() => {
                     >
                       {{ transaction.isIncome ? '+' : '-' }}{{ Number.parseFloat(transaction?.value?.toString() ?? '0').toFixed(2) }}&nbsp;€
                     </span>
+                    <span
+                      v-if="showsRunningBalance && transaction.balanceAfter != null"
+                      class="text-xs tabular-nums"
+                      :class="Number(transaction.balanceAfter) < 0 ? 'amount-negative' : 'text-[var(--text-secondary)]'"
+                      data-test="mobile-running-balance"
+                    >Solde : {{ formatBalance(transaction.balanceAfter) }}</span>
                     <div class="flex items-center gap-1.5">
                       <button
                         v-if="transaction.id"
