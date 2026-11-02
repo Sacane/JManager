@@ -22,6 +22,8 @@ declare global {
     isPreview: boolean
     bookletAmount: string
     regularTransactionId?: string | null
+    /** The balance this transaction leaves on its booklet (UX-25); null for a previsional one. */
+    balanceAfter?: string | null
   }
 
   interface BookletDTO {
