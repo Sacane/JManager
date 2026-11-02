@@ -479,15 +479,13 @@ async function applyDateRange() {
     endDate: toIsoLocalDate(rangeEnd.value),
   }
   currentPage.value = 0
-  await loadBookletData()
-  if (globalFilter.value !== 'none') await loadGlobalTransactions()
+  await reloadCurrentView()
 }
 
 async function clearDateRange() {
   resetRangeState()
   currentPage.value = 0
-  await loadBookletData()
-  if (globalFilter.value !== 'none') await loadGlobalTransactions()
+  await reloadCurrentView()
 }
 
 async function loadBookletData() {
@@ -553,6 +551,12 @@ async function loadGlobalTransactions() {
       globalFilter.value = 'none'
     }
   }, loadGlobalScope)
+}
+
+/** After a change, refreshes what is on screen without leaving the view the user works in. */
+async function reloadCurrentView() {
+  await loadBookletData()
+  if (globalFilter.value !== 'none') await loadGlobalTransactions()
 }
 
 async function loadMoreMobileTransactions() {
@@ -647,8 +651,7 @@ async function bookTransaction(transaction: TransactionCreationDTO) {
     try {
       await saveTransaction(bookletData.label, transaction)
 
-      exitGlobalMode()
-      await loadBookletData()
+      await reloadCurrentView()
 
       isCreationDialogVisible.value = false
       resetTransaction()
@@ -694,8 +697,7 @@ async function applyEditTransaction(transaction: TransactionCreationDTO) {
         actualTransactions.value[index] = asDisplayableTransaction(result)
       }
 
-      exitGlobalMode()
-      await loadBookletData()
+      await reloadCurrentView()
 
       isEditDialogVisible.value = false
       resetTransaction()
@@ -760,8 +762,7 @@ async function confirmDelete() {
       })
       selectedTransactions.value = []
 
-      exitGlobalMode()
-      await loadBookletData()
+      await reloadCurrentView()
 
       toast.success('Transactions supprimées avec succès')
     } catch (err) {
@@ -827,8 +828,7 @@ async function confirmPreview() {
         )
       }
 
-      exitGlobalMode()
-      await loadBookletData()
+      await reloadCurrentView()
 
       toast.success('Transaction validée avec succès')
     } catch (err) {
@@ -876,8 +876,7 @@ async function confirmRegeneration(regularTransactionIds: string[]) {
         regularTransactionIds,
       )
       isRegenerateDialogVisible.value = false
-      exitGlobalMode()
-      await loadBookletData()
+      await reloadCurrentView()
       if (response.type === 'PREVISIONAL') {
         toast.success('Transactions prévisionnelles régénérées avec succès')
       } else if (response.type === 'VIRTUAL') {
@@ -1007,9 +1006,8 @@ function openCsvExportDialog() {
   })
 }
 
-function onCsvImportSuccess(result: CsvImportResultDTO) {
-  exitGlobalMode()
-  loadBookletData()
+async function onCsvImportSuccess(result: CsvImportResultDTO) {
+  await reloadCurrentView()
   toast.success(`${result.successCount} transactions importées avec succès !`)
 }
 

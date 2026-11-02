@@ -27,6 +27,7 @@ const confirmPreviewTransactionMock = vi.fn().mockResolvedValue({
   bookletAmount: '1400.00',
 })
 const saveTransactionMock = vi.fn()
+const editTransactionMock = vi.fn()
 
 vi.mock('~/composables/useTransaction', () => ({
   default: () => ({
@@ -1369,6 +1370,8 @@ describe('pages/booklet/[id] tagFilterOptions and subTagFilterOptions scoped to 
 })
 
 describe('pages/booklet/[id] global filter', () => {
+  const regenerateInGlobalMock = vi.fn()
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
@@ -1398,6 +1401,15 @@ describe('pages/booklet/[id] global filter', () => {
       findBalancesByIdMonthAndYear: findBalancesByIdMonthAndYearMock,
       findTransactionsByIdMonthAndYear: findTransactionsByIdMonthAndYearMock,
       findByIdMonthAndYear: findByIdMonthAndYearMock,
+      regenerateDeletedPrevisionalTransactions: regenerateInGlobalMock,
+    }))
+    vi.stubGlobal('useTransaction', () => ({
+      deleteTransaction: deleteTransactionMock,
+      confirmPreviewTransaction: confirmPreviewTransactionMock,
+      confirmVirtualTransaction: confirmVirtualTransactionMock,
+      saveTransaction: saveTransactionMock,
+      editTransaction: editTransactionMock,
+      findTransactionById: vi.fn(),
     }))
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue([defaultTag]),
@@ -1595,6 +1607,97 @@ describe('pages/booklet/[id] global filter', () => {
 
     await vm.onGlobalFilterChange('none')
     expect(vm.selectedTransactions).toHaveLength(0)
+  })
+
+  // The whole-period view is where most of the work happens: an action keeps the user in it, and
+  // shows the rows and running balances as the server now computes them.
+  describe('after a change made in the whole-period view', () => {
+    async function inGlobalView(filter: 'all' | 'preview' = 'all') {
+      const wrapper = mountForGlobal([createTransaction({ id: 'before', isPreview: filter === 'preview' })])
+      await flushPromises()
+      await flushPromises()
+      const vm = wrapper.vm as any
+      await vm.onGlobalFilterChange(filter)
+      await flushPromises()
+
+      findByIdMonthAndYearMock.mockClear()
+      findBalancesByIdMonthAndYearMock.mockClear()
+      findByIdMonthAndYearMock.mockResolvedValue({
+        label: 'compte courant',
+        transactions: [createTransaction({ id: 'after', isPreview: filter === 'preview', balanceAfter: '1490.00' } as Partial<TransactionResultDTO>)],
+        realSold: '1490.00',
+        previewSold: '1690.00',
+      })
+      return vm
+    }
+
+    function expectStillInViewAndReloaded(vm: any, filter: 'all' | 'preview' = 'all') {
+      expect(vm.globalFilter).toBe(filter)
+      expect(findByIdMonthAndYearMock).toHaveBeenCalledTimes(1)
+      expect(vm.allTransactions.map((t: { id: string }) => t.id)).toEqual(['after'])
+      // The balances above the list are reloaded too.
+      expect(findBalancesByIdMonthAndYearMock).toHaveBeenCalledTimes(1)
+    }
+
+    it('stays there after a deletion', async () => {
+      const vm = await inGlobalView()
+      deleteTransactionMock.mockResolvedValue({ deletedIds: ['before'], excludedVirtualTransactions: [] })
+      vm.selectedTransactions = [vm.filteredTransactions[0]]
+
+      await vm.confirmDelete()
+      await flushPromises()
+
+      expectStillInViewAndReloaded(vm)
+    })
+
+    it('stays there after an edit', async () => {
+      const vm = await inGlobalView()
+      editTransactionMock.mockResolvedValue(createTransaction({ id: 'before', value: 20 }))
+
+      await vm.applyEditTransaction({ id: 'before', label: 'Transaction', value: 20, isIncome: false, date: new Date('2026-03-20') })
+      await flushPromises()
+
+      expectStillInViewAndReloaded(vm)
+    })
+
+    it('stays there after a creation', async () => {
+      const vm = await inGlobalView()
+      saveTransactionMock.mockResolvedValue(undefined)
+
+      await vm.bookTransaction({ label: 'Nouvelle', value: 5, isIncome: false, date: new Date('2026-03-21') })
+      await flushPromises()
+
+      expectStillInViewAndReloaded(vm)
+    })
+
+    it('stays in the previsional view after confirming a previsional transaction', async () => {
+      const vm = await inGlobalView('preview')
+      vm.onConfirmPreview(vm.filteredTransactions[0])
+
+      await vm.confirmPreview()
+      await flushPromises()
+
+      expectStillInViewAndReloaded(vm, 'preview')
+    })
+
+    it('stays there after a regeneration', async () => {
+      const vm = await inGlobalView()
+      regenerateInGlobalMock.mockResolvedValue({ type: 'PREVISIONAL' })
+
+      await vm.confirmRegeneration(['rt-1'])
+      await flushPromises()
+
+      expectStillInViewAndReloaded(vm)
+    })
+
+    it('stays there after a CSV import', async () => {
+      const vm = await inGlobalView()
+
+      await vm.onCsvImportSuccess({ successCount: 2 })
+      await flushPromises()
+
+      expectStillInViewAndReloaded(vm)
+    })
   })
 })
 
