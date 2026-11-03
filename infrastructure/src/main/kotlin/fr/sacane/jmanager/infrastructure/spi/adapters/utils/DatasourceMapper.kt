@@ -29,6 +29,7 @@ class BookletMapper(
                 monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
                 monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
                 budgetTarget = booklet.budgetTarget,
+                displayPosition = booklet.displayPosition,
                 transactions = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
                 owner = userResource.get(),
                 initialSold = booklet.initialSold.value,
@@ -41,6 +42,7 @@ class BookletMapper(
                 monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
                 monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
                 budgetTarget = booklet.budgetTarget,
+                displayPosition = booklet.displayPosition,
                 transactions = booklet.transactions.map { it.asResource(it.tag?.asResource()) }.toMutableList(),
                 initialSold = booklet.initialSold.value,
                 idBooklet = booklet.id,
@@ -89,6 +91,7 @@ fun Booklet.asResource(): BookletResource {
         monthlyPeriodStartDay = monthlyPeriodStartDay,
         monthlyPeriodEndDay = monthlyPeriodEndDay,
         budgetTarget = budgetTarget,
+        displayPosition = displayPosition,
         transactions = transactions,
         initialSold = this.initialSold.value,
     )
@@ -131,6 +134,7 @@ fun BookletResource.toModel(): Booklet
     monthlyPeriodStartDay = this.monthlyPeriodStartDay,
     monthlyPeriodEndDay = this.monthlyPeriodEndDay,
     budgetTarget = this.budgetTarget,
+    displayPosition = this.displayPosition,
 )
 
 
@@ -172,6 +176,7 @@ fun BookletResource.toSimpleModel(): Booklet = Booklet(
     monthlyPeriodStartDay = this.monthlyPeriodStartDay,
     monthlyPeriodEndDay = this.monthlyPeriodEndDay,
     budgetTarget = this.budgetTarget,
+    displayPosition = this.displayPosition,
 )
 
 fun UserResource.toModelWithPasswords() : UserWithPassword =

@@ -278,6 +278,9 @@ class InMemoryBookletRepository(
     override fun updateBudgetTarget(bookletId: UUID, budgetTarget: java.math.BigDecimal?): Boolean =
         inMemoryDatabase.setBudgetTarget(bookletId, budgetTarget)
 
+    override fun updateDisplayPositions(orderedBookletIds: List<UUID>): Boolean =
+        inMemoryDatabase.setDisplayPositions(orderedBookletIds)
+
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
         return inMemoryDatabase.bookletsByOwner().find { it.userId == userId }?.booklets ?: emptyList()
     }

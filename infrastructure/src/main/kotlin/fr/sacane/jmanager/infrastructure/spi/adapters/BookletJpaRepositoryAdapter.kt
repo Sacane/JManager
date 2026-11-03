@@ -85,6 +85,11 @@ class BookletJpaRepositoryAdapter(
         bookletRepository.updateBudgetTarget(bookletId, budgetTarget) > 0
 
     @Transactional
+    @CacheEvict(cacheNames = ["allBooklets"], allEntries = true)
+    override fun updateDisplayPositions(orderedBookletIds: List<UUID>): Boolean =
+        orderedBookletIds.withIndex().sumOf { (position, id) -> bookletRepository.updateDisplayPosition(id, position) } == orderedBookletIds.size
+
+    @Transactional
     override fun findBookletsForUser(userId: UserId): List<Booklet> {
         return userId.value?.let { id -> bookletRepository.findAllBookletsByUserId(id).map { it.toModel() } } ?: emptyList()
     }

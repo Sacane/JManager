@@ -19,6 +19,8 @@ class Booklet(
     var monthlyPeriodEndDay: Int? = null,
     /** The monthly budget the user aims at for this booklet; null when none is set. */
     var budgetTarget: BigDecimal? = null,
+    /** Where the user placed this booklet among theirs, from 0; null until they order them. */
+    var displayPosition: Int? = null,
 ){
 
     init {

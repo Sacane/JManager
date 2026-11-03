@@ -30,6 +30,7 @@ import fr.sacane.jmanager.domain.port.output.SecureTokenGenerator
 import fr.sacane.jmanager.domain.usecase.EmailVerificationIssuer
 import fr.sacane.jmanager.domain.port.input.transaction.SearchTransactionsService
 import fr.sacane.jmanager.domain.port.input.user.SetBudgetTargetService
+import fr.sacane.jmanager.domain.port.input.booklet.ReorderBookletsService
 import fr.sacane.jmanager.domain.usecase.PasswordRenewal
 import fr.sacane.jmanager.domain.usecase.PasswordResetTokenVerifier
 import fr.sacane.jmanager.domain.usecase.SessionOpener
@@ -169,6 +170,7 @@ class FakeFactory {
     val getUserSettingsService = GetUserSettingsService(userRepository)
     val updateUserSettingsService = UpdateUserSettingsService(userRepository, bookletRepository)
     val setBudgetTargetService = SetBudgetTargetService(bookletRepository)
+    val reorderBookletsService = ReorderBookletsService(bookletRepository)
     val deleteAccountService = DeleteAccountService(userRepository)
     val recordConsentService = RecordConsentService(userRepository)
     val hasUserConsentedService = HasUserConsentedService(userRepository)

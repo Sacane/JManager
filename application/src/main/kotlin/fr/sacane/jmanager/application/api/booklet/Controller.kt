@@ -16,6 +16,7 @@ import fr.sacane.jmanager.domain.toUUID
 import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.application.api.InvalidRequestException
 import fr.sacane.jmanager.application.api.currentUser
+import fr.sacane.jmanager.application.api.parseBookletId
 import fr.sacane.jmanager.application.api.toDTO
 import fr.sacane.jmanager.application.api.toHttpResponse
 import fr.sacane.jmanager.application.api.transaction.TransactionResult
@@ -27,6 +28,7 @@ import fr.sacane.jmanager.application.configuration.LocalDateSerializer
 import kotlinx.serialization.Serializable
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -47,6 +49,13 @@ class BookletController (
     companion object {
         private val LOGGER: Logger = Logger.getLogger("BookletController")
         private const val MAX_REGULAR_TRANSACTION_ID_LENGTH = 100
+    }
+
+    /** Puts the user's booklets in the given order; those left out follow, in their previous order. */
+    @PutMapping(path = ["order"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun reorderBooklets(@Valid @RequestBody request: ReorderBookletsRequest): ResponseEntity<Void> {
+        commandBus.dispatch(ReorderBookletsCommand(UserId(currentUser.id), request.bookletIds.map(::parseBookletId))).toHttpResponse()
+        return ResponseEntity.noContent().build()
     }
 
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -310,6 +319,16 @@ enum class RegenerationType { PREVISIONAL, VIRTUAL, NONE }
  *           form actually issued. The bound is enforced in the controller rather than with a
  *           container-element `@Size`, which Hibernate Validator does not pick up here.
  */
+/**
+ * @property bookletIds The user's booklets, in the order they want them. Bounded well above the six
+ *           booklets an account holds; each identifier is checked when parsed as a UUID.
+ */
+@Serializable
+data class ReorderBookletsRequest(
+    @field:Size(max = 20)
+    val bookletIds: List<String>
+)
+
 @Serializable
 data class RegenerateTransactionsRequest(
     @field:NotEmpty

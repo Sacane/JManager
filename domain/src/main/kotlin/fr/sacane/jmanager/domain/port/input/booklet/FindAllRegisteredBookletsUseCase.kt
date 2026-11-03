@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
+import fr.sacane.jmanager.domain.models.inDisplayOrder
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.port.input.Query
 import fr.sacane.jmanager.domain.port.input.QueryHandler
@@ -32,6 +33,6 @@ class FindAllRegisteredBookletsService(
                 "L'utilisateur n'existe pas en base",
                 "domain.booklet.find_all.user_not_found"
             )
-        return success(user.booklets)
+        return success(user.booklets.inDisplayOrder())
     }
 }
