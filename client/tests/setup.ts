@@ -67,10 +67,12 @@ vi.stubGlobal('useBookletOrder', (items: any) => ({
   orderedItems: computed(() => items.value),
   draggedIndex: ref(null),
   dragOverIndex: ref(null),
+  moveBooklet: vi.fn().mockResolvedValue(undefined),
   onDragStart: vi.fn(),
   onDragOver: vi.fn(),
-  onDrop: vi.fn(),
+  onDrop: vi.fn().mockResolvedValue(undefined),
   onDragEnd: vi.fn(),
+  migrateLegacyOrder: vi.fn().mockResolvedValue(undefined),
 }))
 vi.stubGlobal('useSubTagOrder', (_parentId: string, items: any) => ({
   orderedItems: computed(() => items.value),

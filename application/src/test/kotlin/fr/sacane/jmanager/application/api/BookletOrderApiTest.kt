@@ -45,6 +45,17 @@ class BookletOrderApiTest(
         }
     }
 
+    // The client tells whether the account holds an order yet, before taking over the one of the browser.
+    @Test
+    fun `shouldTellWhereEachBookletIsPlaced_onceOrdered`() {
+        val ids = givenBooklets("Compte courant", "Livret A")
+        listBooklets().then().body("displayPosition", equalTo(listOf(null, null)))
+
+        reorder(ids.getValue("Livret A"), ids.getValue("Compte courant"))
+
+        listBooklets().then().body("displayPosition", equalTo(listOf(0, 1)))
+    }
+
     @Test
     fun `shouldShowTheSameOrderInTheSettings`() {
         val ids = givenBooklets("Compte courant", "Livret A")
@@ -114,6 +125,13 @@ class BookletOrderApiTest(
     private fun givenBooklets(vararg labels: String): Map<String, String> {
         bookletStateAdapter.init(labels.map { Booklet(label = it, amount = Amount(1000L), owner = user) })
         return bookletStateAdapter.get().filter { it.label in labels }.associate { it.label to it.id.toString() }
+    }
+
+    private fun listBooklets() = Given {
+        port(port)
+        cookie("token", token)
+    } When {
+        get("/api/booklet")
     }
 
     private fun reorder(vararg bookletIds: String) =

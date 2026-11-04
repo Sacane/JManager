@@ -1,6 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
+import { LEGACY_BOOKLET_ORDER_KEY, useBookletOrder } from '../../composables/useBookletOrder'
 import DashboardPage from '../../pages/index.vue'
 
 vi.mock('@vueuse/core', () => ({
@@ -17,6 +18,7 @@ vi.mock('@/composables/useAuth', () => ({
   default: () => ({ user: { username: 'johan' } }),
 }))
 
+const reorderBookletsMock = vi.fn().mockResolvedValue(undefined)
 const fetchBookletsMock = vi.fn().mockResolvedValue([
   {
     id: '11111111-1111-4111-8111-111111111111',
@@ -150,6 +152,7 @@ function mountDashboardPage(useLocalStorageImpl?: (key: string, defaultValue: un
   vi.stubGlobal('useBooklet', () => ({
     createBooklet: vi.fn(),
     fetch: fetchBookletsMock,
+    reorderBooklets: reorderBookletsMock,
   }))
   vi.stubGlobal('useRegularTransaction', () => ({ getRegularTransaction: vi.fn().mockResolvedValue([]) }))
   vi.stubGlobal('useTag', () => ({ getAllTags: vi.fn().mockResolvedValue([]) }))
@@ -966,6 +969,23 @@ describe('pages/index selected booklet persistence', () => {
     const select = wrapper.get('select')
     expect((select.element as HTMLSelectElement).value).toBe(firstBooklet.id)
     expect(wrapper.text()).toContain(firstBooklet.label)
+  })
+
+  // The dashboard may be the first screen opened after the order moved to the account.
+  it('takes over the order kept in this browser, and falls back to its first booklet', async () => {
+    const stubbedOrder = (globalThis as Record<string, unknown>).useBookletOrder
+    vi.stubGlobal('useBookletOrder', useBookletOrder)
+    window.localStorage.setItem(LEGACY_BOOKLET_ORDER_KEY, JSON.stringify([secondBooklet.id, firstBooklet.id]))
+    try {
+      const wrapper = mountDashboardPage(createPersistentLocalStorage())
+      await settleDashboard()
+
+      expect(reorderBookletsMock).toHaveBeenCalledWith([secondBooklet.id, firstBooklet.id])
+      expect((wrapper.get('select').element as HTMLSelectElement).value).toBe(secondBooklet.id)
+    } finally {
+      window.localStorage.removeItem(LEGACY_BOOKLET_ORDER_KEY)
+      vi.stubGlobal('useBookletOrder', stubbedOrder)
+    }
   })
 })
 

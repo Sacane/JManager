@@ -23,7 +23,8 @@ internal fun Booklet.toDTO(): BookletDTO = BookletDTO(
     this.amount.value,
     this.label,
     this.transactionsSnapshot().map { transaction -> transaction.toDTO() },
-    this.amount.currency.symbol
+    this.amount.currency.symbol,
+    this.displayPosition,
 )
 
 internal fun TransactionResult.toModel(): Transaction {

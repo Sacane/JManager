@@ -64,11 +64,16 @@ export type TransactionSortDirection = 'ASCENDING' | 'DESCENDING'
 export type TransactionSortField = 'DATE' | 'LABEL' | 'EXPENSE' | 'INCOME'
 
 export default function useBooklet() {
-  const { get, post, deleteQuery } = useQuery()
+  const { get, post, put, deleteQuery } = useQuery()
   const BookletFormatted = ref<BookletFormatted[]>([])
 
   async function findAllBooklet(): Promise<Array<BookletDTO>> {
     return get(`booklet`).then()
+  }
+
+  /** Puts the user's booklets in this order; booklets left out follow, in their previous order. */
+  async function reorderBooklets(bookletIds: string[]): Promise<void> {
+    await put('booklet/order', { bookletIds })
   }
 
   async function createBooklet(label: string, amount: number, currency: string): Promise<any> {
@@ -161,6 +166,7 @@ export default function useBooklet() {
   return {
     createBooklet,
     fetch: findAllBooklet,
+    reorderBooklets,
     deleteBooklet,
     BookletFormatted,
     findById,

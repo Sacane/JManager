@@ -32,6 +32,8 @@ declare global {
     label: string
     transactions: Array<TransactionDTO>
     currency?: string
+    /** Where the user placed this booklet, from 0; null until they order their booklets. */
+    displayPosition?: number | null
   }
 
   type OnlyBookletInfo = Pick<BookletDTO, 'id' | 'amount' | 'label' | 'currency'>

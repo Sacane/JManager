@@ -64,9 +64,9 @@ const SELECTED_BOOKLET_STORAGE_KEY = 'dashboard.selectedBookletId.v1'
 const isBookletDialogOpen = ref(false)
 const booklets = ref<BookletDTO[]>([])
 
-// Only the order is used here: the drag and drop lived in the "Mes livrets" block, removed by UX-18
-// since the booklets page already offers it.
-const { orderedItems: orderedBooklets } = useBookletOrder(booklets)
+// Only the order is used here: the booklets page is where it changes. The dashboard may be the first
+// screen opened, so it also takes over the order an earlier version kept in this browser.
+const { orderedItems: orderedBooklets, migrateLegacyOrder: migrateLegacyBookletOrder } = useBookletOrder(booklets)
 const regularTransactions = ref<RegularTransactionDTO[]>([])
 const tags = ref<TagDTO[]>([])
 const categoryDistribution = ref<CategoryDistributionDTO | null>(null)
@@ -1157,6 +1157,8 @@ async function loadDashboardData() {
       ])
 
       booklets.value = Array.isArray(bookletsData) ? bookletsData : []
+      // Not awaited: the order shows at once, and the dashboard need not wait for the account to take it.
+      void migrateLegacyBookletOrder()
       regularTransactions.value = Array.isArray(regularTransData) ? regularTransData : []
       tags.value = Array.isArray(tagsData) ? tagsData : []
 
