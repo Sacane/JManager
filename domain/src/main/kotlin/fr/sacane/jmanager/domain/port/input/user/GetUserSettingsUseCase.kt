@@ -3,9 +3,7 @@ package fr.sacane.jmanager.domain.port.input.user
 import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
-import fr.sacane.jmanager.domain.models.BookletMonthlyCycleSetting
 import fr.sacane.jmanager.domain.models.UserId
-import fr.sacane.jmanager.domain.models.User
 import fr.sacane.jmanager.domain.models.UserSettings
 import fr.sacane.jmanager.domain.port.output.UserRepository
 import fr.sacane.jmanager.domain.port.input.Query
@@ -37,18 +35,4 @@ class GetUserSettingsService(
             )
         return success(user.toSettings())
     }
-
-    private fun User.toSettings(): UserSettings = UserSettings(
-        projectionWindowDays = projectionWindowDays,
-        bookletCycles = booklets.mapNotNull { booklet ->
-            val bookletId = booklet.id ?: return@mapNotNull null
-            BookletMonthlyCycleSetting(
-                bookletId = bookletId,
-                bookletLabel = booklet.label,
-                monthlyPeriodStartDay = booklet.monthlyPeriodStartDay,
-                monthlyPeriodEndDay = booklet.monthlyPeriodEndDay,
-                budgetTarget = booklet.budgetTarget,
-            )
-        }
-    )
 }

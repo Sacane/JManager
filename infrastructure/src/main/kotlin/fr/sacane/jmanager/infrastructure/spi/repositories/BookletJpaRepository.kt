@@ -40,6 +40,10 @@ interface BookletJpaRepository: CrudRepository<BookletResource, UUID>{
     @Query("UPDATE BookletResource b SET b.budgetTarget = :budgetTarget WHERE b.idBooklet = :id")
     fun updateBudgetTarget(@Param("id") id: UUID, @Param("budgetTarget") budgetTarget: BigDecimal?): Int
 
+    @Modifying
+    @Query("UPDATE BookletResource b SET b.displayPosition = :position WHERE b.idBooklet = :id")
+    fun updateDisplayPosition(@Param("id") id: UUID, @Param("position") position: Int): Int
+
     @Query("SELECT DISTINCT b FROM BookletResource b LEFT JOIN FETCH b.transactions WHERE b.idBooklet = :id")
     fun findTransactionsById(id: UUID): BookletResource?
 

@@ -20,6 +20,8 @@ class BookletResource(
     var monthlyPeriodEndDay: Int? = null,
     @Column(name = "budget_target", precision = 12, scale = 2)
     var budgetTarget: BigDecimal? = null,
+    @Column(name = "display_position")
+    var displayPosition: Int? = null,
     @OneToMany(cascade = [CascadeType.ALL], fetch = FetchType.LAZY, mappedBy = "booklet")
     var transactions: MutableList<TransactionResource> = mutableListOf(),
     @ManyToOne

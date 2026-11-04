@@ -139,6 +139,13 @@ class InMemoryDatabase {
         return true
     }
 
+    fun setDisplayPositions(orderedBookletIds: List<UUID>): Boolean {
+        val stored = userByBooklet.values.flatten()
+        if (!orderedBookletIds.all { id -> stored.any { it.id == id } }) return false
+        orderedBookletIds.forEachIndexed { position, id -> stored.first { it.id == id }.displayPosition = position }
+        return true
+    }
+
     fun findBookletById(bookletId: UUID): Booklet? {
 
         var targetBooklet: Booklet? = null
@@ -156,6 +163,7 @@ class InMemoryDatabase {
                     monthlyPeriodStartDay = found.monthlyPeriodStartDay,
                     monthlyPeriodEndDay = found.monthlyPeriodEndDay,
                     budgetTarget = found.budgetTarget,
+                    displayPosition = found.displayPosition,
                 )
             }
         }
@@ -184,6 +192,7 @@ class InMemoryDatabase {
                     monthlyPeriodStartDay = it.monthlyPeriodStartDay,
                     monthlyPeriodEndDay = it.monthlyPeriodEndDay,
                     budgetTarget = it.budgetTarget,
+                    displayPosition = it.displayPosition,
                 )
             )
         }

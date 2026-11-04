@@ -92,6 +92,13 @@ interface BookletRepository {
     fun updateBudgetTarget(bookletId: UUID, budgetTarget: BigDecimal?): Boolean
 
     /**
+     * Places each booklet at its index in [orderedBookletIds], from 0.
+     *
+     * @return true when every booklet was updated, false otherwise
+     */
+    fun updateDisplayPositions(orderedBookletIds: List<UUID>): Boolean
+
+    /**
      * Retrieve all booklets owned by a user.
      *
      * @param userId Domain user identifier

@@ -24,6 +24,7 @@ import fr.sacane.jmanager.domain.utils.ResultState
 import fr.sacane.jmanager.application.api.InvalidRequestException
 import fr.sacane.jmanager.application.api.UnauthorizedRequestException
 import fr.sacane.jmanager.application.api.currentUser
+import fr.sacane.jmanager.application.api.parseBookletId
 import fr.sacane.jmanager.application.api.toDTO
 import fr.sacane.jmanager.application.api.toHttpResponse
 import fr.sacane.jmanager.application.bus.CommandBus
@@ -302,16 +303,6 @@ class SessionController(
     fun removeBudgetTarget(@PathVariable bookletId: String): ResponseEntity<Void> {
         commandBus.dispatch(SetBudgetTargetCommand(UserId(currentUser.id), parseBookletId(bookletId), null)).toHttpResponse()
         return ResponseEntity.noContent().build()
-    }
-
-    private fun parseBookletId(bookletId: String): UUID = try {
-        UUID.fromString(bookletId)
-    } catch (_: IllegalArgumentException) {
-        throw InvalidRequestException(
-            ResultState.INVALID.code,
-            "L'identifiant de livret '$bookletId' est invalide",
-            "domain.user.settings.invalid_booklet_id",
-        )
     }
 
     private fun parseUserId(userId: String): UUID = try {
