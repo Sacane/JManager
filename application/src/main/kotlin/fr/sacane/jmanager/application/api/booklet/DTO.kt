@@ -14,7 +14,9 @@ data class BookletDTO(
     val amount: BigDecimal,
     val label: String,
     val transactions: List<TransactionResult>?,
-    val currency: String
+    val currency: String,
+    /** Where the user placed this booklet, from 0; null until they order their booklets. */
+    val displayPosition: Int? = null,
 )
 
 @Serializable

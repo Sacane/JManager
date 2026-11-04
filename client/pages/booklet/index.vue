@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AxiosError } from 'axios'
+import { nextTick } from 'vue'
 import BookletDeleteDialog from '~/components/booklet/BookletDeleteDialog.vue'
 import BookletBookingDialog from '~/components/dialog/BookletBookingDialog.vue'
 import { MAX_BOOKLETS } from '~/constants/booklet'
@@ -35,13 +36,62 @@ const data = ref<Array<{
   amount: string
   currency: string
   transactionCount: number
+  displayPosition: number | null
 }>>([])
 
-const { orderedItems, draggedIndex, dragOverIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useBookletOrder(data)
+const {
+  orderedItems,
+  draggedIndex,
+  dragOverIndex,
+  moveBooklet,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  migrateLegacyOrder,
+} = useBookletOrder(data)
 
 onMounted(async () => {
   await loadBooklets()
+  await migrateLegacyOrder()
 })
+
+// Reorganising is a mode of its own: a card does not open, cannot be deleted, and shows its arrows.
+// The arrows work with a click, a finger or the keyboard; dragging stays available with a mouse.
+const isReordering = ref(false)
+const canReorder = computed(() => orderedItems.value.length >= 2)
+/** Read out by screen readers after each move. */
+const reorderAnnouncement = ref('')
+
+watch(canReorder, (possible) => {
+  if (!possible) isReordering.value = false
+})
+
+function toggleReordering() {
+  isReordering.value = !isReordering.value
+  reorderAnnouncement.value = ''
+}
+
+const bookletsGrid = ref<HTMLElement | null>(null)
+function moveButtonSelector(bookletId: string, offset: -1 | 1) {
+  return `[data-test="move-${offset < 0 ? 'before' : 'after'}-${bookletId}"]`
+}
+
+// The card moved in the page: put the focus back on the arrow used, or on the other one once at the end.
+function focusMoveButton(bookletId: string, offset: -1 | 1) {
+  const used = bookletsGrid.value?.querySelector<HTMLButtonElement>(moveButtonSelector(bookletId, offset))
+  const target = used && !used.disabled ? used : bookletsGrid.value?.querySelector<HTMLButtonElement>(moveButtonSelector(bookletId, offset < 0 ? 1 : -1))
+  target?.focus()
+}
+
+async function moveOneStep(index: number, offset: -1 | 1, booklet: { id: string, label: string }) {
+  const saving = moveBooklet(index, offset)
+  const position = orderedItems.value.findIndex(item => item.id === booklet.id) + 1
+  reorderAnnouncement.value = `« ${capitalizeFirst(booklet.label)} » est maintenant en position ${position} sur ${orderedItems.value.length}.`
+  await nextTick()
+  focusMoveButton(booklet.id, offset)
+  await saving
+}
 
 async function loadBooklets() {
   await withLoading(async () => {
@@ -64,10 +114,12 @@ function format(booklets: Array<BookletDTO>) {
     // Only meaningful when positive: the list endpoint may return an empty snapshot for a
     // booklet that does hold transactions, and the dialog never announces a count of zero.
     transactionCount: booklet.transactions?.length ?? 0,
+    displayPosition: booklet.displayPosition ?? null,
   }))
 }
 
 function onCardClick(bookletId: string) {
+  if (isReordering.value) return
   router.push(`/booklet/${bookletId}`)
 }
 
@@ -214,14 +266,31 @@ function formatAmount(amount: string) {
 
     <!-- Booklets Grid -->
     <div v-else class="booklets-container">
-      <div class="booklets-grid">
+      <div v-if="canReorder" class="reorder-toolbar">
+        <p v-if="isReordering" class="reorder-hint" data-test="reorder-hint">
+          Déplacez vos livrets avec les flèches, ou faites-les glisser. Chaque déplacement est enregistré.
+        </p>
+        <Button
+          :label="isReordering ? 'Terminé' : 'Réorganiser'"
+          :icon="isReordering ? 'pi pi-check' : 'pi pi-sort-alt'"
+          :class="{ 'btn-outline-primary': !isReordering }"
+          :aria-pressed="isReordering"
+          data-test="reorder-toggle"
+          @click="toggleReordering"
+        />
+      </div>
+      <p class="sr-only" aria-live="polite" data-test="reorder-announcement">
+        {{ reorderAnnouncement }}
+      </p>
+
+      <div ref="bookletsGrid" class="booklets-grid">
         <!-- Existing Booklets -->
         <div
           v-for="(booklet, index) in orderedItems"
           :key="booklet.id"
           class="booklet-card"
-          :class="{ 'is-dragging': draggedIndex === index, 'drag-over': dragOverIndex === index && draggedIndex !== index }"
-          draggable="true"
+          :class="{ 'is-reordering': isReordering, 'is-dragging': draggedIndex === index, 'drag-over': dragOverIndex === index && draggedIndex !== index }"
+          :draggable="isReordering"
           @click="onCardClick(booklet.id)"
           @dragstart="onDragStart($event, index)"
           @dragover="onDragOver($event, index)"
@@ -240,14 +309,39 @@ function formatAmount(amount: string) {
                 </h3>
               </div>
               <div class="card-actions">
-                <button
-                  v-tooltip.top="'Réorganiser'"
-                  class="drag-handle"
-                  @click.stop
+                <div
+                  v-if="isReordering"
+                  class="reorder-controls"
+                  role="group"
+                  :aria-label="`Position de « ${capitalizeFirst(booklet.label)} »`"
                 >
-                  <i class="pi pi-bars" />
-                </button>
+                  <!-- One column on a phone: before is up there, left on a wider screen. -->
+                  <button
+                    type="button"
+                    class="reorder-button"
+                    :disabled="index === 0"
+                    :aria-label="`Déplacer « ${capitalizeFirst(booklet.label)} » avant`"
+                    :data-test="`move-before-${booklet.id}`"
+                    @click.stop="moveOneStep(index, -1, booklet)"
+                  >
+                    <i class="pi pi-arrow-up md:hidden" aria-hidden="true" />
+                    <i class="pi pi-arrow-left hidden md:inline-block" aria-hidden="true" />
+                  </button>
+                  <span class="reorder-position" aria-hidden="true">{{ index + 1 }}/{{ orderedItems.length }}</span>
+                  <button
+                    type="button"
+                    class="reorder-button"
+                    :disabled="index === orderedItems.length - 1"
+                    :aria-label="`Déplacer « ${capitalizeFirst(booklet.label)} » après`"
+                    :data-test="`move-after-${booklet.id}`"
+                    @click.stop="moveOneStep(index, 1, booklet)"
+                  >
+                    <i class="pi pi-arrow-down md:hidden" aria-hidden="true" />
+                    <i class="pi pi-arrow-right hidden md:inline-block" aria-hidden="true" />
+                  </button>
+                </div>
                 <Button
+                  v-else
                   icon="pi pi-trash"
                   class="delete-btn"
                   text
@@ -282,7 +376,7 @@ function formatAmount(amount: string) {
 
         <!-- Add New Card (if under limit) -->
         <div
-          v-if="!hasReachedLimit"
+          v-if="!hasReachedLimit && !isReordering"
           class="booklet-card add-card"
           :class="{ 'disabled-card': isAnyBookletActionLoading }"
           @click="openBookletDialog"
@@ -508,6 +602,15 @@ function formatAmount(amount: string) {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
+  &.is-reordering {
+    cursor: grab;
+    border-style: dashed;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
   &.is-dragging {
     opacity: 0.4;
     transform: scale(0.97) !important;
@@ -588,31 +691,78 @@ function formatAmount(amount: string) {
   flex-shrink: 0;
 }
 
-.drag-handle {
+/* ===== REORDER MODE ===== */
+.reorder-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 768px) {
+    justify-content: stretch;
+
+    :deep(.p-button) {
+      width: 100%;
+    }
+  }
+}
+
+.reorder-hint {
+  flex: 1 1 280px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.reorder-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.reorder-position {
+  min-width: 2.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.reorder-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--card-border);
   background: transparent;
-  color: var(--text-tertiary);
-  cursor: grab;
-  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 10px;
   transition: all 0.2s ease;
   padding: 0;
 
-  &:active {
-    cursor: grabbing;
+  &:hover:not(:disabled) {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
   }
 
-  &:hover {
-    color: var(--primary);
-    background: rgba(101, 8, 204, 0.1);
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
 
   i {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 }
 
