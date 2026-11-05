@@ -28,4 +28,6 @@ data class BookletLoadingResult(
     val totalPages: Int = 1,
     val orderedTransactions: List<Transaction> = currentTransactions + previsionalTransactions,
     val balanceAfter: Map<UUID, Amount> = emptyMap(),
+    /** The tags used over the whole period, whatever the page shown and the filters applied. */
+    val periodTagIds: Set<UUID> = emptySet(),
 )

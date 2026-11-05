@@ -5,6 +5,7 @@ import fr.sacane.jmanager.domain.hexadoc.DomainService
 import fr.sacane.jmanager.domain.hexadoc.Port
 import fr.sacane.jmanager.domain.hexadoc.Side
 import fr.sacane.jmanager.domain.models.LabelSearch
+import fr.sacane.jmanager.domain.models.TagFilter
 import fr.sacane.jmanager.domain.models.Booklet
 import fr.sacane.jmanager.domain.models.UserId
 import fr.sacane.jmanager.domain.models.transaction.Transaction
@@ -46,6 +47,8 @@ data class LoadTransactionsForBookletForAMonthQuery(
     val sortField: TransactionSortField? = null,
     /** A fragment of label to look for in the period; blank or null lists every transaction. */
     val search: String? = null,
+    /** Only the transactions of this tag or of one of its sub-tags; null lists every transaction. */
+    val tagId: UUID? = null,
 ) : Query<BookletLoadingResult>, MdcContextProvider {
     override fun mdcContext() = mapOf(MdcKeys.BOOKLET_ID to bookletId.toString())
 }
@@ -267,10 +270,12 @@ class LoadTransactionsForBookletForAMonthService(
                     tracker.excludedMonths.contains(targetYearMonth)
                 }
 
-            // Searched before paging, so every page of the period is searched; the balances above stay the period's.
+            // Searched and filtered by tag before paging, so every page of the period is; the balances above stay the period's.
+            val periodTransactions = transactions.second + combinedPrevisionalTransactions
             val search = LabelSearch.of(query.search)
+            val tagFilter = TagFilter.of(query.tagId)
             val allDisplayTransactions = sortForDisplay(
-                (transactions.second + combinedPrevisionalTransactions).filter { search.matches(it.label) },
+                periodTransactions.filter { search.matches(it.label) && tagFilter.matches(it.tag) },
                 query.sortField,
                 query.sortDirection
             )
@@ -292,6 +297,7 @@ class LoadTransactionsForBookletForAMonthService(
                 totalPages = page.totalPages,
                 orderedTransactions = page.content,
                 balanceAfter = balanceAfter,
+                periodTagIds = periodTransactions.mapNotNull { it.tag?.id }.toSet(),
             )
 
             val totalMs = Duration.ofNanos(System.nanoTime() - totalStartNs).toMillis()
