@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
+import java.util.UUID
 import java.util.logging.Logger
 
 
@@ -170,6 +171,7 @@ class BookletController (
         @RequestParam(required = false) sortDirection: TransactionSortDirection?,
         @RequestParam(required = false) sortField: TransactionSortField?,
         @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) tagId: UUID?,
     ): ResponseEntity<BookletTransactionsResponse> {
         validateDateRange(startDate, endDate)
         requireSearchWithinLabelLength(search)
@@ -188,6 +190,7 @@ class BookletController (
                     sortDirection = sortDirection,
                     sortField = sortField,
                     search = search,
+                    tagId = tagId,
                 )
             )
             .map { res ->
@@ -198,6 +201,7 @@ class BookletController (
                     pageSize = res.pageSize,
                     totalElements = res.totalElements,
                     totalPages = res.totalPages,
+                    tagIds = res.periodTagIds.map { it.toString() },
                 )
             }
             .toHttpResponse()
@@ -307,6 +311,8 @@ data class BookletTransactionsResponse(
     val pageSize: Int = 10,
     val totalElements: Long = 0L,
     val totalPages: Int = 1,
+    /** The tags used over the whole period, whatever the page and the filters: the ones worth offering as a filter. */
+    val tagIds: List<String> = emptyList(),
 )
 
 @Serializable
