@@ -138,7 +138,6 @@ const subTagsByParent = computed(() => {
   }
   return map
 })
-const selectedParentTagFilter = ref<string>('')
 const selectedSubTagFilter = ref<string>('')
 watch(selectedTagFilter, (val) => {
   if (val) selectedSubTagFilter.value = ''
@@ -146,14 +145,18 @@ watch(selectedTagFilter, (val) => {
 watch(selectedSubTagFilter, (val) => {
   if (val) selectedTagFilter.value = ''
 })
+/** The tag asked for: a tag brings its sub-tags along, a sub-tag stands alone. */
+const activeTagId = computed(() => selectedSubTagFilter.value || selectedTagFilter.value)
+/** The tags used over the whole period, as the server tells them. */
+const periodTagIds = ref<string[]>([])
 
 // --- Search (UX-22): the displayed period only, by label ---
 const SEARCH_DEBOUNCE_MS = 300
 /** What is typed, and what is searched: the typed text once typing pauses, trimmed. */
 const { search, appliedSearch } = useDebouncedSearch(SEARCH_DEBOUNCE_MS)
-// The server searches every page of the period, so the list restarts from its first page.
+// The server searches and filters by tag every page of the period, so the list restarts from its first page.
 // "Tout le mois" already holds the whole period and filters it below without asking again.
-watch(appliedSearch, async () => {
+watch([appliedSearch, activeTagId], async () => {
   currentPage.value = 0
   await loadBookletData()
 })
@@ -181,9 +184,11 @@ function clearAllFilters() {
   selectedTagFilter.value = ''
   selectedSubTagFilter.value = ''
 }
+// The tags worth offering: those of the whole period, not only the ones of the page shown.
 const transactionTagIds = computed(() => {
+  if (globalFilter.value === 'none') return new Set(periodTagIds.value)
   const ids = new Set<string>()
-  for (const t of actualTransactions.value) {
+  for (const t of allTransactions.value) {
     if (t.tagDTO?.tagId) ids.add(t.tagDTO.tagId)
   }
   return ids
@@ -288,17 +293,13 @@ const filteredTransactions = computed(() => {
     result = result.filter(t => matchesLabel(t.label, appliedSearch.value))
   }
 
-  if (selectedParentTagFilter.value !== '') {
-    const childIds = (subTagsByParent.value[selectedParentTagFilter.value] ?? []).map(c => c.tagId)
-    const allowedIds = new Set([selectedParentTagFilter.value, ...childIds])
-    result = result.filter(t => allowedIds.has(t.tagDTO?.tagId ?? ''))
-  }
-  if (selectedTagFilter.value !== '') {
+  // Paginated mode received the server's filtered result already.
+  if (isGlobalMode && selectedTagFilter.value !== '') {
     const childIds = (subTagsByParent.value[selectedTagFilter.value] ?? []).map(c => c.tagId)
     const allowedIds = new Set([selectedTagFilter.value, ...childIds])
     result = result.filter(t => allowedIds.has(t.tagDTO?.tagId ?? ''))
   }
-  if (selectedSubTagFilter.value !== '') {
+  if (isGlobalMode && selectedSubTagFilter.value !== '') {
     result = result.filter(t => (t.tagDTO?.tagId ?? '') === selectedSubTagFilter.value)
   }
   // Global mode holds the whole period client-side, so it is ordered here.
@@ -501,7 +502,7 @@ async function loadBookletData() {
 
       const [balances, transactionsRes] = await Promise.all([
         findBalancesByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value),
-        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, activeSort.value.direction, activeSort.value.field, appliedSearch.value),
+        findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, isMobile.value ? 0 : currentPage.value, isMobile.value ? MOBILE_LAZY_PAGE_SIZE : pageSize.value, activeSort.value.direction, activeSort.value.field, appliedSearch.value, activeTagId.value),
       ])
 
       bookletData.label = balances.label
@@ -523,6 +524,7 @@ async function loadBookletData() {
       hasRegenerableTransactions.value = hasCustomRange.value ? false : transactionsRes.hasRegenerableTransactions
       totalElements.value = transactionsRes.totalElements
       totalPages.value = transactionsRes.totalPages
+      periodTagIds.value = transactionsRes.tagIds ?? []
 
       if (isMobile.value) {
         mobileCurrentPage.value = 0
@@ -565,7 +567,7 @@ async function loadMoreMobileTransactions() {
     const bookletId = (route.params as any)?.id as string
     const month = numberFromMonth(bookletData.month) as number
     const nextPage = mobileCurrentPage.value + 1
-    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, nextPage, MOBILE_LAZY_PAGE_SIZE, activeSort.value.direction, activeSort.value.field, appliedSearch.value)
+    const res = await findTransactionsByIdMonthAndYear(bookletId, month, bookletData.year, activeDateRange.value, nextPage, MOBILE_LAZY_PAGE_SIZE, activeSort.value.direction, activeSort.value.field, appliedSearch.value, activeTagId.value)
     const newTransactions = res.transactions
       .map((t, i) => asDisplayableTransaction(t, actualTransactions.value.length + i))
     actualTransactions.value = [...actualTransactions.value, ...newTransactions]
