@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import Profile from '~/components/Profile.vue'
 import useAuth from '../composables/useAuth'
 import 'primeicons/primeicons.css'
@@ -9,6 +9,13 @@ const { emailVerified } = useConsent()
 const { version, fetchVersion } = useAppVersion()
 const isSidebarOpen = ref(false)
 const isMobileView = ref(false)
+// Desktop only: the mobile drawer has its own open/close model. Kept between visits.
+const isCollapsedPreference = useLocalStorage<boolean>('jmanager-sidebar-collapsed', false)
+const isCollapsed = computed(() => isCollapsedPreference.value && !isMobileView.value)
+
+function setCollapsed(value: boolean) {
+  isCollapsedPreference.value = value
+}
 
 function checkMobile() {
   isMobileView.value = window.innerWidth <= 768
@@ -64,12 +71,26 @@ onUnmounted(() => {
       <i class="pi pi-bars" />
     </button>
 
+    <button
+      v-if="isCollapsed"
+      class="expand-btn"
+      data-test="sidebar-expand"
+      aria-label="Déplier le menu"
+      aria-expanded="false"
+      @click="setCollapsed(false)"
+    >
+      <i class="pi pi-angle-double-right" />
+    </button>
+
     <!-- Sidebar -->
     <aside
       :class="{
         'sidebar-open': isSidebarOpen,
         'sidebar-closed': !isSidebarOpen && isMobileView,
+        'sidebar-collapsed': isCollapsed,
       }"
+      :aria-hidden="isCollapsed ? 'true' : undefined"
+      :inert="isCollapsed"
       class="sidebar"
     >
       <div class="sidebar-content">
@@ -82,6 +103,16 @@ onUnmounted(() => {
           <div class="header-actions">
             <button v-if="isMobileView" class="close-btn" @click="isSidebarOpen = false">
               <i class="pi pi-times" />
+            </button>
+            <button
+              v-else
+              class="close-btn"
+              data-test="sidebar-collapse"
+              aria-label="Replier le menu"
+              aria-expanded="true"
+              @click="setCollapsed(true)"
+            >
+              <i class="pi pi-angle-double-left" />
             </button>
           </div>
         </div>
@@ -640,6 +671,50 @@ onUnmounted(() => {
   .sidebar {
     position: sticky;
     top: 0;
+    // Folding shrinks the column to nothing so the page content takes the freed width.
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-width 0.3s ease;
+  }
+
+  .sidebar-collapsed {
+    width: 0 !important;
+    border-right-width: 0;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  // Always reachable once the sidebar is folded away, whatever the page scroll.
+  .expand-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #190233;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .expand-btn {
+    display: none;
   }
 }
 
