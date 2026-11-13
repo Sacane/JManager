@@ -19,6 +19,8 @@ export interface BookletTransactionsDTO {
   pageSize: number
   totalElements: number
   totalPages: number
+  /** The tags used over the whole period, whatever the page and the filters. */
+  tagIds?: string[]
 }
 
 export type RegenerationType = 'PREVISIONAL' | 'VIRTUAL' | 'NONE'
@@ -129,6 +131,7 @@ export default function useBooklet() {
     sortDirection?: TransactionSortDirection,
     sortField?: TransactionSortField,
     search: string = '',
+    tagId: string = '',
   ): Promise<BookletTransactionsDTO> {
     const fragment = normalizedSearch(search)
     return get(`booklet/${bookletId}/transactions`, {
@@ -140,6 +143,7 @@ export default function useBooklet() {
       ...(sortDirection ? { sortDirection } : {}),
       ...(sortField ? { sortField } : {}),
       ...(fragment ? { search: fragment } : {}),
+      ...(tagId ? { tagId } : {}),
     })
   }
 

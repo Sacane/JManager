@@ -211,6 +211,8 @@ describe('pages/booklet/[id] loading states', () => {
       'DATE',
       // No search typed.
       '',
+      // No tag picked.
+      '',
     )
   })
 })
@@ -242,6 +244,8 @@ describe('pages/booklet/[id] sorting', () => {
       'DATE',
       // No search typed.
       '',
+      // No tag picked.
+      '',
     )
   })
 
@@ -271,6 +275,8 @@ describe('pages/booklet/[id] sorting', () => {
       'DATE',
       // No search typed.
       '',
+      // No tag picked.
+      '',
     )
   })
 
@@ -295,6 +301,8 @@ describe('pages/booklet/[id] sorting', () => {
       'ASCENDING',
       'LABEL',
       // No search typed.
+      '',
+      // No tag picked.
       '',
     )
   })
@@ -322,6 +330,8 @@ describe('pages/booklet/[id] sorting', () => {
       'DESCENDING',
       'EXPENSE',
       // No search typed.
+      '',
+      // No tag picked.
       '',
     )
   })
@@ -363,6 +373,8 @@ describe('pages/booklet/[id] sorting', () => {
       'ASCENDING',
       'LABEL',
       // No search typed.
+      '',
+      // No tag picked.
       '',
     )
   })
@@ -1051,6 +1063,8 @@ describe('pages/booklet/[id] resolveDisplayTag', () => {
   })
 })
 
+// The paginated list is filtered by the server (booklet-tag-filter.spec.ts): the page filters by itself in
+// "Tout le mois" only, which holds the whole period already.
 describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -1083,7 +1097,7 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
         totalElements: transactions.length,
         totalPages: 1,
       }),
-      findByIdMonthAndYear: findByIdMonthAndYearMock,
+      findByIdMonthAndYear: vi.fn().mockResolvedValue({ label: 'compte courant', transactions, realSold: '1500.00', previewSold: '1700.00' }),
     }))
     vi.stubGlobal('useTag', () => ({
       getAllTags: vi.fn().mockResolvedValue([parentTag, subTag]),
@@ -1121,25 +1135,6 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
     })
   }
 
-  it('filtering by parent tag includes transactions of parent tag and its sub-tags', async () => {
-    const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTag })
-    const txSub = createTransaction({ id: 'tx-2', tagDTO: subTag })
-    const txOther = createTransaction({ id: 'tx-3', tagDTO: defaultTag })
-
-    const wrapper = mountWithTagsAndTransactions([txParent, txSub, txOther])
-    await flushPromises()
-    await flushPromises()
-    await flushPromises()
-
-    const vm = wrapper.vm as any
-    vm.selectedParentTagFilter = 'parent-1'
-
-    const result = vm.filteredTransactions
-    expect(result).toHaveLength(2)
-    expect(result.map((t: any) => t.id)).toContain('tx-1')
-    expect(result.map((t: any) => t.id)).toContain('tx-2')
-  })
-
   it('tag column filter includes transactions of the tag and its sub-tags', async () => {
     const txParent = createTransaction({ id: 'tx-1', tagDTO: parentTag })
     const txSub = createTransaction({ id: 'tx-2', tagDTO: subTag })
@@ -1151,6 +1146,7 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
     await flushPromises()
 
     const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
     vm.selectedTagFilter = 'parent-1'
 
     const result = vm.filteredTransactions
@@ -1169,6 +1165,7 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
     await flushPromises()
 
     const vm = wrapper.vm as any
+    await vm.onGlobalFilterChange('all')
     vm.selectedSubTagFilter = 'sub-1'
 
     const result = vm.filteredTransactions
@@ -1207,6 +1204,7 @@ describe('pages/booklet/[id] filteredTransactions tag filtering', () => {
   })
 })
 
+// The server tells the tags used over the whole period (tagIds): here, those of the transactions given.
 describe('pages/booklet/[id] tagFilterOptions and subTagFilterOptions scoped to transactions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -1240,6 +1238,7 @@ describe('pages/booklet/[id] tagFilterOptions and subTagFilterOptions scoped to 
         pageSize: 10,
         totalElements: transactions.length,
         totalPages: 1,
+        tagIds: transactions.map(transaction => transaction.tagDTO?.tagId).filter(Boolean),
       }),
       findByIdMonthAndYear: findByIdMonthAndYearMock,
     }))
